@@ -92,6 +92,8 @@ module Cometreg_ = struct
 
   type return = Eliom_services.http
 
+  let pre_service ?options () = Lwt.return ()
+
   let do_appl_xhr = Eliom_services.XAlways
 
   let code_of_code_option = function
