@@ -24,6 +24,8 @@
    - nph- scripts
 *)
 
+open Ocsigen_pervasives
+
 open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
@@ -158,7 +160,7 @@ let find_cgi_page request reg sub_path =
     | Unix.Unix_error (Unix.ENOENT, _, _) -> raise Failed_404
   in
 
-  let sub_path = (Ocsigen_lib.string_of_url_path ~encode:true sub_path) in
+  let sub_path = (Url.string_of_url_path ~encode:true sub_path) in
 
   match split_regexp reg.regexp sub_path with
   | None -> raise Failed_404
@@ -205,7 +207,7 @@ let array_environment filename re doc_root ri hostname =
   let meth =
     match Http_header.get_firstline header with
     | Http_header.Query (meth, _) -> Framepp.string_of_method meth
-    | _ -> raise Ocsigen_lib.Ocsigen_Bad_Request
+    | _ -> raise Ocsigen_Bad_Request
   in
 
    (* Rule  : the header lines  received from the client,  if any, are
@@ -590,7 +592,7 @@ let parse_config _ path _ _ = function
            script= Ocsigen_extensions.parse_user_dir "$1";
 
            path= string_conform 
-          (Ocsigen_lib.string_of_url_path ~encode:true path);
+          (Url.string_of_url_path ~encode:true path);
            path_info="";
 
            exec=None;
@@ -603,7 +605,7 @@ let parse_config _ path _ _ = function
            script= Ocsigen_extensions.parse_user_dir t;
 
            path= string_conform 
-              (Ocsigen_lib.string_of_url_path ~encode:true path);
+              (Url.string_of_url_path ~encode:true path);
            path_info=""; (* unknown for the moment *)
 
            exec= (match q with

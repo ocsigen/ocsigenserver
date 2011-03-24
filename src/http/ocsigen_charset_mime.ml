@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+open Ocsigen_pervasives
+
 module MapString = Map.Make(String)
 type extension = string
 type filename = string
@@ -39,7 +41,7 @@ type 'a assoc = {
 let find_in_assoc file assoc =
   let filename = Filename.basename file in
   let ext =
-    try String.lowercase (Ocsigen_lib.extension_no_directory file)
+    try String.lowercase (Filename.extension_no_directory file)
     with Not_found -> ""
   in
   let rec aux = function

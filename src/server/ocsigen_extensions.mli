@@ -27,7 +27,7 @@
 (** Writing extensions for Ocsigen                                           *)
 
 open Lwt
-open Ocsigen_lib
+open Ocsigen_pervasives
 
 exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 
@@ -133,6 +133,14 @@ val client_connection : client -> Ocsigen_http_com.connection
 
 type ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
 
+type file_info = {
+    tmp_filename: string;
+    filesize: int64;
+    raw_original_filename: string;
+    original_basename: string ;
+    file_content_type: (string * string option) option;
+  }
+
 (** The request *)
 type request_info =
     {ri_url_string: string; (** full URL *)
@@ -154,13 +162,13 @@ type request_info =
      ri_files: (config_info -> (string * file_info) list Lwt.t) option; (** Files sent in the request (multipart data). None if other content type or no content. *)
      ri_remote_inet_addr: Unix.inet_addr; (** IP of the client *)
      ri_remote_ip: string;            (** IP of the client *)
-     ri_remote_ip_parsed: ip_address Lazy.t;    (** IP of the client, parsed *)
+     ri_remote_ip_parsed: Ip_address.t Lazy.t;    (** IP of the client, parsed *)
      ri_remote_port: int;      (** Port used by the client *)
      ri_forward_ip: string list; (** IPs of gateways the request went throught *)
      ri_server_port: int;      (** Port of the request (server) *)
      ri_user_agent: string;    (** User_agent of the browser *)
      ri_cookies_string: string option Lazy.t; (** Cookies sent by the browser *)
-     ri_cookies: string Ocsigen_lib.String_Table.t Lazy.t;  (** Cookies sent by the browser *)
+     ri_cookies: string String.Table.t Lazy.t;  (** Cookies sent by the browser *)
      ri_ifmodifiedsince: float option;   (** if-modified-since field *)
      ri_ifunmodifiedsince: float option;   (** if-unmodified-since field *)
      ri_ifnonematch: string list option;   (** if-none-match field ( * and weak entity tags not implemented) *)
@@ -346,7 +354,7 @@ type parse_config =
 and parse_config_user =
     userconf_info -> parse_config
 and parse_config_aux =
-    url_path -> parse_host ->
+    Url.path -> parse_host ->
       (parse_fun -> Simplexmlparser.xml ->
          extension
       )
@@ -468,7 +476,7 @@ val get_command_function :
 (**/**)
 (**/**)
 
-val make_parse_config : url_path -> parse_config_aux -> parse_fun
+val make_parse_config : Url.path -> parse_config_aux -> parse_fun
 
 val parse_config_item : parse_config
 val parse_user_site_item : parse_config_user

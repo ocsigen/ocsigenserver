@@ -71,7 +71,7 @@ let errlog s = ignore (Lwt_log.error s : unit Lwt.t)
 let warning s = ignore (Lwt_log.warning s : unit Lwt.t)
 
 let unexpected_exception e s =
-  warning ("Unexpected exception in "^s^": "^Ocsigen_lib.string_of_exn e)
+  warning ("Unexpected exception in "^s^": "^Printexc.to_string e)
 
 (****)
 

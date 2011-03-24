@@ -27,6 +27,8 @@ Then load it dynamically from Ocsigen's config file:
 
 *)
 
+open Ocsigen_pervasives
+
 open Printf
 open Lwt
 open Ocsigen_extensions
@@ -43,13 +45,13 @@ let rec parse_condition = function
     | Element ("ip", ["value", s], []) ->
         let ip_with_mask =
           try
-            Ocsigen_lib.parse_ip s
+            Ip_address.parse s
           with Failure _ ->
             badconfig "Bad ip/netmask [%s] in <ip> condition" s
         in
         (fun ri ->
            let r = 
-             Ocsigen_lib.match_ip ip_with_mask 
+             Ip_address.match_ip ip_with_mask 
                (Lazy.force ri.ri_remote_ip_parsed) 
            in
            if r then
@@ -304,8 +306,8 @@ let parse_config parse_fun = function
 		Ocsigen_messages.debug2 ("--Access control: malformed X-Forwarded-For field: "^header);
 		request
 	      | original_ip::proxies ->
-		let last_proxy = Ocsigen_lib.list_last proxies in
-		let proxy_ip = fst (Ocsigen_lib.parse_ip last_proxy) in
+		let last_proxy = List.last proxies in
+		let proxy_ip = fst (Ip_address.parse last_proxy) in
 		let equal_ip = proxy_ip = Lazy.force request.request_info.ri_remote_ip_parsed in
 		let need_equal_ip =
 		  match param with
@@ -321,7 +323,7 @@ let parse_config parse_fun = function
 		  { request with request_info =
 		      { request.request_info with
 			ri_remote_ip = original_ip;
-			ri_remote_ip_parsed = lazy (fst (Ocsigen_lib.parse_ip original_ip));
+			ri_remote_ip_parsed = lazy (fst (Ip_address.parse original_ip));
 			ri_forward_ip = proxies; } }
 		else (* the announced ip of the proxy is not its real ip *)
 		  ( Ocsigen_messages.warning (Printf.sprintf "--Access control: X-Forwarded-For: host ip ( %s ) does not match the header ( %s )" request.request_info.ri_remote_ip header );

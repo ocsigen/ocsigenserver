@@ -10,8 +10,7 @@ all: byte opt
 
 ### Common files ###
 
-FILES := ocsigen_lib_cli.ml        \
-	 ocsigen_lib.ml            \
+FILES := ocsigen_pervasives.ml     \
 	 ocsigen_cache.ml          \
          ocsigen_config.ml         \
 	 ocsigen_commandline.ml    \

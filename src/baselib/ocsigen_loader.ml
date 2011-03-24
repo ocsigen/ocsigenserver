@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+open Ocsigen_pervasives
+
 exception Dynlink_error of string * exn
 exception Findlib_error of string * exn
 
@@ -46,9 +48,9 @@ let translate =
 (* Loading files *)
 
 let isloaded, addloaded =
-  let set = ref Ocsigen_lib.StringSet.empty in
-  ((fun s -> Ocsigen_lib.StringSet.mem s !set),
-   (fun s -> set := Ocsigen_lib.StringSet.add s !set))
+  let set = ref String.Set.empty in
+  ((fun s -> String.Set.mem s !set),
+   (fun s -> set := String.Set.add s !set))
 
 module M = Map.Make(String)
 
@@ -166,7 +168,7 @@ let findfiles =
       let preds = [(if Ocsigen_config.is_native then "native" else "byte"); "plugin"; "mt"] in
       let deps = Findlib.package_deep_ancestors preds [package] in
       let deps = List.filter
-        (fun a -> not (Ocsigen_lib.StringSet.mem a Ocsigen_config.builtin_packages)) deps in
+        (fun a -> not (String.Set.mem a Ocsigen_config.builtin_packages)) deps in
       Ocsigen_messages.debug
         (fun () ->
            Printf.sprintf "-- Dependencies of %s: %s" package (String.concat ", " deps));
@@ -178,7 +180,7 @@ let findfiles =
                 let raw = Findlib.package_property preds a "archive" in
                 (* Replacing .cmx/.cmxa by .cmxs *)
                 let raw = Netstring_pcre.global_replace cmx ".cmxs " raw in
-                List.filter ((<>) "") (Ocsigen_lib.split ~multisep:true ' ' raw)
+                List.filter ((<>) "") (String.split ~multisep:true ' ' raw)
               with
                 | Not_found -> []
             in
@@ -199,7 +201,7 @@ let findfiles =
 
 open Printf
 
-let () = Ocsigen_lib.register_exn_printer
+let () = Printexc.register_exn_printer
   (fun f_rec -> function
      | Dynlink_wrapper.Error e -> Dynlink_wrapper.error_message e
      | Dynlink_error (s, e) ->

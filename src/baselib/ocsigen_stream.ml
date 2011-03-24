@@ -16,8 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-let (>>=) = Lwt.bind
-let (>|=) = Lwt.(>|=)
+open Ocsigen_pervasives
 
 exception Interrupted of exn
 exception Cancelled
@@ -140,7 +139,7 @@ let enlarge_stream = function
       let long = String.length s in
       let max = Ocsigen_config.get_netbuffersize () in
       if long >= max
-      then Lwt.fail Ocsigen_lib.Input_is_too_large
+      then Lwt.fail Input_is_too_large
       else
         next f >>= fun e ->
         match e with

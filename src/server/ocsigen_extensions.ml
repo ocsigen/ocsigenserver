@@ -32,7 +32,7 @@
 *)
 
 open Lwt
-open Ocsigen_lib
+open Ocsigen_pervasives
 
 exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 exception Ocsigen_Looping_request
@@ -186,6 +186,14 @@ and follow_symlink =
 (* Requests *)
 type ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
 
+type file_info = {
+    tmp_filename: string;
+    filesize: int64;
+    raw_original_filename: string;
+    original_basename: string ;
+    file_content_type: (string * string option) option;
+  }
+
 type request_info =
     {ri_url_string: string; (** full URL *)
      ri_method: Ocsigen_http_frame.Http_header.http_method; (** GET, POST, HEAD... *)
@@ -206,13 +214,13 @@ type request_info =
      ri_files: (config_info -> (string * file_info) list Lwt.t) option; (** Files sent in the request (multipart data). None if other content type or no content. *)
      ri_remote_inet_addr: Unix.inet_addr; (** IP of the client *)
      ri_remote_ip: string;            (** IP of the client *)
-     ri_remote_ip_parsed: ip_address Lazy.t;    (** IP of the client, parsed *)
+     ri_remote_ip_parsed: Ip_address.t Lazy.t;    (** IP of the client, parsed *)
      ri_remote_port: int;      (** Port used by the client *)
      ri_forward_ip: string list; (** IPs of gateways the request went throught *)
      ri_server_port: int;      (** Port of the request (server) *)
      ri_user_agent: string;    (** User_agent of the browser *)
      ri_cookies_string: string option Lazy.t; (** Cookies sent by the browser *)
-     ri_cookies: string Ocsigen_lib.String_Table.t Lazy.t;  (** Cookies sent by the browser *)
+     ri_cookies: string String.Table.t Lazy.t;  (** Cookies sent by the browser *)
      ri_ifmodifiedsince: float option;   (** if-modified-since field *)
      ri_ifunmodifiedsince: float option;   (** if-unmodified-since field *)
      ri_ifnonematch: string list option;   (** if-none-match field ( * and weak entity tags not implemented) *)
@@ -346,7 +354,7 @@ type parse_fun = Simplexmlparser.xml list -> extension2
 
 type parse_host =
     Parse_host of
-      (url_path ->
+      (Url.path ->
          parse_host -> parse_fun -> Simplexmlparser.xml -> extension)
 
 let (hosts : (virtual_hosts * config_info * extension2) list ref) =
@@ -408,20 +416,20 @@ let make_ext awake cookies_to_set req_state (genfun : extension) (genfun2 : exte
           | Req_not_found (_, ri) -> ri
         in
         genfun2
-          Ocsigen_lib.id (* already awoken *)
+          id (* already awoken *)
           Ocsigen_cookies.Cookies.empty
           (Req_found (ri, add_to_res_cookies r' cookies_to_set))
     | Ext_found_continue_with r ->
         awake ();
         r () >>= fun (r', req) ->
         genfun2
-          Ocsigen_lib.id (* already awoken *)
+          id (* already awoken *)
           Ocsigen_cookies.Cookies.empty
           (Req_found (req, add_to_res_cookies r' cookies_to_set))
     | Ext_found_continue_with' (r', req) ->
         awake ();
         genfun2
-          Ocsigen_lib.id (* already awoken *)
+          id (* already awoken *)
           Ocsigen_cookies.Cookies.empty
           (Req_found (req, add_to_res_cookies r' cookies_to_set))
     | Ext_next e ->
@@ -485,9 +493,9 @@ let rec default_parse_config
       let charset, dir = parse_site_attrs (None, None) atts in
       let path =
         prevpath@
-        Ocsigen_lib.remove_slash_at_end
-          (Ocsigen_lib.remove_slash_at_beginning
-             (Ocsigen_lib.remove_dotdot (Neturl.split_path dir)))
+        Url.remove_slash_at_end
+          (Url.remove_slash_at_beginning
+             (Url.remove_dotdot (Neturl.split_path dir)))
       in
       let parse_config = make_parse_config path parse_host l in
       let ext awake cookies_to_set =
@@ -507,25 +515,25 @@ let rec default_parse_config
               | None ->
                   Ocsigen_messages.debug (fun () ->
                     "site \""^
-                    (Ocsigen_lib.string_of_url_path ~encode:true path)^
+                    (Url.string_of_url_path ~encode:true path)^
                     "\" does not match url \""^
-                    (Ocsigen_lib.string_of_url_path ~encode:true
+                    (Url.string_of_url_path ~encode:true
                        oldri.request_info.ri_full_path)^
                     "\".");
                   Lwt.return (Ext_next e, cookies_to_set)
               | Some sub_path ->
                   Ocsigen_messages.debug (fun () ->
                     "-------- site found: url \""^
-                    (Ocsigen_lib.string_of_url_path ~encode:true
+                    (Url.string_of_url_path ~encode:true
                        oldri.request_info.ri_full_path)^
                     "\" matches \""^
-                    (Ocsigen_lib.string_of_url_path ~encode:true path)^"\".");
+                    (Url.string_of_url_path ~encode:true path)^"\".");
                   let ri = {oldri with
                               request_info =
                                 { oldri.request_info with
                                     ri_sub_path = sub_path;
                                     ri_sub_path_string =
-                                    Ocsigen_lib.string_of_url_path
+                                    Url.string_of_url_path
                                       ~encode:true sub_path} }
                   in
                   parse_config awake cookies_to_set (Req_not_found (e, ri))
@@ -588,13 +596,13 @@ and make_parse_config path parse_host l : extension2 =
                tag at all *)
             badconfig
               "Unexpected tag <%s> inside <site dir=\"%s\">" t
-              (Ocsigen_lib.string_of_url_path ~encode:true path)
+              (Url.string_of_url_path ~encode:true path)
         | Error_in_config_file _ as e -> raise e
         | e ->
             badconfig
               "Error while parsing configuration file: %s"
               (try !fun_exn e
-               with e -> Ocsigen_lib.string_of_exn e)
+               with e -> Printexc.to_string e)
   in
   !fun_beg ();
   let r =
@@ -617,7 +625,7 @@ type userconf_info = {
 type parse_config = virtual_hosts -> config_info -> parse_config_aux
 and parse_config_user = userconf_info -> parse_config
 and parse_config_aux =
-    url_path -> parse_host ->
+    Url.path -> parse_host ->
       (parse_fun -> Simplexmlparser.xml ->
          extension
       )
@@ -805,7 +813,7 @@ let compute_result
            tobeawoken := false;
            Ocsigen_http_com.wakeup_next_request conn
          end)
-    else Ocsigen_lib.id
+    else id
   in
 
   let rec do2 sites cookies_to_set ri =
@@ -891,12 +899,12 @@ let compute_result
 
 (* used to modify the url in ri (for example for retrying after rewrite) *)
 let ri_of_url ?(full_rewrite = false) url ri =
-  let (_, host, _, url, path, params, get_params) = parse_url url in
+  let (_, host, _, url, path, params, get_params) = Url.parse url in
   let host = match host with
     | Some h -> host
     | None -> ri.ri_host
   in
-  let path_string = string_of_url_path ~encode:true path in
+  let path_string = Url.string_of_url_path ~encode:true path in
   let original_fullpath, original_fullpath_string =
     if full_rewrite
     then (path, path_string)
@@ -1044,7 +1052,7 @@ let find_redirection regexp full_url dest
               | Some g -> full_path_string ^ "?" ^ g
           in
           let path =
-            Ocsigen_lib.make_absolute_url https host port ("/"^path)
+            Url.make_absolute_url https host port ("/"^path)
           in
           (match Netstring_pcre.string_match regexp path 0 with
              | None -> raise Not_concerned

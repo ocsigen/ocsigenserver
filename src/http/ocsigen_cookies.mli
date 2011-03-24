@@ -16,14 +16,15 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-type url_path = string list
+open Ocsigen_pervasives
 
+module CookiesTable : Map.S with type key = string
 
 (** This table is to store cookie values for each path.
-    The key has type url_path option:
+    The key has type Url.path option:
     it is for the path (default: root of the site),
  *)
-module Cookies : Map.S with type key = url_path
+module Cookies : Map.S with type key = Url.path
 
 (** Type used for cookies to set.
     The float option is the timestamp for the expiration date.
@@ -35,31 +36,31 @@ type cookie =
   | OSet of float option * string * bool
   | OUnset
 
-type cookieset = cookie Ocsigen_lib.String_Table.t Cookies.t
+type cookieset = cookie CookiesTable.t Cookies.t
 
-val empty_cookieset : 'a Ocsigen_lib.String_Table.t Cookies.t
+val empty_cookieset : 'a CookiesTable.t Cookies.t
 
 
 (** [add_cookie path c v cookie_table] 
     adds the cookie [c] to the table [cookie_table].
     If the cookie is already bound, the previous binding disappear. *)
-val add_cookie : url_path -> string -> 'a ->
-  'a Ocsigen_lib.String_Table.t Cookies.t ->
-  'a Ocsigen_lib.String_Table.t Cookies.t
+val add_cookie : Url.path -> string -> 'a ->
+  'a CookiesTable.t Cookies.t ->
+  'a CookiesTable.t Cookies.t
 
 (** [remove_cookie c cookie_table] removes the cookie [c]
     from the table [cookie_table].
     Warning: it is not equivalent to [add_cookie ... OUnset ...]).
 *)
-val remove_cookie : url_path -> string -> 
-  'a Ocsigen_lib.String_Table.t Cookies.t ->
-  'a Ocsigen_lib.String_Table.t Cookies.t
+val remove_cookie : Url.path -> string -> 
+  'a CookiesTable.t Cookies.t ->
+  'a CookiesTable.t Cookies.t
 
 (** [add_cookies newcookies oldcookies] adds the cookies from [newcookies]
    to [oldcookies]. If cookies are already bound in oldcookies,
    the previous binding disappear. *)
 val add_cookies :
-    cookie Ocsigen_lib.String_Table.t Cookies.t ->
-      cookie Ocsigen_lib.String_Table.t Cookies.t ->
-        cookie Ocsigen_lib.String_Table.t Cookies.t
+    cookie CookiesTable.t Cookies.t ->
+      cookie CookiesTable.t Cookies.t ->
+        cookie CookiesTable.t Cookies.t
 

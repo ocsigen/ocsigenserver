@@ -41,6 +41,8 @@
    this data has been sent and is lost ...
 *)
 
+open Ocsigen_pervasives
+
 open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
@@ -52,7 +54,7 @@ exception Bad_answer_from_http_server
 (* The table of redirections for each virtual server                         *)
 type redir =
     { regexp: Netstring_pcre.regexp;
-      full_url: Ocsigen_lib.yesnomaybe;
+      full_url: yesnomaybe;
       dest: string;
       pipeline: bool;
       keephost: bool}
@@ -87,15 +89,15 @@ let gen dir = function
              ri.ri_full_path_string
          in 
          match dir.full_url with
-           | Ocsigen_lib.Yes -> fi true
-           | Ocsigen_lib.No -> fi false
-           | Ocsigen_lib.Maybe -> 
+           | Yes -> fi true
+           | No -> fi false
+           | Maybe -> 
                try fi false 
                with Ocsigen_extensions.Not_concerned -> fi true
        in
        let (https, host, port, uri) = 
          try
-           match Ocsigen_lib.parse_url dest with
+           match Url.parse dest with
              | (Some https, Some host, port, uri, _, _, _) -> 
                  let port = match port with
                    | None -> if https then 443 else 80
@@ -116,7 +118,7 @@ let gen dir = function
               (if https then "https://" else "http://")^host^":"^
               (string_of_int port)^uri);
 
-       Ocsigen_lib.get_inet_addr host >>= fun inet_addr ->
+       Ip_address.get_inet_addr host >>= fun inet_addr ->
 
        (* It is now safe to start processing next request.
           We are sure that the request won't be taken in disorder.
@@ -256,17 +258,17 @@ let parse_config = function
         | [] -> res
         | ("regexp", regexp)::l when r = None -> (* deprecated *)
             parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Ocsigen_lib.Maybe,
+              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
                d, pipeline, h)
               l
         | ("fullurl", regexp)::l when r = None ->
             parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Ocsigen_lib.Yes,
+              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
                d, pipeline, h)
               l
         | ("suburl", regexp)::l when r = None ->
             parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Ocsigen_lib.No,
+              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
                d, pipeline, h)
               l
         | ("dest", dest)::l when d = None ->
@@ -285,7 +287,7 @@ let parse_config = function
             badconfig "Wrong or duplicate attribute '%s' for <revproxy>" a
       in
       let dir =
-          match parse_attrs (None, Ocsigen_lib.Yes, None, true, false) atts with
+          match parse_attrs (None, Yes, None, true, false) atts with
           | (None, _, _, _, _) ->
               badconfig "Missing attribute 'regexp' for <revproxy>"
           | (_, _, None, _, _) ->

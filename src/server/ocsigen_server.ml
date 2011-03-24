@@ -20,7 +20,7 @@
 
 open Lwt
 open Ocsigen_messages
-open Ocsigen_lib
+open Ocsigen_pervasives
 open Ocsigen_extensions
 open Ocsigen_http_frame
 open Ocsigen_headers
@@ -48,7 +48,7 @@ let _ = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
 let _ =
   Lwt_timeout.set_exn_handler
     (fun e -> Ocsigen_messages.errlog ("Uncaught Exception after lwt timeout: "^
-                                 Ocsigen_lib.string_of_exn e))
+                                 Printexc.to_string e))
 
 external disable_nagle : Unix.file_descr -> unit = "disable_nagle"
 external initgroups : string -> int -> unit = "initgroups_stub"
@@ -157,7 +157,7 @@ and find_post_params_form_urlencoded body_gen _ =
        Ocsigen_stream.string_of_stream
          (Ocsigen_config.get_maxrequestbodysizeinmemory ())
          body >>= fun r ->
-       let r = Ocsigen_lib.fixup_url_string r in
+       let r = Url.fixup_url_string r in
        Lwt.return ((Netencoding.Url.dest_url_encoded_parameters r), [])
     )
     (function
@@ -227,7 +227,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
           !files@[(p_name, {tmp_filename=fname;
                             filesize=size;
                             raw_original_filename=oname;
-                            original_basename=(Ocsigen_lib.basename oname);
+                            original_basename=(Filename.basename oname);
                             file_content_type = content_type;
                            })];
         Unix.close wh;
@@ -251,7 +251,7 @@ let get_request_infos
     (fun () ->
 
        let (_, headerhost, headerport, url, path, params, get_params) =
-         Ocsigen_lib.parse_url url
+         Url.parse url
        in
 
        let headerhost, headerport =
@@ -286,7 +286,7 @@ let get_request_infos
 
        let cookies =
          lazy (match (Lazy.force cookies_string) with
-         | None -> Ocsigen_lib.String_Table.empty
+         | None -> String.Table.empty
          | Some s -> parse_cookies s)
        in
 
@@ -342,7 +342,7 @@ let get_request_infos
        in
 
        let ipstring = Unix.string_of_inet_addr client_inet_addr in
-       let path_string = string_of_url_path ~encode:true path in
+       let path_string = Url.string_of_url_path ~encode:true path in
 
        Lwt.return
          {ri_url_string = url;
@@ -354,7 +354,7 @@ let get_request_infos
           ri_original_full_path_string = path_string;
           ri_original_full_path = path;
           ri_sub_path = path;
-          ri_sub_path_string = string_of_url_path ~encode:true path;
+          ri_sub_path_string = Url.string_of_url_path ~encode:true path;
           ri_get_params_string = params;
           ri_host = headerhost;
           ri_port_from_host_field = headerport;
@@ -364,7 +364,7 @@ let get_request_infos
           ri_files = files;
           ri_remote_inet_addr = client_inet_addr;
           ri_remote_ip = ipstring;
-          ri_remote_ip_parsed = lazy (fst (Ocsigen_lib.parse_ip ipstring));
+          ri_remote_ip_parsed = lazy (fst (Ip_address.parse ipstring));
           ri_remote_port = port_of_sockaddr sockaddr;
 	  ri_forward_ip = [];
           ri_server_port = port;
@@ -393,7 +393,7 @@ let get_request_infos
     )
     (fun e ->
        Ocsigen_messages.debug (fun () -> "~~~ Exn during get_request_infos : "^
-                                 string_of_exn e);
+                                 Printexc.to_string e);
        Lwt.fail e)
 
 
@@ -528,7 +528,7 @@ let service receiver sender_slot request meth url port sockaddr =
   let handle_service_errors e =
     (* Exceptions during page generation *)
     Ocsigen_messages.debug
-      (fun () -> "~~~ Exception during generation/sending: " ^ string_of_exn e);
+      (fun () -> "~~~ Exception during generation/sending: " ^ Printexc.to_string e);
     let send_error ?cookies code =
       Ocsigen_senders.send_error ~exn:e sender_slot ~clientproto ?cookies ~head
         ~code ~sender:Ocsigen_http_com.default_sender ()
@@ -562,12 +562,12 @@ let service receiver sender_slot request meth url port sockaddr =
     | Neturl.Malformed_URL ->
         Ocsigen_messages.debug2 "-> Sending 400 (Malformed URL)";
         send_error 400
-    | Ocsigen_lib.Ocsigen_Request_too_long ->
+    | Ocsigen_Request_too_long ->
         Ocsigen_messages.debug2 "-> Sending 413 (Entity too large)";
         send_error 413
     | e ->
         Ocsigen_messages.warning
-          ("Exn during page generation: " ^ string_of_exn e ^" (sending 500)");
+          ("Exn during page generation: " ^ Printexc.to_string e ^" (sending 500)");
         Ocsigen_messages.debug2 "-> Sending 500";
         send_error 500
   in
@@ -697,7 +697,7 @@ let service receiver sender_slot request meth url port sockaddr =
                                || (ri.ri_ssl && port = 443)
                              then None
                              else Some port)
-                      ~path:(""::(Ocsigen_lib.add_end_slash_if_missing
+                      ~path:(""::(Url.add_end_slash_if_missing
                                     ri.ri_full_path))
                       ?query:ri.ri_get_params_string
                       http_url_syntax
@@ -727,7 +727,7 @@ let service receiver sender_slot request meth url port sockaddr =
             with Unix.Unix_error _ as e ->
               Ocsigen_messages.warning
                 (Format.sprintf "Error while removing file %s: %s"
-                   a (string_of_exn e)))
+                   a (Printexc.to_string e)))
           !filenames;
         return ())
   end
@@ -780,14 +780,14 @@ let try_bind' f g h = Lwt.try_bind f h g
 let add_to_receivers_waiting_for_pipeline, 
   remove_from_receivers_waiting_for_pipeline,
   iter_receivers_waiting_for_pipeline =
-  let l = Ocsigen_lib.Clist.create () in
+  let l = Clist.create () in
   ((fun r -> 
-      let node = Ocsigen_lib.Clist.make r in
-      Ocsigen_lib.Clist.insert l node;
+      let node = Clist.make r in
+      Clist.insert l node;
       node),
-   Ocsigen_lib.Clist.remove,
+   Clist.remove,
    (fun f -> 
-      Ocsigen_lib.Clist.fold_left
+      Clist.fold_left
         (fun t v -> t >>= fun () -> f v)
         (Lwt.return ()) 
         l))
@@ -801,13 +801,13 @@ let handle_connection port in_ch sockaddr =
     begin match e with
     | Lost_connection e' ->
         warn sockaddr ("connection abruptly closed by peer ("
-                       ^ string_of_exn e' ^ ")")
+                       ^ Printexc.to_string e' ^ ")")
     | Ocsigen_http_com.Timeout ->
         warn sockaddr "timeout"
     | Ocsigen_http_com.Aborted ->
         dbg sockaddr "writing thread aborted"
     | Ocsigen_stream.Interrupted e' ->
-        warn sockaddr ("interrupted content stream (" ^ string_of_exn e' ^ ")")
+        warn sockaddr ("interrupted content stream (" ^ Printexc.to_string e' ^ ")")
     | _ ->
         Ocsigen_messages.unexpected_exception e "Server.handle_write_errors"
     end;
@@ -930,7 +930,7 @@ let rec wait_connection use_ssl port socket =
         wait_connection use_ssl port socket
     | e ->
         Ocsigen_messages.debug
-          (fun () -> Format.sprintf "Accept failed: %s" (string_of_exn e));
+          (fun () -> Format.sprintf "Accept failed: %s" (Printexc.to_string e));
         wait_connection use_ssl port socket
   in
   try_bind'
@@ -1012,7 +1012,7 @@ let listen use_ssl (addr, port) wait_end_init =
     | Unix.Unix_error (Unix.EADDRINUSE, _, _) ->
         stop (Format.sprintf "Fatal - The port %d is already in use." port) 8
     | exn ->
-        stop ("Fatal - Uncaught exception: " ^ string_of_exn exn) 100
+        stop ("Fatal - Uncaught exception: " ^ Printexc.to_string exn) 100
   in
   List.iter (fun x ->
                ignore (wait_end_init >>= fun () ->
@@ -1025,7 +1025,7 @@ let errmsg = function
       (("Fatal - Dynamic linking error: "^(Dynlink_wrapper.error_message e)),
       6)
   | (Unix.Unix_error _) as e ->
-      (("Fatal - "^(string_of_exn e)),
+      (("Fatal - "^(Printexc.to_string e)),
       9)
   | Ssl.Private_key_error ->
       (("Fatal - bad password"),
@@ -1038,17 +1038,17 @@ let errmsg = function
       (("Fatal - Error in configuration file: "^s),
        51)
   | Ocsigen_loader.Dynlink_error (s, exn) ->
-      (("Fatal - While loading "^s^": "^(string_of_exn exn)),
+      (("Fatal - While loading "^s^": "^(Printexc.to_string exn)),
       52)
   | Ocsigen_loader.Findlib_error _ as e ->
-      (("Fatal - " ^ string_of_exn e), 53)
+      (("Fatal - " ^ Printexc.to_string e), 53)
   | exn ->
       try
         ((Ocsigen_extensions.get_init_exn_handler () exn),
         20)
       with
         exn ->
-          (("Fatal - Uncaught exception: "^string_of_exn exn),
+          (("Fatal - Uncaught exception: "^Printexc.to_string exn),
           100)
 
 
@@ -1216,7 +1216,7 @@ let start_server () = try
             ignore (Ocsigen_messages.warning "Command pipe created");
           with e ->
             Ocsigen_messages.errlog
-              ("Cannot create the command pipe: "^(string_of_exn e))));
+              ("Cannot create the command pipe: "^(Printexc.to_string e))));
 
       (* I change the user for the process *)
       begin try
@@ -1289,11 +1289,11 @@ let start_server () = try
         (Lwt.catch
            (fun () ->
              let prefix, c =
-               match Ocsigen_lib.split ~multisep:true ' ' s with
+               match String.split ~multisep:true ' ' s with
                  | [] -> raise Ocsigen_extensions.Unknown_command
                  | a::l ->
                    try
-                     let aa, ab = Ocsigen_lib.sep ':' a in
+                     let aa, ab = String.sep ':' a in
                      (Some aa, (ab::l))
                    with Not_found -> None, (a::l)
              in
@@ -1303,7 +1303,7 @@ let start_server () = try
                Lwt.return ()
              | e ->
                Ocsigen_messages.errlog ("Uncaught Exception after command: "^
-                                           Ocsigen_lib.string_of_exn e);
+                                           Printexc.to_string e);
                Lwt.fail e))
         >>= f
       in ignore (f ());

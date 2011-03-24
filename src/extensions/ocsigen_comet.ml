@@ -28,6 +28,7 @@
  * WebSockets support.
  *)
 
+open Ocsigen_pervasives
 
 (*** PREAMBLE ***)
 
@@ -35,7 +36,6 @@
 module OFrame  = Ocsigen_http_frame
 module OStream = Ocsigen_stream
 module OX      = Ocsigen_extensions
-module OLib    = Ocsigen_lib
 module OConf   = Ocsigen_config
 module OMsg    = Ocsigen_messages
 
@@ -48,8 +48,8 @@ let map_rev_accu_split func lst accu1 accu2 =
   let rec aux accu1 accu2 = function
     | [] -> (accu1, accu2)
     | x :: xs -> match func x with
-        | OLib.Left y -> aux (y :: accu1) accu2 xs
-        | OLib.Right y -> aux accu1 (y :: accu2) xs
+        | Left y -> aux (y :: accu1) accu2 xs
+        | Right y -> aux accu1 (y :: accu2) xs
   in
     aux accu1 accu2 lst
 
@@ -146,7 +146,7 @@ end = struct
   (* storage and ID manipulation *)
   let ctbl = CTbl.create tbl_initial_size
 
-  let new_id = Ocsigen_lib.make_cryptographic_safe_string
+  let new_id = String.make_cryptographic_safe
 
   (* because Hashtables allow search for elements with a corresponding hash, we
    * have to create a dummy channel in order to retreive the original channel.
@@ -251,13 +251,13 @@ end = struct
   let field_separator = ":"
   let ended_message = "ENDED_CHANNEL"
   let channel_separator_regexp = Netstring_pcre.regexp channel_separator
-  let url_encode x = OLib.encode ~plus:false x
+  let url_encode x = Url.encode ~plus:false x
 
   let decode_string s accu1 accu2 =
     map_rev_accu_split
       (fun s ->
-         try OLib.Left (Channels.find_channel s)
-         with | Not_found -> OLib.Right s
+         try Left (Channels.find_channel s)
+         with | Not_found -> Right s
       )
       (Netstring_pcre.split channel_separator_regexp s)
       accu1
@@ -284,11 +284,11 @@ end = struct
                Lwt.return (OStream.get body) >>=
                OStream.string_of_stream
                  (OConf.get_maxrequestbodysizeinmemory ()) >|=
-               Ocsigen_lib.fixup_url_string >|=
+               Url.fixup_url_string >|=
                Netencoding.Url.dest_url_encoded_parameters
       )
       (function
-         | OStream.String_too_large -> Lwt.fail OLib.Input_is_too_large
+         | OStream.String_too_large -> Lwt.fail Input_is_too_large
          | e -> Lwt.fail e
       )
       >|= decode_param_list

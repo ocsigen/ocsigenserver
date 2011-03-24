@@ -26,7 +26,7 @@
 
 open Ocsigen_http_frame
 open Ocsigen_senders
-open Ocsigen_lib
+open Ocsigen_pervasives
 
 
 let find name frame =
@@ -73,8 +73,8 @@ let rec quoted_split char (* char is not used in that version *) s =
 
 let parse_quality parse_name s =
   try
-    let a,b = sep ';' s in
-    let q,qv = sep '=' b in
+    let a,b = String.sep ';' s in
+    let q,qv = String.sep '=' b in
     if q="q"
     then ((parse_name a), Some (float_of_string qv))
     else failwith "Parse error"
@@ -86,35 +86,35 @@ let parse_star a =
   else Some a
 
 let parse_mime_type a =
-  let b,c = sep '/' a in
+  let b,c = String.sep '/' a in
   ((parse_star b), (parse_star c))
 
 let parse_extensions parse_name s =
   try
-    let a,b = sep ';' s in
-    ((parse_name a), List.map (sep '=') (split ';' b))
+    let a,b = String.sep ';' s in
+    ((parse_name a), List.map (String.sep '=') (String.split ';' b))
   with _ -> ((parse_name s), [])
 
 let parse_list_with_quality parse_name s =
-  let splitted = list_flat_map (split ',') s in
+  let splitted = list_flat_map (String.split ',') s in
   List.map (parse_quality parse_name) splitted
 
 let parse_list_with_extensions parse_name s =
-  let splitted = list_flat_map (split ',') s in
+  let splitted = list_flat_map (String.split ',') s in
   List.map (parse_extensions parse_name) splitted
 
 
 (*****************************************************************************)
 let rec parse_cookies s =
-  let splitted = split ';' s in
+  let splitted = String.split ';' s in
   try
     List.fold_left
       (fun beg a ->
-        let (n, v) = sep '=' a in
-        Ocsigen_lib.String_Table.add n v beg)
-      Ocsigen_lib.String_Table.empty
+        let (n, v) = String.sep '=' a in
+        String.Table.add n v beg)
+      String.Table.empty
       splitted
-  with _ -> Ocsigen_lib.String_Table.empty
+  with _ -> String.Table.empty
 (*VVV Actually the real syntax of cookies is more complex! *)
 (*
 http://www.w3.org/Protocols/rfc2109/rfc2109
@@ -233,14 +233,14 @@ let get_content_type http_frame =
 let parse_content_type = function
   | None -> None
   | Some s ->
-      match Ocsigen_lib.split ';' s with
+      match String.split ';' s with
         | [] -> None
         | a::l ->
             try
-              let (typ, subtype) = Ocsigen_lib.sep '/' a in
+              let (typ, subtype) = String.sep '/' a in
               let params = 
                 try
-                  List.map (Ocsigen_lib.sep '=') l 
+                  List.map (String.sep '=') l 
                 with Not_found -> []
               in 
 (*VVV If syntax error, we return no parameter at all *)
@@ -279,7 +279,7 @@ let get_accept http_frame =
     in
     let change_quality (a, l) =
       try
-        let q,ll = list_assoc_remove "q" l in
+        let q,ll = List.assoc_remove "q" l in
         (a, Some (float_of_string q), ll)
       with _ -> (a, None, l)
     in
@@ -308,7 +308,7 @@ let get_accept_encoding http_frame =
 let get_accept_language http_frame =
   try
     parse_list_with_quality
-      Ocsigen_lib.id
+      id
       (Http_header.get_headers_values
          http_frame.Ocsigen_http_frame.frame_header Http_headers.accept_language)
   with _ -> []

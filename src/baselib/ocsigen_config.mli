@@ -16,13 +16,15 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+open Ocsigen_pervasives
+
 exception Config_file_error of string
 
 val server_name : string
 val full_server_name : string
 val version_number : string
 val is_native : bool
-val builtin_packages : Ocsigen_lib.StringSet.t
+val builtin_packages : String.Set.t
 
 val set_logdir : string -> unit
 val set_configfile : string -> unit

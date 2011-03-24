@@ -32,6 +32,8 @@ Then load it dynamically from Ocsigen's config file:
 
 *)
 
+open Ocsigen_pervasives
+
 open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
@@ -42,7 +44,7 @@ open Simplexmlparser
 (* The table of redirections for each virtual server                         *)
 type assockind =
   | Regexp of Netstring_pcre.regexp * string
-      * Ocsigen_lib.yesnomaybe (* full url *) 
+      * yesnomaybe (* full url *) 
       * bool (* temporary *)
 
 
@@ -72,9 +74,9 @@ let gen dir = function
                  ri.request_info.ri_full_path_string
              in
              match full with
-               | Ocsigen_lib.Yes -> fi true
-               | Ocsigen_lib.No -> fi false
-               | Ocsigen_lib.Maybe -> 
+               | Yes -> fi true
+               | No -> fi false
+               | Maybe -> 
                    try fi false 
                    with Ocsigen_extensions.Not_concerned -> fi true
            in
@@ -108,17 +110,17 @@ let parse_config = function
         | [] -> res
         | ("regexp", regexp)::l when r = None -> (* deprecated *)
             parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Ocsigen_lib.Maybe,
+              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
                d, temp)
               l
         | ("fullurl", regexp)::l when r = None ->
             parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Ocsigen_lib.Yes,
+              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
                d, temp)
               l
         | ("suburl", regexp)::l when r = None ->
             parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Ocsigen_lib.No,
+              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
                d, temp)
               l
         | ("dest", dest)::l when d = None ->
@@ -132,7 +134,7 @@ let parse_config = function
         | _ -> raise (Error_in_config_file "Wrong attribute for <redirect>")
         in
         let dir =
-          match parse_attrs (None, Ocsigen_lib.Yes, None, true) atts with
+          match parse_attrs (None, Yes, None, true) atts with
           | (None, _, _, _) -> 
               raise (Error_in_config_file
                        "Missing attribute regexp for <redirect>")

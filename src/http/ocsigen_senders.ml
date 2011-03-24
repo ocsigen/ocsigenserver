@@ -19,6 +19,7 @@
 (** This module provides predefined "senders" for usual types of pages to be
   sent by the server: xhtml, files, ... *)
 
+open Ocsigen_pervasives
 open Ocsigen_http_frame
 open Ocsigen_http_com
 open Lwt
@@ -187,7 +188,7 @@ module Streamlist_content =
               (fun e -> exnhandler e l)
       and exnhandler e l =
         Ocsigen_messages.warning
-          ("Error while reading stream list: " ^ Ocsigen_lib.string_of_exn e);
+          ("Error while reading stream list: " ^ Printexc.to_string e);
         finalize `Failure >>= fun () ->
         next_stream l
       in
@@ -423,10 +424,10 @@ module Directory_content =
         if path = [] || path = [""] then
           None
         else
-          Some ("/"^Ocsigen_lib.string_of_url_path ~encode:true (back path))
+          Some ("/"^Url.string_of_url_path ~encode:true (back path))
       in
       let before =
-        let st = (Ocsigen_lib.string_of_url_path ~encode:true path) in
+        let st = (Url.string_of_url_path ~encode:true path) in
         "<html>\n\
          <head><meta http-equiv=\"Content-Type\" content=\"text/html;\" />\n\
          <link rel=\"stylesheet\" type=\"text/css\" href=\"/ocsigenstuff/style.css\" media=\"screen\" />\n\
@@ -517,7 +518,7 @@ module Error_content =
               ("Error "^str_code)
               error_msg
               [XHTML.M.p
-                 [XHTML.M.pcdata (Ocsigen_lib.string_of_exn exn);
+                 [XHTML.M.pcdata (Printexc.to_string exn);
                   XHTML.M.br ();
                   XHTML.M.em
                     [XHTML.M.pcdata "(Ocsigen running in debug mode)"]

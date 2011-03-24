@@ -25,7 +25,7 @@
 
 
 open Lwt
-open Ocsigen_lib
+open Ocsigen_pervasives
 open Ocsigen_extensions
 
 exception NoConfFile
@@ -131,8 +131,8 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
             let user_parse_site = Ocsigen_extensions.make_parse_config
               (sitepath@[prefix]) user_parse_host
             and path =
-              Ocsigen_lib.remove_slash_at_beginning
-                (Ocsigen_lib.remove_dotdot (Neturl.split_path url))
+              Url.remove_slash_at_beginning
+                (Url.remove_dotdot (Neturl.split_path url))
             in
             let new_req =
               { req with request_info =

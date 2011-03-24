@@ -20,6 +20,7 @@
 (** This module uses the lowel level module Ocsigen_http_frame.Http_header.
      It is very basic and must be completed for exhaustiveness. *)
 
+open Ocsigen_pervasives
 
 val find : string -> Ocsigen_http_frame.t -> string
 (** find one of the values bound to [name] in the HTTP headers of the frame.
@@ -30,7 +31,7 @@ val find_all : string -> Ocsigen_http_frame.t -> string list
 (** find all the values bound to [name] in the HTTP headers of the frame. *)
 
 val get_keepalive : Ocsigen_http_frame.Http_header.http_header -> bool
-val parse_cookies : string  -> string Ocsigen_lib.String_Table.t
+val parse_cookies : string  -> string String.Table.t
 val parse_mime_type : string -> string option * string option
 val get_host_from_host_header : Ocsigen_http_frame.t -> 
   string option * int option

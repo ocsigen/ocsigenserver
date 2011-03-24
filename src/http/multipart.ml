@@ -4,6 +4,8 @@
 
 (*VVV Check wether we should support int64 for large files? *)
 
+open Ocsigen_pervasives
+
 module S = Netstring_pcre
 open Lwt
 open Ocsigen_stream
@@ -235,7 +237,7 @@ let scan_multipart_body_from_stream s ~boundary ~create ~add ~stop ~maxsize=
               | Some m ->
                   (Int64.compare size2 m) > 0)
             then
-              fail (Ocsigen_lib.Ocsigen_Request_too_long)
+              fail Ocsigen_Request_too_long
             else
               if stri = ""
               then Ocsigen_stream.next f >>= while_stream size
@@ -262,7 +264,7 @@ let scan_multipart_body_from_stream s ~boundary ~create ~add ~stop ~maxsize=
       read_multipart_body decode_part boundary s >>=
       (fun _ -> return ()))
     (function
-      | Stream_too_small -> fail Ocsigen_lib.Ocsigen_Bad_Request
+      | Stream_too_small -> fail Ocsigen_Bad_Request
       | e -> fail e)
 ;;
 

@@ -16,33 +16,32 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-type url_path = string list
-
+module CookiesTable = Map.Make(String)
 
 module Cookies =
-  Map.Make(struct type t = url_path let compare = compare end)
+  Map.Make(struct type t = string list let compare = compare end)
 
 type cookie =
   | OSet of float option * string * bool
   | OUnset
 
-type cookieset = cookie Ocsigen_lib.String_Table.t Cookies.t
+type cookieset = cookie CookiesTable.t Cookies.t
 
 let empty_cookieset = Cookies.empty
 
 let add_cookie path n v t =
   let ct =
     try Cookies.find path t
-    with Not_found -> Ocsigen_lib.String_Table.empty
+    with Not_found -> CookiesTable.empty
   in
   (* We replace the old value if it exists *)
-  Cookies.add path (Ocsigen_lib.String_Table.add n v ct) t
+  Cookies.add path (CookiesTable.add n v ct) t
 
 let remove_cookie path n t =
   try
     let ct = Cookies.find path t in
-    let newct = Ocsigen_lib.String_Table.remove n ct in
-    if Ocsigen_lib.String_Table.is_empty newct
+    let newct = CookiesTable.remove n ct in
+    if CookiesTable.is_empty newct
     then Cookies.remove path t
     else (* We replace the old value *) Cookies.add path newct t
   with Not_found -> t
@@ -53,7 +52,7 @@ let remove_cookie path n t =
 let add_cookies newcookies oldcookies =
   Cookies.fold
     (fun path ct t ->
-      Ocsigen_lib.String_Table.fold
+      CookiesTable.fold
         (fun n v beg ->
           match v with
           | OSet (expo, v, secure) ->

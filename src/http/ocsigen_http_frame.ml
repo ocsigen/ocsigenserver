@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+open Ocsigen_pervasives
+
 (** this set of modules discribes the http protocol and
 the operation on this protocol*)
 
@@ -47,21 +49,21 @@ let compute_new_ri_cookies
     cookies_set_by_page =
 
   let prefix path p =
-    Ocsigen_lib.list_is_prefix_skip_end_slash
-      (Ocsigen_lib.remove_slash_at_beginning path)
-      (Ocsigen_lib.remove_slash_at_beginning p)
+    Url.is_prefix_skip_end_slash
+      (Url.remove_slash_at_beginning path)
+      (Url.remove_slash_at_beginning p)
   in
   Cookies.fold
     (fun path ct t ->
       if prefix path ripath then
-        Ocsigen_lib.String_Table.fold
+        String.Table.fold
           (fun n v beg ->
             match v with
             | OSet (Some ti, v, _) when ti>now ->
-                Ocsigen_lib.String_Table.add n v t
-            | OSet (None, v, _) -> Ocsigen_lib.String_Table.add n v t
+                String.Table.add n v t
+            | OSet (None, v, _) -> String.Table.add n v t
             | OSet (_, _, _)
-            | OUnset -> Ocsigen_lib.String_Table.remove n t
+            | OUnset -> String.Table.remove n t
           )
           ct
           t

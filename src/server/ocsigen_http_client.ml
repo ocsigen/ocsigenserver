@@ -71,6 +71,8 @@
 
 *)
 
+open Ocsigen_pervasives
+
 (* constants. Should be configurable *)
 let max_free_open_connections = 2
 
@@ -193,7 +195,7 @@ module FT = struct
     with Not_found ->
       ()
       | e ->
-          Ocsigen_messages.debug2 ("--Ocsigen_http_client: exception while removing from connection table: "^Ocsigen_lib.string_of_exn e)
+          Ocsigen_messages.debug2 ("--Ocsigen_http_client: exception while removing from connection table: "^Printexc.to_string e)
 
 end
 
@@ -357,7 +359,7 @@ let raw_request
            | e ->
                Ocsigen_messages.warning
                  ("--Ocsigen_http_client: exception caught while receiving frame: "^
-                  Ocsigen_lib.string_of_exn e^
+                  Printexc.to_string e^
                   " - closing connection to the server.");
                Lwt_ssl.close (Ocsigen_http_com.connection_fd conn)
          )))
@@ -576,7 +578,7 @@ let raw_request
         with e ->
           Ocsigen_messages.debug_noel2
             "--Ocsigen_http_client: exception while trying to keep free connection: ";
-          Ocsigen_messages.debug2 (Ocsigen_lib.string_of_exn e);
+          Ocsigen_messages.debug2 (Printexc.to_string e);
           !ref_thr_conn >>= fun conn ->
           Lwt_ssl.close (Ocsigen_http_com.connection_fd conn)
       in
@@ -703,7 +705,7 @@ let raw_request
 
 (*****************************************************************************)
 let get ?https ?port ?headers ~host ~uri () =
-  Ocsigen_lib.get_inet_addr host >>= fun inet_addr ->
+  Ip_address.get_inet_addr host >>= fun inet_addr ->
   raw_request
     ?https
     ?port
@@ -717,14 +719,14 @@ let get ?https ?port ?headers ~host ~uri () =
     ()
 
 let get_url ?headers url =
-  let (https, host, port, uri, _, _, _) = Ocsigen_lib.parse_url url in
+  let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
   get ?https ?port ?headers ~host ~uri ()
 
 (*****************************************************************************)
 let post_string ?https ?port ?(headers = Http_headers.empty)
     ~host ~uri ~content ~content_type () =
-  Ocsigen_lib.get_inet_addr host >>= fun inet_addr ->
+  Ip_address.get_inet_addr host >>= fun inet_addr ->
   let content_type = String.concat "/" [fst content_type; snd content_type] in
   raw_request
     ?https
@@ -740,7 +742,7 @@ let post_string ?https ?port ?(headers = Http_headers.empty)
     ()
 
 let post_string_url ?headers ~content ~content_type url =
-  let (https, host, port, uri, _, _, _) = Ocsigen_lib.parse_url url in
+  let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
   post_string ?https ?port ?headers ~host ~uri ~content ~content_type ()
 
@@ -754,7 +756,7 @@ let post_urlencoded ?https ?port ?headers ~host ~uri ~content () =
     ()
 
 let post_urlencoded_url ?headers ~content url =
-  let (https, host, port, uri, _, _, _) = Ocsigen_lib.parse_url url in
+  let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
   post_urlencoded ?https ?port ?headers ~host ~uri ~content ()
 

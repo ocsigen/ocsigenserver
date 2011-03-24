@@ -21,12 +21,14 @@
 (******************************************************************)
 (** Config file parsing *)
 
+open Ocsigen_pervasives
+
 open Simplexmlparser
 open Ocsigen_config
 
 let blah_of_string f tag s =
   try
-    f (Ocsigen_lib.remove_spaces s 0 ((String.length s) -1))
+    f (String.remove_spaces s 0 ((String.length s) -1))
   with Failure _ -> raise (Ocsigen_config.Config_file_error
                              ("While parsing <"^tag^"> - "^s^
                                 " is not a valid value."))
@@ -64,7 +66,7 @@ let parse_size =
   let tebi = Int64.mul mebi mebi in
   fun s ->
     let l = String.length s in
-    let s = Ocsigen_lib.remove_spaces s 0 (l-1) in
+    let s = String.remove_spaces s 0 (l-1) in
     let v l =
       try
         Int64.of_string (String.sub s 0 l)
@@ -543,7 +545,7 @@ let parse_server isreloading c =
                       with e ->
                         Ocsigen_messages.errlog
                           ("Error while loading configuration file "^filename^
-                           ": "^(Ocsigen_lib.string_of_exn e)^" (ignored)");
+                           ": "^(Printexc.to_string e)^" (ignored)");
                         []
                     in
                     (match filecont with
@@ -558,7 +560,7 @@ let parse_server isreloading c =
             | Sys_error _ as e ->
                 Ocsigen_messages.errlog
                   ("Error while loading configuration file: "^
-                   ": "^(Ocsigen_lib.string_of_exn e)^" (ignored)");
+                   ": "^(Printexc.to_string e)^" (ignored)");
                 []
           in
           one@(parse_server_aux ll)

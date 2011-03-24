@@ -24,7 +24,7 @@
 (*****************************************************************************)
 
 open Lwt
-open Ocsigen_lib
+open Ocsigen_pervasives
 open Ocsigen_extensions
 
 exception Not_concerned
@@ -130,7 +130,7 @@ let gen ~usermode dir = function
            Ocsigen_messages.debug2 "--Staticmod: Is it a static file?";
            let status_filter, page =
              find_static_page ~request:ri ~usermode ~dir ~err
-             ~pathstring:(Ocsigen_lib.string_of_url_path ~encode:false
+             ~pathstring:(Url.string_of_url_path ~encode:false
                             ri.request_info.ri_sub_path) in
            Ocsigen_local_files.content ri page
            >>= fun answer ->
@@ -227,7 +227,7 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
                        "Missing attribute dir, regexp, or code for <static>")
 
           | (Some d, None, None, None, None) ->
-              Dir (remove_end_slash d)
+              Dir (Url.remove_end_slash d)
 
           | (None, Some r, code, Some t, rc) ->
               Regexp { source_regexp = r;

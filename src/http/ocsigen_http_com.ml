@@ -36,6 +36,7 @@ PERSISTENT CONNECTIONS
 http://www.tools.ietf.org/html/draft-ietf-http-connection-00
 *)
 
+open Ocsigen_pervasives
 
 open Ocsigen_http_frame
 open Ocsigen_cookies
@@ -848,7 +849,7 @@ let send
                            | _ ->
                                Ocsigen_messages.warning
                                  ("Ocsigen_http_com: reopening after exception "^
-                                    (Ocsigen_lib.string_of_exn e)^
+                                    (Printexc.to_string e)^
                                     " (Is that right?) Please report this error.");
                                ignore (reopen ());
                                Lwt.fail e
@@ -915,7 +916,7 @@ let send
   let mkcook path exp name c secure =
     Format.sprintf "%s=%s%s%s" name c
 (*VVV encode = true? *)
-      ("; path=/" ^ Ocsigen_lib.string_of_url_path ~encode:true path)
+      ("; path=/" ^ Url.string_of_url_path ~encode:true path)
       (if secure && slot.sl_ssl then "; secure" else "")^
       (match exp with
       | Some s -> "; expires=" ^
@@ -925,7 +926,7 @@ let send
       | None   -> "")
   in
   let mkcookl path t hds =
-    Ocsigen_lib.String_Table.fold
+    CookiesTable.fold
       (fun name c h ->
         let exp, v, secure = match c with
         | Ocsigen_cookies.OUnset -> (Some 0., "", false)

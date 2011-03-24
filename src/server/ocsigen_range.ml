@@ -26,7 +26,7 @@
    For files, it should be optimized with seek!!!!!
 *)
 
-let (>>=) = Lwt.bind
+open Ocsigen_pervasives
 
 exception Range_416
 
@@ -189,20 +189,20 @@ let get_range http_frame =
     in
 
     let interval, from =
-      let a,b = Ocsigen_lib.sep '=' rangeheader in
+      let a,b = String.sep '=' rangeheader in
       if String.compare a "bytes" <> 0
       then raise Not_found
       else
-        let l = Ocsigen_lib.split ',' b in
+        let l = String.split ',' b in
         let rec f index = function
           | [] -> [], None
           | [a] -> 
-              let d, e = Ocsigen_lib.sep '-' a in
+              let d, e = String.sep '-' a in
               if e = ""
               then [], Some (Int64.of_string d)
               else [decode_int index d e], None
           | a::l ->
-              let d, e = Ocsigen_lib.sep '-' a in
+              let d, e = String.sep '-' a in
               let a, b = decode_int index d e in
               let ll, fr = f b l in (* not tail rec *)
               (a, b)::ll, fr
