@@ -98,7 +98,6 @@ distclean: clean.local
 	-rm -f *~ \#* .\#*
 	${MAKE} -C ocsipersist-dbm distclean
 	${MAKE} -C ocsipersist-sqlite distclean
-	-rm -d ocsipersist.mli
 
 ## Dependencies
 
