@@ -1,0 +1,10 @@
+ocsidbmtypes.cmi:
+ocsipersist.cmi:
+ocsidbm.cmo: ocsidbmtypes.cmi
+ocsidbm.cmx: ocsidbmtypes.cmi
+ocsipersist.cmo: ../../baselib/ocsigen_messages.cmi \
+    ../../server/ocsigen_extensions.cmi ../../baselib/ocsigen_config.cmi \
+    ocsidbmtypes.cmi ocsipersist.cmi
+ocsipersist.cmx: ../../baselib/ocsigen_messages.cmx \
+    ../../server/ocsigen_extensions.cmx ../../baselib/ocsigen_config.cmx \
+    ocsidbmtypes.cmi ocsipersist.cmi

@@ -1,37 +1,25 @@
 include ../Makefile.config
-include ../Makefile.filelist
+include ../src/Makefile.filelist
 
-export OCAMLPATH := ../deriving/tmp:${OCAMLPATH}
+OCAMLDOC := ${OCAMLFIND} ocamldoc
 
-ifeq "${OCAMLDUCE}" "YES"
-CAMLDOC = ocamlducefind ocamldoc $(LIB)
-else
-CAMLDOC = ocamlfind ocamldoc $(LIB)
-endif
-
-INSTALL = install
-
-
-LIB = -package netstring,lwt,ssl,netstring${DUCEPACK},react,text,deriving,calendar,js_of_ocaml $(LIBDIRS) -I ../xmlp4/xhtml
-
-DOCPREF=../
+LIBS := -package lwt,xmlp4,ssl \
+        ${addprefix -I ../src/, baselib http server extensions }
 
 doc: odoc
 
 odoc:
 	mkdir -p api-html
-	$(CAMLDOC) -d api-html -intro indexdoc -html $(DOC)
+	$(OCAMLDOC) ${LIBS} -d api-html -intro indexdoc -html $(addprefix ../src/,$(DOC) $(PLUGINS_DOC))
 
-
-DOCUPDIR=$(shell  dirname $(TEMPROOT)$(DOCDIR))
 install:
-	[ -d $(DOCUPDIR) ] || (mkdir -p $(DOCUPDIR); chmod a+rx $(DOCUPDIR))
-	mkdir -p $(TEMPROOT)$(DOCDIR)
+	${INSTALL} -d -m 644 $(TEMPROOT)$(DOCDIR)
 	$(INSTALL) -m 644 api-html/* $(TEMPROOT)$(DOCDIR)
-	chmod a+rx $(TEMPROOT)$(DOCDIR)
-	chmod a+r $(TEMPROOT)$(DOCDIR)/*
+
+uninstall:
+	-rm -Rf $(TEMPROOT)$(DOCDIR)
 
 clean:
-	-rm -f *.cm[ioxa] *.o *.a *.cmx[sa] *~
 	-rm -f api-html/*
+	-rm -f *~ \#* .\#*
 

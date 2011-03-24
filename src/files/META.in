@@ -1,0 +1,43 @@
+description = "Ocsigen server library"
+version = "dev"
+requires = "%%NAME%%.commandline,%%NAME%%.polytables,%%NAME%%.http,%%DEPS%%"
+archive(byte) = "ocsigenserver.cma stubs.o"
+archive(native) = "ocsigenserver.cmxa stubs.o"
+
+package "polytables" (
+  exists_if = "polytables.cmo,polytables.cmx"
+  version = "[distributed with Ocsigen server]"
+  description = "Polymorphic tables"
+  archive(byte) = "polytables.cmo"
+  archive(native) = "polytables.cmx"
+)
+
+package "commandline" (
+  description = "Read the commandline during server initialization"
+  version = "[distributed with Ocsigen server]"
+  archive(byte) = "parsecommandline.cma"
+  archive(native) = "parsecommandline.cmxa"
+  archive(byte,nocommandline) = "donotparsecommandline.cma"
+  archive(native,nocommandline) = "donotparsecommandline.cmxa"
+)
+
+package "baselib" (
+  requires = "lwt,netstring,cryptokit,findlib,xmlp4"
+  version = "[distributed with Ocsigen server]"
+  description = "Base library for Ocsigen server"
+  archive(byte) = "baselib.cma"
+  archive(native) = "baselib.cmxa"
+)
+
+package "http" (
+  requires = "%%NAME%%.baselib,lwt.ssl,xmlp4.streams"
+  version = "[distributed with Ocsigen server]"
+  description = "HTTP library for Ocsigen server"
+  archive(byte) = "http.cma"
+  archive(native) = "http.cmxa"
+)
+
+package "cookies" (
+  version = "[distributed with Ocsigen server]"
+  archive(byte) = "ocsigen_cookies.cmo"
+)
