@@ -115,7 +115,7 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
   in
   if usermode = None || correct_user_local_file filename then
     (status_filter,
-     Ocsigen_LocalFiles.resolve ?no_check_for:root ~request ~filename)
+     Ocsigen_local_files.resolve ?no_check_for:root ~request ~filename)
   else
     raise (Ocsigen_extensions.Error_in_user_config_file
              "Staticmod: cannot use '..' in user paths")
@@ -132,7 +132,7 @@ let gen ~usermode dir = function
              find_static_page ~request:ri ~usermode ~dir ~err
              ~pathstring:(Ocsigen_lib.string_of_url_path ~encode:false
                             ri.request_info.ri_sub_path) in
-           Ocsigen_LocalFiles.content ri page
+           Ocsigen_local_files.content ri page
            >>= fun answer ->
            let answer' =
              if status_filter = false then
@@ -145,13 +145,13 @@ let gen ~usermode dir = function
         )
 
         (function
-           | Ocsigen_LocalFiles.Failed_403 -> return (Ext_next 403)
+           | Ocsigen_local_files.Failed_403 -> return (Ext_next 403)
                (* XXX We should try to leave an information about this
                   error for later *)
-           | Ocsigen_LocalFiles.NotReadableDirectory ->
+           | Ocsigen_local_files.NotReadableDirectory ->
                return (Ext_next err)
            | NoSuchUser | Not_concerned
-           | Ocsigen_LocalFiles.Failed_404 -> return (Ext_next err)
+           | Ocsigen_local_files.Failed_404 -> return (Ext_next err)
            | e -> fail e
         )
 

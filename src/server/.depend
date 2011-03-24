@@ -1,4 +1,4 @@
-ocsigen_LocalFiles.cmi: ../http/ocsigen_http_frame.cmi ocsigen_extensions.cmi
+ocsigen_local_files.cmi: ../http/ocsigen_http_frame.cmi ocsigen_extensions.cmi
 ocsigen_extensions.cmi: ../baselib/polytables.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
     ../http/ocsigen_cookies.cmi ../http/ocsigen_charset_mime.cmi
@@ -8,12 +8,12 @@ ocsigen_http_client.cmi: ../baselib/ocsigen_stream.cmi \
 ocsigen_parseconfig.cmi: ocsigen_extensions.cmi
 ocsigen_range.cmi: ../http/ocsigen_http_frame.cmi ocsigen_extensions.cmi
 ocsigen_server.cmi:
-ocsigen_LocalFiles.cmo: ../http/ocsigen_senders.cmi \
+ocsigen_local_files.cmo: ../http/ocsigen_senders.cmi \
     ../baselib/ocsigen_messages.cmi ocsigen_extensions.cmi \
-    ocsigen_LocalFiles.cmi
-ocsigen_LocalFiles.cmx: ../http/ocsigen_senders.cmx \
+    ocsigen_local_files.cmi
+ocsigen_local_files.cmx: ../http/ocsigen_senders.cmx \
     ../baselib/ocsigen_messages.cmx ocsigen_extensions.cmx \
-    ocsigen_LocalFiles.cmi
+    ocsigen_local_files.cmi
 ocsigen_extensions.cmo: ../baselib/polytables.cmi \
     ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_loader.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \

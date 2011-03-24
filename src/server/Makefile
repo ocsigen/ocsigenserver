@@ -17,7 +17,7 @@ FILES := ocsigen_extensions.ml  \
          ocsigen_range.ml       \
          ocsigen_parseconfig.ml \
          ocsigen_http_client.ml \
-         ocsigen_LocalFiles.ml  \
+         ocsigen_local_files.ml  \
          ocsigen_server.ml      \
 
 byte:: ${PROJECTNAME}.cma

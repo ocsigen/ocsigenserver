@@ -76,10 +76,10 @@ rewritemod.cmx: ../baselib/ocsigen_messages.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx
 staticmod.cmo: ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../server/ocsigen_extensions.cmi \
-    ../server/ocsigen_LocalFiles.cmi
+    ../server/ocsigen_local_files.cmi
 staticmod.cmx: ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_lib.cmx \
     ../http/ocsigen_http_frame.cmx ../server/ocsigen_extensions.cmx \
-    ../server/ocsigen_LocalFiles.cmx
+    ../server/ocsigen_local_files.cmx
 userconf.cmo: ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_lib.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi
 userconf.cmx: ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_lib.cmx \
