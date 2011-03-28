@@ -3,7 +3,7 @@ include ../../Makefile.config
 all: byte opt
 
 PACKAGE  := ${SERVERPACKAGE} ## See ../../Makefile.options
-LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}}
+LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}} -I .
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} -thread
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} -thread
 OCAMLDOC := $(OCAMLFIND) ocamldoc
@@ -20,13 +20,16 @@ FILES := ocsigen_extensions.ml  \
          ocsigen_local_files.ml  \
          ocsigen_server.ml      \
 
+
+STUBS  := stubs.o
+
 byte:: ${PROJECTNAME}.cma
 opt:: ${PROJECTNAME}.cmxa
 
-${PROJECTNAME}.cma: $(FILES:.ml=.cmo)
-	${OCAMLC} -a -o $@ $^
-${PROJECTNAME}.cmxa: $(FILES:.ml=.cmx)
-	${OCAMLOPT} -a -o $@ $^
+${PROJECTNAME}.cma: $(FILES:.ml=.cmo) ${STUBS}
+	${OCAMLMKLIB} -linkall -o $(patsubst %.cma,%,$@) $^
+${PROJECTNAME}.cmxa: $(FILES:.ml=.cmx) ${STUBS}
+	${OCAMLMKLIB} -linkall -o $(patsubst %.cmxa,%,$@) $^
 
 ### Server ###
 
@@ -46,11 +49,10 @@ SERVERLIBS := ${PARSECOMMANDLINE}       \
 	      ${PROJECTNAME}.cma         \
 
 SERVEROBJS := server_main.cmo
-STUBSOBJS  := stubs.o
 
-${PROJECTNAME}: ${SERVERLIBS} ${SERVEROBJS} ${STUBSOBJS}
+${PROJECTNAME}: ${SERVERLIBS} ${SERVEROBJS}
 	${OCAMLC} -o $@ -linkpkg -linkall -thread ${LIBS} $^
-${PROJECTNAME}.opt: ${SERVERLIBS:.cma=.cmxa} ${SERVEROBJS:.cmo=.cmx} ${STUBSOBJS}
+${PROJECTNAME}.opt: ${SERVERLIBS:.cma=.cmxa} ${SERVEROBJS:.cmo=.cmx}
 	${OCAMLOPT} -o $@ -linkpkg -linkall -thread ${LIBS} $^
 
 ### Toplevel ####
@@ -58,7 +60,7 @@ ${PROJECTNAME}.opt: ${SERVERLIBS:.cma=.cmxa} ${SERVEROBJS:.cmo=.cmx} ${STUBSOBJS
 top: servertop
 	OCAMLPATH=${SRC}/src/files/:${OCAMLPATH} ${RLWRAP} ./servertop
 
-servertop: ${SERVERLIBS} ${STUBSOBJS}
+servertop: ${SERVERLIBS}
 	OCAMLPATH=${SRC}/src/files/:${OCAMLPATH} ${OCAMLFIND} ocamlmktop \
 	   -o $@ -linkall -linkpkg -thread ${LIBS} $^
 

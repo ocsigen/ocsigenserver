@@ -533,6 +533,7 @@ PROJECTNAME := $name
 
 OCAMLFIND := ocamlfind
 OCAMLLEX  := ocamllex
+OCAMLMKLIB:= ocamlmklib
 CHOWN     := chown
 CHMOD     := chmod
 INSTALL   := install

@@ -35,6 +35,9 @@ IMPL := baselib/baselib.cma		   \
 	\
 	server/${PROJECTNAME}.cma          \
 	server/server_main.cmo             \
+        \
+        server/lib${PROJECTNAME}.a         \
+        server/dll${PROJECTNAME}.so        \
 
 NATIMPL := $(patsubst %.cmo,%.cmx, $(filter %.cmo,${IMPL})) \
            $(patsubst %.cmo,%.o  , $(filter %.cmo,${IMPL})) \
