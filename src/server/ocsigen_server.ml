@@ -28,6 +28,7 @@ open Ocsigen_http_com
 open Ocsigen_senders
 open Ocsigen_config
 open Ocsigen_parseconfig
+open Ocsigen_cookies
 open Lazy
 
 
@@ -286,7 +287,7 @@ let get_request_infos
 
        let cookies =
          lazy (match (Lazy.force cookies_string) with
-         | None -> String.Table.empty
+         | None -> CookiesTable.empty
          | Some s -> parse_cookies s)
        in
 

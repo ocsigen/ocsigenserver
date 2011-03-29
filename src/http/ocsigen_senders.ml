@@ -24,76 +24,42 @@ open Ocsigen_http_frame
 open Ocsigen_http_com
 open Lwt
 open Ocsigen_stream
-open XHTML.M
+
 
 
 (*****************************************************************************)
 (** this module instantiate the HTTP_CONTENT signature for an Xhtml content*)
 
-module Old_Xhtml_content =
-  struct
-    type t = [ `Html ] XHTML.M.elt
+module Make_XML_Content(XML : XML_sigs.Iterable)
+                       (TypedXML : XML_sigs.TypedXML(XML).T) = struct
 
-    type options = unit
+      module Xhtmlprinter =
+	XML_print.MakeTyped(XML)(TypedXML)(Ocsigen_stream.StringStream)
 
-    let get_etag_aux x =
-      Some (Digest.to_hex (Digest.string x))
+      type t = TypedXML.doc
+      type options = unit
 
-    let get_etag ?options c =
-      let x = Xhtmlpretty.xhtml_print c in
-      get_etag_aux x
+      let get_etag_aux x = None
 
-    let result_of_content ?(options = ()) c =
-      let x = Xhtmlpretty.xhtml_print c in
-      let md5 = get_etag_aux x in
-      let default_result = default_result () in
-      Lwt.return
-        {default_result with
-         res_content_length = Some (Int64.of_int (String.length x));
-         res_content_type = Some "text/html";
-         res_etag = md5;
-         res_headers= Http_headers.dyn_headers;
-         res_stream =
-            (Ocsigen_stream.make
-               (fun () -> Ocsigen_stream.cont x
-                  (fun () -> Ocsigen_stream.empty None)),
-             None)
-       }
+      let get_etag ?options c = None
 
-  end
+      let result_of_content ?options c =
+	let x = Xhtmlprinter.print c in
+	let default_result = default_result () in
+	Lwt.return
+          {default_result with
+           res_content_length = None;
+           res_content_type = Some TypedXML.Info.content_type;
+           res_etag = get_etag c;
+           res_headers= Http_headers.dyn_headers;
+           res_stream = (x, None)
+	 }
 
-module Xhtml_content_
-    (Xhtmlprinter : Xhtml_streams.Printer
-                    with type s = string Ocsigen_stream.t ) = struct
-  type t = [ `Html ] Xhtmlprinter.elt
+    end
 
-  type options = Xhtmlprinter.doctypes
+module Xhtml_content = Make_XML_Content(XML)(XHTML.M)
+module Html5_content = Make_XML_Content(XML)(HTML5.M)
 
-    let get_etag_aux x = None
-
-    let get_etag ?options c = None
-
-    let result_of_content ?options c =
-      let x = Xhtmlprinter.xhtml_stream ?version:options c in
-      let default_result = default_result () in
-      Lwt.return
-        {default_result with
-         res_content_length = None;
-         res_content_type = Some "text/html";
-         res_etag = get_etag c;
-         res_headers= Http_headers.dyn_headers;
-         res_stream = (x, None)
-       }
-
-  end
-
-
-module Xhtmlcompact_content =
-  Xhtml_content_(Xhtmlcompact_streams.Compact(Ocsigen_stream.StringStream))
-module Xhtml_content = Xhtmlcompact_content
-
-module Xhtmlpretty_content =
-  Xhtml_content_(Xhtmlpretty_streams.Pretty(Ocsigen_stream.StringStream))
 
 (*****************************************************************************)
 module Text_content =
@@ -482,7 +448,7 @@ module Error_content =
         (XHTML.M.head (XHTML.M.title (XHTML.M.pcdata s)) [])
         (XHTML.M.body
            (XHTML.M.h1 [XHTML.M.pcdata msg]::
-            p [pcdata s]::
+            XHTML.M.p [XHTML.M.pcdata s]::
             c)
         )
 
@@ -563,10 +529,3 @@ let send_error
     ~head
     ~sender
     r
-
-
-module Xhtml5pretty_content =
-  Xhtml_content_(Xhtml5pretty_streams.Pretty(Ocsigen_stream.StringStream))
-module Xhtml5compact_content =
-  Xhtml_content_( Xhtml5compact_streams.Compact(Ocsigen_stream.StringStream))
-module Xhtml5_content = Xhtml5compact_content

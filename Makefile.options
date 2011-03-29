@@ -26,16 +26,15 @@ SERVERPACKAGE  := lwt.ssl           \
 	          lwt.extra         \
                   findlib           \
 	          cryptokit         \
-	          xmlp4.streams     \
 	          xmlp4.parser      \
 	          xmlp4.syntax      \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVERPACKAGE})\"; \
-	       \"ocsigenserver.commandline\";  \
-               \"ocsigenserver.polytables\";   \
-               \"ocsigenserver.cookies\";      \
-               \"ocsigenserver.baselib\";      \
-               \"ocsigenserver.http\";         \
-               \"ocsigenserver\";              \
+	       \"${PROJECTNAME}.commandline\";  \
+               \"${PROJECTNAME}.polytables\";   \
+               \"${PROJECTNAME}.cookies\";      \
+               \"${PROJECTNAME}.baselib\";      \
+               \"${PROJECTNAME}.http\";         \
+               \"${PROJECTNAME}\";              \
 

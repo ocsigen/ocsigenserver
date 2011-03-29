@@ -118,17 +118,18 @@ val of_string : string -> string t
 module StringStream : sig
 
   (** Interface for stream creation (for xmlp4) *)
-  type s = string t
+  type out = string t
   type m
-  val make: m Lazy.t -> string t
+
+  val make: m -> out
 
   (** Create an empty stream *)
-  val empty: unit -> m Lazy.t
+  val empty: m
 
   (** Create a stream with one element *)
-  val put: string -> m Lazy.t
+  val put: string -> m
 
   (** Concatenate two stream *)
-  val concat: m Lazy.t -> m Lazy.t -> m Lazy.t
+  val concat: m -> m -> m
 
 end

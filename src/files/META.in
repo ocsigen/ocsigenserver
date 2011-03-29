@@ -1,8 +1,8 @@
 description = "Ocsigen server library"
 version = "dev"
 requires = "%%NAME%%.commandline,%%NAME%%.polytables,%%NAME%%.http,%%DEPS%%"
-archive(byte) = "ocsigenserver.cma stubs.o"
-archive(native) = "ocsigenserver.cmxa stubs.o"
+archive(byte) = "ocsigenserver.cma"
+archive(native) = "ocsigenserver.cmxa"
 
 package "polytables" (
   exists_if = "polytables.cmo,polytables.cmx"
@@ -30,7 +30,7 @@ package "baselib" (
 )
 
 package "http" (
-  requires = "%%NAME%%.baselib,lwt.ssl,xmlp4.streams"
+  requires = "%%NAME%%.baselib,lwt.ssl,xmlp4"
   version = "[distributed with Ocsigen server]"
   description = "HTTP library for Ocsigen server"
   archive(byte) = "http.cma"

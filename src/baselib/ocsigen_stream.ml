@@ -246,17 +246,17 @@ let of_string s =
 
 module StringStream = struct
 
-  type s = string t
-  type m = string stream -> string step Lwt.t
+  type out = string t
+  type m = (string stream -> string step Lwt.t) Lazy.t
 
-  let empty () : m Lazy.t = lazy (fun c -> Lazy.force c)
-  let concat (m: m Lazy.t) (f: m Lazy.t) : m Lazy.t =
+  let empty : m = lazy (fun c -> Lazy.force c)
+  let concat (m: m) (f: m) : m =
     lazy (fun c -> Lazy.force m (lazy (Lazy.force f c)))
-  let put (s : string) : m Lazy.t = lazy (fun c -> Lwt.return (Cont (s, c)))
+  let put (s : string) : m = lazy (fun c -> Lwt.return (Cont (s, c)))
 
-  let make_stream (m: m Lazy.t) : string stream =
+  let make_stream (m: m) : string stream =
     lazy (Lazy.force m (lazy (Lwt.return (Finished None))))
 
-  let make (m: m Lazy.t) : s = make (fun () -> Lazy.force (make_stream m))
+  let make (m: m) : out = make (fun () -> Lazy.force (make_stream m))
 
 end

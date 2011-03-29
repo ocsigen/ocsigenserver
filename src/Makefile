@@ -115,7 +115,7 @@ raw_install:
 	$(OCAMLFIND) install $(PROJECTNAME) \
 	   -destdir $(TEMPROOT)$(LIBDIR) \
 	   -patch-version ${VERSION} \
-	   ${INTF} $(INSTALL_IMPL) $(STUBS) $(DOC) files/META
+	   ${INTF} $(INSTALL_IMPL) $(DOC) files/META
 	 # Extensions
 	$(INSTALL) -m 755 -d $(TEMPROOT)${EXTLIBDIR}/
 	${OCAMLFIND} install ${EXTPACKAGENAME} \

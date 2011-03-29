@@ -33,6 +33,7 @@
 
 open Lwt
 open Ocsigen_pervasives
+open Ocsigen_cookies
 
 exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 exception Ocsigen_Looping_request
@@ -220,7 +221,7 @@ type request_info =
      ri_server_port: int;      (** Port of the request (server) *)
      ri_user_agent: string;    (** User_agent of the browser *)
      ri_cookies_string: string option Lazy.t; (** Cookies sent by the browser *)
-     ri_cookies: string String.Table.t Lazy.t;  (** Cookies sent by the browser *)
+     ri_cookies: string CookiesTable.t Lazy.t;  (** Cookies sent by the browser *)
      ri_ifmodifiedsince: float option;   (** if-modified-since field *)
      ri_ifunmodifiedsince: float option;   (** if-unmodified-since field *)
      ri_ifnonematch: string list option;   (** if-none-match field ( * and weak entity tags not implemented) *)

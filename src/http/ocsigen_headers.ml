@@ -27,6 +27,7 @@
 open Ocsigen_http_frame
 open Ocsigen_senders
 open Ocsigen_pervasives
+open Ocsigen_cookies
 
 
 let find name frame =
@@ -111,10 +112,10 @@ let rec parse_cookies s =
     List.fold_left
       (fun beg a ->
         let (n, v) = String.sep '=' a in
-        String.Table.add n v beg)
-      String.Table.empty
+        CookiesTable.add n v beg)
+      CookiesTable.empty
       splitted
-  with _ -> String.Table.empty
+  with _ -> CookiesTable.empty
 (*VVV Actually the real syntax of cookies is more complex! *)
 (*
 http://www.w3.org/Protocols/rfc2109/rfc2109

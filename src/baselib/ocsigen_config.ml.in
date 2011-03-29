@@ -23,7 +23,7 @@ open Ocsigen_pervasives
 exception Config_file_error of string
 
 (* General config *)
-let config_file = ref "_CONFIGDIR_/_OCSIGENNAME_.conf"
+let config_file = ref "_CONFIGDIR_/_PROJECTNAME_.conf"
 let verbose = ref false
 let silent = ref false
 let daemon = ref false
@@ -36,12 +36,7 @@ let full_server_name = server_name^"/"^version_number
 let is_native = _ISNATIVE_
 
 let builtin_packages =
-  List.fold_left (fun a s -> String.Set.add s a) String.Set.empty
-    ["unix"; "threads"; "ssl"; "lwt.unix";
-     "lwt"; "lwt.preemptive"; "lwt.ssl"; "lwt.extra";
-     "netstring"; "netsys"; "pcre"; "dynlink"; "findlib"; "cryptokit";
-     "ocsigen"; "ocsigen.server"; "ocsigen_xhtml";
-     "camlp4.lib"; "ocsigen.ext.polytables"; "deriving" ]
+  List.fold_left (fun a s -> String.Set.add s a) String.Set.empty [_DEPS_]
 
 (* Server config: *)
 let (uploaddir : string option ref) = ref None
@@ -64,7 +59,7 @@ let maxuploadfilesize = ref (Some (Int64.of_int 2000000))
 let defaultcharset = ref (None : string option)
 let datadir = ref "_DATADIR_"
 let bindir = ref "_BINDIR_"
-let extralibdir = ref "_EXTRALIBDIR_"
+let extralibdir = ref "_EXTLIBDIR_"
 let user = ref (Some !default_user)
 let group = ref (Some !default_group)
 let command_pipe = ref "_COMMANDPIPE_"
