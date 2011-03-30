@@ -44,7 +44,7 @@ module Make_XML_Content(XML : XML_sigs.Iterable)
       let get_etag ?options c = None
 
       let result_of_content ?options c =
-	let x = Xhtmlprinter.print c in
+	let x = Xhtmlprinter.print ~advert c in
 	let default_result = default_result () in
 	Lwt.return
           {default_result with

@@ -21,6 +21,8 @@ val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 type yesnomaybe = Yes | No | Maybe
 type ('a, 'b) leftright = Left of 'a | Right of 'b
 
+val advert: string
+
 
 module List : sig
   include module type of List
