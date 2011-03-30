@@ -76,7 +76,7 @@ install.files:
 	$(INSTALL) -m 755 -d $(TEMPROOT)$(CONFIGDIR)/conf.d
 	${INSTALL} -m 644 ${PROJECTNAME}.conf.sample $(TEMPROOT)$(CONFIGDIR)/
 	[ -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf ] || \
-	  { $(INSTALL) -m 755 $(PROJECTNAME).conf.sample \
+	  { $(INSTALL) -m 644 $(PROJECTNAME).conf.sample \
                 $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory

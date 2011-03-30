@@ -13,7 +13,7 @@ odoc:
 	$(OCAMLDOC) ${LIBS} -d api-html -intro indexdoc -html $(addprefix ../src/,$(DOC) $(PLUGINS_DOC))
 
 install:
-	${INSTALL} -d -m 644 $(TEMPROOT)$(DOCDIR)
+	${INSTALL} -d -m 755 $(TEMPROOT)$(DOCDIR)
 	$(INSTALL) -m 644 api-html/* $(TEMPROOT)$(DOCDIR)
 
 uninstall:
