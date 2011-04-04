@@ -34,7 +34,7 @@
     <!--
     <extension findlib-package="_EXTPACKAGENAME_.ocsipersist-dbm">
       <store dir="_DATADIR_"/>
-      <ocsidbm name="_EXTLIBDIR_/ext/ocsidbm"/>
+      <ocsidbm name="_EXTDIR_/ocsidbm"/>
     </extension>
     -->
 

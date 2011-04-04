@@ -63,7 +63,7 @@ let rec parse_global_config (store, ocsidbm, delayloading as d) = function
 
 let (directory, ocsidbm) =
   (ref ((Ocsigen_config.get_datadir ())^"/ocsipersist"),
-   ref ((Ocsigen_config.get_extralibdir ())^"/extensions/ocsidbm"))
+   ref ((Ocsigen_config.get_extdir ())^"/ocsidbm"))
 
 
 (*****************************************************************************)

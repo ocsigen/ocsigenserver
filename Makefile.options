@@ -17,8 +17,6 @@ BYTEDBG :=p ${BYTEDBG}
 OPTDBG  += -p
 endif
 
-EXTPACKAGENAME := ${PROJECTNAME}_ext
-
 ## ${SERVERPACKAGE} is not only used to build the 'ocsigenserver' executable
 ## but also to generate src/baselib/ocsigen_config.ml and src/files/META
 

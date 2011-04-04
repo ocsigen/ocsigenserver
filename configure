@@ -84,7 +84,6 @@ set_defaults () {
     bindir=""
     logdir=""
     libdir=""
-    extlibdir=""
     mandir=""
     docdir=""
     sysconfdir="/etc/\$(PROJECTNAME)"
@@ -145,11 +144,6 @@ print_options () {
             *) libdir2=$libdir;;
         esac
 
-        case "$extlibdir" in
-            "") extlibdir2="<prefix>/lib/\$(PROJECTNAME)";;
-            *) extlibdir2=$extlibdir;;
-        esac
-
         case "$mandir" in
             "") mandir2="<prefix>/share/man/man1";;
             *) mandir2=$mandir;;
@@ -168,7 +162,6 @@ print_options () {
 	echo "    --ocsigen-group $ocsigen_group"
 	echo "    --bindir $bindir2"
         echo "    --libdir $libdir2"
-        echo "    --extlibdir $extlibdir2"
 	echo "    --sysconfdir $sysconfdir"
 	echo "    --mandir $mandir2"
 	echo "    --docdir $docdir2"
@@ -204,7 +197,6 @@ usage: ./configure [ options ]
 
   --bindir=DIR		Install binaries into this directory
   --libdir=DIR		Common directory for Ocsigen server's libraries
-  --extlibdir=DIR	Common directory for Ocsigen server's extensions
 
   --sysconfdir=DIR	Create configuration files in this directory
   --mandir=DIR		Install man pages in this directory
@@ -305,11 +297,6 @@ while [ "$#" -gt 0 ]; do
                         shift
                         shift
                         ;;
-                --extlibdir)
-                        extlibdir="$2"
-                        shift
-                        shift
-                        ;;
 		--mandir)
 			mandir="$2"
 			shift
@@ -377,10 +364,6 @@ esac
 case "$libdir" in
   "") libdir="\$(shell \${OCAMLFIND} printconf destdir)";;
   *) libdir=$root$libdir
-esac
-
-case "$extlibdir" in
-  "") extlibdir="$prefix/lib/\$(PROJECTNAME)";;
 esac
 
 case "$mandir" in
@@ -592,9 +575,6 @@ MANDIR := $root$mandir
 
 # Where to install the libraries
 LIBDIR := $libdir
-
-# Where to install the extensions
-EXTLIBDIR := $root$extlibdir
 
 # ocsigen's logs:
 LOGDIR := $root$logdir

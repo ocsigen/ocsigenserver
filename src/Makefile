@@ -24,6 +24,7 @@ metas: files/META files/META.${PROJECTNAME}
 
 files/META: files/META.in ../Makefile.config ../Makefile.options Makefile
 	cat $< \
+	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
 	  | sed s/%%NAME%%/$(PROJECTNAME)/g \
 	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVERPACKAGE})/g \
 	  > $@
@@ -36,6 +37,7 @@ files/META.${PROJECTNAME}: files/META.in ../Makefile.config ../Makefile.options 
 	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVERPACKAGE})/g \
 	  | sed "s%package \"\(polytables\|commandline\|baselib\)\" (%package \"\1\" (\n  directory = \"../baselib\"%" \
 	  | sed "s%package \"http\" (%package \"http\" (\n  directory = \"../http\"%" \
+	  | sed "s%directory = \"extensions\"%directory = \"../extensions\"%" \
 	  >> $@
 
 ### CONF ####
@@ -50,13 +52,13 @@ confs: ../$(PROJECTNAME).conf.sample ../local/etc/${PROJECTNAME}.conf
 	  | sed s%_OCSIGENGROUP_%$(OCSIGENGROUP)%g \
 	  | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	  | sed s%_MIMEFILE_%$(CONFIGDIR)/mime.types%g \
-	  | sed s%_METADIR_%$(EXTLIBDIR)%g \
+	  | sed s%_METADIR_%$(LIBDIR)%g \
 	  | sed s%_PROJECTNAME_%$(PROJECTNAME)%g \
 	  | sed s%_LIBDIR_%$(LIBDIR)%g \
-	  | sed s%_EXTLIBDIR_%$(EXTLIBDIR)%g \
+	  | sed s%_EXTDIR_%$(LIBDIR)/ocsigenserver/extensions%g \
 	  | sed s%_CONFIGDIR_%$(CONFIGDIR)%g \
 	  | sed s%_STATICPAGESDIR_%$(STATICPAGESDIR)%g \
-	  | sed s%_EXTPACKAGENAME_%$(EXTPACKAGENAME)%g \
+	  | sed s%_EXTPACKAGENAME_%$(PROJECTNAME).ext%g \
 	  > $@
 
 ../local/etc/$(PROJECTNAME).conf: files/${PROJECTNAME}.conf.in ../Makefile.config Makefile
@@ -73,7 +75,7 @@ confs: ../$(PROJECTNAME).conf.sample ../local/etc/${PROJECTNAME}.conf
 	  | sed s%_EXTLIBDIR_%${SRC}/src/extensions/ocsipersist-dbm%g \
 	  | sed s%_CONFIGDIR_%$(SRC)/local/etc/%g \
 	  | sed s%_STATICPAGESDIR_%$(SRC)/local/var/www%g \
-	  | sed s%_EXTPACKAGENAME_%$(EXTPACKAGENAME)%g \
+	  | sed s%_EXTPACKAGENAME_%$(PROJECTNAME).ext%g \
 	  | sed s%\<\!--\ \<commandpipe%\<commandpipe%g \
 	  | sed s%\</commandpipe\>\ --\>%\</commandpipe\>%g \
 	  | sed s%\<\!--\ \<mimefile%\<mimefile%g \
@@ -117,18 +119,16 @@ raw_install:
 	   -patch-version ${VERSION} \
 	   ${INTF} $(INSTALL_IMPL) $(DOC) files/META
 	 # Extensions
-	$(INSTALL) -m 755 -d $(TEMPROOT)${EXTLIBDIR}/
-	${OCAMLFIND} install ${EXTPACKAGENAME} \
-	   -destdir $(TEMPROOT)$(EXTLIBDIR) \
-	   -patch-version ${VERSION} \
-	  extensions/files/META \
-	  $(PLUGINS_INTF) $(INSTALL_PLUGINS_IMPL) $(PLUGINS_DOC)
+	$(INSTALL) -m 755 -d $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
+	$(INSTALL) -m 644 \
+	  $(PLUGINS_INTF) $(INSTALL_PLUGINS_IMPL) $(PLUGINS_DOC) \
+	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
 	$(INSTALL) -m 755 $(INSTALL_PLUGINS_BIN) \
-	  $(TEMPROOT)$(EXTLIBDIR)/${EXTPACKAGENAME}
+	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
 
 uninstall:
 	 # Extensions
-	-${OCAMLFIND} remove ${EXTPACKAGENAME} -destdir $(TEMPROOT)$(EXTLIBDIR)
+	-rm -r $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
 	 # Server libraries
 	-$(OCAMLFIND) remove ${PROJECTNAME} -destdir $(TEMPROOT)${LIBDIR}
 	 # Server binaries

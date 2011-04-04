@@ -57,24 +57,6 @@ opt::
 	$(MAKE) -C ocsipersist-dbm opt
 endif
 
-#### META #####
-
-byte:: metas
-opt:: metas
-
-metas: files/META files/META.${EXTPACKAGENAME}
-
-files/META: files/META.in ../../Makefile.config Makefile
-	cat $< \
-	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
-	  > $@
-
-files/META.${EXTPACKAGENAME}: files/META.in ../../Makefile.config Makefile
-	echo directory = \"${SRC}/src/extensions\" > $@
-	cat $< \
-	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
-	  >> $@
-
 ##########
 
 %.cmi: %.mli
