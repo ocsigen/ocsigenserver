@@ -1,7 +1,7 @@
 include ../../../Makefile.config
 
 PACKAGE  := lwt          \
-	    xmlp4.parser \
+	    tyxml.parser \
 	    sqlite3      \
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \

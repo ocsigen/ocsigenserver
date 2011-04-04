@@ -1,7 +1,7 @@
 include ../../../Makefile.config
 
 PACKAGE  := lwt.extra    \
-	    xmlp4.parser \
+	    tyxml.parser \
 	    dbm          \
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \

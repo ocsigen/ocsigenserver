@@ -117,7 +117,7 @@ val of_string : string -> string t
 
 module StringStream : sig
 
-  (** Interface for stream creation (for xmlp4) *)
+  (** Interface for stream creation (for tyxml) *)
   type out = string t
   type m
 

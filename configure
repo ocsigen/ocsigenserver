@@ -50,7 +50,7 @@ test_library () {
 fail_library () {
   echo
   echo "Required library $1 not found!"
-  [ -z "$2"] || echo "===> $2"
+  [ -z "$2" ] || echo "===> $2"
   exit 1
 }
 
@@ -60,7 +60,7 @@ check_library () {
   if test_library $1; then
       return
   else
-      fail_library $1 $2
+      fail_library $1 "$2"
   fi
 }
 
@@ -436,7 +436,7 @@ check_library netsys \
 check_library pcre "See: http://ocaml.info/home/ocaml_sources.html"
 check_library cryptokit "See: http://pauillac.inria.fr/~xleroy/software.html#cryptokit"
 
-check_library xmlp4 "See: ???"
+check_library tyxml "See: http://ocsigen.org/tyxml/"
 
 # Check Sqlite3
 case "$with_sqlite" in

@@ -3,7 +3,7 @@ include ../../Makefile.config
 PACKAGE  := lwt.unix     \
 	    lwt.react    \
             netstring    \
-	    xmlp4.parser \
+	    tyxml.parser \
 
 LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}

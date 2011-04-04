@@ -22,7 +22,7 @@ package "commandline" (
 )
 
 package "baselib" (
-  requires = "lwt,netstring,cryptokit,findlib,xmlp4"
+  requires = "lwt,netstring,cryptokit,findlib,tyxml"
   version = "[distributed with Ocsigen server]"
   description = "Base library for Ocsigen server"
   archive(byte) = "baselib.cma"
@@ -30,7 +30,7 @@ package "baselib" (
 )
 
 package "http" (
-  requires = "%%NAME%%.baselib,lwt.ssl,xmlp4"
+  requires = "%%NAME%%.baselib,lwt.ssl,tyxml"
   version = "[distributed with Ocsigen server]"
   description = "HTTP library for Ocsigen server"
   archive(byte) = "http.cma"

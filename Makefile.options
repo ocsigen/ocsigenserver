@@ -26,8 +26,8 @@ SERVERPACKAGE  := lwt.ssl           \
 	          lwt.extra         \
                   findlib           \
 	          cryptokit         \
-	          xmlp4.parser      \
-	          xmlp4.syntax      \
+	          tyxml.parser      \
+	          tyxml.syntax      \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVERPACKAGE})\"; \
