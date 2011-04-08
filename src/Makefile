@@ -26,7 +26,7 @@ files/META: files/META.in ../Makefile.config ../Makefile.options Makefile
 	cat $< \
 	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
 	  | sed s/%%NAME%%/$(PROJECTNAME)/g \
-	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVERPACKAGE})/g \
+	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVER_PACKAGE})/g \
 	  > $@
 
 files/META.${PROJECTNAME}: files/META.in ../Makefile.config ../Makefile.options Makefile

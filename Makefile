@@ -80,7 +80,7 @@ install.files:
                 $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory
-	$(INSTALL) --m 644 src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
+	$(INSTALL) -m 644 src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
 	$(INSTALL) -d -m 755 -o ${OCSIGENUSER} -g ${OCSIGENGROUP} \
 	  $(TEMPROOT)$(LOGDIR)
 	 ## Static files

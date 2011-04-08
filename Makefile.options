@@ -17,18 +17,21 @@ BYTEDBG :=p ${BYTEDBG}
 OPTDBG  += -p
 endif
 
-## ${SERVERPACKAGE} is not only used to build the 'ocsigenserver' executable
+## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
 ## but also to generate src/baselib/ocsigen_config.ml and src/files/META
 
-SERVERPACKAGE  := lwt.ssl           \
+SERVER_PACKAGE := lwt.ssl           \
 	          lwt.extra         \
+	          netstring         \
                   findlib           \
 	          cryptokit         \
+		  tyxml             \
 	          tyxml.parser      \
-	          tyxml.syntax      \
+
+SERVER_SYNTAX :=  tyxml.syntax      \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
-	                            -separator '\";\"' ${SERVERPACKAGE})\"; \
+	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \
 	       \"${PROJECTNAME}.commandline\";  \
                \"${PROJECTNAME}.polytables\";   \
                \"${PROJECTNAME}.cookies\";      \
