@@ -18,7 +18,7 @@
 (**
    Polymorphic tables (using Map) 
    @author Vincent Balat
-   @author Jérôme Vouillon
+   @author JÃ©rÃ´me Vouillon
 *)
 
 
