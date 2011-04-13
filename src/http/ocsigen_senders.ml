@@ -57,8 +57,8 @@ module Make_XML_Content(XML : XML_sigs.Iterable)
 
     end
 
-module Xhtml_content = Make_XML_Content(XML)(XHTML.M)
-module Html5_content = Make_XML_Content(XML)(HTML5.M)
+module Xhtml_content = Make_XML_Content(XML.M)(XHTML.M)
+module Html5_content = Make_XML_Content(XML.M)(HTML5.M)
 
 
 (*****************************************************************************)
