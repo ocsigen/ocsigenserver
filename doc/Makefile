@@ -3,7 +3,7 @@ include ../src/Makefile.filelist
 
 OCAMLDOC := ${OCAMLFIND} ocamldoc
 
-LIBS := -package lwt,xmlp4,ssl \
+LIBS := -package lwt,tyxml,ssl \
         ${addprefix -I ../src/, baselib http server extensions }
 
 doc: odoc
