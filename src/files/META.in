@@ -22,7 +22,7 @@ package "commandline" (
 )
 
 package "baselib" (
-  requires = "lwt,netstring,cryptokit,findlib,tyxml"
+  requires = "lwt.unix,netstring,cryptokit,findlib,tyxml"
   version = "[distributed with Ocsigen server]"
   description = "Base library for Ocsigen server"
   archive(byte) = "baselib.cma"
