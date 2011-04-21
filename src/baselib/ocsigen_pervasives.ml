@@ -691,12 +691,12 @@ module Ip_address = struct
       | _::l -> aux l
     in
     Lwt.bind
-      (Lwt_lib.getaddrinfo host "" [])
+      (Lwt_unix.getaddrinfo host "" [])
       aux
 
   let getnameinfo ia p =
     try
-      Lwt_lib.getnameinfo (Unix.ADDR_INET (ia, p)) [Unix.NI_NAMEREQD] >>= fun r ->
+      Lwt_unix.getnameinfo (Unix.ADDR_INET (ia, p)) [Unix.NI_NAMEREQD] >>= fun r ->
 	Lwt.return r.Unix.ni_hostname
     with
     | Not_found ->

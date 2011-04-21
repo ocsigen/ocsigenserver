@@ -4,8 +4,8 @@ all: byte opt
 
 PACKAGE  := ${SERVER_PACKAGE} ${SERVER_SYNTAX} ## See ../../Makefile.options
 LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}} -I .
-OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} -thread
-OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} -thread
+OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} ${THREAD}
+OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
 
@@ -51,9 +51,9 @@ SERVERLIBS := ${PARSECOMMANDLINE}       \
 SERVEROBJS := server_main.cmo
 
 ${PROJECTNAME}: ${SERVERLIBS} ${SERVEROBJS}
-	${OCAMLC} -o $@ -linkpkg -linkall -thread ${LIBS} $^
+	${OCAMLC} -o $@ -linkpkg -linkall ${THREAD} ${LIBS} $^
 ${PROJECTNAME}.opt: ${SERVERLIBS:.cma=.cmxa} ${SERVEROBJS:.cmo=.cmx}
-	${OCAMLOPT} -o $@ -linkpkg -linkall -thread ${LIBS} $^
+	${OCAMLOPT} -o $@ -linkpkg -linkall ${THREAD} ${LIBS} $^
 
 ### Toplevel ####
 
@@ -62,7 +62,7 @@ top: servertop
 
 servertop: ${SERVERLIBS}
 	OCAMLPATH=${SRC}/src/files/:${OCAMLPATH} ${OCAMLFIND} ocamlmktop \
-	   -o $@ -linkall -linkpkg -thread ${LIBS} $^
+	   -o $@ -linkall -linkpkg ${THREAD} ${LIBS} $^
 
 ##########
 

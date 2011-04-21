@@ -1,13 +1,14 @@
 include ../../../Makefile.config
 
-PACKAGE  := lwt.extra    \
+PACKAGE  := ${LWT_EXTRA_PACKAGE} \
+	    lwt.unix     \
 	    tyxml.parser \
 	    dbm          \
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} -thread
-OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} -thread
+OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} ${THREAD}
+OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
 

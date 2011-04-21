@@ -102,6 +102,7 @@ val get_shutdown_timeout : unit -> float option
 
 val display_version : unit -> 'a
 
+val init_preempt : int -> int -> (string -> unit) -> unit
 
 (**/**)
 

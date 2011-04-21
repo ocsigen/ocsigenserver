@@ -1,6 +1,7 @@
 
 BYTEDBG :=
 OPTDBG  :=
+THREAD  :=
 
 ifeq "$(DEBUG)" "YES"
 BYTEDBG += -g
@@ -17,11 +18,21 @@ BYTEDBG :=p ${BYTEDBG}
 OPTDBG  += -p
 endif
 
+ifeq "$(PREEMPTIVE)" "YES"
+  THREAD += -thread
+endif
+
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
 ## but also to generate src/baselib/ocsigen_config.ml and src/files/META
 
+LWT_EXTRA_PACKAGE :=
+
+ifeq "$(PREEMPTIVE)" "YES"
+  LWT_EXTRA_PACKAGE += lwt.extra
+endif
+
 SERVER_PACKAGE := lwt.ssl           \
-	          lwt.extra         \
+	          ${LWT_EXTRA_PACKAGE} \
 	          netstring         \
                   findlib           \
 	          cryptokit         \

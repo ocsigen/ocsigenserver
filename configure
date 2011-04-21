@@ -80,6 +80,7 @@ set_defaults () {
     with_sqlite=1
     with_camlzip=1
     with_dbm=1
+    with_preempt=0
     prefix="/usr/local"
     bindir=""
     logdir=""
@@ -106,7 +107,7 @@ full_pwd=`pwd`
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
 eoptions="debug annot natdynlink"
-woptions="sqlite dbm camlzip"
+woptions="sqlite dbm camlzip preempt"
 
 print_options () {
 	for opt in $eoptions; do
@@ -409,7 +410,7 @@ check_library lwt "See: http://ocsigen.org/lwt"
 check_library lwt.unix  "Missing support for 'unix' in lwt."
 check_library lwt.react "Missing support for 'react' in lwt."
 check_library lwt.ssl   "Missing support for 'ssl' in lwt."
-check_library lwt.extra "Missing support for 'extra' in lwt."
+#check_library lwt.extra "Missing support for 'extra' in lwt."
 
 check_library netstring \
     "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
@@ -448,6 +449,17 @@ if [ "$with_camlzip" -gt 0 ]; then
 	fail_library camlzip "https://forge.ocamlcore.org/projects/camlzip/"
     else
 	with_camlzip=0
+    fi
+fi
+
+# Check Lwt.extra
+if [ "$with_preempt" -gt 0 ]; then
+    if test_library lwt.extra; then
+	echo -n
+    elif [ "$with_preempt" -gt 1 ]; then
+	fail_library lwt.extra "Missing support for 'extra' in lwt."
+    else
+	with_preempt=0
     fi
 fi
 
@@ -500,6 +512,11 @@ if [ $with_camlzip -gt 0 ] ; then
 else
 	with_camlzip="NO"
 fi
+if [ $with_preempt -gt 0 ] ; then
+	with_preempt="YES"
+else
+	with_preempt="NO"
+fi
 
 ocamlinclude=`ocamlfind printconf stdlib`
 
@@ -547,6 +564,9 @@ OCSIPERSISTSQLITE:=$with_sqlite
 
 # Do you want ocsipersist with dbm? YES/NO
 OCSIPERSISTDBM:=$with_dbm
+
+# Do you want preemptive threads ? YES/NO
+PREEMPTIVE:=$with_preempt
 
 # Do you want debugging information (-g) ? YES/NO
 DEBUG:=$enable_debug

@@ -1246,7 +1246,7 @@ let start_server () = try
         raise
           (Config_file_error "maxthreads should be greater than minthreads");
 
-      ignore (Lwt_preemptive.init minthreads maxthreads Ocsigen_messages.errlog);
+      ignore (Ocsigen_config.init_preempt minthreads maxthreads Ocsigen_messages.errlog);
 
       (* Now I can load the modules *)
       Dynlink_wrapper.init ();
