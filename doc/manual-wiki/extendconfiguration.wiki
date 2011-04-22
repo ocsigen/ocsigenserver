@@ -14,7 +14,7 @@ To use that extension, first load it from the configuration file:
 == Options
 === Following symlinks
 
-For extensions that access files on the filesystem ([[extensions/staticmod|staticmod]],[[extensions/eliom|eliom]],...), you can decide whether symlinks should be followed or not, using the tag
+For extensions that access files on the filesystem (<<a_manual chapter="staticmod"|staticmod>>,...), you can decide whether symlinks should be followed or not, using the tag
 
 {{{
 <followsymlinks value="VAL" />
@@ -25,7 +25,7 @@ where {{{VAL}}} can be:
     * {{{always}}} always follows symlinks (more efficient). Note that this setting is not permitted in userconf files
     * {{{ownermatch}}} symlinks are followed only if the owner of the symlink and of the target coincide. (Default value)
 
-Notice that staticmod partially overrides this setting when it not used in a userconf file. When used with the syntax {{{<static dir="dir" />}}}, the checks start only after the directory {{{dir}}}. In regexp mode, the checks only start after the value given by the {{{root}}} attribute. See the documentation of [[extensions/staticmod|staticmod]] for details.
+Notice that staticmod partially overrides this setting when it not used in a userconf file. When used with the syntax {{{<static dir="dir" />}}}, the checks start only after the directory {{{dir}}}. In regexp mode, the checks only start after the value given by the {{{root}}} attribute. See the documentation of <<a_manual chpater="staticmod"|staticmod>>] for details.
 
 === Hiding or forbidding local files
 
@@ -106,7 +106,7 @@ as the maximum size for these files. The two options are named {{{uploaddir}}} a
 <uploaddir>/tmp</uploaddir>
 <maxuploadfilesize>1MB</maxuploadfilesize>
 }}}
-The arguments are the same as for the global corresponding options ; see the [[config#upload|configuration]] page for details. In order to disallow uploading for a specific
+The arguments are the same as for the global corresponding options ; see the <<a_manual chapter="config" fragment="upload"|configuration>> page for details. In order to disallow uploading for a specific
 host or site, use an empty path: {{{<uploaddir></uploaddir>}}}.
 
 //Warning//

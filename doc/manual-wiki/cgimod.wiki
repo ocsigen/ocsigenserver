@@ -1,6 +1,6 @@
 =CGImod=
 
-CGImod is a module for running CGI scripts with ocsigen. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [[../trac/|here]].
+CGImod is a module for running CGI scripts with ocsigen. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [[site:trac/|here]].
 
 == CGImod ==
 

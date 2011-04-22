@@ -1,6 +1,6 @@
 =Accesscontrol=
 
-Accesscontrol is in beta version. Submit your bugs and feature wishes [[../trac/|here]].
+Accesscontrol is in beta version. Submit your bugs and feature wishes [[site:trac/|here]].
 
 = The accesscontrol extension =
 

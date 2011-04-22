@@ -22,7 +22,7 @@ The configuration file specified in {{{conf}}} will be parsed for each request m
 the user configuration file will behave as though executed in a {{{<site>}}} tag of root {{{prefix}}}, while
 {{{url}}} is used to match the remainder of the url (the path {{{prefix/url}}} must be equal to {{{regexp}}}).
 Finally, the option {{{localpath}}} is used to specify the files the user is allowed to send: in userconf mode,
-all the paths used in [[extensions/staticmod|Staticmod]] must be relative, and are appended after the evaluation of
+all the paths used in <<a_manual chapter="staticmod" |Staticmod >> must be relative, and are appended after the evaluation of
 {{{localpath}}}.
 
 

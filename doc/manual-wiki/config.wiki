@@ -323,7 +323,7 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 //Warning:// the maximum size of files is also limited by {{{<maxrequestbodysize>}}}.
 
 Starting from Ocsigen 1.3, you can redefine the options {{{<uploaddir>}}} and {{{<maxuploadfilesize>}}} on each host or inside {{{<site>}}} tags. The syntax is the same
-as above. There are however some limitations; please read carefully the documentation of the module [[extensions/extendconfiguration#upload|Extendconfiguration]] before using this functionality.
+as above. There are however some limitations; please read carefully the documentation of the module <<a_manual chapter="extendconfiguration" fragment="upload"|Extendconfiguration>> before using this functionality.
 
         
 ===={{{<maxrequestbodysize>}}} : maximum size of the body of incoming requests

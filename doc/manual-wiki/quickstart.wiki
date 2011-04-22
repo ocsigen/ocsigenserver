@@ -27,20 +27,20 @@ and go to the URL {{{http://localhost:8080/}}} to see the default Web site.
 
 ==Personalizing my configuration
 
-Have a look at the page [[config|Configuration]] to learn how to personalize the configuration file and adapt it to your needs.
+Have a look at the page <<a_manual chapter="config"|Configuration>> to learn how to personalize the configuration file and adapt it to your needs.
 
-The documentation on extensions is available [[extensions/|here]]. The main extensions you need for basic use are:
+The main extensions you need for basic use are:
 
-;Staticmod
-:for serving static pages, 
-;Accesscontrol
-:if you need to restrict the access to the sites, 
-;Eliom
-:if you want to use dynamic Web sites written in OCaml with Eliom, 
-;CGImod
-:if you want to use dynamic Web sites written as CGI scripts (for example one way to run PHP pages), 
-;Revproxy
-:if you want to redirect some requests to another Web server, like Tomcat or Apache (another way to run PHP pages). 
+;<<a_manual chapter="staticmod"|Staticmod>>
+:for serving static pages,
+;<<a_manual chapter="accesscontrol"|Accesscontrol>>
+:if you need to restrict the access to the sites,
+;<<a_manual chapter="eliom"|Eliom>>
+:if you want to use dynamic Web sites written in OCaml with Eliom,
+;<<a_manual chapter="cgimod"|CGImod>>
+:if you want to use dynamic Web sites written as CGI scripts (for example one way to run PHP pages),
+;<<a_manual chapter="revproxy"|Revproxy>>
+:if you want to redirect some requests to another Web server, like Tomcat or Apache (another way to run PHP pages).
 
 ==Writing my own dynamic sites with Eliom
 
