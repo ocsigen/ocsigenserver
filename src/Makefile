@@ -123,7 +123,8 @@ raw_install:
 	$(INSTALL) -m 644 \
 	  $(PLUGINS_INTF) $(INSTALL_PLUGINS_IMPL) $(PLUGINS_DOC) \
 	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-	$(INSTALL) -m 755 $(INSTALL_PLUGINS_BIN) \
+	[ -z "$(strip ${INSTALL_PLUGINS_BIN})" ] || \
+	  $(INSTALL) -m 755 $(INSTALL_PLUGINS_BIN) \
 	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
 
 uninstall:
