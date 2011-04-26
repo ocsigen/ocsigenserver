@@ -463,6 +463,11 @@ if [ "$with_preempt" -gt 0 ]; then
     fi
 fi
 
+if [ "$with_sqlite" -eq 1 ] && [ "$with_preempt" -eq -1 ]; then
+    echo "preemptive threads are needed by sqlite, enable it with -with-preempt"
+    exit 1
+fi
+
 # Check rlwrap or ledit
 if test_binary rlwrap; then
     rlwrap=rlwrap
