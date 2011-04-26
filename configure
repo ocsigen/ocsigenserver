@@ -80,7 +80,7 @@ set_defaults () {
     with_sqlite=1
     with_camlzip=1
     with_dbm=1
-    with_preempt=0
+    with_preempt=1
     prefix="/usr/local"
     bindir=""
     logdir=""
