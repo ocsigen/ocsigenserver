@@ -29,7 +29,8 @@ module Xhtml_content :
 module Html5_content :
   Ocsigen_http_frame.HTTP_CONTENT with type t = HTML5.M.doc
 
-module Make_XML_Content(XML : XML_sigs.Iterable)(TypedXML : XML_sigs.TypedXML(XML).T) :
+module Make_XML_Content(XML : XML_sigs.Iterable)
+                       (TypedXML : XML_sigs.TypedXML with module XML := XML) :
   Ocsigen_http_frame.HTTP_CONTENT with type t = TypedXML.doc
 
 (** content * content-type *)

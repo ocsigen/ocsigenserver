@@ -31,34 +31,35 @@ open Ocsigen_stream
 (** this module instantiate the HTTP_CONTENT signature for an Xhtml content*)
 
 module Make_XML_Content(XML : XML_sigs.Iterable)
-                       (TypedXML : XML_sigs.TypedXML(XML).T) = struct
+                       (TypedXML : XML_sigs.TypedXML with module XML := XML)
+  = struct
 
-      module Xhtmlprinter =
-	XML_print.MakeTyped(XML)(TypedXML)(Ocsigen_stream.StringStream)
+    module Xhtmlprinter =
+      XML_print.MakeTyped(XML)(TypedXML)(Ocsigen_stream.StringStream)
 
-      type t = TypedXML.doc
-      type options = unit
+    type t = TypedXML.doc
+    type options = unit
 
-      let get_etag_aux x = None
+    let get_etag_aux x = None
 
-      let get_etag ?options c = None
+    let get_etag ?options c = None
 
-      let result_of_content ?options c =
-	let x = Xhtmlprinter.print ~advert c in
-	let default_result = default_result () in
-	Lwt.return
-          {default_result with
-           res_content_length = None;
-           res_content_type = Some TypedXML.Info.content_type;
-           res_etag = get_etag c;
-           res_headers= Http_headers.dyn_headers;
-           res_stream = (x, None)
-	 }
+    let result_of_content ?options c =
+      let x = Xhtmlprinter.print ~advert c in
+      let default_result = default_result () in
+      Lwt.return
+        {default_result with
+          res_content_length = None;
+          res_content_type = Some TypedXML.Info.content_type;
+          res_etag = get_etag c;
+          res_headers= Http_headers.dyn_headers;
+          res_stream = (x, None)
+	}
 
-    end
+  end
 
-module Xhtml_content = Make_XML_Content(XML.M)(XHTML.M)
-module Html5_content = Make_XML_Content(XML.M)(HTML5.M)
+module Xhtml_content = Make_XML_Content(XML)(XHTML.M)
+module Html5_content = Make_XML_Content(XML)(HTML5.M)
 
 
 (*****************************************************************************)
