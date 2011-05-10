@@ -51,7 +51,6 @@ let _ =
     (fun e -> Ocsigen_messages.errlog ("Uncaught Exception after lwt timeout: "^
                                  Printexc.to_string e))
 
-external disable_nagle : Unix.file_descr -> unit = "disable_nagle"
 external initgroups : string -> int -> unit = "initgroups_stub"
 
 let make_ipv6_socket addr port =
@@ -965,7 +964,7 @@ let rec wait_connection use_ssl port socket =
          Lwt.catch
            (fun () ->
               Lwt_unix.set_close_on_exec s;
-              disable_nagle (Lwt_unix.unix_file_descr s);
+              Lwt_unix.setsockopt s Unix.TCP_NODELAY true;
               begin if use_ssl then
                 Lwt_ssl.ssl_accept s !sslctx
               else

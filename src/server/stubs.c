@@ -7,17 +7,6 @@
 #include <netinet/tcp.h>
 #include <grp.h>
 
-CAMLprim value disable_nagle(value fd)
-{
-  CAMLparam1(fd);
-  int i = 1;
-
-  setsockopt(Int_val(fd), IPPROTO_TCP, TCP_NODELAY,
-             &i, sizeof(int));
-
-  CAMLreturn(Val_int(0));
-}
-
 CAMLprim value initgroups_stub(value user, value group)
 {
   CAMLparam2(user, group);
