@@ -51,8 +51,6 @@ let _ =
     (fun e -> Ocsigen_messages.errlog ("Uncaught Exception after lwt timeout: "^
                                  Printexc.to_string e))
 
-external initgroups : string -> int -> unit = "initgroups_stub"
-
 let make_ipv6_socket addr port =
   let socket = Lwt_unix.socket Unix.PF_INET6 Unix.SOCK_STREAM 0 in
   Lwt_unix.set_close_on_exec socket;
@@ -1223,7 +1221,7 @@ let start_server () = try
         if current_uid = 0 then begin
           match user with
             | None -> ()
-            | Some user -> initgroups user gid
+            | Some user -> Unix.initgroups user gid
         end;
         Unix.setgid gid;
         Unix.setuid uid;
