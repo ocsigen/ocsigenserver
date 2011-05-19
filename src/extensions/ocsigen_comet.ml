@@ -53,6 +53,8 @@ let map_rev_accu_split func lst accu1 accu2 =
   in
     aux accu1 accu2 lst
 
+let section = Lwt_log.Section.make "Comet"
+let () = OMsg.register_section section
 
 (*** EXTENSION OPTIONS ***)
 
@@ -176,10 +178,13 @@ end = struct
   (* creation : newly created channel is stored in the map as a side effect *)
   let do_create name =
     if maxed_out_virtual_channels ()
-    then (OMsg.warning "Too many virtual channels, associated exception raised";
-          raise Too_many_virtual_channels)
-    else
-      let (read , write ) = Lwt.task () in
+    then begin
+      OMsg.warning
+        ~section
+        "Too many virtual channels, associated exception raised";
+      raise Too_many_virtual_channels
+    end else
+      let (read , write) = Lwt.task () in
       let ch =
         {
           ch_id = name ;
@@ -359,15 +364,22 @@ end = struct
   let activated, activate, deactivate =
     let activated = ref true in
       ((fun () -> !activated),
-       (fun () -> if !activated
-                  then ()
-                  else (OMsg.warning "Comet is being activated";
-                        activated := true)),
-       (fun () -> if !activated
-                  then (OMsg.warning "Comet is being deactivated";
-                        activated := false;
-                        kill_all_connections ())
-                  else ())
+       (fun () ->
+         if !activated then
+           ()
+         else begin
+           OMsg.warning ~section "Comet is being activated";
+           activated := true
+         end
+       ),
+       (fun () ->
+         if !activated then begin
+           OMsg.warning ~section "Comet is being deactivated";
+           activated := false;
+           kill_all_connections ()
+         end else
+           ()
+       )
       )
 
   let warn_kill =
