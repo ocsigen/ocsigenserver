@@ -151,12 +151,12 @@ let register_section s = sectmap := SectMap.add (Lwt_log.Section.name s) s !sect
 let find_section s = SectMap.find s !sectmap
 
 let level_of_string = function
-  | "Debug"   -> Some Lwt_log.Debug
-  | "Info"    -> Some Lwt_log.Info
-  | "Notice"  -> Some Lwt_log.Notice
-  | "Warning" -> Some Lwt_log.Warning
-  | "Error"   -> Some Lwt_log.Error
-  | "Fatal"   -> Some Lwt_log.Fatal
+  | "Debug"   | "debug"  -> Some Lwt_log.Debug
+  | "Info"    | "info"   -> Some Lwt_log.Info
+  | "Notice"  | "notice" -> Some Lwt_log.Notice
+  | "Warning" | "warning"-> Some Lwt_log.Warning
+  | "Error"   | "error"  -> Some Lwt_log.Error
+  | "Fatal"   | "fatal"  -> Some Lwt_log.Fatal
   | _ -> None
 
 let command_f exc _ = function
