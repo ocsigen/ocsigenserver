@@ -24,9 +24,6 @@ let access_file = "access.log"
 let warning_file = "warnings.log"
 let error_file = "errors.log"
 
-
-let access_sect = Lwt_log.Section.make "access"
-
 let full_path f = Filename.concat (Ocsigen_config.get_logdir ()) f
 
 let error_log_path () = full_path error_file
@@ -39,24 +36,36 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
 
   (* CHECK: we are closing asynchronously!  That should be ok, though. *)
   List.iter (fun l -> ignore (Lwt_log.close l : unit Lwt.t)) !loggers;
-  Lwt_log.file (full_path access_file) () >>= fun acc ->
-  Lwt_log.file (full_path warning_file) () >>= fun war ->
-  Lwt_log.file (full_path error_file) () >>= fun err ->
+
+  let open_log path =
+    let path = full_path path in
+    try_lwt
+      Lwt_log.file path ()
+    with
+      | Unix.Unix_error(error,_,_) ->
+	raise_lwt (Ocsigen_config.Config_file_error (
+	  Printf.sprintf "can't open log file %s: %s"
+	    path (Unix.error_message error)))
+  in
+
+  lwt acc = open_log access_file in
+  lwt war = open_log  warning_file in
+  lwt err = open_log  error_file in
   loggers := [acc; war; err];
 
   Lwt_log.default :=
     Lwt_log.broadcast
       [Lwt_log.dispatch
          (fun sect lev ->
-            if sect = access_sect then acc else
+            if Lwt_log.Section.name sect = "access" then acc else
             match lev with
-            | Lwt_log.Error | Lwt_log.Fatal -> err
+              Lwt_log.Error | Lwt_log.Fatal -> err
             | _                             -> war);
        Lwt_log.dispatch
          (fun sect lev ->
             let show =
               match lev with
-              | Lwt_log.Error | Lwt_log.Fatal ->
+                Lwt_log.Error | Lwt_log.Fatal ->
                   not (Ocsigen_config.get_silent ())
               | _ ->
                   Ocsigen_config.get_verbose ()
@@ -81,17 +90,17 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
   lwt () = Lwt_unix.chown (full_path error_file) uid gid in
 
   Lwt.return ()
-                
-(****)
 
 (****)
+
+let access_sect = Lwt_log.Section.make "access"
 
 let accesslog s =
   ignore (Lwt_log.notice ~section:access_sect s : unit Lwt.t)
 
-let errlog ?section s = ignore (Lwt_log.error ?section s : unit Lwt.t)
+let errlog s = ignore (Lwt_log.error s : unit Lwt.t)
 
-let warning ?section s = ignore (Lwt_log.warning ?section s : unit Lwt.t)
+let warning s = ignore (Lwt_log.warning s : unit Lwt.t)
 
 let unexpected_exception e s =
   warning ("Unexpected exception in "^s^": "^Printexc.to_string e)
@@ -139,43 +148,6 @@ let console2 =
     print_endline
   else
     (fun s -> ())
-
-
-(*Dynamic log level changing*)
-
-module SectMap = Map.Make (String)
-let sectmap = ref SectMap.empty
-
-let register_section s = sectmap := SectMap.add (Lwt_log.Section.name s) s !sectmap
-
-let find_section s = SectMap.find s !sectmap
-
-let level_of_string = function
-  | "Debug"   -> Some Lwt_log.Debug
-  | "Info"    -> Some Lwt_log.Info
-  | "Notice"  -> Some Lwt_log.Notice
-  | "Warning" -> Some Lwt_log.Warning
-  | "Error"   -> Some Lwt_log.Error
-  | "Fatal"   -> Some Lwt_log.Fatal
-  | _ -> None
-
-let command_f exc _ = function
-  | [sect_name] -> begin
-      try
-        Lwt_log.Section.reset_level (find_section sect_name);
-      with Not_found -> ()
-      end;
-      Lwt.return ()
-  | [sect_name; level_name] -> begin
-      try
-        match level_of_string level_name with
-        | None -> Lwt_log.Section.reset_level (find_section sect_name)
-        | Some l -> Lwt_log.Section.set_level (find_section sect_name) l
-      with Not_found -> ()
-      end;
-      Lwt.return ()
-  | _ -> Lwt.fail exc
-
 
 (*
 

@@ -23,10 +23,10 @@
 val accesslog : string -> unit
 
 (** Write a message in errors.log *)
-val errlog : string -> unit
+val errlog : ?section:Lwt_log.section -> string -> unit
 
 (** Write a message in warnings.log *)
-val warning : string -> unit
+val warning : ?section:Lwt_log.section -> string -> unit
 
 (** Write a message only in debugging mode (-V option) - Non cooperative *)
 val debug : (unit -> string) -> unit
@@ -57,7 +57,18 @@ val unexpected_exception : exn -> string -> unit
 (** Path to the error log file *)
 val error_log_path : unit -> string
 
+
+(** Register sections (so as to be able to dynamically change their level)
+    Level change is obtain by piping `logs: <section_name> <level_name>` to the
+    Ocsigen command-pipe. Parameter <section_name> must be the name of a
+    registered section (or else nothing happens), and <level_name> must be one
+    of `Debug`, `Info`, `Notice`, `Warning`, `Error`, `Fatal` (or else the
+    default level is restored)
+ *)
+val register_section: Lwt_log.section -> unit
+
 (**/**)
 
 val open_files : ?user:string option -> ?group:string option -> unit -> unit Lwt.t
 val bip : int -> unit
+val command_f : exn -> string -> string list -> unit Lwt.t
