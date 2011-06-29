@@ -107,6 +107,9 @@ module Dlist : sig
   val maxsize : 'a t -> int
   val value : 'a node -> 'a
 
+  (** returns the timer of the Dlist *)
+  val get_timer : 'a t -> float option
+
   (** The list to which the node belongs *)
   val list_of : 'a node -> 'a t option
 

@@ -51,6 +51,9 @@ sig
   val size : 'a t -> int
   val maxsize : 'a t -> int
 
+  (** returns the timer of the Dlist *)
+  val get_timer : 'a t -> float option
+
   val value : 'a node -> 'a
   val list_of : 'a node -> 'a t option
 
@@ -295,6 +298,9 @@ end = struct
   let oldest a = a.oldest
   let size c = c.size
   let maxsize c = c.maxsize
+  let get_timer c = match c.time_bound with
+    | None -> None
+    | Some tb -> Some tb.timer
 
   let value n = n.value
   let list_of n = n.mylist
@@ -426,24 +432,33 @@ struct
           a weak hash table *)
       }
 
-  let clear cache =
-    let size = Dlist.maxsize cache.pointers in
-    cache.pointers <- Dlist.create size;
-    cache.table <- H.create size
+  let mk f ?timer size =
+    let (l, t) as a = (Dlist.create ?timer size, H.create size) in
+    Dlist.set_finaliser_after
+      (fun n -> H.remove t (Dlist.value n))
+      l;
+    a
 
-  let create f ?timer size =
-    let rec cache = {pointers = Dlist.create ?timer size;
-                     table = H.create size;
-                     finder = f;
-                     clear = f_clear;
-                    }
+  let rec create f ?timer size =
+    let rec cache =
+      let (l, t) = mk f ?timer size in
+      {pointers = l;
+       table = t;
+       finder = f;
+       clear = f_clear;
+      }
     and f_clear = (fun () -> clear cache)
     in
-    Dlist.set_finaliser_after
-      (fun n -> H.remove cache.table (Dlist.value n))
-      cache.pointers;
     Weak.add clear_all f_clear;
     cache
+
+  and clear cache =
+    let size = Dlist.maxsize cache.pointers in
+    let timer = Dlist.get_timer cache.pointers in
+    let (l, t) = mk cache.finder ?timer size in
+    cache.pointers <- l;
+    cache.table <- t
+
 
   (* not exported *)
   let poke cache node =
