@@ -58,6 +58,14 @@ sig
       returns the list of removed values *)
   val remove_n_oldest : 'a t -> int -> 'a list
 
+  (** fold over the elements from the cache starting from the newest
+      to the oldest *)
+  val fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+
+  (** fold over the elements from the cache starting from the oldest
+      to the newest *)
+  val fold_back : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+
   (** Move a node from one dlist to another one, without finalizing.
       If one value is removed from the destination list (because its
       maximum size is reached), it is returned (after finalisation). *)
@@ -325,6 +333,35 @@ end = struct
       | None -> None
       | Some v -> remove v; Some v.value
 
+  (* fold over the elements from the newest to the oldest *)
+  let fold f accu {newest} =
+    match newest with
+      | None -> accu
+      | Some newest ->
+	let rec fold accu node =
+	  let accu = f accu node.value in
+	  match node.prev with
+	    | None -> accu
+	    | Some new_node when new_node == newest -> accu
+	    | Some new_node ->
+	      fold accu new_node
+	in
+	fold accu newest
+
+  (* fold over the elements from the oldest to the newest *)
+  let fold_back f accu {oldest} =
+    match oldest with
+      | None -> accu
+      | Some oldest ->
+	let rec fold accu node =
+	  let accu = f accu node.value in
+	  match node.succ with
+	    | None -> accu
+	    | Some new_node when new_node == oldest -> accu
+	    | Some new_node ->
+	      fold accu new_node
+	in
+	fold accu oldest
 
   let set_maxsize l m =
     let size = l.size in

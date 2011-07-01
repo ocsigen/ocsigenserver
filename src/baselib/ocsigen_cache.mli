@@ -114,6 +114,14 @@ module Dlist : sig
       returns the list of removed values *)
   val remove_n_oldest : 'a t -> int -> 'a list
 
+  (** fold over the elements from the cache starting from the newest
+      to the oldest *)
+  val fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+
+  (** fold over the elements from the cache starting from the oldest
+      to the newest *)
+  val fold_back : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+
   (** Move a node from one dlist to another one, without finalizing.
       If one value is removed from the destination list (because its
       maximum size is reached), it is returned (after finalisation). *)
