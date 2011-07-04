@@ -1,6 +1,6 @@
 include ../../Makefile.config
 
-LIBS     := -package lwt,netstring,cryptokit,findlib,tyxml -package lwt.syntax -syntax camlp4o
+LIBS     := -package lwt,netstring,cryptokit,findlib,tyxml,lwt.syntax
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
@@ -18,6 +18,8 @@ FILES := ocsigen_pervasives.ml     \
 	 dynlink_wrapper.ml        \
          ocsigen_loader.ml         \
 	 ocsigen_stream.ml         \
+
+INTF_NOP4 := ocsigen_pervasives.mli
 
 PREDEP := ocsigen_config.ml dynlink_wrapper.ml
 
@@ -116,11 +118,14 @@ polytables.cmxa: polytables.cmx
 ##########
 
 %.cmi: %.mli
+	$(OCAMLC) -syntax camlp4o ${LIBS} -c $<
+${INTF_NOP4:.mli=.cmi}: \
+%.cmi: %.mli
 	$(OCAMLC) ${LIBS} -c $<
 %.cmo: %.ml
-	$(OCAMLC) ${LIBS} -c $<
+	$(OCAMLC) -syntax camlp4o ${LIBS} -c $<
 %.cmx: %.ml
-	$(OCAMLOPT) ${LIBS} -c $<
+	$(OCAMLOPT) -syntax camlp4o ${LIBS} -c $<
 %.cmxs: %.cmxa
 	$(OCAMLOPT) -shared -linkall -o $@ $<
 
@@ -138,7 +143,8 @@ distclean: clean
 ## Dependencies
 
 depend: ${PREDEP}
-	$(OCAMLDEP) ${LIBS} *.mli *.ml > .depend
+	$(OCAMLDEP) ${LIBS} -syntax camlp4o $(filter-out ${INTF_NOP4},$(wildcard *.mli)) *.ml > .depend
+	$(OCAMLDEP) ${LIBS} ${INTF_NOP4} >> .depend
 
 FORCE:
 -include .depend
