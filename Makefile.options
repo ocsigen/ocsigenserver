@@ -38,6 +38,7 @@ SERVER_PACKAGE := lwt.ssl           \
 	          cryptokit         \
 		  tyxml             \
 	          tyxml.parser      \
+                  dynlink           \
 
 SERVER_SYNTAX :=  tyxml.syntax      \
 

@@ -1,6 +1,6 @@
 description = "Ocsigen server library"
 version = "dev"
-requires = "%%NAME%%.commandline,%%NAME%%.polytables,%%NAME%%.http,%%DEPS%%"
+requires = "%%NAME%%.commandline,%%NAME%%.polytables,%%NAME%%.http,%%NAME%%.baselib"
 archive(byte) = "ocsigenserver.cma"
 archive(native) = "ocsigenserver.cmxa"
 
@@ -22,7 +22,7 @@ package "commandline" (
 )
 
 package "baselib" (
-  requires = "lwt.unix,netstring,cryptokit,findlib,tyxml"
+  requires = "%%DEPS%%"
   version = "[distributed with Ocsigen server]"
   description = "Base library for Ocsigen server"
   archive(byte) = "baselib.cma"
