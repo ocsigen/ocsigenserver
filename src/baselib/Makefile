@@ -1,6 +1,6 @@
 include ../../Makefile.config
 
-LIBS     := -package lwt,netstring,cryptokit,findlib,tyxml
+LIBS     := -package lwt,netstring,cryptokit,findlib,tyxml -package lwt.syntax -syntax camlp4o
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc

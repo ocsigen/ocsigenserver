@@ -32,13 +32,16 @@ let stderr = Lwt_log.channel `Keep Lwt_io.stderr ()
 
 let loggers = ref []
 
-let open_files () =
+let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get_group ()) () =
+
   (* CHECK: we are closing asynchronously!  That should be ok, though. *)
   List.iter (fun l -> ignore (Lwt_log.close l : unit Lwt.t)) !loggers;
-  Lwt_log.file (full_path access_file) () >>= fun acc ->
-  Lwt_log.file (full_path warning_file) () >>= fun war ->
-  Lwt_log.file (full_path error_file) () >>= fun err ->
+  lwt acc = Lwt_log.file (full_path access_file) () in
+  lwt war = Lwt_log.file (full_path warning_file) () in
+  lwt err = Lwt_log.file (full_path error_file) () in
+
   loggers := [acc; war; err];
+
   Lwt_log.default :=
     Lwt_log.broadcast
       [Lwt_log.dispatch
@@ -57,8 +60,26 @@ let open_files () =
                   Ocsigen_config.get_verbose ()
             in
             if show then stderr else Lwt_log.null)];
+
+  let gid = match group with
+    | None -> Unix.getgid ()
+    | Some group -> (try
+                       (Unix.getgrnam group).Unix.gr_gid
+      with Not_found as e -> ignore (Lwt_log.error "Error: Wrong group"); raise e)
+  in
+
+  let uid = match user with
+    | None -> Unix.getuid ()
+    | Some user -> (try
+                      (Unix.getpwnam user).Unix.pw_uid
+      with Not_found as e -> ignore (Lwt_log.error "Error: Wrong user"); raise e)
+  in
+  lwt () = Lwt_unix.chown (full_path access_file) uid gid in
+  lwt () = Lwt_unix.chown (full_path warning_file) uid gid in
+  lwt () = Lwt_unix.chown (full_path error_file) uid gid in
+
   Lwt.return ()
-                
+
 (****)
 
 let access_sect = Lwt_log.Section.make "access"

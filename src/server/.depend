@@ -64,7 +64,7 @@ ocsigen_server.cmo: ../baselib/polytables.cmi ../baselib/ocsigen_stream.cmi \
     ocsigen_http_client.cmi ../http/ocsigen_headers.cmi \
     ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi \
     ../baselib/ocsigen_config.cmi ../baselib/ocsigen_cache.cmi \
-    ../http/multipart.cmo ../http/http_headers.cmi \
+    ../http/multipart.cmi ../http/http_headers.cmi \
     ../baselib/dynlink_wrapper.cmo ocsigen_server.cmi
 ocsigen_server.cmx: ../baselib/polytables.cmx ../baselib/ocsigen_stream.cmx \
     ../http/ocsigen_senders.cmx ocsigen_range.cmx \

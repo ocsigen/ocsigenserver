@@ -1168,7 +1168,7 @@ let start_server () = try
 
   let run (user, group) (_, ports, sslports) (minthreads, maxthreads) s =
 
-    Lwt_unix.run (Ocsigen_messages.open_files ());
+    Lwt_unix.run (Ocsigen_messages.open_files ~user ~group ());
 
     Lwt_unix.run
       (let wait_end_init, wait_end_init_awakener = wait () in
