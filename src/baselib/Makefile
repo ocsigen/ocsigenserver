@@ -56,7 +56,7 @@ ocsigen_config.ml: ocsigen_config.ml.in ../../Makefile.config ../../Makefile.opt
 	| sed s%_LOGDIR_%$(LOGDIR)% \
 	| sed s%_DATADIR_%$(DATADIR)%g \
 	| sed s%_BINDIR_%$(BINDIR)%g \
-	| sed s%_EXTDIR_%$(EXTLIBDIR)/${PROJECTNAME}/extensions/%g \
+	| sed s%_EXTDIR_%$(LIBDIR)/${PROJECTNAME}/extensions%g \
 	| sed s%_STATICPAGESDIR_%$(STATICPAGESDIR)% \
 	| sed s%_UP_%$(UPLOADDIR)%g \
 	| sed s%_OCSIGENUSER_%$(OCSIGENUSER)%g \

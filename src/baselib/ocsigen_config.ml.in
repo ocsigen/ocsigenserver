@@ -34,6 +34,7 @@ let pidfile = ref None
 let server_name = "Ocsigen"
 let full_server_name = server_name^"/"^version_number
 let is_native = _ISNATIVE_
+let native_ext = if is_native then ".opt" else ""
 
 let builtin_packages =
   List.fold_left (fun a s -> String.Set.add s a) String.Set.empty [_DEPS_]

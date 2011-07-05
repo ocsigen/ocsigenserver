@@ -24,6 +24,8 @@ val server_name : string
 val full_server_name : string
 val version_number : string
 val is_native : bool
+val native_ext : string
+
 val builtin_packages : String.Set.t
 
 val set_logdir : string -> unit
