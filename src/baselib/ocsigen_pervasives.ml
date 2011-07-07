@@ -450,7 +450,8 @@ module Url = struct
     then
       fixup_url_string (String.concat "/"
                           (List.map (*Netencoding.Url.encode*)
-                             MyUrl.encode l))
+                             (MyUrl.encode ~plus:false) l))
+        (* ' ' are not encoded to '+' in paths *)
     else String.concat "/" l (* BYXXX : check illicit characters *)
 
 
@@ -503,6 +504,12 @@ module Url = struct
 
       (* Note that the fragment (string after #) is not sent by browsers *)
 
+(*20110707 ' ' is encoded to '+' in queries, but not in paths. 
+  Warning: if we write the URL manually, we must encode ' ' to '+' manually
+  (not done by the browser).
+  --Vincent
+*)
+
       let get_params =
 	lazy begin
           let params_string = match query with None -> "" | Some s -> s in
@@ -512,8 +519,7 @@ module Url = struct
 	end
       in
 
-      let path = List.map Netencoding.Url.decode (Neturl.split_path pathstring) in
-
+      let path = List.map (Netencoding.Url.decode ~plus:false) (Neturl.split_path pathstring) in
       let path = remove_dotdot path (* and remove "//" *)
           (* here we remove .. from paths, as it is dangerous.
              But in some very particular cases, we may want them?
