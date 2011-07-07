@@ -18,22 +18,25 @@
 
 open Ocsigen_config
 
-let () = Arg.parse_argv Ocsigen_getcommandline.commandline
-    [("-c", Arg.String set_configfile,
-      "Alternate config file (default /etc/ocsigen/ocsigen.conf)");
-     ("--config", Arg.String set_configfile,
-      "Alternate config file (default /etc/ocsigen/ocsigen.conf)");
-     ("-s", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
-     ("--silent", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
-     ("-p", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
-     ("--pidfile", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
-     ("-v", Arg.Unit set_verbose, "Verbose mode");
-     ("--verbose", Arg.Unit set_verbose, "Verbose mode");
-     ("-V", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
-     ("--veryverbose", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
-     ("-d", Arg.Unit set_daemon, "Daemon mode (detach the process)");
-     ("--daemon", Arg.Unit set_daemon, "Daemon mode (detach the process) (This is the default when there are more than 1 process)");
-     ("--version", Arg.Unit display_version, "Display version number and exit")
-   ]
-    (fun _ -> ())
-    "usage: ocsigen [-c configfile]"
+let () = 
+  try
+    Arg.parse_argv Ocsigen_getcommandline.commandline
+      [("-c", Arg.String set_configfile,
+        "Alternate config file (default /etc/ocsigen/ocsigen.conf)");
+       ("--config", Arg.String set_configfile,
+        "Alternate config file (default /etc/ocsigen/ocsigen.conf)");
+       ("-s", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
+       ("--silent", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
+       ("-p", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
+       ("--pidfile", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
+       ("-v", Arg.Unit set_verbose, "Verbose mode");
+       ("--verbose", Arg.Unit set_verbose, "Verbose mode");
+       ("-V", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
+       ("--veryverbose", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
+       ("-d", Arg.Unit set_daemon, "Daemon mode (detach the process)");
+       ("--daemon", Arg.Unit set_daemon, "Daemon mode (detach the process) (This is the default when there are more than 1 process)");
+       ("--version", Arg.Unit display_version, "Display version number and exit")
+      ]
+      (fun _ -> ())
+      "usage: ocsigen [-c configfile]"
+  with Arg.Help s -> print_endline s; exit 0

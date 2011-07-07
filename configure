@@ -635,7 +635,7 @@ echo
 echo
 echo "Please check Makefile.config."
 echo
-echo "You can now compile Ocsigen by invoking:"
+echo "You can now compile Ocsigen Server by invoking:"
 echo
 echo "   make"
 echo "   make doc"
