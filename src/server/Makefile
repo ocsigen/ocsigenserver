@@ -21,15 +21,13 @@ FILES := ocsigen_extensions.ml  \
          ocsigen_server.ml      \
 
 
-STUBS  := stubs.o
-
 byte:: ${PROJECTNAME}.cma
 opt:: ${PROJECTNAME}.cmxa
 
-${PROJECTNAME}.cma: $(FILES:.ml=.cmo) ${STUBS}
-	${OCAMLMKLIB} -linkall -o $(patsubst %.cma,%,$@) $^
-${PROJECTNAME}.cmxa: $(FILES:.ml=.cmx) ${STUBS}
-	${OCAMLMKLIB} -linkall -o $(patsubst %.cmxa,%,$@) $^
+${PROJECTNAME}.cma: $(FILES:.ml=.cmo)
+	${OCAMLC} -a -o $@ $^
+${PROJECTNAME}.cmxa: $(FILES:.ml=.cmx)
+	${OCAMLOPT} -a -o $@ $^
 
 ### Server ###
 

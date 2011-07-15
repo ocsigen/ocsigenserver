@@ -1,6 +1,5 @@
 framepp.cmi: ocsigen_http_frame.cmi
 http_headers.cmi:
-multipart.cmi: ../baselib/ocsigen_stream.cmi
 ocsigen_charset_mime.cmi:
 ocsigen_cookies.cmi: ../baselib/ocsigen_pervasives.cmi
 ocsigen_headers.cmi: ../baselib/ocsigen_pervasives.cmi ocsigen_http_frame.cmi \
@@ -18,9 +17,9 @@ http_headers.cmx: http_headers.cmi
 http_lexer.cmo: ocsigen_http_frame.cmi http_headers.cmi
 http_lexer.cmx: ocsigen_http_frame.cmx http_headers.cmx
 multipart.cmo: ../baselib/ocsigen_stream.cmi \
-    ../baselib/ocsigen_pervasives.cmi multipart.cmi
+    ../baselib/ocsigen_pervasives.cmi
 multipart.cmx: ../baselib/ocsigen_stream.cmx \
-    ../baselib/ocsigen_pervasives.cmx multipart.cmi
+    ../baselib/ocsigen_pervasives.cmx
 ocsigen_charset_mime.cmo: ../baselib/ocsigen_pervasives.cmi \
     ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_config.cmi \
     ocsigen_charset_mime.cmi
