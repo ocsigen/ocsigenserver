@@ -1,3 +1,9 @@
+===== 2.0-rc1 (2011-07-15) =====
+
+  * Fix installation without dbm
+  * Option to compile without preemptive threads
+  * Get rid of C stubs: they are now included in Ocaml standard library
+  * Log files are opened with the right UID
 
 ===== 1.91 (2011-04-08) =====
 
