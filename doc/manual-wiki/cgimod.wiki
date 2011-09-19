@@ -66,15 +66,16 @@ easy to get lost so keep things as simple as you can!
   <site dir="whatever">
     <cgi regexp="cgi-bin/([^/]*)" 
           dir="/usr/lib/cgi-bin/" 
-          script="$1" /> 
+          script="\1" /> 
   </site>
 }}}
 
   This is the same example using regexps. The "regexp" part matches the
   url, "dir" is the physical directory containing the scripts and
-  "script" is the name of the script to execute. Here, "$1" makes
+  "script" is the name of the script to execute. Here, "\1" makes
   reference to the first (parenthesized) subexpression in "regexp". Of
-  course, you could use "$2", "$3", etc. as well.
+  course, you could use "\2", "\3", etc. as well.
+  //Warning: until recently, the syntax was $1, $2, etc.//
 
   //End your regexps with {{{$}}} if you want them to match the full URL.//
 
@@ -99,14 +100,14 @@ easy to get lost so keep things as simple as you can!
 
     <!-- First, take care of implicit index.php -->
     <cgi regexp="(.*)/"
-         dir="/var/www/$1" 
+         dir="/var/www/\1" 
          script="index.php" 
          exec="/usr/bin/php5-cgi"/>
 
     <!-- Then, execute every other .php -->
     <cgi regexp="((.*)/)?([^/]*).php" 
-         dir="/var/www/$2" 
-         script="$3.php" 
+         dir="/var/www/\2" 
+         script="\3.php" 
          exec="/usr/bin/php5-cgi"/>
   </site>
 }}}

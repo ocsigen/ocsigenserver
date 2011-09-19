@@ -16,21 +16,21 @@ Then configure your hosts as in this example:
 
 You may also want to filter or rewrite URLs, as in this example, that allows user to have their home pages:
 {{{
-<static regexp="~([^/]*)(.*)" dest="/home/$1/public_html$2"/>
+<static regexp="~([^/]*)(.*)" dest="/home/\1/public_html\2"/>
 }}}
 {{{regexp}}} is a regular expression using PERL syntax (PCRE).
 
 Actually, for user's pages, it is better to do:
 {{{
-<static regexp="~([^/]*)(.*)" dest="$u($1)/public_html$2"/>
+<static regexp="~([^/]*)(.*)" dest="$u(\1)/public_html\2"/>
 }}}
 {{{$u(toto)}}} will be replaced by the home directory for user toto.
 
 You can also specify the option root as in
 {{{
-<static regexp="~([^/]*)(.*)" dest="$u($1)/public_html$2" root="$u($1)/public_html"/>
+<static regexp="~([^/]*)(.*)" dest="$u(\1)/public_html\2" root="$u(\1)/public_html"/>
 }}}
-This will wave all symlinks checks above the directory {{{u($1)/public_html}}}. This option is not permitted inside userconf files.
+This will wave all symlinks checks above the directory {{{u(\1)/public_html}}}. This option is not permitted inside userconf files.
 
 ===Catching HTTP errors
 

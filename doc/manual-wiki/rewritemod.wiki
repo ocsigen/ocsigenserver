@@ -8,6 +8,6 @@ To use that extension, first load it from the configuration file:
 }}}
 Then configure your hosts as in this example:
 {{{
-<rewrite regexp="(.*)" url="toto/$1"/>
+<rewrite regexp="(.*)" url="toto/\1"/>
 }}}
 The syntax of regular expression is PCRE's one.

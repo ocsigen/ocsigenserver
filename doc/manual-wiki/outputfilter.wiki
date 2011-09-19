@@ -11,6 +11,6 @@ To use this extension, first load it from the configuration file:
 }}}
 Then, when you want to rewrite one header (after having generated a page), do something like:
 {{{
-<outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/$1"/>
+<outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/\1"/>
 }}}
 Here we rewrite the content of the header location (this line is useful when you are using the reverse proxy).
