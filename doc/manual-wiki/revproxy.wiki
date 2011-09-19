@@ -15,12 +15,12 @@ To use the reverse proxy, first load the extension from the configuration file:
 Then configure your hosts as in these examples:
 
 {{{
-<revproxy suburl="(.*)" dest="http://my.newaddress.org:8080/$1"/>
-<revproxy suburl="dir/(.*)\.html" dest="https://my.newaddress.org/$1.php"/>
-<revproxy fullurl="http://(.*).mydomain.org:(80|8080)/(.*)" dest="http://$1.my.newdomain.org:$2/$3"/>
+<revproxy suburl="(.*)" dest="http://my.newaddress.org:8080/\1"/>
+<revproxy suburl="dir/(.*)\.html" dest="https://my.newaddress.org/\1.php"/>
+<revproxy fullurl="http://(.*).mydomain.org:(80|8080)/(.*)" dest="http://\1.my.newdomain.org:\2/\3"/>
 }}}
 
-regexp is a regular expression using PERL syntax (PCRE). The destination URL is built from dest, (where $i corresponds to the i-th part between parenthesis of the regular expression).
+regexp is a regular expression using PERL syntax (PCRE). The destination URL is built from dest, where \i corresponds to the i-th part between parenthesis of the regular expression (was $i in older versions).
 
 Add the attribute {{{keephost="keephost"}}} if you want to send the original {{{Host}}} header to the distant server.
 Otherwise, it will be computed from {{{dest}}}.
@@ -30,7 +30,7 @@ Add the attribute {{{nopipeline="nopipeline"}}} if for some reason you don't wan
 You probably also need to rewrite locations in the output (if the server is doing redirections). For example:
 
 {{{
-<outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/$1"/>
+<outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/\1"/>
 }}}
 
 Note that if you are using ocsigen behind a reverse proxy handling X-Forward-For and X-Forward-Proto headers ( like the revproxy module ), you should allow ocsigen to use those informations, using accesscontrol extension
