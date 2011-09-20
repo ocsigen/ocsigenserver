@@ -5,7 +5,7 @@ Staticmod is a module allowing to serve static pages (files).
 
 To use that extension, first load it from the configuration file:
 {{{
-<extension findlib-package="ocsigen_ext.staticmod"/>
+<extension findlib-package="ocsigenserver.ext.staticmod"/>
 }}}
 Then configure your hosts as in this example:
 {{{

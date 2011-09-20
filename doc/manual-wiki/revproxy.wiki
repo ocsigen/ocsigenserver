@@ -9,7 +9,7 @@ This module allows to transmit some requests to another Web server using the HTT
 To use the reverse proxy, first load the extension from the configuration file:
 
 {{{
-<extension findlib-package="ocsigen_ext.revproxy"/>
+<extension findlib-package="ocsigenserver.ext.revproxy"/>
 }}}
 
 Then configure your hosts as in these examples:

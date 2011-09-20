@@ -7,7 +7,7 @@ from other extensions to disallow unsafe options (for example, in version 1.2 it
 To use this extension, first load it from the configuration file:
 
 {{{
-<extension findlib-package="ocsigen_ext.userconf"/>
+<extension findlib-package="ocsigenserver.ext.userconf"/>
 }}}
 
 Then, if you want to allow users to have their own configuration files, put in your hosts something like the lines

@@ -17,7 +17,7 @@ to make your own one.
 
 In order to use it, you must first add the following line to your ocsigen.conf:
 {{{
-<extension findlib-package="ocsigen_ext.authbasic"/>
+<extension findlib-package="ocsigenserver.ext.authbasic"/>
 }}}
 This extension defines one action, {{{<authbasic>}}},
 and one authentication plugin, {{{<plain>}}}.

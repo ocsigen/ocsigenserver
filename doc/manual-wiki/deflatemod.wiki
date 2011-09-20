@@ -20,7 +20,7 @@ installation.
 First, load the extension in the configuration file:
 
 {{{
-<extension findlib-package="ocsigen_ext.deflatemod" />
+<extension findlib-package="ocsigenserver.ext.deflatemod" />
 }}}
 
 

@@ -21,7 +21,7 @@ scripts, you need php5-cgi too.
 First, load the extension in the configuration file:
 
 {{{
-<extension findlib-package="ocsigen_ext.cgimod" />
+<extension findlib-package="ocsigenserver.ext.cgimod" />
 }}}
 
 Alternatively, if you do not want to use findlib, you need to
@@ -36,7 +36,7 @@ load cgimod explicitly:
 You can set the timeout value for CGI scripts globally, using:
 
 {{{
-  <extension findlib-package="ocsigen_ext.cgimod" >
+  <extension findlib-package="ocsigenserver.ext.cgimod" >
     <cgitimeout value="30" /> <!-- optionnal -->
   </extension>
 }}}

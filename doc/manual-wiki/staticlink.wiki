@@ -27,7 +27,7 @@ All statically linked extensions need to be initialized from the configuration f
 }}}
 or
 {{{
-<extension findlib-package="ocsigen_ext.staticmod" />
+<extension findlib-package="ocsigenserver.ext.staticmod" />
 }}}
 by
 {{{

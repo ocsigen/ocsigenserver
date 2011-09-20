@@ -7,7 +7,7 @@ Configuration
 
 To use this extension, first load it from the configuration file:
 {{{
-<extension findlib-package="ocsigen_ext.outputfilter"/>
+<extension findlib-package="ocsigenserver.ext.outputfilter"/>
 }}}
 Then, when you want to rewrite one header (after having generated a page), do something like:
 {{{

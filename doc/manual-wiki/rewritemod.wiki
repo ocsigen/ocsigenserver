@@ -4,7 +4,7 @@ Rewritemod allows to rewrite the requests.It is available from Ocsigen version 1
 
 To use that extension, first load it from the configuration file:
 {{{
-<extension findlib-package="ocsigen_ext.rewritemod"/>
+<extension findlib-package="ocsigenserver.ext.rewritemod"/>
 }}}
 Then configure your hosts as in this example:
 {{{

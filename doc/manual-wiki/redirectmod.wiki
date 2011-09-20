@@ -4,7 +4,7 @@ Redirectmod is a module allowing to define HTTP redirections from Ocsigen's conf
 
 To use that extension, first load it from the configuration file:
 {{{
-<extension findlib-package="ocsigen_ext.redirectmod"/>
+<extension findlib-package="ocsigenserver.ext.redirectmod"/>
 }}}
 Then configure your hosts as in these examples:
 {{{

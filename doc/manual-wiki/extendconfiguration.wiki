@@ -8,7 +8,7 @@ Extendconfiguration allows to configure some options of the server inside a {{{<
 To use that extension, first load it from the configuration file:
 
 {{{
-<extension findlib-package="ocsigen_ext.extendconfiguration"/>
+<extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
 }}}
 
 == Options
