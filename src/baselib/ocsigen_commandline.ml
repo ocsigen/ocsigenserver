@@ -22,9 +22,9 @@ let () =
   try
     Arg.parse_argv Ocsigen_getcommandline.commandline
       [("-c", Arg.String set_configfile,
-        "Alternate config file (default /etc/ocsigen/ocsigen.conf)");
+        "Alternate config file (default "^ Ocsigen_config.get_config_file() ^")");
        ("--config", Arg.String set_configfile,
-        "Alternate config file (default /etc/ocsigen/ocsigen.conf)");
+        "Alternate config file (default "^ Ocsigen_config.get_config_file() ^")");
        ("-s", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
        ("--silent", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
        ("-p", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
