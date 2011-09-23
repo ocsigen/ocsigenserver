@@ -394,7 +394,7 @@ module Directory_content =
           Some ("/"^Url.string_of_url_path ~encode:true (back path))
       in
       let before =
-        let st = (Url.string_of_url_path ~encode:true path) in
+        let st = Url.string_of_url_path ~encode:false path in
         "<html>\n\
          <head><meta http-equiv=\"Content-Type\" content=\"text/html;\" />\n\
          <link rel=\"stylesheet\" type=\"text/css\" href=\"/ocsigenstuff/style.css\" media=\"screen\" />\n\
