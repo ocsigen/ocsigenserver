@@ -1,3 +1,7 @@
+===== 2.0.1 (2011-09-28) =====
+
+  * Directory listing: do not use URL encoding for displaying the current path in HTML.
+
 ===== 2.0 (2011-09-20) =====
 
   * Small fixes in documentation.
