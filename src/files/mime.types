@@ -29,6 +29,8 @@ application/edifact
 application/edi-x12
 application/eshop
 application/font-tdpfr
+application/font-woff           woff
+application/x-font-ttf          ttf
 application/http
 application/hyperstudio
 application/iges
@@ -109,6 +111,7 @@ application/vnd.anser-web-funds-transfer-initiation
 application/vnd.audiograph
 application/vnd.blueice.multipass
 application/vnd.bmi
+application/vnd.bw-fontobject   eot
 application/vnd.businessobjects
 application/vnd.canon-cpdl
 application/vnd.canon-lips
