@@ -151,7 +151,10 @@ let parse_mime_types ~filename : mime_type assoc =
               in
               close_in in_ch;
               map
-            with Sys_error _ -> MapString.empty
+            with Sys_error s ->
+	      Ocsigen_messages.warning
+		(Printf.sprintf "Ocsigen_charser_mime: unable to read the mime.types file (Error: %s)." s);
+	      MapString.empty
            )];
     assoc_default = default_mime_type;
   }
