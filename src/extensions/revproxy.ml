@@ -27,9 +27,6 @@
    TODO
    - Change the policy for « trusted servers » for pipelining?
    (see ocsigen_http_client.ml)
-   - add the ability to rewrite some headers from the config file
-   (for ex after a redirection, the new URL is wrong)
-   probably in another (filter) extension
    - enhance pipelining
    - HTTP/1.0
    - ...
