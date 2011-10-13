@@ -116,3 +116,7 @@ let dyn_headers =
   << (cache_control, "no-cache")
   << (expires, "0")
 
+type accept =
+    ( (string option * string option)
+      * float option
+      * (string * string) list ) list

@@ -1,3 +1,7 @@
+===== dev =====
+
+  * Allow Ocsigen_sender.{Html5,Xhtml}_content to choose the returned content type (close #53).
+
 ===== 2.0.1 (2011-09-28) =====
 
   * Directory listing: do not use URL encoding for displaying the current path in HTML.

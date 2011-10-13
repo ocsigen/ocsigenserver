@@ -10,7 +10,8 @@ ocsigen_http_com.cmi: ../baselib/ocsigen_stream.cmi ocsigen_http_frame.cmi \
 ocsigen_http_frame.cmi: ../baselib/ocsigen_stream.cmi \
     ../baselib/ocsigen_pervasives.cmi ocsigen_cookies.cmi http_headers.cmi
 ocsigen_senders.cmi: ../baselib/ocsigen_stream.cmi ocsigen_http_frame.cmi \
-    ocsigen_http_com.cmi ocsigen_cookies.cmi ocsigen_charset_mime.cmi
+    ocsigen_http_com.cmi ocsigen_cookies.cmi ocsigen_charset_mime.cmi \
+    http_headers.cmi
 framepp.cmo: ocsigen_http_frame.cmi http_headers.cmi framepp.cmi
 framepp.cmx: ocsigen_http_frame.cmx http_headers.cmx framepp.cmi
 http_headers.cmo: http_headers.cmi

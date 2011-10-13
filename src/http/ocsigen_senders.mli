@@ -31,7 +31,10 @@ module Html5_content :
 
 module Make_XML_Content(XML : XML_sigs.Iterable)
                        (TypedXML : XML_sigs.TypedXML with module XML := XML) :
-  Ocsigen_http_frame.HTTP_CONTENT with type t = TypedXML.doc
+  Ocsigen_http_frame.HTTP_CONTENT
+  with type t = TypedXML.doc
+  and type options = Http_headers.accept Lazy.t
+
 
 (** content * content-type *)
 module Text_content :

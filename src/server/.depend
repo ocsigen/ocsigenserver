@@ -15,13 +15,13 @@ ocsigen_extensions.cmo: ../baselib/polytables.cmi \
     ../baselib/ocsigen_loader.cmi ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_http_com.cmi ../http/ocsigen_cookies.cmi \
     ../baselib/ocsigen_config.cmi ../http/ocsigen_charset_mime.cmi \
-    ocsigen_extensions.cmi
+    ../http/http_headers.cmi ocsigen_extensions.cmi
 ocsigen_extensions.cmx: ../baselib/polytables.cmx \
     ../baselib/ocsigen_pervasives.cmx ../baselib/ocsigen_messages.cmx \
     ../baselib/ocsigen_loader.cmx ../http/ocsigen_http_frame.cmx \
     ../http/ocsigen_http_com.cmx ../http/ocsigen_cookies.cmx \
     ../baselib/ocsigen_config.cmx ../http/ocsigen_charset_mime.cmx \
-    ocsigen_extensions.cmi
+    ../http/http_headers.cmx ocsigen_extensions.cmi
 ocsigen_http_client.cmo: ../baselib/ocsigen_stream.cmi \
     ../http/ocsigen_senders.cmi ../baselib/ocsigen_pervasives.cmi \
     ../baselib/ocsigen_messages.cmi ../http/ocsigen_http_frame.cmi \

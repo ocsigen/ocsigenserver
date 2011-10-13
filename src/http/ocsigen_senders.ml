@@ -38,19 +38,38 @@ module Make_XML_Content(XML : XML_sigs.Iterable)
       XML_print.MakeTyped(XML)(TypedXML)(Ocsigen_stream.StringStream)
 
     type t = TypedXML.doc
-    type options = unit
+    type options = Http_headers.accept Lazy.t
 
     let get_etag_aux x = None
 
     let get_etag ?options c = None
 
+    let choose_content_type accepted alt default =
+      match accepted, alt with
+      | None, _ | _, [] -> default
+      | Some accepted, alt ->
+	  try
+	    List.find
+	      (fun content_type ->
+		List.exists
+		  (function
+		    | ((Some a, Some b),_,_) -> a^"/"^b = content_type
+		    | _ -> false)
+		  (Lazy.force accepted))
+	      alt
+	  with Not_found -> default
+
     let result_of_content ?options c =
+      let content_type =
+	choose_content_type options
+	  TypedXML.Info.alternative_content_types
+	  TypedXML.Info.content_type in
       let x = Xhtmlprinter.print ~advert c in
       let default_result = default_result () in
       Lwt.return
         {default_result with
           res_content_length = None;
-          res_content_type = Some TypedXML.Info.content_type;
+          res_content_type = Some content_type;
           res_etag = get_etag c;
           res_headers= Http_headers.dyn_headers;
           res_stream = (x, None)
