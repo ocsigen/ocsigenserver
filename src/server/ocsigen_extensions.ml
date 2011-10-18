@@ -991,8 +991,11 @@ let get_port req =
         then req.request_config.default_httpsport
         else req.request_config.default_httpport)
   else match req.request_info.ri_port_from_host_field with
-    | None -> req.request_info.ri_server_port
     | Some p -> p
+    | None ->
+        match req.request_info.ri_host with
+	  | Some _ -> if req.request_info.ri_ssl then 443 else 80
+	  | None -> req.request_info.ri_server_port
 
 
 (*****************************************************************************)
