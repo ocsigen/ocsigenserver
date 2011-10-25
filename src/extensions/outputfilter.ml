@@ -28,36 +28,59 @@ open Ocsigen_extensions
 open Simplexmlparser
 open Ocsigen_headers
 
+type outputfilter =
+  | Rewrite_header of (Http_headers.name * Netstring_pcre.regexp * string)
+  | Add_header of (Http_headers.name * string * bool option)
 
-let gen (header, regexp, dest) = function
+let gen filter = function
   | Req_not_found (code,_) -> return (Ext_next code)
   | Req_found (ri, res) ->
-      try
-        let header_values =
-          Http_headers.find_all header res.Ocsigen_http_frame.res_headers
-        in
-        let h =
-          Http_headers.replace_opt header None res.Ocsigen_http_frame.res_headers
-        in
-        let new_headers =
-          List.fold_left
-            (fun h value ->
-
-              Http_headers.add
-                header
-                (Netstring_pcre.global_replace regexp dest value)
-                h
-            )
-            h
-            header_values
-        in
-        Lwt.return
-          (Ocsigen_extensions.Ext_found
-             (fun () ->
-               Lwt.return
-                 {res with Ocsigen_http_frame.res_headers = new_headers}))
-      with Not_found ->
-        Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return res))
+    let new_headers =
+      match filter with
+	| Rewrite_header (header, regexp, dest) ->
+	  begin
+	    try
+              let header_values =
+		Http_headers.find_all header res.Ocsigen_http_frame.res_headers
+              in
+              let h =
+		Http_headers.replace_opt header None res.Ocsigen_http_frame.res_headers
+              in
+	      List.fold_left
+		(fun h value ->
+		  Http_headers.add
+                    header
+                    (Netstring_pcre.global_replace regexp dest value)
+                    h
+		)
+		h
+		header_values
+	    with
+	      | Not_found -> res.Ocsigen_http_frame.res_headers
+	  end
+	| Add_header (header, dest, replace) ->
+	  begin
+	    match replace with
+	      | None ->
+		begin
+		  try
+		    ignore (Http_headers.find header res.Ocsigen_http_frame.res_headers);
+		    res.Ocsigen_http_frame.res_headers
+		  with
+		    | Not_found ->
+		      Http_headers.add header dest res.Ocsigen_http_frame.res_headers
+		end
+	      | Some false ->
+		Http_headers.add header dest res.Ocsigen_http_frame.res_headers
+	      | Some true ->
+		Http_headers.replace header dest res.Ocsigen_http_frame.res_headers
+	  end
+    in
+    Lwt.return
+      (Ocsigen_extensions.Ext_found
+	 (fun () ->
+	   Lwt.return
+             {res with Ocsigen_http_frame.res_headers = new_headers}))
 
 
 
@@ -65,25 +88,40 @@ let gen (header, regexp, dest) = function
 
 let parse_config = function
   | Element ("outputfilter", atts, []) ->
-      let rec parse_attrs ((h, r, d) as res) = function
+      let rec parse_attrs ((h, r, d, rep) as res) = function
         | [] -> res
         | ("header", header)::l when h = None ->
-            parse_attrs (Some header, r, d) l
+            parse_attrs (Some header, r, d, rep) l
         | ("regexp", regexp)::l when r = None ->
-            parse_attrs (h, Some (Netstring_pcre.regexp regexp), d) l
+            parse_attrs (h, Some (Netstring_pcre.regexp regexp), d, rep) l
         | ("dest", dest)::l when d = None ->
-            parse_attrs (h, r, Some dest) l
-        | _ -> raise (Error_in_config_file "Wrong attribute for <outputfilter header=... regexp=... dest=... />")
+            parse_attrs (h, r, Some dest, rep) l
+        | ("replace", replace)::l when rep = None ->
+	    let replace =
+	      try
+		bool_of_string replace
+	      with
+		| Invalid_argument _ ->
+		  raise (Error_in_config_file
+			   (Printf.sprintf "Wrong value for attribute replace of <outputfilter/>: %s. is should be true or false" replace))
+	    in
+            parse_attrs (h, r, d, Some replace ) l
+        | _ -> raise (Error_in_config_file "Wrong attribute for <outputfilter header=... dest=... (regexp=... / replace=...)/>")
       in
-      (match parse_attrs (None, None, None) atts with
-      | (Some h, Some r, Some d) ->
-          gen (Http_headers.name h, r, d)
+      (match parse_attrs (None, None, None, None) atts with
+      | (_, Some _, _, Some _) ->
+          raise
+            (Error_in_config_file
+               "Wrong attributes for <outputfilter/>: attributes regexp and replace can't be set simultaneously")
+      | (Some h, Some r, Some d, None) ->
+          gen (Rewrite_header (Http_headers.name h, r, d))
+      | (Some h, None, Some d, rep) ->
+          gen (Add_header (Http_headers.name h, d, rep))
       | _ ->
           raise
             (Error_in_config_file
-               "Missing attributes for <outputfilter header=... regexp=... dest=... />"))
-  | Element ("outputfilter" as s, _, _) -> badconfig "Bad syntax for tag %s" s
-
+               "Wrong attributes for <outputfilter header=... dest=... (regexp=... / replace=...)/>"))
+  | Element ("outputfilter", _, _) -> badconfig "Bad syntax for tag <outputfilter header=... dest=... (regexp=... / replace=...)/>"
   | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ ->
       raise (Error_in_config_file "Unexpected data in config file")
