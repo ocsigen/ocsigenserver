@@ -12,14 +12,18 @@ By default, Ocsigen is linking extensions dynamically (and also Eliom modules). 
 To create a standalone server executable that includes all the extensions you need, use a command like:
 {{{
 ocamlfind ocamlopt  
-    -package ocsigen.server,ocsigen.ext.ocsipersist-sqlite  
-    -package ocsigen.ext.eliom,ocsigen.ext.staticmod  
+    -package ocsigenserver.server,ocsigenserver.ext.ocsipersist-sqlite  
+    -package eliom,ocsigenserver.ext.staticmod  
     othermodule.cmx server_main.cmx -o myserver -linkpkg -thread
 }}}
 
 Do not forget to link {{{server_main.cmx}}} to launch the server's main loop.
 
 If you do not want to read the commandline when the server starts, add {{{-predicates nocommandline}}} to this command line. Alternatively, you can provide a package containing the command-line you want to be parsed (with the same signature as {{{baselib/ocsigen_getcommandline.mli}}}), then make the appropriate changes in {{{files/META.in}}}.
+
+If you still want to use dynamic linking, add option {{{-linkall}}} while
+compiling, otherwise the compiler may remove some modules from packages
+{{{cma/cmxa}}}.
 
 All statically linked extensions need to be initialized from the configuration file. To do that, replace the lines like:
 {{{

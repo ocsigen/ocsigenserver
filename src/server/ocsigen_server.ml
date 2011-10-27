@@ -41,6 +41,10 @@ let shutdown = ref false
 
 let () = Random.self_init ()
 
+let () = Ocsigen_commandline.cmdline
+(* This is only to have the module Ocsigen_commandline linked
+   when we do not use -linkall *)
+
 (* Without the following line, it stops with "Broken Pipe" without raising
    an exception ... *)
 let _ = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
@@ -1104,9 +1108,9 @@ let shutdown_server s l =
     ignore
       (iter_receivers_waiting_for_pipeline
          (fun receiver ->
-            Ocsigen_http_com.wait_all_senders receiver >>= fun () ->
-              Ocsigen_http_com.abort receiver;
-              Lwt.return ()));
+           Ocsigen_http_com.wait_all_senders receiver >>= fun () ->
+           Ocsigen_http_com.abort receiver;
+           Lwt.return ()));
   with Failure e ->
     Ocsigen_messages.warning ("Wrong command: " ^ s ^ " (" ^ e ^ ")")
 

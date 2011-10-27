@@ -18,7 +18,7 @@
 
 open Ocsigen_config
 
-let () = 
+let cmdline : unit = 
   try
     Arg.parse_argv Ocsigen_getcommandline.commandline
       [("-c", Arg.String set_configfile,

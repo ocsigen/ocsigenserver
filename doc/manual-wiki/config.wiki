@@ -548,7 +548,7 @@ If you don't want to clutter your installation with a lot of Ocsigen-specific pa
 <findlib path="/usr/local/lib/ocsigenserver/METAS"/>
 }}}
 
-Extensions shipped with Ocsigenserver are available as subpackages of {{{ocsigenserver.ext}}} (this package is in an extended search path). For example:
+Extensions shipped with Ocsigen Server are available as subpackages of {{{ocsigenserver.ext}}} (this package is in an extended search path). For example:
 
 
 
