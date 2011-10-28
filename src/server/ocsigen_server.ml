@@ -790,7 +790,10 @@ let add_to_receivers_waiting_for_pipeline,
    Clist.remove,
    (fun f -> 
       Clist.fold_left
-        (fun t v -> t >>= fun () -> f v)
+        (fun t v ->
+          (*VVV reread this. Is yield here ok? *)
+          t >>= Lwt_unix.yield >>= fun () ->
+          f v)
         (Lwt.return ()) 
         l))
 
@@ -954,45 +957,45 @@ let rec wait_connection use_ssl port socket =
        Lwt_unix.accept_n socket 50)
     handle_exn
     (fun (l, e) ->
-       let number_of_accepts = List.length l in
-       Ocsigen_messages.debug
-         (fun () -> "received "^string_of_int number_of_accepts^" accepts" );
-       incr_connected number_of_accepts;
-       ignore (wait_connection use_ssl port socket);
-
-       let handle_one (s, sockaddr) =
-         Ocsigen_messages.debug2
-           "\n__________________NEW CONNECTION__________________________";
-         Lwt.catch
-           (fun () ->
-              Lwt_unix.set_close_on_exec s;
-              Lwt_unix.setsockopt s Unix.TCP_NODELAY true;
-              begin if use_ssl then
+      let number_of_accepts = List.length l in
+      Ocsigen_messages.debug
+        (fun () -> "received "^string_of_int number_of_accepts^" accepts"  );
+      incr_connected number_of_accepts;
+      if e = None then ignore (wait_connection use_ssl port socket);
+      
+      let handle_one (s, sockaddr) =
+        Ocsigen_messages.debug2
+          "\n__________________NEW CONNECTION__________________________";
+        Lwt.catch
+          (fun () ->
+            Lwt_unix.set_close_on_exec s;
+            Lwt_unix.setsockopt s Unix.TCP_NODELAY true;
+            begin if use_ssl then
                 Lwt_ssl.ssl_accept s !sslctx
               else
                 Lwt.return (Lwt_ssl.plain s)
-              end >>= fun in_ch ->
-              handle_connection port in_ch sockaddr)
-           (fun e ->
-              Ocsigen_messages.unexpected_exception e
-                "Server.wait_connection (handle connection)";
-              return ())
-         >>= fun () ->
-         Ocsigen_messages.debug2 "** CLOSE";
-         catch
-           (fun () -> Lwt_unix.close s)
-           (function Unix.Unix_error _ as e ->
-             Ocsigen_messages.unexpected_exception
-               e "Server.wait_connection (close)";
-             Lwt.return ()
-             | e -> Lwt.fail e)
-         >>= decr_connected
-       in
-
-       Lwt_util.iter handle_one l >>= fun () ->
-       match e with
-         | Some e -> handle_exn e
-         | None -> Lwt.return ())
+            end >>= fun in_ch ->
+            handle_connection port in_ch sockaddr)
+          (fun e ->
+            Ocsigen_messages.unexpected_exception e
+              "Server.wait_connection (handle connection)";
+            return ())
+        >>= fun () ->
+        Ocsigen_messages.debug2 "** CLOSE";
+        catch
+          (fun () -> Lwt_unix.close s)
+          (function Unix.Unix_error _ as e ->
+            Ocsigen_messages.unexpected_exception
+              e "Server.wait_connection (close)";
+            Lwt.return ()
+            | e -> Lwt.fail e)
+        >>= decr_connected
+      in
+      
+      Lwt_util.iter handle_one l >>= fun () ->
+      match e with
+        | Some e -> handle_exn e
+        | None -> Lwt.return ())
 
 
 
@@ -1108,6 +1111,7 @@ let shutdown_server s l =
     ignore
       (iter_receivers_waiting_for_pipeline
          (fun receiver ->
+           (*VVV reread this - why are we using infinite iterators? *)
            Ocsigen_http_com.wait_all_senders receiver >>= fun () ->
            Ocsigen_http_com.abort receiver;
            Lwt.return ()));

@@ -41,6 +41,7 @@ module List : sig
 
 end
 
+(** Circular lists *)
 module Clist :
 sig
   type 'a t
@@ -52,7 +53,11 @@ sig
   val value : 'a node -> 'a
   val in_list : 'a node -> bool
   val is_empty : 'a t -> bool
+
+  (** Infinite iteration on circular lists *)
   val iter : ('a -> unit) -> 'a t -> unit
+
+  (** Infinite fold on circular lists (use with care!) *)
   val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
 end
 
