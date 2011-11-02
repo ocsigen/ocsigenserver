@@ -36,10 +36,21 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
 
   (* CHECK: we are closing asynchronously!  That should be ok, though. *)
   List.iter (fun l -> ignore (Lwt_log.close l : unit Lwt.t)) !loggers;
-  lwt acc = Lwt_log.file (full_path access_file) () in
-  lwt war = Lwt_log.file (full_path warning_file) () in
-  lwt err = Lwt_log.file (full_path error_file) () in
 
+  let open_log path =
+    let path = full_path path in
+    try_lwt
+      Lwt_log.file path ()
+    with
+      | Unix.Unix_error(error,_,_) ->
+	raise_lwt (Ocsigen_config.Config_file_error (
+	  Printf.sprintf "can't open log file %s: %s"
+	    path (Unix.error_message error)))
+  in
+
+  lwt acc = open_log access_file in
+  lwt war = open_log  warning_file in
+  lwt err = open_log  error_file in
   loggers := [acc; war; err];
 
   Lwt_log.default :=

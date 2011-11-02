@@ -62,7 +62,14 @@ end)
 let tableoftables = ref Tableoftables.empty
 
 let list_tables () =
-  let d = Unix.opendir directory in
+  let d =
+    try
+      Unix.opendir directory
+    with
+      | Unix.Unix_error(error,_,_) ->
+	failwith ( Printf.sprintf "Ocsidbm: can't open directory  %s: %s"
+		     directory (Unix.error_message error))
+  in
   let rec aux () =
     try
       let n = Unix.readdir d in
@@ -80,7 +87,19 @@ let _ =
   try
     Unix.access directory [Unix.R_OK; Unix.W_OK; Unix.X_OK; Unix.F_OK]
   with
-  | Unix.Unix_error (Unix.ENOENT, _, _) -> Unix.mkdir directory 0o750
+  | Unix.Unix_error (Unix.ENOENT, _, _) ->
+    begin
+      try
+	Unix.mkdir directory 0o750
+      with
+	| Unix.Unix_error(error,_,_) ->
+	  failwith ( Printf.sprintf "Ocsidbm: can't create directory %s: %s"
+		       directory (Unix.error_message error) )
+    end
+  | Unix.Unix_error(error,_,_) ->
+    failwith ( Printf.sprintf "Ocsidbm: can't access directory %s: %s"
+		 directory (Unix.error_message error) )
+
 
 let open_db name =
   let t = opendbm (directory^"/"^name^suffix) [Dbm_rdwr; Dbm_create] 0o640 in
