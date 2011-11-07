@@ -67,6 +67,8 @@ Build instructions:
 
  * run "make uninstall" to uninstall (almost) everything
 
+ * run "make purge" to uninstall everything (even configuration files)
+
 ------------------------------------------------------------------
 
 Local testings:

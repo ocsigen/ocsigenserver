@@ -45,7 +45,7 @@ distclean: clean.local
 
 ### Installation ####
 
-.PHONY: install partialinstall reinstall uninstall
+.PHONY: install partialinstall reinstall uninstall purge.files install.files
 
 install.META:
 	$(MAKE) -C src install
@@ -108,6 +108,20 @@ uninstall:
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(DATADIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(MANDIR)
 	-$(MAKE) -C src uninstall
+
+purge: purge.files uninstall
+
+purge.files:
+	-rm -f $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
+	-rm -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf
+	-rm -f $(patsubst local/var/www/ocsigenstuff/%, \
+	 		  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff/%, \
+	                  $(wildcard local/var/www/ocsigenstuff/*))
+	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
+	-rm -f $(patsubst local/var/www/%, \
+	 		  $(TEMPROOT)$(STATICPAGESDIR)/%, \
+	                  $(wildcard local/var/www/*.html))
+	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(STATICPAGESDIR)
 
 install.doc:
 	${MAKE} -C doc install
