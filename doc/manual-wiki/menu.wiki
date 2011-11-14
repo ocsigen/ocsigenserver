@@ -18,6 +18,7 @@
 ===[[outputfilter|Outputfilter]]
 ===[[userconf|Userconf]]
 ===[[comet|Comet]]
+===[[cors|CORS]]
 ==Developer documentation
 ===Developing with the Ocsigen framework
 ====[[lwtoc|Cooperative threads]]
