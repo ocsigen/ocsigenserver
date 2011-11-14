@@ -55,6 +55,18 @@ let range = name "Range"
 let x_forwarded_for = name "X-Forwarded-For"
 let x_forwarded_proto = name "X-Forwarded-Proto"
 
+(* CORS headers *)
+let origin = name "Origin"
+let access_control_request_method = name "Access-Control-Request-Method"
+let access_control_request_headers = name "Access-Control-Request-Headers"
+
+let access_control_allow_origin = name "Access-Control-Allow-Origin"
+let access_control_allow_credentials = name "Access-Control-Allow-Credentials"
+let access_control_expose_headers = name "Access-Control-Expose-Headers"
+let access_control_max_age = name "Access-Control-Max-Age"
+let access_control_allow_methods = name "Access-Control-Allow-Methods"
+let access_control_allow_headers = name "Access-Control-Allow-Headers"
+
 module NameHtbl =
   Hashtbl.Make
     (struct

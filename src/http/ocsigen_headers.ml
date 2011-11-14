@@ -267,6 +267,29 @@ let get_referer http_frame =
   with _ -> None
 
 
+let get_origin http_frame =
+  try
+    Some
+      (Http_header.get_headers_value
+         http_frame.Ocsigen_http_frame.frame_header Http_headers.origin)
+  with _ -> None
+
+let get_access_control_request_method http_frame =
+  try
+    Some
+      (Http_header.get_headers_value
+         http_frame.Ocsigen_http_frame.frame_header
+         Http_headers.access_control_request_method)
+  with _ -> None
+
+let get_access_control_request_headers http_frame =
+  try
+    let s = (Http_header.get_headers_value
+               http_frame.Ocsigen_http_frame.frame_header
+               Http_headers.access_control_request_headers) in
+    Some (String.split ',' s)
+  with _ -> None
+
 let get_referrer = get_referer
 
 

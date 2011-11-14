@@ -63,9 +63,10 @@ ocsigen_server.cmo: ../baselib/polytables.cmi ../baselib/ocsigen_stream.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
     ocsigen_http_client.cmi ../http/ocsigen_headers.cmi \
     ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi \
-    ../baselib/ocsigen_config.cmi ../baselib/ocsigen_cache.cmi \
-    ../http/multipart.cmi ../http/http_headers.cmi \
-    ../baselib/dynlink_wrapper.cmo ocsigen_server.cmi
+    ../baselib/ocsigen_config.cmi ../baselib/ocsigen_commandline.cmo \
+    ../baselib/ocsigen_cache.cmi ../http/multipart.cmi \
+    ../http/http_headers.cmi ../baselib/dynlink_wrapper.cmo \
+    ocsigen_server.cmi
 ocsigen_server.cmx: ../baselib/polytables.cmx ../baselib/ocsigen_stream.cmx \
     ../http/ocsigen_senders.cmx ocsigen_range.cmx \
     ../baselib/ocsigen_pervasives.cmx ocsigen_parseconfig.cmx \
@@ -73,8 +74,9 @@ ocsigen_server.cmx: ../baselib/polytables.cmx ../baselib/ocsigen_stream.cmx \
     ../http/ocsigen_http_frame.cmx ../http/ocsigen_http_com.cmx \
     ocsigen_http_client.cmx ../http/ocsigen_headers.cmx \
     ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
-    ../baselib/ocsigen_config.cmx ../baselib/ocsigen_cache.cmx \
-    ../http/multipart.cmx ../http/http_headers.cmx \
-    ../baselib/dynlink_wrapper.cmx ocsigen_server.cmi
+    ../baselib/ocsigen_config.cmx ../baselib/ocsigen_commandline.cmx \
+    ../baselib/ocsigen_cache.cmx ../http/multipart.cmx \
+    ../http/http_headers.cmx ../baselib/dynlink_wrapper.cmx \
+    ocsigen_server.cmi
 server_main.cmo: ocsigen_server.cmi
 server_main.cmx: ocsigen_server.cmx

@@ -95,6 +95,14 @@ package "ext" (
     archive(native) = "accesscontrol.cmx"
   )
 
+  package "cors" (
+    exists_if = "cors.cmo,cors.cmx"
+    version = "[distributed with Ocsigen server]"
+    description = "Handling cross-origin requests"
+    archive(byte) = "cors.cmo"
+    archive(native) = "cors.cmx"
+  )
+
   package "extendconfiguration" (
     exists_if = "extendconfiguration.cmo,extendconfiguration.cmx"
     version = "[distributed with Ocsigen server]"

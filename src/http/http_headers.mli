@@ -62,6 +62,17 @@ val range : name
 val x_forwarded_for : name
 val x_forwarded_proto : name
 
+val origin : name
+val access_control_request_method : name
+val access_control_request_headers : name
+
+val access_control_allow_origin : name
+val access_control_allow_credentials : name
+val access_control_expose_headers : name
+val access_control_max_age : name
+val access_control_allow_methods : name
+val access_control_allow_headers : name
+
 (****)
 
 type t
@@ -84,7 +95,8 @@ val find : name -> t -> string
  *)
 
 val find_all : name -> t -> string list
-(** find all the values bound to [name] in the HTTP header [t]. *)
+(** find all the values bound to [name] in the HTTP header [t].
+    Raise [Not_found] if it is not bound. *)
 
 val iter : (name -> string -> unit) -> t -> unit
 val fold : (name -> string list -> 'a -> 'a) -> t -> 'a -> 'a

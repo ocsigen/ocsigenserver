@@ -29,7 +29,8 @@ val find : string -> Ocsigen_http_frame.t -> string
  *)
 
 val find_all : string -> Ocsigen_http_frame.t -> string list
-(** find all the values bound to [name] in the HTTP headers of the frame. *)
+(** find all the values bound to [name] in the HTTP headers of the frame.
+    Raise [Not_found] if it is not bound.*)
 
 val get_keepalive : Ocsigen_http_frame.Http_header.http_header -> bool
 val parse_cookies : string  -> string CookiesTable.t
@@ -47,6 +48,11 @@ val parse_content_type : string option -> ((string * string) * (string * string)
 val get_content_length : Ocsigen_http_frame.t -> int64 option
 val get_referer : Ocsigen_http_frame.t -> string option
 val get_referrer : Ocsigen_http_frame.t -> string option
+
+val get_origin : Ocsigen_http_frame.t -> string option
+val get_access_control_request_method : Ocsigen_http_frame.t -> string option
+val get_access_control_request_headers : Ocsigen_http_frame.t -> string list option
+
 val get_accept :
   Ocsigen_http_frame.t ->
   ((string option * string option) * float option * (string * string) list)

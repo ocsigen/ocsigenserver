@@ -66,6 +66,7 @@ PLUGINS_IMPL := extensions/staticmod.cmo           \
                 extensions/rewritemod.cmo          \
                 extensions/extendconfiguration.cmo \
                 extensions/ocsigen_comet.cmo       \
+                extensions/cors.cmo                \
 
 ifeq "$(CAMLZIP)" "YES"
 PLUGINS_IMPL += extensions/deflatemod.cmo

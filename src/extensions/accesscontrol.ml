@@ -103,9 +103,12 @@ let rec parse_condition = function
                   let r = Netstring_pcre.string_match regexp a 0 <> None in
                   if r then Ocsigen_messages.debug2 (sprintf "--Access control (header): header %s matches \"%s\"" name reg);
                   r)
-               (Http_headers.find_all
-                  (Http_headers.name name)
-                  ri.ri_http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers)
+               (try
+                  (Http_headers.find_all
+                     (Http_headers.name name)
+                     ri.ri_http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers)
+                with
+                  | Not_found -> [])
            in
            if not r then Ocsigen_messages.debug2 (sprintf "--Access control (header): header %s does not match \"%s\"" name reg);
            r)

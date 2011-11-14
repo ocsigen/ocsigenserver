@@ -27,6 +27,7 @@ FILES := staticmod.ml           \
 	 rewritemod.ml          \
 	 extendconfiguration.ml \
          ocsigen_comet.ml       \
+         cors.ml                \
 
 ifeq "$(CAMLZIP)" "YES"
 FILES += deflatemod.ml

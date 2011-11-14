@@ -231,6 +231,18 @@ type request_info =
      ri_content_length: int64 option; (** Content-Length HTTP header *)
      ri_referer: string option Lazy.t; (** Referer HTTP header *)
 
+     ri_origin: string option Lazy.t;
+     (** Where the cross-origin request or preflight request originates from.
+         http://www.w3.org/TR/cors/#origin-request-header *)
+     ri_access_control_request_method : string option Lazy.t;
+     (** which method will be used in the actual request as part of
+         the preflight request.
+         http://www.w3.org/TR/cors/#access-control-request-method-request-he*)
+     ri_access_control_request_headers : string list option Lazy.t;
+     (** Which headers will be used in the actual request as part of
+         the preflight request.
+         http://www.w3.org/TR/cors/#access-control-request-headers-request-h *)
+
      ri_accept: Http_headers.accept Lazy.t; (** Accept HTTP header. For example [(Some "text", None)] means ["text/*"]. The float is the "quality" value, if any. The last association list is for other extensions. *)
      ri_accept_charset: (string option * float option) list Lazy.t; (** Accept-Charset HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
      ri_accept_encoding: (string option * float option) list Lazy.t; (** Accept-Encoding HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)

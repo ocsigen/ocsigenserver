@@ -310,6 +310,14 @@ let get_request_infos
 
        let referer = lazy (get_referer http_frame) in
 
+       let origin = lazy (get_origin http_frame) in
+
+       let access_control_request_method =
+         lazy (get_access_control_request_method http_frame) in
+
+       let access_control_request_headers =
+         lazy (get_access_control_request_headers http_frame) in
+
        let accept = lazy (get_accept http_frame)   in
 
        let accept_charset = lazy (get_accept_charset http_frame) in
@@ -319,18 +327,24 @@ let get_request_infos
        let accept_language = lazy (get_accept_language http_frame) in
 
        let post_params0 =
-         if meth = Http_header.GET || meth = Http_header.HEAD
-         then None
-         else match find_post_params http_frame ct filenames with
-           | None -> None
-           | Some f -> 
-             let r = ref None in
-             Some (fun ci -> 
-               match !r with
-                 | None -> let res = f ci in
-                           r := Some res;
-                           res
-                 | Some r -> r)
+         match meth with
+           | Http_header.GET
+           | Http_header.HEAD -> None
+           | Http_header.POST
+           | Http_header.OPTIONS ->
+             begin
+               match find_post_params http_frame ct filenames with
+                 | None -> None
+                 | Some f ->
+                   let r = ref None in
+                   Some (fun ci ->
+                     match !r with
+                       | None -> let res = f ci in
+                                r := Some res;
+                                res
+                       | Some r -> r)
+             end
+           | _ -> failwith "get_request_infos: HTTP method not implemented"
        in
        let post_params =
          match post_params0 with
@@ -381,6 +395,9 @@ let get_request_infos
           ri_content_type_string = ct_string;
           ri_content_length = cl;
           ri_referer = referer;
+          ri_origin = origin;
+          ri_access_control_request_method = access_control_request_method;
+          ri_access_control_request_headers = access_control_request_headers;
           ri_accept = accept;
           ri_accept_charset = accept_charset;
           ri_accept_encoding = accept_encoding;
@@ -621,7 +638,8 @@ let service receiver sender_slot request meth url port sockaddr =
   (* body of service *)
   if meth <> Http_header.GET &&
      meth <> Http_header.POST &&
-     meth <> Http_header.HEAD
+     meth <> Http_header.HEAD &&
+     meth <> Http_header.OPTIONS
   then begin
    (* VVV Warning: This must be done once and only once.
       Put this somewhere else to ensure that?
