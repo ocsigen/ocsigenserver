@@ -1,6 +1,12 @@
-===== dev =====
+===== 2.0.2 (2011-11-18) =====
 
-  * Allow Ocsigen_sender.{Html5,Xhtml}_content to choose the returned content type (close #53).
+  * Server:
+    ** The command line options where not parsed when the server was not compiled with -linkall.
+    ** Improve error messages when the log firectory is not present.
+    ** Add a Cross-Origin Resource Sharing extension.
+  * Libraries:
+    ** Allow Ocsigen_sender.{Html5,Xhtml}_content to choose the returned content type (close #53).
+    ** Ocsigen_extensions.get_port: do not return the actual request port if an Host HTTP header is present.
 
 ===== 2.0.1 (2011-09-28) =====
 
