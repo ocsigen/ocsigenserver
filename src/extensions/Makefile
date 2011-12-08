@@ -1,6 +1,7 @@
 include ../../Makefile.config
 
 PACKAGE  := lwt.unix     \
+	    lwt.ssl      \
 	    lwt.react    \
             netstring    \
 	    tyxml.parser \

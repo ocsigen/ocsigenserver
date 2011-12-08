@@ -25,10 +25,8 @@ endif
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
 ## but also to generate src/baselib/ocsigen_config.ml and src/files/META
 
-LWT_EXTRA_PACKAGE :=
-
 ifeq "$(PREEMPTIVE)" "YES"
-  LWT_EXTRA_PACKAGE += lwt.extra
+LWT_EXTRA_PACKAGE:=lwt.extra
 endif
 
 SERVER_PACKAGE := lwt.ssl           \
