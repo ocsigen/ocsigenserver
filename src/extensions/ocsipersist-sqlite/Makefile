@@ -1,6 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := lwt          \
+PACKAGE  := lwt.preempt  \
 	    tyxml.parser \
 	    sqlite3      \
 

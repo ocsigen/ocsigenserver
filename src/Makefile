@@ -30,7 +30,7 @@ files/META: files/META.in ../Makefile.config ../Makefile.options Makefile
 	  > $@
 
 files/META.${PROJECTNAME}: files/META.in ../Makefile.config ../Makefile.options Makefile
-	echo directory = \"${SRC}/src/server\" > $@
+	echo directory = \"../server\" > $@
 	cat $< \
 	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
 	  | sed s/%%NAME%%/$(PROJECTNAME)/g \
