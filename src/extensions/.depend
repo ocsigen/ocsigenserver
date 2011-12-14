@@ -28,10 +28,14 @@ cgimod.cmx: ../baselib/ocsigen_stream.cmx ../http/ocsigen_senders.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
     ../baselib/ocsigen_config.cmx ../http/http_headers.cmx \
     ../http/framepp.cmx
-cors.cmo: ../baselib/ocsigen_pervasives.cmi ../baselib/ocsigen_messages.cmi \
-    ../http/ocsigen_http_frame.cmi ../server/ocsigen_extensions.cmi
-cors.cmx: ../baselib/ocsigen_pervasives.cmx ../baselib/ocsigen_messages.cmx \
-    ../http/ocsigen_http_frame.cmx ../server/ocsigen_extensions.cmx
+cors.cmo: ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_pervasives.cmi \
+    ../baselib/ocsigen_messages.cmi ../http/ocsigen_http_frame.cmi \
+    ../server/ocsigen_extensions.cmi ../http/http_headers.cmi \
+    ../http/framepp.cmi
+cors.cmx: ../baselib/ocsigen_stream.cmx ../baselib/ocsigen_pervasives.cmx \
+    ../baselib/ocsigen_messages.cmx ../http/ocsigen_http_frame.cmx \
+    ../server/ocsigen_extensions.cmx ../http/http_headers.cmx \
+    ../http/framepp.cmx
 deflatemod.cmo: ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_messages.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_headers.cmi \
     ../server/ocsigen_extensions.cmi ../http/http_headers.cmi
@@ -82,10 +86,12 @@ rewritemod.cmx: ../baselib/ocsigen_messages.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx
 staticmod.cmo: ../baselib/ocsigen_pervasives.cmi \
     ../baselib/ocsigen_messages.cmi ../server/ocsigen_local_files.cmi \
-    ../http/ocsigen_http_frame.cmi ../server/ocsigen_extensions.cmi
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
+    ../server/ocsigen_extensions.cmi ../http/http_headers.cmi
 staticmod.cmx: ../baselib/ocsigen_pervasives.cmx \
     ../baselib/ocsigen_messages.cmx ../server/ocsigen_local_files.cmx \
-    ../http/ocsigen_http_frame.cmx ../server/ocsigen_extensions.cmx
+    ../http/ocsigen_http_frame.cmx ../http/ocsigen_http_com.cmx \
+    ../server/ocsigen_extensions.cmx ../http/http_headers.cmx
 userconf.cmo: ../baselib/ocsigen_pervasives.cmi \
     ../baselib/ocsigen_messages.cmi ../server/ocsigen_extensions.cmi \
     ../http/ocsigen_cookies.cmi
