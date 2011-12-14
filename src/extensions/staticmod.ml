@@ -121,7 +121,7 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
              "Staticmod: cannot use '..' in user paths")
 
 
-let gen ~usermode dir = function
+let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found (_, r) ->
       Lwt.return (Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_not_found (err, ri) ->
@@ -134,14 +134,29 @@ let gen ~usermode dir = function
                             ri.request_info.ri_sub_path) in
            Ocsigen_local_files.content ri page
            >>= fun answer ->
-           let answer' =
+           let answer =
              if status_filter = false then
                answer
              else
                (* The page is an error handler, we propagate
                   the original error code *)
                {answer with Ocsigen_http_frame.res_code = err }
-           in Lwt.return (Ext_found (fun () -> Lwt.return answer'))
+           in
+           let (<<) h (n, v) = Http_headers.replace n v h in
+	   let answer = match cache with
+	     | None -> answer
+	     | Some 0 ->
+	       {answer with Ocsigen_http_frame.res_headers =
+		   answer.Ocsigen_http_frame.res_headers
+		       << (Http_headers.cache_control, "no-cache")
+		       << (Http_headers.expires, "0")}
+	     | Some duration ->
+	       {answer with Ocsigen_http_frame.res_headers =
+		   answer.Ocsigen_http_frame.res_headers
+		       << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
+		       << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))}
+	   in
+	   Lwt.return (Ext_found (fun () -> Lwt.return answer))
         )
 
         (function
@@ -173,6 +188,7 @@ type options = {
   opt_code: Netstring_pcre.regexp option;
   opt_dest: Ocsigen_extensions.ud_string option;
   opt_root_checks: Ocsigen_extensions.ud_string option;
+  opt_cache: int option;
 }
 
 let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
@@ -207,6 +223,14 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
           parse_attrs l
             { opt with opt_root_checks = Some (parse_user_dir s) }
 
+      | ("cache", s) :: l when opt.opt_cache = None ->
+	  let duration = try int_of_string s
+	    with _ ->
+	      if s = "no" then 0
+	      else bad_config ("Bad integer \""^s^"\" in <static cache=\"...\" />")
+	  in
+          parse_attrs l { opt with opt_cache = Some duration }
+
       | _ -> bad_config "Wrong attribute for <static>"
   in
   function
@@ -218,6 +242,7 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
             opt_code = None;
             opt_dest = None;
             opt_root_checks = None;
+	    opt_cache = None;
           }
         in
         let kind =
@@ -242,7 +267,7 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
 
           | _ -> raise (Error_in_config_file "Wrong attributes for <static>")
         in
-        gen ~usermode:userconf kind
+        gen ~usermode:userconf ?cache:opt.opt_cache kind
     | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
     | _ -> bad_config "(staticmod extension) Bad data"
 

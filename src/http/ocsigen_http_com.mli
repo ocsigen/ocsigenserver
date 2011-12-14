@@ -107,3 +107,7 @@ val abort : connection -> unit
 *)
 val set_result_observer : 
   (Ocsigen_http_frame.Http_header.http_header -> string -> unit Lwt.t) -> unit
+
+
+(**/**)
+val gmtdate: float -> string

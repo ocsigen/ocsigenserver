@@ -42,6 +42,20 @@ Here is an example on how to set a default error page for all 40x errors:
 
 Note that if you want to catch errors from all sites, you need to put this configuration in a separate <site path="">at the end of your configuration file.
 
+===Max-age and Expires
+
+Here is an example on how to set up the {{{Cache-control: max-age}}}
+and {{{Expires}}} HTTP headers:
+
+{{{
+<static dir="/path/to/the/local/directory" cache="2678400" />
+}}}
+
+The {{{cache}}} argument is given in seconds. (1 month in the example)
+
+When the {{{cache}}} argument is {{{0}}} or {{{no}}}, the
+{{{Cache-control: no-cache}}} header is sent.
+
 ===Staticmod and userconf
 
 (version 1.2.0 and greater)
