@@ -959,8 +959,8 @@ let send
              | _              ->
 	       match String.sub s (String.length s - 4) 4,
 		     res.res_charset with
-		 | "+xml", Some "" -> Some s
-		 | "+xml", Some c ->
+		 | ("+xml"|"/xml"), Some "" -> Some s
+		 | ("+xml"|"/xml"), Some c ->
 		     Some (Format.sprintf "%s; charset=%s" s c)
 		 | _ -> res.res_content_type
          else
