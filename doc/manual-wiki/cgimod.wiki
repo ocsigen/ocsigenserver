@@ -73,8 +73,8 @@ easy to get lost so keep things as simple as you can!
   This is the same example using regexps. The "regexp" part matches the
   url, "dir" is the physical directory containing the scripts and
   "script" is the name of the script to execute. Here, "\1" makes
-  reference to the first (parenthesized) subexpression in "regexp". Of
-  course, you could use "\2", "\3", etc. as well.
+  reference to the first (parenthesized) subexpression in "regexp" (and of
+  course you can use "\2", "\3", for the second, third, etc.).
   //Warning: until recently, the syntax was $1, $2, etc.//
 
   //End your regexps with {{{$}}} if you want them to match the full URL.//
