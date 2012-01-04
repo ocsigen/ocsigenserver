@@ -20,7 +20,7 @@ Libraries:
  * pcre-ocaml        (tested with 6.0.1)
  * cryptokit         (tested with 1.3)
  * ocaml-text        (tested with 0.3)
- * tyxml	     (need version 2.0)
+ * tyxml	     (need version 2.0.1)
 
 Optional libraries:
 
