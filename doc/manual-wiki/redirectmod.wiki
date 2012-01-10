@@ -1,6 +1,6 @@
 =Redirectmod=
 
-Redirectmod is a module allowing to define HTTP redirections from Ocsigen's configuration file. It is in beta version. Submit your bugs and feature wishes (or any enhancement/mistake in the documentation) [[site:trac|here]].
+Redirectmod is a module allowing to define HTTP redirections from Ocsigen's configuration file. Submit your bugs and feature wishes (or any enhancement/mistake in the documentation) [[site:trac|here]].
 
 To use that extension, first load it from the configuration file:
 {{{
