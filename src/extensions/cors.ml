@@ -128,12 +128,14 @@ let main config = function
       begin match rq.OX.request_info.OX.ri_method with
         | OFrame.Http_header.OPTIONS ->
           OMsg.debug (fun () -> "CORS: OPTIONS request");
-          try
-            add_headers config rq (default_frame ())
-          with
-            | Refused ->
-              OMsg.debug (fun () -> "CORS: Refused request");
-              Lwt.return OX.Ext_do_nothing
+          begin
+            try
+              add_headers config rq (default_frame ())
+            with
+              | Refused ->
+                OMsg.debug (fun () -> "CORS: Refused request");
+                Lwt.return OX.Ext_do_nothing
+          end
         | _ ->
           Lwt.return OX.Ext_do_nothing
       end
