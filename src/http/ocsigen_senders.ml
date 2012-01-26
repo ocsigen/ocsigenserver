@@ -88,8 +88,20 @@ module Text_content =
 
     type options = unit
 
-    let get_etag ?options (x, _) =
-      Some (Digest.to_hex (Digest.string x))
+    let get_etag ?options (x, _) = None
+(*      Some (Digest.to_hex (Digest.string x)) *)
+    (* We do not add etags here because the content is
+       probably generated and there are problemes with etags
+       and POST requests:
+       when doing POST request with etags, the semantinc
+       is not to do side effects on the server when the
+       etag match and respond with code 412 ( precondition failed ).
+       Since the etag is calculated from the content of the answer,
+       we cannot enforce this semantic correctly, so it is better not
+       to send etags with POST requests. Here, we cannot know wether
+       the request was in POST or GET, so the easiest way to fix that
+       is to never send etags *)
+
 
     let result_of_content ?(options = ()) ((c, ct) as content) =
       let md5 = get_etag content in
