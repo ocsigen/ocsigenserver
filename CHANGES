@@ -1,3 +1,11 @@
+===== 2.0.3 (2012-01-31) =====
+
+  * Staticmod: add a "cache" option
+  * Cgimod: fix use of old $1 notation instead of \1
+  * Fix problem with etags, post and safari
+  * Add charset to content served as something/xml
+  * Licence of polytable and ocsigen_cache changed from GPL to LGPL
+
 ===== 2.0.2 (2011-11-18) =====
 
   * Server:
