@@ -93,7 +93,8 @@ install.files:
 	$(INSTALL) -d -m 755 -o ${OCSIGENUSER} -g ${OCSIGENGROUP} \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	$(INSTALL) -m 644 -o ${OCSIGENUSER} -g ${OCSIGENGROUP} \
-	  local/var/www/ocsigenstuff/* $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
+	  local/var/www/ocsigenstuff/*.png local/var/www/ocsigenstuff/*.css \
+	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	$(INSTALL) -d -m 755 $(TEMPROOT)$(MANDIR)
 	$(INSTALL) -m 644 src/files/${PROJECTNAME}.1 $(TEMPROOT)$(MANDIR)
 
