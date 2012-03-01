@@ -210,6 +210,8 @@ type request_info =
      ri_timeofday: float; (** An Unix timestamp computed at the beginning of the request *)
      mutable ri_nb_tries: int; (** For internal use: 
                                    used to prevent loops of requests *)
+
+     ri_connection_closed: unit Lwt.t; (** a thread waking up when the connection is closed *)
    }
 (** If you force [ri_files] or [ri_post_params], the request is fully read,
    so it is not possible any more to read it from [ri_http_frame]

@@ -408,6 +408,7 @@ let get_request_infos
           ri_range = lazy (Ocsigen_range.get_range http_frame);
           ri_timeofday = Unix.gettimeofday ();
           ri_nb_tries = 0;
+          ri_connection_closed = Ocsigen_http_com.closed receiver;
         }
     )
     (fun e ->

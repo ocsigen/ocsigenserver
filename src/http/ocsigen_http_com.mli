@@ -51,6 +51,10 @@ val get_http_frame : ?head:bool -> connection -> Ocsigen_http_frame.t Lwt.t
 val connection_id : connection -> int
 val connection_fd : connection -> Lwt_ssl.socket
 
+(** [closed conn] is a thread waking up when the connection is
+    closed *)
+val closed : connection -> unit Lwt.t
+
 (****)
 
 type slot

@@ -100,6 +100,7 @@ type connection =
     chan : Lwt_chan.out_channel;
     timeout : Lwt_timeout.t;
     r_mode : mode;
+    closed : unit Lwt.t * unit Lwt.u;
     mutable buf : string;
     mutable read_pos : int;
     mutable write_pos : int;
@@ -138,6 +139,7 @@ let create_receiver timeout mode fd =
     buf=String.create buffer_size;
     read_pos = 0;
     write_pos = 0;
+    closed = Lwt.wait ();
     read_mutex = Lwt_mutex.create ();
     extension_mutex = Lwt_mutex.create ();
     senders = create_waiter false;
@@ -149,7 +151,11 @@ let lock_receiver receiver = Lwt_mutex.lock receiver.read_mutex
 
 let unlock_receiver receiver = Lwt_mutex.unlock receiver.read_mutex
 
-let abort conn = Lwt_ssl.abort conn.fd Aborted
+let abort conn =
+  Lwt.wakeup (snd conn.closed) ();
+  Lwt_ssl.abort conn.fd Aborted
+
+let closed conn = fst conn.closed
 
 let wakeup_next_request conn = Lwt_mutex.unlock conn.extension_mutex
 

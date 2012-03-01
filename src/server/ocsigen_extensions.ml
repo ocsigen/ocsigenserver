@@ -262,6 +262,8 @@ type request_info =
      ri_timeofday: float; (** An Unix timestamp computed at the beginning of the request *)
      mutable ri_nb_tries: int; (** For internal use: 
                                    used to prevent loops of requests *)
+
+     ri_connection_closed: unit Lwt.t; (** a thread waking up when the connection is closed *)
    }
 and request = {
   request_info: request_info;
