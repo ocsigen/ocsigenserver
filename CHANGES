@@ -1,3 +1,9 @@
+===== 2.0.4 (2012-03-08) =====
+
+  * Fix licencing problems of staticmod icons
+  * Server:
+    ** Add a notification for connections closed by the client
+
 ===== 2.0.3 (2012-01-31) =====
 
   * Staticmod: add a "cache" option
