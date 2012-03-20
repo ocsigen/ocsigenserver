@@ -138,7 +138,7 @@ logrotate:
 	     | sed s%USER%$(OCSIGENUSER)%g \
 	     | sed s%GROUP%$(OCSIGENGROUP)%g \
 	     | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
-	     > $(TEMPROOT)/etc/logrotate.d/$(PROJECTNAME); }
+	     > $(TEMPROOT)/etc/logrotate.d/$(PROJECTNAME) }
 
 ###
 
