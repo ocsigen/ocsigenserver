@@ -257,7 +257,7 @@ module File_content =
 
     let skip fd stream k =
       try
-        ignore 
+        ignore
           (Unix.LargeFile.lseek (Lwt_unix.unix_file_descr fd) k Unix.SEEK_CUR);
         Ocsigen_stream.next (Ocsigen_stream.get stream)
       with e -> Lwt.fail e

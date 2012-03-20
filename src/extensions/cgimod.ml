@@ -589,7 +589,7 @@ let parse_config _ path _ _ = function
            regexp= Regexp.regexp ("^"^(good_root r)^"([^/]*)");
 
            doc_root= Ocsigen_extensions.parse_user_dir (string_conform1 s);
-           script= Ocsigen_extensions.parse_user_dir "\1";
+           script= Ocsigen_extensions.parse_user_dir "\\1";
 
            path= string_conform 
           (Url.string_of_url_path ~encode:true path);

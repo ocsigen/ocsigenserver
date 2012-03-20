@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-type name = string
-let name s = String.lowercase s
-let name_to_string s = s
+type name = string * string
+let name s = (s, String.lowercase s)
+let name_to_string = fst
 
 let accept = name "Accept"
 let accept_charset = name "Accept-Charset"
@@ -71,13 +71,16 @@ module NameHtbl =
   Hashtbl.Make
     (struct
        type t = name
-       let equal (n : string) n' = n = n'
-       let hash = Hashtbl.hash
+       let equal (_, n : _ * string) (_, n') = n = n'
+       let hash (_,n) = Hashtbl.hash n
      end)
 
 (****)
 
-module Map = Map.Make (String)
+module Map = Map.Make (struct
+  type t = name
+  let compare (_,n) (_,n') = compare n n'
+end)
 
 type t = string list Map.t
 
