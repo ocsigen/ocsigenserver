@@ -27,6 +27,6 @@ uninstall:
 	-rm -Rf $(TEMPROOT)$(DOCDIR)
 
 clean:
-	-rm -f api-html/*
+	-rm -f api-html/* api-wiki/*
 	-rm -f *~ \#* .\#*
 
