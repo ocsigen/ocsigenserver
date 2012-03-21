@@ -2,6 +2,7 @@ include ../Makefile.config
 include ../src/Makefile.filelist
 
 OCAMLDOC := ${OCAMLFIND} ocamldoc
+ODOC_WIKI := odoc_wiki.cma
 
 LIBS := -package lwt,tyxml,ssl \
         ${addprefix -I ../src/, baselib http server extensions }
