@@ -14,7 +14,7 @@ api-html/index.html: indexdoc $(addprefix ../src/,$(DOC) $(PLUGINS_DOC))
 wikidoc: api-wiki/index.wiki
 api-wiki/index.wiki: indexdoc $(addprefix ../src/,$(DOC) $(PLUGINS_DOC))
 	mkdir -p api-wiki
-	$(OCAMLDOC) ${LIBS} -d api-html -intro indexdoc -colorize-code \
+	$(OCAMLDOC) ${LIBS} -d api-wiki -intro indexdoc -colorize-code \
 	   -i $(shell ocamlfind query wikidoc) -g ${ODOC_WIKI} \
 	   $(addprefix ../src/,$(DOC) $(PLUGINS_DOC))
 
