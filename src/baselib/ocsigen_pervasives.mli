@@ -23,6 +23,14 @@ type ('a, 'b) leftright = Left of 'a | Right of 'b
 
 val advert: string
 
+module Option : sig
+  type 'a t = 'a option
+  val map : ('a -> 'b) -> 'a t -> 'b t
+  val get : (unit -> 'a) -> 'a t -> 'a
+  val iter : ('a -> unit) -> 'a t -> unit
+  val return : 'a -> 'a t
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
+end
 
 module List : sig
   include module type of List

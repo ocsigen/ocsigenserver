@@ -45,6 +45,25 @@ See http://ocsigen.org/ and http://caml.inria.fr/ for information"
 
 (*****************************************************************************)
 
+module Option = struct
+  type 'a t = 'a option
+  let map f = function
+    | Some x -> Some (f x)
+    | None -> None
+  let get f = function
+    | Some x -> x
+    | None -> f ()
+  let iter f = function
+    | Some x -> f x
+    | None -> ()
+  let return x =
+    Some x
+  let bind opt k =
+    match opt with
+      | Some x -> k x
+      | None -> None
+end
+
 module List = struct
 
   include List
