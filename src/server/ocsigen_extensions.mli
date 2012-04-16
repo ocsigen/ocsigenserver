@@ -399,6 +399,8 @@ extension, taking as parameter the configuration options between
 [<extension>] and [</extension>]. This allows to give configuration options
 to extensions. If no function is supplied, the extension is supposed to
 accept no option (and loading will fail if an option is supplied)
+See <<a_api module="Ocsigen_extensions.Configuration" | val process_elements >> for
+the easy construction of such a function.
 - a function [exn_handler] that will create an error message from the
 exceptions that may be raised during the initialisation phase, and raise again
 all other exceptions
@@ -423,6 +425,79 @@ val register_extension :
   ?respect_pipeline:bool ->
   unit -> unit
 
+
+(** This modules contains types and constructor for the description of XML
+    configurations and the accordingly parsing. *)
+module Configuration : sig
+
+  (** Specification of a XML element. *)
+  type element
+
+  (** Specification of a XML attribute. *)
+  type attribute
+
+  (** Create the specification of a XML element.
+      @param name Name of the XML tag
+      @param init A function to be executed before processing the child elements and attributes
+      @param obligatory Whether the element is obligatory ([false] by default)
+      @param elements Specifications of the child elements
+      @param attribute Specifications of the attributes
+      @param pcdata Function to be applied on the pcdata ([ignore_blank_pcdata] by default)
+      @param other_elements Optional function to be applied on the content of unspecified tags
+      @param other_attributes Optional function to be applied on the unspecfied attributes
+    *)
+  val element :
+    name:string ->
+    ?obligatory:bool ->
+    ?init:(unit -> unit) ->
+    ?elements:element list ->
+    ?attributes:attribute list ->
+    ?pcdata:(string -> unit) ->
+    ?other_elements:(string -> (string * string) list -> Simplexmlparser.xml list -> unit) ->
+    ?other_attributes:(string -> string -> unit) ->
+    unit -> element
+
+  (** [attribute ~name f] create a specification of a XML attribute.
+      @param name The name of the XML attribute
+      @param obligatory Whether the attribute is obligatory ([false] by default)
+      @param f Function to be applied on the value string of the attribute
+    *)
+  val attribute :
+    name:string ->
+    ?obligatory:bool ->
+    (string -> unit) ->
+    attribute
+
+  (** Process an XML element by the specifications.
+      @param in_tag Name of the enclosing XML tag (just for generating error messages)
+      @param elements Specifications of the child elements
+      @param pcdata Function to be applied on the PCDATA ([ignore_blank_pcdata] by default)
+      @param other_elements Optional function to be applied on unexpected child elements
+      @raise Error_in_user_config_file If an element (resp. attribute) occurs
+        which is not specified by the [element] (resp. [attribute]) parameter
+        and no function [other_elements] (resp. other_attributes) is provided
+    *)
+  val process_element :
+     in_tag:string ->
+     elements:element list ->
+     ?pcdata:(string -> unit) ->
+     ?other_elements:(string -> (string * string) list -> Simplexmlparser.xml list -> unit) ->
+     Simplexmlparser.xml -> unit
+
+  (** Application of [process_element] on a list of XML elements. *)
+  val process_elements :
+    in_tag:string ->
+    elements:element list ->
+    ?pcdata:(string -> unit) ->
+    ?other_elements:(string -> (string * string) list -> Simplexmlparser.xml list -> unit) ->
+    ?init:(unit -> unit) ->
+    Simplexmlparser.xml list -> unit
+
+  (** The specification for ignoring blank PCDATA ('\n', '\r', ' ', '\t') and failing
+      otherwise (a reasonable default). *)
+  val ignore_blank_pcdata : in_tag:string -> string -> unit
+
+end
 
 (** Returns the hostname to be used for absolute links or redirections.
     It is either the Host header or the hostname set in 

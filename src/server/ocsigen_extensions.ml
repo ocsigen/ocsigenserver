@@ -762,6 +762,129 @@ let register_extension
        register_extension ?fun_site ?user_fun_site ?begin_init ?end_init
          ?exn_handler ?respect_pipeline ())
 
+module Configuration = struct
+
+  type attribute' = {
+    attribute_obligatory : bool;
+    attribute_value_func : string -> unit
+  }
+  type attribute = string * attribute'
+
+  type element' = {
+    obligatory : bool;
+    init : unit -> unit;
+    elements : element list;
+    attributes : attribute list;
+    pcdata : (string -> unit) option;
+    other_elements : (string -> (string * string) list -> Simplexmlparser.xml list -> unit) option;
+    other_attributes : (string -> string -> unit) option;
+  }
+  and element = string * element'
+
+  let element ~name
+      ?(obligatory=false)
+      ?(init=ignore)
+      ?(elements=[])
+      ?(attributes=[])
+      ?pcdata
+      ?other_elements
+      ?other_attributes
+      () : element =
+    name, { obligatory; init; elements; attributes; pcdata; other_elements; other_attributes }
+
+  let attribute ~name ?(obligatory=false) f : attribute =
+    name, { attribute_obligatory = obligatory; attribute_value_func = f }
+
+  let ignore_blank_pcdata ~in_tag =
+    fun str ->
+      String.iter
+        (fun c ->
+           if not (List.mem c [' '; '\n'; '\r'; '\t']) then
+             raise (Error_in_user_config_file
+                      ("Non-blank PCDATA in tag "^in_tag)))
+        str
+
+  let refuse_pcdata ~in_tag =
+    fun _ ->
+      raise (Error_in_user_config_file
+               ("No PCDATA allowed in tag "^in_tag))
+
+  let check_attribute_occurrence ~in_tag ?other_elements attributes = function
+    | name, { attribute_obligatory = true } ->
+        (try ignore (List.assoc name attributes)
+         with Not_found ->
+           raise (Error_in_user_config_file
+                    ("Obligatory attribute "^name^" not in tag "^in_tag)))
+    | _ -> ()
+
+  let check_element_occurrence ~in_tag elements = function
+    | name, { obligatory = true } ->
+        let corresponding_element = function
+          | Simplexmlparser.Element (name', _, _) -> name = name'
+          | _ -> false
+        in
+        if not (List.exists corresponding_element elements) then
+          raise (Error_in_user_config_file
+                   ("Obligatory element "^name^" not in tag "^in_tag))
+    | _ -> ()
+
+  let process_attribute =
+    fun ~in_tag ~attributes:spec_attributes ?other_attributes:spec_other_attributes (attribute, value) ->
+      try
+        (List.assoc attribute spec_attributes).attribute_value_func value
+      with Not_found ->
+        match spec_other_attributes with
+          | Some spec_other_attributes ->
+              spec_other_attributes attribute value
+          | None ->
+              raise (Error_in_user_config_file
+                       ("Unexpected attribute "^attribute^" in tag "^in_tag))
+
+  let rec process_element ~in_tag ~elements:spec_elements ?pcdata:spec_pcdata ?other_elements:spec_other_elements =
+    function | Simplexmlparser.PCData str ->
+          let spec_pcdata = Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata in
+          spec_pcdata str
+      | Simplexmlparser.Element (name, attributes, elements) ->
+          try
+            let spec = List.assoc name spec_elements in
+            List.iter
+              (check_attribute_occurrence ~in_tag:name attributes)
+              spec.attributes;
+            List.iter
+              (check_element_occurrence ~in_tag:name elements)
+              spec.elements;
+            spec.init ();
+            List.iter
+              (process_attribute ~in_tag:name
+                 ~attributes:spec.attributes
+                 ?other_attributes:spec.other_attributes)
+              attributes;
+            List.iter
+              (process_element ~in_tag:name
+                 ~elements:spec.elements
+                 ?pcdata:spec.pcdata
+                 ?other_elements:spec.other_elements)
+              elements
+          with Not_found ->
+            match spec_other_elements with
+              | Some spec_other_elements ->
+                  spec_other_elements name attributes elements
+              | None ->
+                  raise (Error_in_user_config_file
+                           ("Unknown tag "^name^" in tag "^in_tag))
+
+  let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements ?(init=ignore) elements =
+    List.iter
+      (check_element_occurrence ~in_tag elements)
+      spec_elements;
+    init ();
+    List.iter
+      (process_element ~in_tag ~elements:spec_elements ?pcdata ?other_elements)
+      elements
+
+end
+
+
 (*****************************************************************************)
 let start_initialisation, during_initialisation,
   end_initialisation, get_numberofreloads =
