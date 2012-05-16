@@ -24,15 +24,15 @@ module File_content : Ocsigen_http_frame.HTTP_CONTENT
    string * Ocsigen_charset_mime.charset_assoc * Ocsigen_charset_mime.mime_assoc
 
 module Xhtml_content :
-  Ocsigen_http_frame.HTTP_CONTENT with type t = XHTML.M.doc
+  Ocsigen_http_frame.HTTP_CONTENT with type t = Xhtml.M.doc
 
 module Html5_content :
-  Ocsigen_http_frame.HTTP_CONTENT with type t = HTML5.M.doc
+  Ocsigen_http_frame.HTTP_CONTENT with type t = Html5.M.doc
 
-module Make_XML_Content(XML : XML_sigs.Iterable)
-                       (TypedXML : XML_sigs.TypedXML with module XML := XML) :
+module Make_XML_Content(Xml : Xml_sigs.Iterable)
+                       (Typed_xml : Xml_sigs.Typed_xml with module Xml := Xml) :
   Ocsigen_http_frame.HTTP_CONTENT
-  with type t = TypedXML.doc
+  with type t = Typed_xml.doc
   and type options = Http_headers.accept Lazy.t
 
 

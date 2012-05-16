@@ -30,14 +30,14 @@ open Ocsigen_stream
 (*****************************************************************************)
 (** this module instantiate the HTTP_CONTENT signature for an Xhtml content*)
 
-module Make_XML_Content(XML : XML_sigs.Iterable)
-                       (TypedXML : XML_sigs.TypedXML with module XML := XML)
+module Make_XML_Content(Xml : Xml_sigs.Iterable)
+                       (Typed_xml : Xml_sigs.Typed_xml with module Xml := Xml)
   = struct
 
     module Xhtmlprinter =
-      XML_print.MakeTyped(XML)(TypedXML)(Ocsigen_stream.StringStream)
+      Xml_print.Make_typed(Xml)(Typed_xml)(Ocsigen_stream.StringStream)
 
-    type t = TypedXML.doc
+    type t = Typed_xml.doc
     type options = Http_headers.accept Lazy.t
 
     let get_etag_aux x = None
@@ -62,8 +62,8 @@ module Make_XML_Content(XML : XML_sigs.Iterable)
     let result_of_content ?options c =
       let content_type =
 	choose_content_type options
-	  TypedXML.Info.alternative_content_types
-	  TypedXML.Info.content_type in
+	  Typed_xml.Info.alternative_content_types
+	  Typed_xml.Info.content_type in
       let x = Xhtmlprinter.print ~advert c in
       let default_result = default_result () in
       Lwt.return
@@ -77,8 +77,8 @@ module Make_XML_Content(XML : XML_sigs.Iterable)
 
   end
 
-module Xhtml_content = Make_XML_Content(XML)(XHTML.M)
-module Html5_content = Make_XML_Content(XML)(HTML5.M)
+module Xhtml_content = Make_XML_Content(Xml)(Xhtml.M)
+module Html5_content = Make_XML_Content(Xml)(Html5.M)
 
 
 (*****************************************************************************)
@@ -476,11 +476,11 @@ module Error_content =
     let get_etag ?options c = None
 
     let error_page s msg c =
-      XHTML.M.html
-        (XHTML.M.head (XHTML.M.title (XHTML.M.pcdata s)) [])
-        (XHTML.M.body
-           (XHTML.M.h1 [XHTML.M.pcdata msg]::
-            XHTML.M.p [XHTML.M.pcdata s]::
+      Xhtml.M.html
+        (Xhtml.M.head (Xhtml.M.title (Xhtml.M.pcdata s)) [])
+        (Xhtml.M.body
+           (Xhtml.M.h1 [Xhtml.M.pcdata msg]::
+            Xhtml.M.p [Xhtml.M.pcdata s]::
             c)
         )
 
@@ -515,11 +515,11 @@ module Error_content =
             error_page
               ("Error "^str_code)
               error_msg
-              [XHTML.M.p
-                 [XHTML.M.pcdata (Printexc.to_string exn);
-                  XHTML.M.br ();
-                  XHTML.M.em
-                    [XHTML.M.pcdata "(Ocsigen running in debug mode)"]
+              [Xhtml.M.p
+                 [Xhtml.M.pcdata (Printexc.to_string exn);
+                  Xhtml.M.br ();
+                  Xhtml.M.em
+                    [Xhtml.M.pcdata "(Ocsigen running in debug mode)"]
                 ]]
         | _ ->
           error_page
