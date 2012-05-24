@@ -27,6 +27,13 @@ package "baselib" (
   description = "Base library for Ocsigen server"
   archive(byte) = "baselib.cma"
   archive(native) = "baselib.cmxa"
+  package "base" (
+    description = "Just extensions of the stdlib (also for usage on the client side)"
+    version = "[distributed with Ocsigen server]"
+    requires = "%%BASEDEPS%%"
+    archive(byte) = "ocsigen_lib_base.cmo"
+    archive(native) = "ocsigen_lib_base.cmxo"
+  )
 )
 
 package "http" (

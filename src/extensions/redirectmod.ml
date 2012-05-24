@@ -32,7 +32,7 @@ Then load it dynamically from Ocsigen's config file:
 
 *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 open Lwt
 open Ocsigen_extensions

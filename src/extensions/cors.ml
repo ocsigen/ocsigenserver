@@ -20,7 +20,7 @@
 
 (** Handling Cross-Origin Resource Sharing headers *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 open Lwt
 
 module OX      = Ocsigen_extensions

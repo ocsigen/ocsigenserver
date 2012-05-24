@@ -2,7 +2,8 @@ BIN := server/${PROJECTNAME}
 NATBIN := server/${PROJECTNAME}.opt
 
 INTF := baselib/ocsigen_cache.cmi	   \
-	baselib/ocsigen_pervasives.cmi	   \
+	baselib/ocsigen_lib_base.cmi	   \
+	baselib/ocsigen_lib.cmi	   \
 	baselib/ocsigen_config.cmi	   \
 	baselib/ocsigen_getcommandline.cmi \
 	baselib/ocsigen_messages.cmi       \
@@ -25,7 +26,8 @@ INTF := baselib/ocsigen_cache.cmi	   \
 	server/ocsigen_local_files.cmi     \
 	server/ocsigen_server.cmi	   \
 
-IMPL := baselib/baselib.cma		   \
+IMPL := baselib/ocsigen_lib_base.cmo	   \
+        baselib/baselib.cma		   \
 	baselib/parsecommandline.cma       \
 	baselib/donotparsecommandline.cma  \
         baselib/polytables.cmo	           \

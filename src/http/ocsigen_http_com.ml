@@ -36,7 +36,7 @@ PERSISTENT CONNECTIONS
 http://www.tools.ietf.org/html/draft-ietf-http-connection-00
 *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 open Ocsigen_http_frame
 open Ocsigen_cookies

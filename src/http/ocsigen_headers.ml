@@ -26,7 +26,7 @@
 
 open Ocsigen_http_frame
 open Ocsigen_senders
-open Ocsigen_pervasives
+open Ocsigen_lib
 open Ocsigen_cookies
 
 

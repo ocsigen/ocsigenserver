@@ -28,7 +28,7 @@
  * WebSockets support.
  *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 (*** PREAMBLE ***)
 
@@ -146,7 +146,7 @@ end = struct
   (* storage and ID manipulation *)
   let ctbl = CTbl.create tbl_initial_size
 
-  let new_id = String.make_cryptographic_safe
+  let new_id = Ocsigen_lib.make_cryptographic_safe_string
 
   (* because Hashtables allow search for elements with a corresponding hash, we
    * have to create a dummy channel in order to retreive the original channel.

@@ -20,7 +20,7 @@
 (** This module uses the lowel level module Ocsigen_http_frame.Http_header.
      It is very basic and must be completed for exhaustiveness. *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 open Ocsigen_cookies
 
 val find : string -> Ocsigen_http_frame.t -> string

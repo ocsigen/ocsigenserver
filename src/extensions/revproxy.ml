@@ -38,7 +38,7 @@
    this data has been sent and is lost ...
 *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 open Lwt
 open Ocsigen_extensions

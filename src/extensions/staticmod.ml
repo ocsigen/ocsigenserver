@@ -24,7 +24,7 @@
 (*****************************************************************************)
 
 open Lwt
-open Ocsigen_pervasives
+open Ocsigen_lib
 open Ocsigen_extensions
 
 exception Not_concerned

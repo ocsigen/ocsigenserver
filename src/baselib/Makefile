@@ -10,7 +10,8 @@ all: byte opt
 
 ### Common files ###
 
-FILES := ocsigen_pervasives.ml     \
+FILES := ocsigen_lib_base.ml       \
+	 ocsigen_lib.ml            \
 	 ocsigen_cache.ml          \
          ocsigen_config.ml         \
 	 ocsigen_commandline.ml    \
@@ -19,7 +20,7 @@ FILES := ocsigen_pervasives.ml     \
          ocsigen_loader.ml         \
 	 ocsigen_stream.ml         \
 
-INTF_NOP4 := ocsigen_pervasives.mli
+INTF_NOP4 := ocsigen_lib_base.mli ocsigen_lib.mli
 
 PREDEP := ocsigen_config.ml dynlink_wrapper.ml
 

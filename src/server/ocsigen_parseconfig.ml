@@ -21,7 +21,7 @@
 (******************************************************************)
 (** Config file parsing *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 open Simplexmlparser
 open Ocsigen_config

@@ -27,6 +27,7 @@ files/META: files/META.in ../Makefile.config ../Makefile.options Makefile
 	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
 	  | sed s/%%NAME%%/$(PROJECTNAME)/g \
 	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVER_PACKAGE})/g \
+	  | sed s/%%BASEDEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${BASE_PACKAGE})/g \
 	  > $@
 
 files/META.${PROJECTNAME}: files/META.in ../Makefile.config ../Makefile.options Makefile
@@ -35,6 +36,7 @@ files/META.${PROJECTNAME}: files/META.in ../Makefile.config ../Makefile.options 
 	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
 	  | sed s/%%NAME%%/$(PROJECTNAME)/g \
 	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVER_PACKAGE})/g \
+	  | sed s/%%BASEDEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${BASE_PACKAGE})/g \
 	  | sed "s%package \"\(polytables\|commandline\|baselib\)\" (%package \"\1\" (\n  directory = \"../baselib\"%" \
 	  | sed "s%package \"\(http\|cookies\)\" (%package \"\1\" (\n  directory = \"../http\"%" \
 	  | sed "s%directory = \"extensions\"%directory = \"../extensions\"%" \

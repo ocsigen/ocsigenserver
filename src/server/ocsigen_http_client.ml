@@ -71,7 +71,7 @@
 
 *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 (* constants. Should be configurable *)
 let max_free_open_connections = 2

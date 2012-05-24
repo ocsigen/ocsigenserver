@@ -27,7 +27,7 @@
 (** Writing extensions for Ocsigen                                           *)
 
 open Lwt
-open Ocsigen_pervasives
+open Ocsigen_lib
 open Ocsigen_cookies
 
 exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)

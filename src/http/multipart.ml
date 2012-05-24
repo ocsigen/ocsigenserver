@@ -4,7 +4,7 @@
 
 (*VVV Check wether we should support int64 for large files? *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 module S = Netstring_pcre
 open Lwt

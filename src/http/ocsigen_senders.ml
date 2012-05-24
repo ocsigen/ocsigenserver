@@ -19,7 +19,7 @@
 (** This module provides predefined "senders" for usual types of pages to be
   sent by the server: xhtml, files, ... *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 open Ocsigen_http_frame
 open Ocsigen_http_com
 open Lwt

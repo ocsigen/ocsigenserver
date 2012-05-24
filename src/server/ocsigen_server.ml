@@ -20,7 +20,7 @@
 
 open Lwt
 open Ocsigen_messages
-open Ocsigen_pervasives
+open Ocsigen_lib
 open Ocsigen_extensions
 open Ocsigen_http_frame
 open Ocsigen_headers

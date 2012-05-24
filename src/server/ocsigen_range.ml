@@ -26,7 +26,7 @@
    For files, it should be optimized with seek!!!!!
 *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 exception Range_416
 

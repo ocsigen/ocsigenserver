@@ -24,7 +24,7 @@
    - nph- scripts
 *)
 
-open Ocsigen_pervasives
+open Ocsigen_lib
 
 open Lwt
 open Ocsigen_extensions
