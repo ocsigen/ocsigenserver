@@ -129,12 +129,12 @@ let parse_config = function
               l
         | ("temporary", "temporary")::l ->
             parse_attrs
-              (r, f, d, false)
+              (r, f, d, true)
               l
         | _ -> raise (Error_in_config_file "Wrong attribute for <redirect>")
         in
         let dir =
-          match parse_attrs (None, Yes, None, true) atts with
+          match parse_attrs (None, Yes, None, false) atts with
           | (None, _, _, _) -> 
               raise (Error_in_config_file
                        "Missing attribute regexp for <redirect>")
