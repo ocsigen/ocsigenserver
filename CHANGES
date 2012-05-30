@@ -1,3 +1,9 @@
+
+===== 2.0.4 (2012-06-02) =====
+
+  * Rename and split Ocsigen_pervasives into Ocsigen_lib and Ocsigen_lib_base
+  * Adapt to lower-case module names in TyXML
+
 ===== 2.0.4 (2012-03-08) =====
 
   * Fix licencing problems of staticmod icons
