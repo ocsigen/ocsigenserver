@@ -13,7 +13,7 @@ dependencies (including OCaml) or to use the [[wiki(2):install|Ocsigen
 bunble]]. It is known to work on Linux, MacOS, FreeBSD, Solaris (but
 has not been tested on Windows).
 
-If you need to install it from source, [[install|download the
+If you need to install it from source, [[wiki:install|download the
 package]], and read instructions in the README file.
 
 == Launch the server ==
