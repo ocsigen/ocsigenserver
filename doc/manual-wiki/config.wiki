@@ -4,7 +4,7 @@
 >>
 
 The main configuration file is usually named
-{{{/etc/ocsigensever/ocsigenserver.conf}}}. It contains the port(s) on
+{{{/etc/ocsigenserver/ocsigenserver.conf}}}. It contains the port(s) on
 which you want to run the server (usually 80), the protocol to use
 (HTTP or HTTPS), the location of log files, many settings for the
 server, the extensions to be loaded, the OCaml libraries you need for
