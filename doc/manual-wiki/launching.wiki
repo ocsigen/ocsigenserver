@@ -28,7 +28,7 @@ following options:
   -V ,  --veryverbose
          Very verbose mode (debug).
 
-  -version
+  --version
          Show version of program.
 }}}
 
