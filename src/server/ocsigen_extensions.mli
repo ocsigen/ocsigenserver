@@ -97,7 +97,7 @@ type config_info = {
       Use [None] if no index should be tried. The various indexes
       are tried in the given order. If no index is specified,
       or the index does not exists, the content of the directory
-      might be listed, according to [list_directry_content] *)
+      might be listed, according to [list_directory_content] *)
   default_directory_index : string list;
 
   (** Should the list of files in a directory be displayed
