@@ -246,12 +246,13 @@ end
 
 let make_cryptographic_safe_string =
   let rng = Cryptokit.Random.device_rng "/dev/urandom"
-  and to_hex = Cryptokit.Hexa.encode () in
+  and to_b64 = Cryptokit.Base64.encode_compact () in
   fun () ->
     let random_part =
       let random_number = Cryptokit.Random.string rng 20 in
-      Cryptokit.transform_string to_hex random_number
+      Cryptokit.transform_string to_b64 random_number
     and sequential_part =
+(*VVV Use base 64 also here *)
       Printf.sprintf "%Lx" (Int64.bits_of_float (Unix.gettimeofday ())) in
     random_part ^ sequential_part
 
