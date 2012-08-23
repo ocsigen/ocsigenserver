@@ -73,7 +73,8 @@ module Url : sig
   val string_of_url_path : encode:bool -> path -> uri
   val parse : t ->
     bool option * string option * int option *
-      string * string list * string option *
+      string (** the path, as a string, without the first / *) *
+      string list * string option *
       (string * string) list Lazy.t
 
 end

@@ -74,7 +74,7 @@
 open Ocsigen_lib
 
 (* constants. Should be configurable *)
-let max_free_open_connections = 2
+let max_free_open_connections = 10
 
 exception Connection_timed_out
 exception Connection_refused
@@ -721,6 +721,7 @@ let get ?https ?port ?headers ~host ~uri () =
 let get_url ?headers url =
   let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
+  let uri = "/"^uri in
   get ?https ?port ?headers ~host ~uri ()
 
 (*****************************************************************************)
@@ -744,6 +745,7 @@ let post_string ?https ?port ?(headers = Http_headers.empty)
 let post_string_url ?headers ~content ~content_type url =
   let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
+  let uri = "/"^uri in
   post_string ?https ?port ?headers ~host ~uri ~content ~content_type ()
 
 
@@ -758,6 +760,7 @@ let post_urlencoded ?https ?port ?headers ~host ~uri ~content () =
 let post_urlencoded_url ?headers ~content url =
   let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
+  let uri = "/"^uri in
   post_urlencoded ?https ?port ?headers ~host ~uri ~content ()
 
 (*****************************************************************************)
