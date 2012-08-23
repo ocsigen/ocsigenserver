@@ -108,15 +108,28 @@ module String_base : sig
 
   include module type of String
 
+  (** [remove_spaces s beg endd] returns a copy of the string from beg to endd,
+      removing spaces at the beginning and at the end *)
   val remove_spaces : string -> int -> int -> string
 
+  (* Cuts a string to the next separator *)
   val basic_sep : char -> string -> string * string
+
+  (** Cuts a string to the next separator, removing spaces.
+      Raises Not_found if the separator connot be found. *)
   val sep : char -> string -> string * string
+
+  (** Splits a string for words with separator,
+      removing spaces.
+      For ex "azert,   sdfmlskdf,    dfdsfs". *)
   val split : ?multisep:bool -> char -> string -> string list
 
   val may_append : string -> sep:string -> string -> string (* WAS add_to_string *)
   val may_concat : string -> sep:string -> string -> string (* WAS concat_strings *)
 
+  (* [first_diff s1 s2 n last] returns the index of the first difference
+     between s1 and s2, starting from n and ending at last.
+     returns (last + 1) if no difference is found. *)
   val first_diff : string -> string -> int -> int -> int
 
   module Table : Map.S with type key = string

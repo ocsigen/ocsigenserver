@@ -47,9 +47,23 @@ type resolved =
 (** Finds [filename] in the filesystem, with a possible redirection
     if it is a directory. Takes into account the fact that [filename]
     does not exists, is a symlink or is a directory, and raises
-    Failed_404 or Failed_403 accordingly. [no_check_for] is supposed
-    to be a prefix of [filename] ; directories above [no_check_for]
-    are not checked for symlinks *)
+    Failed_404 or Failed_403 accordingly.
+
+    - we return ["filename/index.html"] if [filename] corresponds to
+    a directory, ["filename/index.html"] is valid, and ["index.html"]
+    is one possible index (trying all possible indexes in order)
+    - we raise [Failed_404] if [filename] corresponds to a directory,
+    no index exists and [list_dir_content] is false.
+    Warning: this behaviour is not the same as Apache's but it corresponds
+    to a missing service in Eliom (answers 404). This also allows to have
+    an Eliom service after a "forbidden" directory
+    - we raise [Failed_403] if [filename] is a symlink that must
+    not be followed
+    - raises [Failed_404] if [filename] does not exist, or is a special file
+    - otherwise returns [filename]
+
+    [no_check_for] is supposed to be a prefix of [filename] ;
+    directories above [no_check_for] are not checked for symlinks *)
 val resolve :
   ?no_check_for:string ->
   request:Ocsigen_extensions.request ->

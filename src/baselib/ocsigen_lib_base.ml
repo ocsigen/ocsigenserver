@@ -272,7 +272,7 @@ module String_base = struct
     ((remove_spaces s 0 (seppos-1)),
      (remove_spaces s (seppos+1) (len-1)))
 
-  (* splits a string, for ex azert,   sdfmlskdf,    dfdsfs *)
+  (* splits a string, for ex "azert,   sdfmlskdf,    dfdsfs" *)
   let rec split ?(multisep=false) char s =
     let longueur = String.length s in
     let rec aux deb =

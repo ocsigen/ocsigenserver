@@ -1,6 +1,6 @@
 (* Ocsigen
  * http://www.ocsigen.org
- * Module rewritemod.ml
+ * Module extendconfiguration.ml
  * Copyright (C) 2008 Boris Yakobowski
  *
  * This program is free software; you can redistribute it and/or modify
