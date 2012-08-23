@@ -115,7 +115,7 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
   in
   if usermode = None || correct_user_local_file filename then
     (status_filter,
-     Ocsigen_local_files.resolve ?no_check_for:root ~request ~filename)
+     Ocsigen_local_files.resolve ?no_check_for:root ~request ~filename ())
   else
     raise (Ocsigen_extensions.Error_in_user_config_file
              "Staticmod: cannot use '..' in user paths")

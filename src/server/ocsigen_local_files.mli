@@ -67,7 +67,7 @@ type resolved =
 val resolve :
   ?no_check_for:string ->
   request:Ocsigen_extensions.request ->
-  filename:string -> resolved
+  filename:string -> unit -> resolved
 
 
 (** Given the local file [file], with a request originating at url

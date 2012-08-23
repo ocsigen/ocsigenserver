@@ -147,7 +147,7 @@ type resolved =
    - otherwise returns [filename]
 *)
 (* See also module Files in eliom.ml *)
-let resolve ?no_check_for ~request ~filename =
+let resolve ?no_check_for ~request ~filename () =
   (* We only accept absolute filenames, 
      as we do not really know what is the current directory *)
   let filename = 
