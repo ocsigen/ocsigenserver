@@ -125,6 +125,12 @@ module Dlist : sig
       to the newest *)
   val fold_back : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
 
+  (** lwt version of fold *)
+  val lwt_fold : ('b -> 'a -> 'b Lwt.t) -> 'b -> 'a t -> 'b Lwt.t
+
+  (** lwt version of fold_back *)
+  val lwt_fold_back : ('b -> 'a -> 'b Lwt.t) -> 'b -> 'a t -> 'b Lwt.t
+
   (** Move a node from one dlist to another one, without finalizing.
       If one value is removed from the destination list (because its
       maximum size is reached), it is returned (after finalisation). *)

@@ -116,7 +116,7 @@ module String_base : sig
   val basic_sep : char -> string -> string * string
 
   (** Cuts a string to the next separator, removing spaces.
-      Raises Not_found if the separator connot be found. *)
+      Raises [Not_found] if the separator cannot be found. *)
   val sep : char -> string -> string * string
 
   (** Splits a string for words with separator,

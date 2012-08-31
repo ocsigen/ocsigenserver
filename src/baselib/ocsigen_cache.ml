@@ -68,6 +68,12 @@ sig
       to the newest *)
   val fold_back : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
 
+  (** lwt version of fold *)
+  val lwt_fold : ('b -> 'a -> 'b Lwt.t) -> 'b -> 'a t -> 'b Lwt.t
+
+  (** lwt version of fold_back *)
+  val lwt_fold_back : ('b -> 'a -> 'b Lwt.t) -> 'b -> 'a t -> 'b Lwt.t
+
   (** Move a node from one dlist to another one, without finalizing.
       If one value is removed from the destination list (because its
       maximum size is reached), it is returned (after finalisation). *)
@@ -337,6 +343,36 @@ end = struct
     match add_node node l with
       | None -> None
       | Some v -> remove v; Some v.value
+
+  (* fold over the elements from the newest to the oldest *)
+  let lwt_fold f accu {newest} =
+    match newest with
+      | None -> Lwt.return accu
+      | Some newest ->
+	let rec fold accu node =
+	  f accu node.value >>= fun accu ->
+	  match node.prev with
+	    | None -> Lwt.return accu
+	    | Some new_node when new_node == newest -> Lwt.return accu
+	    | Some new_node ->
+	      fold accu new_node
+	in
+	fold accu newest
+
+  (* fold over the elements from the oldest to the newest *)
+  let lwt_fold_back f accu {oldest} =
+    match oldest with
+      | None -> Lwt.return accu
+      | Some oldest ->
+	let rec fold accu node =
+	  f accu node.value >>= fun accu ->
+	  match node.succ with
+	    | None -> Lwt.return accu
+	    | Some new_node when new_node == oldest -> Lwt.return accu
+	    | Some new_node ->
+	      fold accu new_node
+	in
+	fold accu oldest
 
   (* fold over the elements from the newest to the oldest *)
   let fold f accu {newest} =
