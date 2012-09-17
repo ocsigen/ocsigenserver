@@ -39,4 +39,4 @@ by
 }}}
 This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.
 
-//Warning:// If you are using Eliom with static linking, the registration of your services must be delayed until the configuration file is read. See how to do that in Eliom's manual.
+//Warning:// If you are using Eliom with static linking, the registration of your services must be delayed until the configuration file is read. See how to do that <<a_manual project="eliom" chapter="config" fragment="static_linking"|here>>.
