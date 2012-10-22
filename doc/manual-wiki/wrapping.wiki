@@ -9,13 +9,6 @@ declared on server side. For instance when we write
 <<code language="ocaml"| Eliom_services.onload {{ Dom_html.window##alert(Js.string %text) }} >>
 the contents of the {{{text}}} variable is sent along the page for the client code to access it.
 
-Cote serveur, dans le code genere par,
-<<code language="ocaml"| {{ Dom_html.window##alert(Js.string %text) }} >>
-la variable {{{text}}} est enregistree dans une table et un identifiant
-lui est associe. Cette contiendra toutes les donnees a envoyer au client.
-Cote client, l'identifiant est utilise pour retrouver la valeur de {{{text}}}
-dans la table.
-
 Server side, when <<code language="ocaml"| {{ Dom_html.window##alert(Js.string %text) }} >>
 is executed, the variable {{{text}}} is registered into a table and an id is associated to it.
 This table will containt all the datas references by variables annotated with % in a page, and
