@@ -18,8 +18,6 @@ The type of request is {{{Extensions.request_info}}} (have a look at it in the i
 
 Each extensions loaded in the configuration file tries to handle the request and returns something of type {{{Extensions.answer}}}. If the page is not found by the extension ({{{Ext_not_found}}}), the following one will try to handle the request. If the page is found, the answer is {{{Ext_found r}}} where {{{r}}} has type {{{Extensions.result}}}. An extension can also modify the request before giving it to the next one (answer {{{Ext_continue_with of Extensions.request_info}}}). 
 
-[[site:download/ocsigen/extensions/extensiontemplate.ml|See an example]]. 
-
 To write such an extension, just write a cmo or cma, and use the function Extensions.register_extension to register you extension. This function takes four functions as parameters: 
 * a function that will be called for each virtual server, generating two functions: 
 **one that will be called to generate the pages (it has type {{{string option -> request_info -> answer Lwt.t}}}), where the {{{string option}}} is the encoding for characters possibly specified in the configuration file, 
@@ -75,9 +73,6 @@ The module {{{Parseconfig}}} defines functions to parse strings or sizes (in byt
 //Warning: This is experimental. Please report your experience if you use it.//
 
 Extensions may take parameters in the configuration file. During the loading of the extension, the function {{{Extensions.get_config ()}}} returns the xml tree between {{{<extension>}}} and {{{</extension>}}} (or {{{<library>}}} and {{{</library>}}}). Write a parser for that tree. 
-
-====Example 
-[[site:download/ocsigen/extensions/extensiontemplate.ml|See an example]]. 
 
 ===Catching the request before it is fully read 
 
