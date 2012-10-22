@@ -2,11 +2,13 @@
 
 {2 Persistent data, writing in the logs, configuration file extension, polymorphic tables}
 {!modules:
+Ocsigen_lib
 Ocsigen_messages
 Ocsigen_parseconfig
 Polytables
 Ocsigen_cache
 Ocsipersist
+Ocsigen_config
 }
 
 {2 Extending Ocsigen}
