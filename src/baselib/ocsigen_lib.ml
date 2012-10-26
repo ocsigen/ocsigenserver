@@ -264,7 +264,7 @@ let make_cryptographic_safe_string =
    is impossible for an attacker to deduce the sequence of random
    numbers produced.  As for the latter component, it exists to
    prevent a theoretical (though infinitesimally unlikely) session
-   ID collision if the server were to be restarted. 
+   ID collision if the server were to be restarted.
  *)
 
 
@@ -331,7 +331,9 @@ module Url = struct
   let encode = MyUrl.encode
   let decode ?plus a = Netencoding.Url.decode ?plus a
 
-  let make_encoded_parameters = Netencoding.Url.mk_url_encoded_parameters
+  let make_encoded_parameters params =
+    String.concat "&"
+      (List.map (fun (name, value) -> encode name ^ "=" ^ encode value) params)
 
   let string_of_url_path ~encode l =
     if encode
@@ -392,7 +394,7 @@ module Url = struct
 
       (* Note that the fragment (string after #) is not sent by browsers *)
 
-(*20110707 ' ' is encoded to '+' in queries, but not in paths. 
+(*20110707 ' ' is encoded to '+' in queries, but not in paths.
   Warning: if we write the URL manually, we must encode ' ' to '+' manually
   (not done by the browser).
   --Vincent

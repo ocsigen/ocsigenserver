@@ -28,6 +28,9 @@ include module type of Ocsigen_lib_base
   and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
   and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
 
+(** Generate an unique and cryptographically safe random string.
+    It is impossible to guess for other people and
+    will never return twice the same value (with very good probabilities). *)
 val make_cryptographic_safe_string : unit -> string
 
 module String : module type of String_base
