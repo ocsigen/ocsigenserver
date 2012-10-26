@@ -58,10 +58,12 @@ val empty : (unit -> 'a step Lwt.t) option -> 'a step Lwt.t
 val cont : 'a -> (unit -> 'a step Lwt.t) -> 'a step Lwt.t
 
 
-(** Add a finalizer function *)
+(** Add a finalizer function. In the current version,
+    finalizers must be called manually. *)
 val add_finalizer : 'a t -> (outcome -> unit Lwt.t) -> unit
 
-(** Finalize the stream *)
+(** Finalize the stream. This function must be called explicitely after reading
+    the stream, otherwise finalizers won't be called. *)
 val finalize : 'a t -> outcome -> unit Lwt.t
 
 (** Cancel the stream, i.e. read the stream until the end, without decoding.

@@ -30,10 +30,17 @@ val get :
 (** Do a GET HTTP request.
     The default port is 80 for HTTP, 443 for HTTPS.
     The default protocol is http ([https=false]).
+
+    Warning: the stream must be finalized manually after reading, using
+    {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
  *)
 
 val get_url : ?headers: Http_headers.t -> string -> Ocsigen_http_frame.t Lwt.t
-(** Do a GET HTTP request. The string must be a full URL. *)
+(** Do a GET HTTP request. The string must be a full URL. 
+
+    Warning: the stream must be finalized manually after reading, using
+    {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
+*)
 
 val post_string :
   ?https: bool ->
@@ -48,6 +55,9 @@ val post_string :
 (** Do a POST HTTP request.
     The default port is 80 for HTTP, 443 for HTTPS.
     The default protocol is http ([https=false]).
+
+    Warning: the stream must be finalized manually after reading, using
+    {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
  *)
 
 val post_string_url :
@@ -56,7 +66,11 @@ val post_string_url :
   content_type:(string * string) ->
   string ->
   Ocsigen_http_frame.t Lwt.t
-(** Do a GET HTTP request. The string must be a full URL. *)
+(** Do a GET HTTP request. The string must be a full URL. 
+
+    Warning: the stream must be finalized manually after reading, using
+    {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
+*)
 
 val post_urlencoded :
   ?https: bool ->
@@ -70,6 +84,9 @@ val post_urlencoded :
 (** Do a POST HTTP request with URL encoded parameters as content.
     The default port is 80 for HTTP, 443 for HTTPS.
     The default protocol is http ([https=false]).
+
+    Warning: the stream must be finalized manually after reading, using
+    {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
  *)
 
 val post_urlencoded_url :
@@ -78,7 +95,11 @@ val post_urlencoded_url :
   string ->
   Ocsigen_http_frame.t Lwt.t
 (** Do a GET HTTP request with URL encoded parameters as content.
-    The string must be a full URL. *)
+    The string must be a full URL. 
+
+    Warning: the stream must be finalized manually after reading, using
+    {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
+*)
 
 
 val raw_request :

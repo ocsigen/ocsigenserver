@@ -27,7 +27,7 @@ type 'a stream = 'a step Lwt.t Lazy.t
 
 and 'a step =
   | Finished of 'a stream option (* If there is another stream following
-                                    (usefull for substreams) *)
+                                    (useful for substreams) *)
   | Cont of 'a * 'a stream       (* Current buffer, what follows *)
 
 type outcome = [`Success | `Failure]
