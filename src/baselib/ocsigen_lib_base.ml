@@ -66,6 +66,9 @@ module Option = struct
     match opt with
       | Some x -> k x
       | None -> None
+  let to_list = function
+    | None -> []
+    | Some v -> [v]
 end
 
 module List = struct

@@ -57,6 +57,7 @@ module Option : sig
   val iter : ('a -> unit) -> 'a t -> unit
   val return : 'a -> 'a t
   val bind : 'a t -> ('a -> 'b t) -> 'b t
+  val to_list : 'a t -> 'a list
 end
 
 module List : sig
