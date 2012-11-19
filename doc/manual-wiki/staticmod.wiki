@@ -11,6 +11,8 @@ Then configure your hosts as in this example:
 {{{
 <static dir="/path/to/the/local/directory" />
 }}}
+Note that when running Ocsigenserver as a daemon, a relative path is
+interpreted starting at ##/##.
 
 ===Rewriting URLs
 

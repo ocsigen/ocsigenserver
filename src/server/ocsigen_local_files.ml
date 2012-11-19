@@ -148,12 +148,13 @@ type resolved =
 *)
 (* See also module Files in eliom.ml *)
 let resolve ?no_check_for ~request ~filename () =
-  (* We only accept absolute filenames, 
+  (* We only accept absolute filenames in daemon mode,
      as we do not really know what is the current directory *)
-  let filename = 
-    if filename.[0] = '/'
-    then filename
-    else "/"^filename
+  let filename =
+    if Filename.is_relative filename && Ocsigen_config.get_daemon () then
+      "/"^filename
+    else
+      filename
   in
   try
     Ocsigen_messages.debug
@@ -201,7 +202,7 @@ let resolve ?no_check_for ~request ~filename () =
          (fun () -> "--Filenames cannot contain .. as in \""^filename^"\".");
        raise Failed_403)
     else if check_symlinks ~filename ~no_check_for
-      request.request_config.follow_symlinks 
+      request.request_config.follow_symlinks
     then (
         can_send filename request.request_config;
       (* If the previous function did not fail, we are authorized to
