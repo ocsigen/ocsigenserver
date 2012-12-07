@@ -7,31 +7,31 @@ Requirements:
 
 Compilers:
 
- * ocaml and camlp4  (need version >= 3.12)
+ * ocaml and camlp4  (need version >= 3.12.1)
  * a C compiler      (tested with gcc-4.4.5)
 
 Libraries:
 
  * findlib
- * react             (tested with 0.9.2)
- * ocamlssl          (tested with 0.4.4)
- * lwt 	             (need version >= 2.3.0, with react and ssl support)
- * ocamlnet          (tested with 2.2.9 and 3.2, with netstring and netsys)
- * pcre-ocaml        (tested with 6.0.1)
- * cryptokit         (tested with 1.3)
- * ocaml-text        (tested with 0.3)
- * tyxml	     (need version 2.0.1)
+ * react             (tested with 0.9.3)
+ * ocamlssl          (tested with 0.4.6)
+ * lwt 	             (need version >= 2.4.2, with react and ssl support)
+ * ocamlnet          (tested with 3.6, with netstring and netsys)
+ * pcre-ocaml        (tested with 6.2.5)
+ * cryptokit         (tested with 1.6)
+ * ocaml-text        (tested with 0.6)
+ * tyxml	     (need version 2.2)
+ * ocamlsqlite3      (tested with 2.0.2) OR
+ * dbm               (tested with 1.0)
 
 Optional libraries:
 
- * ocamlsqlite3      (tested with 1.5.6)
- * camlzip           (tested with 1.0.4)
+ * camlzip           (tested with 1.04)
 
-You may also use the dbm database (for example gdbm) instead of
-sqlite.  In that case, you need dbm with headers (libgdbm-dev package
-for ex.)
+Ocsigenserver supports both dbm and sqlite3. Note well, that dbm isn't part of
+the distribution of OCaml>=4 any more, but an external package.
 
-If OCaml 3.12 and the needed libraries (findlib/react/lwt...) are not
+If OCaml 3.12.1 and the needed libraries (findlib/react/lwt...) are not
 installed on your computer and not available on your favorite linux
 distribution, you may use the Ocsigen bunble GODI to install them
 automatically, see:

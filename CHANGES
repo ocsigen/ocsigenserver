@@ -1,3 +1,14 @@
+==== 2.2 (2012-12-03) ====
+
+  * Relative filenames when not running as daemon
+  * Small change in ocsigen_lib: encoding of parameters with '~'
+  * fix Ocsigen_http_client.get_url (and other) first "/" was missing (close #311)
+  * Installation: Do not try to chown files to a different user
+  * Fix error on make logrotate
+  * redirectmod: fixing default to permanent (as written in manual)
+  * Minor additions in the API
+
+===== 2.1 =====
 
 ===== 2.0.4 (2012-06-02) =====
 
