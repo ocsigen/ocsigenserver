@@ -29,8 +29,6 @@ application/edifact
 application/edi-x12
 application/eshop
 application/font-tdpfr
-application/font-woff           woff
-application/x-font-ttf          ttf
 application/http
 application/hyperstudio
 application/iges
@@ -251,6 +249,7 @@ application/vnd.mozilla.xul+xml	xul
 application/vnd.ms-artgalry
 application/vnd.ms-asf
 application/vnd.ms-excel	xls
+application/vnd.ms-fontobject  eot
 application/vnd.ms-lrm
 application/vnd.ms-powerpoint	ppt
 application/vnd.ms-project
@@ -353,6 +352,8 @@ application/x-cpio		cpio
 application/x-csh		csh
 application/x-director		dcr dir dxr
 application/x-dvi		dvi
+application/x-font-ttf          ttf
+application/x-font-woff         woff
 application/x-futuresplash	spl
 application/x-gtar		gtar
 application/x-gzip
