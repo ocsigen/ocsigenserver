@@ -159,7 +159,6 @@ module Url_base : sig
   (* val recursively_remove_slash_at_beginning : path -> path *)
   val is_prefix_skip_end_slash : string list -> string list -> bool
 
-
   val split_fragment : string -> string * string option
 
 end

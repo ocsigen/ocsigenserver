@@ -175,14 +175,15 @@ module Ip_address = struct
   let inet6_addr_loopback =
     fst (parse (Unix.string_of_inet_addr Unix.inet6_addr_loopback))
 
-  let get_inet_addr host =
+  let get_inet_addr ?(v6=false) host =
     let rec aux = function
       | [] -> Lwt.fail No_such_host
       | {Unix.ai_addr=Unix.ADDR_INET (inet_addr, _)}::_ -> Lwt.return inet_addr
       | _::l -> aux l
     in
+    let options = [if v6 then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6 else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET] in
     Lwt.bind
-      (Lwt_unix.getaddrinfo host "" [])
+      (Lwt_unix.getaddrinfo host "" options)
       aux
 
 (*

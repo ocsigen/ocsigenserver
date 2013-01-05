@@ -20,6 +20,7 @@
 (** Using Ocsigen as a HTTP client *)
 
 val get :
+    ?v6:bool ->
     ?https: bool ->
     ?port:int ->
     ?headers: Http_headers.t ->
@@ -35,14 +36,15 @@ val get :
     {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
  *)
 
-val get_url : ?headers: Http_headers.t -> string -> Ocsigen_http_frame.t Lwt.t
-(** Do a GET HTTP request. The string must be a full URL. 
+val get_url : ?v6:bool -> ?headers: Http_headers.t -> string -> Ocsigen_http_frame.t Lwt.t
+(** Do a GET HTTP request. The string must be a full URL.
 
     Warning: the stream must be finalized manually after reading, using
     {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
 *)
 
 val post_string :
+  ?v6:bool ->
   ?https: bool ->
   ?port:int ->
   ?headers: Http_headers.t ->
@@ -61,18 +63,20 @@ val post_string :
  *)
 
 val post_string_url :
+  ?v6:bool ->
   ?headers: Http_headers.t ->
   content:string ->
   content_type:(string * string) ->
   string ->
   Ocsigen_http_frame.t Lwt.t
-(** Do a GET HTTP request. The string must be a full URL. 
+(** Do a GET HTTP request. The string must be a full URL.
 
     Warning: the stream must be finalized manually after reading, using
     {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
 *)
 
 val post_urlencoded :
+  ?v6:bool ->
   ?https: bool ->
   ?port:int ->
   ?headers: Http_headers.t ->
@@ -90,12 +94,13 @@ val post_urlencoded :
  *)
 
 val post_urlencoded_url :
+  ?v6:bool ->
   ?headers: Http_headers.t ->
   content:(string * string) list ->
   string ->
   Ocsigen_http_frame.t Lwt.t
 (** Do a GET HTTP request with URL encoded parameters as content.
-    The string must be a full URL. 
+    The string must be a full URL.
 
     Warning: the stream must be finalized manually after reading, using
     {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
@@ -171,7 +176,7 @@ val basic_raw_request :
     uri:string ->
     unit ->
     Ocsigen_http_frame.t Lwt.t
-(** Same as {!Ocsigen_http_client.raw_request}, 
+(** Same as {!Ocsigen_http_client.raw_request},
     but does not try to reuse connections.
     Opens a new connections for each request. Far less efficient.
 *)

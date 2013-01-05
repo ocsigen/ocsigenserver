@@ -51,7 +51,7 @@ module Ip_address : sig
 
   val inet6_addr_loopback : t
 
-  val get_inet_addr : string -> Unix.inet_addr Lwt.t
+  val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr Lwt.t
 
   (* val getnameinfo : Unix.inet_addr -> int -> string Lwt.t *)
 

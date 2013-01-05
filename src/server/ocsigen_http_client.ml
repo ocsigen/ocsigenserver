@@ -375,8 +375,7 @@ let raw_request
     let thr_conn =
       let timeout =
         Lwt_timeout.create (Ocsigen_config.get_server_timeout ())
-          (fun () ->
-            try Lwt_unix.shutdown fd Unix.SHUTDOWN_RECEIVE with _ -> ());
+          (fun () -> try Lwt_unix.shutdown fd Unix.SHUTDOWN_RECEIVE with _ -> ());
       in
       Lwt.catch
         (fun () ->
@@ -394,7 +393,7 @@ let raw_request
                           (Ocsigen_config.get_server_timeout ())
                           Ocsigen_http_com.Answer socket))
         (Lwt_timeout.stop timeout;
-         handle_connection_error fd)
+	handle_connection_error fd)
     in
     let gf =
       thr_conn >>= fun conn ->
@@ -706,8 +705,8 @@ let raw_request
 
 
 (*****************************************************************************)
-let get ?https ?port ?headers ~host ~uri () =
-  Ip_address.get_inet_addr host >>= fun inet_addr ->
+let get ?v6 ?https ?port ?headers ~host ~uri () =
+  Ip_address.get_inet_addr ?v6 host >>= fun inet_addr ->
   raw_request
     ?https
     ?port
@@ -720,16 +719,16 @@ let get ?https ?port ?headers ~host ~uri () =
     ()
     ()
 
-let get_url ?headers url =
+let get_url ?v6 ?headers url =
   let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
   let uri = "/"^uri in
-  get ?https ?port ?headers ~host ~uri ()
+  get ?v6 ?https ?port ?headers ~host ~uri ()
 
 (*****************************************************************************)
-let post_string ?https ?port ?(headers = Http_headers.empty)
+let post_string ?v6 ?https ?port ?(headers = Http_headers.empty)
     ~host ~uri ~content ~content_type () =
-  Ip_address.get_inet_addr host >>= fun inet_addr ->
+  Ip_address.get_inet_addr ?v6 host >>= fun inet_addr ->
   let content_type = String.concat "/" [fst content_type; snd content_type] in
   raw_request
     ?https
@@ -744,26 +743,26 @@ let post_string ?https ?port ?(headers = Http_headers.empty)
     ()
     ()
 
-let post_string_url ?headers ~content ~content_type url =
+let post_string_url ?v6 ?headers ~content ~content_type url =
   let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
   let uri = "/"^uri in
-  post_string ?https ?port ?headers ~host ~uri ~content ~content_type ()
+  post_string ?v6 ?https ?port ?headers ~host ~uri ~content ~content_type ()
 
 
 (*****************************************************************************)
-let post_urlencoded ?https ?port ?headers ~host ~uri ~content () =
-  post_string ?https ?port ?headers
+let post_urlencoded ?v6 ?https ?port ?headers ~host ~uri ~content () =
+  post_string ?v6 ?https ?port ?headers
     ~host ~uri
     ~content:(Netencoding.Url.mk_url_encoded_parameters content)
     ~content_type:("application","x-www-form-urlencoded")
     ()
 
-let post_urlencoded_url ?headers ~content url =
+let post_urlencoded_url ?v6 ?headers ~content url =
   let (https, host, port, uri, _, _, _) = Url.parse url in
   let host = match host with None -> "localhost" | Some h -> h in
   let uri = "/"^uri in
-  post_urlencoded ?https ?port ?headers ~host ~uri ~content ()
+  post_urlencoded ?v6 ?https ?port ?headers ~host ~uri ~content ()
 
 (*****************************************************************************)
 let basic_raw_request
