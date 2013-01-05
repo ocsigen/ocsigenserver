@@ -82,7 +82,7 @@ exception Pipeline_failed
 
 let (>>=) = Lwt.(>>=)
 
-(* let _ = Ssl_threads.init ()  (* Does not work for now (deadlock) -- 
+(* let _ = Ssl_threads.init ()  (* Does not work for now (deadlock) --
                                    bug in ocamlssl *) *)
 let _ = Ssl.init ()
 let sslcontext = ref (Ssl.create_context Ssl.SSLv23 Ssl.Both_context)
@@ -106,13 +106,13 @@ let connection_table = T.create 100
   The connection table associates to each incoming connection
   (called "client") the thread and information about the output requests,
   in order to try to pipeline them on the same output connection.
-  
+
   If the client parameter is not present, we do the
   requests independantly.
   We try to find a free connection to the right server
   or we create one if there is none.
   In that case, the distant server may have the request in wrong order.
-  
+
   If there is a body in the request we want to do,
   we do not try to pipeline, even if it comes from the same client.
   We use a free (or new) connection.
@@ -367,18 +367,19 @@ let raw_request
 
   let new_conn () =
     let sockaddr = Unix.ADDR_INET (inet_addr, port) in
-    let fd = 
-      Lwt_unix.socket (Unix.domain_of_sockaddr sockaddr) Unix.SOCK_STREAM 0 
+    let fd =
+      Lwt_unix.socket (Unix.domain_of_sockaddr sockaddr) Unix.SOCK_STREAM 0
     in
     Lwt_unix.set_close_on_exec fd;
 
     let thr_conn =
+      let timeout =
+        Lwt_timeout.create (Ocsigen_config.get_server_timeout ())
+          (fun () ->
+            try Lwt_unix.shutdown fd Unix.SHUTDOWN_RECEIVE with _ -> ());
+      in
       Lwt.catch
         (fun () ->
-           let timeout =
-             Lwt_timeout.create (Ocsigen_config.get_server_timeout ())
-               (fun () -> Lwt_unix.shutdown fd Unix.SHUTDOWN_RECEIVE);
-           in
            Lwt_timeout.start timeout;
            Lwt_unix.connect
              fd sockaddr >>= fun () ->
@@ -392,7 +393,8 @@ let raw_request
             Lwt.return (Ocsigen_http_com.create_receiver
                           (Ocsigen_config.get_server_timeout ())
                           Ocsigen_http_com.Answer socket))
-        (handle_connection_error fd)
+        (Lwt_timeout.stop timeout;
+         handle_connection_error fd)
     in
     let gf =
       thr_conn >>= fun conn ->
@@ -524,12 +526,12 @@ let raw_request
                     Ocsigen_http_frame.res_content_length= content_length;
                     Ocsigen_http_frame.res_headers= headers;
                   }) >>= fun () ->
-          
+
           Ocsigen_messages.debug2 "--Ocsigen_http_client: request sent";
           Lwt.wakeup request_sent_awakener ();
           Lwt.return ())
         (fun e -> Lwt.wakeup_exn request_sent_awakener e; Lwt.fail e)
-        
+
     in
 
 
@@ -753,7 +755,7 @@ let post_string_url ?headers ~content ~content_type url =
 let post_urlencoded ?https ?port ?headers ~host ~uri ~content () =
   post_string ?https ?port ?headers
     ~host ~uri
-    ~content:(Netencoding.Url.mk_url_encoded_parameters content) 
+    ~content:(Netencoding.Url.mk_url_encoded_parameters content)
     ~content_type:("application","x-www-form-urlencoded")
     ()
 
@@ -773,8 +775,8 @@ let basic_raw_request
   | Some p -> p
   in
   let sockaddr = Unix.ADDR_INET (inet_addr, port) in
-  let fd = 
-    Lwt_unix.socket (Unix.domain_of_sockaddr sockaddr) Unix.SOCK_STREAM 0 
+  let fd =
+    Lwt_unix.socket (Unix.domain_of_sockaddr sockaddr) Unix.SOCK_STREAM 0
   in
   Lwt_unix.set_close_on_exec fd;
 
