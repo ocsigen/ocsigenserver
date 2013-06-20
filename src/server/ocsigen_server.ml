@@ -329,6 +329,8 @@ let get_request_infos
        let post_params0 =
          match meth with
            | Http_header.GET
+           | Http_header.DELETE
+           | Http_header.PUT
            | Http_header.HEAD -> None
            | Http_header.POST
            | Http_header.OPTIONS ->
@@ -640,7 +642,9 @@ let service receiver sender_slot request meth url port sockaddr =
   if meth <> Http_header.GET &&
      meth <> Http_header.POST &&
      meth <> Http_header.HEAD &&
-     meth <> Http_header.OPTIONS
+     meth <> Http_header.OPTIONS &&
+     meth <> Http_header.DELETE &&
+     meth <> Http_header.PUT
   then begin
    (* VVV Warning: This must be done once and only once.
       Put this somewhere else to ensure that?
