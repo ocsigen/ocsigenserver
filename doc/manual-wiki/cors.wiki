@@ -3,7 +3,7 @@
 = The CORS extension =
 
 This extension is used to allow other servers to serve pages
-requesting datas on that one using XmlHttpReauest. It adds headers to
+requesting data on that one using XmlHttpRequest. It adds headers to
 the server response and handle preflight OPTIONS requests to indicate
 if some client side code has the right to access resources.
 
