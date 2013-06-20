@@ -299,6 +299,8 @@ let parse_server isreloading c =
           parse_server_aux ll
       | (Element ("logdir", [], p))::ll ->
           parse_server_aux ll
+      | (Element ("syslog", [], p))::ll ->
+          parse_server_aux ll
       | (Element ("ssl", [], p))::ll ->
           parse_server_aux ll
       | (Element ("user", [], p))::ll ->
@@ -599,6 +601,30 @@ let parse_port =
           int_of_string "port" (get r 2)
       | None -> All, int_of_string "port" s
 
+let parse_facility = function
+  | "auth" -> `Auth
+  | "authpriv" -> `Authpriv
+  | "console" -> `Console
+  | "cron" -> `Cron
+  | "daemon" -> `Daemon
+  | "ftp" -> `FTP
+  | "kernel" -> `Kernel
+  | "lpr" -> `LPR
+  | "local0" -> `Local0
+  | "local1" -> `Local1
+  | "local2" -> `Local2
+  | "local3" -> `Local3
+  | "local4" -> `Local4
+  | "local5" -> `Local5
+  | "local6" -> `Local6
+  | "local7" -> `Local7
+  | "mail" -> `Mail
+  | "ntp" -> `NTP
+  | "news" -> `News
+  | "security" -> `Security
+  | "syslog" -> `Syslog
+  | "uucp" -> `UUCP
+  | "user" -> `User;;
 
 (* First parsing of config file *)
 let extract_info c =
@@ -624,6 +650,10 @@ let extract_info c =
       [] -> ((user, group), (ssl, ports,sslports), (minthreads, maxthreads))
     | (Element ("logdir" as st, [], p))::ll ->
         set_logdir (parse_string_tag st p);
+        aux user group ssl ports sslports minthreads maxthreads ll
+    | (Element ("syslog" as st, [], p))::ll ->
+        let str = String.lowercase (parse_string_tag st p) in
+        set_syslog_facility (Some (parse_facility str));
         aux user group ssl ports sslports minthreads maxthreads ll
     | (Element ("port" as st, atts, p))::ll ->
         (match atts with

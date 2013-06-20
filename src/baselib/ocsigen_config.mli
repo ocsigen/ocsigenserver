@@ -29,6 +29,7 @@ val native_ext : string
 val builtin_packages : String.Set.t
 
 val set_logdir : string -> unit
+val set_syslog_facility: Lwt_log.syslog_facility option -> unit
 val set_configfile : string -> unit
 val set_pidfile : string -> unit
 val set_mimefile : string -> unit
@@ -65,6 +66,7 @@ val set_maxretries : int -> unit
 val set_shutdown_timeout : float option -> unit
 
 val get_logdir : unit -> string
+val get_syslog_facility: unit -> Lwt_log.syslog_facility option
 val get_config_file : unit -> string
 val get_pidfile : unit -> string option
 val get_mimefile : unit -> string

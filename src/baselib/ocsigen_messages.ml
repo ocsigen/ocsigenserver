@@ -40,6 +40,17 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
   (* CHECK: we are closing asynchronously!  That should be ok, though. *)
   List.iter (fun l -> ignore (Lwt_log.close l : unit Lwt.t)) !loggers;
 
+  match Ocsigen_config.get_syslog_facility () with
+  | Some facility ->
+    (* log to syslog *)
+    let syslog = Lwt_log.syslog ~facility () in
+    loggers := [syslog];
+    Lwt_log.default := Lwt_log.broadcast [syslog; stderr_dispatch ()];
+    Lwt.return ()
+
+  | None ->
+    (* log to files *)
+
   let open_log path =
     let path = full_path path in
     try_lwt

@@ -48,7 +48,8 @@ end
 
 (* Server config: *)
 let (uploaddir : string option ref) = ref None
-let logdir = ref "_LOGDIR_"
+let logdir = ref (Some ("_LOGDIR_"))
+let syslog_facility = ref None
 let default_user = ref "_OCSIGENUSER_"
 let default_group = ref "_OCSIGENGROUP_"
 let minthreads = ref 10
@@ -81,7 +82,8 @@ let maxretries = ref 10
 let shutdowntimeout = ref (Some 10.)
 
 let set_uploaddir u = uploaddir := u
-let set_logdir s = logdir := s
+let set_logdir s = logdir := Some s
+let set_syslog_facility f = syslog_facility := f; logdir := None
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
 let set_mimefile s = mimefile := s
@@ -120,7 +122,12 @@ let set_maxretries i = maxretries := i
 let set_shutdown_timeout s = shutdowntimeout := s
 
 let get_uploaddir () = !uploaddir
-let get_logdir () = !logdir
+let get_logdir () =
+  match !logdir with
+  | Some s -> s
+  | None -> raise (
+    Config_file_error ("Log directory requested, but not set"));;
+let get_syslog_facility () = !syslog_facility
 let get_config_file () = !config_file
 let get_pidfile () = !pidfile
 let get_mimefile () = !mimefile

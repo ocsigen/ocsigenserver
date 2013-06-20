@@ -283,6 +283,18 @@ Example :
 {{{
 <datadir>/var/lib/ocsigenserver</datadir>
 }}}
+
+===={{{<syslog>}}} : log to syslog
+
+Specifies which syslog facility to use, instead of logging to files. This option
+is mutually exclusive with <logdir>.
+
+Example:
+
+{{{
+<syslog>Local7</syslog>
+}}}
+
         ===={{{<user>}}} and {{{<group>}}} : user who runs the server
 
 
