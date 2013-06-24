@@ -45,7 +45,7 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
     (* log to syslog *)
     let syslog = Lwt_log.syslog ~facility () in
     loggers := [syslog];
-    Lwt_log.default := Lwt_log.broadcast [syslog; stderr_dispatch ()];
+    Lwt_log.default := Lwt_log.broadcast [syslog; stderr];
     Lwt.return ()
 
   | None ->
