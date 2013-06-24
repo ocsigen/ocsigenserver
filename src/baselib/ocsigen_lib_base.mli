@@ -69,13 +69,13 @@ module List : sig
 
   val remove_first_if_any : 'a -> 'a list -> 'a list
   val remove_first_if_any_q : 'a -> 'a list -> 'a list
-  (* val remove_first : 'a -> 'a list -> 'a list *)
-  (* val remove_first_q : 'a -> 'a list -> 'a list *)
-  (* val remove_all : 'a -> 'a list -> 'a list *)
-  (* val remove_all_q : 'a -> 'a list -> 'a list *)
+  val remove_first : 'a -> 'a list -> 'a list
+  val remove_first_q : 'a -> 'a list -> 'a list
+  val remove_all : 'a -> 'a list -> 'a list
+  val remove_all_q : 'a -> 'a list -> 'a list
   val remove_all_assoc : 'a -> ('a * 'b) list -> ('a * 'b) list
-  (* val remove_all_assoc_q : 'a -> ('a * 'b) list -> ('a * 'b) list *)
-  (* val is_prefix : 'a list -> 'a list -> bool *)
+  val remove_all_assoc_q : 'a -> ('a * 'b) list -> ('a * 'b) list
+  val is_prefix : 'a list -> 'a list -> bool
 
   val chop : int -> 'a list -> 'a list
 

@@ -76,14 +76,18 @@ val clear_all_caches : unit -> unit
 
 
 
-(** Doubly-linked lists with maximum number of entries and limited lifespan for
-    entries. *)
+(** Doubly-linked lists with maximum number of entries,
+    and (possibly) limited lifespan for entries. *)
 module Dlist : sig
   type 'a t
   type 'a node
+
+  (** Create a dlist. It takes the maximum length of the list as
+      parameter. The optional [?timer] parameter sets a maximum
+      lifetime for elements (in seconds). *)
   val create : ?timer:float -> int -> 'a t
 
-  (** Adds an element to the list, 
+  (** Adds an element to the list,
       and possibly returns the element that has been removed if the maximum
       size was exceeded. *)
   val add : 'a -> 'a t -> 'a option
@@ -91,12 +95,12 @@ module Dlist : sig
   (** Removes an element from its list.
       If it is not in a list, it does nothing.
       If it is in a list, it calls the finaliser, then removes the element.
-      If the finaliser fails with an exception, 
+      If the finaliser fails with an exception,
       the element is removed and the exception is raised again.
   *)
   val remove : 'a node -> unit
 
-  (** Removes the element from its list without finalising, 
+  (** Removes the element from its list without finalising,
       then adds it as newest. *)
   val up : 'a node -> unit
 
