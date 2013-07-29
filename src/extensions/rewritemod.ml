@@ -35,7 +35,7 @@
 
 
 (* To compile it:
-ocamlfind ocamlc  -thread -package netstring,ocsigen -c extensiontemplate.ml
+ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
 
 Then load it dynamically from Ocsigen's config file:
    <extension module=".../rewritemod.cmo"/>

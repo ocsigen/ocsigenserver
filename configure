@@ -414,6 +414,8 @@ check_library lwt.ssl   "Missing support for 'ssl' in lwt."
 
 check_library netstring \
     "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
+check_library netstring-pcre \
+    "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
 check_library netsys \
     "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
 

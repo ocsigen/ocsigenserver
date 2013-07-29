@@ -16,7 +16,7 @@ Libraries:
  * react             (tested with 0.9.3)
  * ocamlssl          (tested with 0.4.6)
  * lwt 	             (need version >= 2.4.2, with react and ssl support)
- * ocamlnet          (tested with 3.6, with netstring and netsys)
+ * ocamlnet          (tested with 3.6, with netstring, netstring-pcre and netsys)
  * pcre-ocaml        (tested with 6.2.5)
  * cryptokit         (tested with 1.6)
  * ocaml-text        (tested with 0.6)

@@ -33,7 +33,7 @@ BASE_PACKAGE := lwt
 
 SERVER_PACKAGE := lwt.ssl           \
 	          ${LWT_EXTRA_PACKAGE} \
-	          netstring         \
+	          netstring-pcre    \
                   findlib           \
 	          cryptokit         \
 		  tyxml             \
