@@ -88,6 +88,7 @@ type config_info = {
   default_hostname: string;
   default_httpport: int;
   default_httpsport: int;
+  default_protocol_is_https: bool;
 
   mime_assoc: Ocsigen_charset_mime.mime_assoc;
 
@@ -203,12 +204,12 @@ type request_info =
          extensions
      *)
      ri_client: client; (** The request connection *)
-     ri_range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t; 
-     (** Range HTTP header. [None] means all the document. 
+     ri_range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
+     (** Range HTTP header. [None] means all the document.
          List of intervals + possibly from an index to the end of the document.
      *)
      ri_timeofday: float; (** An Unix timestamp computed at the beginning of the request *)
-     mutable ri_nb_tries: int; (** For internal use: 
+     mutable ri_nb_tries: int; (** For internal use:
                                    used to prevent loops of requests *)
 
      ri_connection_closed: unit Lwt.t; (** a thread waking up when the connection is closed *)
@@ -294,7 +295,7 @@ type answer =
             the parsing function (of type [parse_fun]),
             that will return something of type [extension2].
         *)
-  | Ext_found_continue_with of 
+  | Ext_found_continue_with of
       (unit -> (Ocsigen_http_frame.result * request) Lwt.t)
         (** Same as [Ext_found] but may modify the request. *)
   | Ext_found_continue_with' of (Ocsigen_http_frame.result * request)
@@ -500,7 +501,7 @@ module Configuration : sig
 end
 
 (** Returns the hostname to be used for absolute links or redirections.
-    It is either the Host header or the hostname set in 
+    It is either the Host header or the hostname set in
     the configuration file. *)
 val get_hostname : request -> string
 
@@ -547,7 +548,7 @@ val find_redirection :
 exception Unknown_command
 
 (** Use a prefix for all your commands when you want to create
-    extension-specific commands. 
+    extension-specific commands.
     For example if the prefix is "myextension" and the commande "blah",
     the actual command to be written by the user is "myextension:blah".
     Give as parameter the function that will parse the command and do an action.
@@ -608,4 +609,3 @@ val get_server_address : request_info -> Unix.inet_addr * int
 
 val sockets : Lwt_unix.file_descr list ref
 val sslsockets : Lwt_unix.file_descr list ref
-

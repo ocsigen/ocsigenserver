@@ -151,6 +151,7 @@ type config_info = {
   default_hostname: string;
   default_httpport: int;
   default_httpsport: int;
+  default_protocol_is_https: bool;
 
   mime_assoc: Ocsigen_charset_mime.mime_assoc;
 
@@ -255,12 +256,12 @@ type request_info =
          extensions
      *)
      ri_client: client; (** The request connection *)
-     ri_range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t; 
-     (** Range HTTP header. [None] means all the document. 
+     ri_range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
+     (** Range HTTP header. [None] means all the document.
          List of intervals + possibly from an index to the end of the document.
      *)
      ri_timeofday: float; (** An Unix timestamp computed at the beginning of the request *)
-     mutable ri_nb_tries: int; (** For internal use: 
+     mutable ri_nb_tries: int; (** For internal use:
                                    used to prevent loops of requests *)
 
      ri_connection_closed: unit Lwt.t; (** a thread waking up when the connection is closed *)
@@ -341,7 +342,7 @@ type answer =
             the parsing function (of type [parse_fun]),
             that will return something of type [extension2].
         *)
-  | Ext_found_continue_with of 
+  | Ext_found_continue_with of
       (unit -> (Ocsigen_http_frame.result * request) Lwt.t)
         (** Same as [Ext_found] but may modify the request. *)
   | Ext_found_continue_with' of (Ocsigen_http_frame.result * request)
@@ -567,8 +568,8 @@ let rec default_parse_config
                         Lwt.return
                           (Ext_found_continue_with' (r, oldri), cookies_to_set)
                     | (Ext_do_nothing, cookies_to_set) ->
-                        Lwt.return 
-                          (Ext_continue_with (oldri, 
+                        Lwt.return
+                          (Ext_continue_with (oldri,
                                               Ocsigen_cookies.Cookies.empty,
                                               e), cookies_to_set)
                     | r -> Lwt.return r
@@ -689,7 +690,7 @@ let register_extension, parse_config_item, parse_user_site_item, get_beg_init, g
                       try
                         oldf parse_config config_tag
                       with
-                        | Bad_config_tag_for_extension c -> 
+                        | Bad_config_tag_for_extension c ->
                             newf parse_config config_tag
                ));
 
@@ -708,7 +709,7 @@ let register_extension, parse_config_item, parse_user_site_item, get_beg_init, g
                       try
                         oldf parse_config config_tag
                       with
-                        | Bad_config_tag_for_extension c -> 
+                        | Bad_config_tag_for_extension c ->
                             newf parse_config config_tag
                ));
 
@@ -744,7 +745,7 @@ let default_parse_extension ext_name = function
   | _ -> raise (Error_in_config_file
                   (Printf.sprintf "Unexpected content found in configuration of extension %s: %s does not accept options" ext_name ext_name))
 
-let register_extension 
+let register_extension
     ~name
     ?fun_site
     ?user_fun_site
@@ -1079,7 +1080,7 @@ let get_number_of_connected,
   let mvar = Lwt_mvar.create_empty () in
   ((fun () -> !connected),
    (fun n -> connected := !connected + n),
-   (fun () -> 
+   (fun () ->
       let c = !connected in
       connected := c - 1;
       if !connected <= 0 && !sockets = [] && !sslsockets = []
@@ -1092,7 +1093,7 @@ let get_number_of_connected,
       end
       else Lwt.return ()
    ),
-   (fun max -> 
+   (fun max ->
       maxr := max;
       Lwt_mvar.take mvar)
   )
@@ -1107,7 +1108,7 @@ let get_server_address ri =
 
 
 (*****************************************************************************)
-(* Default hostname is either the Host header or the hostname set in 
+(* Default hostname is either the Host header or the hostname set in
    the configuration file. *)
 let get_hostname req =
   if Ocsigen_config.get_usedefaulthostname ()
@@ -1177,7 +1178,7 @@ let replace_user_dir regexp dest pathstring =
 exception Not_concerned
 
 let find_redirection regexp full_url dest
-    https host port 
+    https host port
     get_params_string
     sub_path_string
     full_path_string
@@ -1218,14 +1219,14 @@ exception Unknown_command
 
 let register_command_function, get_command_function =
   let command_function = ref (fun ?prefix _ _ -> Lwt.fail Unknown_command) in
-  ((fun ?prefix f -> 
+  ((fun ?prefix f ->
       let prefix' = prefix in
       let old_command_function = !command_function in
-      command_function := 
-        (fun ?prefix s c -> 
+      command_function :=
+        (fun ?prefix s c ->
            Lwt.catch (fun () -> old_command_function ?prefix s c)
              (function
-               | Unknown_command -> 
+               | Unknown_command ->
                  if prefix = prefix'
                  then f s c
                  else Lwt.fail Unknown_command
@@ -1237,4 +1238,3 @@ let () =
   register_command_function
     ~prefix:"logs"
     (Ocsigen_messages.command_f Unknown_command)
-
