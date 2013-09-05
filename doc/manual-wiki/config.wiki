@@ -626,12 +626,12 @@ If you do not want to send any charset, explicitely: {{{charset=""}}}. In that c
 
 
 
-It is also possible to set the default ports for http and https using {{{defaulthttpport}}} and {{{defaulthttpsport}}}. These arguments may be used by extensions (like Eliom) if they need to create absolute links. Example:
+It is also possible to set the default ports for http and https, and default protocol using {{{defaulthttpport}}}, {{{defaulthttpsport}}} and {{{defaultprotocol=}}}. These arguments may be used by extensions (like Eliom) if they need to create absolute links. Example:
 
 
 
 {{{
-<host defaulthostname="www.mywebsite.org" hostfilter="*.org" defaulthttpport="8080" defaulthttpsport="4433"> ... </host>
+<host defaulthostname="www.mywebsite.org" hostfilter="*.org" defaulthttpport="8080" defaulthttpsport="4433" defaultprotocol="https"> ... </host>
 }}}
 
 Inside {{{<host>}}}, write the configuration for your main (root) site. These options depend on the extensions loaded. See the documentation about the extensions to know what to put here. It is also possible to define here several subsites, using {{{<site>}}} (see below).
@@ -695,5 +695,3 @@ echo shutdown notimeout > /var/run/ocsigenserver_command
 In that case, the server will wait for all the connections to terminate, even if it takes a lot of time.
 
 The default timeout value can be set in the configuration file (see {{{shutdowntimeout}}} option above).
-
-
