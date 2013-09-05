@@ -1,7 +1,7 @@
 (* Ocsigen
  * http://www.ocsigen.org
  * Copyright (C) 2005
- * Vincent Balat, Denis Berthod, Nataliya Guts, Jérôme Vouillon
+ * Vincent Balat, Denis Berthod, Nataliya Guts, JÃ©rÃ´me Vouillon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -222,7 +222,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
     | No_File (p_name, to_buf) ->
         return
           (params := !params @ [(p_name, Buffer.contents to_buf)])
-          (* à la fin ? *)
+          (* a la fin ? *)
     | A_File (p_name,fname,oname,wh, content_type) ->
         (* Ocsigen_messages.debug "closing file"; *)
         files :=
@@ -665,7 +665,7 @@ let service receiver sender_slot request meth url port sockaddr =
       Lwt.try_bind
         (fun () ->
            get_request_infos
-             meth clientproto url request filenames sockaddr 
+             meth clientproto url request filenames sockaddr
              port receiver)
         (fun ri ->
            (* *** Now we generate the page and send it *)
@@ -693,7 +693,7 @@ let service receiver sender_slot request meth url port sockaddr =
                     ri.ri_remote_ip
                     ri.ri_user_agent
                     ri.ri_url_string);
-           let send_aux = 
+           let send_aux =
              send sender_slot ~clientproto ~head
                ~sender:Ocsigen_http_com.default_sender
            in
@@ -802,22 +802,22 @@ let linger in_ch receiver =
 
 let try_bind' f g h = Lwt.try_bind f h g
 
-let add_to_receivers_waiting_for_pipeline, 
+let add_to_receivers_waiting_for_pipeline,
   remove_from_receivers_waiting_for_pipeline,
   iter_receivers_waiting_for_pipeline =
   let l = Clist.create () in
-  ((fun r -> 
+  ((fun r ->
       let node = Clist.make r in
       Clist.insert l node;
       node),
    Clist.remove,
-   (fun f -> 
+   (fun f ->
       Clist.fold_left
         (fun t v ->
           (*VVV reread this. Is yield here ok? *)
           t >>= Lwt_unix.yield >>= fun () ->
           f v)
-        (Lwt.return ()) 
+        (Lwt.return ())
         l))
 
 let handle_connection port in_ch sockaddr =
@@ -912,7 +912,7 @@ let handle_connection port in_ch sockaddr =
            | Some pos -> remove_from_receivers_waiting_for_pipeline pos
            | None -> ());
          let meth, url =
-           match 
+           match
              Http_header.get_firstline request.Ocsigen_http_frame.frame_header
            with
              | Http_header.Query a -> a
@@ -928,11 +928,11 @@ let handle_connection port in_ch sockaddr =
          if not !shutdown &&
            get_keepalive request.Ocsigen_http_frame.frame_header
          then
-           (* We put the receiver in the set of receiver waiting for 
+           (* We put the receiver in the set of receiver waiting for
               pipeline in order to be able to shutdown the connections
               if the server is shutting down.
            *)
-           handle_request 
+           handle_request
              ~receiver_pos:(add_to_receivers_waiting_for_pipeline receiver) ()
          else (* No keep-alive => no pipeline *)
             (* We wait for the query to be entirely read and for
@@ -962,7 +962,7 @@ let rec wait_connection use_ssl port socket =
         wait_connection use_ssl port socket
   in
   try_bind'
-    (fun () -> 
+    (fun () ->
        (* if too much connections,
           we wait for a signal before accepting again *)
        let max = get_max_number_of_connections () in
@@ -975,7 +975,7 @@ let rec wait_connection use_ssl port socket =
                   (get_max_number_of_connections ())));
           wait_fewer_connected max
         end) >>= fun () ->
-       (* We do several accept(), as explained in 
+       (* We do several accept(), as explained in
          "Accept()able strategies ..." by Tim Brecht & al. *)
        Lwt_unix.accept_n socket 50)
     handle_exn
@@ -985,7 +985,7 @@ let rec wait_connection use_ssl port socket =
         (fun () -> "received "^string_of_int number_of_accepts^" accepts"  );
       incr_connected number_of_accepts;
       if e = None then ignore (wait_connection use_ssl port socket);
-      
+
       let handle_one (s, sockaddr) =
         Ocsigen_messages.debug2
           "\n__________________NEW CONNECTION__________________________";
@@ -1014,7 +1014,7 @@ let rec wait_connection use_ssl port socket =
             | e -> Lwt.fail e)
         >>= decr_connected
       in
-      
+
       Lwt_util.iter handle_one l >>= fun () ->
       match e with
         | Some e -> handle_exn e
@@ -1086,9 +1086,9 @@ let errmsg = function
 let reload_conf s =
   try
     Ocsigen_extensions.start_initialisation ();
-    
+
     parse_server true s;
-    
+
     Ocsigen_extensions.end_initialisation ();
   with e ->
     Ocsigen_extensions.end_initialisation ();
@@ -1110,18 +1110,18 @@ let reload ?file () =
 
 
 let shutdown_server s l =
-  try 
+  try
     let timeout = match l with
       | [] -> Ocsigen_config.get_shutdown_timeout ()
       | ["notimeout"] -> None
-      | [t] -> 
+      | [t] ->
           Some (float_of_string t)
       | _ -> failwith "syntax error in command"
     in
     Ocsigen_messages.warning "Shutting down";
-    List.iter 
+    List.iter
       (fun s -> Lwt_unix.abort s Socket_closed) !sockets;
-    List.iter 
+    List.iter
       (fun s -> Lwt_unix.abort s Socket_closed) !sslsockets;
     sockets := [];
     sslsockets := [];
@@ -1336,6 +1336,11 @@ let start_server () = try
                Lwt.fail e))
         >>= f
       in ignore (f ());
+
+      Lwt.async_exception_hook := (fun e ->
+          (* replace the default "exit 2" behaviour *)
+          Ocsigen_messages.errlog ("Uncaught Exception: "^ Printexc.to_string e)
+        );
 
       Lwt.wakeup wait_end_init_awakener ();
 
