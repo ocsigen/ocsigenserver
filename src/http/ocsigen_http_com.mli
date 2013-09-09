@@ -82,7 +82,8 @@ val create_sender :
 (** Sender with only the server name, and HTTP/1.1 *)
 val default_sender : sender_type
 
-
+(** send an HTTP/1.1 100 Continue message *)
+val send_100_continue : slot -> unit Lwt.t
 
 (** send an HTTP message.
     [send] may also fail with [Interrupted_stream] exception if the input

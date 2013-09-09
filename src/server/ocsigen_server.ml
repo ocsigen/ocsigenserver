@@ -234,11 +234,47 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
   Ocsigen_stream.consume body_gen >>= fun () ->
   Lwt.return (!params, !files)
 
+let wrap_stream f x frame_content =
+  Ocsigen_stream.make ~finalize:(fun outcome ->
+      match frame_content with
+      | Some stream ->
+        Ocsigen_stream.finalize stream outcome
+      | None ->
+        Lwt.return ()
+    )
+    (fun () ->
+       f x >>= fun () ->
+       match frame_content with
+       | Some stream ->
+         Ocsigen_stream.next (Ocsigen_stream.get stream)
+       | None ->
+         Ocsigen_stream.empty None
+    )
 
+let handle_100_continue slot frame =
+  { frame with
+    frame_content = Some (wrap_stream send_100_continue slot
+    frame.frame_content)
+  }
+
+let handle_expect slot frame =
+  let expect_list = Ocsigen_headers.get_expect frame in
+  let proto = Http_header.get_proto frame.frame_header in
+  List.fold_left (fun frame tok ->
+    match String.lowercase tok with
+    | "100-continue" ->
+        if proto = Http_header.HTTP11 then
+          handle_100_continue slot frame
+        else
+          frame
+    | _ ->
+      raise (Ocsigen_http_error (Ocsigen_cookies.empty_cookieset, 417))
+  ) frame expect_list
 
 (* reading the request *)
 let get_request_infos
-    meth clientproto url http_frame filenames sockaddr port receiver =
+    meth clientproto url http_frame filenames sockaddr port receiver
+    sender_slot =
 
   Lwt.catch
     (fun () ->
@@ -395,7 +431,7 @@ let get_request_infos
           ri_accept_charset = accept_charset;
           ri_accept_encoding = accept_encoding;
           ri_accept_language = accept_language;
-          ri_http_frame = http_frame;
+          ri_http_frame = handle_expect sender_slot http_frame;
           ri_request_cache = Polytables.create ();
           ri_client = Ocsigen_extensions.client_of_connection receiver;
           ri_range = lazy (Ocsigen_range.get_range http_frame);
@@ -657,7 +693,7 @@ let service receiver sender_slot request meth url port sockaddr =
         (fun () ->
            get_request_infos
              meth clientproto url request filenames sockaddr
-             port receiver)
+             port receiver sender_slot)
         (fun ri ->
            (* *** Now we generate the page and send it *)
            (* Log *)

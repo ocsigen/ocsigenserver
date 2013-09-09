@@ -731,6 +731,18 @@ let set_result_observer, observe_result =
       observer := (fun a b -> o a b >>= fun () -> f a b)),
    (fun a b -> !observer a b))
 
+let send_100_continue slot =
+  wait_previous_senders slot >>= fun () ->
+  let out_ch = slot.sl_chan in
+  Ocsigen_messages.debug2 "writing 100-continue";
+  let hh = Framepp.string_of_header {
+    H.mode = H.Answer 100;
+    proto = H.HTTP11;
+    headers = Http_headers.empty
+  } in
+  Ocsigen_messages.debug2 hh;
+  Lwt_chan.output_string out_ch hh
+
 (** Sends the HTTP frame.
  * The headers are merged with those of the sender, the priority
  * being given to the newly defined header in case of conflict.
