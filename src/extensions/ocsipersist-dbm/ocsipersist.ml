@@ -238,6 +238,17 @@ type 'a t = store * string
 
 let open_store name : store = name
 
+let make_persistent_lazy_lwt ~store ~name ~default =
+  let pvname = (store, name) in
+  (catch
+     (fun () -> db_get pvname >>= (fun _ -> return ()))
+     (function
+       | Not_found ->
+           let def = default () >>= (fun x -> Lwt.return (Marshal.to_string x []))
+           in def >>= db_replace pvname
+       | e -> fail e)) >>=
+   (fun () -> return pvname)
+
 let make_persistent_lazy ~store ~name ~default =
   let pvname = (store, name) in
   (catch
