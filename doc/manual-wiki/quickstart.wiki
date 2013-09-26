@@ -90,5 +90,4 @@ If you can't find the solution in the documentation,
 to our mailing list]] and ask your question here.
 
 If you find a bug, a mistake in the documentation (even a small one),
-or if you want to make a suggestion, [[site:trac|register to our bug
-tracking system]] and fill a ticket.
+or if you want to make a suggestion, [[https://github.com/ocsigen/ocsigenserver|fill a ticket on Github]].

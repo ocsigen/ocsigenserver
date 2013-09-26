@@ -1,6 +1,6 @@
 =Outputfilter=
 
-Outputfilter allows to filter the output and rewrite some part of it (for example headers) before sending it to the client. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [[site:trac|here]].
+Outputfilter allows to filter the output and rewrite some part of it (for example headers) before sending it to the client. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [[https://github.com/ocsigen/ocsigenserver|here]].
 
 For now it only allows to rewrite HTTP or add headers.
 

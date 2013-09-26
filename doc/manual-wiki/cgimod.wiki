@@ -1,6 +1,6 @@
 =CGImod=
 
-CGImod is a module for running CGI scripts with ocsigen. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [[site:trac/|here]].
+CGImod is a module for running CGI scripts with ocsigen. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [[https://github.com/ocsigen/ocsigenserver|here]].
 
 == CGImod ==
 
@@ -11,7 +11,7 @@ Cgimod is a module for Ocsigen that allows you to run CGI scripts
 on your server. It is also the only way to run PHP scripts on
 Ocsigen, through php5-cgi.
 
-===What do I need to use cgimod? 
+===What do I need to use cgimod?
 
 You need a working Ocsigen installation. If you want to run PHP
 scripts, you need php5-cgi too.
@@ -51,7 +51,7 @@ easy to get lost so keep things as simple as you can!
 {{{
   <site dir="whatever">
     <!-- ... -->
-    <cgi root="cgi-bin" dir="/usr/lib/cgi-bin/" /> 
+    <cgi root="cgi-bin" dir="/usr/lib/cgi-bin/" />
     <!-- ... -->
   </site>
 }}}
@@ -64,9 +64,9 @@ easy to get lost so keep things as simple as you can!
 
 {{{
   <site dir="whatever">
-    <cgi regexp="cgi-bin/([^/]*)" 
-          dir="/usr/lib/cgi-bin/" 
-          script="\1" /> 
+    <cgi regexp="cgi-bin/([^/]*)"
+          dir="/usr/lib/cgi-bin/"
+          script="\1" />
   </site>
 }}}
 
@@ -81,9 +81,9 @@ easy to get lost so keep things as simple as you can!
 
   Here is another example:
 {{{
-  <site dir="">  
+  <site dir="">
     <cgi regexp="darcsweb"
-          dir="/usr/lib/cgi-bin/" 
+          dir="/usr/lib/cgi-bin/"
           script="darcsweb.cgi" />
   </site>
 }}}
@@ -91,23 +91,23 @@ easy to get lost so keep things as simple as you can!
   interface for darcs, written in Python.
 
 + The exec way: useful for PHP (and other script languages)
-  
+
 {{{
   <site dir="">
     <!-- To use PHP as a CGI module: -->
-    <!-- WARNING: 
+    <!-- WARNING:
     remember to put the most generic regexp at the end! -->
 
     <!-- First, take care of implicit index.php -->
     <cgi regexp="(.*)/"
-         dir="/var/www/\1" 
-         script="index.php" 
+         dir="/var/www/\1"
+         script="index.php"
          exec="/usr/bin/php5-cgi"/>
 
     <!-- Then, execute every other .php -->
-    <cgi regexp="((.*)/)?([^/]*).php" 
-         dir="/var/www/\2" 
-         script="\3.php" 
+    <cgi regexp="((.*)/)?([^/]*).php"
+         dir="/var/www/\2"
+         script="\3.php"
          exec="/usr/bin/php5-cgi"/>
   </site>
 }}}
@@ -125,12 +125,12 @@ Here is an example for setting up trac:
        <static dir="/var/www/ocsigen/site/trac" />
 
        <!-- An example defining its own environment variable: -->
-       <cgi regexp="" 
-            dir="/usr/share/trac/cgi-bin" 
+       <cgi regexp=""
+            dir="/usr/share/trac/cgi-bin"
             script="trac.cgi" >
-    
-            <setenv var="TRAC_ENV" val="/var/www/trac" />        
-    </cgi>        
+
+            <setenv var="TRAC_ENV" val="/var/www/trac" />
+    </cgi>
   </site>
 }}}
 

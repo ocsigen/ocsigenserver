@@ -1,21 +1,21 @@
 =Deflatemod=
 
-Deflatemod is in beta version. Submit your bugs and feature wishes [[http://ocsigen.org/trac|here]].
+Deflatemod is in beta version. Submit your bugs and feature wishes [[https://github.com/ocsigen/ocsigenserver|here]].
 
 == Usage ==
 
-=== What is deflatemod? 
+=== What is deflatemod?
 
 Deflatemod is a module for Ocsigen that allows you to
 deflate content, using HTTP/1.1 mechanism. It supports gzip as well as
 deflate.
 
-=== What do I need to use deflatemod? 
+=== What do I need to use deflatemod?
 
 You need the camlzip library by Xavier Leroy and a working Ocsigen
-installation. 
+installation.
 
-=== How do I use deflatemod? 
+=== How do I use deflatemod?
 
 First, load the extension in the configuration file:
 
@@ -40,7 +40,7 @@ Alternatively, if you do not want to use findlib, you need to:
 }}}
 
 
-=== How do I configure deflatemod? 
+=== How do I configure deflatemod?
 
 Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:
 
@@ -50,7 +50,7 @@ Again, the options are in ocsigen.conf. You can set a few options globally, in t
 * the buffer size: default is 1024. You shouldn't need to change this
   one, but you can still try a few other values (any feedback welcomed).
 
-For example: 
+For example:
 
 {{{
 <extension module="/home/gabriel/ocsigen/extensions/deflatemod.cmo">
@@ -61,14 +61,14 @@ For example:
 
 Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.
 
-=== I want to deflate only some files. Is it possible? 
+=== I want to deflate only some files. Is it possible?
 
 To some extent, yes. You can '''exclude''' some files and deflate every other, according to their mime-type or extension (''ie.'' the end of the '''url''' in fact, not really the file name on the disk).
 
 Here is an example:
 
 {{{
-<host> 
+<host>
 <site>
 <!-- ... -->
 </site>
@@ -87,7 +87,7 @@ Conversely, you can choose to deflate '''only''' some files, based
 on their mime-types or extension:
 
 {{{
-<host> 
+<host>
 <site>
 <!-- ... -->
 </site>
