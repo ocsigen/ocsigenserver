@@ -235,22 +235,14 @@ let make_persistent_lazy_lwt ~store ~name ~default =
      (fun () -> db_get pvname >>= (fun _ -> return ()))
      (function
        | Not_found ->
-           let def = default () >>= (fun x -> Lwt.return (Marshal.to_string x []))
-           in def >>= db_replace pvname
+           default () >>= fun def ->
+           db_replace pvname (Marshal.to_string def [])
        | e -> fail e)) >>=
   (fun () -> return pvname)
 
 let make_persistent_lazy ~store ~name ~default =
-  store >>= fun store ->
-  let pvname = (store, name) in
-  (catch
-     (fun () -> db_get pvname >>= (fun _ -> return ()))
-     (function
-       | Not_found ->
-           let def = Marshal.to_string (default ()) []
-           in db_replace pvname def
-       | e -> fail e)) >>=
-  (fun () -> return pvname)
+  let default () = Lwt.wrap default in
+  make_persistent_lazy_lwt ~store ~name ~default
 
 let make_persistent ~store ~name ~default =
   make_persistent_lazy ~store ~name ~default:(fun () -> default)
