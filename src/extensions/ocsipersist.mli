@@ -56,6 +56,11 @@ val make_persistent_lazy :
     if needed
 *)
 
+val make_persistent_lazy_lwt :
+    store:store -> name:string -> default:(unit -> 'a Lwt.t) -> 'a t Lwt.t
+(** Lwt version of make_persistent_lazy.
+*)
+
 val get : 'a t -> 'a Lwt.t
 (** [get pv] gives the value of [pv] *)
 
