@@ -57,6 +57,9 @@ module Option = struct
   let get f = function
     | Some x -> x
     | None -> f ()
+  let get' a = function
+    | Some x -> x
+    | None -> a
   let iter f = function
     | Some x -> f x
     | None -> ()
