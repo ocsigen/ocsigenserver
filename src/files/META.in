@@ -32,7 +32,7 @@ package "baselib" (
     version = "[distributed with Ocsigen server]"
     requires = "%%BASEDEPS%%"
     archive(byte) = "ocsigen_lib_base.cmo"
-    archive(native) = "ocsigen_lib_base.cmxo"
+    archive(native) = "ocsigen_lib_base.cmx"
   )
 )
 
@@ -56,6 +56,7 @@ package "ext" (
 
   package "redirectmod" (
     exists_if = "redirectmod.cmo,redirectmod.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "HTTP redirections"
     archive(byte) = "redirectmod.cmo"
@@ -64,6 +65,7 @@ package "ext" (
 
   package "outputfilter" (
     exists_if = "outputfilter.cmo,outputfilter.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Changing HTTP answers before sending"
     archive(byte) = "outputfilter.cmo"
@@ -72,6 +74,7 @@ package "ext" (
 
   package "userconf" (
     exists_if = "userconf.cmo,userconf.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Allowing users to have their own configuration files"
     archive(byte) = "userconf.cmo"
@@ -80,6 +83,7 @@ package "ext" (
 
   package "staticmod" (
     exists_if = "staticmod.cmo,staticmod.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Serving static files"
     archive(byte) = "staticmod.cmo"
@@ -96,6 +100,7 @@ package "ext" (
 
   package "accesscontrol" (
     exists_if = "accesscontrol.cmo,accesscontrol.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Filtering HTTP requests"
     archive(byte) = "accesscontrol.cmo"
@@ -104,6 +109,7 @@ package "ext" (
 
   package "cors" (
     exists_if = "cors.cmo,cors.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Handling cross-origin requests"
     archive(byte) = "cors.cmo"
@@ -112,6 +118,7 @@ package "ext" (
 
   package "extendconfiguration" (
     exists_if = "extendconfiguration.cmo,extendconfiguration.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Updating server options"
     archive(byte) = "extendconfiguration.cmo"
@@ -120,6 +127,7 @@ package "ext" (
 
   package "authbasic" (
     exists_if = "authbasic.cmo,authbasic.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Basic HTTP Authentication"
     archive(byte) = "authbasic.cmo"
@@ -153,7 +161,7 @@ package "ext" (
 
   package "deflatemod" (
     exists_if = "deflatemod.cmo,deflatemod.cmx"
-    requires = "%%CAMLZIPNAME%%"
+    requires = "ocsigenserver,%%CAMLZIPNAME%%"
     version = "[distributed with Ocsigen server]"
     description = "Compressing HTTP reply bodies"
     archive(byte) = "deflatemod.cmo"
@@ -162,6 +170,7 @@ package "ext" (
 
   package "rewritemod" (
     exists_if = "rewritemod.cmo,rewritemod.cmx"
+    requires = "ocsigenserver"
     version = "[distributed with Ocsigen server]"
     description = "Rewriting URLs"
     archive(byte) = "rewritemod.cmo"
@@ -170,7 +179,7 @@ package "ext" (
 
   package "comet" (
     exists_if = "ocsigen_comet.cmo,ocsigen_comet.cmx"
-    requires = "lwt.react"
+    requires = "ocsigenserver,lwt.react"
     version = "[distributed with Ocsigen server]"
     description = "Comet server-to-client communication"
     archive(byte) = "ocsigen_comet.cmo"
