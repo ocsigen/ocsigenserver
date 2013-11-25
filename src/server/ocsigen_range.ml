@@ -44,16 +44,17 @@ let select_range length beg endopt skipfun stream =
     then Ocsigen_stream.empty None
     else
       (match step with
-         | Ocsigen_stream.Finished _  -> 
+         | Ocsigen_stream.Finished _  ->
              Lwt.fail Ocsigen_stream.Stream_too_small
          | Ocsigen_stream.Cont (c, f) -> Lwt.return (c, f))
       >>= fun (buf, nextstream) ->
       let buflen = String.length buf in
       let buflen64 = Int64.of_int buflen in
       if (Int64.compare buflen64 num) <= 0
-      then 
-        Ocsigen_stream.next nextstream >>= fun next ->
-          Ocsigen_stream.cont buf (aux next (Int64.sub num buflen64))
+      then
+        Ocsigen_stream.cont buf (fun () ->
+          Ocsigen_stream.next nextstream >>= fun next ->
+          aux next (Int64.sub num buflen64) ())
       else
         Ocsigen_stream.cont (String.sub buf 0 (Int64.to_int num))
           (fun () -> Ocsigen_stream.empty None)
@@ -63,12 +64,12 @@ let select_range length beg endopt skipfun stream =
        skipfun stream beg >>= fun new_s ->
        Lwt.return
          (match endopt with
-           | None -> 
+           | None ->
                Ocsigen_stream.make
                  ~finalize:
                     (fun status -> Ocsigen_stream.finalize stream status)
                  (fun () -> Lwt.return new_s)
-           | Some endc -> 
+           | Some endc ->
                Ocsigen_stream.make
                  ~finalize:
                     (fun status -> Ocsigen_stream.finalize stream status)
@@ -93,14 +94,14 @@ let compute_range ri res =
         else begin
           let res = {res with
                        Ocsigen_http_frame.res_headers =
-              Http_headers.replace 
+              Http_headers.replace
                 Http_headers.accept_ranges "bytes"
                 res.Ocsigen_http_frame.res_headers;
                        }
           in
           match change_range (Lazy.force ri.Ocsigen_extensions.ri_range) with
             | None -> Lwt.return res
-            | Some (_, _, Ocsigen_extensions.IR_ifmatch etag) 
+            | Some (_, _, Ocsigen_extensions.IR_ifmatch etag)
                 when (match res.Ocsigen_http_frame.res_etag with
                         | None -> true
                         | Some resetag -> String.compare etag resetag <> 0) ->
@@ -118,7 +119,7 @@ let compute_range ri res =
                      (if Int64.compare cl beg <= 0
                       then Lwt.fail Range_416
                       else Lwt.return ()) >>= fun () ->
-                       
+
                      let endc, length = match endopt with
                        | None -> (Int64.sub cl 1L, Int64.sub cl beg)
                        | Some e -> (e, Int64.add (Int64.sub e beg) 1L)
@@ -128,25 +129,25 @@ let compute_range ri res =
                        res.Ocsigen_http_frame.res_stream
                      in
                      (* stream transform *)
-                     let skipfun = 
+                     let skipfun =
                        match skipfun with
-                         | None -> 
+                         | None ->
                              (fun stream beg ->
-                                (Ocsigen_stream.next 
+                                (Ocsigen_stream.next
                                    (Ocsigen_stream.get stream) >>= fun s ->
                                  Ocsigen_stream.skip s beg))
                          | Some f -> f
                      in
-                     select_range 
+                     select_range
                        length beg endopt skipfun
                        resstream
                      >>= fun new_s ->
-                     Lwt.return 
+                     Lwt.return
                        {res with
                           Ocsigen_http_frame.res_stream = (new_s, None);
                           Ocsigen_http_frame.res_code = 206;
                           Ocsigen_http_frame.res_headers =
-                           Http_headers.replace 
+                           Http_headers.replace
                              Http_headers.content_range
                              ("bytes "^Int64.to_string beg^"-"^
                                 Int64.to_string endc^"/"^
@@ -163,7 +164,7 @@ let compute_range ri res =
                            {dr with
                               Ocsigen_http_frame.res_code = 416;
                               Ocsigen_http_frame.res_headers =
-                               Http_headers.replace 
+                               Http_headers.replace
                                  Http_headers.content_range
                                  ("bytes */"^Int64.to_string cl)
                                  res.Ocsigen_http_frame.res_headers;
@@ -180,7 +181,7 @@ let get_range http_frame =
       Http_headers.range
     in
 
-    let decode_int index d e = 
+    let decode_int index d e =
       let a = Int64.of_string d in
       let b = Int64.of_string e in
       assert (Int64.compare index a < 0);
@@ -196,7 +197,7 @@ let get_range http_frame =
         let l = String.split ',' b in
         let rec f index = function
           | [] -> [], None
-          | [a] -> 
+          | [a] ->
               let d, e = String.sep '-' a in
               if e = ""
               then [], Some (Int64.of_string d)
@@ -210,8 +211,8 @@ let get_range http_frame =
         f (-1L) l
     in
 
-    let ifrange = 
-      try 
+    let ifrange =
+      try
         let ifrangeheader = Ocsigen_http_frame.Http_header.get_headers_value
           http_frame.Ocsigen_http_frame.frame_header
           Http_headers.if_range
