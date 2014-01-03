@@ -21,10 +21,10 @@ doc:
 .PHONY: run.local run.opt.local top
 
 run.local: byte
-	CAML_LD_LIBRARY_PATH=src/server src/server/${PROJECTNAME} -c local/etc/${PROJECTNAME}.conf
+	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/${PROJECTNAME} -c local/etc/${PROJECTNAME}.conf
 
 run.opt.local: opt
-	CAML_LD_LIBRARY_PATH=src/server src/server/${PROJECTNAME}.opt -c local/etc/${PROJECTNAME}.conf
+	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/${PROJECTNAME}.opt -c local/etc/${PROJECTNAME}.conf
 
 top:
 	cd src/server && ${MAKE} top

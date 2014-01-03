@@ -64,7 +64,7 @@ confs: ../$(PROJECTNAME).conf.sample ../local/etc/${PROJECTNAME}.conf
 	  > $@
 
 ../local/etc/$(PROJECTNAME).conf: files/${PROJECTNAME}.conf.in ../Makefile.config Makefile
-	mkdir -p ../local/etc
+	mkdir -p ../local/etc ../local/var/log ../local/var/run
 	cat $< \
 	  | sed s%80\</port\>%8080\</port\>%g \
 	  | sed s%_LOGDIR_%$(SRC)/local/var/log%g \
