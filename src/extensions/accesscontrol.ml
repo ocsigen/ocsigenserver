@@ -43,16 +43,18 @@ open Ocsigen_http_frame
 let rec parse_condition = function
 
     | Element ("ip", ["value", s], []) ->
-        let ip_with_mask =
+        let prefix =
           try
-            Ip_address.parse s
-          with Failure _ ->
-            badconfig "Bad ip/netmask [%s] in <ip> condition" s
+            Ipaddr.Prefix.of_string_exn s
+          with Ipaddr.Parse_error _ ->
+            try
+              let ip = Ipaddr.of_string_exn s in
+              Ipaddr.Prefix.of_addr ip
+            with _ ->
+              badconfig "Bad ip/netmask [%s] in <ip> condition" s
         in
         (fun ri ->
-           let r = 
-             Ip_address.match_ip ip_with_mask 
-               (Lazy.force ri.ri_remote_ip_parsed) 
+           let r = Ipaddr.mem prefix (Lazy.force ri.ri_remote_ip_parsed)
            in
            if r then
              Ocsigen_messages.debug2 (sprintf "--Access control (ip): %s matches %s" ri.ri_remote_ip s)
@@ -230,10 +232,10 @@ let parse_config parse_fun = function
   | Element ("nextsite", [], []) ->
       (function
          | Ocsigen_extensions.Req_found (_, r) ->
-             Lwt.return (Ocsigen_extensions.Ext_found_stop 
+             Lwt.return (Ocsigen_extensions.Ext_found_stop
                            (fun () -> Lwt.return r))
          | Ocsigen_extensions.Req_not_found (err, ri) ->
-             Lwt.return (Ocsigen_extensions.Ext_stop_site 
+             Lwt.return (Ocsigen_extensions.Ext_stop_site
                            (Ocsigen_cookies.Cookies.empty, 404)))
 
   | Element ("nexthost", [], []) ->

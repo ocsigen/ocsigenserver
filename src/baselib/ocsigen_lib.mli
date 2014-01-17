@@ -36,25 +36,8 @@ val make_cryptographic_safe_string : unit -> string
 module String : module type of String_base
 
 module Ip_address : sig
-
-  type t =
-    | IPv4 of int32
-    | IPv6 of int64 * int64
-
-  (* exception Invalid_ipaddress of string *)
-
-  val parse : string -> t * (t option)
-  val match_ip : t * (t option) -> t -> bool
-  val network_of_ip : t -> int32 -> int64 * int64 -> t
-
   exception No_such_host
-
-  val inet6_addr_loopback : t
-
   val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr Lwt.t
-
-  (* val getnameinfo : Unix.inet_addr -> int -> string Lwt.t *)
-
 end
 
 module Filename : sig
