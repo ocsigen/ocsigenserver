@@ -100,7 +100,7 @@ package "ext" (
 
   package "accesscontrol" (
     exists_if = "accesscontrol.cmo,accesscontrol.cmx"
-    requires = "ocsigenserver"
+    requires = "ocsigenserver,ipaddr"
     version = "[distributed with Ocsigen server]"
     description = "Filtering HTTP requests"
     archive(byte) = "accesscontrol.cmo"

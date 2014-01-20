@@ -216,7 +216,7 @@ type request_info =
      ri_files: (config_info -> (string * file_info) list Lwt.t) option; (** Files sent in the request (multipart data). None if other content type or no content. *)
      ri_remote_inet_addr: Unix.inet_addr; (** IP of the client *)
      ri_remote_ip: string;            (** IP of the client *)
-     ri_remote_ip_parsed: Ip_address.t Lazy.t;    (** IP of the client, parsed *)
+     ri_remote_ip_parsed: Ipaddr.t Lazy.t;    (** IP of the client, parsed *)
      ri_remote_port: int;      (** Port used by the client *)
      ri_forward_ip: string list; (** IPs of gateways the request went throught *)
      ri_server_port: int;      (** Port of the request (server) *)
