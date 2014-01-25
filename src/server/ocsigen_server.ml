@@ -31,7 +31,6 @@ open Ocsigen_parseconfig
 open Ocsigen_cookies
 open Lazy
 
-
 exception Ocsigen_unsupported_media
 exception Ssl_Exception
 exception Ocsigen_upload_forbidden
@@ -79,17 +78,17 @@ let make_sockets addr port =
            corresponds to the net.ipv6.bindv6only=0 behaviour on Linux,
            but is portable and should work with
            net.ipv6.bindv6only=1 as well. *)
-        let ipv6_socket =
-          try [make_ipv6_socket Unix.inet6_addr_any port]
-          with Unix.Unix_error
-              ((Unix.EAFNOSUPPORT | Unix.EPROTONOSUPPORT),
-               _, _) -> []
-        in
-        (make_ipv4_socket Unix.inet_addr_any port)::ipv6_socket
+      let ipv6_socket =
+        try [make_ipv6_socket Unix.inet6_addr_any port]
+        with Unix.Unix_error
+            ((Unix.EAFNOSUPPORT | Unix.EPROTONOSUPPORT),
+             _, _) -> []
+      in
+      (make_ipv4_socket Unix.inet_addr_any port)::ipv6_socket
     | IPv4 addr ->
-        [make_ipv4_socket addr port]
+      [make_ipv4_socket addr port]
     | IPv6 addr ->
-        [make_ipv6_socket addr port]
+      [make_ipv6_socket addr port]
 
 let sslctx = Ocsigen_http_client.sslcontext
 
@@ -112,7 +111,8 @@ let find_field field content_disp =
 
 type to_write =
     No_File of string * Buffer.t
-  | A_File of (string * string * string * Unix.file_descr * (string * string option) option)
+  | A_File of (string * string * string * Unix.file_descr
+               * ((string * string option) * (string * string) list) option)
 
 let counter = let c = ref (Random.int 1000000) in fun () -> c := !c + 1 ; !c
 
@@ -126,8 +126,6 @@ let dbg sockaddr s =
        let ip = Unix.string_of_inet_addr (ip_of_sockaddr sockaddr) in
        "While talking to " ^ ip ^ ": " ^ s)
 
-
-let r_content_type = Netstring_pcre.regexp "([^ ]*)"
 
 let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 
@@ -176,14 +174,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
     let content_type =
       try
         let ct = List.assoc "content-type" hs in
-        let content_type =
-          let (_, res) = Netstring_pcre.search_forward r_content_type ct 0 in
-          Netstring_pcre.matched_group res 1 ct
-        in
-        let charset = try
-          Some (find_field "charset" ct)
-        with _ -> None
-        in Some (content_type, charset)
+        Ocsigen_headers.parse_content_type (Some ct)
       with _ -> None
     in
     let cd = List.assoc "content-disposition" hs in

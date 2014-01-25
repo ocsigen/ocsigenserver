@@ -156,8 +156,8 @@ let get_keepalive http_header =
 (* RFC 2616, sect. 14.23 *)
 (* XXX Not so simple: the host name may contain a colon! (RFC 3986) *)
 let get_host_from_host_header =
-  let host_re = 
-    Netstring_pcre.regexp "^(\\[[0-9A-Fa-f:.]+\\]|[^:]+)(:([0-9]+))?$" 
+  let host_re =
+    Netstring_pcre.regexp "^(\\[[0-9A-Fa-f:.]+\\]|[^:]+)(:([0-9]+))?$"
   in
   fun http_frame ->
     try
@@ -166,9 +166,9 @@ let get_host_from_host_header =
           http_frame.Ocsigen_http_frame.frame_header Http_headers.host
       in
       match Netstring_pcre.string_match host_re hostport 0 with
-        | Some m -> 
+        | Some m ->
             (Some (Netstring_pcre.matched_group m 1 hostport),
-             try Some (int_of_string 
+             try Some (int_of_string
                          (Netstring_pcre.matched_group m 3 hostport))
              with Not_found -> None | Failure _ -> raise Ocsigen_Bad_Request)
         | None -> raise Ocsigen_Bad_Request
@@ -237,16 +237,18 @@ let parse_content_type = function
       match String.split ';' s with
         | [] -> None
         | a::l ->
+          let (typ, subtype) =
             try
-              let (typ, subtype) = String.sep '/' a in
-              let params = 
-                try
-                  List.map (String.sep '=') l 
-                with Not_found -> []
-              in 
+              let typ, subtype = String.sep '/' a in (typ, Some subtype)
+            with Not_found -> a, None
+          in
+          let params =
+            try
+              List.map (String.sep '=') l
+            with Not_found -> []
+          in
 (*VVV If syntax error, we return no parameter at all *)
-              Some ((typ, subtype), params)
-            with Not_found -> None
+          Some ((typ, subtype), params)
 (*VVV If syntax error in type, we return None *)
 
 
@@ -336,4 +338,3 @@ let get_accept_language http_frame =
       (Http_header.get_headers_values
          http_frame.Ocsigen_http_frame.frame_header Http_headers.accept_language)
   with _ -> []
-

@@ -140,7 +140,8 @@ type file_info = {
     filesize: int64;
     raw_original_filename: string;
     original_basename: string ;
-    file_content_type: (string * string option) option;
+    file_content_type:
+      ((string * string option) * (string * string) list) option;
   }
 
 (** The request *)

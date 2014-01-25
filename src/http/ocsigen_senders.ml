@@ -114,10 +114,10 @@ module Text_content =
          res_headers= Http_headers.dyn_headers;
          res_stream =
             (Ocsigen_stream.make
-               (fun () -> 
+               (fun () ->
                   Ocsigen_stream.cont c (fun () -> Ocsigen_stream.empty None)),
              None)
-               
+
             }
 
   end
@@ -195,7 +195,7 @@ module Streamlist_content =
         {default_result with
          res_content_length = None;
          res_etag = get_etag c;
-         res_stream = 
+         res_stream =
             (Ocsigen_stream.make ~finalize (fun _ -> next_stream c), None);
          res_headers= Http_headers.dyn_headers;
          res_content_type = Some ct}
