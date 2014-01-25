@@ -237,20 +237,17 @@ let parse_content_type = function
       match String.split ';' s with
         | [] -> None
         | a::l ->
-          let (typ, subtype) =
-            try
-              let typ, subtype = String.sep '/' a in (typ, Some subtype)
-            with Not_found -> a, None
-          in
-          let params =
-            try
-              List.map (String.sep '=') l
-            with Not_found -> []
-          in
+          try
+            let typ, subtype = String.sep '/' a in
+            let params =
+              try
+                List.map (String.sep '=') l
+              with Not_found -> []
+            in
 (*VVV If syntax error, we return no parameter at all *)
-          Some ((typ, subtype), params)
+            Some ((typ, subtype), params)
 (*VVV If syntax error in type, we return None *)
-
+          with Not_found -> None
 
 let get_content_length http_frame =
   try

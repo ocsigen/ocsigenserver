@@ -112,7 +112,7 @@ let find_field field content_disp =
 type to_write =
     No_File of string * Buffer.t
   | A_File of (string * string * string * Unix.file_descr
-               * ((string * string option) * (string * string) list) option)
+               * ((string * string) * (string * string) list) option)
 
 let counter = let c = ref (Random.int 1000000) in fun () -> c := !c + 1 ; !c
 
