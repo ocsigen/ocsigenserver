@@ -43,6 +43,7 @@ val content_range : name
 val cookie : name
 val date : name
 val etag : name
+val expect: name
 val expires : name
 val host : name
 val if_match : name

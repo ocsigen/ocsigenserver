@@ -187,6 +187,16 @@ let get_cookie_string http_frame =
   with Not_found ->
     None
 
+let get_expect http_frame =
+  try
+    String.split ',' (
+      Http_header.get_headers_value
+        http_frame.Ocsigen_http_frame.frame_header
+        Http_headers.expect
+    )
+  with Not_found ->
+    []
+
 let get_if_modified_since http_frame =
   try
     Some (Netdate.parse_epoch
