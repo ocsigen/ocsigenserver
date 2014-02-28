@@ -373,7 +373,7 @@ let get_request_infos
           ri_files = files;
           ri_remote_inet_addr = client_inet_addr;
           ri_remote_ip = ipstring;
-          ri_remote_ip_parsed = lazy (fst (Ip_address.parse ipstring));
+          ri_remote_ip_parsed = lazy (Ipaddr.of_string_exn ipstring);
           ri_remote_port = port_of_sockaddr sockaddr;
 	  ri_forward_ip = [];
           ri_server_port = port;

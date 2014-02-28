@@ -20,6 +20,7 @@ depends: [
   "cryptokit"
   "tyxml" {>= "9999"}
   ("dbm" | "sqlite3-ocaml")
+  "ipaddr" {>= "2.1"}
 ]
 depopts: [
   "camlzip" {>= "1.04"}

@@ -43,16 +43,18 @@ open Ocsigen_http_frame
 let rec parse_condition = function
 
     | Element ("ip", ["value", s], []) ->
-        let ip_with_mask =
+        let prefix =
           try
-            Ip_address.parse s
-          with Failure _ ->
-            badconfig "Bad ip/netmask [%s] in <ip> condition" s
+            Ipaddr.Prefix.of_string_exn s
+          with Ipaddr.Parse_error _ ->
+            try
+              let ip = Ipaddr.of_string_exn s in
+              Ipaddr.Prefix.of_addr ip
+            with _ ->
+              badconfig "Bad ip/netmask [%s] in <ip> condition" s
         in
         (fun ri ->
-           let r = 
-             Ip_address.match_ip ip_with_mask 
-               (Lazy.force ri.ri_remote_ip_parsed) 
+           let r = Ipaddr.Prefix.mem (Lazy.force ri.ri_remote_ip_parsed) prefix
            in
            if r then
              Ocsigen_messages.debug2 (sprintf "--Access control (ip): %s matches %s" ri.ri_remote_ip s)
@@ -230,10 +232,10 @@ let parse_config parse_fun = function
   | Element ("nextsite", [], []) ->
       (function
          | Ocsigen_extensions.Req_found (_, r) ->
-             Lwt.return (Ocsigen_extensions.Ext_found_stop 
+             Lwt.return (Ocsigen_extensions.Ext_found_stop
                            (fun () -> Lwt.return r))
          | Ocsigen_extensions.Req_not_found (err, ri) ->
-             Lwt.return (Ocsigen_extensions.Ext_stop_site 
+             Lwt.return (Ocsigen_extensions.Ext_stop_site
                            (Ocsigen_cookies.Cookies.empty, 404)))
 
   | Element ("nexthost", [], []) ->
@@ -310,7 +312,7 @@ let parse_config parse_fun = function
 		request
 	      | original_ip::proxies ->
 		let last_proxy = List.last proxies in
-		let proxy_ip = fst (Ip_address.parse last_proxy) in
+		let proxy_ip = Ipaddr.of_string_exn last_proxy in
 		let equal_ip = proxy_ip = Lazy.force request.request_info.ri_remote_ip_parsed in
 		let need_equal_ip =
 		  match param with
@@ -326,7 +328,7 @@ let parse_config parse_fun = function
 		  { request with request_info =
 		      { request.request_info with
 			ri_remote_ip = original_ip;
-			ri_remote_ip_parsed = lazy (fst (Ip_address.parse original_ip));
+			ri_remote_ip_parsed = lazy (Ipaddr.of_string_exn original_ip);
 			ri_forward_ip = proxies; } }
 		else (* the announced ip of the proxy is not its real ip *)
 		  ( Ocsigen_messages.warning (Printf.sprintf "--Access control: X-Forwarded-For: host ip ( %s ) does not match the header ( %s )" request.request_info.ri_remote_ip header );

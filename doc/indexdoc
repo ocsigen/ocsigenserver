@@ -11,7 +11,7 @@ Ocsipersist
 Ocsigen_config
 }
 
-{2 Extending Ocsigen}
+{2 Extending Ocsigen Server}
 {!modules:
 Ocsigen_extensions
 Ocsigen_local_files

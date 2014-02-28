@@ -16,7 +16,7 @@
 ##
 
 #VERSION?=$(shell grep Version: _oasis | cut -d ' ' -f 2)
-VERSION=`cat VERSION`
+VERSION=$(shell cat VERSION)
 REPO?=https://github.com/ocsigen/ocsigenserver
 
 all: dist sign

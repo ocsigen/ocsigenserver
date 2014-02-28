@@ -29,10 +29,11 @@ ifeq "$(PREEMPTIVE)" "YES"
 LWT_EXTRA_PACKAGE:=lwt.extra
 endif
 
-BASE_PACKAGE := lwt
+BASE_PACKAGE := lwt ipaddr
 
 SERVER_PACKAGE := lwt.ssl           \
 	          ${LWT_EXTRA_PACKAGE} \
+            ipaddr            \
 	          netstring         \
 	          netstring-pcre    \
                   findlib           \
@@ -51,4 +52,3 @@ INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
                \"${PROJECTNAME}.baselib\";      \
                \"${PROJECTNAME}.http\";         \
                \"${PROJECTNAME}\";              \
-

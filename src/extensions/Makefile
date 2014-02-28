@@ -1,6 +1,7 @@
 include ../../Makefile.config
 
 PACKAGE  := lwt.unix     \
+			ipaddr       \
 	    lwt.ssl      \
 	    lwt.react    \
             netstring    \
