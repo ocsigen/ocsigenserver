@@ -22,6 +22,7 @@
 (** Config file parsing *)
 
 open Ocsigen_lib
+open Ocsigen_socket
 
 open Simplexmlparser
 open Ocsigen_config
@@ -589,12 +590,6 @@ let parse_server isreloading c =
           raise (Config_file_error "Syntax error")
   in Ocsigen_extensions.set_hosts (parse_server_aux c)
 
-
-(* Types of socket declarable in configuration file *)
-type socket_type =
-  | IPv4 of Unix.inet_addr
-  | IPv6 of Unix.inet_addr
-  | All
 
 (* Parsing <port> tags *)
 let parse_port =
