@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (*****************************************************************************)
 (*****************************************************************************)
 (* Ocsigen extension for rewriteing URLs                                     *)
@@ -35,9 +35,9 @@
 
 
 (* To compile it:
-ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
+   ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
 
-Then load it dynamically from Ocsigen's config file:
+   Then load it dynamically from Ocsigen's config file:
    <extension module=".../rewritemod.cmo"/>
 
 *)
@@ -62,9 +62,9 @@ type assockind =
 
 let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
   (match Netstring_pcre.string_match regexp suburl 0 with
-     | None -> raise Not_concerned
-     | Some _ -> (* Matching regexp found! *)
-         Netstring_pcre.global_replace regexp dest suburl), fullrewrite
+   | None -> raise Not_concerned
+   | Some _ -> (* Matching regexp found! *)
+     Netstring_pcre.global_replace regexp dest suburl), fullrewrite
 
 
 
@@ -74,34 +74,34 @@ let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
 (*****************************************************************************)
 (** The function that will generate the pages from the request. *)
 let gen regexp = function
-| Ocsigen_extensions.Req_found _ -> 
+  | Ocsigen_extensions.Req_found _ -> 
     Lwt.return Ocsigen_extensions.Ext_do_nothing
-| Ocsigen_extensions.Req_not_found (err, ri) ->
-  catch
-    (* Is it a rewrite? *)
-    (fun () ->
-      Ocsigen_messages.debug2 "--Rewritemod: Is it a rewrite?";
-      let redir, fullrewrite =
-        let ri = ri.request_info in
-        find_rewrite regexp
-          (match ri.ri_get_params_string with
-             | None -> ri.ri_sub_path_string
-             | Some g -> ri.ri_sub_path_string ^ "?" ^ g)
-      in
-      Ocsigen_messages.debug (fun () ->
-        "--Rewritemod: YES! rewrite to: "^redir);
-      return
-        (Ext_retry_with
-           ({ ri with request_info =
-                Ocsigen_extensions.ri_of_url
-                  ~full_rewrite:fullrewrite
-                  redir ri.request_info },
-            Ocsigen_cookies.Cookies.empty)
-        )
-    )
-    (function
-      | Not_concerned -> return (Ext_next err)
-      | e -> fail e)
+  | Ocsigen_extensions.Req_not_found (err, ri) ->
+    catch
+      (* Is it a rewrite? *)
+      (fun () ->
+         Ocsigen_messages.debug2 "--Rewritemod: Is it a rewrite?";
+         let redir, fullrewrite =
+           let ri = ri.request_info in
+           find_rewrite regexp
+             (match ri.ri_get_params_string with
+              | None -> ri.ri_sub_path_string
+              | Some g -> ri.ri_sub_path_string ^ "?" ^ g)
+         in
+         Ocsigen_messages.debug (fun () ->
+             "--Rewritemod: YES! rewrite to: "^redir);
+         return
+           (Ext_retry_with
+              ({ ri with request_info =
+                           Ocsigen_extensions.ri_of_url
+                             ~full_rewrite:fullrewrite
+                             redir ri.request_info },
+               Ocsigen_cookies.Cookies.empty)
+           )
+      )
+      (function
+        | Not_concerned -> return (Ext_next err)
+        | e -> fail e)
 
 
 
@@ -110,21 +110,21 @@ let gen regexp = function
 
 let parse_config = function
   | Element ("rewrite", atts, []) ->
-      let regexp = match atts with
+    let regexp = match atts with
       | [] ->
-          raise (Error_in_config_file
-                   "regexp attribute expected for <rewrite>")
+        raise (Error_in_config_file
+                 "regexp attribute expected for <rewrite>")
       | [("regexp", s); ("url", t)]
       | [("regexp", s); ("dest", t)] ->
-          Regexp ((Netstring_pcre.regexp ("^"^s^"$")), t, false)
+        Regexp ((Netstring_pcre.regexp ("^"^s^"$")), t, false)
       | [("regexp", s); ("url", t); ("fullrewrite", "fullrewrite")]
       | [("regexp", s); ("dest", t); ("fullrewrite", "fullrewrite")] ->
-          Regexp ((Netstring_pcre.regexp ("^"^s^"$")), t, true)
+        Regexp ((Netstring_pcre.regexp ("^"^s^"$")), t, true)
       | _ -> raise (Error_in_config_file "Wrong attribute for <rewrite>")
-      in
-      gen regexp
+    in
+    gen regexp
   | Element (t, _, _) ->
-      raise (Bad_config_tag_for_extension t)
+    raise (Bad_config_tag_for_extension t)
   | _ -> raise (Error_in_config_file "(rewritemod extension) Bad data")
 
 
@@ -133,7 +133,7 @@ let parse_config = function
 (*****************************************************************************)
 (** Registration of the extension *)
 let () = register_extension
-  ~name:"rewritemod"
-  ~fun_site:(fun _ _ _ _ _ -> parse_config)
-  ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
-  ()
+    ~name:"rewritemod"
+    ~fun_site:(fun _ _ _ _ _ -> parse_config)
+    ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
+    ()

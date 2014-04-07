@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (*****************************************************************************)
 (*****************************************************************************)
 (* Ocsigen extension for defining page redirections                          *)
@@ -25,9 +25,9 @@
 (*****************************************************************************)
 
 (* To compile it:
-ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
+   ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
 
-Then load it dynamically from Ocsigen's config file:
+   Then load it dynamically from Ocsigen's config file:
    <extension module=".../redirectmod.cmo"/>
 
 *)
@@ -44,8 +44,8 @@ open Simplexmlparser
 (* The table of redirections for each virtual server                         *)
 type assockind =
   | Regexp of Netstring_pcre.regexp * string
-      * yesnomaybe (* full url *) 
-      * bool (* temporary *)
+              * yesnomaybe (* full url *) 
+              * bool (* temporary *)
 
 
 
@@ -53,51 +53,51 @@ type assockind =
 (** The function that will generate the pages from the request. *)
 let gen dir = function
   | Ocsigen_extensions.Req_found _ -> 
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+    Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, ri) ->
-      catch
-        (* Is it a redirection? *)
-        (fun () ->
-           Ocsigen_messages.debug2 "--Redirectmod: Is it a redirection?";
-           let Regexp (regexp, dest, full, temp) = dir in
-           let redir =
-             let fi full =
-               Ocsigen_extensions.find_redirection
-                 regexp
-                 full
-                 dest
-                 ri.request_info.ri_ssl
-                 ri.request_info.ri_host
-                 ri.request_info.ri_server_port
-                 ri.request_info.ri_get_params_string
-                 ri.request_info.ri_sub_path_string
-                 ri.request_info.ri_full_path_string
-             in
-             match full with
-               | Yes -> fi true
-               | No -> fi false
-               | Maybe -> 
-                   try fi false 
-                   with Ocsigen_extensions.Not_concerned -> fi true
+    catch
+      (* Is it a redirection? *)
+      (fun () ->
+         Ocsigen_messages.debug2 "--Redirectmod: Is it a redirection?";
+         let Regexp (regexp, dest, full, temp) = dir in
+         let redir =
+           let fi full =
+             Ocsigen_extensions.find_redirection
+               regexp
+               full
+               dest
+               ri.request_info.ri_ssl
+               ri.request_info.ri_host
+               ri.request_info.ri_server_port
+               ri.request_info.ri_get_params_string
+               ri.request_info.ri_sub_path_string
+               ri.request_info.ri_full_path_string
            in
-           Ocsigen_messages.debug
-             (fun () ->
-                "--Redirectmod: YES! "^
-                  (if temp then "Temporary " else "Permanent ")^
-                  "redirection to: "^redir);
-           let empty_result = Ocsigen_http_frame.empty_result () in
-           return
-             (Ext_found
-                (fun () ->
-                   Lwt.return
-                     {empty_result with
-                        Ocsigen_http_frame.res_location = Some redir;
-                        Ocsigen_http_frame.res_code= 
-                         if temp then 302 else 301}))
-        )
-        (function
-           | Ocsigen_extensions.Not_concerned -> return (Ext_next err)
-           | e -> fail e)
+           match full with
+           | Yes -> fi true
+           | No -> fi false
+           | Maybe -> 
+             try fi false 
+             with Ocsigen_extensions.Not_concerned -> fi true
+         in
+         Ocsigen_messages.debug
+           (fun () ->
+              "--Redirectmod: YES! "^
+              (if temp then "Temporary " else "Permanent ")^
+              "redirection to: "^redir);
+         let empty_result = Ocsigen_http_frame.empty_result () in
+         return
+           (Ext_found
+              (fun () ->
+                 Lwt.return
+                   {empty_result with
+                    Ocsigen_http_frame.res_location = Some redir;
+                    Ocsigen_http_frame.res_code= 
+                      if temp then 302 else 301}))
+      )
+      (function
+        | Ocsigen_extensions.Not_concerned -> return (Ext_next err)
+        | e -> fail e)
 
 
 
@@ -106,49 +106,49 @@ let gen dir = function
 
 let parse_config = function
   | Element ("redirect", atts, []) ->
-      let rec parse_attrs ((r, f, d, temp) as res) = function
-        | [] -> res
-        | ("regexp", regexp)::l when r = None -> (* deprecated *)
-            parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
-               d, temp)
-              l
-        | ("fullurl", regexp)::l when r = None ->
-            parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
-               d, temp)
-              l
-        | ("suburl", regexp)::l when r = None ->
-            parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
-               d, temp)
-              l
-        | ("dest", dest)::l when d = None ->
-            parse_attrs
-              (r, f, Some dest, temp)
-              l
-        | ("temporary", "temporary")::l ->
-            parse_attrs
-              (r, f, d, true)
-              l
-        | _ -> raise (Error_in_config_file "Wrong attribute for <redirect>")
-        in
-        let dir =
-          match parse_attrs (None, Yes, None, false) atts with
-          | (None, _, _, _) -> 
-              raise (Error_in_config_file
-                       "Missing attribute regexp for <redirect>")
-          | (_, _, None, _) -> 
-              raise (Error_in_config_file
-                       "Missing attribute dest for <redirect>>")
-          | (Some r, full, Some d, temp) ->
-              Regexp (r, d, full, temp)
-        in
-        gen dir
+    let rec parse_attrs ((r, f, d, temp) as res) = function
+      | [] -> res
+      | ("regexp", regexp)::l when r = None -> (* deprecated *)
+        parse_attrs
+          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
+           d, temp)
+          l
+      | ("fullurl", regexp)::l when r = None ->
+        parse_attrs
+          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
+           d, temp)
+          l
+      | ("suburl", regexp)::l when r = None ->
+        parse_attrs
+          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
+           d, temp)
+          l
+      | ("dest", dest)::l when d = None ->
+        parse_attrs
+          (r, f, Some dest, temp)
+          l
+      | ("temporary", "temporary")::l ->
+        parse_attrs
+          (r, f, d, true)
+          l
+      | _ -> raise (Error_in_config_file "Wrong attribute for <redirect>")
+    in
+    let dir =
+      match parse_attrs (None, Yes, None, false) atts with
+      | (None, _, _, _) -> 
+        raise (Error_in_config_file
+                 "Missing attribute regexp for <redirect>")
+      | (_, _, None, _) -> 
+        raise (Error_in_config_file
+                 "Missing attribute dest for <redirect>>")
+      | (Some r, full, Some d, temp) ->
+        Regexp (r, d, full, temp)
+    in
+    gen dir
   | Element ("redirect" as s, _, _) -> badconfig "Bad syntax for tag %s" s
 
   | Element (t, _, _) ->
-      raise (Bad_config_tag_for_extension t)
+    raise (Bad_config_tag_for_extension t)
   | _ -> raise (Error_in_config_file "(redirectmod extension) Bad data")
 
 
@@ -157,7 +157,7 @@ let parse_config = function
 (*****************************************************************************)
 (** Registration of the extension *)
 let () = register_extension
-  ~name:"redirectmod"
-  ~fun_site:(fun _ _ _ _ _ -> parse_config)
-  ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
-  ()
+    ~name:"redirectmod"
+    ~fun_site:(fun _ _ _ _ _ -> parse_config)
+    ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
+    ()
