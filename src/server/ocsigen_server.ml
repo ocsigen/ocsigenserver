@@ -164,7 +164,8 @@ and find_post_params_form_urlencoded body_gen _ =
       | Ocsigen_stream.String_too_large -> fail Input_is_too_large
       | e -> fail e)
 
-and find_post_params_multipart_form_data body_gen ctparams filenames ci =
+and find_post_params_multipart_form_data body_gen ctparams filenames
+    (uploaddir, maxuploadfilesize)=
   (* Same question here, should this stream be consumed after an error ? *)
   let body = Ocsigen_stream.get body_gen
   and bound = get_boundary ctparams
@@ -181,7 +182,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
     let p_name = find_field "name" cd in
     try
       let store = find_field "filename" cd in
-      match ci.uploaddir with
+      match uploaddir with
       | Some dname ->
         let now = Printf.sprintf "%f-%d"
             (Unix.gettimeofday ()) (counter ()) in
@@ -227,7 +228,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
       return ()
   in
   Multipart.scan_multipart_body_from_stream
-    body bound create add stop ci.maxuploadfilesize >>= fun () ->
+    body bound create add stop maxuploadfilesize >>= fun () ->
   (*VVV Does scan_multipart_body_from_stream read until the end or
     only what it needs?  If we do not consume here, the following
     request will be read only when this one is finished ...  *)
