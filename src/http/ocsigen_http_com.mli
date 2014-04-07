@@ -40,6 +40,9 @@ exception Keepalive_timeout (* R *)
 (** Connection killed *)
 exception Aborted (* RrS *)
 
+(* Could enlighten me about its usefulness ? *)
+exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+
 type mode = Answer | Query | Nofirstline
 type connection
 val create_receiver : int -> mode -> Lwt_ssl.socket -> connection

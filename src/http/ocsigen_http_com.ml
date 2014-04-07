@@ -56,6 +56,7 @@ exception Lost_connection of exn
 exception Timeout
 exception Keepalive_timeout
 exception Aborted
+exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 
 (*XXX Provide the max size? *)
 let request_too_large max =

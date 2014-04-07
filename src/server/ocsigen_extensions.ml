@@ -35,7 +35,6 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
-exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 exception Ocsigen_Looping_request
 
 
@@ -957,7 +956,7 @@ let compute_result
         | Some h -> h^":"^(string_of_int port)
       in
       let rec aux_host ri prev_err cookies_to_set = function
-        | [] -> fail (Ocsigen_http_error (cookies_to_set, prev_err))
+        | [] -> fail (Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, prev_err))
         | (h, conf_info, host_function)::l when
             host_match ~virtual_hosts:h ~host ~port ->
           Ocsigen_messages.debug (fun () ->
@@ -993,7 +992,7 @@ let compute_result
              aux_host ri e (Ocsigen_cookies.add_cookies cook cookies_to_set) l
            (* try next site *)
            | Ext_stop_all (cook, e) ->
-             fail (Ocsigen_http_error (cookies_to_set, e))
+             fail (Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, e))
            | Ext_continue_with (_, cook, e) ->
              aux_host ri e
                (Ocsigen_cookies.add_cookies cook cookies_to_set) l

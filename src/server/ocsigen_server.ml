@@ -269,7 +269,7 @@ let handle_expect slot frame =
         else
           frame
       | _ ->
-        raise (Ocsigen_http_error (Ocsigen_cookies.empty_cookieset, 417))
+        raise (Ocsigen_http_com.Ocsigen_http_error (Ocsigen_cookies.empty_cookieset, 417))
     ) frame expect_list
 
 (* reading the request *)
@@ -585,7 +585,7 @@ let service receiver sender_slot request meth url port sockaddr =
     in
     match e with
     (* EXCEPTIONS WHILE COMPUTING A PAGE *)
-    | Ocsigen_http_error (cookies_to_set, i) ->
+    | Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, i) ->
       Ocsigen_messages.debug
         (fun () -> "-> Sending HTTP error "^(string_of_int i)^" "^
                    Ocsigen_http_frame.Http_error.expl_of_code i);

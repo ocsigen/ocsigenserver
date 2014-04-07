@@ -120,7 +120,7 @@ let parse_config = function
                (fun () -> sprintf
                    "--Access control (auth): Invalid Authorization header (%s)"
                    (Printexc.to_string e));
-             fail (Ocsigen_http_error (Ocsigen_cookies.Cookies.empty, 400))
+             fail (Ocsigen_http_com.Ocsigen_http_error (Ocsigen_cookies.Cookies.empty, 400))
          end
        | Ocsigen_extensions.Req_found (ri, r) ->
          Lwt.return Ocsigen_extensions.Ext_do_nothing)

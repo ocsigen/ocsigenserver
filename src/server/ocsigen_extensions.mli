@@ -30,8 +30,6 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
-exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
-
 (** Xml tag not recognized by an extension (usually not a real error) *)
 exception Bad_config_tag_for_extension of string
 
