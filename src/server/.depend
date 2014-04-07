@@ -7,7 +7,7 @@ ocsigen_http_client.cmi : ../baselib/ocsigen_stream.cmi \
     ../http/http_headers.cmi
 ocsigen_local_files.cmi : ../http/ocsigen_http_frame.cmi \
     ocsigen_extensions.cmi
-ocsigen_parseconfig.cmi : ocsigen_extensions.cmi
+ocsigen_parseconfig.cmi : ocsigen_socket.cmi ocsigen_extensions.cmi
 ocsigen_range.cmi : ../http/ocsigen_http_frame.cmi ocsigen_extensions.cmi
 ocsigen_server.cmi :
 ocsigen_socket.cmi :
@@ -41,11 +41,11 @@ ocsigen_local_files.cmo : ../http/ocsigen_senders.cmi \
 ocsigen_local_files.cmx : ../http/ocsigen_senders.cmx \
     ../baselib/ocsigen_messages.cmx ocsigen_extensions.cmx \
     ../baselib/ocsigen_config.cmx ocsigen_local_files.cmi
-ocsigen_parseconfig.cmo : ../baselib/ocsigen_messages.cmi \
+ocsigen_parseconfig.cmo : ocsigen_socket.cmi ../baselib/ocsigen_messages.cmi \
     ../baselib/ocsigen_loader.cmi ../baselib/ocsigen_lib.cmi \
     ocsigen_extensions.cmi ../baselib/ocsigen_config.cmi \
     ../http/ocsigen_charset_mime.cmi ocsigen_parseconfig.cmi
-ocsigen_parseconfig.cmx : ../baselib/ocsigen_messages.cmx \
+ocsigen_parseconfig.cmx : ocsigen_socket.cmx ../baselib/ocsigen_messages.cmx \
     ../baselib/ocsigen_loader.cmx ../baselib/ocsigen_lib.cmx \
     ocsigen_extensions.cmx ../baselib/ocsigen_config.cmx \
     ../http/ocsigen_charset_mime.cmx ocsigen_parseconfig.cmi

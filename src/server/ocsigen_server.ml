@@ -59,6 +59,40 @@ let _ =
 let sslctx = Ocsigen_http_client.sslcontext
 
 
+(*****************************************************************************)
+(* This is used by server.ml.
+   I put that here because I need it to be accessible for profiling. *)
+let sockets = ref []
+let sslsockets = ref []
+
+let get_number_of_connected,
+    incr_connected,
+    decr_connected,
+    wait_fewer_connected =
+  let connected = ref 0 in
+  let maxr = ref (-1000) in
+  let mvar = Lwt_mvar.create_empty () in
+  ((fun () -> !connected),
+   (fun n -> connected := !connected + n),
+   (fun () ->
+      let c = !connected in
+      connected := c - 1;
+      if !connected <= 0 && !sockets = [] && !sslsockets = []
+      then exit 0;
+      if c = !maxr
+      then begin
+        Ocsigen_messages.warning "Number of connections now ok";
+        maxr := -1000;
+        Lwt_mvar.put mvar ()
+      end
+      else Lwt.return ()
+   ),
+   (fun max ->
+      maxr := max;
+      Lwt_mvar.take mvar)
+  )
+
+
 let ip_of_sockaddr = function
   | Unix.ADDR_INET (ip, port) -> ip
   | _ -> raise (Ocsigen_Internal_Error "ip of unix socket")
@@ -1119,7 +1153,7 @@ let shutdown_server s l =
     sockets := [];
     sslsockets := [];
     shutdown := true;
-    if Ocsigen_extensions.get_number_of_connected () <= 0
+    if get_number_of_connected () <= 0
     then exit 0;
     (match timeout with
      | Some t -> ignore (Lwt_unix.sleep t >>= fun () -> exit 0)

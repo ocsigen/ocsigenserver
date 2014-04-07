@@ -584,15 +584,6 @@ val compute_result :
   ?awake_next_request:bool ->
   request_info -> Ocsigen_http_frame.result Lwt.t
 
-(** Profiling *)
-val get_number_of_connected : unit -> int
-val get_number_of_connected : unit -> int
-
-
-(** Server internal functions: *)
-val incr_connected : int -> unit
-val decr_connected : unit -> unit Lwt.t
-val wait_fewer_connected : int -> unit Lwt.t
 
 val during_initialisation : unit -> bool
 val start_initialisation : unit -> unit
@@ -606,6 +597,3 @@ val set_config : Simplexmlparser.xml list -> unit
 val client_of_connection : Ocsigen_http_com.connection -> client
 
 val get_server_address : request_info -> Unix.inet_addr * int
-
-val sockets : Lwt_unix.file_descr list ref
-val sslsockets : Lwt_unix.file_descr list ref

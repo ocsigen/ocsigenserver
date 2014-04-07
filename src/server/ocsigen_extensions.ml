@@ -1065,41 +1065,6 @@ let ri_of_url ?(full_rewrite = false) url ri =
 
 
 
-(*****************************************************************************)
-(* This is used by server.ml.
-   I put that here because I need it to be accessible for profiling. *)
-let sockets = ref []
-let sslsockets = ref []
-
-let get_number_of_connected,
-    incr_connected,
-    decr_connected,
-    wait_fewer_connected =
-  let connected = ref 0 in
-  let maxr = ref (-1000) in
-  let mvar = Lwt_mvar.create_empty () in
-  ((fun () -> !connected),
-   (fun n -> connected := !connected + n),
-   (fun () ->
-      let c = !connected in
-      connected := c - 1;
-      if !connected <= 0 && !sockets = [] && !sslsockets = []
-      then exit 0;
-      if c = !maxr
-      then begin
-        Ocsigen_messages.warning "Number of connections now ok";
-        maxr := -1000;
-        Lwt_mvar.put mvar ()
-      end
-      else Lwt.return ()
-   ),
-   (fun max ->
-      maxr := max;
-      Lwt_mvar.take mvar)
-  )
-
-
-
 let get_server_address ri =
   let socket = Ocsigen_http_com.connection_fd (client_connection ri.ri_client) in
   match Lwt_ssl.getsockname socket with
