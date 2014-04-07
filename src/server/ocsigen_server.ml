@@ -1148,9 +1148,9 @@ let _ =
       Lwt.return ()
     | ["clearcache"] -> Ocsigen_cache.clear_all_caches ();
       Lwt.return ()
-    | _ -> Lwt.fail Ocsigen_extensions.Unknown_command
+    | _ -> Lwt.fail Ocsigen_command.Unknown_command
   in
-  Ocsigen_extensions.register_command_function f
+  Ocsigen_command.register_command_function f
 
 let start_server () = try
 
@@ -1312,21 +1312,21 @@ let start_server () = try
 
       let rec f () =
         Lwt_chan.input_line pipe >>= fun s ->
-        Lwt_log.ign_warning_f ~section "Command received: %s" s;
+        Ocsigen_messages.warning ("Command received: "^s);
         (Lwt.catch
            (fun () ->
               let prefix, c =
                 match String.split ~multisep:true ' ' s with
-                | [] -> raise Ocsigen_extensions.Unknown_command
+                | [] -> raise Ocsigen_command.Unknown_command
                 | a::l ->
                   try
                     let aa, ab = String.sep ':' a in
                     (Some aa, (ab::l))
                   with Not_found -> None, (a::l)
               in
-              Ocsigen_extensions.get_command_function () ?prefix s c)
+              Ocsigen_command.get_command_function () ?prefix s c)
            (function
-             | Unknown_command ->
+             | Ocsigen_command.Unknown_command ->
                Lwt_log.ign_warning ~section "Unknown command";
                Lwt.return ()
              | e ->
