@@ -22,6 +22,7 @@ open Lwt
 open Ocsigen_messages
 open Ocsigen_socket
 open Ocsigen_lib
+open Ocsigen_request_info
 open Ocsigen_extensions
 open Ocsigen_http_frame
 open Ocsigen_headers

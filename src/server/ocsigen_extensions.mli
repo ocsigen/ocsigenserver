@@ -121,10 +121,11 @@ and follow_symlink =
 
 (*****************************************************)
 
+(* Avoids breaking compatibility with extensions ensuring independence between
+ * Ocsigen_extensions and Ocsigen_server *)
+type ifrange = Ocsigen_request_info.ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
 
-type ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
-
-type file_info = {
+type file_info = Ocsigen_request_info.file_info = {
     tmp_filename: string;
     filesize: int64;
     raw_original_filename: string;
@@ -133,7 +134,7 @@ type file_info = {
   }
 
 (** The request *)
-type request_info =
+type request_info = Ocsigen_request_info.request_info =
     {ri_url_string: string; (** full URL *)
      ri_method: Ocsigen_http_frame.Http_header.http_method; (** GET, POST, HEAD... *)
      ri_protocol: Ocsigen_http_frame.Http_header.proto; (** HTTP protocol used by client *)

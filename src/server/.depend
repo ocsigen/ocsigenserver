@@ -1,4 +1,4 @@
-ocsigen_extensions.cmi : ../baselib/polytables.cmi \
+ocsigen_extensions.cmi : ../baselib/polytables.cmi ocsigen_request_info.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_http_com.cmi ../http/ocsigen_cookies.cmi \
     ../http/ocsigen_charset_mime.cmi
@@ -9,20 +9,23 @@ ocsigen_local_files.cmi : ../http/ocsigen_http_frame.cmi \
     ocsigen_extensions.cmi
 ocsigen_parseconfig.cmi : ocsigen_socket.cmi ocsigen_extensions.cmi
 ocsigen_range.cmi : ../http/ocsigen_http_frame.cmi ocsigen_extensions.cmi
+ocsigen_request_info.cmi : ../baselib/polytables.cmi \
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
+    ../http/ocsigen_cookies.cmi
 ocsigen_server.cmi :
 ocsigen_socket.cmi :
-ocsigen_extensions.cmo : ../baselib/polytables.cmi \
+ocsigen_extensions.cmo : ocsigen_request_info.cmi \
     ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_loader.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_http_com.cmi ../http/ocsigen_cookies.cmi \
     ../baselib/ocsigen_config.cmi ../http/ocsigen_charset_mime.cmi \
-    ../http/http_headers.cmi ocsigen_extensions.cmi
-ocsigen_extensions.cmx : ../baselib/polytables.cmx \
+    ocsigen_extensions.cmi
+ocsigen_extensions.cmx : ocsigen_request_info.cmx \
     ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_loader.cmx \
     ../baselib/ocsigen_lib.cmx ../http/ocsigen_http_frame.cmx \
     ../http/ocsigen_http_com.cmx ../http/ocsigen_cookies.cmx \
     ../baselib/ocsigen_config.cmx ../http/ocsigen_charset_mime.cmx \
-    ../http/http_headers.cmx ocsigen_extensions.cmi
+    ocsigen_extensions.cmi
 ocsigen_http_client.cmo : ../baselib/ocsigen_stream.cmi \
     ../http/ocsigen_senders.cmi ../baselib/ocsigen_messages.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
@@ -55,6 +58,14 @@ ocsigen_range.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
 ocsigen_range.cmx : ../baselib/ocsigen_stream.cmx ../baselib/ocsigen_lib.cmx \
     ../http/ocsigen_http_frame.cmx ocsigen_extensions.cmx \
     ../baselib/ocsigen_config.cmx ../http/http_headers.cmx ocsigen_range.cmi
+ocsigen_request_info.cmo : ../baselib/polytables.cmi \
+    ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
+    ../http/ocsigen_http_com.cmi ../http/ocsigen_cookies.cmi \
+    ../http/http_headers.cmi ocsigen_request_info.cmi
+ocsigen_request_info.cmx : ../baselib/polytables.cmx \
+    ../baselib/ocsigen_lib.cmx ../http/ocsigen_http_frame.cmx \
+    ../http/ocsigen_http_com.cmx ../http/ocsigen_cookies.cmx \
+    ../http/http_headers.cmx ocsigen_request_info.cmi
 ocsigen_server.cmo : ../baselib/polytables.cmi ../baselib/ocsigen_stream.cmi \
     ocsigen_socket.cmi ../http/ocsigen_senders.cmi ocsigen_range.cmi \
     ocsigen_parseconfig.cmi ../baselib/ocsigen_messages.cmi \
