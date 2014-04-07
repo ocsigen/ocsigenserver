@@ -69,14 +69,6 @@ let rec equal_virtual_hosts (l1 : virtual_hosts) (l2 : virtual_hosts) =
   | (s1, _, p1) :: q1, (s2, _, p2) :: q2 ->
     s1 = s2 && p1 = p2 && equal_virtual_hosts q1 q2
 
-(*****************************************************************************)
-
-type client = Ocsigen_http_com.connection
-
-let client_id = Ocsigen_http_com.connection_id
-let client_connection x = x
-let client_of_connection x = x
-
 
 (*****************************************************************************)
 
@@ -255,7 +247,7 @@ type request_info =
        for example, information for subsequent
        extensions
    *)
-   ri_client: client; (** The request connection *)
+   ri_client: Ocsigen_http_com.connection; (** The request connection *)
    ri_range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
    (** Range HTTP header. [None] means all the document.
        List of intervals + possibly from an index to the end of the document.
@@ -941,7 +933,7 @@ let compute_result
   let host = ri.ri_host in
   let port = ri.ri_server_port in
 
-  let conn = client_connection ri.ri_client in
+  let conn = ri.ri_client in
   let awake =
     if awake_next_request
     then
@@ -1066,7 +1058,7 @@ let ri_of_url ?(full_rewrite = false) url ri =
 
 
 let get_server_address ri =
-  let socket = Ocsigen_http_com.connection_fd (client_connection ri.ri_client) in
+  let socket = Ocsigen_http_com.connection_fd ri.ri_client in
   match Lwt_ssl.getsockname socket with
   | Unix.ADDR_UNIX _ -> failwith "unix domain socket have no ip"
   | Unix.ADDR_INET (addr,port) -> addr,port

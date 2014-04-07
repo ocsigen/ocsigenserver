@@ -124,15 +124,6 @@ and follow_symlink =
 (*****************************************************)
 
 
-type client
-(** A value of this type represents the client who did the request. *)
-
-val client_id : client -> int
-(** Returns the id number of the connection *)
-
-val client_connection : client -> Ocsigen_http_com.connection
-(** Returns the connection *)
-
 type ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
 
 type file_info = {
@@ -203,7 +194,7 @@ type request_info =
          for example, information for subsequent
          extensions
      *)
-     ri_client: client; (** The request connection *)
+     ri_client: Ocsigen_http_com.connection; (** The request connection *)
      ri_range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
      (** Range HTTP header. [None] means all the document.
          List of intervals + possibly from an index to the end of the document.
@@ -593,7 +584,5 @@ val get_numberofreloads : unit -> int
 val get_init_exn_handler : unit -> exn -> string
 
 val set_config : Simplexmlparser.xml list -> unit
-
-val client_of_connection : Ocsigen_http_com.connection -> client
 
 val get_server_address : request_info -> Unix.inet_addr * int

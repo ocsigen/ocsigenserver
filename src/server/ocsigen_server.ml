@@ -433,7 +433,7 @@ let get_request_infos
           ri_accept_language = accept_language;
           ri_http_frame = handle_expect sender_slot http_frame;
           ri_request_cache = Polytables.create ();
-          ri_client = Ocsigen_extensions.client_of_connection receiver;
+          ri_client = receiver;
           ri_range = lazy (Ocsigen_range.get_range http_frame);
           ri_timeofday = Unix.gettimeofday ();
           ri_nb_tries = 0;

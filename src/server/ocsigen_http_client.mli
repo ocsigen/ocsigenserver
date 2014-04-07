@@ -108,7 +108,7 @@ val post_urlencoded_url :
 
 
 val raw_request :
-    ?client: Ocsigen_extensions.client ->
+    ?client: Ocsigen_http_com.connection ->
     ?keep_alive: bool ->
     ?headers: Http_headers.t ->
     ?https: bool ->
