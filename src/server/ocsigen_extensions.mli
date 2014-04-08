@@ -160,8 +160,8 @@ and request = {
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory of request
-
+exception Ocsigen_Is_a_directory
+  of (Ocsigen_request_info.request_info -> Neturl.url)
 
 type answer =
   | Ext_do_nothing
@@ -446,6 +446,9 @@ val get_hostname : request -> string
     It is either the port the server is listening at or the default port set in
     the configuration file. *)
 val get_port : request -> int
+
+(** Returns a new url of directory depending the server and the request *)
+val new_url_of_directory_request : request -> request_info -> Neturl.url
 
 (** Parsing URLs.
     This allows to modify the URL in the request_info.

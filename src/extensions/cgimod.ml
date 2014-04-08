@@ -140,8 +140,8 @@ let find_cgi_page request reg sub_path =
       let filename =
         if (stat.Unix.LargeFile.st_kind = Unix.S_DIR)
         then
-           (Lwt_log.ign_info ~section "This is a directory.";
-           raise (Ocsigen_Is_a_directory request))
+           (Lwt_log.ign_info ~section "Cigmod: this is a directory.";
+           raise (Ocsigen_Is_a_directory (new_url_of_directory_request request)))
         else filename
       in
       Lwt_log.ign_info_f ~section "Looking for %S." filename;
