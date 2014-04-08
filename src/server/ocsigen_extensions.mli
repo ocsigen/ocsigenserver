@@ -34,6 +34,7 @@ open Ocsigen_cookies
  * Avoids break compatibility with extensions which record commands
  * (same as request_info) *)
 include (module type of Ocsigen_command)
+include (module type of Ocsigen_brouette)
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
 exception Bad_config_tag_for_extension of string
@@ -217,8 +218,6 @@ and request = {
   request_info: request_info;
   request_config: config_info;
 }
-
-exception Ocsigen_Is_a_directory of request
 
 
 type answer =
@@ -504,6 +503,9 @@ val get_hostname : request -> string
     It is either the port the server is listening at or the default port set in
     the configuration file. *)
 val get_port : request -> int
+
+(** Returns a new url of directory depending the server and the request *)
+val new_url_of_directory_request : request -> request_info -> Neturl.url
 
 (** Parsing URLs.
    This allows to modify the URL in the request_info.

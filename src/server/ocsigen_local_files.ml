@@ -168,7 +168,8 @@ let resolve ?no_check_for ~request ~filename () =
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
           Ocsigen_messages.debug
             (fun () -> "--LocalFiles: "^filename^" is a directory");
-          raise (Ocsigen_extensions.Ocsigen_Is_a_directory request)
+          raise (Ocsigen_extensions.Ocsigen_Is_a_directory
+                   (Ocsigen_extensions.new_url_of_directory_request request))
         end
 
         else

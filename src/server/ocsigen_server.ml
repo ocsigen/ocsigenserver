@@ -740,10 +740,11 @@ let service receiver sender_slot request meth url port sockaddr
                (fun e ->
                   finish_request ();
                   match e with
-                  | Ocsigen_extensions.Ocsigen_Is_a_directory request ->
+                  | Ocsigen_extensions.Ocsigen_Is_a_directory fun_request ->
                     (* User requested a directory. We redirect it to
                        the correct url (with a slash), so that relative
                        urls become correct *)
+                    (*
                     Ocsigen_messages.debug2 "-> Sending 301 Moved permanently";
                     let port = Ocsigen_extensions.get_port request in
                     let new_url = Neturl.make_url
@@ -758,10 +759,11 @@ let service receiver sender_slot request meth url port sockaddr
                         ?query:ri.ri_get_params_string
                         http_url_syntax
                     in
+                    *)
                     send_aux {
                       (Ocsigen_http_frame.empty_result ()) with
                       res_code = 301;
-                      res_location = Some (Neturl.string_of_url new_url)
+                      res_location = Some (Neturl.string_of_url (fun_request ri))
                     }
 
                   | _ -> handle_service_errors e

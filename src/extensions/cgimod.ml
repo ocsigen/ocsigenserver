@@ -140,7 +140,7 @@ let find_cgi_page request reg sub_path =
         if (stat.Unix.LargeFile.st_kind = Unix.S_DIR)
         then
           (Ocsigen_messages.debug2 "--Cgimod: this is a directory.";
-           raise (Ocsigen_Is_a_directory request))
+           raise (Ocsigen_Is_a_directory (new_url_of_directory_request request)))
         else filename
       in
       Ocsigen_messages.debug (fun () -> "--Cgimod: Looking for \""^filename^"\".");

@@ -1,8 +1,9 @@
+ocsigen_brouette.cmi : ocsigen_request_info.cmi
 ocsigen_command.cmi :
 ocsigen_extensions.cmi : ../baselib/polytables.cmi ocsigen_request_info.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_http_com.cmi ../http/ocsigen_cookies.cmi \
-    ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi
+    ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi ocsigen_brouette.cmi
 ocsigen_http_client.cmi : ../baselib/ocsigen_stream.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
     ../http/http_headers.cmi
@@ -15,6 +16,8 @@ ocsigen_request_info.cmi : ../baselib/polytables.cmi \
     ../http/ocsigen_cookies.cmi
 ocsigen_server.cmi :
 ocsigen_socket.cmi :
+ocsigen_brouette.cmo : ocsigen_request_info.cmi ocsigen_brouette.cmi
+ocsigen_brouette.cmx : ocsigen_request_info.cmx ocsigen_brouette.cmi
 ocsigen_command.cmo : ../baselib/ocsigen_messages.cmi ocsigen_command.cmi
 ocsigen_command.cmx : ../baselib/ocsigen_messages.cmx ocsigen_command.cmi
 ocsigen_extensions.cmo : ocsigen_request_info.cmi \
@@ -22,13 +25,15 @@ ocsigen_extensions.cmo : ocsigen_request_info.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_http_com.cmi ../http/ocsigen_cookies.cmi \
     ../baselib/ocsigen_config.cmi ocsigen_command.cmi \
-    ../http/ocsigen_charset_mime.cmi ocsigen_extensions.cmi
+    ../http/ocsigen_charset_mime.cmi ocsigen_brouette.cmi \
+    ocsigen_extensions.cmi
 ocsigen_extensions.cmx : ocsigen_request_info.cmx \
     ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_loader.cmx \
     ../baselib/ocsigen_lib.cmx ../http/ocsigen_http_frame.cmx \
     ../http/ocsigen_http_com.cmx ../http/ocsigen_cookies.cmx \
     ../baselib/ocsigen_config.cmx ocsigen_command.cmx \
-    ../http/ocsigen_charset_mime.cmx ocsigen_extensions.cmi
+    ../http/ocsigen_charset_mime.cmx ocsigen_brouette.cmx \
+    ocsigen_extensions.cmi
 ocsigen_http_client.cmo : ../baselib/ocsigen_stream.cmi \
     ../http/ocsigen_senders.cmi ../baselib/ocsigen_messages.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \

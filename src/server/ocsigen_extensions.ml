@@ -36,6 +36,7 @@ open Ocsigen_lib
 open Ocsigen_cookies
 include Ocsigen_request_info
 include Ocsigen_command
+include Ocsigen_brouette
 
 exception Ocsigen_Looping_request
 
@@ -184,8 +185,6 @@ type request = {
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory of request
-
 
 type answer =
   | Ext_do_nothing
@@ -297,6 +296,60 @@ let get_hosts () = !hosts
 
 
 (*****************************************************************************)
+
+
+
+(* Default hostname is either the Host header or the hostname set in
+   the configuration file. *)
+let get_hostname req =
+  if Ocsigen_config.get_usedefaulthostname ()
+  then req.request_config.default_hostname
+  else match req.request_info.ri_host with
+    | None -> req.request_config.default_hostname
+    | Some host -> host
+
+
+(*****************************************************************************)
+(* Default port is either
+   - the port the server is listening at
+   - or the port in the Host header
+   - or the default port set in the configuration file. *)
+let get_port req =
+  if Ocsigen_config.get_usedefaulthostname ()
+  then (if req.request_info.ri_ssl
+        then req.request_config.default_httpsport
+        else req.request_config.default_httpport)
+  else match req.request_info.ri_port_from_host_field with
+    | Some p -> p
+    | None ->
+      match req.request_info.ri_host with
+      | Some _ -> if req.request_info.ri_ssl then 443 else 80
+      | None -> req.request_info.ri_server_port
+
+let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
+
+(** new_url_of_directory_request create a redirection and generating a new url
+ * for the client (depending on the server configuration and request)
+ * @param request configuration of the server
+ * @param ri request *)
+let new_url_of_directory_request request ri =
+  Ocsigen_messages.debug2 "-> Sending 301 Moved permanently";
+  let port = get_port request in
+  let new_url = Neturl.make_url
+      ~scheme:(if ri.ri_ssl then "https" else "http")
+      ~host:(get_hostname request)
+      ?port:(if (port = 80 && not ri.ri_ssl)
+             || (ri.ri_ssl && port = 443)
+             then None
+             else Some port)
+      ~path:(""::(Url.add_end_slash_if_missing ri.ri_full_path))
+      ?query:ri.ri_get_params_string
+      http_url_syntax
+  in new_url
+
+
+
+(*****************************************************************************)
 (* To give parameters to extensions: *)
 let dynlinkconfig = ref ([] : Simplexmlparser.xml list)
 let set_config s = dynlinkconfig := s
@@ -311,7 +364,9 @@ let site_match request (site_path : string list) url =
   (* We return the subpath without / at beginning *)
   let rec aux site_path url =
     match site_path, url with
-    | [], [] -> raise (Ocsigen_Is_a_directory request)
+    | [], [] ->
+      raise (Ocsigen_brouette.Ocsigen_Is_a_directory
+               (new_url_of_directory_request request))
     | [], p -> Some p
     | a::l, aa::ll when a = aa -> aux l ll
     | _ -> None
@@ -943,38 +998,6 @@ let compute_result
        awake ();
        Lwt.return ()
     )
-
-
-(*****************************************************************************)
-
-
-
-(* Default hostname is either the Host header or the hostname set in
-   the configuration file. *)
-let get_hostname req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then req.request_config.default_hostname
-  else match req.request_info.ri_host with
-    | None -> req.request_config.default_hostname
-    | Some host -> host
-
-
-(*****************************************************************************)
-(* Default port is either
-   - the port the server is listening at
-   - or the port in the Host header
-   - or the default port set in the configuration file. *)
-let get_port req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then (if req.request_info.ri_ssl
-        then req.request_config.default_httpsport
-        else req.request_config.default_httpport)
-  else match req.request_info.ri_port_from_host_field with
-    | Some p -> p
-    | None ->
-      match req.request_info.ri_host with
-      | Some _ -> if req.request_info.ri_ssl then 443 else 80
-      | None -> req.request_info.ri_server_port
 
 
 (*****************************************************************************)
