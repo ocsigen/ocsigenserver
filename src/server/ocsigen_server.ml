@@ -707,26 +707,11 @@ let service receiver sender_slot request meth url port sockaddr =
                (fun e ->
                   finish_request ();
                   match e with
-                  | Ocsigen_extensions.Ocsigen_Is_a_directory request ->
+                  | Ocsigen_extensions.Ocsigen_Is_a_directory fun_request ->
                     (* User requested a directory. We redirect it to
                        the correct url (with a slash), so that relative
                        urls become correct *)
-                    Lwt_log.ign_info ~section "Sending 301 Moved permanently";
-                    let port = Ocsigen_extensions.get_port request in
-                    let new_url = Neturl.make_url
-                        ~scheme:(if (Ocsigen_request_info.ssl ri)
-                                 then "https" else "http")
-                        ~host:(Ocsigen_extensions.get_hostname request)
-                        ?port:(if (port = 80
-                                   && not (Ocsigen_request_info.ssl ri))
-                               || ((Ocsigen_request_info.ssl ri) && port = 443)
-                               then None
-                               else Some port)
-                        ~path:(""::(Url.add_end_slash_if_missing
-                                      (Ocsigen_request_info.full_path ri)))
-                        ?query:(Ocsigen_request_info.get_params_string ri)
-                        http_url_syntax
-                    in
+                    let new_url = fun_request ri in
                     send_aux
                       (Result.update (Ocsigen_http_frame.Result.empty ())
                          ~code:301

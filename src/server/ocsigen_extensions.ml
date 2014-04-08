@@ -197,8 +197,8 @@ type request = {
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory of request
-
+exception Ocsigen_Is_a_directory
+  of (Ocsigen_request_info.request_info -> Neturl.url)
 
 type answer =
   | Ext_do_nothing
@@ -308,6 +308,52 @@ let set_hosts v = hosts := v
 let get_hosts () = !hosts
 
 
+(* Default hostname is either the Host header or the hostname set in
+   the configuration file. *)
+let get_hostname req =
+  if Ocsigen_config.get_usedefaulthostname ()
+  then req.request_config.default_hostname
+  else match Ocsigen_request_info.host req.request_info with
+    | None -> req.request_config.default_hostname
+    | Some host -> host
+
+(* Default port is either
+   - the port the server is listening at
+   - or the port in the Host header
+   - or the default port set in the configuration file. *)
+let get_port req =
+  if Ocsigen_config.get_usedefaulthostname ()
+  then (if Ocsigen_request_info.ssl req.request_info
+        then req.request_config.default_httpsport
+        else req.request_config.default_httpport)
+  else match Ocsigen_request_info.port_from_host_field req.request_info with
+    | Some p -> p
+    | None ->
+      match Ocsigen_request_info.host req.request_info with
+      | Some _ -> if Ocsigen_request_info.ssl req.request_info then 443 else 80
+      | None -> Ocsigen_request_info.server_port req.request_info
+
+
+let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
+
+let new_url_of_directory_request request ri =
+  Lwt_log.ign_info ~section "Sending 301 Moved permanently";
+  let port = get_port request in
+  let ssl = Ocsigen_request_info.ssl ri in
+  let new_url = Neturl.make_url
+      ~scheme:(if ssl then "https" else "http")
+      ~host:(get_hostname request)
+      ?port:(if (port = 80 && not ssl)
+             || (ssl && port = 443)
+             then None
+             else Some port)
+      ~path:(""::(Url.add_end_slash_if_missing
+                    (Ocsigen_request_info.full_path ri)))
+      ?query:(Ocsigen_request_info.get_params_string ri)
+      http_url_syntax
+  in new_url
+
+
 
 (*****************************************************************************)
 (* To give parameters to extensions: *)
@@ -324,7 +370,9 @@ let site_match request (site_path : string list) url =
   (* We return the subpath without / at beginning *)
   let rec aux site_path url =
     match site_path, url with
-    | [], [] -> raise (Ocsigen_Is_a_directory request)
+    | [], [] ->
+      raise (Ocsigen_Is_a_directory
+               (new_url_of_directory_request request))
     | [], p -> Some p
     | a::l, aa::ll when a = aa -> aux l ll
     | _ -> None
@@ -961,6 +1009,7 @@ let compute_result
 
 
 (*****************************************************************************)
+
 (* This is used by server.ml.
    I put that here because I need it to be accessible for profiling. *)
 let sockets = ref []
@@ -1002,36 +1051,6 @@ let get_server_address ri =
   | Unix.ADDR_INET (addr,port) -> addr,port
 
 
-(*****************************************************************************)
-(* Default hostname is either the Host header or the hostname set in
-   the configuration file. *)
-let get_hostname req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then req.request_config.default_hostname
-  else match Ocsigen_request_info.host req.request_info with
-    | None -> req.request_config.default_hostname
-    | Some host -> host
-
-
-(*****************************************************************************)
-(* Default port is either
-   - the port the server is listening at
-   - or the port in the Host header
-   - or the default port set in the configuration file. *)
-let get_port req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then (if Ocsigen_request_info.ssl req.request_info
-        then req.request_config.default_httpsport
-        else req.request_config.default_httpport)
-  else match Ocsigen_request_info.port_from_host_field req.request_info with
-    | Some p -> p
-    | None ->
-      match Ocsigen_request_info.host req.request_info with
-      | Some _ -> if Ocsigen_request_info.ssl req.request_info then 443 else 80
-      | None -> Ocsigen_request_info.server_port req.request_info
-
-
-(*****************************************************************************)
 (* user directories *)
 
 exception NoSuchUser

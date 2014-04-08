@@ -157,8 +157,8 @@ and request = {
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory of request
-
+exception Ocsigen_Is_a_directory
+  of (Ocsigen_request_info.request_info -> Neturl.url)
 
 type answer =
   | Ext_do_nothing
@@ -440,9 +440,18 @@ end
 val get_hostname : request -> string
 
 (** Returns the port to be used for absolute links or redirections.
-    It is either the port the server is listening at or the default port set in
-    the configuration file. *)
+    It is either:
+    - the port the server is listening at
+    - or the port in the Host header
+    - or the default port set in the configuration file. *)
 val get_port : request -> int
+
+
+(** new_url_of_directory_request create a redirection and generating a new url
+    for the client (depending on the server configuration and request)
+    @param request configuration of the server
+    @param ri request *)
+val new_url_of_directory_request : request -> request_info -> Neturl.url
 
 (** Parsing URLs.
     This allows to modify the URL in the request_info.

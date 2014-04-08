@@ -161,8 +161,9 @@ let resolve ?no_check_for ~request ~filename () =
           (* In this case, [filename] is a directory but this is not visible in
              its name as there is no final slash. We signal this fact to
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
-          Lwt_log.ign_info_f ~section "%s is a directory" filename;
-          raise (Ocsigen_extensions.Ocsigen_Is_a_directory request)
+          Lwt_log.ign_info_f ~section "LocalFiles: %s is a directory" filename;
+          raise (Ocsigen_extensions.Ocsigen_Is_a_directory
+                   (Ocsigen_extensions.new_url_of_directory_request request))
         end
 
         else
