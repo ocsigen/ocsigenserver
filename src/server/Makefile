@@ -16,11 +16,11 @@ all: byte opt
 FILES := ocsigen_socket.ml      \
          ocsigen_request_info.ml \
          ocsigen_command.ml     \
+         ocsigen_range.ml       \
+         ocsigen_http_client.ml \
          ocsigen_brouette.ml    \
          ocsigen_extensions.ml  \
-         ocsigen_range.ml       \
          ocsigen_parseconfig.ml \
-         ocsigen_http_client.ml \
          ocsigen_local_files.ml \
          ocsigen_server.ml      \
 
@@ -78,6 +78,11 @@ servertop: ${SERVERLIBS}
 	$(OCAMLOPT) -shared -linkall -o $@ $<
 %.o: %.c
 	$(OCAMLC) -c $<
+
+%.gmli: %.ml
+	$(OCAMLC) ${LIBS} -i $< > $@
+
+type: $(FILES:.ml=.gmli)
 
 ## Clean up
 
