@@ -50,15 +50,6 @@ let _ =
     (fun e -> Ocsigen_messages.errlog ("Uncaught Exception after lwt timeout: "^
                                        Printexc.to_string e))
 
-
-let ip_of_sockaddr = function
-  | Unix.ADDR_INET (ip, port) -> ip
-  | _ -> raise (Ocsigen_Internal_Error "ip of unix socket")
-
-let port_of_sockaddr = function
-  | Unix.ADDR_INET (ip, port) -> port
-  | _ -> raise (Ocsigen_Internal_Error "port of unix socket")
-
 let warn sockaddr s =
   let ip = Unix.string_of_inet_addr (ip_of_sockaddr sockaddr) in
   Ocsigen_messages.warning ("While talking to " ^ ip ^ ": " ^ s)
