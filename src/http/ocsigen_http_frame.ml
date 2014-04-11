@@ -28,6 +28,7 @@ open Ocsigen_lib
 
 open Ocsigen_stream
 open Ocsigen_cookies
+open Cohttp
 
 type etag = string
 
@@ -220,6 +221,32 @@ struct
   let add_headers header key value =
     { header with
       headers = Http_headers.add key value header.headers }
+
+  let ocsigen_of_cohttp_proto = function
+    | `HTTP_1_0 -> HTTP10
+    | `HTTP_1_1 -> HTTP11
+  let ocsigen_of_cohttp_meth = function
+    | `GET -> GET
+    | `POST -> POST
+    | `HEAD -> HEAD
+    | `PUT -> PUT
+    | `DELETE -> DELETE
+    | `TRACE -> TRACE
+    | `OPTIONS -> OPTIONS
+    | `CONNECT -> CONNECT
+    | `LINK -> LINK
+    | `UNLINK -> UNLINK
+    | `PATCH -> PATCH
+
+  let from_cohttp_request request =
+    {
+      mode = Query
+          (ocsigen_of_cohttp_meth @@ Request.meth request,
+           Uri.to_string @@ Request.uri request);
+      proto = ocsigen_of_cohttp_proto @@ Request.version request;
+      headers = Http_headers.empty; 
+      (* TODO: it's same of Cohttp.Header.t but slackness *)
+    }
 end
 
 module Http_error =
