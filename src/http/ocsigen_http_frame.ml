@@ -238,14 +238,22 @@ struct
     | `UNLINK -> UNLINK
     | `PATCH -> PATCH
 
-  let from_cohttp_request request =
+  (** Type conversion between Cohttp.[Response|Request].t to
+   * Ocsigen_http_frame.http_header *)
+  let of_cohttp_request request =
     {
       mode = Query
           (ocsigen_of_cohttp_meth @@ Request.meth request,
            Uri.to_string @@ Request.uri request);
       proto = ocsigen_of_cohttp_proto @@ Request.version request;
-      headers = Http_headers.empty; 
+      headers = Http_headers.empty;
       (* TODO: it's same of Cohttp.Header.t but slackness *)
+    }
+  let of_cohttp_response response =
+    {
+      mode = Answer (Cohttp.Code.code_of_status @@ Response.status response);
+      proto = ocsigen_of_cohttp_proto @@ Response.version response;
+      headers = Http_headers.empty;
     }
 end
 

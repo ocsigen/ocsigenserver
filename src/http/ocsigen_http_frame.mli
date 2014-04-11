@@ -101,6 +101,9 @@ module Http_header :
     val get_headers_values : http_header -> Http_headers.name -> string list
     val get_proto : http_header -> proto
     val add_headers : http_header -> Http_headers.name -> string -> http_header
+
+    val of_cohttp_request : Cohttp.Request.t -> http_header
+    val of_cohttp_response : Cohttp.Response.t -> http_header
   end
 module Http_error :
   sig
