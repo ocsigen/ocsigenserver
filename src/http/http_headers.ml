@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 type name = string * string
 let name s = (s, String.lowercase s)
@@ -71,17 +71,17 @@ let access_control_allow_headers = name "Access-Control-Allow-Headers"
 module NameHtbl =
   Hashtbl.Make
     (struct
-       type t = name
-       let equal (_, n : _ * string) (_, n') = n = n'
-       let hash (_,n) = Hashtbl.hash n
-     end)
+      type t = name
+      let equal (_, n : _ * string) (_, n') = n = n'
+      let hash (_,n) = Hashtbl.hash n
+    end)
 
 (****)
 
 module Map = Map.Make (struct
-  type t = name
-  let compare (_,n) (_,n') = compare n n'
-end)
+    type t = name
+    let compare (_,n) (_,n') = compare n n'
+  end)
 
 type t = string list Map.t
 
@@ -99,9 +99,9 @@ let find n h =
 let replace n v h = Map.add n [v] h
 
 let replace_opt n v h =
- match v with
-   None   -> Map.remove n h
- | Some v -> replace n v h
+  match v with
+    None   -> Map.remove n h
+  | Some v -> replace n v h
 
 let add n v h =
   let vl = try find_all n h with Not_found -> [] in
@@ -133,6 +133,6 @@ let dyn_headers =
   << (expires, "0")
 
 type accept =
-    ( (string option * string option)
-      * float option
-      * (string * string) list ) list
+  ( (string option * string option)
+    * float option
+    * (string * string) list ) list

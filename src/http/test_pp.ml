@@ -4,11 +4,11 @@ open Framepp
 module H = Http_header
 
 module C =
-  struct
-    type t = string
-    let string_of_content c = c
-    let content_of_string s = s
-  end
+struct
+  type t = string
+  let string_of_content c = c
+  let content_of_string s = s
+end
 
 
 module Http = FHttp_frame (C)
