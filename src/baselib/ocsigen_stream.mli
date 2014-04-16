@@ -114,6 +114,8 @@ val of_file : string -> string t
 (** returns a stream containing a string. *)
 val of_string : string -> string t
 
+(** returns a stream containing a Lwt_stream.t *)
+val of_lwt_stream : ('a -> 'b) -> 'a Lwt_stream.t -> 'b t
 
 module StringStream : sig
 
