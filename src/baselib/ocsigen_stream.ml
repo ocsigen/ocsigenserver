@@ -242,7 +242,19 @@ let of_file filename =
 let of_string s =
   make (fun () -> cont s (fun () -> empty None))
 
+(** of_lwt_stream convert Lwt_stream.t to Ocsigen_stream.t
+ * @param promotion Ocsigen_stream.t adds a level of depth in the data (you can
+ * have stream of stream) then there is only level deep in Lwt_stream.t. This
+ * is promotional function to break level Ocsigen_stream.
+ * @param stream a Lwt_stream.t
+*)
 
+let of_lwt_stream promotion stream =
+  let rec aux () =
+    Lwt_stream.get stream >>= function
+    | Some e -> cont (promotion e) aux
+    | None -> empty None
+  in make aux
 
 module StringStream = struct
 
