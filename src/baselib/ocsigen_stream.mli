@@ -114,6 +114,8 @@ val of_file : string -> string t
 (** returns a stream containing a string. *)
 val of_string : string -> string t
 
+(** Convert a {!Lwt_stream.t} to an {!Ocsigen_stream.t}. *)
+val of_lwt_stream : 'a Lwt_stream.t -> 'a t
 
 module StringStream : sig
 
