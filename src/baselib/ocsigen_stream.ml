@@ -242,7 +242,13 @@ let of_file filename =
 let of_string s =
   make (fun () -> cont s (fun () -> empty None))
 
-
+(** Convert a {!Lwt_stream.t} to an {!Ocsigen_stream.t}. *)
+let of_lwt_stream stream =
+  let rec aux () =
+    Lwt_stream.get stream >>= function
+    | Some e -> cont e aux
+    | None -> empty None
+  in make aux
 
 module StringStream = struct
 
