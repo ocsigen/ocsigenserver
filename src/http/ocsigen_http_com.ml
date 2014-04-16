@@ -110,6 +110,22 @@ type connection =
     mutable senders : waiter;
     mutable sender_count : int }
 
+let dummy_receiver () = {
+  id = 0;
+  fd = Lwt_ssl.plain Lwt_unix.stdout;
+  chan = Lwt_chan.out_channel_of_descr Lwt_unix.stdout;
+  timeout = Lwt_timeout.create 0 (fun () -> ());
+  r_mode = Nofirstline;
+  closed = Lwt.wait ();
+  buf = "";
+  read_pos = 0;
+  write_pos = 0;
+  read_mutex = Lwt_mutex.create ();
+  extension_mutex = Lwt_mutex.create ();
+  senders = create_waiter false;
+  sender_count = 0;
+}
+
 let connection_id x = x.id
 let connection_fd x = x.fd
 

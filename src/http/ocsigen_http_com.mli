@@ -45,6 +45,7 @@ exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 
 type mode = Answer | Query | Nofirstline
 type connection
+val dummy_receiver : unit -> connection
 val create_receiver : int -> mode -> Lwt_ssl.socket -> connection
 val lock_receiver : connection -> unit Lwt.t
 val unlock_receiver : connection -> unit
