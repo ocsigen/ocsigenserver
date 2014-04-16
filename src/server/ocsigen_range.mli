@@ -19,8 +19,9 @@
  *)
 
 val compute_range : 
-  Ocsigen_extensions.request_info ->
+  Ocsigen_request_info.request_info ->
   Ocsigen_http_frame.result ->
   Ocsigen_http_frame.result Lwt.t
 
-val get_range : Ocsigen_http_frame.t -> ((int64 * int64) list * int64 option * Ocsigen_extensions.ifrange) option
+val get_range : Ocsigen_http_frame.t ->
+  ((int64 * int64) list * int64 option * Ocsigen_request_info.ifrange) option
