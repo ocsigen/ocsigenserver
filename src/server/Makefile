@@ -18,6 +18,7 @@ FILES := ocsigen_socket.ml      \
          ocsigen_command.ml     \
          ocsigen_range.ml       \
          ocsigen_http_client.ml \
+         ocsigen_generate.ml    \
          ocsigen_brouette.ml    \
          ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
@@ -101,3 +102,8 @@ depend: ${PREDEP}
 
 FORCE:
 -include .depend
+
+type: $(FILES:.ml=.gmli)
+
+%.gmli: %.ml
+	$(OCAMLC) ${LIBS} -i $< > $@

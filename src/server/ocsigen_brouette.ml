@@ -9,11 +9,11 @@ open Ocsigen_http_com
 open Ocsigen_senders
 open Ocsigen_config
 open Ocsigen_cookies
+open Ocsigen_generate
 open Lazy
 
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
-exception Ocsigen_upload_forbidden
 exception Ssl_Exception
 exception Socket_closed
 
@@ -68,126 +68,9 @@ let get_number_of_connected,
       Lwt_mvar.take mvar)
   )
 
-type to_write =
-    No_File of string * Buffer.t
-  | A_File of (string * string * string * Unix.file_descr
-               * ((string * string) * (string * string) list) option)
-
-let get_boundary ctparams = List.assoc "boundary" ctparams
 let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 let counter = let c = ref (Random.int 1000000) in fun () -> c := !c + 1 ; !c
 let try_bind' f g h = Lwt.try_bind f h g
-
-let find_field field content_disp =
-  let (_, res) = Netstring_pcre.search_forward
-      (Netstring_pcre.regexp (field^"=.([^\"]*).;?")) content_disp 0 in
-  Netstring_pcre.matched_group res 1 content_disp
-
-let rec find_post_params http_frame ct filenames =
-  match http_frame.Ocsigen_http_frame.frame_content with
-  | None -> None
-  | Some body_gen ->
-    let ((ct, cst), ctparams) = match ct with
-      (* RFC 2616, sect. 7.2.1 *)
-      (* If the media type remains unknown, the recipient SHOULD
-         treat it as type "application/octet-stream". *)
-      | None -> (("application", "octet-stream"), [])
-      | Some (c, p) -> (c, p)
-    in
-    match String.lowercase ct, String.lowercase cst with
-    | "application", "x-www-form-urlencoded" ->
-      Some (find_post_params_form_urlencoded body_gen)
-    | "multipart", "form-data" ->
-      Some (find_post_params_multipart_form_data
-              body_gen ctparams filenames)
-    | _ -> None
-
-and find_post_params_form_urlencoded body_gen _ =
-  catch
-    (fun () ->
-       let body = Ocsigen_stream.get body_gen in
-       (* BY, adapted from a previous comment. Should this stream be
-          consumed in case of error? *)
-       Ocsigen_stream.string_of_stream
-         (Ocsigen_config.get_maxrequestbodysizeinmemory ())
-         body >>= fun r ->
-       let r = Url.fixup_url_string r in
-       Lwt.return ((Netencoding.Url.dest_url_encoded_parameters r), [])
-    )
-    (function
-      | Ocsigen_stream.String_too_large -> fail Input_is_too_large
-      | e -> fail e)
-
-and find_post_params_multipart_form_data body_gen ctparams filenames
-    (uploaddir, maxuploadfilesize)=
-  (* Same question here, should this stream be consumed after an error ? *)
-  let body = Ocsigen_stream.get body_gen
-  and bound = get_boundary ctparams
-  and params = ref []
-  and files = ref [] in
-  let create hs =
-    let content_type =
-      try
-        let ct = List.assoc "content-type" hs in
-        Ocsigen_headers.parse_content_type (Some ct)
-      with _ -> None
-    in
-    let cd = List.assoc "content-disposition" hs in
-    let p_name = find_field "name" cd in
-    try
-      let store = find_field "filename" cd in
-      match uploaddir with
-      | Some dname ->
-        let now = Printf.sprintf "%f-%d"
-            (Unix.gettimeofday ()) (counter ()) in
-        let fname = dname^"/"^now in
-        let fd = Unix.openfile fname
-            [Unix.O_CREAT; Unix.O_TRUNC; Unix.O_WRONLY; Unix.O_NONBLOCK] 0o666
-        in
-        Ocsigen_messages.debug2 ("Upload file opened: " ^ fname);
-        filenames := fname::!filenames;
-        A_File (p_name, fname, store, fd, content_type)
-      | None -> raise Ocsigen_upload_forbidden
-    with Not_found -> No_File (p_name, Buffer.create 1024)
-  in
-  let rec add where s =
-    match where with
-    | No_File (p_name, to_buf) ->
-      Buffer.add_string to_buf s;
-      return ()
-    | A_File (_,_,_,wh,_) ->
-      let len = String.length s in
-      let r = Unix.write wh s 0 len in
-      if r < len then
-        (*XXXX Inefficient if s is long *)
-        add where (String.sub s r (len - r))
-      else
-        Lwt_unix.yield ()
-  in
-  let stop size = function
-    | No_File (p_name, to_buf) ->
-      return
-        (params := !params @ [(p_name, Buffer.contents to_buf)])
-    (* a la fin ? *)
-    | A_File (p_name,fname,oname,wh, content_type) ->
-      (* Ocsigen_messages.debug "closing file"; *)
-      files :=
-        !files@[(p_name, {tmp_filename=fname;
-                          filesize=size;
-                          raw_original_filename=oname;
-                          original_basename=(Filename.basename oname);
-                          file_content_type = content_type;
-                         })];
-      Unix.close wh;
-      return ()
-  in
-  Multipart.scan_multipart_body_from_stream
-    body bound create add stop maxuploadfilesize >>= fun () ->
-  (*VVV Does scan_multipart_body_from_stream read until the end or
-    only what it needs?  If we do not consume here, the following
-    request will be read only when this one is finished ...  *)
-  Ocsigen_stream.consume body_gen >>= fun () ->
-  Lwt.return (!params, !files)
 
 let wrap_stream f x frame_content =
   Ocsigen_stream.make ~finalize:(fun outcome ->

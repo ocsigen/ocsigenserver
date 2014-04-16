@@ -3,7 +3,6 @@
 
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
-exception Ocsigen_upload_forbidden
 
 val sockets : Lwt_unix.file_descr list ref
 val sslsockets : Lwt_unix.file_descr list ref
