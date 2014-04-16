@@ -222,10 +222,10 @@ struct
     { header with
       headers = Http_headers.add key value header.headers }
 
-  let ocsigen_of_cohttp_proto = function
+  let proto_of_cohttp_version = function
     | `HTTP_1_0 -> HTTP10
     | `HTTP_1_1 -> HTTP11
-  let ocsigen_of_cohttp_meth = function
+  let meth_of_cohttp_meth = function
     | `GET -> GET
     | `POST -> POST
     | `HEAD -> HEAD
@@ -238,22 +238,26 @@ struct
     | `UNLINK -> UNLINK
     | `PATCH -> PATCH
 
+  let of_cohttp_header headers =
+    Cohttp.Header.fold
+      (fun key value acc -> Http_headers.add (Http_headers.name key) value acc)
+      headers Http_headers.empty
+
   (** Type conversion between Cohttp.[Response|Request].t to
    * Ocsigen_http_frame.http_header *)
   let of_cohttp_request request =
     {
       mode = Query
-          (ocsigen_of_cohttp_meth @@ Request.meth request,
+          (meth_of_cohttp_meth @@ Request.meth request,
            Uri.to_string @@ Request.uri request);
-      proto = ocsigen_of_cohttp_proto @@ Request.version request;
-      headers = Http_headers.empty;
-      (* TODO: it's same of Cohttp.Header.t but slackness *)
+      proto = proto_of_cohttp_version @@ Request.version request;
+      headers = of_cohttp_header @@ Request.headers request;
     }
   let of_cohttp_response response =
     {
       mode = Answer (Cohttp.Code.code_of_status @@ Response.status response);
-      proto = ocsigen_of_cohttp_proto @@ Response.version response;
-      headers = Http_headers.empty;
+      proto = proto_of_cohttp_version @@ Response.version response;
+      headers = of_cohttp_header @@ Response.headers response;
     }
 end
 
@@ -348,3 +352,15 @@ type t =
       à revoir...
     *)
   }
+
+let of_cohttp_request request body = {
+  frame_header = Http_header.of_cohttp_request request;
+  frame_content = Some
+      (Ocsigen_stream.of_lwt_stream
+         (fun x -> x)
+         (Cohttp_lwt_body.to_stream body));
+  frame_abort = (fun () -> Lwt.return ());
+  (*XXX: It is complex and related to the management of the pipeline by Ocsigen.
+   * Consideration should be given to another layer over cohttp for pipeline
+   * management as proxy. *)
+}

@@ -102,6 +102,8 @@ module Http_header :
     val get_proto : http_header -> proto
     val add_headers : http_header -> Http_headers.name -> string -> http_header
 
+    val meth_of_cohttp_meth : Cohttp.Code.meth -> http_method
+    val proto_of_cohttp_version : Cohttp.Code.version -> proto
     val of_cohttp_request : Cohttp.Request.t -> http_header
     val of_cohttp_response : Cohttp.Response.t -> http_header
   end
@@ -126,3 +128,5 @@ type t =
     frame_content : string Ocsigen_stream.t option;
     frame_abort : unit -> unit Lwt.t
   }
+
+val of_cohttp_request : Cohttp.Request.t -> Cohttp_lwt_body.t -> t
