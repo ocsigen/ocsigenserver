@@ -42,6 +42,7 @@ SERVER_PACKAGE := lwt.ssl           \
 	          tyxml.parser      \
                   dynlink           \
 		  cohttp            \
+		  cohttp.lwt        \
 
 SERVER_SYNTAX :=  tyxml.syntax      \
 
