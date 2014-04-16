@@ -16,8 +16,8 @@ all: byte opt
 FILES := ocsigen_socket.ml      \
          ocsigen_request_info.ml \
          ocsigen_command.ml     \
-         ocsigen_extensions.ml  \
          ocsigen_range.ml       \
+         ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
          ocsigen_http_client.ml \
          ocsigen_local_files.ml \
