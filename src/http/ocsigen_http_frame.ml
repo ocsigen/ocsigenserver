@@ -225,6 +225,9 @@ struct
   let proto_of_cohttp_version = function
     | `HTTP_1_0 -> HTTP10
     | `HTTP_1_1 -> HTTP11
+  let proto_to_cohttp_version = function
+    | HTTP10 -> `HTTP_1_0
+    | HTTP11 -> `HTTP_1_1
   let meth_of_cohttp_meth = function
     | `GET -> GET
     | `POST -> POST
@@ -237,11 +240,28 @@ struct
     | `LINK -> LINK
     | `UNLINK -> UNLINK
     | `PATCH -> PATCH
+  let meth_to_cohttp_meth = function
+    | GET -> `GET
+    | POST -> `POST
+    | HEAD -> `HEAD
+    | PUT -> `PUT
+    | DELETE -> `DELETE
+    | OPTIONS -> `OPTIONS
+    | PATCH -> `PATCH
+    | _ -> raise
+      (Invalid_argument "Ocsigen_http_frame.Http_header.meth_to_cohttp_meth")
 
   let of_cohttp_header headers =
     Cohttp.Header.fold
       (fun key value acc -> Http_headers.add (Http_headers.name key) value acc)
       headers Http_headers.empty
+  let to_cohttp_header headers =
+    Http_headers.fold
+      (fun key values acc ->
+        let key = Http_headers.name_to_string key in
+        List.fold_left (fun acc value ->
+        Cohttp.Header.add acc key value) acc values)
+      headers (Cohttp.Header.init ())
 
   (** Type conversion between Cohttp.[Response|Request].t to
    * Ocsigen_http_frame.http_header *)
@@ -259,6 +279,24 @@ struct
       proto = proto_of_cohttp_version @@ Response.version response;
       headers = of_cohttp_header @@ Response.headers response;
     }
+  let to_cohttp_request ?encoding { mode; proto; headers; } uri =
+    match mode with
+    | Query (meth, _) ->
+      let meth = meth_to_cohttp_meth meth in
+      let version = proto_to_cohttp_version proto in
+      let headers = to_cohttp_header headers in
+      Cohttp.Request.make ~meth ~version ?encoding ~headers uri
+    | _ -> raise
+      (Invalid_argument "Ocsigen_http_frame.Http_header.to_cohttp_request")
+  let to_cohttp_response ?encoding ?flush { mode; proto; headers; } =
+    match mode with
+    | Answer code ->
+      let version = proto_to_cohttp_version proto in
+      let status = Cohttp.Code.status_of_code code in
+      let headers = to_cohttp_header headers in
+      Cohttp.Response.make ~version ~status ?flush ?encoding ~headers ()
+    | _ -> raise
+      (Invalid_argument "Ocsigen_http_frame.Http_header.to_cohttp_response")
 end
 
 module Http_error =

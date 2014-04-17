@@ -106,6 +106,14 @@ module Http_header :
     val proto_of_cohttp_version : Cohttp.Code.version -> proto
     val of_cohttp_request : Cohttp.Request.t -> http_header
     val of_cohttp_response : Cohttp.Response.t -> http_header
+    val to_cohttp_request :
+        ?encoding:Cohttp.Transfer.encoding ->
+        http_header ->
+        Uri.t -> Cohttp.Request.t
+    val to_cohttp_response :
+        ?encoding:Cohttp.Transfer.encoding ->
+        ?flush:bool ->
+        http_header -> Cohttp.Response.t
   end
 module Http_error :
   sig
