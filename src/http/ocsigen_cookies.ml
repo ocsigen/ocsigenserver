@@ -16,10 +16,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
+open Ocsigen_lib
+
 module CookiesTable = Map.Make(String)
 
 module Cookies =
-  Map.Make(struct type t = string list let compare = compare end)
+  Map.Make(struct type t = Url.path let compare = compare end)
 
 type cookie =
   | OSet of float option * string * bool
