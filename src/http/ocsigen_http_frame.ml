@@ -249,7 +249,7 @@ struct
     | OPTIONS -> `OPTIONS
     | PATCH -> `PATCH
     | _ -> raise
-      (Invalid_argument "Ocsigen_http_frame.Http_header.meth_to_cohttp_meth")
+             (Invalid_argument "Ocsigen_http_frame.Http_header.meth_to_cohttp_meth")
 
   let of_cohttp_header headers =
     Cohttp.Header.fold
@@ -258,9 +258,9 @@ struct
   let to_cohttp_header headers =
     Http_headers.fold
       (fun key values acc ->
-        let key = Http_headers.name_to_string key in
-        List.fold_left (fun acc value ->
-        Cohttp.Header.add acc key value) acc values)
+         let key = Http_headers.name_to_string key in
+         List.fold_left (fun acc value ->
+             Cohttp.Header.add acc key value) acc values)
       headers (Cohttp.Header.init ())
 
   (** Type conversion between Cohttp.[Response|Request].t to
@@ -287,7 +287,7 @@ struct
       let headers = to_cohttp_header headers in
       Cohttp.Request.make ~meth ~version ?encoding ~headers uri
     | _ -> raise
-      (Invalid_argument "Ocsigen_http_frame.Http_header.to_cohttp_request")
+             (Invalid_argument "Ocsigen_http_frame.Http_header.to_cohttp_request")
   let to_cohttp_response ?encoding ?flush { mode; proto; headers; } =
     match mode with
     | Answer code ->
@@ -296,7 +296,7 @@ struct
       let headers = to_cohttp_header headers in
       Cohttp.Response.make ~version ~status ?flush ?encoding ~headers ()
     | _ -> raise
-      (Invalid_argument "Ocsigen_http_frame.Http_header.to_cohttp_response")
+             (Invalid_argument "Ocsigen_http_frame.Http_header.to_cohttp_response")
 end
 
 module Http_error =
@@ -402,3 +402,24 @@ let of_cohttp_request request body = {
    * Consideration should be given to another layer over cohttp for pipeline
    * management as proxy. *)
 }
+
+let result_to_cohttp_response {
+    res_cookies; (* OK *)
+    res_lastmodified;
+    res_etag;
+    res_code; (* OK *)
+    res_stream;
+    res_content_length;
+    res_content_type;
+    res_headers; (* OK *)
+    res_charset;
+    res_location;
+  } =
+  let headers =
+    Ocsigen_cookies.to_cohttp_header res_cookies
+      (Http_header.to_cohttp_header res_headers)
+  in
+  (Cohttp.Response.make
+     ~status:(Cohttp.Code.status_of_code res_code)
+     ~headers
+     (), `Stream (Ocsigen_stream.to_lwt_stream (fst res_stream)))

@@ -138,3 +138,4 @@ type t =
   }
 
 val of_cohttp_request : Cohttp.Request.t -> Cohttp_lwt_body.t -> t
+val result_to_cohttp_response : result -> Cohttp.Response.t * Cohttp_lwt_body.t
