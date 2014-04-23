@@ -20,3 +20,12 @@ val listen :
   unit Lwt.t ->
   (Ocsigen_request_info.request_info -> unit -> Ocsigen_http_frame.result Lwt.t) ->
   Lwt_unix.file_descr list
+
+val service_cohttp :
+  address:string ->
+  port:int ->
+  extension_connector:(Ocsigen_request_info.request_info -> unit -> Ocsigen_http_frame.result Lwt.t) ->
+  Cohttp.Connection.t ->
+  Cohttp.Request.t ->
+  Cohttp_lwt_body.t ->
+  (Cohttp_lwt_unix.Server.Response.t * Cohttp_lwt_body.t) Lwt.t

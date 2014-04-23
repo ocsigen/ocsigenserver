@@ -12,6 +12,9 @@ open Ocsigen_cookies
 open Ocsigen_generate
 open Lazy
 
+open Cohttp
+open Cohttp_lwt_unix
+
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
 exception Ssl_Exception
@@ -981,3 +984,88 @@ let listen use_ssl (addr, port) wait_end_init extensions_connector =
               wait_connection use_ssl port x extensions_connector))
     listening_sockets;
   listening_sockets
+
+let service_cohttp ~address ~port ~extension_connector conn_id request body =
+  let filenames = ref [] in
+
+  let handle_error = function
+    | Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, code) ->
+      Server.respond_error 
+        ~status:(Cohttp.Code.status_of_code code)
+        ~body:("Sending HTTP error"^(string_of_int code))
+        ()
+    | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code 500)
+        ~body:("Cannot read the request twice. You probably have two \
+                incompatible options in <site> configuration, \
+                or the oerder of the options in the config file is wrong.")
+        ()
+    | Unix.Unix_error (Unix.EACCES, _, _)
+    | Ocsigen_upload_forbidden ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code 403)
+        ~body:""
+        ()
+    | Http_error.Http_exception (code, _, _) ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code code)
+        ~body:""
+        ()
+    | Ocsigen_Bad_Request ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code 400)
+        ~body:""
+        ()
+    | Ocsigen_unsupported_media ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code 415)
+        ~body:""
+        ()
+    | Neturl.Malformed_URL ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code 400)
+        ~body:""
+        ()
+    | Ocsigen_Request_too_long ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code 413)
+        ~body:""
+        ()
+    | exn ->
+      Server.respond_error
+        ~status:(Cohttp.Code.status_of_code 500)
+        ~body:""
+        ()
+  in
+  Lwt.finalize (fun () ->
+      Lwt.try_bind
+        (fun () -> Ocsigen_generate.of_cohttp_request
+            ~address
+            ~port
+            filenames
+            conn_id
+            request
+            body)
+        (fun ri ->
+           Lwt.try_bind
+             (extension_connector ri)
+             (fun res ->
+                let (res, body) = Ocsigen_http_frame.result_to_cohttp_response res
+                in Lwt.return (res, body))
+             (function
+               | Ocsigen_Is_a_directory fun_request ->
+                 Server.respond_redirect
+                   ~uri:(Uri.of_string @@ Neturl.string_of_url @@ fun_request ri) ()
+               | exn -> handle_error exn))
+        handle_error
+    )
+    (fun () ->
+       if !filenames <> []
+       then List.iter (fun a ->
+           try Unix.unlink a
+           with Unix.Unix_error _ as e ->
+             Ocsigen_messages.warning
+               (Format.sprintf "Error while removing file %s: %s"
+                  a (Printexc.to_string e)))
+           !filenames; Lwt.return ())
