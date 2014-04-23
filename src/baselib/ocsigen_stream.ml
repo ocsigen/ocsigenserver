@@ -256,6 +256,20 @@ let of_lwt_stream promotion stream =
     | None -> empty None
   in make aux
 
+(** to_lwt_stream convert Ocsigen_stream.t to Lwt_stream.t
+ * @param stream a Ocsigen_stream.t
+*)
+
+let to_lwt_stream stream =
+  let stream = ref (get stream) in
+  let rec wrap () =
+    next !stream >>= function
+    | Finished None -> Lwt.return None
+    | Finished (Some next) -> stream := next; wrap ()
+    | Cont (value, next) ->
+      stream := next; Lwt.return (Some value)
+  in Lwt_stream.from wrap
+
 module StringStream = struct
 
   type out = string t
