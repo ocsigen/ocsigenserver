@@ -256,6 +256,24 @@ let of_lwt_stream promotion stream =
     | None -> empty None
   in make aux
 
+(** to_lwt_stream convert Ocsigen_stream.t to Lwt_stream.t
+ * @param is_empty function for zap empty chunk
+ * @param stream a Ocsigen_stream.t
+*)
+
+let to_lwt_stream ?(is_empty=(fun _ -> false)) o_stream =
+  let stream = ref (get o_stream) in
+  let rec wrap () =
+    next !stream >>= function
+    | Finished None -> o_stream.finalizer `Success >>= fun () -> Lwt.return None
+    | Finished (Some next) -> stream := next; wrap ()
+    | Cont (value, next) ->
+      stream := next;
+      if is_empty value
+      then wrap ()
+      else Lwt.return (Some value)
+  in Lwt_stream.from wrap
+
 module StringStream = struct
 
   type out = string t
