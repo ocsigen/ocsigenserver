@@ -21,3 +21,8 @@ val ip_of_sockaddr : Unix.sockaddr -> Unix.inet_addr
  * @param A Unix.ADDR_INET value or raise error
  * *)
 val port_of_sockaddr : Unix.sockaddr -> int
+
+(** string_of_socket_type cast a Unix.inet_addr in socket_type to a string
+ * @param A socket_type
+ * *)
+val string_of_socket_type : socket_type -> string

@@ -57,3 +57,8 @@ let ip_of_sockaddr = function
 let port_of_sockaddr = function
   | Unix.ADDR_INET (ip, port) -> port
   | _ -> raise (Ocsigen_lib_base.Ocsigen_Internal_Error "port of unix socket")
+
+let string_of_socket_type = function
+  | All -> Unix.string_of_inet_addr Unix.inet_addr_any
+  | IPv4 u -> Unix.string_of_inet_addr u
+  | IPv6 u -> Unix.string_of_inet_addr u
