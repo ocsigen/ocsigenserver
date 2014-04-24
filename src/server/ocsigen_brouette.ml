@@ -988,54 +988,58 @@ let listen use_ssl (addr, port) wait_end_init extensions_connector =
 let service_cohttp ~address ~port ~extensions_connector conn_id request body =
   let filenames = ref [] in
 
-  let handle_error = function
+  let handle_error exn = 
+    let string_of_exn = Printexc.to_string exn in
+
+    prerr_endline "Error in server loop";
+    prerr_endline (Printexc.get_backtrace ());
+
+    match exn with
     | Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, code) ->
       Server.respond_error 
         ~status:(Cohttp.Code.status_of_code code)
-        ~body:("Sending HTTP error"^(string_of_int code))
+        ~body:string_of_exn
         ()
     | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code 500)
-        ~body:("Cannot read the request twice. You probably have two \
-                incompatible options in <site> configuration, \
-                or the oerder of the options in the config file is wrong.")
+        ~body:string_of_exn
         ()
     | Unix.Unix_error (Unix.EACCES, _, _)
     | Ocsigen_upload_forbidden ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code 403)
-        ~body:""
+        ~body:string_of_exn
         ()
     | Http_error.Http_exception (code, _, _) ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code code)
-        ~body:""
+        ~body:string_of_exn
         ()
     | Ocsigen_Bad_Request ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code 400)
-        ~body:""
+        ~body:string_of_exn
         ()
     | Ocsigen_unsupported_media ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code 415)
-        ~body:""
+        ~body:string_of_exn
         ()
     | Neturl.Malformed_URL ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code 400)
-        ~body:""
+        ~body:string_of_exn
         ()
     | Ocsigen_Request_too_long ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code 413)
-        ~body:""
+        ~body:string_of_exn
         ()
     | exn ->
       Server.respond_error
         ~status:(Cohttp.Code.status_of_code 500)
-        ~body:""
+        ~body:string_of_exn
         ()
   in
   Lwt.finalize (fun () ->
