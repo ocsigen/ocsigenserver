@@ -34,6 +34,9 @@ open Ocsigen_cookies
 open Ocsigen_brouette
 open Lazy
 
+open Cohttp
+open Cohttp_lwt_unix
+
 let () = Random.self_init ()
 
 let () = Ocsigen_commandline.cmdline
@@ -188,12 +191,19 @@ let start_server () = try
       Lwt_unix.run (Ocsigen_messages.open_files ~user ~group ());
 
       Lwt_unix.run
-        (let wait_end_init, wait_end_init_awakener = wait () in
+        (let _ = () in (* it's for ocp-indent ... it's ugly ! *)
+         (*let wait_end_init, wait_end_init_awakener = wait () in *)
          (* Listening on all ports: *)
-         sockets := List.fold_left
+          (*
+           sockets := List.fold_left
              (fun a i -> (listen false i wait_end_init extensions_connector)@a) [] ports;
-         sslsockets := List.fold_left
+           sslsockets := List.fold_left
              (fun a i -> (listen true i wait_end_init extensions_connector)@a) [] sslports;
+          *)
+
+         let address, port = match ports with
+           | (a, p) :: _ -> (Ocsigen_socket.string_of_socket_type a, p)
+           | [] -> ("0.0.0.0", 80) in
 
          begin match ports with
            | (_, p)::_ -> Ocsigen_config.set_default_port p
@@ -330,11 +340,24 @@ let start_server () = try
              Ocsigen_messages.errlog ("Uncaught Exception: "^ Printexc.to_string e)
            );
 
-         Lwt.wakeup wait_end_init_awakener ();
+         (* Lwt.wakeup wait_end_init_awakener (); *)
 
-         Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
+         let config = {
+           Server.callback =
+             Ocsigen_brouette.service_cohttp
+               ~address
+               ~port
+               ~extensions_connector;
+           Server.conn_closed = (fun _ () -> ())
+         } in
+
+         Server.create ~address ~port config
+
+         (*
+           Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
 
          fst (Lwt.wait ())
+         *)
         )
     in
 
