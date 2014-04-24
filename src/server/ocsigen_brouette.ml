@@ -985,7 +985,7 @@ let listen use_ssl (addr, port) wait_end_init extensions_connector =
     listening_sockets;
   listening_sockets
 
-let service_cohttp ~address ~port ~extension_connector conn_id request body =
+let service_cohttp ~address ~port ~extensions_connector conn_id request body =
   let filenames = ref [] in
 
   let handle_error = function
@@ -1049,7 +1049,7 @@ let service_cohttp ~address ~port ~extension_connector conn_id request body =
             body)
         (fun ri ->
            Lwt.try_bind
-             (extension_connector ri)
+             (extensions_connector ri)
              (fun res ->
                 let (res, body) = Ocsigen_http_frame.result_to_cohttp_response res
                 in Lwt.return (res, body))

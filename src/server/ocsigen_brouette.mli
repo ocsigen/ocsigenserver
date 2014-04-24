@@ -24,7 +24,7 @@ val listen :
 val service_cohttp :
   address:string ->
   port:int ->
-  extension_connector:(Ocsigen_request_info.request_info -> unit -> Ocsigen_http_frame.result Lwt.t) ->
+  extensions_connector:(Ocsigen_request_info.request_info -> unit -> Ocsigen_http_frame.result Lwt.t) ->
   Cohttp.Connection.t ->
   Cohttp.Request.t ->
   Cohttp_lwt_body.t ->
