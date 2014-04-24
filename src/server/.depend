@@ -35,8 +35,6 @@ ocsigen_brouette.cmx : ../baselib/polytables.cmx \
     ocsigen_http_client.cmx ../http/ocsigen_headers.cmx ocsigen_generate.cmx \
     ../http/ocsigen_cookies.cmx ../baselib/ocsigen_config.cmx \
     ../http/http_headers.cmx ocsigen_brouette.cmi
-ocsigen_cohttp.cmo :
-ocsigen_cohttp.cmx :
 ocsigen_command.cmo : ../baselib/ocsigen_messages.cmi ocsigen_command.cmi
 ocsigen_command.cmx : ../baselib/ocsigen_messages.cmx ocsigen_command.cmi
 ocsigen_extensions.cmo : ocsigen_request_info.cmi \
