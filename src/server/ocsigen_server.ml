@@ -204,6 +204,9 @@ let start_server () = try
          let address, port = match ports with
            | (a, p) :: _ -> (Ocsigen_socket.string_of_socket_type a, p)
            | [] -> ("0.0.0.0", 80) in
+         let ssl_address, ssl_port = match sslports with
+           | (a, p) :: _ -> (Ocsigen_socket.string_of_socket_type a, p)
+           | [] -> ("0.0.0.0", 443) in
 
          begin match ports with
            | (_, p)::_ -> Ocsigen_config.set_default_port p
@@ -351,7 +354,20 @@ let start_server () = try
            Server.conn_closed = (fun _ () -> ())
          } in
 
-         Server.create ~address ~port config
+         let ssl_config = {
+           Server.callback =
+             Ocsigen_brouette.service_cohttp
+               ~address:ssl_address
+               ~port:ssl_port
+               ~extensions_connector;
+           Server.conn_closed = (fun _ () -> ())
+         } in
+
+         Lwt.join
+           [
+             Server.create ~address ~port config;
+             Server.create ~address:ssl_address ~port:ssl_port ssl_config;
+           ]
 
          (*
            Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
