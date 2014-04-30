@@ -416,7 +416,7 @@ let result_to_cohttp_response {
     res_location;
   } =
   let headers =
-    Ocsigen_cookies.to_cohttp_header res_cookies
+    Ocsigen_cookies_server.to_cohttp_header res_cookies
       (Http_header.to_cohttp_header res_headers)
   in
   (Cohttp.Response.make

@@ -16,12 +16,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Ocsigen_lib
-
 module CookiesTable = Map.Make(String)
 
 module Cookies =
-  Map.Make(struct type t = Url.path let compare = compare end)
+  Map.Make(struct type t = string list let compare = compare end)
+
+(* We could be put instead the string list type Url.path type
+ * (because that's how in reality). But if we do that, we create
+ * a dependency between Ocsigen_cookies and Ocsigen_lib and at
+ * a higher level (eliom-widgets or graffiti), we fall on
+ * a linkage error with this module.
+ *
+ * XXX: Thus, for the maintenance of peace in the kingdom of dependencies,
+ * it suffices to use the type string list. *)
 
 type cookie =
   | OSet of float option * string * bool
@@ -67,34 +74,3 @@ let add_cookies newcookies oldcookies =
     )
     newcookies
     oldcookies
-
-let to_cohttp_header cookies_table header =
-  let set_cookies =
-    Cookies.fold
-      (fun path table acc ->
-         CookiesTable.fold
-           (fun name value acc ->
-              match value with
-              | OUnset ->
-                let c = Cohttp.Cookie.Set_cookie_hdr.make
-                    ~expiration:(`Max_age (Int64.of_int 0))
-                    ~path:(Url.string_of_url_path ~encode:true path)
-                    ~secure:false
-                    (name, "") in
-                let (k, v) = Cohttp.Cookie.Set_cookie_hdr.serialize c
-                in (k, v) :: acc
-              | OSet (time, value, secure) ->
-                let time = match time with | Some time -> time | None -> 0.0 in
-                let c = Cohttp.Cookie.Set_cookie_hdr.make
-                    ~expiration:(`Max_age (Int64.bits_of_float time))
-                    ~path:(Url.string_of_url_path ~encode:true path)
-                    ~secure
-                    (name, value) in
-                let (k, v) = Cohttp.Cookie.Set_cookie_hdr.serialize c
-                in (k, v) :: acc)
-           table acc)
-      cookies_table
-      []
-  in List.fold_left
-    (fun acc (key, value) -> Cohttp.Header.add acc key value)
-    header set_cookies
