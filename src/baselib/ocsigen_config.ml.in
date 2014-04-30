@@ -29,7 +29,6 @@ let silent = ref false
 let daemon = ref false
 let veryverbose = ref false
 let version_number = (**)"0000000000000000"(**)
-let mimefile = ref "_CONFIGDIR_/mime.types"
 let pidfile = ref None
 let server_name = "Ocsigen"
 let full_server_name = server_name^"/"^version_number

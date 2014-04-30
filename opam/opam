@@ -14,7 +14,7 @@ depends: [
   "base-threads"
   "react"
   "ssl"
-  "lwt"
+  "lwt" {>= "2.4.0"}
   "ocamlnet" {>= "3.6.0"}
   "pcre-ocaml"
   "cryptokit"
@@ -23,5 +23,8 @@ depends: [
   "ipaddr" {>= "2.1"}
 ]
 depopts: [
-  "camlzip" {>= "1.04"}
+  "camlzip"
+]
+conflicts: [
+  "camlzip" {< "1.04"}
 ]
