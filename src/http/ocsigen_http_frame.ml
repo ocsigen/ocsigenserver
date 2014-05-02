@@ -403,23 +403,70 @@ let of_cohttp_request request body = {
    * management as proxy. *)
 }
 
+let to_date date =
+  let x = Netdate.mk_mail_date ~zone:0 date in
+  try
+    let ind_plus = String.index x '+' in
+    String.set x ind_plus 'G';
+    String.set x (ind_plus + 1) 'M';
+    String.set x (ind_plus + 2) 'T';
+    String.sub x 0 (ind_plus + 3)
+  with Invalid_argument _ | Not_found -> (); x
+
+let to_type ty charset =
+  if String.length ty >= 4 then
+    match String.sub ty 0 4, charset with
+    | "text", Some "" -> ty
+    | "text", Some ch -> Format.sprintf "%s; charset=%s" ty ch
+    | _ ->
+      begin match String.sub ty (String.length ty - 4) 4, charset with
+        | ("+xml"|"/xml"), Some "" -> ty
+        | ("+xml"|"/xml"), Some ch -> Format.sprintf "%s; charset=%s" ty ch
+        | _ -> ty
+      end
+  else ty
+
 let result_to_cohttp_response {
     res_cookies; (* OK *)
-    res_lastmodified;
-    res_etag;
+    res_lastmodified; (* OK *)
+    res_etag; (* OK *)
     res_code; (* OK *)
     res_stream;
-    res_content_length;
-    res_content_type;
+    res_content_length; (* OK *)
+    res_content_type; (* OK *)
     res_headers; (* OK *)
-    res_charset;
-    res_location;
+    res_charset; (* OK *)
+    res_location; (* OK *)
   } =
   let headers =
     Ocsigen_cookies_server.to_cohttp_header res_cookies
-      (Http_header.to_cohttp_header res_headers)
+      (Http_header.to_cohttp_header res_headers) in
+  let headers = match res_lastmodified with
+    | Some date -> Cohttp.Header.add headers "Last-Modified" (to_date date)
+    | None -> headers
+  in
+  let headers = match res_etag with
+    | Some etag -> Cohttp.Header.add headers "ETag" (Format.sprintf "\"%s\"" etag)
+    | None -> headers
+  in
+  let encoding = match res_content_length with
+    | Some length when length <= Int64.of_int max_int ->
+      Cohttp.Transfer.Fixed (Int64.to_int length)
+    | _ -> Cohttp.Transfer.Chunked
+  in
+  let headers = match res_content_type with
+    | Some ty -> Cohttp.Header.add headers "Content-Type" (to_type ty res_charset)
+    | None -> headers
+  in
+  let headers = match res_location with
+    | Some location -> Cohttp.Header.add headers "Location" location
+    | None -> headers
   in
   (Cohttp.Response.make
      ~status:(Cohttp.Code.status_of_code res_code)
+     ~encoding
      ~headers
-     (), `Stream (Ocsigen_stream.to_lwt_stream (fst res_stream)))
+     (),
+   `Stream (Ocsigen_stream.to_lwt_stream
+              ~is_empty:(fun x -> String.length x = 0)
+              (fst res_stream)))
