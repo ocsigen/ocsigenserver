@@ -119,8 +119,8 @@ val of_string : string -> string t
 (** returns a stream containing a Lwt_stream.t *)
 val of_lwt_stream : ('a -> 'b) -> 'a Lwt_stream.t -> 'b t
 
-(** returns a cast between Ocsigen_stream and Lwt_stream.t *)
-val to_lwt_stream : 'a t -> 'a Lwt_stream.t
+(** returns a cast between Ocsigen_stream and Lwt_stream.t (can zap empty chunk) *)
+val to_lwt_stream : ?is_empty:('a -> bool) -> 'a t -> 'a Lwt_stream.t
 
 module StringStream : sig
 
