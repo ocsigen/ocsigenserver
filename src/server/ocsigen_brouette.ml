@@ -985,7 +985,7 @@ let listen use_ssl (addr, port) wait_end_init extensions_connector =
     listening_sockets;
   listening_sockets
 
-let service_cohttp ~address ~port ~extensions_connector conn_id request body =
+let service_cohttp ~address ~port ~extensions_connector sockaddr conn_id request body =
   let filenames = ref [] in
 
   let handle_error exn = 
@@ -1048,6 +1048,7 @@ let service_cohttp ~address ~port ~extensions_connector conn_id request body =
             ~address
             ~port
             filenames
+            sockaddr
             conn_id
             request
             body)

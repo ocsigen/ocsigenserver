@@ -13,6 +13,7 @@ val of_cohttp_request :
   address:string ->
   port:int ->
   string list ref ->
+  Lwt_unix.sockaddr ->
   Cohttp.Connection.t ->
   Cohttp.Request.t ->
   Cohttp_lwt_body.t -> Ocsigen_request_info.request_info Lwt.t

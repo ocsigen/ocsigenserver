@@ -132,7 +132,6 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
 
 let of_cohttp_request ~address ~port filenames socket request body =
 
-  let sockaddr = Unix.ADDR_INET (Unix.inet_addr_of_string "0.0.0.0", 0) in
   let client_inet_addr = ip_of_sockaddr sockaddr in
   let ipstring = Unix.string_of_inet_addr client_inet_addr in
 

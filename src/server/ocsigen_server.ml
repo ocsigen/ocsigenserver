@@ -351,7 +351,7 @@ let start_server () = try
                ~address
                ~port
                ~extensions_connector;
-           Server.conn_closed = (fun _ () -> ())
+           Server.conn_closed = (fun _ _ () -> ())
          } in
 
          let process = [ Server.create ~address ~port config ] in
@@ -363,7 +363,7 @@ let start_server () = try
                    ~address
                    ~port
                    ~extensions_connector;
-               Server.conn_closed = (fun _ () -> ())
+               Server.conn_closed = (fun _ _ () -> ())
 
              } in Server.create ~address ~port config :: process
            | None -> process
