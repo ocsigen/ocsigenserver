@@ -404,8 +404,6 @@ let handle_result_frame ri res send =
     Ocsigen_range.compute_range ri res
     >>= send
 
-
-
 (** service execute a service of client
  * @param receiver information of client
  * @param sender_slot place to write
@@ -1056,6 +1054,7 @@ let service_cohttp ~address ~port ~extensions_connector sockaddr conn_id request
            Lwt.try_bind
              (extensions_connector ri)
              (fun res ->
+                Ocsigen_range.compute_range ri res >>= fun res ->
                 let (res, body) = Ocsigen_http_frame.result_to_cohttp_response res
                 in Lwt.return (res, body))
              (function
