@@ -130,7 +130,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
   Ocsigen_stream.consume body_gen >>= fun () ->
   Lwt.return (!params, !files)
 
-let of_cohttp_request ~address ~port filenames socket request body =
+let of_cohttp_request ~address ~port ?(receiver=Ocsigen_http_com.dummy_receiver ()) filenames sockaddr conn_id request body =
 
   let client_inet_addr = ip_of_sockaddr sockaddr in
   let ipstring = Unix.string_of_inet_addr client_inet_addr in
@@ -216,7 +216,6 @@ let of_cohttp_request ~address ~port filenames socket request body =
   in
 
   let path_string = Url.string_of_url_path ~encode:true path in
-  let dummy_receiver = Ocsigen_http_com.dummy_receiver () in
 
   Lwt.return
     {
@@ -263,9 +262,9 @@ let of_cohttp_request ~address ~port filenames socket request body =
       ri_accept_language = accept_language;
       ri_http_frame = http_frame; (* XXX: not tested ! *)
       ri_request_cache = Polytables.create ();
-      ri_client = dummy_receiver; (* XXX: it's obsolete with Cohttp ! *)
+      ri_client = receiver; (* XXX: it's obsolete with Cohttp ! *)
       ri_range = lazy (Ocsigen_range.get_range http_frame);
       ri_timeofday = Unix.gettimeofday ();
       ri_nb_tries = 0;
-      ri_connection_closed = Ocsigen_http_com.closed dummy_receiver;
+      ri_connection_closed = Ocsigen_http_com.closed receiver;
     }

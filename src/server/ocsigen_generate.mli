@@ -12,6 +12,7 @@ val find_post_params :
 val of_cohttp_request :
   address:string ->
   port:int ->
+  ?receiver:Ocsigen_http_com.connection ->
   string list ref ->
   Lwt_unix.sockaddr ->
   Cohttp.Connection.t ->
