@@ -983,14 +983,38 @@ let listen use_ssl (addr, port) wait_end_init extensions_connector =
     listening_sockets;
   listening_sockets
 
+(** print_cohttp_request Print request for debug
+ * @param out_ch output for debug
+ * @param request Cohttp request *)
+
+let print_cohttp_request out_ch request =
+  let print_list print_data out_ch lst =
+    let rec aux = function
+      | [] -> ()
+      | [ x ] -> print_data out_ch x
+      | x :: r -> print_data out_ch x; aux r
+    in aux lst
+  in
+
+  let open Cohttp.Request in
+
+  Printf.fprintf out_ch "%s [%s/%s]:\n"
+    (Uri.to_string request.uri)
+    (Cohttp.Code.string_of_version request.version)
+    (Cohttp.Code.string_of_method request.meth);
+  Cohttp.Header.iter
+    (fun key values ->
+       Printf.fprintf out_ch "\t%s = %a\n" key
+         (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
+    request.headers
+
 let service_cohttp ~address ~port ~extensions_connector sockaddr conn_id request body =
   let filenames = ref [] in
 
-  let handle_error exn = 
-    let string_of_exn = Printexc.to_string exn in
+  Printf.fprintf stderr "%a%!" print_cohttp_request request;
 
-    prerr_endline "Error in server loop";
-    prerr_endline (Printexc.get_backtrace ());
+  let handle_error exn =
+    let string_of_exn = Printexc.to_string exn in
 
     match exn with
     | Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, code) ->
