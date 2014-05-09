@@ -43,6 +43,8 @@ open Ocsigen_lib
 open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
+open Cohttp
+open Cohttp_lwt_unix
 
 exception Bad_answer_from_http_server
 
@@ -134,7 +136,7 @@ let gen dir = function
            | None -> host
          in
 
-         let do_request =
+         let do_request () =
            let ri = ri.request_info in
            let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
            let forward = 
@@ -145,6 +147,18 @@ let gen dir = function
              then "https"
              else "http"
            in
+           let (meth, version, headers, uri', body) =
+             Ocsigen_generate.to_cohttp_request ri in
+           let headers =
+             Cohttp.Header.add headers
+               "X-Forwarded-Proto"
+               (Cohttp.Code.string_of_version version) in
+           let headers =
+             Cohttp.Header.add headers
+               "X-Forwarded-For"
+               forward in
+           Client.call ~headers ~body meth (Uri.of_string uri)
+(*
            let headers =
              Http_headers.replace
                Http_headers.x_forwarded_proto
@@ -178,13 +192,17 @@ let gen dir = function
                  ~host
                  ~inet_addr
                  ~uri ()
+*)
          in
          Lwt.return
            (Ext_found
               (fun () ->
                  do_request ()
 
-                 >>= fun http_frame ->
+                 >>= fun (response, body) ->
+
+                 let http_frame =
+                   Ocsigen_http_frame.of_cohttp_response response body in
                  let headers =
                    http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers
                  in

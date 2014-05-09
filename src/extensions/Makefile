@@ -7,6 +7,8 @@ PACKAGE  := lwt.unix     \
             netstring    \
             netstring-pcre \
 	    tyxml.parser \
+	    cohttp       \
+	    cohttp.lwt   \
 
 LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
