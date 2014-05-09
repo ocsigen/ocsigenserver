@@ -403,6 +403,20 @@ let of_cohttp_request request body = {
    * management as proxy. *)
 }
 
+(** to_cohttp_request cast between Ocsigen_http_frame.t and Cohttp.Request.t
+ * @param encoding parameter for make Cohttp.Request.t
+ * @param frame Ocsigen HTTP frame
+ * @param uri uri of HTTP frame *)
+
+let to_cohttp_request ?encoding { frame_header; frame_content; } uri =
+  let stream = match frame_content with
+    | Some s -> Ocsigen_stream.to_lwt_stream
+                  ~is_empty:(fun x -> String.length x = 0)
+                  s
+    | None -> (Lwt_stream.from (fun () -> Lwt.return None) : string Lwt_stream.t)
+  in
+  (Http_header.to_cohttp_request ?encoding frame_header uri, `Stream stream)
+
 let to_date date =
   let x = Netdate.mk_mail_date ~zone:0 date in
   try
