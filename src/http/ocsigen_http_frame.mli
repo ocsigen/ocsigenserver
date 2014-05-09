@@ -140,5 +140,6 @@ type t =
   }
 
 val of_cohttp_request : Cohttp.Request.t -> Cohttp_lwt_body.t -> t
+val of_cohttp_response : Cohttp.Response.t -> Cohttp_lwt_body.t -> t
 val to_cohttp_request : ?encoding:Cohttp.Transfer.encoding -> t -> Uri.t -> (Cohttp.Request.t * Cohttp_lwt_body.t)
 val result_to_cohttp_response : result -> Cohttp.Response.t * Cohttp_lwt_body.t

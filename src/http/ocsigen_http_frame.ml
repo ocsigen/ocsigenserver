@@ -403,6 +403,15 @@ let of_cohttp_request request body = {
    * management as proxy. *)
 }
 
+let of_cohttp_response response body = {
+  frame_header = Http_header.of_cohttp_response response;
+  frame_content = Some
+      (Ocsigen_stream.of_lwt_stream
+         (fun x -> x)
+         (Cohttp_lwt_body.to_stream body));
+  frame_abort = (fun () -> Lwt.return ());
+}
+
 (** to_cohttp_request cast between Ocsigen_http_frame.t and Cohttp.Request.t
  * @param encoding parameter for make Cohttp.Request.t
  * @param frame Ocsigen HTTP frame
