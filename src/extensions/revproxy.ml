@@ -136,9 +136,54 @@ let gen dir = function
            | None -> host
          in
 
+         let print_cohttp_request out_ch (headers, version, meth, uri) =
+           let print_list print_data out_ch lst =
+             let rec aux = function
+               | [] -> ()
+               | [ x ] -> print_data out_ch x
+               | x :: r -> print_data out_ch x; aux r
+             in aux lst
+           in
+
+           Printf.fprintf out_ch "%s [%s/%s:]\n"
+             (Uri.to_string uri)
+             (Cohttp.Code.string_of_version version)
+             (Cohttp.Code.string_of_method meth);
+           Cohttp.Header.iter
+             (fun key values ->
+                Printf.fprintf out_ch "\t%s = %a\n" key
+                  (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
+             headers
+         in
+
+         let print_cohttp_response out_ch response =
+           let print_list print_data out_ch lst =
+             let rec aux = function
+               | [] -> ()
+               | [ x ] -> print_data out_ch x
+               | x :: r -> print_data out_ch x; aux r
+             in aux lst
+           in
+
+           let open Cohttp.Response in
+
+           Printf.fprintf out_ch "%s: %s\n"
+             (Cohttp.Code.string_of_version @@ version response)
+             (Cohttp.Code.string_of_status @@ status response);
+           Cohttp.Header.iter
+             (fun key values ->
+                Printf.fprintf out_ch "\t%s = %a\n" key
+                  (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
+             (headers response)
+         in
+
+
          let do_request () =
            let ri = ri.request_info in
-           let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
+           (* let address = Unix.string_of_inet_addr (fst (get_server_address
+            * ri)) in *)
+           let address = Unix.string_of_inet_addr
+               ri.Ocsigen_request_info.ri_remote_inet_addr in
            let forward = 
              String.concat ", " (ri.ri_remote_ip :: (ri.ri_forward_ip @ [address]))
            in
@@ -157,6 +202,11 @@ let gen dir = function
              Cohttp.Header.add headers
                "X-Forwarded-For"
                forward in
+           let headers = Cohttp.Header.remove headers "host" in
+           let uri = Printf.sprintf "%s://%s%s"
+               proto host uri in
+           Printf.fprintf stderr "[R] %a%!" print_cohttp_request
+             (headers, version, meth, Uri.of_string uri);
            Client.call ~headers ~body meth (Uri.of_string uri)
 (*
            let headers =
@@ -200,6 +250,9 @@ let gen dir = function
                  do_request ()
 
                  >>= fun (response, body) ->
+
+                 Printf.fprintf stderr "[R] %a%!"
+                   print_cohttp_response response;
 
                  let http_frame =
                    Ocsigen_http_frame.of_cohttp_response response body in
