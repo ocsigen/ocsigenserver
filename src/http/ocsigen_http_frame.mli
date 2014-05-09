@@ -103,7 +103,9 @@ module Http_header :
     val add_headers : http_header -> Http_headers.name -> string -> http_header
 
     val meth_of_cohttp_meth : Cohttp.Code.meth -> http_method
+    val meth_to_cohttp_meth : http_method -> Cohttp.Code.meth
     val proto_of_cohttp_version : Cohttp.Code.version -> proto
+    val proto_to_cohttp_version : proto -> Cohttp.Code.version
     val of_cohttp_request : Cohttp.Request.t -> http_header
     val of_cohttp_response : Cohttp.Response.t -> http_header
     val to_cohttp_request :
