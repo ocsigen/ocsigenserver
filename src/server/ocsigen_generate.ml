@@ -268,3 +268,12 @@ let of_cohttp_request ~address ~port ?(receiver=Ocsigen_http_com.dummy_receiver 
       ri_nb_tries = 0;
       ri_connection_closed = Ocsigen_http_com.closed receiver;
     }
+
+let to_cohttp_request
+    { ri_url_string; ri_http_frame; _ } =
+  let uri = Uri.of_string ri_url_string in
+  let (request, body) =
+    Ocsigen_http_frame.to_cohttp_request ri_http_frame uri in
+  let meth = Cohttp.Request.meth request in
+  let headers = Cohttp.Request.headers request in
+  (headers, body, meth, uri)
