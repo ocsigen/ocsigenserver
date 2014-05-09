@@ -21,4 +21,4 @@ val of_cohttp_request :
 
 val to_cohttp_request :
   Ocsigen_request_info.request_info ->
-  (Cohttp.Header.t * Cohttp_lwt_body.t * Cohttp.Code.meth * Uri.t)
+  (Cohttp.Code.meth * Cohttp.Code.version * Cohttp.Header.t * Uri.t * Cohttp_lwt_body.t)

@@ -270,10 +270,12 @@ let of_cohttp_request ~address ~port ?(receiver=Ocsigen_http_com.dummy_receiver 
     }
 
 let to_cohttp_request
-    { ri_url_string; ri_http_frame; _ } =
+    { ri_url_string; ri_http_frame; ri_protocol; _ } =
   let uri = Uri.of_string ri_url_string in
   let (request, body) =
     Ocsigen_http_frame.to_cohttp_request ri_http_frame uri in
+  let version =
+    Ocsigen_http_frame.Http_header.proto_to_cohttp_version ri_protocol in
   let meth = Cohttp.Request.meth request in
   let headers = Cohttp.Request.headers request in
-  (headers, body, meth, uri)
+  (meth, version, headers, uri, body)
