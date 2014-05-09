@@ -1008,33 +1008,6 @@ let print_cohttp_request out_ch request =
          (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
     request.headers
 
-let cohttp_request_compare a b =
-  let cohttp_header_compare a b =
-    List.fold_left2 (fun acc (key, value) (key', value') ->
-        if key = key' && value = value' && acc
-        then true
-        else begin Printf.fprintf stderr "a(%s, %s) != b(%s, %s)\n%!" key value key'
-            value'; false end)
-      true (Cohttp.Header.to_list a) (Cohttp.Header.to_list b)
-  in
-  let cohttp_meth_compare = (=) in
-  let cohttp_uri_compare a b = (Uri.to_string a) = (Uri.to_string b) in
-  let cohttp_version_compare = (=) in
-  let cohttp_encoding_compare = (=) in
-
-  if cohttp_header_compare (Cohttp.Request.headers a) (Cohttp.Request.headers b)
-  then if cohttp_meth_compare (Cohttp.Request.meth a) (Cohttp.Request.meth b)
-    then if cohttp_uri_compare (Cohttp.Request.uri a) (Cohttp.Request.uri b)
-      then if cohttp_version_compare (Cohttp.Request.version a) (Cohttp.Request.version b)
-        then if cohttp_encoding_compare (Cohttp.Request.encoding a) (Cohttp.Request.encoding b)
-          then true
-          else begin Printf.fprintf stderr "Encoding is different\n"; false end
-        else begin Printf.fprintf stderr "Version is different\n"; false end
-      else begin Printf.fprintf stderr "Uri is different (%s <> %s)\n"
-          (Uri.to_string @@ Cohttp.Request.uri a) (Uri.to_string @@ Cohttp.Request.uri b); false end
-    else begin Printf.fprintf stderr "Meth is different\n"; false end
-  else begin Printf.fprintf stderr "Headers is different\n"; false end
-
 let service_cohttp ~address ~port ~extensions_connector sockaddr conn_id request body =
   let filenames = ref [] in
 
@@ -1102,13 +1075,6 @@ let service_cohttp ~address ~port ~extensions_connector sockaddr conn_id request
             request
             body)
         (fun ri ->
-
-           let _ =
-             let (headers, body, meth, uri) = Ocsigen_generate.to_cohttp_request ri
-             in let cc = Cohttp.Request.make ~meth ~headers uri
-             in cohttp_request_compare request cc
-           in
-
            Lwt.try_bind
              (extensions_connector ri)
              (fun res ->
