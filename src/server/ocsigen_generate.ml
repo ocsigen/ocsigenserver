@@ -130,7 +130,8 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
   Ocsigen_stream.consume body_gen >>= fun () ->
   Lwt.return (!params, !files)
 
-let of_cohttp_request ~address ~port ?(receiver=Ocsigen_http_com.dummy_receiver ()) filenames sockaddr conn_id request body =
+let of_cohttp_request ~address ~port ?(receiver=Ocsigen_http_com.dummy_receiver ())
+  filenames sockaddr conn_id request body =
 
   let client_inet_addr = ip_of_sockaddr sockaddr in
   let ipstring = Unix.string_of_inet_addr client_inet_addr in
