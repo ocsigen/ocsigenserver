@@ -6,7 +6,7 @@ ocsigen_extensions.cmi : ../baselib/polytables.cmi ocsigen_request_info.cmi \
     ../http/ocsigen_http_com.cmi ../http/ocsigen_cookies.cmi \
     ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi ocsigen_brouette.cmi
 ocsigen_generate.cmi : ocsigen_request_info.cmi \
-    ../http/ocsigen_http_frame.cmi
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi
 ocsigen_http_client.cmi : ../baselib/ocsigen_stream.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
     ../http/http_headers.cmi
