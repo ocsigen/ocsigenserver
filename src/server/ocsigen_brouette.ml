@@ -1008,8 +1008,12 @@ let print_cohttp_request out_ch request =
          (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
     request.headers
 
-let service_cohttp ~address ~port ~extensions_connector sockaddr conn_id request body =
+let service_cohttp ~address ~port ~extensions_connector endpoint conn_id request body =
   let filenames = ref [] in
+  let sockaddr =
+    Unix.ADDR_INET
+    (Unix.inet_addr_of_string @@ Server.Endpoint.addr endpoint,
+     Server.Endpoint.port endpoint) in
 
   Printf.fprintf stderr "%a%!" print_cohttp_request request;
 
