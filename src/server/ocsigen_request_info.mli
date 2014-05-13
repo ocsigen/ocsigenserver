@@ -21,9 +21,6 @@ val ri_of_url : ?full_rewrite:bool -> string -> request_info -> request_info
 
 val get_server_address : request_info -> Unix.inet_addr * int
 
-(* XXX: It is a work of Chinese that does not reflect what it does but it works.
- * It would probably rework it all but French is lazy. *)
-
 (** Make a request_info *)
 val make :
   ri_url_string:string ->
@@ -139,8 +136,6 @@ val update :
   ?ri_connection_closed:unit Lwt.t -> unit -> request_info
 
 val update_nb_tries : request_info -> int -> unit
-
-(* XXX: Do you like fieldslib ? Me, not. *)
 
 (** Accessor for range of request_info *)
 val range : request_info -> ((int64 * int64) list * int64 option * ifrange) option Lazy.t
