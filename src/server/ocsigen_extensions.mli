@@ -37,7 +37,8 @@ include (module type of Ocsigen_command)
 include (module type of Ocsigen_brouette)
 
 (* Outsources module for Eliom *)
-module RI : (module type of Ocsigen_request_info)
+module RI : (module type of Ocsigen_request_info
+  with type request_info = Ocsigen_request_info.request_info)
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
 exception Bad_config_tag_for_extension of string
