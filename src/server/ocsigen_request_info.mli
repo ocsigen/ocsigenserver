@@ -136,6 +136,7 @@ val update :
   ?connection_closed:unit Lwt.t -> unit -> request_info
 
 val update_nb_tries : request_info -> int -> unit
+val update_request_cache : request_info -> Polytables.t -> unit
 
 (** Accessor for range of request_info *)
 val range : request_info -> ((int64 * int64) list * int64 option * ifrange) option Lazy.t
@@ -244,3 +245,21 @@ val original_full_path : request_info -> string list
 
 (** Accessor for cookies of request_info *)
 val cookies : request_info -> string CookiesTable.t Lazy.t
+
+(** Accessor for post_params of request_info *)
+val post_params : request_info -> ((string option * Int64.t option) -> (string * string) list Lwt.t) option
+
+(** Accessor for get_params of request_info *)
+val get_params : request_info -> (string * string) list Lazy.t
+
+(** Accessor for initial_get_params of request_info *)
+val initial_get_params : request_info -> (string * string) list Lazy.t
+
+(** Accessor for original_full_path_string of request_info *)
+val original_full_path_string : request_info -> string
+
+(** Accessor for timeofday of request_info *)
+val timeofday : request_info -> float
+
+(** Accessor for accept_language of request_info *)
+val accept_language : request_info -> (string * float option) list Lazy.t

@@ -323,6 +323,7 @@ let update ri
   }
 
 let update_nb_tries ri value = ri.nb_tries <- value
+let update_request_cache ri value = ri.request_cache <- value
 
 let range { range; _ } = range
 let url_string { url_string; _ } = url_string
@@ -363,3 +364,10 @@ let request_cache { request_cache; _ } = request_cache
 let files { files; _ } = files
 let original_full_path { original_full_path; _ } = original_full_path
 let cookies { cookies; _ } = cookies
+let post_params { post_params; _ } = post_params
+let get_params { get_params; _ } = get_params
+let initial_get_params { initial_get_params; _ } = initial_get_params
+let original_full_path_string { original_full_path_string; _ } =
+  original_full_path_string
+let timeofday { timeofday; _ } = timeofday
+let accept_language { accept_language; _ } = accept_language
