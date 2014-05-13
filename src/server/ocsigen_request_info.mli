@@ -23,117 +23,117 @@ val get_server_address : request_info -> Unix.inet_addr * int
 
 (** Make a request_info *)
 val make :
-  ri_url_string:string ->
-  ri_method:Ocsigen_http_frame.Http_header.http_method ->
-  ri_protocol:Ocsigen_http_frame.Http_header.proto ->
-  ?ri_ssl:bool ->
-  ri_full_path_string:string ->
-  ri_full_path:Ocsigen_lib.Url.path ->
-  ?ri_original_full_path_string:string ->
-  ?ri_original_full_path:Ocsigen_lib.Url.path ->
-  ?ri_sub_path:Ocsigen_lib.Url.path ->
-  ?ri_sub_path_string:Ocsigen_lib.Url.uri ->
-  ri_get_params_string:string option ->
-  ri_host:string option ->
-  ri_port_from_host_field:int option ->
-  ri_get_params:(string * string) list Lazy.t ->
-  ?ri_initial_get_params:(string * string) list Lazy.t ->
-  ri_post_params:(string option * Int64.t option ->
+  url_string:string ->
+  meth:Ocsigen_http_frame.Http_header.http_method ->
+  protocol:Ocsigen_http_frame.Http_header.proto ->
+  ?ssl:bool ->
+  full_path_string:string ->
+  full_path:Ocsigen_lib.Url.path ->
+  ?original_full_path_string:string ->
+  ?original_full_path:Ocsigen_lib.Url.path ->
+  ?sub_path:Ocsigen_lib.Url.path ->
+  ?sub_path_string:Ocsigen_lib.Url.uri ->
+  get_params_string:string option ->
+  host:string option ->
+  port_from_host_field:int option ->
+  get_params:(string * string) list Lazy.t ->
+  ?initial_get_params:(string * string) list Lazy.t ->
+  post_params:(string option * Int64.t option ->
                   (string * string) list Lwt.t)
                  option ->
-  ri_files:(string option * Int64.t option ->
+  files:(string option * Int64.t option ->
             (string * file_info) list Lwt.t)
            option ->
-  ri_remote_inet_addr:Unix.inet_addr ->
-  ri_remote_ip:string ->
-  ?ri_remote_ip_parsed:Ipaddr.t Lazy.t ->
-  ri_remote_port:int ->
-  ?ri_forward_ip:string list ->
-  ri_server_port:int ->
-  ri_user_agent:string ->
-  ri_cookies_string:string option Lazy.t ->
-  ri_cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
-  ri_ifmodifiedsince:float option ->
-  ri_ifunmodifiedsince:float option ->
-  ri_ifnonematch:string list option ->
-  ri_ifmatch:string list option ->
-  ri_content_type:((string * string) * (string * string) list)
+  remote_inet_addr:Unix.inet_addr ->
+  remote_ip:string ->
+  ?remote_ip_parsed:Ipaddr.t Lazy.t ->
+  remote_port:int ->
+  ?forward_ip:string list ->
+  server_port:int ->
+  user_agent:string ->
+  cookies_string:string option Lazy.t ->
+  cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
+  ifmodifiedsince:float option ->
+  ifunmodifiedsince:float option ->
+  ifnonematch:string list option ->
+  ifmatch:string list option ->
+  content_type:((string * string) * (string * string) list)
                   option ->
-  ri_content_type_string:string option ->
-  ri_content_length:int64 option ->
-  ri_referer:string option Lazy.t ->
-  ri_origin:string option Lazy.t ->
-  ri_access_control_request_method:string option Lazy.t ->
-  ri_access_control_request_headers:string list option Lazy.t ->
-  ri_accept:Http_headers.accept Lazy.t ->
-  ri_accept_charset:(string option * float option) list Lazy.t ->
-  ri_accept_encoding:(string option * float option) list Lazy.t ->
-  ri_accept_language:(string * float option) list Lazy.t ->
-  ri_http_frame:Ocsigen_http_frame.t ->
-  ?ri_request_cache:Polytables.t ->
-  ri_client:Ocsigen_http_com.connection ->
-  ri_range:((int64 * int64) list * int64 option * ifrange) option
+  content_type_string:string option ->
+  content_length:int64 option ->
+  referer:string option Lazy.t ->
+  origin:string option Lazy.t ->
+  access_control_request_method:string option Lazy.t ->
+  access_control_request_headers:string list option Lazy.t ->
+  accept:Http_headers.accept Lazy.t ->
+  accept_charset:(string option * float option) list Lazy.t ->
+  accept_encoding:(string option * float option) list Lazy.t ->
+  accept_language:(string * float option) list Lazy.t ->
+  http_frame:Ocsigen_http_frame.t ->
+  ?request_cache:Polytables.t ->
+  client:Ocsigen_http_com.connection ->
+  range:((int64 * int64) list * int64 option * ifrange) option
            Lazy.t ->
-  ?ri_timeofday:float ->
-  ?ri_nb_tries:int ->
-  ?ri_connection_closed:unit Lwt.t -> unit -> request_info
+  ?timeofday:float ->
+  ?nb_tries:int ->
+  ?connection_closed:unit Lwt.t -> unit -> request_info
 
 val update :
   request_info ->
-  ?ri_url_string:string ->
-  ?ri_method:Ocsigen_http_frame.Http_header.http_method ->
-  ?ri_protocol:Ocsigen_http_frame.Http_header.proto ->
-  ?ri_ssl:bool ->
-  ?ri_full_path_string:string ->
-  ?ri_full_path:string list ->
-  ?ri_original_full_path_string:string ->
-  ?ri_original_full_path:string list ->
-  ?ri_sub_path:string list ->
-  ?ri_sub_path_string:string ->
-  ?ri_get_params_string:string option ->
-  ?ri_host:string option ->
-  ?ri_port_from_host_field:int option ->
-  ?ri_get_params:(string * string) list Lazy.t ->
-  ?ri_initial_get_params:(string * string) list Lazy.t ->
-  ?ri_post_params:(string option * Int64.t option ->
-                   (string * string) list Lwt.t)
-                  option ->
-  ?ri_files:(string option * Int64.t option ->
-             (string * file_info) list Lwt.t)
-            option ->
-  ?ri_remote_inet_addr:Unix.inet_addr ->
-  ?ri_remote_ip:string ->
-  ?ri_remote_ip_parsed:Ipaddr.t Lazy.t ->
-  ?ri_remote_port:int ->
-  ?ri_forward_ip:string list ->
-  ?ri_server_port:int ->
-  ?ri_user_agent:string ->
-  ?ri_cookies_string:string option Lazy.t ->
-  ?ri_cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
-  ?ri_ifmodifiedsince:float option ->
-  ?ri_ifunmodifiedsince:float option ->
-  ?ri_ifnonematch:string list option ->
-  ?ri_ifmatch:string list option ->
-  ?ri_content_type:((string * string) * (string * string) list)
-                   option ->
-  ?ri_content_type_string:string option ->
-  ?ri_content_length:int64 option ->
-  ?ri_referer:string option Lazy.t ->
-  ?ri_origin:string option Lazy.t ->
-  ?ri_access_control_request_method:string option Lazy.t ->
-  ?ri_access_control_request_headers:string list option Lazy.t ->
-  ?ri_accept:Http_headers.accept Lazy.t ->
-  ?ri_accept_charset:(string option * float option) list Lazy.t ->
-  ?ri_accept_encoding:(string option * float option) list Lazy.t ->
-  ?ri_accept_language:(string * float option) list Lazy.t ->
-  ?ri_http_frame:Ocsigen_http_frame.t ->
-  ?ri_request_cache:Polytables.t ->
-  ?ri_client:Ocsigen_http_com.connection ->
-  ?ri_range:((int64 * int64) list * int64 option * ifrange) option
-            Lazy.t ->
-  ?ri_timeofday:float ->
-  ?ri_nb_tries:int ->
-  ?ri_connection_closed:unit Lwt.t -> unit -> request_info
+  ?url_string:string ->
+  ?meth:Ocsigen_http_frame.Http_header.http_method ->
+  ?protocol:Ocsigen_http_frame.Http_header.proto ->
+  ?ssl:bool ->
+  ?full_path_string:string ->
+  ?full_path:string list ->
+  ?original_full_path_string:string ->
+  ?original_full_path:string list ->
+  ?sub_path:string list ->
+  ?sub_path_string:string ->
+  ?get_params_string:string option ->
+  ?host:string option ->
+  ?port_from_host_field:int option ->
+  ?get_params:(string * string) list Lazy.t ->
+  ?initial_get_params:(string * string) list Lazy.t ->
+  ?post_params:(string option * Int64.t option ->
+                (string * string) list Lwt.t)
+               option ->
+  ?files:(string option * Int64.t option ->
+          (string * file_info) list Lwt.t)
+         option ->
+  ?remote_inet_addr:Unix.inet_addr ->
+  ?remote_ip:string ->
+  ?remote_ip_parsed:Ipaddr.t Lazy.t ->
+  ?remote_port:int ->
+  ?forward_ip:string list ->
+  ?server_port:int ->
+  ?user_agent:string ->
+  ?cookies_string:string option Lazy.t ->
+  ?cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
+  ?ifmodifiedsince:float option ->
+  ?ifunmodifiedsince:float option ->
+  ?ifnonematch:string list option ->
+  ?ifmatch:string list option ->
+  ?content_type:((string * string) * (string * string) list)
+                option ->
+  ?content_type_string:string option ->
+  ?content_length:int64 option ->
+  ?referer:string option Lazy.t ->
+  ?origin:string option Lazy.t ->
+  ?access_control_request_method:string option Lazy.t ->
+  ?access_control_request_headers:string list option Lazy.t ->
+  ?accept:Http_headers.accept Lazy.t ->
+  ?accept_charset:(string option * float option) list Lazy.t ->
+  ?accept_encoding:(string option * float option) list Lazy.t ->
+  ?accept_language:(string * float option) list Lazy.t ->
+  ?http_frame:Ocsigen_http_frame.t ->
+  ?request_cache:Polytables.t ->
+  ?client:Ocsigen_http_com.connection ->
+  ?range:((int64 * int64) list * int64 option * ifrange) option
+         Lazy.t ->
+  ?timeofday:float ->
+  ?nb_tries:int ->
+  ?connection_closed:unit Lwt.t -> unit -> request_info
 
 val update_nb_tries : request_info -> int -> unit
 

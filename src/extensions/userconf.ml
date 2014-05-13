@@ -139,8 +139,8 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
         let new_req =
           { req with request_info =
                        RI.update req.request_info
-                         ~ri_sub_path:path
-                         ~ri_sub_path_string:url
+                         ~sub_path:path
+                         ~sub_path_string:url
                          () }
         in
         Lwt.return

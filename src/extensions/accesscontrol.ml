@@ -327,9 +327,9 @@ let parse_config parse_fun = function
               then
                 { request with request_info =
                                  RI.update request.request_info
-                                   ~ri_remote_ip:original_ip
-                                   ~ri_remote_ip_parsed:(lazy (Ipaddr.of_string_exn original_ip))
-                                   ~ri_forward_ip:proxies () }
+                                   ~remote_ip:original_ip
+                                   ~remote_ip_parsed:(lazy (Ipaddr.of_string_exn original_ip))
+                                   ~forward_ip:proxies () }
               else (* the announced ip of the proxy is not its real ip *)
                 ( Ocsigen_messages.warning (Printf.sprintf "--Access control: X-Forwarded-For: host ip ( %s ) does not match the header ( %s )" (RI.remote_ip request.request_info) header );
                   request )
@@ -355,11 +355,11 @@ let parse_config parse_fun = function
             | "http" ->
               { request with request_info =
                                RI.update request.request_info
-                                 ~ri_ssl:false () }
+                                 ~ssl:false () }
             | "https" ->
               { request with request_info =
                                RI.update request.request_info
-                                 ~ri_ssl:true () }
+                                 ~ssl:true () }
             | _ ->
               Ocsigen_messages.debug2 ("--Access control: malformed X-Forwarded-Proto field: "^header);
               request

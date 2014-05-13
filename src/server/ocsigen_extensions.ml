@@ -517,8 +517,8 @@ let rec default_parse_config
           let ri = {oldri with
                     request_info = RI.update
                         oldri.request_info
-                        ~ri_sub_path:sub_path
-                        ~ri_sub_path_string:
+                        ~sub_path:sub_path
+                        ~sub_path_string:
                           (Url.string_of_url_path ~encode:true sub_path) () }
           in
           parse_config awake cookies_to_set (Req_not_found (e, ri))
