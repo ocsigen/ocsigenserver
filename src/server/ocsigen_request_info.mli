@@ -232,3 +232,6 @@ val access_control_request_method : request_info -> string option Lazy.t
 
 (** Accessor for access_control_request_headers of request_info *)
 val access_control_request_headers : request_info -> string list option Lazy.t
+
+(** Accessor for request_cache of request_info *)
+val request_cache : request_info -> Polytables.t
