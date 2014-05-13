@@ -29,6 +29,7 @@ exception Ocsigen_Request_too_long
 val (>>=) : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 val (>|=) : 'a Lwt.t -> ('a -> 'b) -> 'b Lwt.t
 val (!!) : 'a Lazy.t -> 'a
+val (@@) : ('a -> 'b) -> 'a -> 'b
 
 external id : 'a -> 'a = "%identity"
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
