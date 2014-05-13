@@ -27,6 +27,8 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_extensions
 
+module RI = Ocsigen_request_info
+
 exception Not_concerned
 
 let bad_config s = raise (Error_in_config_file s)
@@ -131,7 +133,7 @@ let gen ~usermode ?cache dir = function
          let status_filter, page =
            find_static_page ~request:ri ~usermode ~dir ~err
              ~pathstring:(Url.string_of_url_path ~encode:false
-                            ri.request_info.ri_sub_path) in
+                          @@ RI.sub_path ri.request_info) in
          Ocsigen_local_files.content ri page
          >>= fun answer ->
          let answer =

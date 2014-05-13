@@ -38,6 +38,8 @@ include Ocsigen_request_info
 include Ocsigen_command
 include Ocsigen_brouette
 
+module RI = Ocsigen_request_info
+
 exception Ocsigen_Looping_request
 
 
@@ -304,7 +306,7 @@ let get_hosts () = !hosts
 let get_hostname req =
   if Ocsigen_config.get_usedefaulthostname ()
   then req.request_config.default_hostname
-  else match req.request_info.ri_host with
+  else match RI.host req.request_info with
     | None -> req.request_config.default_hostname
     | Some host -> host
 
@@ -316,15 +318,15 @@ let get_hostname req =
    - or the default port set in the configuration file. *)
 let get_port req =
   if Ocsigen_config.get_usedefaulthostname ()
-  then (if req.request_info.ri_ssl
+  then (if RI.ssl req.request_info
         then req.request_config.default_httpsport
         else req.request_config.default_httpport)
-  else match req.request_info.ri_port_from_host_field with
+  else match RI.port_from_host_field req.request_info with
     | Some p -> p
     | None ->
-      match req.request_info.ri_host with
-      | Some _ -> if req.request_info.ri_ssl then 443 else 80
-      | None -> req.request_info.ri_server_port
+      match RI.host req.request_info with
+      | Some _ -> if RI.ssl req.request_info then 443 else 80
+      | None -> RI.server_port req.request_info
 
 let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 
@@ -336,14 +338,14 @@ let new_url_of_directory_request request ri =
   Ocsigen_messages.debug2 "-> Sending 301 Moved permanently";
   let port = get_port request in
   let new_url = Neturl.make_url
-      ~scheme:(if ri.ri_ssl then "https" else "http")
+      ~scheme:(if RI.ssl ri then "https" else "http")
       ~host:(get_hostname request)
-      ?port:(if (port = 80 && not ri.ri_ssl)
-             || (ri.ri_ssl && port = 443)
+      ?port:(if (port = 80 && not (RI.ssl ri))
+             || (RI.ssl ri && port = 443)
              then None
              else Some port)
-      ~path:(""::(Url.add_end_slash_if_missing ri.ri_full_path))
-      ?query:ri.ri_get_params_string
+      ~path:(""::(Url.add_end_slash_if_missing @@ RI.full_path ri))
+      ?query:(RI.get_params_string ri)
       http_url_syntax
   in new_url
 
@@ -495,30 +497,29 @@ let rec default_parse_config
                                                          Ocsigen_charset_mime.set_default_charset
                                                            oldri.request_config.charset_assoc charset } }
         in
-        match site_match oldri path oldri.request_info.ri_full_path with
+        match site_match oldri path @@ RI.full_path oldri.request_info with
         | None ->
           Ocsigen_messages.debug (fun () ->
               "site \""^
               (Url.string_of_url_path ~encode:true path)^
               "\" does not match url \""^
               (Url.string_of_url_path ~encode:true
-                 oldri.request_info.ri_full_path)^
+               @@ RI.full_path oldri.request_info)^
               "\".");
           Lwt.return (Ext_next e, cookies_to_set)
         | Some sub_path ->
           Ocsigen_messages.debug (fun () ->
               "-------- site found: url \""^
               (Url.string_of_url_path ~encode:true
-                 oldri.request_info.ri_full_path)^
+               @@ RI.full_path oldri.request_info)^
               "\" matches \""^
               (Url.string_of_url_path ~encode:true path)^"\".");
           let ri = {oldri with
-                    request_info =
-                      { oldri.request_info with
-                        ri_sub_path = sub_path;
-                        ri_sub_path_string =
-                          Url.string_of_url_path
-                            ~encode:true sub_path} }
+                    request_info = RI.update
+                        oldri.request_info
+                        ~ri_sub_path:sub_path
+                        ~ri_sub_path_string:
+                          (Url.string_of_url_path ~encode:true sub_path) () }
           in
           parse_config awake cookies_to_set (Req_not_found (e, ri))
           >>= function
@@ -906,10 +907,10 @@ let compute_result
     ?(previous_cookies = Ocsigen_cookies.Cookies.empty)
     ?(awake_next_request = false) ri =
 
-  let host = ri.ri_host in
-  let port = ri.ri_server_port in
+  let host = RI.host ri in
+  let port = RI.server_port ri in
 
-  let conn = ri.ri_client in
+  let conn = RI.client ri in
   let awake =
     if awake_next_request
     then
@@ -924,8 +925,8 @@ let compute_result
   in
 
   let rec do2 sites cookies_to_set ri =
-    ri.ri_nb_tries <- ri.ri_nb_tries + 1;
-    if ri.ri_nb_tries > Ocsigen_config.get_maxretries ()
+    RI.update_nb_tries ri (RI.nb_tries ri + 1);
+    if RI.nb_tries ri > Ocsigen_config.get_maxretries ()
     then fail Ocsigen_Looping_request
     else
       let string_of_host_option = function

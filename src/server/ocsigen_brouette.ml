@@ -15,6 +15,8 @@ open Lazy
 open Cohttp
 open Cohttp_lwt_unix
 
+module RI = Ocsigen_request_info (* An alias convenient for accessor *)
+
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
 exception Ssl_Exception
@@ -231,55 +233,46 @@ let get_request_infos
        let path_string = Url.string_of_url_path ~encode:true path in
 
        Lwt.return
-         {ri_url_string = url;
-          ri_method = meth;
-          ri_protocol = http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto;
-          ri_ssl = Lwt_ssl.is_ssl (Ocsigen_http_com.connection_fd receiver);
-          ri_full_path_string = path_string;
-          ri_full_path = path;
-          ri_original_full_path_string = path_string;
-          ri_original_full_path = path;
-          ri_sub_path = path;
-          ri_sub_path_string = Url.string_of_url_path ~encode:true path;
-          ri_get_params_string = params;
-          ri_host = headerhost;
-          ri_port_from_host_field = headerport;
-          ri_get_params = get_params;
-          ri_initial_get_params = get_params;
-          ri_post_params = post_params;
-          ri_files = files;
-          ri_remote_inet_addr = client_inet_addr;
-          ri_remote_ip = ipstring;
-          ri_remote_ip_parsed = lazy (Ipaddr.of_string_exn ipstring);
-          ri_remote_port = port_of_sockaddr sockaddr;
-          ri_forward_ip = [];
-          ri_server_port = port;
-          ri_user_agent = useragent;
-          ri_cookies_string = cookies_string;
-          ri_cookies = cookies;
-          ri_ifmodifiedsince = ifmodifiedsince;
-          ri_ifunmodifiedsince = ifunmodifiedsince;
-          ri_ifnonematch = ifnonematch;
-          ri_ifmatch = ifmatch;
-          ri_content_type = ct;
-          ri_content_type_string = ct_string;
-          ri_content_length = cl;
-          ri_referer = referer;
-          ri_origin = origin;
-          ri_access_control_request_method = access_control_request_method;
-          ri_access_control_request_headers = access_control_request_headers;
-          ri_accept = accept;
-          ri_accept_charset = accept_charset;
-          ri_accept_encoding = accept_encoding;
-          ri_accept_language = accept_language;
-          ri_http_frame = handle_expect sender_slot http_frame;
-          ri_request_cache = Polytables.create ();
-          ri_client = receiver;
-          ri_range = lazy (Ocsigen_range.get_range http_frame);
-          ri_timeofday = Unix.gettimeofday ();
-          ri_nb_tries = 0;
-          ri_connection_closed = Ocsigen_http_com.closed receiver;
-         }
+         (Ocsigen_request_info.make
+            ~ri_url_string:url
+            ~ri_method:meth
+            ~ri_protocol:http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto
+            ~ri_ssl:(Lwt_ssl.is_ssl (Ocsigen_http_com.connection_fd receiver))
+            ~ri_full_path_string:path_string
+            ~ri_full_path:path
+            ~ri_get_params_string:params
+            ~ri_host:headerhost
+            ~ri_port_from_host_field:headerport
+            ~ri_get_params:get_params
+            ~ri_post_params:post_params
+            ~ri_files:files
+            ~ri_remote_inet_addr:client_inet_addr
+            ~ri_remote_ip:ipstring
+            ~ri_remote_port:(port_of_sockaddr sockaddr)
+            ~ri_server_port:port
+            ~ri_user_agent:useragent
+            ~ri_cookies_string:cookies_string
+            ~ri_cookies:cookies
+            ~ri_ifmodifiedsince:ifmodifiedsince
+            ~ri_ifunmodifiedsince:ifunmodifiedsince
+            ~ri_ifnonematch:ifnonematch
+            ~ri_ifmatch:ifmatch
+            ~ri_content_type:ct
+            ~ri_content_type_string:ct_string
+            ~ri_content_length:cl
+            ~ri_referer:referer
+            ~ri_origin:origin
+            ~ri_access_control_request_method:access_control_request_method
+            ~ri_access_control_request_headers:access_control_request_headers
+            ~ri_accept:accept
+            ~ri_accept_charset:accept_charset
+            ~ri_accept_encoding:accept_encoding
+            ~ri_accept_language:accept_language
+            ~ri_http_frame:(handle_expect sender_slot http_frame)
+            ~ri_client:receiver
+            ~ri_range:(lazy (Ocsigen_range.get_range http_frame))
+            ()
+         )
     )
     (fun e ->
        Ocsigen_messages.debug (fun () -> "~~~ Exn during get_request_infos : "^
@@ -325,8 +318,8 @@ let handle_result_frame ri res send =
       | None   -> `Ignore_header
       | Some e ->
         if List.mem e if_none_match then
-          if ri.ri_method = Http_header.GET ||
-             ri.ri_method = Http_header.HEAD then
+          if meth ri = Http_header.GET ||
+             meth ri = Http_header.HEAD then
             `Unmodified
           else
             `Precondition_failed
@@ -361,17 +354,17 @@ let handle_result_frame ri res send =
        the order used by Apache. See the function
        modules/http/http_protocol.c/ap_meets_conditions in the Apache
        source *)
-    match handle_header if_match ri.ri_ifmatch with
+    match handle_header if_match @@ RI.ifmatch ri with
     | `Precondition_failed -> `Precondition_failed
     | `No_header | `Ignore_header ->
-      match handle_header if_unmodified_since ri.ri_ifunmodifiedsince with
+      match handle_header if_unmodified_since @@ RI.ifunmodifiedsince ri with
       | `Precondition_failed -> `Precondition_failed
       | `No_header | `Ignore_header ->
-        match handle_header if_none_match ri.ri_ifnonematch with
+        match handle_header if_none_match @@ RI.ifnonematch ri with
         | `Precondition_failed -> `Precondition_failed
         | `Ignore_header_and_ModifiedSince -> `Std
         | `Unmodified | `No_header as r1 ->
-          (match handle_header if_modified_since ri.ri_ifmodifiedsince with
+          (match handle_header if_modified_since @@ RI.ifmodifiedsince ri with
            | `Unmodified | `No_header as r2 ->
              if r1 = `No_header && r2 = `No_header then
                `Std
@@ -549,26 +542,26 @@ let service receiver sender_slot request meth url port sockaddr
              accesslog
                (try
                   let x_forwarded_for = Http_headers.find Http_headers.x_forwarded_for
-                      ri.ri_http_frame.frame_header.Http_header.headers in
+                      (RI.http_frame ri).frame_header.Http_header.headers in
                   Format.sprintf
                     "connection for %s from %s (%s) with X-Forwarded-For: %s: %s"
-                    (match ri.ri_host with
+                    (match RI.host ri with
                      | None   -> "<host not specified in the request>"
                      | Some h -> h)
-                    ri.ri_remote_ip
-                    ri.ri_user_agent
+                    (RI.remote_ip ri)
+                    (RI.user_agent ri)
                     x_forwarded_for
-                    ri.ri_url_string
+                    (RI.url_string ri)
                 with
                 | Not_found ->
                   Format.sprintf
                     "connection for %s from %s (%s): %s"
-                    (match ri.ri_host with
+                    (match RI.host ri with
                      | None   -> "<host not specified in the request>"
                      | Some h -> h)
-                    ri.ri_remote_ip
-                    ri.ri_user_agent
-                    ri.ri_url_string);
+                    (RI.remote_ip ri)
+                    (RI.user_agent ri)
+                    (RI.url_string ri));
              let send_aux =
                send sender_slot ~clientproto ~head
                  ~sender:Ocsigen_http_com.default_sender
@@ -1012,8 +1005,8 @@ let service_cohttp ~address ~port ~extensions_connector endpoint conn_id request
   let filenames = ref [] in
   let sockaddr =
     Unix.ADDR_INET
-    (Unix.inet_addr_of_string @@ Server.Endpoint.addr endpoint,
-     Server.Endpoint.port endpoint) in
+      (Unix.inet_addr_of_string @@ Server.Endpoint.addr endpoint,
+       Server.Endpoint.port endpoint) in
 
   Printf.fprintf stderr "%a%!" print_cohttp_request request;
 

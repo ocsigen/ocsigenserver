@@ -115,3 +115,247 @@ let get_server_address ri =
   match Lwt_ssl.getsockname socket with
   | Unix.ADDR_UNIX _ -> failwith "unix domain socket have no ip"
   | Unix.ADDR_INET (addr,port) -> addr,port
+
+let make
+    ~ri_url_string
+    ~ri_method
+    ~ri_protocol
+    ?(ri_ssl=false)
+    ~ri_full_path_string
+    ~ri_full_path
+    ?(ri_original_full_path_string=ri_full_path_string)
+    ?(ri_original_full_path=ri_full_path)
+    ?(ri_sub_path=ri_full_path)
+    ?(ri_sub_path_string=Url.string_of_url_path ~encode:true ri_full_path)
+    ~ri_get_params_string
+    ~ri_host
+    ~ri_port_from_host_field
+    ~ri_get_params
+    ?(ri_initial_get_params=ri_get_params)
+    ~ri_post_params
+    ~ri_files
+    ~ri_remote_inet_addr
+    ~ri_remote_ip
+    ?(ri_remote_ip_parsed=lazy (Ipaddr.of_string_exn ri_remote_ip))
+    ~ri_remote_port
+    ?(ri_forward_ip=[])
+    ~ri_server_port
+    ~ri_user_agent
+    ~ri_cookies_string
+    ~ri_cookies
+    ~ri_ifmodifiedsince
+    ~ri_ifunmodifiedsince
+    ~ri_ifnonematch
+    ~ri_ifmatch
+    ~ri_content_type
+    ~ri_content_type_string
+    ~ri_content_length
+    ~ri_referer
+    ~ri_origin
+    ~ri_access_control_request_method
+    ~ri_access_control_request_headers
+    ~ri_accept
+    ~ri_accept_charset
+    ~ri_accept_encoding
+    ~ri_accept_language
+    ~ri_http_frame
+    ?(ri_request_cache=Polytables.create ())
+    ~ri_client
+    ~ri_range
+    (* XXX: We should have this line but it would produce a circular dependency
+     * between the two modules
+     *
+     * ?(ri_range=lazy (Ocsigen_range.get_range ri_http_frame)) *)
+    ?(ri_timeofday=Unix.gettimeofday ())
+    ?(ri_nb_tries=0)
+    ?(ri_connection_closed=Ocsigen_http_com.closed ri_client)
+    () =
+  {
+    ri_url_string;
+    ri_method;
+    ri_protocol;
+    ri_ssl;
+    ri_full_path_string;
+    ri_full_path;
+    ri_original_full_path_string;
+    ri_original_full_path;
+    ri_sub_path;
+    ri_sub_path_string;
+    ri_get_params_string;
+    ri_host;
+    ri_port_from_host_field;
+    ri_get_params;
+    ri_initial_get_params;
+    ri_post_params;
+    ri_files;
+    ri_remote_inet_addr;
+    ri_remote_ip;
+    ri_remote_ip_parsed;
+    ri_remote_port;
+    ri_forward_ip;
+    ri_server_port;
+    ri_user_agent;
+    ri_cookies_string;
+    ri_cookies;
+    ri_ifmodifiedsince;
+    ri_ifunmodifiedsince;
+    ri_ifnonematch;
+    ri_ifmatch;
+    ri_content_type;
+    ri_content_type_string;
+    ri_content_length;
+    ri_referer;
+    ri_origin;
+    ri_access_control_request_method;
+    ri_access_control_request_headers;
+    ri_accept;
+    ri_accept_charset;
+    ri_accept_encoding;
+    ri_accept_language;
+    ri_http_frame;
+    ri_request_cache;
+    ri_client;
+    ri_range;
+    ri_timeofday;
+    ri_nb_tries;
+    ri_connection_closed;
+  }
+
+let update ri
+    ?(ri_url_string=ri.ri_url_string)
+    ?(ri_method=ri.ri_method)
+    ?(ri_protocol=ri.ri_protocol)
+    ?(ri_ssl=ri.ri_ssl)
+    ?(ri_full_path_string=ri.ri_full_path_string)
+    ?(ri_full_path=ri.ri_full_path)
+    ?(ri_original_full_path_string=ri.ri_original_full_path_string)
+    ?(ri_original_full_path=ri.ri_original_full_path)
+    ?(ri_sub_path=ri.ri_sub_path)
+    ?(ri_sub_path_string=ri.ri_sub_path_string)
+    ?(ri_get_params_string=ri.ri_get_params_string)
+    ?(ri_host=ri.ri_host)
+    ?(ri_port_from_host_field=ri.ri_port_from_host_field)
+    ?(ri_get_params=ri.ri_get_params)
+    ?(ri_initial_get_params=ri.ri_initial_get_params)
+    ?(ri_post_params=ri.ri_post_params)
+    ?(ri_files=ri.ri_files)
+    ?(ri_remote_inet_addr=ri.ri_remote_inet_addr)
+    ?(ri_remote_ip=ri.ri_remote_ip)
+    ?(ri_remote_ip_parsed=ri.ri_remote_ip_parsed)
+    ?(ri_remote_port=ri.ri_remote_port)
+    ?(ri_forward_ip=ri.ri_forward_ip)
+    ?(ri_server_port=ri.ri_server_port)
+    ?(ri_user_agent=ri.ri_user_agent)
+    ?(ri_cookies_string=ri.ri_cookies_string)
+    ?(ri_cookies=ri.ri_cookies)
+    ?(ri_ifmodifiedsince=ri.ri_ifmodifiedsince)
+    ?(ri_ifunmodifiedsince=ri.ri_ifunmodifiedsince)
+    ?(ri_ifnonematch=ri.ri_ifnonematch)
+    ?(ri_ifmatch=ri.ri_ifmatch)
+    ?(ri_content_type=ri.ri_content_type)
+    ?(ri_content_type_string=ri.ri_content_type_string)
+    ?(ri_content_length=ri.ri_content_length)
+    ?(ri_referer=ri.ri_referer)
+    ?(ri_origin=ri.ri_origin)
+    ?(ri_access_control_request_method=ri.ri_access_control_request_method)
+    ?(ri_access_control_request_headers=ri.ri_access_control_request_headers)
+    ?(ri_accept=ri.ri_accept)
+    ?(ri_accept_charset=ri.ri_accept_charset)
+    ?(ri_accept_encoding=ri.ri_accept_encoding)
+    ?(ri_accept_language=ri.ri_accept_language)
+    ?(ri_http_frame=ri.ri_http_frame)
+    ?(ri_request_cache=ri.ri_request_cache)
+    ?(ri_client=ri.ri_client)
+    ?(ri_range=ri.ri_range)
+    ?(ri_timeofday=ri.ri_timeofday)
+    ?(ri_nb_tries=ri.ri_nb_tries)
+    ?(ri_connection_closed=ri.ri_connection_closed)
+    () =
+  {
+    ri_url_string;
+    ri_method;
+    ri_protocol;
+    ri_ssl;
+    ri_full_path_string;
+    ri_full_path;
+    ri_original_full_path_string;
+    ri_original_full_path;
+    ri_sub_path;
+    ri_sub_path_string;
+    ri_get_params_string;
+    ri_host;
+    ri_port_from_host_field;
+    ri_get_params;
+    ri_initial_get_params;
+    ri_post_params;
+    ri_files;
+    ri_remote_inet_addr;
+    ri_remote_ip;
+    ri_remote_ip_parsed;
+    ri_remote_port;
+    ri_forward_ip;
+    ri_server_port;
+    ri_user_agent;
+    ri_cookies_string;
+    ri_cookies;
+    ri_ifmodifiedsince;
+    ri_ifunmodifiedsince;
+    ri_ifnonematch;
+    ri_ifmatch;
+    ri_content_type;
+    ri_content_type_string;
+    ri_content_length;
+    ri_referer;
+    ri_origin;
+    ri_access_control_request_method;
+    ri_access_control_request_headers;
+    ri_accept;
+    ri_accept_charset;
+    ri_accept_encoding;
+    ri_accept_language;
+    ri_http_frame;
+    ri_request_cache;
+    ri_client;
+    ri_range;
+    ri_timeofday;
+    ri_nb_tries;
+    ri_connection_closed;
+  }
+
+let update_nb_tries ri value = ri.ri_nb_tries <- value
+
+let range { ri_range; _ } = ri_range
+let url_string { ri_url_string; _ } = ri_url_string
+let protocol { ri_protocol; _ } = ri_protocol
+let http_frame { ri_http_frame; _ } = ri_http_frame
+let meth { ri_method; _ } = ri_method
+let ifmatch { ri_ifmatch; _ } = ri_ifmatch
+let ifunmodifiedsince { ri_ifunmodifiedsince; _ } = ri_ifunmodifiedsince
+let ifnonematch { ri_ifnonematch; _ } = ri_ifnonematch
+let ifmodifiedsince { ri_ifmodifiedsince; _ } = ri_ifmodifiedsince
+let remote_ip { ri_remote_ip; _ } = ri_remote_ip
+let user_agent { ri_user_agent; } = ri_user_agent
+let host { ri_host; _ } = ri_host
+let ssl { ri_ssl; _ } = ri_ssl
+let port_from_host_field { ri_port_from_host_field; _ } =
+  ri_port_from_host_field
+let server_port { ri_server_port; _ } = ri_server_port
+let full_path { ri_full_path; _ } = ri_full_path
+let get_params_string { ri_get_params_string; _ } = ri_get_params_string
+let client { ri_client; _ } = ri_client
+let nb_tries { ri_nb_tries; _ } = ri_nb_tries
+let sub_path { ri_sub_path; _ } = ri_sub_path
+let content_length { ri_content_length; _ } = ri_content_length
+let content_type_string { ri_content_type_string; _ } = ri_content_type_string
+let remote_port { ri_remote_port; _ } = ri_remote_port
+let sub_path_string { ri_sub_path_string; _ } = ri_sub_path_string
+let full_path_string { ri_full_path_string; _ } = ri_full_path_string
+let remote_inet_addr { ri_remote_inet_addr; _ } = ri_remote_inet_addr
+let forward_ip { ri_forward_ip; _ } = ri_forward_ip
+let remote_ip_parsed { ri_remote_ip_parsed; _ } = ri_remote_ip_parsed
+let content_type { ri_content_type; _ } = ri_content_type
+let origin { ri_origin; _ } = ri_origin
+let access_control_request_method { ri_access_control_request_method; _ } =
+  ri_access_control_request_method
+let access_control_request_headers { ri_access_control_request_headers; _ } =
+  ri_access_control_request_headers
