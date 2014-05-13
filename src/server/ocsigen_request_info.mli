@@ -238,3 +238,9 @@ val request_cache : request_info -> Polytables.t
 
 (** Accessor for files of request_info *)
 val files : request_info -> ((string option * Int64.t option) -> (string * file_info) list Lwt.t) option
+
+(** Accessor for original_full_path of request_info *)
+val original_full_path : request_info -> string list
+
+(** Accessor for cookies of request_info *)
+val cookies : request_info -> string CookiesTable.t Lazy.t

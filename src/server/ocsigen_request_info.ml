@@ -361,3 +361,5 @@ let access_control_request_headers { access_control_request_headers; _ } =
   access_control_request_headers
 let request_cache { request_cache; _ } = request_cache
 let files { files; _ } = files
+let original_full_path { original_full_path; _ } = original_full_path
+let cookies { cookies; _ } = cookies
