@@ -360,3 +360,4 @@ let access_control_request_method { access_control_request_method; _ } =
 let access_control_request_headers { access_control_request_headers; _ } =
   access_control_request_headers
 let request_cache { request_cache; _ } = request_cache
+let files { files; _ } = files

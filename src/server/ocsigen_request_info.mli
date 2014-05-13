@@ -235,3 +235,6 @@ val access_control_request_headers : request_info -> string list option Lazy.t
 
 (** Accessor for request_cache of request_info *)
 val request_cache : request_info -> Polytables.t
+
+(** Accessor for files of request_info *)
+val files : request_info -> ((string option * Int64.t option) -> (string * file_info) list Lwt.t) option
