@@ -24,7 +24,7 @@ open Ocsigen_extensions
 open Simplexmlparser
 open Ocsigen_http_frame
 
-
+module RI = Ocsigen_request_info
 
 (*****************************************************************************)
 (* Management of basic authentication methods *)
@@ -92,7 +92,7 @@ let parse_config = function
                let credentials =
                  Http_headers.find
                    (Http_headers.name "Authorization")
-                   ri.request_info.ri_http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers
+                   (RI.http_frame ri.request_info).Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers
                in
                let encoded =
                  let n = String.length credentials in

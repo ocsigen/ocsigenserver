@@ -26,6 +26,7 @@ external id : 'a -> 'a = "%identity"
 let (>>=) = Lwt.bind
 let (>|=) = Lwt.(>|=)
 let (!!) = Lazy.force
+let (@@) f x = f x
 
 let comp f g x = f (g x)
 let curry f x y = f (x, y)

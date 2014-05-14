@@ -131,7 +131,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
   Lwt.return (!params, !files)
 
 let of_cohttp_request ~address ~port ?(receiver=Ocsigen_http_com.dummy_receiver ())
-  filenames sockaddr conn_id request body =
+    filenames sockaddr conn_id request body =
 
   let client_inet_addr = ip_of_sockaddr sockaddr in
   let ipstring = Unix.string_of_inet_addr client_inet_addr in
@@ -219,59 +219,50 @@ let of_cohttp_request ~address ~port ?(receiver=Ocsigen_http_com.dummy_receiver 
   let path_string = Url.string_of_url_path ~encode:true path in
 
   Lwt.return
-    {
-      ri_url_string = url;
-      ri_method = meth;
-      ri_protocol = http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto;
-      ri_ssl = false;
-      ri_full_path_string = path_string;
-      ri_full_path = path;
-      ri_original_full_path_string = path_string;
-      ri_original_full_path = path;
-      ri_sub_path = path;
-      ri_sub_path_string = Url.string_of_url_path ~encode:true path;
-      ri_get_params_string = params;
-      ri_host = headerhost;
-      ri_port_from_host_field = headerport;
-      ri_get_params = get_params;
-      ri_initial_get_params = get_params;
-      ri_post_params = post_params;
-      ri_files = files;
-      ri_remote_inet_addr = client_inet_addr;
-      ri_remote_ip = ipstring;
-      ri_remote_ip_parsed = lazy (Ipaddr.of_string_exn ipstring);
-      ri_remote_port = port_of_sockaddr sockaddr;
-      ri_forward_ip = [];
-      ri_server_port = port;
-      ri_user_agent = useragent;
-      ri_cookies_string = cookies_string;
-      ri_cookies = cookies;
-      ri_ifmodifiedsince = ifmodifiedsince;
-      ri_ifunmodifiedsince = ifunmodifiedsince;
-      ri_ifnonematch = ifnonematch;
-      ri_ifmatch = ifmatch;
-      ri_content_type = ct;
-      ri_content_type_string = ct_string;
-      ri_content_length = cl;
-      ri_referer = referer;
-      ri_origin = origin;
-      ri_access_control_request_method = access_control_request_method;
-      ri_access_control_request_headers = access_control_request_headers;
-      ri_accept = accept;
-      ri_accept_charset = accept_charset;
-      ri_accept_encoding = accept_encoding;
-      ri_accept_language = accept_language;
-      ri_http_frame = http_frame; (* XXX: not tested ! *)
-      ri_request_cache = Polytables.create ();
-      ri_client = receiver; (* XXX: it's obsolete with Cohttp ! *)
-      ri_range = lazy (Ocsigen_range.get_range http_frame);
-      ri_timeofday = Unix.gettimeofday ();
-      ri_nb_tries = 0;
-      ri_connection_closed = Ocsigen_http_com.closed receiver;
-    }
+    (Ocsigen_request_info.make
+       ~url_string:url
+       ~meth:meth
+       ~protocol:http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto
+       ~full_path_string:path_string
+       ~full_path:path
+       ~get_params_string:params
+       ~host:headerhost
+       ~port_from_host_field:headerport
+       ~get_params:get_params
+       ~post_params:post_params
+       ~files:files
+       ~remote_inet_addr:client_inet_addr
+       ~remote_ip:ipstring
+       ~remote_port:(port_of_sockaddr sockaddr)
+       ~server_port:port
+       ~user_agent:useragent
+       ~cookies_string:cookies_string
+       ~cookies:cookies
+       ~ifmodifiedsince:ifmodifiedsince
+       ~ifunmodifiedsince:ifunmodifiedsince
+       ~ifnonematch:ifnonematch
+       ~ifmatch:ifmatch
+       ~content_type:ct
+       ~content_type_string:ct_string
+       ~content_length:cl
+       ~referer:referer
+       ~origin:origin
+       ~access_control_request_method:access_control_request_method
+       ~access_control_request_headers:access_control_request_headers
+       ~accept:accept
+       ~accept_charset:accept_charset
+       ~accept_encoding:accept_encoding
+       ~accept_language:accept_language
+       ~http_frame:http_frame (* XXX: not tested ! *)
+       ~client:receiver (* XXX: it's obsolete with Cohttp ! *)
+       ~range:(lazy (Ocsigen_range.get_range http_frame))
+       ()
+    )
 
-let to_cohttp_request
-    { ri_url_string; ri_http_frame; ri_protocol; _ } =
+let to_cohttp_request ri =
+  let ri_url_string = Ocsigen_request_info.url_string ri in
+  let ri_http_frame = Ocsigen_request_info.http_frame ri in
+  let ri_protocol = Ocsigen_request_info.protocol ri in
   let uri = Uri.of_string ri_url_string in
   let (request, body) =
     Ocsigen_http_frame.to_cohttp_request ri_http_frame uri in

@@ -21,6 +21,8 @@ open Ocsigen_extensions
 (* Displaying of a local file or directory. Currently used in
    staticmod and eliom_predefmod*)
 
+module RI = Ocsigen_request_info
+
 exception Failed_403
 exception Failed_404
 exception NotReadableDirectory
@@ -234,7 +236,7 @@ let content ~request ~file =
     match file with
     | RDir dirname ->
       Ocsigen_senders.Directory_content.result_of_content
-        (dirname, request.request_info.ri_full_path)
+        (dirname, RI.full_path request.request_info)
     | RFile filename ->
       Ocsigen_senders.File_content.result_of_content
         (filename,

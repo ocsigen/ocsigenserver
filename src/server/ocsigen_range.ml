@@ -99,7 +99,7 @@ let compute_range ri res =
                      res.Ocsigen_http_frame.res_headers;
                 }
       in
-      match change_range (Lazy.force ri.Ocsigen_extensions.ri_range) with
+      match change_range (Lazy.force @@ Ocsigen_request_info.range ri) with
       | None -> Lwt.return res
       | Some (_, _, Ocsigen_extensions.IR_ifmatch etag)
         when (match res.Ocsigen_http_frame.res_etag with

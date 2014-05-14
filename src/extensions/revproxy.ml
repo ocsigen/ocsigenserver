@@ -46,6 +46,8 @@ open Simplexmlparser
 open Cohttp
 open Cohttp_lwt_unix
 
+module RI = Ocsigen_request_info
+
 exception Bad_answer_from_http_server
 
 
@@ -80,12 +82,12 @@ let gen dir = function
                dir.regexp
                full
                dir.dest
-               ri.ri_ssl
-               ri.ri_host
-               ri.ri_server_port
-               ri.ri_get_params_string
-               ri.ri_sub_path_string
-               ri.ri_full_path_string
+               (RI.ssl ri)
+               (RI.host ri)
+               (RI.server_port ri)
+               (RI.get_params_string ri)
+               (RI.sub_path_string ri)
+               (RI.full_path_string ri)
            in 
            match dir.full_url with
            | Yes -> fi true
@@ -127,7 +129,7 @@ let gen dir = function
          let host = 
            match
              if dir.keephost 
-             then match ri.request_info.ri_host with 
+             then match RI.host ri.request_info with 
                | Some h -> Some h
                | None -> None
              else None 
@@ -183,12 +185,12 @@ let gen dir = function
            (* let address = Unix.string_of_inet_addr (fst (get_server_address
             * ri)) in *)
            let address = Unix.string_of_inet_addr
-               ri.Ocsigen_request_info.ri_remote_inet_addr in
+             @@ RI.remote_inet_addr ri in
            let forward = 
-             String.concat ", " (ri.ri_remote_ip :: (ri.ri_forward_ip @ [address]))
+             String.concat ", " (RI.remote_ip ri :: (RI.forward_ip ri @ [address]))
            in
            let proto =
-             if ri.ri_ssl
+             if RI.ssl ri
              then "https"
              else "http"
            in

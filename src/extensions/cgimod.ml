@@ -33,7 +33,7 @@ open Ocsigen_http_frame
 open Ocsigen_http_com
 open Ocsigen_senders
 
-
+module RI = Ocsigen_request_info
 module Regexp = Netstring_pcre
 
 exception Failed_403
@@ -196,7 +196,7 @@ let _ =
      (*"Referer"; "Host"; "Cookie"*) ]
 
 let array_environment filename re doc_root ri hostname =
-  let header = ri.ri_http_frame.Ocsigen_http_frame.frame_header in
+  let header = (RI.http_frame ri).Ocsigen_http_frame.frame_header in
   let opt = function
     | None -> ""
     | Some a -> a
@@ -244,17 +244,17 @@ let array_environment filename re doc_root ri hostname =
 
       (* Request-specific variables *)
       ["SERVER_PROTOCOL=HTTP/1.1";
-       Printf.sprintf "SERVER_PORT=%s" (string_of_int ri.ri_server_port);
+       Printf.sprintf "SERVER_PORT=%s" (string_of_int @@ RI.server_port ri);
        Printf.sprintf "REQUEST_METHOD=%s" meth;
        Printf.sprintf "PATH_INFO=%s" re.path_info;
        Printf.sprintf "PATH_TRANSLATED=" ; (* PATH_INFO virtual -> physical; unclear, so don't set *)
        Printf.sprintf "SCRIPT_NAME=%s" re.path;
-       Printf.sprintf "QUERY_STRING=%s" (opt ri.ri_get_params_string);
-       Printf.sprintf "REMOTE_ADDR=%s" ri.ri_remote_ip;
+       Printf.sprintf "QUERY_STRING=%s" (opt @@ RI.get_params_string ri);
+       Printf.sprintf "REMOTE_ADDR=%s" @@ RI.remote_ip ri;
        (* no REMOTE_HOST: implies reverse DNS resolution *)
        (* neither AUTH_TYPE, REMOTE_USER nor REMOTE_IDENT: implies authentication *)
-       Printf.sprintf "CONTENT_LENGTH=%s" (opt_int ri.ri_content_length);
-       Printf.sprintf "CONTENT_TYPE=%s"  (opt ri.ri_content_type_string)] ;
+       Printf.sprintf "CONTENT_LENGTH=%s" (opt_int @@ RI.content_length ri);
+       Printf.sprintf "CONTENT_TYPE=%s"  (opt @@ RI.content_type_string ri)] ;
 
       (* Additional headers, coming from the client *)
       [(* Document_root is defined by Apache but not in the CGI's spec *)
@@ -266,8 +266,8 @@ let array_environment filename re doc_root ri hostname =
            Printf.sprintf "HTTP_REFERER=%s" (opt (Lazy.force ri.ri_referer)); *)
 
         (* Neither in the CGI's spec nor in the HTTP headers but used, e.g., by PHP *)
-        Printf.sprintf "REMOTE_PORT=%d" ri.ri_remote_port;
-        Printf.sprintf "REQUEST_URI=%s" ri.ri_url_string ; (* FIXME: URI instead of URL ? *)
+        Printf.sprintf "REMOTE_PORT=%d" @@ RI.remote_port ri;
+        Printf.sprintf "REQUEST_URI=%s" @@ RI.url_string ri; (* FIXME: URI instead of URL ? *)
         Printf.sprintf "SCRIPT_FILENAME=%s" filename ] ;
       additionnal_headers
     ]
@@ -367,7 +367,7 @@ let recupere_cgi head re doc_root filename ri hostname =
     ignore
       (catch
          (fun () ->
-            (match ri.ri_http_frame.Ocsigen_http_frame.frame_content with
+            (match (RI.http_frame ri).Ocsigen_http_frame.frame_content with
              | None -> Lwt_unix.close post_in
              | Some content_post ->
                Ocsigen_http_com.write_stream post_in_ch content_post >>= fun () ->
@@ -468,10 +468,10 @@ let gen reg = function
       (fun () ->
          Ocsigen_messages.debug2 "--Cgimod: Is it a cgi file?";
          let (filename, re, doc_root) =
-           find_cgi_page ri reg ri.request_info.ri_sub_path
+           find_cgi_page ri reg @@ RI.sub_path ri.request_info
          in
          recupere_cgi
-           (ri.request_info.ri_method = Http_header.HEAD)
+           (RI.meth ri.request_info = Http_header.HEAD)
            re doc_root filename ri.request_info
            (Ocsigen_extensions.get_hostname ri)
          >>= fun (frame, finalizer) ->
