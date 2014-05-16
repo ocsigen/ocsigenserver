@@ -19,7 +19,8 @@ FILES := ocsigen_socket.ml      \
          ocsigen_range.ml       \
          ocsigen_http_client.ml \
          ocsigen_generate.ml    \
-         ocsigen_brouette.ml    \
+         ocsigen_cohttp_server.ml \
+         ocsigen_native_server.ml \
          ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
          ocsigen_local_files.ml \

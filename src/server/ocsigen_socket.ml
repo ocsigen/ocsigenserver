@@ -62,3 +62,28 @@ let string_of_socket_type = function
   | All -> Unix.string_of_inet_addr Unix.inet_addr_any
   | IPv4 u -> Unix.string_of_inet_addr u
   | IPv6 u -> Unix.string_of_inet_addr u
+
+let ( |> ) a f = f a
+
+let socket_type_of_string =
+  let all_ipv6 = Netstring_pcre.regexp "^\\[::\\]:([0-9]+)$" in
+  let all_ipv4 = Netstring_pcre.regexp "^\\*:([0-9]+)$" in
+  let single_ipv6 = Netstring_pcre.regexp "^\\[([0-9A-Fa-f.:]+)\\]:([0-9]+)+" in
+  let single_ipv4 = Netstring_pcre.regexp "^([0-9.]+):([0-9]+)$" in
+  let aux str =
+    let match_addr regexp = Netstring_pcre.string_match regexp str 0 in
+    let get_addr regexp = Netstring_pcre.matched_group regexp 1 str in
+    match_addr all_ipv6
+    |> function
+      | Some r -> IPv6 Unix.inet6_addr_any
+      | None -> match_addr all_ipv4
+    |> function
+      | Some r -> IPv4 Unix.inet_addr_any
+      | None -> match_addr single_ipv6
+    |> function
+      | Some r -> IPv6 (Unix.inet_addr_of_string (get_addr r))
+      | None -> match_addr single_ipv4
+    |> function
+      | Some r -> IPv4 (Unix.inet_addr_of_string (get_addr r))
+      | None -> All
+  in aux

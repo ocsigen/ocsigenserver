@@ -31,11 +31,12 @@ open Ocsigen_senders
 open Ocsigen_config
 open Ocsigen_parseconfig
 open Ocsigen_cookies
-open Ocsigen_brouette
 open Lazy
 
 open Cohttp
 open Cohttp_lwt_unix
+
+let shutdown_server _ _ = print_endline "Je suis trop flemmard pour m'éteindre."
 
 let () = Random.self_init ()
 
@@ -344,10 +345,10 @@ let start_server () = try
            );
 
          (* Lwt.wakeup wait_end_init_awakener (); *)
-
+         (*
          let config = {
            Server.callback =
-             Ocsigen_brouette.service_cohttp
+             Ocsigen_cohttp_server.service_cohttp
                ~address
                ~port
                ~extensions_connector;
@@ -368,6 +369,9 @@ let start_server () = try
              } in Server.create ~address ~port config :: process
            | None -> process
          in Lwt.join process
+         *)
+
+         Lwt.join [ Ocsigen_cohttp_server.service ~address ~port ~connector:extensions_connector ()]
 
          (*
            Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
@@ -388,8 +392,8 @@ let start_server () = try
         | Some (_, None) -> raise (Ocsigen_config.Config_file_error
                                      "SSL key is missing")
         | Some ((Some c), (Some k)) ->
-          Ssl.set_password_callback !sslctx (ask_for_passwd sslports);
-          Ssl.use_certificate !sslctx c k
+          Ssl.set_password_callback !Ocsigen_cohttp_server.ssl_context (ask_for_passwd sslports);
+          Ssl.use_certificate !Ocsigen_cohttp_server.ssl_context c k
     in
 
     let write_pid pid =

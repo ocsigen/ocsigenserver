@@ -34,14 +34,14 @@
 open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
+
 include Ocsigen_request_info
 include Ocsigen_command
-include Ocsigen_brouette
+include Ocsigen_cohttp_server
 
 module RI = Ocsigen_request_info
 
 exception Ocsigen_Looping_request
-
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
 exception Bad_config_tag_for_extension of string
@@ -367,7 +367,7 @@ let site_match request (site_path : string list) url =
   let rec aux site_path url =
     match site_path, url with
     | [], [] ->
-      raise (Ocsigen_brouette.Ocsigen_Is_a_directory
+      raise (Ocsigen_cohttp_server.Ocsigen_Is_a_directory
                (new_url_of_directory_request request))
     | [], p -> Some p
     | a::l, aa::ll when a = aa -> aux l ll
