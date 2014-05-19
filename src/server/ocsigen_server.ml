@@ -33,6 +33,7 @@ open Ocsigen_parseconfig
 open Ocsigen_cookies
 open Lazy
 
+module Make (Server : Ocsigen_common_server.S) = struct
 let shutdown_server _ _ = print_endline "Je suis trop flemmard pour m'éteindre."
 
 let () = Random.self_init ()
@@ -368,7 +369,7 @@ let start_server () = try
          in Lwt.join process
          *)
 
-         Lwt.join [ Ocsigen_cohttp_server.service ~address ~port ~connector:extensions_connector ()]
+         Lwt.join [ Server.service ~address ~port ~connector:extensions_connector ()]
 
          (*
            Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
@@ -389,8 +390,8 @@ let start_server () = try
         | Some (_, None) -> raise (Ocsigen_config.Config_file_error
                                      "SSL key is missing")
         | Some ((Some c), (Some k)) ->
-          Ssl.set_password_callback !Ocsigen_cohttp_server.ssl_context (ask_for_passwd sslports);
-          Ssl.use_certificate !Ocsigen_cohttp_server.ssl_context c k
+          Ssl.set_password_callback !Server.ssl_context (ask_for_passwd sslports);
+          Ssl.use_certificate !Server.ssl_context c k
     in
 
     let write_pid pid =
@@ -435,3 +436,6 @@ let start_server () = try
   with e ->
     let msg, errno = errmsg e in
     stop msg errno
+end
+
+include (Make(Ocsigen_cohttp_server))
