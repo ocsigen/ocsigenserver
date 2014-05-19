@@ -1,1 +1,1 @@
-include (module type of Ocsigen_common_server)
+include Ocsigen_common_server.S
