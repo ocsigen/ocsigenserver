@@ -33,9 +33,6 @@ open Ocsigen_parseconfig
 open Ocsigen_cookies
 open Lazy
 
-open Cohttp
-open Cohttp_lwt_unix
-
 let shutdown_server _ _ = print_endline "Je suis trop flemmard pour m'éteindre."
 
 let () = Random.self_init ()
