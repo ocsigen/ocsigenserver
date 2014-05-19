@@ -34,7 +34,7 @@ open Ocsigen_cookies
  * Avoids break compatibility with extensions which record commands
  * (same as request_info) *)
 include (module type of Ocsigen_command)
-include (module type of Ocsigen_common_server)
+include Ocsigen_common_server.S
 
 (* Outsources module for Eliom *)
 module RI : (module type of Ocsigen_request_info

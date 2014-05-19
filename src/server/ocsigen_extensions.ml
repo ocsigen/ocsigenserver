@@ -35,10 +35,12 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
+module Make (Server : Ocsigen_common_server.S) = struct
 include Ocsigen_request_info
 include Ocsigen_command
-include Ocsigen_cohttp_server
+include Server
 
+module Server = Server
 module RI = Ocsigen_request_info
 
 exception Ocsigen_Looping_request
@@ -716,8 +718,8 @@ let default_parse_extension ext_name = function
 
 let register_extension
     ~name
-    ?fun_site
-    ?user_fun_site
+    ?(fun_site : parse_config option)
+    ?(user_fun_site : parse_config_user option)
     ?begin_init
     ?end_init
     ?init_fun
@@ -1076,3 +1078,6 @@ let find_redirection regexp full_url dest
     | None -> raise Not_concerned
     | Some _ -> (* Matching regexp found! *)
       Netstring_pcre.global_replace regexp dest path
+end
+
+include (Make(Ocsigen_cohttp_server))
