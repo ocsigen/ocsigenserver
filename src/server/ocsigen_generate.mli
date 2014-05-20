@@ -8,7 +8,6 @@ exception Ocsigen_upload_forbidden
  * @param receiver connection of client (but it's obsolete !)
  * @param files list that will contain the files of request
  * @param sockaddr endpoit of client (ip:port)
- * @param conn_id id of connection (according to cohttp)
  * @param request cohttp request
  * @param body body of request *)
 val of_cohttp_request :
@@ -17,7 +16,6 @@ val of_cohttp_request :
   ?receiver:Ocsigen_http_com.connection ->
   string list ref ->
   Lwt_unix.sockaddr ->
-  Cohttp.Connection.t ->
   Cohttp.Request.t ->
   Cohttp_lwt_body.t -> Ocsigen_request_info.request_info Lwt.t
 
