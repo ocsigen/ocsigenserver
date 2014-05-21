@@ -379,6 +379,7 @@ let start_server () = try
         )
     in
 
+    (*
     let set_passwd_if_needed (ssl, ports, sslports) =
       if sslports <> []
       then
@@ -393,6 +394,7 @@ let start_server () = try
           Ssl.set_password_callback !Server.ssl_context (ask_for_passwd sslports);
           Ssl.use_certificate !Server.ssl_context c k
     in
+    *)
 
     let write_pid pid =
       match Ocsigen_config.get_pidfile () with
@@ -412,7 +414,7 @@ let start_server () = try
       | [] -> ()
       | [h] ->
         let user_info, sslinfo, threadinfo = extract_info h in
-        set_passwd_if_needed sslinfo;
+        (* set_passwd_if_needed sslinfo; *)
         if (get_daemon ())
         then
           let pid = Unix.fork () in

@@ -15,14 +15,10 @@ open Lazy
 open Cohttp
 open Cohttp_lwt_unix
 
-(* Include SSL context *)
-include Ocsigen_common_server.SSLContext
-
 module RI = Ocsigen_request_info (* An alias convenient for accessor *)
 
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
-
 
 (** print_cohttp_request Print request for debug
  * @param out_ch output for debug
@@ -146,8 +142,13 @@ let stop _ _ = ()
 
 let number_of_client () = 0
 
-let service ~address ~port ~connector () =
+let service ?ssl ~address ~port ~connector () =
   let conn_closed _ () = () in
   let callback = handler ~address ~port ~extensions_connector:connector in
   let config = { Server.callback; Server.conn_closed; } in
-  Server.create ~address ~port config
+  match ssl with
+   | None -> Server.create ~address ~port config
+   | Some (crt, key, password) ->
+       Server.create
+       ~mode:(`SSL (`Crt_file_path crt, `Key_file_path key, password))
+       ~address ~port config
