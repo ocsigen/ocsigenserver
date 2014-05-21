@@ -13,15 +13,17 @@ open Ocsigen_generate
 open Ocsigen_common_server
 open Lazy
 
-(* Include SSL context *)
-include Ocsigen_common_server.SSLContext
-
 module RI = Ocsigen_request_info (* An alias convenient for accessor *)
 
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
 exception Ssl_Exception
 exception Socket_closed
+
+let () = Ssl_threads.init ()
+let () = Ssl.init ()
+
+let ssl_context = ref (Ssl.create_context Ssl.SSLv23 Ssl.Both_context)
 
 (* XXX: This is not the right place ! *)
 let shutdown = ref false
@@ -755,11 +757,20 @@ let rec wait_connection use_ssl port socket extensions_connector =
  * @param port port to bind server
  * @param wait_end_init fix point to wait the initialization *)
 
-let listen use_ssl (addr, port) wait_end_init extensions_connector =
+let listen ?ssl (addr, port) wait_end_init extensions_connector =
   let listening_sockets =
     try
       let sockets = make_sockets addr port in
-      List.iter (fun x -> Lwt_unix.listen x 1024) sockets;
+      List.iter (fun x ->
+        Lwt_unix.listen x 1024;
+        (match ssl with
+         | None -> ()
+         | Some (crt, key, Some password) ->
+           begin Ssl.set_password_callback !ssl_context password;
+           Ssl.use_certificate !ssl_context crt key end
+         | Some (crt, key, None) ->
+           Ssl.use_certificate !ssl_context crt key);
+        ) sockets;
       sockets
     with
     | Unix.Unix_error (Unix.EACCES, _, _) ->
@@ -771,11 +782,12 @@ let listen use_ssl (addr, port) wait_end_init extensions_connector =
     | exn ->
       stop ("Fatal - Uncaught exception: " ^ Printexc.to_string exn) 100
   in
+  let use_ssl = (match ssl with | Some _ -> true | None -> false) in
   Lwt_list.iter_p (fun x ->
       wait_end_init >>= fun () ->
       wait_connection use_ssl port x extensions_connector)
     listening_sockets
 
-let service ~address ~port ~connector () =
+let service ?ssl ~address ~port ~connector () =
   let wait_end_init = Lwt.return () in
-  listen false (Ocsigen_socket.socket_type_of_string address, port) wait_end_init connector
+  listen ?ssl (Ocsigen_socket.socket_type_of_string address, port) wait_end_init connector
