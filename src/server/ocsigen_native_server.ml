@@ -13,6 +13,9 @@ open Ocsigen_generate
 open Ocsigen_common_server
 open Lazy
 
+(* Include SSL context *)
+include Ocsigen_common_server.SSLContext
+
 module RI = Ocsigen_request_info (* An alias convenient for accessor *)
 
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
@@ -25,8 +28,6 @@ let shutdown = ref false
 
 let stop m n =
   errlog m; exit n
-
-let ssl_context = Ocsigen_http_client.sslcontext
 
 let warn sockaddr s =
   let ip = Unix.string_of_inet_addr (ip_of_sockaddr sockaddr) in

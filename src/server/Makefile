@@ -19,6 +19,7 @@ FILES := ocsigen_socket.ml      \
          ocsigen_range.ml       \
          ocsigen_http_client.ml \
          ocsigen_generate.ml    \
+         ocsigen_common_server.ml \
          ocsigen_cohttp_server.ml \
          ocsigen_native_server.ml \
          ocsigen_extensions.ml  \

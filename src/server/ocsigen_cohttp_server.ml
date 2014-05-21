@@ -15,12 +15,14 @@ open Lazy
 open Cohttp
 open Cohttp_lwt_unix
 
+(* Include SSL context *)
+include Ocsigen_common_server.SSLContext
+
 module RI = Ocsigen_request_info (* An alias convenient for accessor *)
 
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
 
-let ssl_context = Ocsigen_http_client.sslcontext
 
 (** print_cohttp_request Print request for debug
  * @param out_ch output for debug

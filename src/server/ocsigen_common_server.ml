@@ -14,6 +14,9 @@ module type S = sig
     unit -> unit Lwt.t
 end
 
-module SSLContext : sig
-  val ssl_context : Ssl.context ref
+let () = Ssl_threads.init ()
+let () = Ssl.init ()
+
+module SSLContext = struct
+  let ssl_context = ref (Ssl.create_context Ssl.SSLv23 Ssl.Both_context)
 end
