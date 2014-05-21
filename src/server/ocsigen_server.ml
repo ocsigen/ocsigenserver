@@ -185,7 +185,7 @@ let start_server () = try
           ~awake_next_request:true ri)
     in
 
-    let run (user, group) (_, ports, sslports) (minthreads, maxthreads) s =
+    let run (user, group) (ssl, ports, sslports) (minthreads, maxthreads) s =
 
       Lwt_unix.run (Ocsigen_messages.open_files ~user ~group ());
 
@@ -200,12 +200,29 @@ let start_server () = try
              (fun a i -> (listen true i wait_end_init extensions_connector)@a) [] sslports;
           *)
 
-         let address, port = match ports with
-           | (a, p) :: _ -> (Ocsigen_socket.string_of_socket_type a, p)
-           | [] -> ("0.0.0.0", 80) in
-         let ssl = match sslports with
-           | (a, p) :: _ -> Some (Ocsigen_socket.string_of_socket_type a, p)
-           | [] -> None in
+          let connection = match List.map
+            (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p) ports with
+            | [] -> [("0.0.0.0", 80)]
+            | l -> l
+          in
+
+          let ssl_connection =
+            let ssl = match ssl with
+              | None
+              | Some (None, None) -> None
+              | Some (Some crt, Some key) -> Some (crt, key)
+              | Some (Some _, None) ->
+                raise (Ocsigen_config.Config_file_error "SSL key is missing")
+              | Some (None, Some _) ->
+                raise (Ocsigen_config.Config_file_error "SSL certificate is missing")
+            in match List.map
+              (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p)
+              sslports, ssl with
+              | [], Some (crt, key) -> [("0.0.0.0", 443, (crt, key))]
+              | l, Some (crt, key) ->
+                List.map (fun (a, p) -> (a, p, (crt, key))) l
+              | _ -> []
+          in
 
          begin match ports with
            | (_, p)::_ -> Ocsigen_config.set_default_port p
@@ -369,8 +386,17 @@ let start_server () = try
          in Lwt.join process
          *)
 
-         Lwt.join [ Server.service ~address ~port ~connector:extensions_connector ()]
-
+         Lwt.join
+          ((List.map (fun (address, port) -> Server.service
+            ~address
+            ~port
+            ~connector:extensions_connector ()) connection)
+          @
+          (List.map (fun (address, port, (crt, key)) -> Server.service
+            ~ssl:(crt, key, Some (ask_for_passwd [(address, port)]))
+            ~address
+            ~port
+            ~connector:extensions_connector ())) ssl_connection)
          (*
            Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
 
