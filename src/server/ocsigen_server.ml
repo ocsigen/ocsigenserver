@@ -34,7 +34,8 @@ open Ocsigen_cookies
 open Lazy
 
 module Make (Server : Ocsigen_common_server.S) = struct
-let shutdown_server _ _ = print_endline "Je suis trop flemmard pour m'éteindre."
+(* let shutdown_server _ _ = print_endline "Je suis trop flemmard pour
+ * m'éteindre." *)
 
 let () = Random.self_init ()
 
@@ -135,7 +136,10 @@ let _ =
       Lwt.return ()
     | ["reload"] -> reload (); Lwt.return ()
     | ["reload"; file] -> reload ~file (); Lwt.return ()
-    | "shutdown"::l -> shutdown_server s l; Lwt.return ()
+    | ["shutdown"] -> Server.shutdown_server None; Lwt.return ()
+    | ["shutdown"; f] ->
+      Server.shutdown_server (Some (float_of_string f));
+      Lwt.return ()
     | ["gc"] ->
       Gc.compact ();
       Ocsigen_messages.warning "Heap compaction requested by user";
@@ -463,7 +467,7 @@ let start_server () = try
 
   with e ->
     let msg, errno = errmsg e in
-    stop msg errno
+      errlog msg; exit errno
 end
 
-include (Make(Ocsigen_cohttp_server))
+include (Make(Ocsigen_native_server))

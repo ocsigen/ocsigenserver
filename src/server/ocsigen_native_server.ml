@@ -25,7 +25,6 @@ let () = Ssl.init ()
 
 let ssl_context = ref (Ssl.create_context Ssl.SSLv23 Ssl.Both_context)
 
-(* XXX: This is not the right place ! *)
 let shutdown = ref false
 
 let stop m n =
@@ -496,13 +495,12 @@ let add_to_receivers_waiting_for_pipeline,
         (Lwt.return ())
         l))
 
-(*
-
 (** shutdown_server shutdown the server
- * @param s string of command
- * @param l parameter of this commande *)
+ * @param timeout time-out of server
+ *)
 
-let shutdown_server s l =
+let shutdown_server timeout =
+(*
   try
     let timeout = match l with
       | [] -> Ocsigen_config.get_shutdown_timeout ()
@@ -511,6 +509,7 @@ let shutdown_server s l =
         Some (float_of_string t)
       | _ -> failwith "syntax error in command"
     in
+*)
     Ocsigen_messages.warning "Shutting down";
     List.iter
       (fun s -> Lwt_unix.abort s Socket_closed) !sockets;
@@ -519,7 +518,7 @@ let shutdown_server s l =
     sockets := [];
     sslsockets := [];
     shutdown := true;
-    if get_number_of_connected () <= 0
+    if number_of_client () <= 0
     then exit 0;
     (match timeout with
      | Some t -> ignore (Lwt_unix.sleep t >>= fun () -> exit 0)
@@ -530,10 +529,10 @@ let shutdown_server s l =
             (*VVV reread this - why are we using infinite iterators? *)
             Ocsigen_http_com.wait_all_senders receiver >>= fun () ->
             Ocsigen_http_com.abort receiver;
-            Lwt.return ()));
+            Lwt.return ()))
+(*
   with Failure e ->
     Ocsigen_messages.warning ("Wrong command: " ^ s ^ " (" ^ e ^ ")")
-
 *)
 
 (** handle_connection handle a connection to service and respect order of

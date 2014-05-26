@@ -138,17 +138,38 @@ let handler ~address ~port ~extensions_connector endpoint request body =
                   a (Printexc.to_string e)))
            !filenames; Lwt.return ())
 
-let stop _ _ = ()
+let shutdown = ref true
+let really_stop, stop_wakener = Lwt.wait ()
+
+let shutdown_server timeout =
+  shutdown := false;
+
+  let process = match timeout with
+  | Some f -> (fun () -> Lwt_unix.sleep f)
+  | None -> (fun () -> Lwt.return ())
+  in let waiter () = really_stop >>= fun () -> Lwt.return ()
+  in ignore
+    begin
+      shutdown := false;
+
+      (Lwt.pick [process (); waiter ()])
+        >>= fun () -> exit 0
+      (* XXX: actually, deadlock with Lwt, cf. Lwt#48 *)
+    end
 
 let number_of_client () = 0
 
 let service ?ssl ~address ~port ~connector () =
   let conn_closed _ () = () in
   let callback = handler ~address ~port ~extensions_connector:connector in
+  let stop () = !shutdown in
   let config = { Server.callback; Server.conn_closed; } in
-  match ssl with
-   | None -> Server.create ~address ~port config
+  (match ssl with
+   | None -> Server.create ~stop ~address ~port config
    | Some (crt, key, password) ->
        Server.create
+       ~stop
        ~mode:(`SSL (`Crt_file_path crt, `Key_file_path key, password))
-       ~address ~port config
+       ~address ~port config)
+  >>= fun () ->
+    Lwt.return (Lwt.wakeup stop_wakener ())
