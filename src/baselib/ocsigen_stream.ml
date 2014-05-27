@@ -261,11 +261,11 @@ let of_lwt_stream promotion stream =
  * @param stream a Ocsigen_stream.t
 *)
 
-let to_lwt_stream ?(is_empty=(fun _ -> false)) stream =
-  let stream = ref (get stream) in
+let to_lwt_stream ?(is_empty=(fun _ -> false)) o_stream =
+  let stream = ref (get o_stream) in
   let rec wrap () =
     next !stream >>= function
-    | Finished None -> Lwt.return None
+    | Finished None -> o_stream.finalizer `Success >>= fun () -> Lwt.return None
     | Finished (Some next) -> stream := next; wrap ()
     | Cont (value, next) ->
       stream := next;
