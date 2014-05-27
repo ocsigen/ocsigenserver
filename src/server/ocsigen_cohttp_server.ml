@@ -52,8 +52,6 @@ let handler ~address ~port ~extensions_connector endpoint request body =
       (Unix.inet_addr_of_string @@ Server.Connection.addr endpoint,
        Server.Connection.port endpoint) in
 
-  Printf.fprintf stderr "%a%!" print_cohttp_request request;
-
   let handle_error exn =
     let string_of_exn = Printexc.to_string exn in
 
