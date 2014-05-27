@@ -470,4 +470,4 @@ let start_server () = try
       errlog msg; exit errno
 end
 
-include (Make(Ocsigen_native_server))
+include (Make(Ocsigen_cohttp_server))

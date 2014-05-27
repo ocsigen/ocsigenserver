@@ -1080,4 +1080,4 @@ let find_redirection regexp full_url dest
       Netstring_pcre.global_replace regexp dest path
 end
 
-include (Make(Ocsigen_native_server))
+include (Make(Ocsigen_cohttp_server))
