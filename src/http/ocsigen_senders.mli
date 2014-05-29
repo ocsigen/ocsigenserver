@@ -23,9 +23,6 @@ module File_content : Ocsigen_http_frame.HTTP_CONTENT
   with  type t =
    string * Ocsigen_charset_mime.charset_assoc * Ocsigen_charset_mime.mime_assoc
 
-module Xhtml_content :
-  Ocsigen_http_frame.HTTP_CONTENT with type t = Xhtml.M.doc
-
 module Html5_content :
   Ocsigen_http_frame.HTTP_CONTENT with type t = Html5.M.doc
 
