@@ -23,20 +23,21 @@ open Ocsigen_lib
 exception Config_file_error of string
 
 (* General config *)
-let config_file = ref "_CONFIGDIR_/_PROJECTNAME_.conf"
+let config_file = ref "%%_CONFIG_DIR_%%/%%_PROJECT_NAME_%%.conf"
 let verbose = ref false
 let silent = ref false
 let daemon = ref false
 let veryverbose = ref false
-let version_number = (**)"0000000000000000"(**)
+let version_number = "%%_VERSION_%%"
 let pidfile = ref None
 let server_name = "Ocsigen"
 let full_server_name = server_name^"/"^version_number
-let is_native = _ISNATIVE_
+let is_native = %%_IS_NATIVE_%%
 let native_ext = if is_native then ".opt" else ""
 
 let builtin_packages =
-  List.fold_left (fun a s -> String.Set.add s a) String.Set.empty [_DEPS_]
+  List.fold_left (fun a s -> String.Set.add s a)
+    String.Set.empty [%%_DEPENDENCES_%%]
 
 module Fake_preempt =
 struct
@@ -47,10 +48,10 @@ end
 
 (* Server config: *)
 let (uploaddir : string option ref) = ref None
-let logdir = ref (Some ("_LOGDIR_"))
+let logdir = ref (Some ("%%_LOGDIR_%%"))
 let syslog_facility = ref None
-let default_user = ref "_OCSIGENUSER_"
-let default_group = ref "_OCSIGENGROUP_"
+let default_user = ref "%%_OCSIGEN_USER_%%"
+let default_group = ref "%%_OCSIGEN_GROUP_%%"
 let minthreads = ref 10
 let maxthreads = ref 30
 let max_number_of_connections = ref 350
@@ -65,12 +66,12 @@ let maxrequestbodysize = ref (Some (Int64.of_int 8000000))
 let maxrequestbodysizeinmemory = ref 8192
 let maxuploadfilesize = ref (Some (Int64.of_int 2000000))
 let defaultcharset = ref (None : string option)
-let datadir = ref "_DATADIR_"
-let bindir = ref "_BINDIR_"
-let extdir = ref "_EXTDIR_"
+let datadir = ref "%%_DATA_DIR_%%"
+let bindir = ref "%%_BIN_DIR_%%"
+let extdir = ref "%%_EXT_DIR_%%"
 let user = ref (Some !default_user)
 let group = ref (Some !default_group)
-let command_pipe = ref "_COMMANDPIPE_"
+let command_pipe = ref "%%_COMMAND_PIPE_%%"
 let debugmode = ref false
 let disablepartialrequests = ref false
 let usedefaulthostname = ref false
@@ -93,7 +94,7 @@ let set_veryverbose () = verbose := true; veryverbose := true
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i
 let set_max_number_of_threads_queued =
-  _PREEMTIMPLEM_.set_max_number_of_threads_queued
+  %%_PREEMPTIVE_%%.set_max_number_of_threads_queued
 let set_max_number_of_connections i = max_number_of_connections := i
 let set_client_timeout i = silent_client_timeout := i
 let set_server_timeout i = silent_server_timeout := i
@@ -139,7 +140,7 @@ let get_default_group () = !default_group
 let get_minthreads () = !minthreads
 let get_maxthreads () = !maxthreads
 let get_max_number_of_threads_queued =
-  _PREEMTIMPLEM_.get_max_number_of_threads_queued
+  %%_PREEMPTIVE_%%.get_max_number_of_threads_queued
 let get_max_number_of_connections () = !max_number_of_connections
 let get_client_timeout () = !silent_client_timeout
 let get_server_timeout () = !silent_server_timeout
@@ -172,4 +173,4 @@ let display_version () =
   exit 0
 
 let init_preempt =
-  _PREEMTIMPLEM_.init
+  %%_PREEMPTIVE_%%.init

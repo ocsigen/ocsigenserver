@@ -1,0 +1,9 @@
+# OASIS_START
+# DO NOT EDIT (digest: a71c36ed00a57e1385c88baa2375e375)
+Ocsigen_extensions
+Ocsigen_range
+Ocsigen_parseconfig
+Ocsigen_http_client
+Ocsigen_local_files
+Ocsigen_server
+# OASIS_STOP

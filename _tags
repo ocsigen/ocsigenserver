@@ -1,0 +1,138 @@
+# OASIS_START
+# DO NOT EDIT (digest: bf14a759863e3dc45a14b1eef7a5afdc)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library ocsigenserver
+"src/ocsigenserver.cmxs": use_ocsigenserver
+# Library polytables
+"src/polytables/polytables.cmxs": use_polytables
+# Library commandline
+"src/commandline/yes/commandline.cmxs": use_commandline
+# Library nocommandline
+"src/commandline/no/nocommandline.cmxs": use_nocommandline
+# Library baselib
+"src/baselib/baselib.cmxs": use_baselib
+<src/baselib/*.ml{,i}>: package(cryptokit)
+<src/baselib/*.ml{,i}>: package(dynlink)
+<src/baselib/*.ml{,i}>: package(findlib)
+<src/baselib/*.ml{,i}>: package(ipaddr)
+<src/baselib/*.ml{,i}>: package(lwt)
+<src/baselib/*.ml{,i}>: package(lwt.extra)
+<src/baselib/*.ml{,i}>: package(lwt.syntax)
+<src/baselib/*.ml{,i}>: package(netstring)
+<src/baselib/*.ml{,i}>: package(netstring-pcre)
+<src/baselib/*.ml{,i}>: package(threads)
+<src/baselib/*.ml{,i}>: package(tyxml)
+<src/baselib/*.ml{,i}>: use_commandline
+# Library http
+"src/http/http.cmxs": use_http
+<src/http/*.ml{,i}>: package(cryptokit)
+<src/http/*.ml{,i}>: package(dynlink)
+<src/http/*.ml{,i}>: package(findlib)
+<src/http/*.ml{,i}>: package(ipaddr)
+<src/http/*.ml{,i}>: package(lwt)
+<src/http/*.ml{,i}>: package(lwt.extra)
+<src/http/*.ml{,i}>: package(lwt.ssl)
+<src/http/*.ml{,i}>: package(lwt.syntax)
+<src/http/*.ml{,i}>: package(netstring)
+<src/http/*.ml{,i}>: package(netstring-pcre)
+<src/http/*.ml{,i}>: package(threads)
+<src/http/*.ml{,i}>: package(tyxml)
+<src/http/*.ml{,i}>: use_baselib
+<src/http/*.ml{,i}>: use_commandline
+# Library server
+"src/server/server.cmxs": use_server
+<src/server/*.ml{,i}>: package(cryptokit)
+<src/server/*.ml{,i}>: package(dynlink)
+<src/server/*.ml{,i}>: package(findlib)
+<src/server/*.ml{,i}>: package(ipaddr)
+<src/server/*.ml{,i}>: package(lwt)
+<src/server/*.ml{,i}>: package(lwt.extra)
+<src/server/*.ml{,i}>: package(lwt.ssl)
+<src/server/*.ml{,i}>: package(lwt.syntax)
+<src/server/*.ml{,i}>: package(lwt.unix)
+<src/server/*.ml{,i}>: package(netstring)
+<src/server/*.ml{,i}>: package(netstring-pcre)
+<src/server/*.ml{,i}>: package(threads)
+<src/server/*.ml{,i}>: package(tyxml)
+<src/server/*.ml{,i}>: package(tyxml.parser)
+<src/server/*.ml{,i}>: use_baselib
+<src/server/*.ml{,i}>: use_commandline
+<src/server/*.ml{,i}>: use_http
+<src/server/*.ml{,i}>: use_polytables
+# Library ext
+"src/extensions/ext.cmxs": use_ext
+# Object staticmod
+<src/extensions/*.ml{,i}>: package(cryptokit)
+<src/extensions/*.ml{,i}>: package(dynlink)
+<src/extensions/*.ml{,i}>: package(findlib)
+<src/extensions/*.ml{,i}>: package(ipaddr)
+<src/extensions/*.ml{,i}>: package(lwt)
+<src/extensions/*.ml{,i}>: package(lwt.extra)
+<src/extensions/*.ml{,i}>: package(lwt.ssl)
+<src/extensions/*.ml{,i}>: package(lwt.syntax)
+<src/extensions/*.ml{,i}>: package(lwt.unix)
+<src/extensions/*.ml{,i}>: package(netstring)
+<src/extensions/*.ml{,i}>: package(netstring-pcre)
+<src/extensions/*.ml{,i}>: package(threads)
+<src/extensions/*.ml{,i}>: package(tyxml)
+<src/extensions/*.ml{,i}>: package(tyxml.parser)
+<src/extensions/*.ml{,i}>: use_baselib
+<src/extensions/*.ml{,i}>: use_commandline
+<src/extensions/*.ml{,i}>: use_http
+<src/extensions/*.ml{,i}>: use_ocsigenserver
+<src/extensions/*.ml{,i}>: use_polytables
+<src/extensions/*.ml{,i}>: use_server
+# Executable ocsigenserver
+"bin/server_main.native": package(cryptokit)
+"bin/server_main.native": package(dynlink)
+"bin/server_main.native": package(findlib)
+"bin/server_main.native": package(ipaddr)
+"bin/server_main.native": package(lwt)
+"bin/server_main.native": package(lwt.extra)
+"bin/server_main.native": package(lwt.ssl)
+"bin/server_main.native": package(lwt.syntax)
+"bin/server_main.native": package(lwt.unix)
+"bin/server_main.native": package(netstring)
+"bin/server_main.native": package(netstring-pcre)
+"bin/server_main.native": package(threads)
+"bin/server_main.native": package(tyxml)
+"bin/server_main.native": package(tyxml.parser)
+"bin/server_main.native": use_baselib
+"bin/server_main.native": use_commandline
+"bin/server_main.native": use_http
+"bin/server_main.native": use_polytables
+"bin/server_main.native": use_server
+<bin/*.ml{,i}>: package(cryptokit)
+<bin/*.ml{,i}>: package(dynlink)
+<bin/*.ml{,i}>: package(findlib)
+<bin/*.ml{,i}>: package(ipaddr)
+<bin/*.ml{,i}>: package(lwt)
+<bin/*.ml{,i}>: package(lwt.extra)
+<bin/*.ml{,i}>: package(lwt.ssl)
+<bin/*.ml{,i}>: package(lwt.syntax)
+<bin/*.ml{,i}>: package(lwt.unix)
+<bin/*.ml{,i}>: package(netstring)
+<bin/*.ml{,i}>: package(netstring-pcre)
+<bin/*.ml{,i}>: package(threads)
+<bin/*.ml{,i}>: package(tyxml)
+<bin/*.ml{,i}>: package(tyxml.parser)
+<bin/*.ml{,i}>: use_baselib
+<bin/*.ml{,i}>: use_commandline
+<bin/*.ml{,i}>: use_http
+<bin/*.ml{,i}>: use_polytables
+<bin/*.ml{,i}>: use_server
+# OASIS_STOP
+
+<src/baselib/*.ml{,i}>: syntax(camlp4o)

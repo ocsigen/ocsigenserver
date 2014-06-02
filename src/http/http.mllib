@@ -1,0 +1,13 @@
+# OASIS_START
+# DO NOT EDIT (digest: 7da4ddb4f75ad152446fe917632d7320)
+Ocsigen_cookies
+Ocsigen_http_frame
+Ocsigen_headers
+Ocsigen_http_com
+Ocsigen_charset_mime
+Ocsigen_senders
+Multipart
+Http_lexer
+Http_headers
+Framepp
+# OASIS_STOP
