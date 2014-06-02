@@ -45,12 +45,9 @@ let print_cohttp_request out_ch request =
          (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
     request.headers
 
-let handler ~address ~port ~extensions_connector endpoint request body =
+let handler ~address ~port ~extensions_connector (edn, conn) request body =
   let filenames = ref [] in
-  let sockaddr =
-    Unix.ADDR_INET
-      (Unix.inet_addr_of_string @@ Server.Connection.addr endpoint,
-       Server.Connection.port endpoint) in
+  let sockaddr = Lwt_unix_conduit.sockname edn in
 
   let handle_error exn =
     let string_of_exn = Printexc.to_string exn in
@@ -136,23 +133,17 @@ let handler ~address ~port ~extensions_connector endpoint request body =
                   a (Printexc.to_string e)))
            !filenames; Lwt.return ())
 
-let shutdown = ref true
-let really_stop, stop_wakener = Lwt.wait ()
+let stop, stop_wakener = Lwt.wait ()
 
 let shutdown_server timeout =
-  shutdown := false;
-
   let process = match timeout with
-  | Some f -> (fun () -> Lwt_unix.sleep f)
-  | None -> (fun () -> Lwt.return ())
-  in let waiter () = really_stop >>= fun () -> Lwt.return ()
+    | Some f -> (fun () -> Lwt_unix.sleep f)
+    | None -> (fun () -> Lwt.return ())
   in ignore
     begin
-      shutdown := false;
-
-      (Lwt.pick [process (); waiter ()])
-        >>= fun () -> exit 0
-      (* XXX: actually, deadlock with Lwt, cf. Lwt#48 *)
+      (Lwt.pick [process (); stop])
+      >>= fun () -> exit 0
+    (* XXX: actually, deadlock with Lwt, cf. Lwt#48 *)
     end
 
 let number_of_client () = 0
@@ -160,14 +151,26 @@ let number_of_client () = 0
 let service ?ssl ~address ~port ~connector () =
   let conn_closed _ () = () in
   let callback = handler ~address ~port ~extensions_connector:connector in
-  let stop () = !shutdown in
   let config = { Server.callback; Server.conn_closed; } in
   (match ssl with
-   | None -> Server.create ~stop ~address ~port config
-   | Some (crt, key, password) ->
-       Server.create
+   | None -> Server.create ~stop ~mode:(`TCP (`Port port)) config
+   | Some (crt, key, Some password) ->
+     Server.create
        ~stop
-       ~mode:(`SSL (`Crt_file_path crt, `Key_file_path key, password))
-       ~address ~port config)
+       ~mode:(`SSL
+                (`Crt_file_path crt,
+                 `Key_file_path key,
+                 `Password password,
+                 `Port port))
+       config
+   | Some (crt, key, None) ->
+     Server.create
+       ~stop
+       ~mode:(`SSL
+                (`Crt_file_path crt,
+                 `Key_file_path key,
+                 `No_password,
+                 `Port port))
+       config)
   >>= fun () ->
-    Lwt.return (Lwt.wakeup stop_wakener ())
+  Lwt.return (Lwt.wakeup stop_wakener ())

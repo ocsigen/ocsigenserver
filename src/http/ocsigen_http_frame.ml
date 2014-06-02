@@ -225,6 +225,7 @@ struct
   let proto_of_cohttp_version = function
     | `HTTP_1_0 -> HTTP10
     | `HTTP_1_1 -> HTTP11
+    | _ -> raise (Invalid_argument "Http_header.proto_of_cohttp_version")
   let proto_to_cohttp_version = function
     | HTTP10 -> `HTTP_1_0
     | HTTP11 -> `HTTP_1_1
@@ -234,12 +235,14 @@ struct
     | `HEAD -> HEAD
     | `PUT -> PUT
     | `DELETE -> DELETE
-    | `TRACE -> TRACE
     | `OPTIONS -> OPTIONS
-    | `CONNECT -> CONNECT
-    | `LINK -> LINK
-    | `UNLINK -> UNLINK
     | `PATCH -> PATCH
+    | `Other "TRACE" -> TRACE
+    | `Other "CONNECT" -> CONNECT
+    | `Other "LINK" -> LINK
+    | `Other "UNLINK" -> UNLINK
+    | `Other _ -> raise (Invalid_argument "Http_header.meth_of_cohttp_meth")
+
   let meth_to_cohttp_meth = function
     | GET -> `GET
     | POST -> `POST
@@ -248,8 +251,10 @@ struct
     | DELETE -> `DELETE
     | OPTIONS -> `OPTIONS
     | PATCH -> `PATCH
-    | _ -> raise
-             (Invalid_argument "Ocsigen_http_frame.Http_header.meth_to_cohttp_meth")
+    | UNLINK -> `Other "UNLINK"
+    | LINK -> `Other "LINK"
+    | TRACE -> `Other "TRACE"
+    | CONNECT -> `Other "CONNECT"
 
   let of_cohttp_header headers =
     Cohttp.Header.fold
