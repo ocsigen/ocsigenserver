@@ -82,11 +82,6 @@ servertop: ${SERVERLIBS}
 %.o: %.c
 	$(OCAMLC) -c $<
 
-%.gmli: %.ml
-	$(OCAMLC) ${LIBS} -i $< > $@
-
-type: $(FILES:.ml=.gmli)
-
 ## Clean up
 
 clean:
@@ -104,8 +99,3 @@ depend: ${PREDEP}
 
 FORCE:
 -include .depend
-
-type: $(FILES:.ml=.gmli)
-
-%.gmli: %.ml
-	$(OCAMLC) ${LIBS} -i $< > $@
