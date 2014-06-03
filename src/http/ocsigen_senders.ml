@@ -77,7 +77,6 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
 
   end
 
-module Xhtml_content = Make_XML_Content(Xml)(Xhtml.M)
 module Html5_content = Make_XML_Content(Xml)(Html5.M)
 
 
@@ -476,11 +475,11 @@ module Error_content =
     let get_etag ?options c = None
 
     let error_page s msg c =
-      Xhtml.M.html
-        (Xhtml.M.head (Xhtml.M.title (Xhtml.M.pcdata s)) [])
-        (Xhtml.M.body
-           (Xhtml.M.h1 [Xhtml.M.pcdata msg]::
-            Xhtml.M.p [Xhtml.M.pcdata s]::
+      Html5.M.html
+        (Html5.M.head (Html5.M.title (Html5.M.pcdata s)) [])
+        (Html5.M.body
+           (Html5.M.h1 [Html5.M.pcdata msg]::
+            Html5.M.p [Html5.M.pcdata s]::
             c)
         )
 
@@ -515,11 +514,11 @@ module Error_content =
             error_page
               ("Error "^str_code)
               error_msg
-              [Xhtml.M.p
-                 [Xhtml.M.pcdata (Printexc.to_string exn);
-                  Xhtml.M.br ();
-                  Xhtml.M.em
-                    [Xhtml.M.pcdata "(Ocsigen running in debug mode)"]
+              [Html5.M.p
+                 [Html5.M.pcdata (Printexc.to_string exn);
+                  Html5.M.br ();
+                  Html5.M.em
+                    [Html5.M.pcdata "(Ocsigen running in debug mode)"]
                 ]]
         | _ ->
           error_page
@@ -527,7 +526,7 @@ module Error_content =
               error_msg
               []
       in
-      Xhtml_content.result_of_content err_page >>= fun r ->
+      Html5_content.result_of_content err_page >>= fun r ->
       Lwt.return
           {r with
            res_cookies = cookies_to_set;
