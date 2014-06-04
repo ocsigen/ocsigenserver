@@ -20,7 +20,6 @@ FILES := ocsigen_socket.ml      \
          ocsigen_generate.ml    \
          ocsigen_common_server.ml \
          ocsigen_cohttp_server.ml \
-         ocsigen_native_server.ml \
          ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
          ocsigen_local_files.ml \
