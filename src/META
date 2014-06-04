@@ -1,0 +1,83 @@
+# OASIS_START
+# DO NOT EDIT (digest: 32f7a290f2b65577093a6bb3ecfac03d)
+version = "0.1"
+description = "HTTP Server in OCaml"
+archive(byte) = "ocsigenserver.cma"
+archive(byte, plugin) = "ocsigenserver.cma"
+archive(native) = "ocsigenserver.cmxa"
+archive(native, plugin) = "ocsigenserver.cmxs"
+exists_if = "ocsigenserver.cma"
+package "server" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ requires =
+ "ocsigenserver.baselib ocsigenserver.polytables ocsigenserver.http lwt.unix netstring netstring-pcre cryptokit findlib tyxml tyxml.parser lwt.syntax lwt.extra ipaddr threads"
+ archive(byte) = "server.cma"
+ archive(byte, plugin) = "server.cma"
+ archive(native) = "server.cmxa"
+ archive(native, plugin) = "server.cmxs"
+ exists_if = "server.cma"
+)
+
+package "polytables" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ archive(byte) = "polytables.cma"
+ archive(byte, plugin) = "polytables.cma"
+ archive(native) = "polytables.cmxa"
+ archive(native, plugin) = "polytables.cmxs"
+ exists_if = "polytables.cma"
+)
+
+package "http" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ requires = "ocsigenserver.baselib netstring netstring-pcre lwt.ssl tyxml"
+ archive(byte) = "http.cma"
+ archive(byte, plugin) = "http.cma"
+ archive(native) = "http.cmxa"
+ archive(native, plugin) = "http.cmxs"
+ exists_if = "http.cma"
+)
+
+package "ext" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ archive(byte) = "ext.cma"
+ archive(byte, plugin) = "ext.cma"
+ archive(native) = "ext.cmxa"
+ archive(native, plugin) = "ext.cmxs"
+ exists_if = "ext.cma"
+ package "staticmod" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires = "ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "staticmod.cmo"
+  archive(native) = "staticmod.cmx"
+  exists_if = "staticmod.cmo"
+ )
+)
+
+package "commandline" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ archive(byte) = "commandline.cma"
+ archive(byte, plugin) = "commandline.cma"
+ archive(native) = "commandline.cmxa"
+ archive(native, plugin) = "commandline.cmxs"
+ exists_if = "commandline.cma"
+)
+
+package "baselib" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ requires =
+ "lwt netstring netstring-pcre cryptokit findlib tyxml lwt.syntax lwt.extra ipaddr threads dynlink ocsigenserver.commandline"
+ archive(byte) = "baselib.cma"
+ archive(byte, plugin) = "baselib.cma"
+ archive(native) = "baselib.cmxa"
+ archive(native, plugin) = "baselib.cmxs"
+ exists_if = "baselib.cma"
+)
+# OASIS_STOP
+
