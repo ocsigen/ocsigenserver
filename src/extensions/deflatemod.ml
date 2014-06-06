@@ -247,7 +247,7 @@ let stream_filter contentencoding url deflate choice res =
                    Some ((if deflate then "Ddeflatemod" else "Gdeflatemod")^e)
                | None -> None);
                ~stream:
-               (compress deflate (fst (Ocsigen_http_frame.Result.stream res)), None);
+               (compress deflate (fst (Ocsigen_http_frame.Result.stream res)), None)
                ~headers:
                (Http_headers.replace
                  Http_headers.content_encoding
