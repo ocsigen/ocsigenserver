@@ -197,12 +197,12 @@ let gen dir = function
                in
                match http_frame.Ocsigen_http_frame.frame_content with
                  | None ->
-                     let empty_result = Ocsigen_http_frame.empty_result () in
+                     let empty_result = Ocsigen_http_frame.Result.empty () in
                      let length =
                        Ocsigen_headers.get_content_length http_frame
                      in
                      Ocsigen_stream.add_finalizer
-                       (fst empty_result.Ocsigen_http_frame.res_stream)
+                       (fst (Ocsigen_http_frame.Result.stream empty_result))
                        (fun outcome ->
                           match outcome with
                             `Failure ->
@@ -210,14 +210,13 @@ let gen dir = function
                           | `Success ->
                               Lwt.return ());
                      Lwt.return
-                       {empty_result with
-                          Ocsigen_http_frame.res_content_length = length;
-                          res_headers= headers;
-                          res_code= code;
-                       }
+                       (Ocsigen_http_frame.Result.update empty_result
+                          ~content_length:length
+                          ~headers
+                          ~code ())
                  | Some stream ->
                      let default_result =
-                       Ocsigen_http_frame.default_result ()
+                       Ocsigen_http_frame.Result.default ()
                      in
                      let length =
                        Ocsigen_headers.get_content_length http_frame
@@ -230,12 +229,11 @@ let gen dir = function
                           | `Success ->
                               Lwt.return ());
                      Lwt.return
-                       {default_result with
-                          Ocsigen_http_frame.res_content_length = length;
-                          res_stream = (stream, None);
-                          res_headers= headers;
-                          res_code= code;
-                       }
+                       (Ocsigen_http_frame.Result.update default_result
+                          ~content_length:length
+                          ~stream:(stream, None)
+                          ~headers
+                          ~code ())
             )
          )
     )

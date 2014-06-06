@@ -426,12 +426,11 @@ end = struct
 
   let frame_503 () =
     Lwt.return
-      { (OFrame.default_result ()) with
-            OFrame.res_stream = (OStream.of_string "", None);
-            OFrame.res_code = 503; (*Service Unavailable*)
-            OFrame.res_content_length = None;
-            OFrame.res_content_type = Some "text/plain";
-      }
+      (OFrame.Result.update (OFrame.Result.default ())
+            ~stream:(OStream.of_string "", None)
+            ~code:503 (*Service Unavailable*)
+            ~content_length:None
+            ~content_type:(Some "text/plain") ())
 
   exception Kill
 
@@ -441,24 +440,20 @@ end = struct
     | [], [] -> (* error : empty request *)
         OMsg.debug (fun () -> "Incorrect or empty Comet request");
         Lwt.return
-          { (OFrame.default_result ()) with
-               OFrame.res_stream =
-                 (OStream.of_string "Empty or incorrect registration", None) ;
-               OFrame.res_code = 400 ;(* BAD REQUEST *)
-               OFrame.res_content_type = Some "text/plain" ;
-               OFrame.res_content_length = None ;
-          }
-
+          (OFrame.Result.update (OFrame.Result.default ())
+               ~stream:
+                 (OStream.of_string "Empty or incorrect registration", None)
+               ~code:400(* BAD REQUEST *)
+               ~content_type:(Some "text/plain")
+               ~content_length:None ())
     | [], (_::_ as ended) -> (* All channels are closed *)
         let end_notice = Messages.encode_ended ended in
         OMsg.debug (fun () -> "Comet request served");
         Lwt.return
-          { (OFrame.default_result ()) with
-               OFrame.res_stream = (OStream.of_string end_notice, None) ;
-               OFrame.res_content_length = None ;
-               OFrame.res_content_type = Some "text/plain" ;
-          }
-
+          (OFrame.Result.update (OFrame.Result.default ())
+               ~stream:(OStream.of_string end_notice, None)
+               ~content_length:None
+               ~content_type:(Some "text/plain") ())
     | (_::_ as active), ended -> (* generic case *)
         let choosed =
           let readings =
@@ -481,11 +476,11 @@ end = struct
              List.iter (fun c -> Channels.send_listeners c (-1)) active ;
              let s = Messages.encode_downgoing ended x in
              OMsg.debug (fun () -> "Comet request served");
-             { (OFrame.default_result ()) with
-                   OFrame.res_stream = (s, None) ;
-                   OFrame.res_content_length = None ;
-                   OFrame.res_content_type = Some "text/plain" ;
-             }
+
+             (OFrame.Result.update (OFrame.Result.default ())
+                   ~stream:(s, None)
+                   ~content_length:None
+                   ~content_type:(Some "text/plain") ())
           )
           (function
              | Kill -> (* Comet stopped for security *)

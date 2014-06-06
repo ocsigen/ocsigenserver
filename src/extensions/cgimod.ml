@@ -509,20 +509,20 @@ let gen reg = function
                                            ri_of_url loc ri.request_info },
                                        Ocsigen_cookies.Cookies.empty))
                   else
-                    let default_result = Ocsigen_http_frame.default_result () in
+                    let default_result = Ocsigen_http_frame.Result.default () in
                     Lwt.return
                       (Ext_found
                          (fun () ->
                             Lwt.return
-                              { default_result with
-                                  res_code= 301; (* Moved permanently *)
-                                  res_location= Some loc}))
+                              (Ocsigen_http_frame.Result.update default_result
+                                ~code:301
+                                ~location:(Some loc) ())))
               | _, _ ->
                   let code = match code with
                   | None -> 200
                   | Some c -> c
                   in
-                  let default_result = Ocsigen_http_frame.default_result () in
+                  let default_result = Ocsigen_http_frame.Result.default () in
 (*VVV Warning: this is really late to make the return Ext_found ... *)
 (*VVV But the extension may also answer Ext_retry_with ... *)
 (*VVV and the other extensions may receive requests in wrong order ... *)
@@ -539,15 +539,15 @@ let gen reg = function
                                | `Success ->
                                    Lwt.return ());
                           Lwt.return
-                            {default_result with
-                               res_content_length = None;
-                               res_stream = (content, None);
-                               res_location= loc;
-                               res_headers =
-                                Http_headers.replace_opt
+                            (Ocsigen_http_frame.Result.update default_result
+                               ~content_length:None
+                               ~stream:(content, None)
+                               ~location:loc
+                               ~headers:
+                                (Http_headers.replace_opt
                                   Http_headers.status None
-                                  header.Http_header.headers;
-                               res_code = code})))
+                                  header.Http_header.headers)
+                               ~code:code ()))))
            (fun e ->
               Ocsigen_stream.finalize content `Failure >>= fun () ->
               Lwt.fail e))

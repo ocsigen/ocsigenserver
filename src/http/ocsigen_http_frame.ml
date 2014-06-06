@@ -73,66 +73,104 @@ let compute_new_ri_cookies
     ricookies
 
 
+module Result = struct
+  (** The type of answers to send *)
+  type result =
+      {cookies: cookieset; (** cookies to set (with optional path) *)
+       lastmodified: float option; (** Default: [None] *)
+       etag: string option;
+       code: int; (** HTTP code, if not 200 *)
+       stream: string Ocsigen_stream.t *
+         (string Ocsigen_stream.t -> 
+            int64 -> 
+              string Ocsigen_stream.step Lwt.t) option
+       ; (** Default: empty stream. 
+             The second field is (optionaly)
+             the function used to skip a part of the 
+             stream, if you do not you want to use
+             a basic reading of the stream. 
+             For example, for static files, you can optimize it by using
+             a [seek] function.
+         *)
+       (* It is not a new field of the record to remember to change it
+          if we change the stream. *)
+       content_length: int64 option; (** [None] means Transfer-encoding: chunked *)
+       content_type: string option;
+       headers: Http_headers.t; (** The headers you want to add *)
+       charset: string option; (** Default: None *)
+       location: string option; (** Default: None *)
+     }
 
-(** The type of answers to send *)
-type result =
-    {res_cookies: cookieset; (** cookies to set (with optional path) *)
-     res_lastmodified: float option; (** Default: [None] *)
-     res_etag: string option;
-     res_code: int; (** HTTP code, if not 200 *)
-     res_stream: string Ocsigen_stream.t *
-       (string Ocsigen_stream.t -> 
-          int64 -> 
-            string Ocsigen_stream.step Lwt.t) option
-     ; (** Default: empty stream. 
-           The second field is (optionaly)
-           the function used to skip a part of the 
-           stream, if you do not you want to use
-           a basic reading of the stream. 
-           For example, for static files, you can optimize it by using
-           a [seek] function.
-       *)
-     (* It is not a new field of the record to remember to change it
-        if we change the stream. *)
-     res_content_length: int64 option; (** [None] means Transfer-encoding: chunked *)
-     res_content_type: string option;
-     res_headers: Http_headers.t; (** The headers you want to add *)
-     res_charset: string option; (** Default: None *)
-     res_location: string option; (** Default: None *)
+  let cookies { cookies; _ } = cookies
+  let lastmodified { lastmodified; _ } = lastmodified
+  let etag { etag; _ } = etag
+  let code { code; _ } = code
+  let stream { stream; _ } = stream
+  let content_length { content_length; _ } = content_length
+  let content_type { content_type; _ } = content_type
+  let headers { headers; _ } = headers
+  let charset { charset; _ } = charset
+  let location { location; _ } = location
+
+  (** Default [result] to use as a base for constructing others. *)
+  let default () =
+    {
+     cookies = Cookies.empty;
+     lastmodified = None;
+     (* No date => proxies use etag *)
+     etag = None;
+     code = 200;
+     stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None), 
+                   None);
+     content_length = Some 0L;
+     content_type = None;
+     headers= Http_headers.empty;
+     charset= None;
+     location= None;
    }
 
-(** Default [result] to use as a base for constructing others. *)
-let default_result () =
-  {
-   res_cookies = Cookies.empty;
-   res_lastmodified = None;
-   (* No date => proxies use etag *)
-   res_etag = None;
-   res_code = 200;
-   res_stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None), 
-                 None);
-   res_content_length = Some 0L;
-   res_content_type = None;
-   res_headers= Http_headers.empty;
-   res_charset= None;
-   res_location= None;
- }
+  let update result
+    ?(cookies=result.cookies)
+    ?(lastmodified=result.lastmodified)
+    ?(etag=result.etag)
+    ?(code=result.code)
+    ?(stream=result.stream)
+    ?(content_length=result.content_length)
+    ?(content_type=result.content_type)
+    ?(headers=result.headers)
+    ?(charset=result.charset)
+    ?(location=result.location) () =
+      {
+        cookies;
+        lastmodified;
+        etag;
+        code;
+        stream;
+        content_length;
+        content_type;
+        headers;
+        charset;
+        location;
+      }
 
-(** [result] for an empty page. *)
-let empty_result () =
-  {
-   res_cookies = Cookies.empty;
-   res_lastmodified = None;
-   res_etag = None;
-   res_code = 204; (* No content *)
-   res_stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None), 
-                 None);
-   res_content_length = Some 0L;
-   res_content_type = None;
-   res_headers= Http_headers.empty;
-   res_charset= None;
-   res_location= None;
- }
+  (** [result] for an empty page. *)
+  let empty () =
+    {
+     cookies = Cookies.empty;
+     lastmodified = None;
+     etag = None;
+     code = 204; (* No content *)
+     stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None), 
+                   None);
+     content_length = Some 0L;
+     content_type = None;
+     headers= Http_headers.empty;
+     charset= None;
+     location= None;
+   }
+end
+
+include Result
 
 module type HTTP_CONTENT =
   sig
@@ -143,7 +181,7 @@ module type HTTP_CONTENT =
 
     (** convert a content into a thread returning the default
         [result] for this content *)
-    val result_of_content : ?options:options -> t -> result Lwt.t
+    val result_of_content : ?options:options -> t -> Result.result Lwt.t
 
     (** compute etag for content *)
     val get_etag : ?options:options -> t -> etag option

@@ -455,9 +455,9 @@ let get_request_infos
 let handle_result_frame ri res send =
   (* Subfonctions to handle each header separately *)
   let if_unmodified_since unmodified_since = (* Section 14.28 *)
-    if (res.res_code = 412 ||
-        (200 <= res.res_code && res.res_code < 300)) then
-      match res.res_lastmodified with
+    if (Result.code res = 412 ||
+        (200 <= Result.code res && Result.code res < 300)) then
+      match Result.lastmodified res with
         | Some r ->
             if r <= unmodified_since then
               `Ignore_header
@@ -468,8 +468,8 @@ let handle_result_frame ri res send =
       `Ignore_header
 
   and if_modified_since modified_since = (* Section 14.25 *)
-    if res.res_code = 200 then
-      match res.res_lastmodified with
+    if Result.code res = 200 then
+      match Result.lastmodified res with
         | Some r ->
             if r <= modified_since then
               `Unmodified
@@ -480,9 +480,9 @@ let handle_result_frame ri res send =
       `Ignore_header
 
   and if_none_match if_none_match = (* Section 14.26 *)
-    if (res.res_code = 412 ||
-        (200 <= res.res_code && res.res_code < 300)) then
-      match res.res_etag with
+    if (Result.code res = 412 ||
+        (200 <= Result.code res && Result.code res < 300)) then
+      match Result.etag res with
         | None   -> `Ignore_header
         | Some e ->
             if List.mem e if_none_match then
@@ -497,9 +497,9 @@ let handle_result_frame ri res send =
       `Ignore_header
 
   and if_match if_match = (* Section 14.24 *)
-    if (res.res_code = 412 ||
-        (200 <= res.res_code && res.res_code < 300)) then
-      match res.res_etag with
+    if (Result.code res = 412 ||
+        (200 <= Result.code res && Result.code res < 300)) then
+      match Result.etag res with
         | None   -> `Precondition_failed
         | Some e ->
             if List.mem e if_match then
@@ -547,19 +547,18 @@ let handle_result_frame ri res send =
   match r with
     | `Unmodified ->
         Ocsigen_messages.debug2 "-> Sending 304 Not modified ";
-        Ocsigen_stream.finalize (fst res.res_stream) `Success >>= fun () ->
-        send { (Ocsigen_http_frame.empty_result ()) with
-                 res_code = 304  (* Not modified *);
-                 res_lastmodified = res.res_lastmodified;
-                 res_etag = res.res_etag;
-             }
+        Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
+        send (Result.update (Ocsigen_http_frame.Result.empty ())
+                 ~code:304  (* Not modified *)
+                 ~lastmodified:(Result.lastmodified res)
+                 ~etag:(Result.etag res) ())
 
     | `Precondition_failed ->
         Ocsigen_messages.debug2 "-> Sending 412 Precondition Failed \
                      (conditional headers)";
-        Ocsigen_stream.finalize (fst res.res_stream) `Success >>= fun () ->
-        send { (Ocsigen_http_frame.empty_result ()) with
-                 res_code = 412 (* Precondition failed *)}
+        Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
+        send (Result.update (Ocsigen_http_frame.Result.empty ())
+                 ~code:412 (* Precondition failed *) ())
 
     | `Std ->
         Ocsigen_range.compute_range ri res
@@ -755,12 +754,10 @@ let service receiver sender_slot request meth url port sockaddr =
                       ?query:(RI.get_params_string ri)
                       http_url_syntax
                     in
-                    send_aux {
-                      (Ocsigen_http_frame.empty_result ()) with
-                        res_code = 301;
-                        res_location = Some (Neturl.string_of_url new_url)
-                   }
-
+                    send_aux
+                      (Result.update (Ocsigen_http_frame.Result.empty ())
+                        ~code:301
+                        ~location:(Some (Neturl.string_of_url new_url)) ())
                 | _ -> handle_service_errors e
              )
         )

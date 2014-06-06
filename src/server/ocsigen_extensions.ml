@@ -348,10 +348,10 @@ let add_to_res_cookies res cookies_to_set =
   if cookies_to_set = Ocsigen_cookies.Cookies.empty then
     res
   else
-    {res with
-     Ocsigen_http_frame.res_cookies =
-        Ocsigen_cookies.add_cookies
-          res.Ocsigen_http_frame.res_cookies cookies_to_set}
+    (Ocsigen_http_frame.Result.update res
+     ~cookies:
+       (Ocsigen_cookies.add_cookies
+          (Ocsigen_http_frame.Result.cookies res) cookies_to_set) ())
 
 let make_ext awake cookies_to_set req_state (genfun : extension) (genfun2 : extension2) =
   genfun req_state

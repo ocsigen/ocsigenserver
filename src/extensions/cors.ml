@@ -32,9 +32,9 @@ module Http_header = OFrame.Http_header
 (*** MAIN FUNCTION ***)
 
 let default_frame () =
-  { (OFrame.default_result ()) with
-    OFrame.res_code = 200;
-    OFrame.res_content_length = Some 0L; }
+  (OFrame.Result.update (OFrame.Result.default ())
+    ~code:200
+    ~content_length:(Some 0L) ())
 
 type config =
     { allowed_method : Http_header.http_method list option;
@@ -56,7 +56,7 @@ let add_headers config rq response =
     | None -> return OX.Ext_do_nothing
     | Some origin ->
       OMsg.debug (fun () -> Printf.sprintf "CORS: request with origin: %s" origin);
-      let res_headers = response.OFrame.res_headers in
+      let res_headers = (OFrame.Result.headers response) in
 
       let res_headers = Http_headers.add
         Http_headers.access_control_allow_origin
@@ -119,8 +119,9 @@ let add_headers config rq response =
               (String.concat ", " config.exposed_headers) res_headers in
 
       return
-        (OX.Ext_found (fun () -> return { response with OFrame.res_headers }))
-
+        (OX.Ext_found (fun () -> return
+          (OFrame.Result.update response
+            ~headers:res_headers ())))
 
 let main config = function
 

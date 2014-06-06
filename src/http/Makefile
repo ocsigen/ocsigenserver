@@ -57,5 +57,10 @@ distclean: clean
 depend: ${PREDEP}
 	$(OCAMLDEP) ${LIBS} *.mli *.ml > .depend
 
+type: $(FILES:.ml=.gmli)
+
+%.gmli: %.ml
+	$(OCAMLC) ${LIBS} -i $< > $@
+
 FORCE:
 -include .depend

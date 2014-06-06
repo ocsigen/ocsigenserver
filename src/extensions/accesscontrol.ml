@@ -306,84 +306,89 @@ let parse_config parse_fun = function
   | Element ("ifnotfound" as s, _, _) -> badconfig "Bad syntax for tag %s" s
 
   | Element ("allow-forward-for", param, _) ->
+    let apply request code =
+      Ocsigen_messages.debug2 "--Access control: allowed proxy";
+      let request =
+        try
+          let header = Http_headers.find Http_headers.x_forwarded_for
+            (RI.http_frame request.request_info).frame_header.Http_header.headers in
+          match Netstring_pcre.split comma_space_regexp header with
+            | []
+            | [_] ->
+        Ocsigen_messages.debug2 ("--Access control: malformed X-Forwarded-For field: "^header);
+        request
+            | original_ip::proxies ->
+        let last_proxy = List.last proxies in
+        let proxy_ip = Ipaddr.of_string_exn last_proxy in
+        let equal_ip = proxy_ip =
+          Lazy.force (RI.remote_ip_parsed request.request_info) in
+        let need_equal_ip =
+          match param with
+            | [] -> false
+            | ["check-equal-ip",b] ->
+              ( try bool_of_string b
+          with Invalid_argument _ ->
+            badconfig "Bad syntax for argument of tag allow-forward-for" )
+            | _ -> badconfig "Bad syntax for argument of tag allow-forward-for"
+        in
+        if equal_ip or (not need_equal_ip)
+        then
+          { request with request_info =
+              (RI.update request.request_info
+               ~remote_ip:original_ip
+               ~remote_ip_parsed:(lazy (Ipaddr.of_string_exn original_ip))
+               ~forward_ip:proxies ()) }
+        else (* the announced ip of the proxy is not its real ip *)
+          ( Ocsigen_messages.warning 
+          (Printf.sprintf "--Access control: X-Forwarded-For: host ip ( %s ) does not match the header ( %s )" 
+            (RI.remote_ip request.request_info) header );
+            request )
+        with
+          | Not_found -> request
+      in
+            Lwt.return
+        (Ocsigen_extensions.Ext_continue_with
+           ( request,
+             Ocsigen_cookies.Cookies.empty,
+             code ))
+    in
     (function
-      | Ocsigen_extensions.Req_found (request, {res_code = code} )
-      | Ocsigen_extensions.Req_not_found (code, request) ->
-	Ocsigen_messages.debug2 "--Access control: allowed proxy";
-	let request =
-	  try
-	    let header = Http_headers.find Http_headers.x_forwarded_for
-	      (RI.http_frame request.request_info).frame_header.Http_header.headers in
-	    match Netstring_pcre.split comma_space_regexp header with
-	      | []
-	      | [_] ->
-		Ocsigen_messages.debug2 ("--Access control: malformed X-Forwarded-For field: "^header);
-		request
-	      | original_ip::proxies ->
-		let last_proxy = List.last proxies in
-		let proxy_ip = Ipaddr.of_string_exn last_proxy in
-		let equal_ip = proxy_ip =
-      Lazy.force (RI.remote_ip_parsed request.request_info) in
-		let need_equal_ip =
-		  match param with
-		    | [] -> false
-		    | ["check-equal-ip",b] ->
-		      ( try bool_of_string b
-			with Invalid_argument _ ->
-			  badconfig "Bad syntax for argument of tag allow-forward-for" )
-		    | _ -> badconfig "Bad syntax for argument of tag allow-forward-for"
-		in
-		if equal_ip or (not need_equal_ip)
-		then
-		  { request with request_info =
-          (RI.update request.request_info
-			     ~remote_ip:original_ip
-			     ~remote_ip_parsed:(lazy (Ipaddr.of_string_exn original_ip))
-           ~forward_ip:proxies ()) }
-		else (* the announced ip of the proxy is not its real ip *)
-		  ( Ocsigen_messages.warning 
-      (Printf.sprintf "--Access control: X-Forwarded-For: host ip ( %s ) does not match the header ( %s )" 
-        (RI.remote_ip request.request_info) header );
-		    request )
-	  with
-	    | Not_found -> request
-	in
-        Lwt.return
-	  (Ocsigen_extensions.Ext_continue_with
-	     ( request,
-	       Ocsigen_cookies.Cookies.empty,
-	       code )))
+      | Ocsigen_extensions.Req_found (request, resp) ->
+        apply request (Ocsigen_http_frame.Result.code resp)
+      | Ocsigen_extensions.Req_not_found (code, request) -> apply request code)
 
   | Element ("allow-forward-proto", _, _) ->
+    let apply request code =
+      Ocsigen_messages.debug2 "--Access control: allowed proxy for ssl";
+      let request =
+        try
+          let header = Http_headers.find Http_headers.x_forwarded_proto
+            (RI.http_frame request.request_info).frame_header.Http_header.headers in
+          match String.lowercase header with
+            | "http" ->
+        { request with request_info =
+            (RI.update request.request_info
+             ~ssl:false ()) }
+            | "https" ->
+        { request with request_info =
+            (RI.update request.request_info
+              ~ssl:true ()) }
+            | _ ->
+        Ocsigen_messages.debug2 ("--Access control: malformed X-Forwarded-Proto field: "^header);
+        request
+        with
+          | Not_found -> request
+      in
+            Lwt.return
+        (Ocsigen_extensions.Ext_continue_with
+           ( request,
+             Ocsigen_cookies.Cookies.empty,
+             code ))
+    in
     (function
-      | Ocsigen_extensions.Req_found (request, {res_code = code} )
-      | Ocsigen_extensions.Req_not_found (code, request) ->
-	Ocsigen_messages.debug2 "--Access control: allowed proxy for ssl";
-	let request =
-	  try
-	    let header = Http_headers.find Http_headers.x_forwarded_proto
-	      (RI.http_frame request.request_info).frame_header.Http_header.headers in
-	    match String.lowercase header with
-	      | "http" ->
-		{ request with request_info =
-        (RI.update request.request_info
-		     ~ssl:false ()) }
-	      | "https" ->
-		{ request with request_info =
-        (RI.update request.request_info
-		      ~ssl:true ()) }
-	      | _ ->
-		Ocsigen_messages.debug2 ("--Access control: malformed X-Forwarded-Proto field: "^header);
-		request
-	  with
-	    | Not_found -> request
-	in
-        Lwt.return
-	  (Ocsigen_extensions.Ext_continue_with
-	     ( request,
-	       Ocsigen_cookies.Cookies.empty,
-	       code )))
-
+      | Ocsigen_extensions.Req_found (request, resp) ->
+        apply request (Ocsigen_http_frame.Result.code resp)
+      | Ocsigen_extensions.Req_not_found (code, request) -> apply request code)
   | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ -> badconfig "(accesscontrol extension) Bad data"
 
