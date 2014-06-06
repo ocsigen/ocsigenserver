@@ -342,5 +342,6 @@ let original_full_path_string { original_full_path_string; _ } =
   original_full_path_string
 let timeofday { timeofday; _ } = timeofday
 let accept_language { accept_language; _ } = accept_language
+let accept_encoding { accept_encoding; _ } = accept_encoding
 let accept { accept; _ } = accept
 let connection_closed { connection_closed; _ } = connection_closed
