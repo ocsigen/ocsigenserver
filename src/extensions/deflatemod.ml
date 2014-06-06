@@ -231,7 +231,7 @@ exception No_compress
 let stream_filter contentencoding url deflate choice res =
  return (Ext_found (fun () ->
  try (
-   match Osigen_http_frame.Result.content_type res with
+   match Ocsigen_http_frame.Result.content_type res with
    | None -> raise No_compress (* il faudrait défaut ? *)
    | Some contenttype ->
        match Ocsigen_headers.parse_mime_type contenttype with
