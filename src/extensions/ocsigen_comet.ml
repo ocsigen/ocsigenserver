@@ -282,7 +282,7 @@ end = struct
     (* r.OX.request_info.OX.ri_post_params r.OX.request_config *)
     Lwt.catch
       (fun () ->
-         match r.OX.request_info.OX.ri_http_frame.OFrame.frame_content with
+         match (OX.RI.http_frame r.OX.request_info).OFrame.frame_content with
            | None ->
                Lwt.return []
            | Some body ->
@@ -525,7 +525,7 @@ let rec debug_content_type = function
 let main = function
 
   | OX.Req_not_found (_, rq) -> (* Else check for content type *)
-      begin match rq.OX.request_info.OX.ri_content_type with
+      begin match (OX.RI.content_type rq.request_info) with
         | Some (hd, tl) when has_comet_content_type (hd :: tl) ->
             OMsg.debug (fun () -> "Comet message: " ^ debug_content_type (hd :: tl));
             Lwt.return (OX.Ext_found (Main.main rq))

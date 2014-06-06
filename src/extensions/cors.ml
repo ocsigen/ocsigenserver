@@ -52,7 +52,7 @@ let default_config =
 exception Refused
 
 let add_headers config rq response =
-  match Lazy.force rq.OX.request_info.OX.ri_origin with
+  match Lazy.force (OX.RI.origin rq.OX.request_info) with
     | None -> return OX.Ext_do_nothing
     | Some origin ->
       OMsg.debug (fun () -> Printf.sprintf "CORS: request with origin: %s" origin);
@@ -75,7 +75,7 @@ let add_headers config rq response =
 
       let res_headers =
         let req_method = Lazy.force
-          rq.OX.request_info.OX.ri_access_control_request_method in
+          (OX.RI.access_control_request_method rq.OX.request_info) in
         match req_method with
             None -> res_headers
           | Some request_method ->
@@ -97,7 +97,7 @@ let add_headers config rq response =
 
       let res_headers =
         let req_headers = Lazy.force
-          rq.OX.request_info.OX.ri_access_control_request_headers in
+          (OX.RI.access_control_request_headers rq.OX.request_info) in
         match req_headers with
             None -> res_headers
           | Some request_headers ->
@@ -125,7 +125,7 @@ let add_headers config rq response =
 let main config = function
 
   | OX.Req_not_found (_, rq) ->
-      begin match rq.OX.request_info.OX.ri_method with
+      begin match (OX.RI.meth rq.OX.request_info) with
         | OFrame.Http_header.OPTIONS ->
           OMsg.debug (fun () -> "CORS: OPTIONS request");
           begin

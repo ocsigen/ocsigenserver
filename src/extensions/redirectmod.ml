@@ -66,12 +66,12 @@ let gen dir = function
                  regexp
                  full
                  dest
-                 ri.request_info.ri_ssl
-                 ri.request_info.ri_host
-                 ri.request_info.ri_server_port
-                 ri.request_info.ri_get_params_string
-                 ri.request_info.ri_sub_path_string
-                 ri.request_info.ri_full_path_string
+                 (RI.ssl ri.request_info)
+                 (RI.host ri.request_info)
+                 (RI.server_port ri.request_info)
+                 (RI.get_params_string ri.request_info)
+                 (RI.sub_path_string ri.request_info)
+                 (RI.full_path_string ri.request_info)
              in
              match full with
                | Yes -> fi true

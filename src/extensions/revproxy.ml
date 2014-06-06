@@ -78,12 +78,12 @@ let gen dir = function
              dir.regexp
              full
              dir.dest
-             ri.ri_ssl
-             ri.ri_host
-             ri.ri_server_port
-             ri.ri_get_params_string
-             ri.ri_sub_path_string
-             ri.ri_full_path_string
+             (RI.ssl ri)
+             (RI.host ri)
+             (RI.server_port ri)
+             (RI.get_params_string ri)
+             (RI.sub_path_string ri)
+             (RI.full_path_string ri)
          in 
          match dir.full_url with
            | Yes -> fi true
@@ -125,7 +125,7 @@ let gen dir = function
        let host = 
          match
            if dir.keephost 
-           then match ri.request_info.ri_host with 
+           then match RI.host ri.request_info with 
              | Some h -> Some h
              | None -> None
            else None 
@@ -138,10 +138,10 @@ let gen dir = function
          let ri = ri.request_info in
 	 let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
 	 let forward = 
-	   String.concat ", " (ri.ri_remote_ip :: (ri.ri_forward_ip @ [address]))
+	   String.concat ", " ((RI.remote_ip ri) :: ((RI.forward_ip ri) @ [address]))
 	 in
 	 let proto =
-	   if ri.ri_ssl
+	   if RI.ssl ri
 	   then "https"
 	   else "http"
 	 in
@@ -152,17 +152,17 @@ let gen dir = function
 	     (Http_headers.replace
 		Http_headers.x_forwarded_for
 		forward
-		(ri.ri_http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers)) in
+		((RI.http_frame ri).Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers)) in
          if dir.pipeline then
            Ocsigen_http_client.raw_request
              ~headers
              ~https
              ~port
-             ~client:ri.ri_client
+             ~client:(RI.client ri)
              ~keep_alive:true
-             ~content:ri.ri_http_frame.Ocsigen_http_frame.frame_content
-             ?content_length:ri.ri_content_length
-             ~http_method:ri.ri_method
+             ~content:(RI.http_frame ri).Ocsigen_http_frame.frame_content
+             ?content_length:(RI.content_length ri)
+             ~http_method:(RI.meth ri)
              ~host
              ~inet_addr
              ~uri ()
@@ -172,9 +172,9 @@ let gen dir = function
                  ~headers
                  ~https
                  ~port
-                 ~content:ri.ri_http_frame.Ocsigen_http_frame.frame_content
-                 ?content_length:ri.ri_content_length
-                 ~http_method:ri.ri_method
+                 ~content:(RI.http_frame ri).Ocsigen_http_frame.frame_content
+                 ?content_length:(RI.content_length ri)
+                 ~http_method:(RI.meth ri)
                  ~host
                  ~inet_addr
                  ~uri ()

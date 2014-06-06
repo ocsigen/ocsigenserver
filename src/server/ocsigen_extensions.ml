@@ -35,6 +35,8 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
+module RI = Ocsigen_request_info
+
 exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 exception Ocsigen_Looping_request
 
@@ -186,86 +188,18 @@ and follow_symlink =
 
 
 (* Requests *)
-type ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
-
-type file_info = {
+type ifrange = RI.ifrange =
+  | IR_No
+  | IR_Ifunmodsince of float
+  | IR_ifmatch of string
+type file_info = RI.file_info = {
     tmp_filename: string;
     filesize: int64;
     raw_original_filename: string;
     original_basename: string ;
     file_content_type: ((string * string) * (string * string) list) option;
-  }
-
-type request_info =
-    {ri_url_string: string; (** full URL *)
-     ri_method: Ocsigen_http_frame.Http_header.http_method; (** GET, POST, HEAD... *)
-     ri_protocol: Ocsigen_http_frame.Http_header.proto; (** HTTP protocol used by client *)
-     ri_ssl: bool; (** true if HTTPS, false if HTTP *)
-     ri_full_path_string: string; (** full path of the URL *)
-     ri_full_path: string list;   (** full path of the URL *)
-     ri_original_full_path_string: string;   (** full path of the URL, as first sent by the client. Should not be changed by extensions, even rewritemod. It is used to create relative links. *)
-     ri_original_full_path: string list;   (** full path of the URL, as first sent by the client. See below. *)
-     ri_sub_path: string list;   (** path of the URL (only part concerning the site) *)
-     ri_sub_path_string: string;   (** path of the URL (only part concerning the site) *)
-     ri_get_params_string: string option; (** string containing GET parameters *)
-     ri_host: string option; (** Host field of the request (if any), without port *)
-     ri_port_from_host_field: int option; (** Port in the host field of the request (if any) *)
-     ri_get_params: (string * string) list Lazy.t;  (** Association list of get parameters *)
-     ri_initial_get_params: (string * string) list Lazy.t;  (** Association list of get parameters, as sent by the browser (must not be modified by extensions) *)
-     ri_post_params: (config_info -> (string * string) list Lwt.t) option; (** Association list of post parameters, if urlencoded form parameters or multipart data. None if other content type or no content. *)
-     ri_files: (config_info -> (string * file_info) list Lwt.t) option; (** Files sent in the request (multipart data). None if other content type or no content. *)
-     ri_remote_inet_addr: Unix.inet_addr; (** IP of the client *)
-     ri_remote_ip: string;            (** IP of the client *)
-     ri_remote_ip_parsed: Ipaddr.t Lazy.t;    (** IP of the client, parsed *)
-     ri_remote_port: int;      (** Port used by the client *)
-     ri_forward_ip: string list; (** IPs of gateways the request went throught *)
-     ri_server_port: int;      (** Port of the request (server) *)
-     ri_user_agent: string;    (** User_agent of the browser *)
-     ri_cookies_string: string option Lazy.t; (** Cookies sent by the browser *)
-     ri_cookies: string CookiesTable.t Lazy.t;  (** Cookies sent by the browser *)
-     ri_ifmodifiedsince: float option;   (** if-modified-since field *)
-     ri_ifunmodifiedsince: float option;   (** if-unmodified-since field *)
-     ri_ifnonematch: string list option;   (** if-none-match field ( * and weak entity tags not implemented) *)
-     ri_ifmatch: string list option;   (** if-match field ( * not implemented) *)
-     ri_content_type: ((string * string) * (string * string) list) option; (** Content-Type HTTP header *)
-     ri_content_type_string: string option; (** Content-Type HTTP header *)
-     ri_content_length: int64 option; (** Content-Length HTTP header *)
-     ri_referer: string option Lazy.t; (** Referer HTTP header *)
-
-     ri_origin: string option Lazy.t;
-     (** Where the cross-origin request or preflight request originates from.
-         http://www.w3.org/TR/cors/#origin-request-header *)
-     ri_access_control_request_method : string option Lazy.t;
-     (** which method will be used in the actual request as part of
-         the preflight request.
-         http://www.w3.org/TR/cors/#access-control-request-method-request-he*)
-     ri_access_control_request_headers : string list option Lazy.t;
-     (** Which headers will be used in the actual request as part of
-         the preflight request.
-         http://www.w3.org/TR/cors/#access-control-request-headers-request-h *)
-
-     ri_accept: Http_headers.accept Lazy.t; (** Accept HTTP header. For example [(Some "text", None)] means ["text/*"]. The float is the "quality" value, if any. The last association list is for other extensions. *)
-     ri_accept_charset: (string option * float option) list Lazy.t; (** Accept-Charset HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
-     ri_accept_encoding: (string option * float option) list Lazy.t; (** Accept-Encoding HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
-     ri_accept_language: (string * float option) list Lazy.t; (** Accept-Language HTTP header. The float is the "quality" value, if any. *)
-
-     ri_http_frame: Ocsigen_http_frame.t; (** The full http_frame *)
-     mutable ri_request_cache: Polytables.t;
-     (** Use this to put anything you want,
-         for example, information for subsequent
-         extensions
-     *)
-     ri_client: client; (** The request connection *)
-     ri_range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
-     (** Range HTTP header. [None] means all the document.
-         List of intervals + possibly from an index to the end of the document.
-     *)
-     ri_timeofday: float; (** An Unix timestamp computed at the beginning of the request *)
-     mutable ri_nb_tries: int; (** For internal use:
-                                   used to prevent loops of requests *)
-
-     ri_connection_closed: unit Lwt.t; (** a thread waking up when the connection is closed *)
-   }
+}
+type request_info = Ocsigen_request_info.request_info
 and request = {
   request_info: request_info;
   request_config: config_info;
@@ -527,30 +461,30 @@ let rec default_parse_config
                             Ocsigen_charset_mime.set_default_charset
                               oldri.request_config.charset_assoc charset } }
               in
-              match site_match oldri path oldri.request_info.ri_full_path with
+              match site_match oldri path (RI.full_path oldri.request_info) with
               | None ->
                   Ocsigen_messages.debug (fun () ->
                     "site \""^
                     (Url.string_of_url_path ~encode:true path)^
                     "\" does not match url \""^
                     (Url.string_of_url_path ~encode:true
-                       oldri.request_info.ri_full_path)^
+                       (RI.full_path oldri.request_info))^
                     "\".");
                   Lwt.return (Ext_next e, cookies_to_set)
               | Some sub_path ->
                   Ocsigen_messages.debug (fun () ->
                     "-------- site found: url \""^
                     (Url.string_of_url_path ~encode:true
-                       oldri.request_info.ri_full_path)^
+                       (RI.full_path oldri.request_info))^
                     "\" matches \""^
                     (Url.string_of_url_path ~encode:true path)^"\".");
                   let ri = {oldri with
                               request_info =
-                                { oldri.request_info with
-                                    ri_sub_path = sub_path;
-                                    ri_sub_path_string =
-                                    Url.string_of_url_path
-                                      ~encode:true sub_path} }
+                                (RI.update oldri.request_info
+                                    ~sub_path:sub_path
+                                    ~sub_path_string:
+                                    (Url.string_of_url_path
+                                      ~encode:true sub_path) ()) }
                   in
                   parse_config awake cookies_to_set (Req_not_found (e, ri))
                   >>= function
@@ -938,10 +872,10 @@ let compute_result
     ?(previous_cookies = Ocsigen_cookies.Cookies.empty)
     ?(awake_next_request = false) ri =
 
-  let host = ri.ri_host in
-  let port = ri.ri_server_port in
+  let host = RI.host ri in
+  let port = RI.server_port ri in
 
-  let conn = client_connection ri.ri_client in
+  let conn = client_connection (RI.client ri) in
   let awake =
     if awake_next_request
     then
@@ -956,8 +890,8 @@ let compute_result
   in
 
   let rec do2 sites cookies_to_set ri =
-    ri.ri_nb_tries <- ri.ri_nb_tries + 1;
-    if ri.ri_nb_tries > Ocsigen_config.get_maxretries ()
+    RI.update_nb_tries ri (RI.nb_tries ri + 1);
+    if (RI.nb_tries ri) > Ocsigen_config.get_maxretries ()
     then fail Ocsigen_Looping_request
     else
     let string_of_host_option = function
@@ -1041,27 +975,26 @@ let ri_of_url ?(full_rewrite = false) url ri =
   let (_, host, _, url, path, params, get_params) = Url.parse url in
   let host = match host with
     | Some h -> host
-    | None -> ri.ri_host
+    | None -> RI.host ri
   in
   let path_string = Url.string_of_url_path ~encode:true path in
   let original_fullpath, original_fullpath_string =
     if full_rewrite
     then (path, path_string)
-    else (ri.ri_original_full_path, ri.ri_original_full_path_string)
+    else (RI.original_full_path ri, RI.original_full_path_string ri)
   in
      (* ri_original_full_path is not changed *)
-  {ri with
-   ri_url_string = url;
-   ri_host = host;
-   ri_full_path_string = path_string;
-   ri_full_path = path;
-   ri_original_full_path_string = original_fullpath_string;
-   ri_original_full_path = original_fullpath;
-   ri_sub_path = path;
-   ri_sub_path_string = path_string;
-   ri_get_params_string = params;
-   ri_get_params = get_params;
-  }
+  RI.update ri
+   ~url_string:url
+   ~host:host
+   ~full_path_string:path_string
+   ~full_path:path
+   ~original_full_path_string:original_fullpath_string
+   ~original_full_path:original_fullpath
+   ~sub_path:path
+   ~sub_path_string:path_string
+   ~get_params_string:params
+   ~get_params:get_params ()
 
 
 
@@ -1101,7 +1034,7 @@ let get_number_of_connected,
 
 
 let get_server_address ri =
-  let socket = Ocsigen_http_com.connection_fd (client_connection ri.ri_client) in
+  let socket = Ocsigen_http_com.connection_fd (client_connection (RI.client ri)) in
   match Lwt_ssl.getsockname socket with
     | Unix.ADDR_UNIX _ -> failwith "unix domain socket have no ip"
     | Unix.ADDR_INET (addr,port) -> addr,port
@@ -1113,7 +1046,7 @@ let get_server_address ri =
 let get_hostname req =
   if Ocsigen_config.get_usedefaulthostname ()
   then req.request_config.default_hostname
-  else match req.request_info.ri_host with
+  else match RI.host req.request_info with
     | None -> req.request_config.default_hostname
     | Some host -> host
 
@@ -1125,15 +1058,15 @@ let get_hostname req =
    - or the default port set in the configuration file. *)
 let get_port req =
   if Ocsigen_config.get_usedefaulthostname ()
-  then (if req.request_info.ri_ssl
+  then (if RI.ssl req.request_info
         then req.request_config.default_httpsport
         else req.request_config.default_httpport)
-  else match req.request_info.ri_port_from_host_field with
+  else match RI.port_from_host_field req.request_info with
     | Some p -> p
     | None ->
-        match req.request_info.ri_host with
-	  | Some _ -> if req.request_info.ri_ssl then 443 else 80
-	  | None -> req.request_info.ri_server_port
+        match RI.host req.request_info with
+	  | Some _ -> if RI.ssl req.request_info then 443 else 80
+	  | None -> RI.server_port req.request_info
 
 
 (*****************************************************************************)

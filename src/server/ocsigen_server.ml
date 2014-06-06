@@ -164,7 +164,8 @@ and find_post_params_form_urlencoded body_gen _ =
        | Ocsigen_stream.String_too_large -> fail Input_is_too_large
        | e -> fail e)
 
-and find_post_params_multipart_form_data body_gen ctparams filenames ci =
+and find_post_params_multipart_form_data body_gen ctparams filenames
+  (uploaddir, maxuploadfilesize) =
   (* Same question here, should this stream be consumed after an error ? *)
   let body = Ocsigen_stream.get body_gen
   and bound = get_boundary ctparams
@@ -181,7 +182,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
     let p_name = find_field "name" cd in
     try
       let store = find_field "filename" cd in
-      match ci.uploaddir with
+      match uploaddir with
         | Some dname ->
             let now = Printf.sprintf "%f-%d"
               (Unix.gettimeofday ()) (counter ()) in
@@ -227,7 +228,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames ci =
         return ()
   in
   Multipart.scan_multipart_body_from_stream
-    body bound create add stop ci.maxuploadfilesize >>= fun () ->
+    body bound create add stop maxuploadfilesize >>= fun () ->
     (*VVV Does scan_multipart_body_from_stream read until the end or
       only what it needs?  If we do not consume here, the following
       request will be read only when this one is finished ...  *)
@@ -390,55 +391,55 @@ let get_request_infos
        let path_string = Url.string_of_url_path ~encode:true path in
 
        Lwt.return
-         {ri_url_string = url;
-          ri_method = meth;
-          ri_protocol = http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto;
-          ri_ssl = Lwt_ssl.is_ssl (Ocsigen_http_com.connection_fd receiver);
-          ri_full_path_string = path_string;
-          ri_full_path = path;
-          ri_original_full_path_string = path_string;
-          ri_original_full_path = path;
-          ri_sub_path = path;
-          ri_sub_path_string = Url.string_of_url_path ~encode:true path;
-          ri_get_params_string = params;
-          ri_host = headerhost;
-          ri_port_from_host_field = headerport;
-          ri_get_params = get_params;
-          ri_initial_get_params = get_params;
-          ri_post_params = post_params;
-          ri_files = files;
-          ri_remote_inet_addr = client_inet_addr;
-          ri_remote_ip = ipstring;
-          ri_remote_ip_parsed = lazy (Ipaddr.of_string_exn ipstring);
-          ri_remote_port = port_of_sockaddr sockaddr;
-	  ri_forward_ip = [];
-          ri_server_port = port;
-          ri_user_agent = useragent;
-          ri_cookies_string = cookies_string;
-          ri_cookies = cookies;
-          ri_ifmodifiedsince = ifmodifiedsince;
-          ri_ifunmodifiedsince = ifunmodifiedsince;
-          ri_ifnonematch = ifnonematch;
-          ri_ifmatch = ifmatch;
-          ri_content_type = ct;
-          ri_content_type_string = ct_string;
-          ri_content_length = cl;
-          ri_referer = referer;
-          ri_origin = origin;
-          ri_access_control_request_method = access_control_request_method;
-          ri_access_control_request_headers = access_control_request_headers;
-          ri_accept = accept;
-          ri_accept_charset = accept_charset;
-          ri_accept_encoding = accept_encoding;
-          ri_accept_language = accept_language;
-          ri_http_frame = handle_expect sender_slot http_frame;
-          ri_request_cache = Polytables.create ();
-          ri_client = Ocsigen_extensions.client_of_connection receiver;
-          ri_range = lazy (Ocsigen_range.get_range http_frame);
-          ri_timeofday = Unix.gettimeofday ();
-          ri_nb_tries = 0;
-          ri_connection_closed = Ocsigen_http_com.closed receiver;
-        }
+        (RI.make
+         ~url_string:url
+         ~meth:meth
+         ~protocol:http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto
+         ~ssl:(Lwt_ssl.is_ssl (Ocsigen_http_com.connection_fd receiver))
+         ~full_path_string:path_string
+         ~full_path:path
+         ~original_full_path_string:path_string
+         ~original_full_path:path
+         ~sub_path:path
+         ~sub_path_string:(Url.string_of_url_path ~encode:true path)
+         ~get_params_string:params
+         ~host:headerhost
+         ~port_from_host_field:headerport
+         ~get_params:get_params
+         ~initial_get_params:get_params
+         ~post_params:post_params
+         ~files:files
+         ~remote_inet_addr:client_inet_addr
+         ~remote_ip:ipstring
+         ~remote_ip_parsed:(lazy (Ipaddr.of_string_exn ipstring))
+         ~remote_port:(port_of_sockaddr sockaddr)
+         ~forward_ip:[]
+         ~server_port:port
+         ~user_agent:useragent
+         ~cookies_string:cookies_string
+         ~cookies:cookies
+         ~ifmodifiedsince:ifmodifiedsince
+         ~ifunmodifiedsince:ifunmodifiedsince
+         ~ifnonematch:ifnonematch
+         ~ifmatch:ifmatch
+         ~content_type:ct
+         ~content_type_string:ct_string
+         ~content_length:cl
+         ~referer:referer
+         ~origin:origin
+         ~access_control_request_method:access_control_request_method
+         ~access_control_request_headers:access_control_request_headers
+         ~accept:accept
+         ~accept_charset:accept_charset
+         ~accept_encoding:accept_encoding
+         ~accept_language:accept_language
+         ~http_frame:(handle_expect sender_slot http_frame)
+         ~request_cache:(Polytables.create () )
+         ~client:(Ocsigen_extensions.client_of_connection receiver)
+         ~range:(lazy (Ocsigen_range.get_range http_frame))
+         ~timeofday:(Unix.gettimeofday ())
+         ~nb_tries:0
+         ~connection_closed:(Ocsigen_http_com.closed receiver) ())
     )
     (fun e ->
        Ocsigen_messages.debug (fun () -> "~~~ Exn during get_request_infos : "^
@@ -485,8 +486,8 @@ let handle_result_frame ri res send =
         | None   -> `Ignore_header
         | Some e ->
             if List.mem e if_none_match then
-              if ri.ri_method = Http_header.GET ||
-                ri.ri_method = Http_header.HEAD then
+              if (RI.meth ri) = Http_header.GET ||
+                (RI.meth ri) = Http_header.HEAD then
                   `Unmodified
               else
                 `Precondition_failed
@@ -521,17 +522,17 @@ let handle_result_frame ri res send =
        the order used by Apache. See the function
        modules/http/http_protocol.c/ap_meets_conditions in the Apache
        source *)
-    match handle_header if_match ri.ri_ifmatch with
+    match handle_header if_match (RI.ifmatch ri) with
     | `Precondition_failed -> `Precondition_failed
     | `No_header | `Ignore_header ->
-      match handle_header if_unmodified_since ri.ri_ifunmodifiedsince with
+      match handle_header if_unmodified_since (RI.ifunmodifiedsince ri) with
       | `Precondition_failed -> `Precondition_failed
       | `No_header | `Ignore_header ->
-        match handle_header if_none_match ri.ri_ifnonematch with
+        match handle_header if_none_match (RI.ifnonematch ri) with
         | `Precondition_failed -> `Precondition_failed
         | `Ignore_header_and_ModifiedSince -> `Std
         | `Unmodified | `No_header as r1 ->
-            (match handle_header if_modified_since ri.ri_ifmodifiedsince with
+            (match handle_header if_modified_since (RI.ifmodifiedsince ri) with
              | `Unmodified | `No_header as r2 ->
                  if r1 = `No_header && r2 = `No_header then
                    `Std
@@ -700,26 +701,26 @@ let service receiver sender_slot request meth url port sockaddr =
            accesslog
 	     (try
 		let x_forwarded_for = Http_headers.find Http_headers.x_forwarded_for
-		  ri.ri_http_frame.frame_header.Http_header.headers in
+		  (RI.http_frame ri).frame_header.Http_header.headers in
 		Format.sprintf
                   "connection for %s from %s (%s) with X-Forwarded-For: %s: %s"
-                  (match ri.ri_host with
+                  (match RI.host ri with
                     | None   -> "<host not specified in the request>"
                     | Some h -> h)
-                  ri.ri_remote_ip
-                  ri.ri_user_agent
+                  (RI.remote_ip ri)
+                  (RI.user_agent ri)
 		  x_forwarded_for
-                  ri.ri_url_string
+                  (RI.url_string ri)
 	      with
 		| Not_found ->
 		  Format.sprintf
                     "connection for %s from %s (%s): %s"
-                    (match ri.ri_host with
+                    (match RI.host ri with
                       | None   -> "<host not specified in the request>"
                       | Some h -> h)
-                    ri.ri_remote_ip
-                    ri.ri_user_agent
-                    ri.ri_url_string);
+                    (RI.remote_ip ri)
+                    (RI.user_agent ri)
+                    (RI.url_string ri));
            let send_aux =
              send sender_slot ~clientproto ~head
                ~sender:Ocsigen_http_com.default_sender
@@ -743,15 +744,15 @@ let service receiver sender_slot request meth url port sockaddr =
                     Ocsigen_messages.debug2 "-> Sending 301 Moved permanently";
                     let port = Ocsigen_extensions.get_port request in
                     let new_url = Neturl.make_url
-                      ~scheme:(if ri.ri_ssl then "https" else "http")
+                      ~scheme:(if (RI.ssl ri) then "https" else "http")
                       ~host:(Ocsigen_extensions.get_hostname request)
-                      ?port:(if (port = 80 && not ri.ri_ssl)
-                               || (ri.ri_ssl && port = 443)
+                      ?port:(if (port = 80 && not (RI.ssl ri))
+                               || ((RI.ssl ri) && port = 443)
                              then None
                              else Some port)
                       ~path:(""::(Url.add_end_slash_if_missing
-                                    ri.ri_full_path))
-                      ?query:ri.ri_get_params_string
+                                    (RI.full_path ri)))
+                      ?query:(RI.get_params_string ri)
                       http_url_syntax
                     in
                     send_aux {

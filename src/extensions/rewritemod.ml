@@ -84,9 +84,9 @@ let gen regexp = function
       let redir, fullrewrite =
         let ri = ri.request_info in
         find_rewrite regexp
-          (match ri.ri_get_params_string with
-             | None -> ri.ri_sub_path_string
-             | Some g -> ri.ri_sub_path_string ^ "?" ^ g)
+          (match RI.get_params_string ri with
+             | None -> RI.sub_path_string ri
+             | Some g -> (RI.sub_path_string ri) ^ "?" ^ g)
       in
       Ocsigen_messages.debug (fun () ->
         "--Rewritemod: YES! rewrite to: "^redir);
