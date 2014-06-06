@@ -1,0 +1,11 @@
+# OASIS_START
+# DO NOT EDIT (digest: 78134eb17edfa6387e26786ea20c74d9)
+version = "0.1"
+description = "HTTP Server in OCaml"
+archive(byte) = "nocommandline.cma"
+archive(byte, plugin) = "nocommandline.cma"
+archive(native) = "nocommandline.cmxa"
+archive(native, plugin) = "nocommandline.cmxs"
+exists_if = "nocommandline.cma"
+# OASIS_STOP
+

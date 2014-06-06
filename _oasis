@@ -1,0 +1,223 @@
+OASISFormat:		0.4
+Name:			ocsigenserver
+Version:		0.1
+Synopsis:		HTTP Server in OCaml
+Authors:		Vincent Balat
+License:		MIT
+Plugins:		META (0.3), DevFiles (0.3)
+BuildTools:		ocamlbuild
+OCamlVersion:		>= 4.01
+BetaFeatures:		section_object
+
+Library ocsigenserver
+  Path:			src/
+  Pack:			true
+
+Flag commandline
+  Description:		Parse command line
+  Default:		true
+
+Library polytables
+  Path:			src/polytables
+  FindlibParent:	ocsigenserver
+  Modules:		Polytables
+
+Library commandline
+  Path:			src/commandline/yes
+  FindlibParent:	ocsigenserver
+  Modules:		Ocsigen_getcommandline
+  Build$:		flag(commandline)
+
+
+Library nocommandline
+  Path:			src/commandline/no
+  Modules:		Ocsigen_getcommandline
+  Build$:		!flag(commandline)
+
+Library baselib
+  Path:			src/baselib
+  FindlibParent:	ocsigenserver
+  Modules:		Ocsigen_cache,
+                        Ocsigen_commandline,
+                        Ocsigen_config,
+                        Ocsigen_lib,
+                        Ocsigen_lib_base,
+                        Ocsigen_loader,
+                        Ocsigen_messages,
+                        Ocsigen_stream,
+                        Dynlink_wrapper
+  BuildDepends:		lwt,
+                        netstring,
+                        netstring-pcre,
+                        cryptokit,
+                        findlib,
+                        tyxml,
+                        lwt.syntax,
+                        lwt.extra,
+                        ipaddr,
+                        threads,
+                        dynlink,
+                        ocsigenserver.commandline
+
+Library http
+  Path:			src/http
+  FindlibParent:	ocsigenserver
+  Modules:		Ocsigen_cookies,
+                        Ocsigen_http_frame,
+                        Ocsigen_headers,
+                        Ocsigen_http_com,
+                        Ocsigen_charset_mime,
+                        Ocsigen_senders
+  InternalModules:	Multipart,
+                        Http_lexer,
+                        Http_headers,
+                        Framepp
+  BuildDepends:		ocsigenserver.baselib,
+                        netstring,
+                        netstring-pcre,
+                        lwt.ssl,
+                        tyxml
+
+Library server
+  Path:			src/server
+  FindlibParent:	ocsigenserver
+  Modules:		Ocsigen_extensions,
+                        Ocsigen_range,
+                        Ocsigen_parseconfig,
+                        Ocsigen_http_client,
+                        Ocsigen_local_files,
+                        Ocsigen_server
+  BuildDepends:		ocsigenserver.baselib,
+                        ocsigenserver.polytables,
+                        ocsigenserver.http,
+                        lwt.unix,
+                        netstring,
+                        netstring-pcre,
+                        cryptokit,
+                        findlib,
+                        tyxml,
+                        tyxml.parser,
+                        lwt.syntax,
+                        lwt.extra,
+                        ipaddr,
+                        threads
+
+# EXTENSIONS
+
+Library ext
+  Path:			src/extensions/
+  FindlibParent:	ocsigenserver
+
+Object staticmod
+  Path:			src/extensions/
+  Modules:		Staticmod
+  FindlibFullName:	ocsigenserver.ext.staticmod
+  BuildDepends:		ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+# Library accesscontrol
+#   Path:			src/ext/accesscontrol
+#   Modules:		Accesscontrol
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library authbasic
+#   Path:			src/ext/authbasic
+#   Modules:		Authbasic
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library cgimod
+#   Path:			src/ext/cgimod
+#   Modules:		Cgimod
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library cors
+#   Path:			src/ext/cors
+#   Modules:		Cors
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library deflatemod
+#   Path:			src/ext/deflatemod
+#   Modules:		Deflatemod
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         camlzip,
+#                         server
+# 
+# Library extendconfiguration
+#   Path:			src/ext/extendconfiguration
+#   Modules:		Extendconfiguration
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library extensiontemplate
+#   Path:			src/ext/extensiontemplate
+#   Modules:		Extensiontemplate
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library ocsigen_comet
+#   Path:			src/ext/ocsigen_comet
+#   Modules:		Ocsigen_comet
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         react,
+#                         server
+# 
+# Library outputfilter
+#   Path:			src/ext/outputfilter
+#   Modules:		Outputfilter
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library redirectmod
+#   Path:			src/ext/redirectmod
+#   Modules:		Redirectmod
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library revproxy
+#   Path:			src/ext/revproxy
+#   Modules:		Revproxy
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library rewritemod
+#   Path:			src/ext/rewritemod
+#   Modules:		Rewritemod
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+# Library userconf
+#   Path:			src/ext/userconf
+#   Modules:		Userconf
+#   FindlibParent:	ext
+#   BuildDepends:		netstring-pcre,
+#                         server
+# 
+
+Executable ocsigenserver
+  Path:			bin/
+  MainIs:		server_main.ml
+  CompiledObject:	native
+  BuildDepends:		lwt,
+                        ocsigenserver.baselib,
+                        ocsigenserver.polytables,
+                        ocsigenserver.http,
+                        ocsigenserver.server,
+                        ocsigenserver.commandline
