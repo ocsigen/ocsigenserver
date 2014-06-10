@@ -1413,7 +1413,7 @@ let start_server () = try
         set_passwd_if_needed sslinfo;
         if (get_daemon ())
         then
-          let pid = Unix.fork () in
+          let pid = Lwt_unix.fork () in
           if pid = 0
           then run user_info sslinfo threadinfo h
           else begin
