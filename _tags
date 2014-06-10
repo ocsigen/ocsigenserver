@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: bf14a759863e3dc45a14b1eef7a5afdc)
+# DO NOT EDIT (digest: 12c3ab3b70bcf11509edba12553f95c0)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -71,9 +71,10 @@
 <src/server/*.ml{,i}>: use_commandline
 <src/server/*.ml{,i}>: use_http
 <src/server/*.ml{,i}>: use_polytables
-# Library ext
-"src/extensions/ext.cmxs": use_ext
-# Object staticmod
+# Library extensions
+"src/extensions/extensions.cmxs": use_extensions
+# Library staticmod
+"src/extensions/staticmod.cmxs": use_staticmod
 <src/extensions/*.ml{,i}>: package(cryptokit)
 <src/extensions/*.ml{,i}>: package(dynlink)
 <src/extensions/*.ml{,i}>: package(findlib)
@@ -136,3 +137,5 @@
 # OASIS_STOP
 
 <src/baselib/*.ml{,i}>: syntax(camlp4o)
+<bin/*.ml{,i}>: linkall
+"bin/server_main.native": linkall

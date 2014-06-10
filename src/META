@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 32f7a290f2b65577093a6bb3ecfac03d)
+# DO NOT EDIT (digest: 5703e97f1553688baceb340b68826c29)
 version = "0.1"
 description = "HTTP Server in OCaml"
 archive(byte) = "ocsigenserver.cma"
@@ -29,6 +29,16 @@ package "polytables" (
  exists_if = "polytables.cma"
 )
 
+package "nocommandline" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ archive(byte) = "nocommandline.cma"
+ archive(byte, plugin) = "nocommandline.cma"
+ archive(native) = "nocommandline.cmxa"
+ archive(native, plugin) = "nocommandline.cmxs"
+ exists_if = "nocommandline.cma"
+)
+
 package "http" (
  version = "0.1"
  description = "HTTP Server in OCaml"
@@ -40,21 +50,23 @@ package "http" (
  exists_if = "http.cma"
 )
 
-package "ext" (
+package "extensions" (
  version = "0.1"
  description = "HTTP Server in OCaml"
- archive(byte) = "ext.cma"
- archive(byte, plugin) = "ext.cma"
- archive(native) = "ext.cmxa"
- archive(native, plugin) = "ext.cmxs"
- exists_if = "ext.cma"
+ archive(byte) = "extensions.cma"
+ archive(byte, plugin) = "extensions.cma"
+ archive(native) = "extensions.cmxa"
+ archive(native, plugin) = "extensions.cmxs"
+ exists_if = "extensions.cma"
  package "staticmod" (
   version = "0.1"
   description = "HTTP Server in OCaml"
   requires = "ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
-  archive(byte) = "staticmod.cmo"
-  archive(native) = "staticmod.cmx"
-  exists_if = "staticmod.cmo"
+  archive(byte) = "staticmod.cma"
+  archive(byte, plugin) = "staticmod.cma"
+  archive(native) = "staticmod.cmxa"
+  archive(native, plugin) = "staticmod.cmxs"
+  exists_if = "staticmod.cma"
  )
 )
 

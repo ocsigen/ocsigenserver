@@ -31,6 +31,7 @@ Library commandline
 
 Library nocommandline
   Path:			src/commandline/no
+  FindlibParent:	ocsigenserver
   Modules:		Ocsigen_getcommandline
   Build$:		!flag(commandline)
 
@@ -104,14 +105,14 @@ Library server
 
 # EXTENSIONS
 
-Library ext
+Library extensions
   Path:			src/extensions/
   FindlibParent:	ocsigenserver
 
-Object staticmod
-  Path:			src/extensions/
+Library staticmod
+  Path:			src/extensions
   Modules:		Staticmod
-  FindlibFullName:	ocsigenserver.ext.staticmod
+  FindlibParent:	extensions
   BuildDepends:		ocsigenserver,
                         ocsigenserver.baselib,
                         ocsigenserver.server,
