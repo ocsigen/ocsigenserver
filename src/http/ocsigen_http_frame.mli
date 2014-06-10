@@ -101,21 +101,6 @@ module Http_header :
     val get_headers_values : http_header -> Http_headers.name -> string list
     val get_proto : http_header -> proto
     val add_headers : http_header -> Http_headers.name -> string -> http_header
-
-    val meth_of_cohttp_meth : Cohttp.Code.meth -> http_method
-    val meth_to_cohttp_meth : http_method -> Cohttp.Code.meth
-    val proto_of_cohttp_version : Cohttp.Code.version -> proto
-    val proto_to_cohttp_version : proto -> Cohttp.Code.version
-    val of_cohttp_request : Cohttp.Request.t -> http_header
-    val of_cohttp_response : Cohttp.Response.t -> http_header
-    val to_cohttp_request :
-        ?encoding:Cohttp.Transfer.encoding ->
-        http_header ->
-        Uri.t -> Cohttp.Request.t
-    val to_cohttp_response :
-        ?encoding:Cohttp.Transfer.encoding ->
-        ?flush:bool ->
-        http_header -> Cohttp.Response.t
   end
 module Http_error :
   sig
@@ -138,8 +123,3 @@ type t =
     frame_content : string Ocsigen_stream.t option;
     frame_abort : unit -> unit Lwt.t
   }
-
-val of_cohttp_request : Cohttp.Request.t -> Cohttp_lwt_body.t -> t
-val of_cohttp_response : Cohttp.Response.t -> Cohttp_lwt_body.t -> t
-val to_cohttp_request : ?encoding:Cohttp.Transfer.encoding -> t -> Uri.t -> (Cohttp.Request.t * Cohttp_lwt_body.t)
-val result_to_cohttp_response : result -> Cohttp.Response.t * Cohttp_lwt_body.t

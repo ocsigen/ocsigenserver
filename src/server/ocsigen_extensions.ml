@@ -912,19 +912,20 @@ module Make (Server : Ocsigen_common_server.S) = struct
     let host = RI.host ri in
     let port = RI.server_port ri in
 
-    let conn = RI.client ri in
-    let awake =
-      if awake_next_request
-      then
-        (let tobeawoken = ref true in
-         (* must be awoken once and only once *)
-         fun () ->
-           if !tobeawoken then begin
-             tobeawoken := false;
-             Ocsigen_http_com.wakeup_next_request conn
-           end)
-      else id
-    in
+    (* let conn = RI.client ri in *)
+    let awake = fun () -> () in
+      (*
+        if awake_next_request
+        then
+          (let tobeawoken = ref true in
+           (* must be awoken once and only once *)
+           fun () ->
+             if !tobeawoken then begin
+               tobeawoken := false;
+               Ocsigen_http_com.wakeup_next_request conn
+             end)
+        else id
+      *)
 
     let rec do2 sites cookies_to_set ri =
       RI.update_nb_tries ri (RI.nb_tries ri + 1);
@@ -936,7 +937,7 @@ module Make (Server : Ocsigen_common_server.S) = struct
           | Some h -> h^":"^(string_of_int port)
         in
         let rec aux_host ri prev_err cookies_to_set = function
-          | [] -> fail (Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, prev_err))
+          | [] -> fail (Server.Ocsigen_http_error (cookies_to_set, prev_err))
           | (h, conf_info, host_function)::l when
               host_match ~virtual_hosts:h ~host ~port ->
             Ocsigen_messages.debug (fun () ->
@@ -972,7 +973,7 @@ module Make (Server : Ocsigen_common_server.S) = struct
                aux_host ri e (Ocsigen_cookies.add_cookies cook cookies_to_set) l
              (* try next site *)
              | Ext_stop_all (cook, e) ->
-               fail (Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, e))
+               fail (Server.Ocsigen_http_error (cookies_to_set, e))
              | Ext_continue_with (_, cook, e) ->
                aux_host ri e
                  (Ocsigen_cookies.add_cookies cook cookies_to_set) l

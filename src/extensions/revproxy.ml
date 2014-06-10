@@ -138,47 +138,17 @@ let gen dir = function
            | None -> host
          in
 
-         let print_cohttp_request out_ch (headers, version, meth, uri) =
-           let print_list print_data out_ch lst =
-             let rec aux = function
-               | [] -> ()
-               | [ x ] -> print_data out_ch x
-               | x :: r -> print_data out_ch x; aux r
-             in aux lst
-           in
-
-           Printf.fprintf out_ch "%s [%s/%s:]\n"
-             (Uri.to_string uri)
-             (Cohttp.Code.string_of_version version)
-             (Cohttp.Code.string_of_method meth);
-           Cohttp.Header.iter
-             (fun key values ->
-                Printf.fprintf out_ch "\t%s = %a\n" key
-                  (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
-             headers
+         let frame_of_cohttp (response, body) =
+           let open Ocsigen_http_frame in
+           {
+             frame_header = Of_cohttp.of_response response;
+             frame_content = Some
+                 (Ocsigen_stream.of_lwt_stream
+                    (fun x -> x)
+                    (Cohttp_lwt_body.to_stream body));
+             frame_abort = (fun () -> Lwt.return ());
+           }
          in
-
-         let print_cohttp_response out_ch response =
-           let print_list print_data out_ch lst =
-             let rec aux = function
-               | [] -> ()
-               | [ x ] -> print_data out_ch x
-               | x :: r -> print_data out_ch x; aux r
-             in aux lst
-           in
-
-           let open Cohttp.Response in
-
-           Printf.fprintf out_ch "%s: %s\n"
-             (Cohttp.Code.string_of_version @@ version response)
-             (Cohttp.Code.string_of_status @@ status response);
-           Cohttp.Header.iter
-             (fun key values ->
-                Printf.fprintf out_ch "\t%s = %a\n" key
-                  (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
-             (headers response)
-         in
-
 
          let do_request () =
            let ri = ri.request_info in
@@ -207,57 +177,16 @@ let gen dir = function
            let headers = Cohttp.Header.remove headers "host" in
            let uri = Printf.sprintf "%s://%s%s"
                proto host uri in
-           Printf.fprintf stderr "[R] %a%!" print_cohttp_request
-             (headers, version, meth, Uri.of_string uri);
            Client.call ~headers ~body meth (Uri.of_string uri)
-(*
-           let headers =
-             Http_headers.replace
-               Http_headers.x_forwarded_proto
-               proto
-               (Http_headers.replace
-                  Http_headers.x_forwarded_for
-                  forward
-                  (ri.ri_http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers)) in
-           if dir.pipeline then
-             Ocsigen_http_client.raw_request
-               ~headers
-               ~https
-               ~port
-               ~client:ri.ri_client
-               ~keep_alive:true
-               ~content:ri.ri_http_frame.Ocsigen_http_frame.frame_content
-               ?content_length:ri.ri_content_length
-               ~http_method:ri.ri_method
-               ~host
-               ~inet_addr
-               ~uri ()
-           else
-             fun () ->
-               Ocsigen_http_client.basic_raw_request
-                 ~headers
-                 ~https
-                 ~port
-                 ~content:ri.ri_http_frame.Ocsigen_http_frame.frame_content
-                 ?content_length:ri.ri_content_length
-                 ~http_method:ri.ri_method
-                 ~host
-                 ~inet_addr
-                 ~uri ()
-*)
          in
          Lwt.return
            (Ext_found
               (fun () ->
                  do_request ()
 
-                 >>= fun (response, body) ->
+                 >|= frame_of_cohttp
+                 >>= fun http_frame ->
 
-                 Printf.fprintf stderr "[R] %a%!"
-                   print_cohttp_response response;
-
-                 let http_frame =
-                   Ocsigen_http_frame.of_cohttp_response response body in
                  let headers =
                    http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers
                  in

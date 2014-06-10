@@ -5,8 +5,6 @@ open Ocsigen_lib
 open Ocsigen_request_info
 open Ocsigen_http_frame
 open Ocsigen_headers
-open Ocsigen_http_com
-open Ocsigen_senders
 open Ocsigen_config
 open Ocsigen_cookies
 open Ocsigen_generate
@@ -19,6 +17,15 @@ module RI = Ocsigen_request_info (* An alias convenient for accessor *)
 
 exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info -> Neturl.url)
 exception Ocsigen_unsupported_media
+exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+
+module Connection = struct
+  exception Lost_connection of exn
+  exception Aborted
+  exception Timeout
+  exception Keepalive_timeout
+  exception Connection_closed
+end
 
 (** print_cohttp_request Print request for debug
  * @param out_ch output for debug
@@ -53,7 +60,7 @@ let handler ~address ~port ~extensions_connector (edn, conn) request body =
     let string_of_exn = Printexc.to_string exn in
 
     match exn with
-    | Ocsigen_http_com.Ocsigen_http_error (cookies_to_set, code) ->
+    | Ocsigen_http_error (cookies_to_set, code) ->
       Server.respond_error 
         ~status:(Cohttp.Code.status_of_code code)
         ~body:string_of_exn
@@ -113,9 +120,9 @@ let handler ~address ~port ~extensions_connector (edn, conn) request body =
            Lwt.try_bind
              (extensions_connector ri)
              (fun res ->
-                Ocsigen_range.compute_range ri res >>= fun res ->
-                let (res, body) = Ocsigen_http_frame.result_to_cohttp_response res
-                in Lwt.return (res, body))
+                Ocsigen_range.compute_range ri res
+                >|= To_cohttp.to_response_and_body
+                >>= Lwt.return)
              (function
                | Ocsigen_Is_a_directory fun_request ->
                  Server.respond_redirect

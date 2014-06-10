@@ -71,7 +71,6 @@ type request_info =
        for example, information for subsequent
        extensions
    *)
-   client: Ocsigen_http_com.connection; (** The request connection *)
    range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
    (** Range HTTP header. [None] means all the document.
        List of intervals + possibly from an index to the end of the document.
@@ -79,8 +78,6 @@ type request_info =
    timeofday: float; (** An Unix timestamp computed at the beginning of the request *)
    mutable nb_tries: int; (** For internal use:
                                  used to prevent loops of requests *)
-
-   connection_closed: unit Lwt.t; (** a thread waking up when the connection is closed *)
   }
 
 (* used to modify the url in ri (for example for retrying after rewrite) *)
@@ -111,10 +108,7 @@ let ri_of_url ?(full_rewrite = false) url ri =
   }
 
 let get_server_address ri =
-  let socket = Ocsigen_http_com.connection_fd ri.client in
-  match Lwt_ssl.getsockname socket with
-  | Unix.ADDR_UNIX _ -> failwith "unix domain socket have no ip"
-  | Unix.ADDR_INET (addr,port) -> addr,port
+  raise (Invalid_argument "Ocsigen_request_info.get_server_address")
 
 let make
     ~url_string
@@ -160,7 +154,6 @@ let make
     ~accept_language
     ~http_frame
     ?(request_cache=Polytables.create ())
-    ~client
     ~range
     (* XXX: We should have this line but it would produce a circular dependency
      * between the two modules
@@ -168,7 +161,6 @@ let make
      * ?(range=lazy (Ocsigen_range.get_range http_frame)) *)
     ?(timeofday=Unix.gettimeofday ())
     ?(nb_tries=0)
-    ?(connection_closed=Ocsigen_http_com.closed client)
     () =
   {
     url_string;
@@ -214,11 +206,9 @@ let make
     accept_language;
     http_frame;
     request_cache;
-    client;
     range;
     timeofday;
     nb_tries;
-    connection_closed;
   }
 
 let update ri
@@ -265,11 +255,9 @@ let update ri
     ?(accept_language=ri.accept_language)
     ?(http_frame=ri.http_frame)
     ?(request_cache=ri.request_cache)
-    ?(client=ri.client)
     ?(range=ri.range)
     ?(timeofday=ri.timeofday)
     ?(nb_tries=ri.nb_tries)
-    ?(connection_closed=ri.connection_closed)
     () =
   {
     url_string;
@@ -315,11 +303,9 @@ let update ri
     accept_language;
     http_frame;
     request_cache;
-    client;
     range;
     timeofday;
     nb_tries;
-    connection_closed;
   }
 
 let update_nb_tries ri value = ri.nb_tries <- value
@@ -343,7 +329,6 @@ let port_from_host_field { port_from_host_field; _ } =
 let server_port { server_port; _ } = server_port
 let full_path { full_path; _ } = full_path
 let get_params_string { get_params_string; _ } = get_params_string
-let client { client; _ } = client
 let nb_tries { nb_tries; _ } = nb_tries
 let sub_path { sub_path; _ } = sub_path
 let content_length { content_length; _ } = content_length
@@ -372,4 +357,4 @@ let original_full_path_string { original_full_path_string; _ } =
 let timeofday { timeofday; _ } = timeofday
 let accept_language { accept_language; _ } = accept_language
 let accept { accept; _ } = accept
-let connection_closed { connection_closed; _ } = connection_closed
+let connection_closed _ = Lwt.return_unit

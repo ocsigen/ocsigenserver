@@ -25,7 +25,6 @@
 (* Include in a better cooperative parser for header or use regexp?. *)
 
 open Ocsigen_http_frame
-open Ocsigen_senders
 open Ocsigen_lib
 open Ocsigen_cookies
 

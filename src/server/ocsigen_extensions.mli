@@ -36,6 +36,7 @@ open Ocsigen_cookies
 include (module type of Ocsigen_command)
 include Ocsigen_common_server.S
 
+module Server : Ocsigen_common_server.S
 (* Outsources module for Eliom *)
 module RI : (module type of Ocsigen_request_info
   with type request_info = Ocsigen_request_info.request_info

@@ -26,8 +26,6 @@ open Ocsigen_request_info
 open Ocsigen_extensions
 open Ocsigen_http_frame
 open Ocsigen_headers
-open Ocsigen_http_com
-open Ocsigen_senders
 open Ocsigen_config
 open Ocsigen_parseconfig
 open Ocsigen_cookies

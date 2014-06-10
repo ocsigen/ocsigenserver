@@ -17,6 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 open Ocsigen_extensions
+open Lwt
 
 (* Displaying of a local file or directory. Currently used in
    staticmod and eliom_predefmod*)
@@ -233,16 +234,14 @@ let resolve ?no_check_for ~request ~filename () =
 (* Given a local file or directory, we retrieve its content *)
 let content ~request ~file =
   try
-    match file with
-    | RDir dirname ->
-      Ocsigen_senders.Directory_content.result_of_content
-        (dirname, RI.full_path request.request_info)
-    | RFile filename ->
-      Ocsigen_senders.File_content.result_of_content
-        (filename,
-         request.request_config.charset_assoc,
-         request.request_config.mime_assoc
-        )
+    (match file with
+     | RDir dirname ->
+       Cohttp_lwt_unix.Server.respond_string
+         ~status:`OK
+         ~body:"Not implemented yet!" ()
+     | RFile filename ->
+       Cohttp_lwt_unix.Server.respond_file ~fname:filename ())
+    >|= Of_cohttp.of_response_and_body
 
   with
   | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403
