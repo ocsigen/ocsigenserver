@@ -632,17 +632,39 @@ let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 # 633 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
+(* VVV: pour être clair, cette liste contient tout les dépendances du serveur
+ * pour éviter que Ocsigen_loader recharge toutes ces dépendances *)
+
 let server_packages = [
   "lwt";
+  "lwt.ssl";
   "netstring";
   "netstring-pcre";
   "cryptokit";
   "findlib";
   "tyxml";
+  "tyxml.parser";
   "lwt.syntax";
   "lwt.extra";
   "ipaddr";
+  "dynlink";
 ]
+
+(* VVV: sauf que les extensions dépendent de ocsigenserver.* et donc si on
+ * rajouter pas à cette liste ces dernières dépendances, le serveur contenant
+ * par exemple déjà ocsigenserver.baselib va essayer de recharger
+ * ocsigenserver.baselib *)
+
+let server_packages' = [
+  "ocsigenserver";
+  "ocsigenserver.commandline";
+  "ocsigenserver.baselib";
+  "ocsigenserver.polytables";
+  "ocsigenserver.http";
+  "ocsigenserver.server";
+]
+
+(* TODO: il faudrait trouver un moyen plus « automatique » pour ceci *)
 
 (* Substitution *)
 
@@ -729,9 +751,16 @@ let dependences =
   let l = ocamlfind
       (["query"; "-p-format"; "-recursive" ] @ server_packages) input_line in
   concat (List.mapi
-            (fun i x -> if i = 0 then p "\"%s\"" x else p "; \"%s\"" x) l);;
+            (fun i x -> if i = 0 then p "\"%s\"" x else p "; \"%s\"" x) (l @
+            server_packages'))
 
-let native = true;;
+let where_ocaml =
+  let concat l = List.fold_right (^) l "" in
+  let result = Ocamlbuild_pack.My_unix.run_and_open "ocamlc -where"
+    (fun ic -> fold (fun () -> input_line ic))
+  in concat result
+
+let native = Sys.file_exists (where_ocaml ^ "/dynlink.cmxa")
 
 let choose_rule ifiles ofile func =
   rule ofile
@@ -774,13 +803,17 @@ Ocamlbuild_plugin.dispatch (function
     | After_hygiene ->
       dispatch_default After_hygiene;
       subst_rule "src/baselib/ocsigen_config.ml" configuration;
-      choose_rule
-        [
-          "src/baselib/dynlink_wrapper.natdynlink.ml";
-          "src/baselib/dynlink_wrapper.nonatdynlink.ml";
-        ]
-        "src/baselib/dynlink_wrapper.ml"
-        (fun l -> match native with
-           | true -> List.nth l 0
-           | false -> List.nth l 1)
+
+      if native
+      then tag_file "src/baselib/dynlink_wrapper.ml"
+        ["native( " ^ (string_of_bool native) ^ ")"];
+
+      pflag ["ocaml"; "ocamldep"] "native"
+        (fun value ->
+          S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
+      pflag ["ocaml"; "compile"] "native"
+        (fun value ->
+          S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
+
+      ()
     | x -> dispatch_default x);;

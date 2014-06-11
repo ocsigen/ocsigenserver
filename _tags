@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 12c3ab3b70bcf11509edba12553f95c0)
+# DO NOT EDIT (digest: 13ca150920cf28e7eda347a145082f06)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -32,6 +32,7 @@
 <src/baselib/*.ml{,i}>: package(lwt.syntax)
 <src/baselib/*.ml{,i}>: package(netstring)
 <src/baselib/*.ml{,i}>: package(netstring-pcre)
+<src/baselib/*.ml{,i}>: package(optcomp)
 <src/baselib/*.ml{,i}>: package(threads)
 <src/baselib/*.ml{,i}>: package(tyxml)
 <src/baselib/*.ml{,i}>: use_commandline
@@ -47,6 +48,7 @@
 <src/http/*.ml{,i}>: package(lwt.syntax)
 <src/http/*.ml{,i}>: package(netstring)
 <src/http/*.ml{,i}>: package(netstring-pcre)
+<src/http/*.ml{,i}>: package(optcomp)
 <src/http/*.ml{,i}>: package(threads)
 <src/http/*.ml{,i}>: package(tyxml)
 <src/http/*.ml{,i}>: use_baselib
@@ -64,6 +66,7 @@
 <src/server/*.ml{,i}>: package(lwt.unix)
 <src/server/*.ml{,i}>: package(netstring)
 <src/server/*.ml{,i}>: package(netstring-pcre)
+<src/server/*.ml{,i}>: package(optcomp)
 <src/server/*.ml{,i}>: package(threads)
 <src/server/*.ml{,i}>: package(tyxml)
 <src/server/*.ml{,i}>: package(tyxml.parser)
@@ -86,6 +89,7 @@
 <src/extensions/*.ml{,i}>: package(lwt.unix)
 <src/extensions/*.ml{,i}>: package(netstring)
 <src/extensions/*.ml{,i}>: package(netstring-pcre)
+<src/extensions/*.ml{,i}>: package(optcomp)
 <src/extensions/*.ml{,i}>: package(threads)
 <src/extensions/*.ml{,i}>: package(tyxml)
 <src/extensions/*.ml{,i}>: package(tyxml.parser)
@@ -107,6 +111,7 @@
 "bin/server_main.native": package(lwt.unix)
 "bin/server_main.native": package(netstring)
 "bin/server_main.native": package(netstring-pcre)
+"bin/server_main.native": package(optcomp)
 "bin/server_main.native": package(threads)
 "bin/server_main.native": package(tyxml)
 "bin/server_main.native": package(tyxml.parser)
@@ -126,6 +131,7 @@
 <bin/*.ml{,i}>: package(lwt.unix)
 <bin/*.ml{,i}>: package(netstring)
 <bin/*.ml{,i}>: package(netstring-pcre)
+<bin/*.ml{,i}>: package(optcomp)
 <bin/*.ml{,i}>: package(threads)
 <bin/*.ml{,i}>: package(tyxml)
 <bin/*.ml{,i}>: package(tyxml.parser)
@@ -139,3 +145,4 @@
 <src/baselib/*.ml{,i}>: syntax(camlp4o)
 <bin/*.ml{,i}>: linkall
 "bin/server_main.native": linkall
+<src/baselib/dynlink_wrapper.ml>: package(optcomp), syntax(camlp4o)

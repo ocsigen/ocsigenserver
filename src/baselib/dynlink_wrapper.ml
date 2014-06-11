@@ -18,16 +18,27 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
+#if native
+
+open Dynlink
+
+exception Error = Dynlink.Error
+
+let loadfile = loadfile
+let error_message = error_message
+let init = init
+let allow_unsafe_modules = allow_unsafe_modules
+let prohibit = prohibit
+
+#else
+
 exception Error of string
 
 let message = "ocsigen compiled without native dynlink support"
-
 let loadfile _ = failwith message
-
 let error_message _ = failwith message
-
 let init _ = ()
-
 let allow_unsafe_modules _ = ()
-
 let prohibit _ = ()
+
+#endif

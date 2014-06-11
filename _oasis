@@ -58,6 +58,7 @@ Library baselib
                         ipaddr,
                         threads,
                         dynlink,
+                        optcomp,
                         ocsigenserver.commandline
 
 Library http
@@ -124,28 +125,28 @@ Library staticmod
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library authbasic
 #   Path:			src/ext/authbasic
 #   Modules:		Authbasic
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library cgimod
 #   Path:			src/ext/cgimod
 #   Modules:		Cgimod
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library cors
 #   Path:			src/ext/cors
 #   Modules:		Cors
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library deflatemod
 #   Path:			src/ext/deflatemod
 #   Modules:		Deflatemod
@@ -153,21 +154,21 @@ Library staticmod
 #   BuildDepends:		netstring-pcre,
 #                         camlzip,
 #                         server
-# 
+#
 # Library extendconfiguration
 #   Path:			src/ext/extendconfiguration
 #   Modules:		Extendconfiguration
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library extensiontemplate
 #   Path:			src/ext/extensiontemplate
 #   Modules:		Extensiontemplate
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library ocsigen_comet
 #   Path:			src/ext/ocsigen_comet
 #   Modules:		Ocsigen_comet
@@ -175,42 +176,42 @@ Library staticmod
 #   BuildDepends:		netstring-pcre,
 #                         react,
 #                         server
-# 
+#
 # Library outputfilter
 #   Path:			src/ext/outputfilter
 #   Modules:		Outputfilter
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library redirectmod
 #   Path:			src/ext/redirectmod
 #   Modules:		Redirectmod
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library revproxy
 #   Path:			src/ext/revproxy
 #   Modules:		Revproxy
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library rewritemod
 #   Path:			src/ext/rewritemod
 #   Modules:		Rewritemod
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 # Library userconf
 #   Path:			src/ext/userconf
 #   Modules:		Userconf
 #   FindlibParent:	ext
 #   BuildDepends:		netstring-pcre,
 #                         server
-# 
+#
 
 Executable ocsigenserver
   Path:			bin/

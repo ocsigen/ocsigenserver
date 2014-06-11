@@ -192,6 +192,7 @@ type options = {
 }
 
 let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
+  Printf.printf "LOL JE PARSE LE FICHIER DE CONF\n%!";
   let rec parse_attrs l opt =
     match l with
       | [] -> opt
