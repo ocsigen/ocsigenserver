@@ -391,7 +391,7 @@ let get_request_infos
        let path_string = Url.string_of_url_path ~encode:true path in
 
        Lwt.return
-        (RI.make
+        (Ocsigen_request_info.make
          ~url_string:url
          ~meth:meth
          ~protocol:http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto
@@ -486,8 +486,8 @@ let handle_result_frame ri res send =
         | None   -> `Ignore_header
         | Some e ->
             if List.mem e if_none_match then
-              if (RI.meth ri) = Http_header.GET ||
-                (RI.meth ri) = Http_header.HEAD then
+              if (Ocsigen_request_info.meth ri) = Http_header.GET ||
+                (Ocsigen_request_info.meth ri) = Http_header.HEAD then
                   `Unmodified
               else
                 `Precondition_failed
@@ -522,17 +522,17 @@ let handle_result_frame ri res send =
        the order used by Apache. See the function
        modules/http/http_protocol.c/ap_meets_conditions in the Apache
        source *)
-    match handle_header if_match (RI.ifmatch ri) with
+    match handle_header if_match (Ocsigen_request_info.ifmatch ri) with
     | `Precondition_failed -> `Precondition_failed
     | `No_header | `Ignore_header ->
-      match handle_header if_unmodified_since (RI.ifunmodifiedsince ri) with
+      match handle_header if_unmodified_since (Ocsigen_request_info.ifunmodifiedsince ri) with
       | `Precondition_failed -> `Precondition_failed
       | `No_header | `Ignore_header ->
-        match handle_header if_none_match (RI.ifnonematch ri) with
+        match handle_header if_none_match (Ocsigen_request_info.ifnonematch ri) with
         | `Precondition_failed -> `Precondition_failed
         | `Ignore_header_and_ModifiedSince -> `Std
         | `Unmodified | `No_header as r1 ->
-            (match handle_header if_modified_since (RI.ifmodifiedsince ri) with
+            (match handle_header if_modified_since (Ocsigen_request_info.ifmodifiedsince ri) with
              | `Unmodified | `No_header as r2 ->
                  if r1 = `No_header && r2 = `No_header then
                    `Std
@@ -700,26 +700,26 @@ let service receiver sender_slot request meth url port sockaddr =
            accesslog
 	     (try
 		let x_forwarded_for = Http_headers.find Http_headers.x_forwarded_for
-		  (RI.http_frame ri).frame_header.Http_header.headers in
+		  (Ocsigen_request_info.http_frame ri).frame_header.Http_header.headers in
 		Format.sprintf
                   "connection for %s from %s (%s) with X-Forwarded-For: %s: %s"
-                  (match RI.host ri with
+                  (match Ocsigen_request_info.host ri with
                     | None   -> "<host not specified in the request>"
                     | Some h -> h)
-                  (RI.remote_ip ri)
-                  (RI.user_agent ri)
+                  (Ocsigen_request_info.remote_ip ri)
+                  (Ocsigen_request_info.user_agent ri)
 		  x_forwarded_for
-                  (RI.url_string ri)
+                  (Ocsigen_request_info.url_string ri)
 	      with
 		| Not_found ->
 		  Format.sprintf
                     "connection for %s from %s (%s): %s"
-                    (match RI.host ri with
+                    (match Ocsigen_request_info.host ri with
                       | None   -> "<host not specified in the request>"
                       | Some h -> h)
-                    (RI.remote_ip ri)
-                    (RI.user_agent ri)
-                    (RI.url_string ri));
+                    (Ocsigen_request_info.remote_ip ri)
+                    (Ocsigen_request_info.user_agent ri)
+                    (Ocsigen_request_info.url_string ri));
            let send_aux =
              send sender_slot ~clientproto ~head
                ~sender:Ocsigen_http_com.default_sender
@@ -743,15 +743,15 @@ let service receiver sender_slot request meth url port sockaddr =
                     Ocsigen_messages.debug2 "-> Sending 301 Moved permanently";
                     let port = Ocsigen_extensions.get_port request in
                     let new_url = Neturl.make_url
-                      ~scheme:(if (RI.ssl ri) then "https" else "http")
+                      ~scheme:(if (Ocsigen_request_info.ssl ri) then "https" else "http")
                       ~host:(Ocsigen_extensions.get_hostname request)
-                      ?port:(if (port = 80 && not (RI.ssl ri))
-                               || ((RI.ssl ri) && port = 443)
+                      ?port:(if (port = 80 && not (Ocsigen_request_info.ssl ri))
+                               || ((Ocsigen_request_info.ssl ri) && port = 443)
                              then None
                              else Some port)
                       ~path:(""::(Url.add_end_slash_if_missing
-                                    (RI.full_path ri)))
-                      ?query:(RI.get_params_string ri)
+                                    (Ocsigen_request_info.full_path ri)))
+                      ?query:(Ocsigen_request_info.get_params_string ri)
                       http_url_syntax
                     in
                     send_aux

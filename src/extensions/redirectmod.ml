@@ -44,7 +44,7 @@ open Simplexmlparser
 (* The table of redirections for each virtual server                         *)
 type assockind =
   | Regexp of Netstring_pcre.regexp * string
-      * yesnomaybe (* full url *) 
+      * yesnomaybe (* full url *)
       * bool (* temporary *)
 
 
@@ -52,7 +52,7 @@ type assockind =
 (*****************************************************************************)
 (** The function that will generate the pages from the request. *)
 let gen dir = function
-  | Ocsigen_extensions.Req_found _ -> 
+  | Ocsigen_extensions.Req_found _ ->
       Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, ri) ->
       catch
@@ -66,18 +66,18 @@ let gen dir = function
                  regexp
                  full
                  dest
-                 (RI.ssl ri.request_info)
-                 (RI.host ri.request_info)
-                 (RI.server_port ri.request_info)
-                 (RI.get_params_string ri.request_info)
-                 (RI.sub_path_string ri.request_info)
-                 (RI.full_path_string ri.request_info)
+                 (Ocsigen_request_info.ssl ri.request_info)
+                 (Ocsigen_request_info.host ri.request_info)
+                 (Ocsigen_request_info.server_port ri.request_info)
+                 (Ocsigen_request_info.get_params_string ri.request_info)
+                 (Ocsigen_request_info.sub_path_string ri.request_info)
+                 (Ocsigen_request_info.full_path_string ri.request_info)
              in
              match full with
                | Yes -> fi true
                | No -> fi false
-               | Maybe -> 
-                   try fi false 
+               | Maybe ->
+                   try fi false
                    with Ocsigen_extensions.Not_concerned -> fi true
            in
            Ocsigen_messages.debug
@@ -135,10 +135,10 @@ let parse_config = function
         in
         let dir =
           match parse_attrs (None, Yes, None, false) atts with
-          | (None, _, _, _) -> 
+          | (None, _, _, _) ->
               raise (Error_in_config_file
                        "Missing attribute regexp for <redirect>")
-          | (_, _, None, _) -> 
+          | (_, _, None, _) ->
               raise (Error_in_config_file
                        "Missing attribute dest for <redirect>>")
           | (Some r, full, Some d, temp) ->

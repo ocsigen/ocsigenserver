@@ -30,7 +30,7 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
-module RI : (module type of Ocsigen_request_info
+module Ocsigen_resquest_info : (module type of Ocsigen_request_info
   with type request_info = Ocsigen_request_info.request_info
    and type file_info = Ocsigen_request_info.file_info
    and type ifrange = Ocsigen_request_info.ifrange)
@@ -138,18 +138,18 @@ val client_id : client -> int
 val client_connection : client -> Ocsigen_http_com.connection
 (** Returns the connection *)
 
-type ifrange = RI.ifrange =
+type ifrange = Ocsigen_resquest_info.ifrange =
   | IR_No
   | IR_Ifunmodsince of float
   | IR_ifmatch of string
-type file_info = RI.file_info = {
+type file_info = Ocsigen_resquest_info.file_info = {
     tmp_filename: string;
     filesize: int64;
     raw_original_filename: string;
     original_basename: string ;
     file_content_type: ((string * string) * (string * string) list) option;
 }
-type request_info = RI.request_info
+type request_info = Ocsigen_resquest_info.request_info
 and request = {
   request_info: request_info;
   request_config: config_info;

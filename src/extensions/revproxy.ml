@@ -64,7 +64,7 @@ type redir =
 (** The function that will generate the pages from the request. *)
 
 let gen dir = function
-| Ocsigen_extensions.Req_found _ -> 
+| Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
 | Ocsigen_extensions.Req_not_found (err, ri) ->
   catch
@@ -78,24 +78,24 @@ let gen dir = function
              dir.regexp
              full
              dir.dest
-             (RI.ssl ri)
-             (RI.host ri)
-             (RI.server_port ri)
-             (RI.get_params_string ri)
-             (RI.sub_path_string ri)
-             (RI.full_path_string ri)
-         in 
+             (Ocsigen_request_info.ssl ri)
+             (Ocsigen_request_info.host ri)
+             (Ocsigen_request_info.server_port ri)
+             (Ocsigen_request_info.get_params_string ri)
+             (Ocsigen_request_info.sub_path_string ri)
+             (Ocsigen_request_info.full_path_string ri)
+         in
          match dir.full_url with
            | Yes -> fi true
            | No -> fi false
-           | Maybe -> 
-               try fi false 
+           | Maybe ->
+               try fi false
                with Ocsigen_extensions.Not_concerned -> fi true
        in
-       let (https, host, port, uri) = 
+       let (https, host, port, uri) =
          try
            match Url.parse dest with
-             | (Some https, Some host, port, uri, _, _, _) -> 
+             | (Some https, Some host, port, uri, _, _, _) ->
                  let port = match port with
                    | None -> if https then 443 else 80
                    | Some p -> p
@@ -122,13 +122,13 @@ let gen dir = function
           => We return.
        *)
 
-       let host = 
+       let host =
          match
-           if dir.keephost 
-           then match RI.host ri.request_info with 
+           if dir.keephost
+           then match Ocsigen_request_info.host ri.request_info with
              | Some h -> Some h
              | None -> None
-           else None 
+           else None
          with
            | Some h -> h
            | None -> host
@@ -137,11 +137,14 @@ let gen dir = function
        let do_request =
          let ri = ri.request_info in
 	 let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
-	 let forward = 
-	   String.concat ", " ((RI.remote_ip ri) :: ((RI.forward_ip ri) @ [address]))
+	 let forward =
+	   String.concat ", "
+      ((Ocsigen_request_info.remote_ip ri)
+       :: ((Ocsigen_request_info.forward_ip ri)
+           @ [address]))
 	 in
 	 let proto =
-	   if RI.ssl ri
+	   if Ocsigen_request_info.ssl ri
 	   then "https"
 	   else "http"
 	 in
@@ -152,17 +155,21 @@ let gen dir = function
 	     (Http_headers.replace
 		Http_headers.x_forwarded_for
 		forward
-		((RI.http_frame ri).Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers)) in
+		((Ocsigen_request_info.http_frame ri)
+     .Ocsigen_http_frame.frame_header
+     .Ocsigen_http_frame.Http_header.headers)) in
          if dir.pipeline then
            Ocsigen_http_client.raw_request
              ~headers
              ~https
              ~port
-             ~client:(RI.client ri)
+             ~client:(Ocsigen_request_info.client ri)
              ~keep_alive:true
-             ~content:(RI.http_frame ri).Ocsigen_http_frame.frame_content
-             ?content_length:(RI.content_length ri)
-             ~http_method:(RI.meth ri)
+             ~content:
+               (Ocsigen_request_info.http_frame ri)
+               .Ocsigen_http_frame.frame_content
+             ?content_length:(Ocsigen_request_info.content_length ri)
+             ~http_method:(Ocsigen_request_info.meth ri)
              ~host
              ~inet_addr
              ~uri ()
@@ -172,9 +179,11 @@ let gen dir = function
                  ~headers
                  ~https
                  ~port
-                 ~content:(RI.http_frame ri).Ocsigen_http_frame.frame_content
-                 ?content_length:(RI.content_length ri)
-                 ~http_method:(RI.meth ri)
+                 ~content:
+                   (Ocsigen_request_info.http_frame ri)
+                   .Ocsigen_http_frame.frame_content
+                 ?content_length:(Ocsigen_request_info.content_length ri)
+                 ~http_method:(Ocsigen_request_info.meth ri)
                  ~host
                  ~inet_addr
                  ~uri ()
@@ -186,11 +195,15 @@ let gen dir = function
 
                >>= fun http_frame ->
                let headers =
-                 http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers
+                 http_frame
+                 .Ocsigen_http_frame.frame_header
+                 .Ocsigen_http_frame.Http_header.headers
                in
                let code =
                  match
-                   http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.mode
+                   http_frame
+                   .Ocsigen_http_frame.frame_header
+                   .Ocsigen_http_frame.Http_header.mode
                  with
                    | Ocsigen_http_frame.Http_header.Answer code -> code
                    | _ -> raise Bad_answer_from_http_server

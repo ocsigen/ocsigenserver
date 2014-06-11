@@ -92,7 +92,9 @@ let parse_config = function
                      let credentials =
                        Http_headers.find
                          (Http_headers.name "Authorization")
-                         (RI.http_frame ri.request_info).Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers
+                         (Ocsigen_request_info.http_frame ri.request_info)
+                         .Ocsigen_http_frame.frame_header
+                         .Ocsigen_http_frame.Http_header.headers
                      in
                      let encoded =
                        let n = String.length credentials in

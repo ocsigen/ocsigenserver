@@ -30,8 +30,6 @@ open Ocsigen_lib
 
 exception Range_416
 
-module RI = Ocsigen_request_info
-
 (* We do not support multipart ranges. We send only an interval.
    The following function checks if we support the range requested.
 *)
@@ -94,14 +92,14 @@ let compute_range ri res =
           || (Ocsigen_config.get_disablepartialrequests ())
         then Lwt.return res
         else begin
-          let res = 
+          let res =
             Ocsigen_http_frame.Result.update res
                        ~headers:
               (Http_headers.replace
                 Http_headers.accept_ranges "bytes"
                 (Ocsigen_http_frame.headers res)) ()
           in
-          match change_range (Lazy.force (RI.range ri)) with
+          match change_range (Lazy.force (Ocsigen_request_info.range ri)) with
             | None -> Lwt.return res
             | Some (_, _, Ocsigen_extensions.IR_ifmatch etag)
                 when (match Ocsigen_http_frame.Result.etag res with

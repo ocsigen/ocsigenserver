@@ -258,11 +258,11 @@ let stream_filter contentencoding url deflate choice res =
 let filter choice_list = function
   | Req_not_found (code,_) -> return (Ext_next code)
   | Req_found ({ request_info = ri }, res) ->
-      match select_encoding (Lazy.force(RI.accept_encoding ri)) with
+      match select_encoding (Lazy.force(Ocsigen_request_info.accept_encoding ri)) with
         | Deflate ->
-            stream_filter "deflate" (RI.sub_path_string ri) true choice_list res
+            stream_filter "deflate" (Ocsigen_request_info.sub_path_string ri) true choice_list res
         | Gzip ->
-            stream_filter "gzip" (RI.sub_path_string ri)  false choice_list res
+            stream_filter "gzip" (Ocsigen_request_info.sub_path_string ri)  false choice_list res
         | Id | Star -> return (Ext_found (fun () -> return res))
         | Not_acceptable ->
             return (Ext_stop_all (Ocsigen_http_frame.Result.cookies res,406))

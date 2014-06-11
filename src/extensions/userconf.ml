@@ -41,13 +41,13 @@ let handle_parsing_error req = function
   | Ocsigen_extensions.Error_in_config_file s ->
       Ocsigen_messages.errlog (Printf.sprintf
           "Syntax error in userconf configuration file for url %s: %s"
-        (RI.url_string req.request_info) s);
+        (Ocsigen_request_info.url_string req.request_info) s);
       Lwt.return err_500
 
   | Ocsigen_extensions.Error_in_user_config_file s ->
       Ocsigen_messages.errlog  (Printf.sprintf
           "Unauthorized option in user configuration for url %s: %s"
-          (RI.url_string req.request_info) s);
+          (Ocsigen_request_info.url_string req.request_info) s);
       Lwt.return err_500
 
   | e -> Lwt.fail e
@@ -110,7 +110,7 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
       Lwt.return Ext_do_nothing
 
   | Req_not_found (previous_err, req) as req_state->
-      let path = (RI.sub_path_string req.request_info) in
+      let path = (Ocsigen_request_info.sub_path_string req.request_info) in
       match Netstring_pcre.string_match regexp path 0 with
       | None -> Lwt.return (Ext_next previous_err)
       | Some _ ->
@@ -136,7 +136,7 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
             in
             let new_req =
               { req with request_info =
-                  (RI.update req.request_info
+                  (Ocsigen_request_info.update req.request_info
                    ~sub_path:path
                    ~sub_path_string:url ())}
             in

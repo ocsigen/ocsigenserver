@@ -23,21 +23,15 @@
 open Ocsigen_lib
 open Lwt
 
-module OX      = Ocsigen_extensions
-module OMsg    = Ocsigen_messages
-module OFrame  = Ocsigen_http_frame
-module OStream = Ocsigen_stream
-module Http_header = OFrame.Http_header
-
 (*** MAIN FUNCTION ***)
 
 let default_frame () =
-  (OFrame.Result.update (OFrame.Result.default ())
+  (Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.default ())
     ~code:200
     ~content_length:(Some 0L) ())
 
 type config =
-    { allowed_method : Http_header.http_method list option;
+    { allowed_method : Ocsigen_http_frame.Http_header.http_method list option;
       (* None means: all method are accepted *)
       allowed_credentials : bool;
       max_age : int option;
@@ -52,11 +46,12 @@ let default_config =
 exception Refused
 
 let add_headers config rq response =
-  match Lazy.force (OX.RI.origin rq.OX.request_info) with
-    | None -> return OX.Ext_do_nothing
+  match Lazy.force (Ocsigen_request_info
+                    .origin rq.Ocsigen_extensions.request_info) with
+    | None -> return Ocsigen_extensions.Ext_do_nothing
     | Some origin ->
-      OMsg.debug (fun () -> Printf.sprintf "CORS: request with origin: %s" origin);
-      let res_headers = (OFrame.Result.headers response) in
+      Ocsigen_messages.debug (fun () -> Printf.sprintf "CORS: request with origin: %s" origin);
+      let res_headers = (Ocsigen_http_frame.Result.headers response) in
 
       let res_headers = Http_headers.add
         Http_headers.access_control_allow_origin
@@ -75,7 +70,9 @@ let add_headers config rq response =
 
       let res_headers =
         let req_method = Lazy.force
-          (OX.RI.access_control_request_method rq.OX.request_info) in
+          (Ocsigen_request_info
+           .access_control_request_method rq.Ocsigen_extensions.request_info)
+        in
         match req_method with
             None -> res_headers
           | Some request_method ->
@@ -92,12 +89,14 @@ let add_headers config rq response =
               Http_headers.access_control_allow_methods
               request_method res_headers
             else
-              (OMsg.debug (fun () -> "CORS: Method refused");
+              (Ocsigen_messages.debug (fun () -> "CORS: Method refused");
                raise Refused) in
 
       let res_headers =
         let req_headers = Lazy.force
-          (OX.RI.access_control_request_headers rq.OX.request_info) in
+          (Ocsigen_request_info
+           .access_control_request_headers rq.Ocsigen_extensions.request_info)
+        in
         match req_headers with
             None -> res_headers
           | Some request_headers ->
@@ -119,30 +118,31 @@ let add_headers config rq response =
               (String.concat ", " config.exposed_headers) res_headers in
 
       return
-        (OX.Ext_found (fun () -> return
-          (OFrame.Result.update response
+        (Ocsigen_extensions.Ext_found (fun () -> return
+          (Ocsigen_http_frame.Result.update response
             ~headers:res_headers ())))
 
 let main config = function
 
-  | OX.Req_not_found (_, rq) ->
-      begin match (OX.RI.meth rq.OX.request_info) with
-        | OFrame.Http_header.OPTIONS ->
-          OMsg.debug (fun () -> "CORS: OPTIONS request");
+  | Ocsigen_extensions.Req_not_found (_, rq) ->
+      begin match (Ocsigen_request_info.meth
+                     rq.Ocsigen_extensions.request_info) with
+        | Ocsigen_http_frame.Http_header.OPTIONS ->
+          Ocsigen_messages.debug (fun () -> "CORS: OPTIONS request");
           begin
             try
               add_headers config rq (default_frame ())
             with
               | Refused ->
-                OMsg.debug (fun () -> "CORS: Refused request");
-                Lwt.return OX.Ext_do_nothing
+                Ocsigen_messages.debug (fun () -> "CORS: Refused request");
+                Lwt.return Ocsigen_extensions.Ext_do_nothing
           end
         | _ ->
-          Lwt.return OX.Ext_do_nothing
+          Lwt.return Ocsigen_extensions.Ext_do_nothing
       end
 
-  | OX.Req_found (rq,response) ->
-    OMsg.debug (fun () -> "CORS: answered request");
+  | Ocsigen_extensions.Req_found (rq,response) ->
+    Ocsigen_messages.debug (fun () -> "CORS: answered request");
     add_headers config rq response
 
 (*** EPILOGUE ***)
@@ -166,7 +166,7 @@ let parse_attributes config = function
       { config with allowed_method =
           Some (List.map Framepp.method_of_string l) }
   | (a,_) ->
-    OX.badconfig "Unexpected attribute %s for tag cors" a
+    Ocsigen_extensions.badconfig "Unexpected attribute %s for tag cors" a
 
 let parse_config _ _ parse_fun = function
   | Element ("cors", attrs, []) ->
@@ -174,15 +174,15 @@ let parse_config _ _ parse_fun = function
       List.fold_left parse_attributes default_config attrs in
     main config
   | Element ("cors", _, _) ->
-    OX.badconfig "cors tag should not have children"
-  | Element (t, _, _) -> raise (OX.Bad_config_tag_for_extension t)
+    Ocsigen_extensions.badconfig "cors tag should not have children"
+  | Element (t, _, _) -> raise (Ocsigen_extensions.Bad_config_tag_for_extension t)
   | _ ->
-    OX.badconfig "Unexpected data in config file"
+    Ocsigen_extensions.badconfig "Unexpected data in config file"
 
-let site_creator (_ : OX.virtual_hosts) _ = parse_config
-let user_site_creator (_ : OX.userconf_info) = site_creator
+let site_creator (_ : Ocsigen_extensions.virtual_hosts) _ = parse_config
+let user_site_creator (_ : Ocsigen_extensions.userconf_info) = site_creator
 
-let () = OX.register_extension
+let () = Ocsigen_extensions.register_extension
   ~name:"CORS"
   ~fun_site:site_creator
   ~user_fun_site:user_site_creator
