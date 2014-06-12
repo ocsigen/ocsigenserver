@@ -1,7 +1,6 @@
-open Ocsigen_lib
 open Ocsigen_cookies
+open Ocsigen_lib
 
-(* Requests *)
 type ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
 
 type file_info = {
@@ -12,6 +11,7 @@ type file_info = {
   file_content_type: ((string * string) * (string * string) list) option;
 }
 
+(** The request *)
 type request_info =
   {url_string: string; (** full URL *)
    meth: Ocsigen_http_frame.Http_header.http_method; (** GET, POST, HEAD... *)
@@ -60,7 +60,7 @@ type request_info =
        the preflight request.
        http://www.w3.org/TR/cors/#access-control-request-headers-request-h *)
 
-   accept: Http_headers.accept Lazy.t; (** Accept HTTP header. For example [(Some "text", None)] means ["text/*"]. The float is the "quality" value, if any. The last association list is for other extensions. *)
+   accept: ((string option * string option) * float option * (string * string) list) list Lazy.t; (** Accept HTTP header. For example [(Some "text", None)] means ["text/*"]. The float is the "quality" value, if any. The last association list is for other extensions. *)
    accept_charset: (string option * float option) list Lazy.t; (** Accept-Charset HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
    accept_encoding: (string option * float option) list Lazy.t; (** Accept-Encoding HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
    accept_language: (string * float option) list Lazy.t; (** Accept-Language HTTP header. The float is the "quality" value, if any. *)
@@ -356,5 +356,6 @@ let original_full_path_string { original_full_path_string; _ } =
   original_full_path_string
 let timeofday { timeofday; _ } = timeofday
 let accept_language { accept_language; _ } = accept_language
+let accept_encoding { accept_encoding; _ } = accept_encoding
 let accept { accept; _ } = accept
 let connection_closed _ = Lwt.return_unit

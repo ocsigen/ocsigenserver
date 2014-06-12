@@ -41,7 +41,7 @@ module Make (Server : Ocsigen_common_server.S) = struct
   include Server
 
   module Server = Server
-  module RI = Ocsigen_request_info
+  module Ocsigen_request_info = Ocsigen_request_info
 
   exception Ocsigen_Looping_request
 
@@ -181,8 +181,6 @@ module Make (Server : Ocsigen_common_server.S) = struct
                                      target have the same owner *)
     | AlwaysFollowSymlinks (** Always follow symlinks *)
 
-
-
   (* Requests *)
   type request = {
     request_info: request_info;
@@ -308,7 +306,7 @@ module Make (Server : Ocsigen_common_server.S) = struct
   let get_hostname req =
     if Ocsigen_config.get_usedefaulthostname ()
     then req.request_config.default_hostname
-    else match RI.host req.request_info with
+    else match Ocsigen_request_info.host req.request_info with
       | None -> req.request_config.default_hostname
       | Some host -> host
 
@@ -320,15 +318,15 @@ module Make (Server : Ocsigen_common_server.S) = struct
      - or the default port set in the configuration file. *)
   let get_port req =
     if Ocsigen_config.get_usedefaulthostname ()
-    then (if RI.ssl req.request_info
+    then (if Ocsigen_request_info.ssl req.request_info
           then req.request_config.default_httpsport
           else req.request_config.default_httpport)
-    else match RI.port_from_host_field req.request_info with
+    else match Ocsigen_request_info.port_from_host_field req.request_info with
       | Some p -> p
       | None ->
-        match RI.host req.request_info with
-        | Some _ -> if RI.ssl req.request_info then 443 else 80
-        | None -> RI.server_port req.request_info
+        match Ocsigen_request_info.host req.request_info with
+        | Some _ -> if Ocsigen_request_info.ssl req.request_info then 443 else 80
+        | None -> Ocsigen_request_info.server_port req.request_info
 
   let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 
@@ -340,14 +338,14 @@ module Make (Server : Ocsigen_common_server.S) = struct
     Ocsigen_messages.debug2 "-> Sending 301 Moved permanently";
     let port = get_port request in
     let new_url = Neturl.make_url
-        ~scheme:(if RI.ssl ri then "https" else "http")
+        ~scheme:(if Ocsigen_request_info.ssl ri then "https" else "http")
         ~host:(get_hostname request)
-        ?port:(if (port = 80 && not (RI.ssl ri))
-               || (RI.ssl ri && port = 443)
+        ?port:(if (port = 80 && not (Ocsigen_request_info.ssl ri))
+               || (Ocsigen_request_info.ssl ri && port = 443)
                then None
                else Some port)
-        ~path:(""::(Url.add_end_slash_if_missing @@ RI.full_path ri))
-        ?query:(RI.get_params_string ri)
+        ~path:(""::(Url.add_end_slash_if_missing @@ Ocsigen_request_info.full_path ri))
+        ?query:(Ocsigen_request_info.get_params_string ri)
         http_url_syntax
     in new_url
 
@@ -386,10 +384,10 @@ module Make (Server : Ocsigen_common_server.S) = struct
     if cookies_to_set = Ocsigen_cookies.Cookies.empty then
       res
     else
-      {res with
-       Ocsigen_http_frame.res_cookies =
-         Ocsigen_cookies.add_cookies
-           res.Ocsigen_http_frame.res_cookies cookies_to_set}
+      (Ocsigen_http_frame.Result.update res
+         ~cookies:
+           (Ocsigen_cookies.add_cookies
+              (Ocsigen_http_frame.Result.cookies res) cookies_to_set) ())
 
   let make_ext awake cookies_to_set req_state (genfun : extension) (genfun2 : extension2) =
     genfun req_state
@@ -499,25 +497,25 @@ module Make (Server : Ocsigen_common_server.S) = struct
                                                            Ocsigen_charset_mime.set_default_charset
                                                              oldri.request_config.charset_assoc charset } }
           in
-          match site_match oldri path @@ RI.full_path oldri.request_info with
+          match site_match oldri path @@ Ocsigen_request_info.full_path oldri.request_info with
           | None ->
             Ocsigen_messages.debug (fun () ->
                 "site \""^
                 (Url.string_of_url_path ~encode:true path)^
                 "\" does not match url \""^
                 (Url.string_of_url_path ~encode:true
-                 @@ RI.full_path oldri.request_info)^
+                 @@ Ocsigen_request_info.full_path oldri.request_info)^
                 "\".");
             Lwt.return (Ext_next e, cookies_to_set)
           | Some sub_path ->
             Ocsigen_messages.debug (fun () ->
                 "-------- site found: url \""^
                 (Url.string_of_url_path ~encode:true
-                 @@ RI.full_path oldri.request_info)^
+                 @@ Ocsigen_request_info.full_path oldri.request_info)^
                 "\" matches \""^
                 (Url.string_of_url_path ~encode:true path)^"\".");
             let ri = {oldri with
-                      request_info = RI.update
+                      request_info = Ocsigen_request_info.update
                           oldri.request_info
                           ~sub_path:sub_path
                           ~sub_path_string:
@@ -909,10 +907,10 @@ module Make (Server : Ocsigen_common_server.S) = struct
       ?(previous_cookies = Ocsigen_cookies.Cookies.empty)
       ?(awake_next_request = false) ri =
 
-    let host = RI.host ri in
-    let port = RI.server_port ri in
+    let host = Ocsigen_request_info.host ri in
+    let port = Ocsigen_request_info.server_port ri in
 
-    (* let conn = RI.client ri in *)
+    (* let conn = Ocsigen_request_info.client ri in *)
     let awake = fun () -> () in
       (*
         if awake_next_request
@@ -928,8 +926,8 @@ module Make (Server : Ocsigen_common_server.S) = struct
       *)
 
     let rec do2 sites cookies_to_set ri =
-      RI.update_nb_tries ri (RI.nb_tries ri + 1);
-      if RI.nb_tries ri > Ocsigen_config.get_maxretries ()
+      Ocsigen_request_info.update_nb_tries ri (Ocsigen_request_info.nb_tries ri + 1);
+      if Ocsigen_request_info.nb_tries ri > Ocsigen_config.get_maxretries ()
       then fail Ocsigen_Looping_request
       else
         let string_of_host_option = function
@@ -1002,7 +1000,6 @@ module Make (Server : Ocsigen_common_server.S) = struct
          awake ();
          Lwt.return ()
       )
-
 
   (*****************************************************************************)
   (* user directories *)

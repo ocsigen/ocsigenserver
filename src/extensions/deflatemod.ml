@@ -229,43 +229,43 @@ exception No_compress
 (* deflate = true -> mode deflate
  * deflate = false -> mode gzip *)
 let stream_filter contentencoding url deflate choice res =
-  return (Ext_found (fun () ->
-      try (
-        match res.Ocsigen_http_frame.res_content_type with
-        | None -> raise No_compress (* il faudrait défaut ? *)
-        | Some contenttype ->
-          match Ocsigen_headers.parse_mime_type contenttype with
-          | None, _ | _, None -> raise No_compress (* should never happen? *)
-          | (Some a, Some b)
+ return (Ext_found (fun () ->
+ try (
+   match Ocsigen_http_frame.Result.content_type res with
+   | None -> raise No_compress (* il faudrait défaut ? *)
+   | Some contenttype ->
+       match Ocsigen_headers.parse_mime_type contenttype with
+       | None, _ | _, None -> raise No_compress (* should never happen? *)
+       | (Some a, Some b)
             when should_compress (a, b) url choice ->
-            return { res with
-                     Ocsigen_http_frame.res_content_length = None;
-                     Ocsigen_http_frame.res_etag =
-                       (match res.Ocsigen_http_frame.res_etag with
-                        | Some e ->
-                          Some ((if deflate then "Ddeflatemod" else "Gdeflatemod")^e)
-                        | None -> None);
-                     Ocsigen_http_frame.res_stream =
-                       (compress deflate (fst res.Ocsigen_http_frame.res_stream), None);
-                     Ocsigen_http_frame.res_headers =
-                       Http_headers.replace
-                         Http_headers.content_encoding
-                         contentencoding res.Ocsigen_http_frame.res_headers;
-                   }
-          | _ -> raise No_compress)
-      with Not_found | No_compress -> return res))
+          return
+              (Ocsigen_http_frame.Result.update res
+               ~content_length:None
+               ~etag:
+               (match Ocsigen_http_frame.Result.etag res with
+               | Some e ->
+                   Some ((if deflate then "Ddeflatemod" else "Gdeflatemod")^e)
+               | None -> None)
+               ~stream:
+               (compress deflate (fst (Ocsigen_http_frame.Result.stream res)), None)
+               ~headers:
+               (Http_headers.replace
+                 Http_headers.content_encoding
+                 contentencoding (Ocsigen_http_frame.Result.headers res)) ())
+       | _ -> raise No_compress)
+ with Not_found | No_compress -> return res))
 
 let filter choice_list = function
   | Req_not_found (code,_) -> return (Ext_next code)
   | Req_found ({ request_info = ri }, res) ->
-    match select_encoding (Lazy.force(ri.ri_accept_encoding)) with
-    | Deflate ->
-      stream_filter "deflate" ri.ri_sub_path_string true choice_list res
-    | Gzip ->
-      stream_filter "gzip" ri.ri_sub_path_string false choice_list res
-    | Id | Star -> return (Ext_found (fun () -> return res))
-    | Not_acceptable ->
-      return (Ext_stop_all (res.Ocsigen_http_frame.res_cookies,406))
+      match select_encoding (Lazy.force(Ocsigen_request_info.accept_encoding ri)) with
+        | Deflate ->
+            stream_filter "deflate" (Ocsigen_request_info.sub_path_string ri) true choice_list res
+        | Gzip ->
+            stream_filter "gzip" (Ocsigen_request_info.sub_path_string ri)  false choice_list res
+        | Id | Star -> return (Ext_found (fun () -> return res))
+        | Not_acceptable ->
+            return (Ext_stop_all (Ocsigen_http_frame.Result.cookies res,406))
 
 
 (*****************************************************************************)

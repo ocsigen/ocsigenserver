@@ -38,9 +38,12 @@ include Ocsigen_common_server.S
 
 module Server : Ocsigen_common_server.S
 (* Outsources module for Eliom *)
-module RI : (module type of Ocsigen_request_info
+module Ocsigen_request_info : (module type of Ocsigen_request_info
   with type request_info = Ocsigen_request_info.request_info
-   and type file_info = Ocsigen_request_info.file_info)
+   and type file_info = Ocsigen_request_info.file_info
+   and type ifrange = Ocsigen_request_info.ifrange)
+
+exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
 exception Bad_config_tag_for_extension of string

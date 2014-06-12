@@ -20,7 +20,8 @@ let post_string ?v6 ?https ?port ?(headers = Http_headers.empty)
     (Uri.of_string uri)
   >|= Of_cohttp.of_response_and_body'
 
-(* XXX: headers is unused *)
+(* XXX: headers is unused at top of ocsigenserver,
+ * but cast with cohttp headers is necessary *)
 
 let get ?v6 ?https ?port ?headers ~host ~uri () =
   Ip_address.get_inet_addr ?v6 host >>= fun inet_addr ->

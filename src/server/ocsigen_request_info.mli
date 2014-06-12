@@ -262,4 +262,8 @@ val accept_language : request_info -> (string * float option) list Lazy.t
 (** Accessor for accept of request_info *)
 val accept : request_info -> Http_headers.accept Lazy.t
 
+(** Accessor for accept_encoding of request_info *)
+val accept_encoding : request_info -> (string option * float option) list Lazy.t
+
+(** Accessor for connection_closed of request_info *)
 val connection_closed : request_info -> unit Lwt.t

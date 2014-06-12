@@ -44,7 +44,7 @@ module RI = Ocsigen_request_info
 (* The table of redirections for each virtual server                         *)
 type assockind =
   | Regexp of Netstring_pcre.regexp * string
-              * yesnomaybe (* full url *) 
+              * yesnomaybe (* full url *)
               * bool (* temporary *)
 
 
@@ -52,7 +52,7 @@ type assockind =
 (*****************************************************************************)
 (** The function that will generate the pages from the request. *)
 let gen dir = function
-  | Ocsigen_extensions.Req_found _ -> 
+  | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, ri) ->
     catch
@@ -76,8 +76,8 @@ let gen dir = function
            match full with
            | Yes -> fi true
            | No -> fi false
-           | Maybe -> 
-             try fi false 
+           | Maybe ->
+             try fi false
              with Ocsigen_extensions.Not_concerned -> fi true
          in
          Ocsigen_messages.debug
@@ -85,15 +85,15 @@ let gen dir = function
               "--Redirectmod: YES! "^
               (if temp then "Temporary " else "Permanent ")^
               "redirection to: "^redir);
-         let empty_result = Ocsigen_http_frame.empty_result () in
+         let empty_result = Ocsigen_http_frame.Result.empty () in
          return
            (Ext_found
               (fun () ->
                  Lwt.return
-                   {empty_result with
-                    Ocsigen_http_frame.res_location = Some redir;
-                    Ocsigen_http_frame.res_code= 
-                      if temp then 302 else 301}))
+                   (Ocsigen_http_frame.Result.update empty_result
+                      ~location:(Some redir)
+                      ~code:
+                        (if temp then 302 else 301) ())))
       )
       (function
         | Ocsigen_extensions.Not_concerned -> return (Ext_next err)
@@ -135,10 +135,10 @@ let parse_config = function
     in
     let dir =
       match parse_attrs (None, Yes, None, false) atts with
-      | (None, _, _, _) -> 
+      | (None, _, _, _) ->
         raise (Error_in_config_file
                  "Missing attribute regexp for <redirect>")
-      | (_, _, None, _) -> 
+      | (_, _, None, _) ->
         raise (Error_in_config_file
                  "Missing attribute dest for <redirect>>")
       | (Some r, full, Some d, temp) ->

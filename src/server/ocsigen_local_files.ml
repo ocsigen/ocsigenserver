@@ -242,6 +242,5 @@ let content ~request ~file =
      | RFile filename ->
        Cohttp_lwt_unix.Server.respond_file ~fname:filename ())
     >|= Of_cohttp.of_response_and_body
-
   with
   | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403

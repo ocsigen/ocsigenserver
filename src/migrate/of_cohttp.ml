@@ -96,48 +96,46 @@ let of_charset =
     with Not_found -> None
 
 let of_response_and_body (resp, body) =
-  let res_cookies =
+  let cookies =
     Cookie.of_headers @@ Cohttp.Response.headers resp in
-  let res_lastmodified =
+  let lastmodified =
     match Cohttp.Header.get (Cohttp.Response.headers resp) "Last-Modified" with
     | None -> None
     | Some date -> Some (of_date date) in
-  let res_etag =
+  let etag =
     match Cohttp.Header.get (Cohttp.Response.headers resp) "ETag" with
     | None -> None
     | Some tag -> Scanf.sscanf tag "\"%s\"" (fun x -> Some x) in
-  let res_code = Cohttp.Code.code_of_status @@ Cohttp.Response.status resp in
-  let res_stream =
+  let code = Cohttp.Code.code_of_status @@ Cohttp.Response.status resp in
+  let stream =
     (Ocsigen_stream.of_lwt_stream (fun x -> x)
        (Cohttp_lwt_body.to_stream body), None) in
   (* XXX: I don't want to know what the second value! None! *)
-  let res_content_length =
+  let content_length =
     let open Cohttp.Transfer in
     match Cohttp.Response.encoding resp with
     | Fixed i -> Some (Int64.of_int i)
     | _  -> None in
-  let res_content_type = Cohttp.Header.get_media_type
+  let content_type = Cohttp.Header.get_media_type
     @@ Cohttp.Response.headers resp in
-  let res_headers = of_headers @@ Cohttp.Response.headers resp in
-  let res_charset =
+  let headers = of_headers @@ Cohttp.Response.headers resp in
+  let charset =
     match Cohttp.Header.get (Cohttp.Response.headers resp) "Content-Type" with
     | None -> None
     | Some ct -> of_charset ct in
-  let res_location =
+  let location =
     Cohttp.Header.get (Cohttp.Response.headers resp) "Location" in
-  let open Ocsigen_http_frame in
-  {
-    res_cookies;
-    res_lastmodified;
-    res_etag;
-    res_code;
-    res_stream;
-    res_content_length;
-    res_content_type;
-    res_headers;
-    res_charset;
-    res_location;
-  }
+  Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.empty ())
+    ~cookies
+    ~lastmodified
+    ~etag
+    ~code
+    ~stream
+    ~content_length
+    ~content_type
+    ~headers
+    ~charset
+    ~location ()
 
 let of_response_and_body' (resp, body) =
   let open Ocsigen_http_frame in

@@ -37,50 +37,51 @@ let gen filter = function
   | Req_found (ri, res) ->
     let new_headers =
       match filter with
-      | Rewrite_header (header, regexp, dest) ->
-        begin
-          try
-            let header_values =
-              Http_headers.find_all header res.Ocsigen_http_frame.res_headers
-            in
-            let h =
-              Http_headers.replace_opt header None res.Ocsigen_http_frame.res_headers
-            in
-            List.fold_left
-              (fun h value ->
-                 Http_headers.add
-                   header
-                   (Netstring_pcre.global_replace regexp dest value)
-                   h
-              )
-              h
-              header_values
-          with
-          | Not_found -> res.Ocsigen_http_frame.res_headers
-        end
-      | Add_header (header, dest, replace) ->
-        begin
-          match replace with
-          | None ->
-            begin
-              try
-                ignore (Http_headers.find header res.Ocsigen_http_frame.res_headers);
-                res.Ocsigen_http_frame.res_headers
-              with
-              | Not_found ->
-                Http_headers.add header dest res.Ocsigen_http_frame.res_headers
-            end
-          | Some false ->
-            Http_headers.add header dest res.Ocsigen_http_frame.res_headers
-          | Some true ->
-            Http_headers.replace header dest res.Ocsigen_http_frame.res_headers
-        end
+	| Rewrite_header (header, regexp, dest) ->
+	  begin
+	    try
+              let header_values =
+		Http_headers.find_all header (Ocsigen_http_frame.Result.headers res)
+              in
+              let h =
+		Http_headers.replace_opt header None (Ocsigen_http_frame.Result.headers res)
+              in
+	      List.fold_left
+		(fun h value ->
+		  Http_headers.add
+                    header
+                    (Netstring_pcre.global_replace regexp dest value)
+                    h
+		)
+		h
+		header_values
+	    with
+	      | Not_found -> Ocsigen_http_frame.Result.headers res
+	  end
+	| Add_header (header, dest, replace) ->
+	  begin
+	    match replace with
+	      | None ->
+		begin
+		  try
+		    ignore (Http_headers.find header (Ocsigen_http_frame.Result.headers res));
+		    (Ocsigen_http_frame.Result.headers res)
+		  with
+		    | Not_found ->
+		      Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
+		end
+	      | Some false ->
+		Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
+	      | Some true ->
+		Http_headers.replace header dest (Ocsigen_http_frame.Result.headers res)
+	  end
     in
     Lwt.return
       (Ocsigen_extensions.Ext_found
-         (fun () ->
-            Lwt.return
-              {res with Ocsigen_http_frame.res_headers = new_headers}))
+	 (fun () ->
+	   Lwt.return
+      (Ocsigen_http_frame.Result.update res
+        ~headers:new_headers ())))
 
 
 

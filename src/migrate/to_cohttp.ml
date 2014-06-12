@@ -126,18 +126,17 @@ let to_type ty charset =
       end
   else ty
 
-let to_response_and_body {
-    Ocsigen_http_frame.res_cookies;
-    Ocsigen_http_frame.res_lastmodified;
-    Ocsigen_http_frame.res_etag;
-    Ocsigen_http_frame.res_code;
-    Ocsigen_http_frame.res_stream;
-    Ocsigen_http_frame.res_content_length;
-    Ocsigen_http_frame.res_content_type;
-    Ocsigen_http_frame.res_headers;
-    Ocsigen_http_frame.res_charset;
-    Ocsigen_http_frame.res_location;
-  } =
+let to_response_and_body res =
+  let res_code = Ocsigen_http_frame.Result.code res in
+  let res_etag = Ocsigen_http_frame.Result.etag res in
+  let res_cookies = Ocsigen_http_frame.Result.cookies res in
+  let res_stream = Ocsigen_http_frame.Result.stream res in
+  let res_lastmodified = Ocsigen_http_frame.Result.lastmodified res in
+  let res_content_length =  Ocsigen_http_frame.Result.content_length res in
+  let res_content_type = Ocsigen_http_frame.Result.content_type res in
+  let res_headers = Ocsigen_http_frame.Result.headers res in
+  let res_charset = Ocsigen_http_frame.Result.charset res in
+  let res_location = Ocsigen_http_frame.Result.location res in
   let headers =
     Cookie.to_headers res_cookies
       (to_headers res_headers) in
