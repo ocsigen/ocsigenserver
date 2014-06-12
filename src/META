@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: a9bb0bd898b9291dca0382a945a53c7b)
+# DO NOT EDIT (digest: fa334e262c3f913eae4bc96e1d6d47ee)
 version = "0.1"
 description = "HTTP Server in OCaml"
 archive(byte) = "ocsigenserver.cma"
@@ -84,7 +84,7 @@ package "baselib" (
  version = "0.1"
  description = "HTTP Server in OCaml"
  requires =
- "lwt netstring netstring-pcre cryptokit findlib tyxml lwt.syntax lwt.extra ipaddr threads dynlink optcomp ocsigenserver.commandline"
+ "lwt netstring netstring-pcre cryptokit findlib tyxml lwt.syntax lwt.extra ipaddr threads dynlink optcomp"
  archive(byte) = "baselib.cma"
  archive(byte, plugin) = "baselib.cma"
  archive(native) = "baselib.cmxa"

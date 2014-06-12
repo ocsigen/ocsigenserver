@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 099a07112246bcd46a1bf338266550a0) *)
+(* DO NOT EDIT (digest: 4b67a54ccbb98d9fe926662d1cb48ea4) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -614,22 +614,15 @@ let package_default =
           ("src/server", ["src/baselib"; "src/http"; "src/polytables"]);
           ("src/http", ["src/baselib"]);
           ("src/extensions", ["src"; "src/baselib"; "src/server"]);
-          ("src/baselib", ["src/commandline/yes"]);
           ("bin",
-            [
-               "src/baselib";
-               "src/commandline/yes";
-               "src/http";
-               "src/polytables";
-               "src/server"
-            ])
+            ["src/baselib"; "src/http"; "src/polytables"; "src/server"])
        ]
   }
   ;;
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 633 "myocamlbuild.ml"
+# 626 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 (* VVV: pour être clair, cette liste contient tout les dépendances du serveur
@@ -760,7 +753,11 @@ let where_ocaml =
     (fun ic -> fold (fun () -> input_line ic))
   in concat result
 
+let env_filename = Pathname.basename BaseEnvLight.default_filename
+let env = BaseEnvLight.load ~filename:env_filename ~allow_empty:true ()
+
 let native = Sys.file_exists (where_ocaml ^ "/dynlink.cmxa")
+let commandline = bool_of_string (BaseEnvLight.var_get "commandline" env)
 
 let choose_rule ifiles ofile func =
   rule ofile
@@ -807,6 +804,18 @@ Ocamlbuild_plugin.dispatch (function
       if native
       then tag_file "src/baselib/dynlink_wrapper.ml"
         ["native( " ^ (string_of_bool native) ^ ")"];
+
+      if commandline
+      then
+        begin
+          tag_file "src/baselib/ocsigen_commandline.ml" ["use_commandline"];
+          tag_file "bin/server_main.native" ["use_commandline"];
+        end
+      else
+        begin
+          tag_file "src/baselib/ocsigen_commandline.ml" ["use_nocommandline"];
+          tag_file "bin/server_main.native" ["use_nocommandline"];
+        end;
 
       pflag ["ocaml"; "ocamldep"] "native"
         (fun value ->

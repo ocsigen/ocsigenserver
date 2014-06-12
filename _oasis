@@ -58,8 +58,7 @@ Library baselib
                         ipaddr,
                         threads,
                         dynlink,
-                        optcomp,
-                        ocsigenserver.commandline
+                        optcomp
 
 Library http
   Path:			src/http
@@ -221,5 +220,4 @@ Executable ocsigenserver
                         ocsigenserver.baselib,
                         ocsigenserver.polytables,
                         ocsigenserver.http,
-                        ocsigenserver.server,
-                        ocsigenserver.commandline
+                        ocsigenserver.server

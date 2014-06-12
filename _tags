@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 13ca150920cf28e7eda347a145082f06)
+# DO NOT EDIT (digest: 7f5c185333fdc15b01ed1ff0c3577281)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -35,7 +35,6 @@
 <src/baselib/*.ml{,i}>: package(optcomp)
 <src/baselib/*.ml{,i}>: package(threads)
 <src/baselib/*.ml{,i}>: package(tyxml)
-<src/baselib/*.ml{,i}>: use_commandline
 # Library http
 "src/http/http.cmxs": use_http
 <src/http/*.ml{,i}>: package(cryptokit)
@@ -52,7 +51,6 @@
 <src/http/*.ml{,i}>: package(threads)
 <src/http/*.ml{,i}>: package(tyxml)
 <src/http/*.ml{,i}>: use_baselib
-<src/http/*.ml{,i}>: use_commandline
 # Library server
 "src/server/server.cmxs": use_server
 <src/server/*.ml{,i}>: package(cryptokit)
@@ -71,7 +69,6 @@
 <src/server/*.ml{,i}>: package(tyxml)
 <src/server/*.ml{,i}>: package(tyxml.parser)
 <src/server/*.ml{,i}>: use_baselib
-<src/server/*.ml{,i}>: use_commandline
 <src/server/*.ml{,i}>: use_http
 <src/server/*.ml{,i}>: use_polytables
 # Library extensions
@@ -94,7 +91,6 @@
 <src/extensions/*.ml{,i}>: package(tyxml)
 <src/extensions/*.ml{,i}>: package(tyxml.parser)
 <src/extensions/*.ml{,i}>: use_baselib
-<src/extensions/*.ml{,i}>: use_commandline
 <src/extensions/*.ml{,i}>: use_http
 <src/extensions/*.ml{,i}>: use_ocsigenserver
 <src/extensions/*.ml{,i}>: use_polytables
@@ -116,7 +112,6 @@
 "bin/server_main.native": package(tyxml)
 "bin/server_main.native": package(tyxml.parser)
 "bin/server_main.native": use_baselib
-"bin/server_main.native": use_commandline
 "bin/server_main.native": use_http
 "bin/server_main.native": use_polytables
 "bin/server_main.native": use_server
@@ -136,7 +131,6 @@
 <bin/*.ml{,i}>: package(tyxml)
 <bin/*.ml{,i}>: package(tyxml.parser)
 <bin/*.ml{,i}>: use_baselib
-<bin/*.ml{,i}>: use_commandline
 <bin/*.ml{,i}>: use_http
 <bin/*.ml{,i}>: use_polytables
 <bin/*.ml{,i}>: use_server
