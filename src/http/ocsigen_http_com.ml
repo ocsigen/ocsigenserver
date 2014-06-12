@@ -776,7 +776,7 @@ let send
              | H.Query _     -> false
          in
          let chunked =
-           res.res_content_length = None &&
+           (Result.content_length res) = None &&
            clientproto <> Ocsigen_http_frame.Http_header.HTTP10 &&
            not empty_content && not head
          in
@@ -801,7 +801,7 @@ let send
          in
          let hds =
            Http_headers.replace_opt Http_headers.content_length
-             (match res.res_content_length with
+             (match Result.content_length res with
                 | None   -> None
                 | Some l -> Some (Int64.to_string l))
              hds
@@ -878,15 +878,15 @@ let send
            Lwt.return ()
          end else begin
            Ocsigen_messages.debug2 "writing body";
-           write_stream ~chunked out_ch (fst res.res_stream)
+           write_stream ~chunked out_ch (fst (Result.stream res))
          end) >>= fun () ->
          Lwt_chan.flush out_ch (* Vincent: I add this otherwise HEAD answers
                                   are not flushed by the reverse proxy *)
          >>= fun () ->
-         Ocsigen_stream.finalize (fst res.res_stream) `Success
+         Ocsigen_stream.finalize (fst (Result.stream res)) `Success
       )
       (fun e ->
-        Ocsigen_stream.finalize (fst res.res_stream) `Failure >>= fun () ->
+        Ocsigen_stream.finalize (fst (Result.stream res)) `Failure >>= fun () ->
         Lwt.fail e
       )
 
@@ -897,11 +897,11 @@ let send
   let date = gmtdate (Unix.time ()) in
 
   let headers =
-    res.res_headers
+    (Result.headers res)
     <<?
     (* il faut récupérer la date de dernière modification *)
     (Http_headers.last_modified,
-     match res.res_lastmodified with
+     match Result.lastmodified res with
        None    -> None (* We do not put last modified for dynamically
                           generated pages, otherwise it is not possible
                           to cache them.  Without Last-Modified, ETag is
@@ -910,7 +910,7 @@ let send
   in
   let mode =
     match mode with
-    | None -> Http_header.Answer res.res_code
+    | None -> Http_header.Answer (Result.code res)
     | Some m -> m
   in
   let headers =
@@ -956,33 +956,33 @@ let send
       hds
   in
   let headers =
-    Cookies.fold mkcookl res.res_cookies headers
+    Cookies.fold mkcookl (Result.cookies res) headers
     <<?
-    (Http_headers.location, res.res_location)
+    (Http_headers.location, Result.location res)
     <<?
     (Http_headers.etag,
-     match res.res_etag with
+     match Result.etag res with
     | None   ->  None
     | Some l ->  Some (Format.sprintf "\"%s\"" l))
                  (*XXX Is it the right place to perform quoting?*)
     <<?
     (Http_headers.content_type,
-     match res.res_content_type with
+     match Result.content_type res with
      | None   -> None
      | Some s ->
          if String.length s >= 4 then
-           match String.sub s 0 4, res.res_charset with
+           match String.sub s 0 4, Result.charset res with
              | "text", Some "" -> Some s
              | "text", Some c -> Some (Format.sprintf "%s; charset=%s" s c)
              | _              ->
 	       match String.sub s (String.length s - 4) 4,
-		     res.res_charset with
+		     Result.charset res with
 		 | ("+xml"|"/xml"), Some "" -> Some s
 		 | ("+xml"|"/xml"), Some c ->
 		     Some (Format.sprintf "%s; charset=%s" s c)
-		 | _ -> res.res_content_type
+		 | _ -> Result.content_type res
          else
-           res.res_content_type
+           (Result.content_type res)
     )
   in
   send_aux ~mode headers

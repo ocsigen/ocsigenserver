@@ -36,48 +36,55 @@ val compute_new_ri_cookies :
           cookie String.Table.t Cookies.t -> string String.Table.t
 
 
+module Result : sig
+  (** The type of answers to send *)
+  type result
 
-(** The type of answers to send *)
-type result =
-    {res_cookies: cookieset; (** cookies to set *)
-     res_lastmodified: float option; (** Default: [None] *)
-     res_etag: etag option;
-     res_code: int; (** HTTP code, if not 200 *)
-     res_stream: string Ocsigen_stream.t *
-       (string Ocsigen_stream.t -> 
-          int64 -> 
-            string Ocsigen_stream.step Lwt.t) option
-     ; (** Default: empty stream. 
-           The second field is (optionaly)
-           the function used to skip a part of the 
-           stream, if you do not you want to use
-           a basic reading of the stream. 
-           For example, for static files, you can optimize it by using
-           a [seek] function.
-       *)
-     (* It is not a new field of the record to remember to change it
-        if we change the stream. *)
-     res_content_length: int64 option;
-     (** [None] means Transfer-encoding: chunked *)
-     res_content_type: string option;
-     res_headers: Http_headers.t; (** The headers you want to add *)
-     res_charset: string option; (** Default: None *)
-     res_location: string option; (** Default: None *)
-   }
+  val cookies : result -> Ocsigen_cookies.cookieset
+  val lastmodified : result -> float option
+  val etag : result -> string option
+  val code : result -> int
+  val stream :
+    result ->
+    string Ocsigen_stream.t *
+    (string Ocsigen_stream.t -> int64 -> string Ocsigen_stream.step Lwt.t)
+    option
+  val content_length : result -> int64 option
+  val content_type : result -> string option
+  val headers : result -> Http_headers.t
+  val charset : result -> string option
+  val location : result -> string option
 
+  (** Default [result] to use as a base for constructing others. *)
+  val default : unit -> result
 
-(** Default [result] to use as a base for constructing others. *)
-val default_result : unit -> result
+  val update :
+   result ->
+   ?cookies:Ocsigen_cookies.cookieset ->
+   ?lastmodified:float option ->
+   ?etag:string option ->
+   ?code:int ->
+   ?stream:string Ocsigen_stream.t *
+           (string Ocsigen_stream.t ->
+            int64 -> string Ocsigen_stream.step Lwt.t)
+           option ->
+   ?content_length:int64 option ->
+   ?content_type:string option ->
+   ?headers:Http_headers.t ->
+   ?charset:string option -> ?location:string option -> unit -> result
 
-(** [result] for an empty page. *)
-val empty_result : unit -> result
+  (** [result] for an empty page. *)
+  val empty : unit -> result
+end
 
+include (module type of Result
+  with type result = Result.result)
 
 module type HTTP_CONTENT =
   sig
     type t
     type options
-    val result_of_content : ?options:options -> t -> result Lwt.t
+    val result_of_content : ?options:options -> t -> Result.result Lwt.t
     val get_etag : ?options:options -> t -> etag option
   end
 module Http_header :

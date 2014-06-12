@@ -495,7 +495,7 @@ let raw_request
         (fun () ->
            (match content with
               | None ->
-                  let empty_result = Ocsigen_http_frame.empty_result () in
+                  let empty_result = Ocsigen_http_frame.Result.empty () in
                   Ocsigen_http_com.send
                     ?reopen
                     slot
@@ -507,8 +507,8 @@ let raw_request
                                                     if we don't trust the server
                                                  *)
                     ~sender:request_sender
-                    {empty_result with
-                       Ocsigen_http_frame.res_headers = headers}
+                    (Ocsigen_http_frame.Result.update empty_result
+                      ~headers ())
 
               | Some stream ->
                 Ocsigen_senders.Stream_content.result_of_content
@@ -521,10 +521,10 @@ let raw_request
                   ~clientproto:Ocsigen_http_frame.Http_header.HTTP11
                   ~keep_alive:keep_alive_asked
                   ~sender:request_sender
-                  {r with
-                    Ocsigen_http_frame.res_content_length= content_length;
-                    Ocsigen_http_frame.res_headers= headers;
-                  }) >>= fun () ->
+                  (Ocsigen_http_frame.Result.update r
+                    ~content_length
+                    ~headers ())
+           ) >>= fun () ->
 
           Ocsigen_messages.debug2 "--Ocsigen_http_client: request sent";
           Lwt.wakeup request_sent_awakener ();
@@ -805,7 +805,7 @@ let basic_raw_request
 
     match content with
     | None ->
-        let empty_result = Ocsigen_http_frame.empty_result () in
+        let empty_result = Ocsigen_http_frame.Result.empty () in
         Ocsigen_http_com.send
           slot
           ~mode:query
@@ -813,8 +813,8 @@ let basic_raw_request
           ~head:false
           ~keep_alive:false
           ~sender:request_sender
-          {empty_result with
-           Ocsigen_http_frame.res_headers = headers}
+          (Ocsigen_http_frame.Result.update empty_result
+            ~headers ())
     | Some stream ->
         Ocsigen_senders.Stream_content.result_of_content stream >>= fun r ->
         Ocsigen_http_com.send
@@ -824,11 +824,9 @@ let basic_raw_request
           ~head:false
           ~keep_alive:false
           ~sender:request_sender
-          {r with
-           Ocsigen_http_frame.res_content_length= content_length;
-           Ocsigen_http_frame.res_headers= headers;
-          }
-
+          (Ocsigen_http_frame.Result.update r
+            ~content_length
+            ~headers ())
   in
   Ocsigen_http_com.start_processing conn f; (* starting the request *)
 (*      Ocsigen_http_com.wait_all_senders conn >>= fun () -> (* not needed *) *)

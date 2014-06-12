@@ -24,7 +24,7 @@
 (*****************************************************************************)
 (*****************************************************************************)
 
-(* IMPORTANT WARNING 
+(* IMPORTANT WARNING
    It is really basic for now:
     - rewrites only subpaths (and do not change get parameters)
     - changes only ri_sub_path and ri_sub_path_tring
@@ -74,7 +74,7 @@ let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
 (*****************************************************************************)
 (** The function that will generate the pages from the request. *)
 let gen regexp = function
-| Ocsigen_extensions.Req_found _ -> 
+| Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
 | Ocsigen_extensions.Req_not_found (err, ri) ->
   catch
@@ -84,9 +84,9 @@ let gen regexp = function
       let redir, fullrewrite =
         let ri = ri.request_info in
         find_rewrite regexp
-          (match ri.ri_get_params_string with
-             | None -> ri.ri_sub_path_string
-             | Some g -> ri.ri_sub_path_string ^ "?" ^ g)
+          (match Ocsigen_request_info.get_params_string ri with
+             | None -> Ocsigen_request_info.sub_path_string ri
+             | Some g -> (Ocsigen_request_info.sub_path_string ri) ^ "?" ^ g)
       in
       Ocsigen_messages.debug (fun () ->
         "--Rewritemod: YES! rewrite to: "^redir);

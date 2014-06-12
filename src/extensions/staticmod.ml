@@ -131,7 +131,7 @@ let gen ~usermode ?cache dir = function
            let status_filter, page =
              find_static_page ~request:ri ~usermode ~dir ~err
              ~pathstring:(Url.string_of_url_path ~encode:false
-                            ri.request_info.ri_sub_path) in
+                            (Ocsigen_request_info.sub_path ri.request_info)) in
            Ocsigen_local_files.content ri page
            >>= fun answer ->
            let answer =
@@ -140,21 +140,21 @@ let gen ~usermode ?cache dir = function
              else
                (* The page is an error handler, we propagate
                   the original error code *)
-               {answer with Ocsigen_http_frame.res_code = err }
+               (Ocsigen_http_frame.Result.update answer ~code:err ())
            in
            let (<<) h (n, v) = Http_headers.replace n v h in
 	   let answer = match cache with
 	     | None -> answer
 	     | Some 0 ->
-	       {answer with Ocsigen_http_frame.res_headers =
-		   answer.Ocsigen_http_frame.res_headers
+	       (Ocsigen_http_frame.Result.update answer ~headers:
+		   ((Ocsigen_http_frame.Result.headers answer)
 		       << (Http_headers.cache_control, "no-cache")
-		       << (Http_headers.expires, "0")}
+		       << (Http_headers.expires, "0")) ())
 	     | Some duration ->
-	       {answer with Ocsigen_http_frame.res_headers =
-		   answer.Ocsigen_http_frame.res_headers
+         (Ocsigen_http_frame.Result.update answer ~headers:
+		   ((Ocsigen_http_frame.Result.headers answer)
 		       << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
-		       << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))}
+		       << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
 	   in
 	   Lwt.return (Ext_found (fun () -> Lwt.return answer))
         )
