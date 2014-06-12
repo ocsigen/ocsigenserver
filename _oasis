@@ -60,6 +60,21 @@ Library baselib
                         dynlink,
                         optcomp
 
+# Executable test_wrapping
+#   Path:			src/baselib/tests
+#   MainIs:		test_wrapping.ml
+#   Build$:		flag(tests)
+#   CompiledObject:	best
+#   Install:		false
+#   BuildDepends:		ocsigenserver.baselib
+#
+#
+# Test "test_wrapping"
+#   Run$:			flag(tests)
+#   TestTools:		test_wrapping
+#   Command:		$test_wrapping
+#   WorkingDirectory:	src/baselib/tests
+
 Library http
   Path:			src/http
   FindlibParent:	ocsigenserver

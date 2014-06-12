@@ -730,10 +730,6 @@ let load_file file =
 
 let project_name = "ocsigenserver";;
 
-let lib_dir =
-  let concat l = List.fold_right (^) l "" in
-  concat (ocamlfind ["printconf"; "destdir"] input_line);;
-
 let preemptive =
   try let _ = Ocamlbuild_pack.Findlib.query "lwt.preemptive" in "Lwt_preemptive"
   with _ -> "Fake_preempt";;
@@ -758,6 +754,8 @@ let env = BaseEnvLight.load ~filename:env_filename ~allow_empty:true ()
 
 let native = Sys.file_exists (where_ocaml ^ "/dynlink.cmxa")
 let commandline = bool_of_string (BaseEnvLight.var_get "commandline" env)
+let libdir = BaseEnvLight.var_get "libdir" env
+let name = BaseEnvLight.var_get "pkg_name" env
 
 let choose_rule ifiles ofile func =
   rule ofile
@@ -773,22 +771,26 @@ let version =
   let bf = input_line fd in
   close_in fd; bf;;
 
+(* Or
+ * let version = BaseEnvLight.var_get "pkg_version" env
+ *)
+
 let configuration = [
   ("_VERSION_", version);
   ("_WARNING_",
    "Warning: this file has been generated from ocsigen_config.ml.in");
-  ("_LOG_DIR_", "/var/log/" ^ project_name);
-  ("_DATA_DIR_", "/var/lib/" ^ project_name);
+  ("_LOG_DIR_", "/var/log/" ^ name);
+  ("_DATA_DIR_", "/var/lib/" ^ name);
   ("_BIN_DIR_", "/usr/local/bin");
-  ("_LIB_DIR_", lib_dir);
-  ("_EXT_DIR_", lib_dir ^ "/" ^ project_name ^ "/extensions");
-  ("_STATIC_PAGES_DIR_", "/var/www/" ^ project_name);
+  ("_LIB_DIR_", libdir);
+  ("_EXT_DIR_", libdir ^ "/" ^ name ^ "/extensions");
+  ("_STATIC_PAGES_DIR_", "/var/www/" ^ name);
   ("_UPLOAD_DIR_", "/tmp/");
   ("_OCSIGEN_USER_", "www-data");
   ("_OCSIGEN_GROUP_", "www-data");
-  ("_PROJECT_NAME_", project_name);
-  ("_COMMAND_PIPE_", "/var/run/" ^ project_name ^ "_command");
-  ("_CONFIG_DIR_", "/etc/" ^ project_name);
+  ("_PROJECT_NAME_", name);
+  ("_COMMAND_PIPE_", "/var/run/" ^ name ^ "_command");
+  ("_CONFIG_DIR_", "/etc/" ^ name);
   ("_PREEMPTIVE_", preemptive);
   ("_IS_NATIVE_", string_of_bool native);
   ("_DEPENDENCES_", dependences);
