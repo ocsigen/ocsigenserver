@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: fa334e262c3f913eae4bc96e1d6d47ee)
+# DO NOT EDIT (digest: c016101aec23efb4bdea6d160656a6d9)
 version = "0.1"
 description = "HTTP Server in OCaml"
 archive(byte) = "ocsigenserver.cma"
@@ -58,6 +58,18 @@ package "extensions" (
  archive(native) = "extensions.cmxa"
  archive(native, plugin) = "extensions.cmxs"
  exists_if = "extensions.cma"
+ package "userconf" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "userconf.cma"
+  archive(byte, plugin) = "userconf.cma"
+  archive(native) = "userconf.cmxa"
+  archive(native, plugin) = "userconf.cmxs"
+  exists_if = "userconf.cma"
+ )
+ 
  package "staticmod" (
   version = "0.1"
   description = "HTTP Server in OCaml"
@@ -67,6 +79,150 @@ package "extensions" (
   archive(native) = "staticmod.cmxa"
   archive(native, plugin) = "staticmod.cmxs"
   exists_if = "staticmod.cma"
+ )
+ 
+ package "rewritemod" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "rewritemod.cma"
+  archive(byte, plugin) = "rewritemod.cma"
+  archive(native) = "rewritemod.cmxa"
+  archive(native, plugin) = "rewritemod.cmxs"
+  exists_if = "rewritemod.cma"
+ )
+ 
+ package "revproxy" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "revproxy.cma"
+  archive(byte, plugin) = "revproxy.cma"
+  archive(native) = "revproxy.cmxa"
+  archive(native, plugin) = "revproxy.cmxs"
+  exists_if = "revproxy.cma"
+ )
+ 
+ package "redirectmod" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "redirectmod.cma"
+  archive(byte, plugin) = "redirectmod.cma"
+  archive(native) = "redirectmod.cmxa"
+  archive(native, plugin) = "redirectmod.cmxs"
+  exists_if = "redirectmod.cma"
+ )
+ 
+ package "outputfilter" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "outputfilter.cma"
+  archive(byte, plugin) = "outputfilter.cma"
+  archive(native) = "outputfilter.cmxa"
+  archive(native, plugin) = "outputfilter.cmxs"
+  exists_if = "outputfilter.cma"
+ )
+ 
+ package "ocsigen_comet" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre react ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "ocsigen_comet.cma"
+  archive(byte, plugin) = "ocsigen_comet.cma"
+  archive(native) = "ocsigen_comet.cmxa"
+  archive(native, plugin) = "ocsigen_comet.cmxs"
+  exists_if = "ocsigen_comet.cma"
+ )
+ 
+ package "extensiontemplate" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "extensiontemplate.cma"
+  archive(byte, plugin) = "extensiontemplate.cma"
+  archive(native) = "extensiontemplate.cmxa"
+  archive(native, plugin) = "extensiontemplate.cmxs"
+  exists_if = "extensiontemplate.cma"
+ )
+ 
+ package "extendconfiguration" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "extendconfiguration.cma"
+  archive(byte, plugin) = "extendconfiguration.cma"
+  archive(native) = "extendconfiguration.cmxa"
+  archive(native, plugin) = "extendconfiguration.cmxs"
+  exists_if = "extendconfiguration.cma"
+ )
+ 
+ package "deflatemod" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre camlzip ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "deflatemod.cma"
+  archive(byte, plugin) = "deflatemod.cma"
+  archive(native) = "deflatemod.cmxa"
+  archive(native, plugin) = "deflatemod.cmxs"
+  exists_if = "deflatemod.cma"
+ )
+ 
+ package "cors" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "cors.cma"
+  archive(byte, plugin) = "cors.cma"
+  archive(native) = "cors.cmxa"
+  archive(native, plugin) = "cors.cmxs"
+  exists_if = "cors.cma"
+ )
+ 
+ package "cgimod" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "cgimod.cma"
+  archive(byte, plugin) = "cgimod.cma"
+  archive(native) = "cgimod.cmxa"
+  archive(native, plugin) = "cgimod.cmxs"
+  exists_if = "cgimod.cma"
+ )
+ 
+ package "authbasic" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "authbasic.cma"
+  archive(byte, plugin) = "authbasic.cma"
+  archive(native) = "authbasic.cmxa"
+  archive(native, plugin) = "authbasic.cmxs"
+  exists_if = "authbasic.cma"
+ )
+ 
+ package "accesscontrol" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  requires =
+  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  archive(byte) = "accesscontrol.cma"
+  archive(byte, plugin) = "accesscontrol.cma"
+  archive(native) = "accesscontrol.cmxa"
+  archive(native, plugin) = "accesscontrol.cmxs"
+  exists_if = "accesscontrol.cma"
  )
 )
 

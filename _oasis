@@ -133,99 +133,137 @@ Library staticmod
                         ocsigenserver.server,
                         lwt
 
-# Library accesscontrol
-#   Path:			src/ext/accesscontrol
-#   Modules:		Accesscontrol
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library authbasic
-#   Path:			src/ext/authbasic
-#   Modules:		Authbasic
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library cgimod
-#   Path:			src/ext/cgimod
-#   Modules:		Cgimod
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library cors
-#   Path:			src/ext/cors
-#   Modules:		Cors
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library deflatemod
-#   Path:			src/ext/deflatemod
-#   Modules:		Deflatemod
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         camlzip,
-#                         server
-#
-# Library extendconfiguration
-#   Path:			src/ext/extendconfiguration
-#   Modules:		Extendconfiguration
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library extensiontemplate
-#   Path:			src/ext/extensiontemplate
-#   Modules:		Extensiontemplate
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library ocsigen_comet
-#   Path:			src/ext/ocsigen_comet
-#   Modules:		Ocsigen_comet
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         react,
-#                         server
-#
-# Library outputfilter
-#   Path:			src/ext/outputfilter
-#   Modules:		Outputfilter
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library redirectmod
-#   Path:			src/ext/redirectmod
-#   Modules:		Redirectmod
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library revproxy
-#   Path:			src/ext/revproxy
-#   Modules:		Revproxy
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library rewritemod
-#   Path:			src/ext/rewritemod
-#   Modules:		Rewritemod
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
-# Library userconf
-#   Path:			src/ext/userconf
-#   Modules:		Userconf
-#   FindlibParent:	ext
-#   BuildDepends:		netstring-pcre,
-#                         server
-#
+Library accesscontrol
+  Path:			src/extensions
+  Modules:		Accesscontrol
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library authbasic
+  Path:			src/extensions
+  Modules:		Authbasic
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library cgimod
+  Path:			src/extensions
+  Modules:		Cgimod
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library cors
+  Path:			src/extensions
+  Modules:		Cors
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library deflatemod
+  Path:			src/extensions
+  Modules:		Deflatemod
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        camlzip,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library extendconfiguration
+  Path:			src/extensions
+  Modules:		Extendconfiguration
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library extensiontemplate
+  Path:			src/extensions
+  Modules:		Extensiontemplate
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library ocsigen_comet
+  Path:			src/extensions
+  Modules:		Ocsigen_comet
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        react,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library outputfilter
+  Path:			src/extensions
+  Modules:		Outputfilter
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library redirectmod
+  Path:			src/extensions
+  Modules:		Redirectmod
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library revproxy
+  Path:			src/extensions
+  Modules:		Revproxy
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library rewritemod
+  Path:			src/extensions
+  Modules:		Rewritemod
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
+
+Library userconf
+  Path:			src/extensions
+  Modules:		Userconf
+  FindlibParent:	extensions
+  BuildDepends:		netstring-pcre,
+                        ocsigenserver,
+                        ocsigenserver.baselib,
+                        ocsigenserver.server,
+                        lwt
 
 Executable ocsigenserver
   Path:			bin/

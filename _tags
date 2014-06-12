@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 7f5c185333fdc15b01ed1ff0c3577281)
+# DO NOT EDIT (digest: 00fc0c172ff522f11f1a3ffb29db1ec3)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -75,6 +75,34 @@
 "src/extensions/extensions.cmxs": use_extensions
 # Library staticmod
 "src/extensions/staticmod.cmxs": use_staticmod
+# Library accesscontrol
+"src/extensions/accesscontrol.cmxs": use_accesscontrol
+# Library authbasic
+"src/extensions/authbasic.cmxs": use_authbasic
+# Library cgimod
+"src/extensions/cgimod.cmxs": use_cgimod
+# Library cors
+"src/extensions/cors.cmxs": use_cors
+# Library deflatemod
+"src/extensions/deflatemod.cmxs": use_deflatemod
+<src/extensions/*.ml{,i}>: package(camlzip)
+# Library extendconfiguration
+"src/extensions/extendconfiguration.cmxs": use_extendconfiguration
+# Library extensiontemplate
+"src/extensions/extensiontemplate.cmxs": use_extensiontemplate
+# Library ocsigen_comet
+"src/extensions/ocsigen_comet.cmxs": use_ocsigen_comet
+<src/extensions/*.ml{,i}>: package(react)
+# Library outputfilter
+"src/extensions/outputfilter.cmxs": use_outputfilter
+# Library redirectmod
+"src/extensions/redirectmod.cmxs": use_redirectmod
+# Library revproxy
+"src/extensions/revproxy.cmxs": use_revproxy
+# Library rewritemod
+"src/extensions/rewritemod.cmxs": use_rewritemod
+# Library userconf
+"src/extensions/userconf.cmxs": use_userconf
 <src/extensions/*.ml{,i}>: package(cryptokit)
 <src/extensions/*.ml{,i}>: package(dynlink)
 <src/extensions/*.ml{,i}>: package(findlib)

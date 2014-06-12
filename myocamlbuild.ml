@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 4b67a54ccbb98d9fe926662d1cb48ea4) *)
+(* DO NOT EDIT (digest: d5b069d538e6850da0e7296e60778c9e) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -605,7 +605,20 @@ let package_default =
           ("http", ["src/http"], []);
           ("server", ["src/server"], []);
           ("extensions", ["src/extensions"], []);
-          ("staticmod", ["src/extensions"], [])
+          ("staticmod", ["src/extensions"], []);
+          ("accesscontrol", ["src/extensions"], []);
+          ("authbasic", ["src/extensions"], []);
+          ("cgimod", ["src/extensions"], []);
+          ("cors", ["src/extensions"], []);
+          ("deflatemod", ["src/extensions"], []);
+          ("extendconfiguration", ["src/extensions"], []);
+          ("extensiontemplate", ["src/extensions"], []);
+          ("ocsigen_comet", ["src/extensions"], []);
+          ("outputfilter", ["src/extensions"], []);
+          ("redirectmod", ["src/extensions"], []);
+          ("revproxy", ["src/extensions"], []);
+          ("rewritemod", ["src/extensions"], []);
+          ("userconf", ["src/extensions"], [])
        ];
      lib_c = [];
      flags = [];
@@ -622,7 +635,7 @@ let package_default =
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 626 "myocamlbuild.ml"
+# 639 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 (* VVV: pour être clair, cette liste contient tout les dépendances du serveur
