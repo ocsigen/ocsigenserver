@@ -61,7 +61,7 @@ let handler ~address ~port ~extensions_connector (edn, conn) request body =
 
     match exn with
     | Ocsigen_http_error (cookies_to_set, code) ->
-      Server.respond_error 
+      Server.respond_error
         ~status:(Cohttp.Code.status_of_code code)
         ~body:string_of_exn
         ()
@@ -154,6 +154,7 @@ let shutdown_server timeout =
     end
 
 let number_of_client () = 0
+let get_number_of_connected = number_of_client
 
 let service ?ssl ~address ~port ~connector () =
   let conn_closed _ () = () in

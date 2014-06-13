@@ -12,6 +12,7 @@ module type S = sig
   end
 
   val number_of_client : unit -> int
+  val get_number_of_connected : unit -> int
   val shutdown_server : float option -> unit
 
   val service :
