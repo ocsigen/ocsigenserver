@@ -54,13 +54,8 @@ let to_meth meth =
   | TRACE -> `Other "TRACE"
   | CONNECT -> `Other "CONNECT"
 
-let to_headers headers =
-  Http_headers.fold
-    (fun key values acc ->
-       let key = Http_headers.name_to_string key in
-       List.fold_left (fun acc value ->
-           Cohttp.Header.add acc key value) acc values)
-    headers (Cohttp.Header.init ())
+let to_headers : Http_headers.t -> Cohttp.Header.t =
+  fun x -> x
 
 let to_response ?encoding ?flush
     {
@@ -94,7 +89,11 @@ let to_request ?encoding
   | _ -> raise
            (Invalid_argument "Ocsigen_http_frame.Http_header.to_cohttp_request")
 
-let to_request_and_body ?encoding { Ocsigen_http_frame.frame_header; Ocsigen_http_frame.frame_content; } uri =
+let to_request_and_body ?encoding
+    {
+      Ocsigen_http_frame.frame_header;
+      Ocsigen_http_frame.frame_content;
+    } uri =
   let stream = match frame_content with
     | Some s -> Ocsigen_stream.to_lwt_stream
                   ~is_empty:(fun x -> String.length x = 0)
