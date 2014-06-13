@@ -24,10 +24,7 @@ let of_meth meth =
   | `Other "UNLINK" -> UNLINK
   | `Other _ -> raise (Invalid_argument "Http_header.meth_of_cohttp_meth")
 
-let of_headers headers =
-  Cohttp.Header.fold
-    (fun key value acc -> Http_headers.add (Http_headers.name key) value acc)
-    headers Http_headers.empty
+let of_headers : Cohttp.Header.t -> Http_headers.t = fun x -> x
 
 let of_request req =
   let open Ocsigen_http_frame.Http_header in
@@ -116,6 +113,8 @@ let of_response_and_body (resp, body) =
     ~headers
     ~charset
     ~location ()
+
+(* VVV: Specific casting for revproxy extension *)
 
 let of_response_and_body' (resp, body) =
   let open Ocsigen_http_frame in
