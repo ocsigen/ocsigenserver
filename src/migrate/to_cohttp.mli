@@ -1,6 +1,6 @@
 module Cookie :
   sig
-    val to_headers :
+    val serialize :
       Ocsigen_cookies.cookie Ocsigen_cookies.CookiesTable.t
       Ocsigen_cookies.Cookies.t -> Cohttp.Header.t -> Cohttp.Header.t
   end

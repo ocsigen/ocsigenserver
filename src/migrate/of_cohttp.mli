@@ -1,11 +1,3 @@
-module Cookie :
-  sig
-    val of_headers :
-      Cohttp.Header.t ->
-      Ocsigen_cookies.cookie Ocsigen_cookies.CookiesTable.t
-      Ocsigen_cookies.Cookies.t
-  end
-
 val of_version :
   [> `HTTP_1_0 | `HTTP_1_1 ] -> Ocsigen_http_frame.Http_header.proto
 

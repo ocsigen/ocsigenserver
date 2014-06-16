@@ -1,36 +1,34 @@
 module Cookie = struct
-  let to_headers cookies_table header =
-    let open Ocsigen_cookies in
-    let open Ocsigen_lib in
-    let set_cookies =
-      Cookies.fold
-        (fun path table acc ->
-           CookiesTable.fold
-             (fun name value acc ->
-                match value with
-                | OUnset ->
-                  let c = Cohttp.Cookie.Set_cookie_hdr.make
-                      ~expiration:(`Max_age (Int64.of_int 0))
-                      ~path:(Url.string_of_url_path ~encode:true path)
-                      ~secure:false
-                      (name, "") in
-                  let (k, v) = Cohttp.Cookie.Set_cookie_hdr.serialize c
-                  in (k, v) :: acc
-                | OSet (time, value, secure) ->
-                  let time = match time with | Some time -> time | None -> 0.0 in
-                  let c = Cohttp.Cookie.Set_cookie_hdr.make
-                      ~expiration:(`Max_age (Int64.bits_of_float time))
-                      ~path:(Url.string_of_url_path ~encode:true path)
-                      ~secure
-                      (name, value) in
-                  let (k, v) = Cohttp.Cookie.Set_cookie_hdr.serialize c
-                  in (k, v) :: acc)
-             table acc)
-        cookies_table
-        []
-    in List.fold_left
-      (fun acc (key, value) -> Cohttp.Header.add acc key value)
-      header set_cookies
+
+  open Ocsigen_cookies
+  open Ocsigen_lib
+
+  let serialize_cookie path exp name c secure =
+    Format.sprintf "%s=%s%s%s" name c
+      ("; path=/" ^ Url.string_of_url_path ~encode:true path)
+      (if secure then "; secure" else "") ^
+    (match exp with
+     | Some s -> "; expires=" ^
+                 Netdate.format
+                   "%a, %d-%b-%Y %H:%M:%S GMT"
+                   (Netdate.create s)
+     | None -> "")
+
+  let serialize_cookies path table headers =
+    CookiesTable.fold
+      (fun name c h ->
+         let exp, v, secure = match c with
+           | Ocsigen_cookies.OUnset -> (Some 0., "", false)
+           | Ocsigen_cookies.OSet (t, v, secure) -> (t, v, secure)
+         in
+         Http_headers.add
+           Http_headers.set_cookie (serialize_cookie path exp name v secure)
+           headers)
+      table
+      headers
+
+  let serialize cookies headers =
+    Cookies.fold serialize_cookies cookies headers
 end
 
 let to_version vrs =
@@ -137,7 +135,7 @@ let to_response_and_body res =
   let res_charset = Ocsigen_http_frame.Result.charset res in
   let res_location = Ocsigen_http_frame.Result.location res in
   let headers =
-    Cookie.to_headers res_cookies
+    Cookie.serialize res_cookies
       (to_headers res_headers) in
   let headers = match res_lastmodified with
     | Some date -> Cohttp.Header.add headers "Last-Modified" (to_date date)

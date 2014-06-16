@@ -1,27 +1,5 @@
-module Cookie = struct
-  let of_headers header =
-    let open Ocsigen_cookies in
-    let open Ocsigen_lib in
-    let set_cookies = Cohttp.Cookie.Set_cookie_hdr.extract header in
-    List.fold_left (fun acc (name, data) ->
-        let time = match Cohttp.Cookie.Set_cookie_hdr.expiration data with
-          | `Session -> None
-          | `Max_age n -> Some (Int64.to_float n)
-        in let key, value = Cohttp.Cookie.Set_cookie_hdr.cookie data
-        in let secure = Cohttp.Cookie.Set_cookie_hdr.secure data
-        in let url = match
-            Cohttp.Cookie.Set_cookie_hdr.domain data,
-            Cohttp.Cookie.Set_cookie_hdr.path data with
-        | Some domain, Some path -> domain ^ "/" ^ path
-        | None, Some path -> path
-        | Some domain, None -> domain
-        | None, None ->
-          raise (Invalid_argument "Ocsigen_cookies_server.of_cohttp_header")
-        in
-        let (_, _, _, _, path, _, _) = Url.parse url in
-        Ocsigen_cookies.add_cookie path key (OSet (time, value, secure)) acc)
-      Ocsigen_cookies.empty_cookieset set_cookies
-end
+open Ocsigen_lib
+open Ocsigen_cookies
 
 let of_version vrs =
   let open Ocsigen_http_frame.Http_header in
@@ -93,8 +71,11 @@ let of_charset =
     with Not_found -> None
 
 let of_response_and_body (resp, body) =
-  let cookies =
-    Cookie.of_headers @@ Cohttp.Response.headers resp in
+  let cookies = Ocsigen_cookies.Cookies.empty in
+  (* VVV: this function is only used by Ocsigen_local_files and this module
+   * create an empty Cookie table as response, it's useless to cast header *)
+  (* VVV: We could do a conversion function but will do nothing in the end.
+   * The conversion function is difficult! *)
   let lastmodified =
     match Cohttp.Header.get (Cohttp.Response.headers resp) "Last-Modified" with
     | None -> None
