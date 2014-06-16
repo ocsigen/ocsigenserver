@@ -134,43 +134,43 @@ let gen ~usermode ?cache dir = function
            find_static_page ~request:ri ~usermode ~dir ~err
              ~pathstring:(Url.string_of_url_path ~encode:false
                             (Ocsigen_request_info.sub_path ri.request_info)) in
-           Ocsigen_local_files.content ri page
-           >>= fun answer ->
-           let answer =
-             if status_filter = false then
-               answer
-             else
-               (* The page is an error handler, we propagate
-                  the original error code *)
-               (Ocsigen_http_frame.Result.update answer ~code:err ())
-           in
-           let (<<) h (n, v) = Http_headers.replace n v h in
-	   let answer = match cache with
-	     | None -> answer
-	     | Some 0 ->
-	       (Ocsigen_http_frame.Result.update answer ~headers:
-		   ((Ocsigen_http_frame.Result.headers answer)
-		       << (Http_headers.cache_control, "no-cache")
-		       << (Http_headers.expires, "0")) ())
-	     | Some duration ->
-         (Ocsigen_http_frame.Result.update answer ~headers:
-		   ((Ocsigen_http_frame.Result.headers answer)
-		       << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
-		       << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
-	   in
-	   Lwt.return (Ext_found (fun () -> Lwt.return answer))
-        )
+         Ocsigen_local_files.content ri page
+         >>= fun answer ->
+         let answer =
+           if status_filter = false then
+             answer
+           else
+             (* The page is an error handler, we propagate
+                the original error code *)
+             (Ocsigen_http_frame.Result.update answer ~code:err ())
+         in
+         let (<<) h (n, v) = Http_headers.replace n v h in
+         let answer = match cache with
+           | None -> answer
+           | Some 0 ->
+             (Ocsigen_http_frame.Result.update answer ~headers:
+                ((Ocsigen_http_frame.Result.headers answer)
+                 << (Http_headers.cache_control, "no-cache")
+                 << (Http_headers.expires, "0")) ())
+           | Some duration ->
+             (Ocsigen_http_frame.Result.update answer ~headers:
+                ((Ocsigen_http_frame.Result.headers answer)
+                 << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
+                 << (Http_headers.expires, To_cohttp.to_date (Unix.time () +. float_of_int duration))) ())
+         in
+         Lwt.return (Ext_found (fun () -> Lwt.return answer))
+      )
 
-        (function
-           | Ocsigen_local_files.Failed_403 -> return (Ext_next 403)
-               (* XXX We should try to leave an information about this
-                  error for later *)
-           | Ocsigen_local_files.NotReadableDirectory ->
-               return (Ext_next err)
-           | NoSuchUser | Not_concerned
-           | Ocsigen_local_files.Failed_404 -> return (Ext_next err)
-           | e -> fail e
-        )
+      (function
+        | Ocsigen_local_files.Failed_403 -> return (Ext_next 403)
+        (* XXX We should try to leave an information about this
+           error for later *)
+        | Ocsigen_local_files.NotReadableDirectory ->
+          return (Ext_next err)
+        | NoSuchUser | Not_concerned
+        | Ocsigen_local_files.Failed_404 -> return (Ext_next err)
+        | e -> fail e
+      )
 
 
 (*****************************************************************************)
