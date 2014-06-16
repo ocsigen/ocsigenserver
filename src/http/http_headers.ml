@@ -19,8 +19,8 @@
 *)
 
 type name = string
-let name : string -> name = fun x -> x
-let name_to_string : name -> string = fun x -> x
+let name : string -> name = String.lowercase
+let name_to_string : name -> string = String.lowercase
 
 let accept = name "Accept"
 let accept_charset = name "Accept-Charset"
@@ -89,7 +89,7 @@ let find_all name map = List.rev (Cohttp.Header.get_multi map name)
 
 let find name map = match Cohttp.Header.get_multi map name with
   | value :: _ -> value
-  | _ -> assert false (* XXX: Sure ? *)
+  | _ -> raise Not_found
 
 let replace name value map = Cohttp.Header.replace map name value
 let replace_opt name value map = match value with
