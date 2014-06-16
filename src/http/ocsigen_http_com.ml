@@ -41,6 +41,8 @@ open Ocsigen_lib
 open Ocsigen_http_frame
 open Ocsigen_cookies
 
+let section = Lwt_log.Section.make "ocsigen:http:com"
+
 (** this module provide a mecanism to communicate with some http frames *)
 
 let (>>=) = Lwt.(>>=)
@@ -590,7 +592,7 @@ let gmtdate d =
     String.set x (ind_plus + 1) 'M';
     String.set x (ind_plus + 2) 'T';
     String.sub x 0 (ind_plus + 3)
-  with Invalid_argument _ | Not_found -> Ocsigen_messages.debug2 "no +"; x
+  with Invalid_argument _ | Not_found -> Lwt_log.ign_debug ~section "no +"; x
 
 type sender_type = {
   (** protocol to be used : HTTP/1.0 HTTP/1.1 *)
@@ -734,13 +736,13 @@ let set_result_observer, observe_result =
 let send_100_continue slot =
   wait_previous_senders slot >>= fun () ->
   let out_ch = slot.sl_chan in
-  Ocsigen_messages.debug2 "writing 100-continue";
   let hh = Framepp.string_of_header {
       H.mode = H.Answer 100;
       proto = H.HTTP11;
       headers = Http_headers.empty
     } in
-  Ocsigen_messages.debug2 hh;
+  Lwt_log.ign_info ~section "writing 100-continue";
+  Lwt_log.ign_info ~section hh;
   Lwt_chan.output_string out_ch hh
 
 (** Sends the HTTP frame.
@@ -837,11 +839,11 @@ let send
            (fun () ->
               Lwt.catch
                 (fun () ->
-                   Ocsigen_messages.debug2 "writing header";
-                   let hh = Framepp.string_of_header hd in
-                   Ocsigen_messages.debug2 hh;
-                   observe_result hd hh >>= fun () ->
-                   Lwt_chan.output_string out_ch hh >>= fun () ->
+
+                  let hh = Framepp.string_of_header hd in
+                  Lwt_log.ign_info_f ~section "writing header\n%s" hh;
+                  observe_result hd hh >>= fun () ->
+                  Lwt_chan.output_string out_ch hh >>= fun () ->
                    (if reopen <> None then
                       (* If we want to give a possibility to reopen if
                          it fails, we must detect the failure before
@@ -854,32 +856,30 @@ let send
                              we may want to retry once (in the case when
                              we reuse an old connection) *** *)
                    match reopen with
-                   | None -> Lwt.fail e
-                   | Some reopen ->
-                     match convert_io_error e with
-                     | Keepalive_timeout
-                     | Timeout
-                     | Connection_closed
-                     | Unix.Unix_error (Unix.EBADF,_ ,_)
-                     | Lost_connection _ ->
-                       reopen () >>= fun () ->
-                       Lwt.fail e
-                     | _ ->
-                       Ocsigen_messages.warning
-                         ("Ocsigen_http_com: reopening after exception "^
-                          (Printexc.to_string e)^
-                          " (Is that right?) Please report this error.");
-                       ignore (reopen ());
-                       Lwt.fail e
+                     | None -> Lwt.fail e
+                     | Some reopen ->
+                         match convert_io_error e with
+                           | Keepalive_timeout
+                           | Timeout
+                           | Connection_closed
+                           | Unix.Unix_error (Unix.EBADF,_ ,_)
+                           | Lost_connection _ ->
+                               reopen () >>= fun () ->
+                               Lwt.fail e
+                           | _ ->
+                             Lwt_log.ign_warning ~section ~exn:e
+                               "reopening after exception (Is that right?) Please report this error.";
+                             ignore (reopen ());
+                             Lwt.fail e
                 )
            )
          >>= fun () ->
          (if empty_content || head then begin
-             Lwt.return ()
-           end else begin
-            Ocsigen_messages.debug2 "writing body";
-            write_stream ~chunked out_ch (fst (Result.stream res))
-          end) >>= fun () ->
+           Lwt.return ()
+         end else begin
+            Lwt_log.ign_info ~section "writing body";
+           write_stream ~chunked out_ch (fst (Result.stream res))
+         end) >>= fun () ->
          Lwt_chan.flush out_ch (* Vincent: I add this otherwise HEAD answers
                                   are not flushed by the reverse proxy *)
          >>= fun () ->
@@ -946,12 +946,12 @@ let send
   let mkcookl path t hds =
     CookiesTable.fold
       (fun name c h ->
-         let exp, v, secure = match c with
-           | Ocsigen_cookies.OUnset -> (Some 0., "", false)
-           | Ocsigen_cookies.OSet (t, v, secure) -> (t, v, secure)
-         in
-         Http_headers.add 
-           Http_headers.set_cookie (mkcook path exp name v secure) h)
+        let exp, v, secure = match c with
+        | Ocsigen_cookies.OUnset -> (Some 0., "", false)
+        | Ocsigen_cookies.OSet (t, v, secure) -> (t, v, secure)
+        in
+        Http_headers.add
+          Http_headers.set_cookie (mkcook path exp name v secure) h)
       t
       hds
   in
@@ -986,5 +986,3 @@ let send
     )
   in
   send_aux ~mode headers
-
-

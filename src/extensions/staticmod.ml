@@ -27,6 +27,7 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_extensions
 
+let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
 exception Not_concerned
 
 let bad_config s = raise (Error_in_config_file s)
@@ -123,13 +124,13 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
 
 let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found (_, r) ->
-    Lwt.return (Ocsigen_extensions.Ext_do_nothing)
+      Lwt.return (Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_not_found (err, ri) ->
-    catch
-      (fun () ->
-         Ocsigen_messages.debug2 "--Staticmod: Is it a static file?";
-         let status_filter, page =
-           find_static_page ~request:ri ~usermode ~dir ~err
+      catch
+        (fun () ->
+           Lwt_log.ign_info ~section "Is it a static file?";
+           let status_filter, page =
+             find_static_page ~request:ri ~usermode ~dir ~err
              ~pathstring:(Url.string_of_url_path ~encode:false
                             (Ocsigen_request_info.sub_path ri.request_info)) in
          Ocsigen_local_files.content ri page

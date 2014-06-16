@@ -46,6 +46,7 @@ open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
 
+let section = Lwt_log.Section.make "ocsigen:ext:rewritemod"
 
 exception Not_concerned
 
@@ -80,7 +81,7 @@ let gen regexp continue = function
     catch
       (* Is it a rewrite? *)
       (fun () ->
-         Ocsigen_messages.debug2 "--Rewritemod: Is it a rewrite?";
+         Lwt_log.ign_info ~section "Is it a rewrite?";
          let redir, fullrewrite =
            let ri = ri.request_info in
            find_rewrite regexp
@@ -88,9 +89,7 @@ let gen regexp continue = function
               | None -> Ocsigen_request_info.sub_path_string ri
               | Some g -> (Ocsigen_request_info.sub_path_string ri) ^ "?" ^ g)
          in
-         Ocsigen_messages.debug (fun () ->
-             "--Rewritemod: YES! rewrite to: "^redir
-             ^(if continue then " (and continue)" else " (and restart)"));
+         Lwt_log.ign_info_f ~section "YES! rewrite to: %s" redir;
          if continue
          then
            return
@@ -115,9 +114,6 @@ let gen regexp continue = function
       (function
         | Not_concerned -> return (Ext_next err)
         | e -> fail e)
-
-
-
 
 (*****************************************************************************)
 

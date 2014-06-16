@@ -31,6 +31,8 @@
 
 *)
 
+let section = Lwt_log.Section.make "ocsigen:ext"
+
 open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
@@ -135,8 +137,7 @@ let do_not_serve_to_regexp d =
         Printf.sprintf "^(%s)$" (paren l)
     in
     (try
-       Ocsigen_messages.debug (fun () -> Printf.sprintf
-                                  "Compiling exclusion regexp %s" regexp);
+       Lwt_log.ign_info_f ~section "Compiling exclusion regexp %s" regexp;
        let r = Netstring_pcre.regexp regexp in
        Hashtbl.add hash_consed_do_not_serve d r;
        r
@@ -425,94 +426,91 @@ let rec default_parse_config
             raise (Ocsigen_config.Config_file_error
                      ("Missing dir attribute in <site>"))
           | Some s -> (enc, s))
-      | ("path", s)::suite
-      | ("dir", s)::suite ->
-        (match dir with
-         | None -> parse_site_attrs (enc, Some s) suite
-         | _ -> raise (Ocsigen_config.Config_file_error
-                         ("Duplicate attribute dir in <site>")))
-      | ("charset", s)::suite ->
-        (match enc with
-         | None -> parse_site_attrs ((Some s), dir) suite
-         | _ -> raise (Ocsigen_config.Config_file_error
-                         ("Duplicate attribute charset in <site>")))
-      | (s, _)::_ ->
-        raise
-          (Ocsigen_config.Config_file_error ("Wrong attribute for <site>: "^s))
-    in
-    let charset, dir = parse_site_attrs (None, None) atts in
-    let path =
-      prevpath@
-      Url.remove_slash_at_end
-        (Url.remove_slash_at_beginning
-           (Url.remove_dotdot (Neturl.split_path dir)))
-    in
-    let parse_config = make_parse_config path parse_host l in
-    let ext awake cookies_to_set =
-      function
-      | Req_found (ri, res) ->
-        Lwt.return (Ext_found_continue_with' (res, ri), cookies_to_set)
-      | Req_not_found (e, oldri) ->
-        let oldri = match charset with
-          | None -> oldri
-          | Some charset ->
-            { oldri with request_config =
-                           { oldri.request_config with charset_assoc =
-                                                         Ocsigen_charset_mime.set_default_charset
-                                                           oldri.request_config.charset_assoc charset } }
-        in
-        match site_match oldri path (Ocsigen_request_info.full_path oldri.request_info) with
-        | None ->
-          Ocsigen_messages.debug (fun () ->
-              "site \""^
-              (Url.string_of_url_path ~encode:true path)^
-              "\" does not match url \""^
-              (Url.string_of_url_path ~encode:true
-                 (Ocsigen_request_info.full_path oldri.request_info))^
-              "\".");
-          Lwt.return (Ext_next e, cookies_to_set)
-        | Some sub_path ->
-          Ocsigen_messages.debug (fun () ->
-              "-------- site found: url \""^
-              (Url.string_of_url_path ~encode:true
-                 (Ocsigen_request_info.full_path oldri.request_info))^
-              "\" matches \""^
-              (Url.string_of_url_path ~encode:true path)^"\".");
-          let ri = {oldri with
-                    request_info =
-                      (Ocsigen_request_info.update oldri.request_info
-                         ~sub_path:sub_path
-                         ~sub_path_string:
-                           (Url.string_of_url_path
-                              ~encode:true sub_path) ()) }
-          in
-          parse_config awake cookies_to_set (Req_not_found (e, ri))
-          >>= function
-            (* After a site, we turn back to old ri *)
-          | (Ext_stop_site (cs, err), cookies_to_set)
-          | (Ext_continue_with (_, cs, err), cookies_to_set) ->
-            Lwt.return
-              (Ext_continue_with (oldri, cs, err), cookies_to_set)
-          | (Ext_found_continue_with r, cookies_to_set) ->
-            awake ();
-            r () >>= fun (r', req) ->
-            Lwt.return
-              (Ext_found_continue_with' (r', oldri), cookies_to_set)
-          | (Ext_found_continue_with' (r, req), cookies_to_set) ->
-            Lwt.return
-              (Ext_found_continue_with' (r, oldri), cookies_to_set)
-          | (Ext_do_nothing, cookies_to_set) ->
-            Lwt.return
-              (Ext_continue_with (oldri,
-                                  Ocsigen_cookies.Cookies.empty,
-                                  e), cookies_to_set)
-          | r -> Lwt.return r
-    in
-    (function
-      | Req_found (ri, r) ->
-        Lwt.return (Ext_found_continue_with' (r, ri))
-      | Req_not_found (err, ri) ->
-        Lwt.return (Ext_sub_result ext))
+        | ("path", s)::suite
+        | ("dir", s)::suite ->
+            (match dir with
+            | None -> parse_site_attrs (enc, Some s) suite
+            | _ -> raise (Ocsigen_config.Config_file_error
+                            ("Duplicate attribute dir in <site>")))
+        | ("charset", s)::suite ->
+            (match enc with
+            | None -> parse_site_attrs ((Some s), dir) suite
+            | _ -> raise (Ocsigen_config.Config_file_error
+                            ("Duplicate attribute charset in <site>")))
+        | (s, _)::_ ->
+            raise
+              (Ocsigen_config.Config_file_error ("Wrong attribute for <site>: "^s))
+      in
+      let charset, dir = parse_site_attrs (None, None) atts in
+      let path =
+        prevpath@
+        Url.remove_slash_at_end
+          (Url.remove_slash_at_beginning
+             (Url.remove_dotdot (Neturl.split_path dir)))
+      in
+      let parse_config = make_parse_config path parse_host l in
+      let ext awake cookies_to_set =
+        function
+          | Req_found (ri, res) ->
+              Lwt.return (Ext_found_continue_with' (res, ri), cookies_to_set)
+          | Req_not_found (e, oldri) ->
+              let oldri = match charset with
+                | None -> oldri
+                | Some charset ->
+                    { oldri with request_config =
+                        { oldri.request_config with charset_assoc =
+                            Ocsigen_charset_mime.set_default_charset
+                              oldri.request_config.charset_assoc charset } }
+              in
+              match site_match oldri path (Ocsigen_request_info.full_path oldri.request_info) with
+              | None ->
+                Lwt_log.ign_info_f ~section
+                  "site \"%a\" does not match url \"%a\"."
+                  (fun () path  -> Url.string_of_url_path ~encode:true path) path
+                  (fun () oldri -> Url.string_of_url_path ~encode:true
+                      (Ocsigen_request_info.full_path oldri.request_info)) oldri;
+                Lwt.return (Ext_next e, cookies_to_set)
+              | Some sub_path ->
+                Lwt_log.ign_info_f ~section
+                  "site found: url \"%a\" matches \"%a\"."
+                  (fun () oldri -> Url.string_of_url_path ~encode:true
+                      (Ocsigen_request_info.full_path oldri.request_info)) oldri
+                  (fun () path -> Url.string_of_url_path ~encode:true path) path;
+                let ri = {oldri with
+                              request_info =
+                                (Ocsigen_request_info.update oldri.request_info
+                                    ~sub_path:sub_path
+                                    ~sub_path_string:
+                                    (Url.string_of_url_path
+                                      ~encode:true sub_path) ()) }
+                  in
+                  parse_config awake cookies_to_set (Req_not_found (e, ri))
+                  >>= function
+                      (* After a site, we turn back to old ri *)
+                    | (Ext_stop_site (cs, err), cookies_to_set)
+                    | (Ext_continue_with (_, cs, err), cookies_to_set) ->
+                        Lwt.return
+                          (Ext_continue_with (oldri, cs, err), cookies_to_set)
+                    | (Ext_found_continue_with r, cookies_to_set) ->
+                        awake ();
+                        r () >>= fun (r', req) ->
+                        Lwt.return
+                          (Ext_found_continue_with' (r', oldri), cookies_to_set)
+                    | (Ext_found_continue_with' (r, req), cookies_to_set) ->
+                        Lwt.return
+                          (Ext_found_continue_with' (r, oldri), cookies_to_set)
+                    | (Ext_do_nothing, cookies_to_set) ->
+                        Lwt.return
+                          (Ext_continue_with (oldri,
+                                              Ocsigen_cookies.Cookies.empty,
+                                              e), cookies_to_set)
+                    | r -> Lwt.return r
+      in
+      (function
+        | Req_found (ri, r) ->
+            Lwt.return (Ext_found_continue_with' (r, ri))
+        | Req_not_found (err, ri) ->
+            Lwt.return (Ext_sub_result ext))
   | Simplexmlparser.Element (tag,_,_) ->
     raise (Bad_config_tag_for_extension tag)
   | _ -> raise (Ocsigen_config.Config_file_error
@@ -907,10 +905,10 @@ let compute_result
         | [] -> fail (Ocsigen_http_error (cookies_to_set, prev_err))
         | (h, conf_info, host_function)::l when
             host_match ~virtual_hosts:h ~host ~port ->
-          Ocsigen_messages.debug (fun () ->
-              "-------- host found! "^
-              (string_of_host_option host)^
-              " matches "^(string_of_host h));
+          Lwt_log.ign_info_f ~section
+            "host found! %a matches %a"
+            (fun () -> string_of_host_option) host
+            (fun () -> string_of_host) h;
           host_function
             awake
             cookies_to_set
@@ -954,10 +952,10 @@ let compute_result
              assert false
           )
         | (h, _, _)::l ->
-          Ocsigen_messages.debug (fun () ->
-              "-------- host = "^
-              (string_of_host_option host)^
-              " does not match "^(string_of_host h));
+          Lwt_log.ign_info_f ~section
+            "host = %a does not match %a"
+            (fun () -> string_of_host_option) host
+            (fun () -> string_of_host) h;
           aux_host ri prev_err cookies_to_set l
       in aux_host ri 404 cookies_to_set sites
   in
@@ -1025,7 +1023,7 @@ let get_number_of_connected,
       then exit 0;
       if c = !maxr
       then begin
-        Ocsigen_messages.warning "Number of connections now ok";
+        Lwt_log.ign_warning ~section "Number of connections now ok";
         maxr := -1000;
         Lwt_mvar.put mvar ()
       end
@@ -1098,16 +1096,16 @@ let replace_user_dir regexp dest pathstring =
   | Nodir dest ->
     Netstring_pcre.global_replace regexp dest pathstring
   | Withdir (s1, u, s2) ->
-    try
-      let s1 = Netstring_pcre.global_replace regexp s1 pathstring in
-      let u = Netstring_pcre.global_replace regexp u pathstring in
-      let s2 = Netstring_pcre.global_replace regexp s2 pathstring in
-      let userdir = (Unix.getpwnam u).Unix.pw_dir in
-      Ocsigen_messages.debug (fun () -> "User " ^ u);
-      s1^userdir^s2
-    with Not_found ->
-      Ocsigen_messages.debug (fun () -> "No such user " ^ u);
-      raise NoSuchUser
+      try
+        let s1 = Netstring_pcre.global_replace regexp s1 pathstring in
+        let u = Netstring_pcre.global_replace regexp u pathstring in
+        let s2 = Netstring_pcre.global_replace regexp s2 pathstring in
+        let userdir = (Unix.getpwnam u).Unix.pw_dir in
+        Lwt_log.ign_info_f ~section "User %s" u;
+        s1^userdir^s2
+      with Not_found ->
+        Lwt_log.ign_info_f ~section "No such user %s" u;
+        raise NoSuchUser
 
 
 (*****************************************************************************)
@@ -1124,21 +1122,21 @@ let find_redirection regexp full_url dest
   if full_url
   then
     match host with
-    | None -> raise Not_concerned
-    | Some host ->
-      let path =
-        match get_params_string with
-        | None -> full_path_string
-        | Some g -> full_path_string ^ "?" ^ g
-      in
-      let path =
-        Url.make_absolute_url https host port ("/"^path)
-      in
-      (match Netstring_pcre.string_match regexp path 0 with
-       | None -> raise Not_concerned
-       | Some _ -> (* Matching regexp found! *)
-         Netstring_pcre.global_replace regexp dest path
-      )
+      | None -> raise Not_concerned
+      | Some host ->
+          let path =
+            match get_params_string with
+              | None -> full_path_string
+              | Some g -> full_path_string ^ "?" ^ g
+          in
+          let path =
+            Url.make_absolute_url https host port ("/"^path)
+          in
+          (match Netstring_pcre.string_match regexp path 0 with
+             | None -> raise Not_concerned
+             | Some _ -> (* Matching regexp found! *)
+                 Netstring_pcre.global_replace regexp dest path
+          )
   else
     let path =
       match get_params_string with
@@ -1146,9 +1144,9 @@ let find_redirection regexp full_url dest
       | Some g -> sub_path_string ^ "?" ^ g
     in
     match Netstring_pcre.string_match regexp path 0 with
-    | None -> raise Not_concerned
-    | Some _ -> (* Matching regexp found! *)
-      Netstring_pcre.global_replace regexp dest path
+      | None -> raise Not_concerned
+      | Some _ -> (* Matching regexp found! *)
+          Netstring_pcre.global_replace regexp dest path
 
 
 (******************************************************************)

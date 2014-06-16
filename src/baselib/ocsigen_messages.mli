@@ -28,23 +28,8 @@ val errlog : ?section:Lwt_log.section -> string -> unit
 (** Write a message in warnings.log *)
 val warning : ?section:Lwt_log.section -> string -> unit
 
-(** Write a message only in debugging mode (-V option) - Non cooperative *)
-val debug : (unit -> string) -> unit
-
-(** Write a message only in debugging mode (-V option) - Non cooperative *)
-val debug2 : string -> unit
-
-(** Same as [debug] without new line at the end - Non cooperative *)
-val debug_noel : (unit -> string) -> unit
-
-(** Same as [debug] without new line at the end - Non cooperative *)
-val debug_noel2 : string -> unit
-
 (** Write a message in the console (if not called in silent mode) *)
 val console : (unit -> string) -> unit
-
-(** Write a message in the console (if not called in silent mode) *)
-val console2 : string -> unit
 
 (** Use that function for all impossible cases in exception handlers
     ([try ... with ... | e -> unexpected_exception ...] or [Lwt.catch ...]).
@@ -70,5 +55,4 @@ val register_section: Lwt_log.section -> unit
 (**/**)
 
 val open_files : ?user:string option -> ?group:string option -> unit -> unit Lwt.t
-val bip : int -> unit
 val command_f : exn -> string -> string list -> unit Lwt.t

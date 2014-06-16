@@ -26,6 +26,7 @@ type extension = string
 type filename = string
 type file = string
 
+let section = Lwt_log.Section.make "ocsigen:mimetype"
 
 type 'a assoc_item =
   | Extension of extension * 'a
@@ -151,10 +152,10 @@ let parse_mime_types ~filename : mime_type assoc =
               in
               close_in in_ch;
               map
-            with Sys_error s ->
-              Ocsigen_messages.errlog
-                (Printf.sprintf "Ocsigen_charser_mime: unable to read the mime.types file (Error: %s)." s);
-              MapString.empty
+            with exn ->
+	            Lwt_log.ign_error ~section ~exn
+               "unable to read the mime.types file";
+	           MapString.empty
            )];
     assoc_default = default_mime_type;
   }
@@ -163,11 +164,10 @@ let parse_mime_types ~filename : mime_type assoc =
 let default_mime_assoc () =
   let parsed = ref None in
   match !parsed with
-  | None ->
-    let file = Ocsigen_config.get_mimefile () in
-    Ocsigen_messages.debug
-      (fun () -> Printf.sprintf "Loading mime types in '%s'" file);
-    let map = parse_mime_types file in
-    parsed := Some map;
-    map
-  | Some map -> map
+    | None ->
+        let file = Ocsigen_config.get_mimefile () in
+        Lwt_log.ign_info_f ~section "Loading mime types in '%s'" file;
+        let map = parse_mime_types file in
+        parsed := Some map;
+        map
+    | Some map -> map

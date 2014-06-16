@@ -74,7 +74,8 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
               if sect = access_sect then acc else
                 match lev with
                 | Lwt_log.Error | Lwt_log.Fatal -> err
-                | _                             -> war);
+                | Lwt_log.Warning               -> war
+                | _                             -> Lwt_log.null);
          Lwt_log.dispatch
            (fun sect lev ->
               let show =
@@ -107,57 +108,20 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
 
 (****)
 
-let accesslog s =
-  ignore (Lwt_log.notice ~section:access_sect s : unit Lwt.t)
+let accesslog s = Lwt_log.ign_notice ~section:access_sect s
 
-let errlog ?section s = ignore (Lwt_log.error ?section s : unit Lwt.t)
+let errlog ?section s = Lwt_log.ign_error ?section s
 
-let warning ?section s = ignore (Lwt_log.warning ?section s : unit Lwt.t)
+let warning ?section s = Lwt_log.ign_warning ?section s
 
 let unexpected_exception e s =
-  warning ("Unexpected exception in "^s^": "^Printexc.to_string e)
+  Lwt_log.ign_warning_f ~exn:e "Unexpected exception in %s" s
 
 (****)
-
-let debug_noel =
-  if Ocsigen_config.get_veryverbose () then
-    (fun s -> Pervasives.prerr_string (s ()))
-  else
-    (fun s -> ())
-
-let debug_noel2 =
-  if Ocsigen_config.get_veryverbose () then
-    Pervasives.prerr_string
-  else
-    (fun s -> ())
-
-let debug =
-  if Ocsigen_config.get_veryverbose () then
-    (fun s -> Pervasives.prerr_endline (s ()))
-  else
-    (fun s -> ())
-
-let debug2 =
-  if Ocsigen_config.get_veryverbose () then
-    Pervasives.prerr_endline
-  else
-    (fun s -> ())
-
-let bip =
-  if Ocsigen_config.get_veryverbose () then
-    (fun i -> Pervasives.prerr_endline ("bip"^(string_of_int i)))
-  else
-    (fun i -> ())
 
 let console =
   if (not (Ocsigen_config.get_silent ())) then
     (fun s -> print_endline (s ()))
-  else
-    (fun s -> ())
-
-let console2 =
-  if (not (Ocsigen_config.get_silent ())) then
-    print_endline
   else
     (fun s -> ())
 

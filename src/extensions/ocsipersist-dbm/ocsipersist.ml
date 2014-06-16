@@ -25,6 +25,7 @@
 open Ocsidbmtypes
 open Lwt
 
+let section = Lwt_log.Section.make "ocsipersist:dbm"
 (** Data are divided into stores.
     Create one store for your project, where you will save all your data.
 *)
@@ -78,56 +79,57 @@ let rec try_connect sname =
        Lwt_unix.connect socket (Unix.ADDR_UNIX sname) >>= fun () ->
        return socket)
     (fun _ ->
-       Ocsigen_messages.warning ("Launching a new Ocsidbm process: "^(!ocsidbm)^
-                                 " on directory "^(!directory)^".");
-       let param = [|!ocsidbm; !directory|] in
-       let child () =
-         let log =
-           Unix.openfile (Ocsigen_messages.error_log_path ())
-             [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_APPEND] 0o640 in
-         Unix.dup2 log Unix.stderr;
-         Unix.close log;
-         let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
-         Unix.dup2 devnull Unix.stdout;
-         Unix.close devnull;
-         Unix.close Unix.stdin;
-         Unix.execv !ocsidbm param
-       in
-       let pid = Lwt_unix.fork () in
-       if pid = 0
-       then begin (* double fork *)
-         if Lwt_unix.fork () = 0
-         then begin
-           child ()
-         end
-         else sys_exit 0;
-       end
-       else
-         Lwt_unix.waitpid [] pid >>=
-         (fun _ ->  Lwt_unix.sleep 1.1 >>=
-           (fun () ->
-              let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
-              Lwt_unix.connect socket (Unix.ADDR_UNIX sname) >>= fun () ->
-              return socket)))
+       Lwt_log.ign_warning_f ~section
+         "Launching a new Ocsidbm process: %s on directory %s." !ocsidbm !directory;
+      let param = [|!ocsidbm; !directory|] in
+      let child () =
+        let log =
+          Unix.openfile (Ocsigen_messages.error_log_path ())
+            [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_APPEND] 0o640 in
+        Unix.dup2 log Unix.stderr;
+        Unix.close log;
+        let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
+        Unix.dup2 devnull Unix.stdout;
+        Unix.close devnull;
+        Unix.close Unix.stdin;
+        Unix.execv !ocsidbm param
+      in
+      let pid = Lwt_unix.fork () in
+      if pid = 0
+      then begin (* double fork *)
+        if Lwt_unix.fork () = 0
+        then begin
+          child ()
+        end
+        else sys_exit 0;
+      end
+      else
+        Lwt_unix.waitpid [] pid >>=
+        (fun _ ->  Lwt_unix.sleep 1.1 >>=
+          (fun () ->
+            let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+            Lwt_unix.connect socket (Unix.ADDR_UNIX sname) >>= fun () ->
+            return socket)))
 
 let rec get_indescr i =
   (catch
      (fun () -> try_connect (!directory^"/"^socketname))
      (fun e ->
-        if i = 0
-        then begin
-          Ocsigen_messages.errlog ("Cannot connect to Ocsidbm. Will continue \
-                                    without persistent session support. \
-                                    Error message is: "^
-                                   (match e with
-                                    | Unix.Unix_error (a,b,c) ->
-                                      (Unix.error_message a)^" in "^b^"("^c^")"
-                                    | _ -> Printexc.to_string e)^
-                                   ". Have a look at the logs to see if there is an \
-                                    error message from the Ocsidbm process.");
-          fail e
-        end
-        else (Lwt_unix.sleep 2.1) >>= (fun () -> get_indescr (i-1))))
+       if i = 0
+       then begin
+         Lwt_log.ign_error_f ~section
+           "Cannot connect to Ocsidbm. Will continue \
+            without persistent session support. \
+            Error message is: %s .\
+            Have a look at the logs to see if there is an \
+            error message from the Ocsidbm process."
+           (match e with
+            | Unix.Unix_error (a,b,c) ->
+              Printf.sprintf "%a in %s(%s)" (fun () -> Unix.error_message) a b c
+            | _ -> Printexc.to_string e);
+         fail e
+       end
+       else (Lwt_unix.sleep 2.1) >>= (fun () -> get_indescr (i-1))))
 
 let inch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
 let outch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
@@ -143,11 +145,10 @@ let init_fun config =
    | None -> ()
    | Some d -> ocsidbm := d);
 
-  Ocsigen_messages.warning
-    (if delay_loading then
-       "Asynchronuous initialization of Ocsipersist-dbm (may fail later)"
+  (if delay_loading then
+       Lwt_log.ign_warning ~section "Asynchronuous initialization (may fail later)"
      else
-       "Initializing Ocsipersist-dbm...");
+       Lwt_log.ign_warning ~section "Initializing ...");
   let indescr = get_indescr 2 in
   if delay_loading then (
     inch  := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
@@ -156,7 +157,7 @@ let init_fun config =
     let r = Lwt_unix.run indescr in
     inch  := return (Lwt_chan.in_channel_of_descr r);
     outch := return (Lwt_chan.out_channel_of_descr r);
-    Ocsigen_messages.warning "...Initialization of Ocsipersist-dbm complete";
+    Lwt_log.ign_warning ~section "...Initialization complete";
   )
 
 

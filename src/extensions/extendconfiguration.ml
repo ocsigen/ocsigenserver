@@ -30,7 +30,7 @@ let gen configfun = function
     Lwt.return Ocsigen_extensions.Ext_do_nothing
 
   | Ocsigen_extensions.Req_not_found (err, request) ->
-    Ocsigen_messages.debug2 "--Updating configuration";
+    Lwt_log.ign_info "Updating configuration";
     let updated_request = { request with request_config =
                                            configfun request.request_config }
     in

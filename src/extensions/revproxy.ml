@@ -44,6 +44,8 @@ open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
 
+let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
+
 exception Bad_answer_from_http_server
 
 
@@ -66,26 +68,26 @@ type redir =
 let gen dir = function
   | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found (err, ri) ->
-    catch
-      (* Is it a redirection? *)
-      (fun () ->
-         Ocsigen_messages.debug2 "--Revproxy: Is it a redirection?";
-         let dest =
-           let ri = ri.request_info in
-           let fi full =
-             Ocsigen_extensions.find_redirection
-               dir.regexp
-               full
-               dir.dest
-               (Ocsigen_request_info.ssl ri)
-               (Ocsigen_request_info.host ri)
-               (Ocsigen_request_info.server_port ri)
-               (Ocsigen_request_info.get_params_string ri)
-               (Ocsigen_request_info.sub_path_string ri)
-               (Ocsigen_request_info.full_path_string ri)
-           in
-           match dir.full_url with
+| Ocsigen_extensions.Req_not_found (err, ri) ->
+  catch
+    (* Is it a redirection? *)
+    (fun () ->
+       Lwt_log.ign_info ~section "Is it a redirection?";
+       let dest =
+         let ri = ri.request_info in
+         let fi full =
+           Ocsigen_extensions.find_redirection
+             dir.regexp
+             full
+             dir.dest
+             (Ocsigen_request_info.ssl ri)
+             (Ocsigen_request_info.host ri)
+             (Ocsigen_request_info.server_port ri)
+             (Ocsigen_request_info.get_params_string ri)
+             (Ocsigen_request_info.sub_path_string ri)
+             (Ocsigen_request_info.full_path_string ri)
+         in
+         match dir.full_url with
            | Yes -> fi true
            | No -> fi false
            | Maybe ->
@@ -107,13 +109,11 @@ let gen dir = function
            with e -> raise (Ocsigen_extensions.Error_in_config_file
                               ("Revproxy : error in destination URL "^dest^" - "^
                                Printexc.to_string e))
-         in
-         let uri = "/"^uri in
-         Ocsigen_messages.debug
-           (fun () ->
-              "--Revproxy: YES! Redirection to "^
-              (if https then "https://" else "http://")^host^":"^
-              (string_of_int port)^uri);
+       in
+       let uri = "/"^uri in
+       Lwt_log.ign_info_f ~section
+         "YES! Redirection to http%s://%s:%d%s"
+         (if https then "s" else "") host port uri;
 
          Ip_address.get_inet_addr host >>= fun inet_addr ->
 

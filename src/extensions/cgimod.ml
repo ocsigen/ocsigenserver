@@ -33,6 +33,7 @@ open Ocsigen_http_frame
 open Ocsigen_http_com
 open Ocsigen_senders
 
+let section = Lwt_log.Section.make "ocsigen:ext:cgimod"
 
 module Regexp = Netstring_pcre
 
@@ -133,17 +134,17 @@ let split_regexp r s =
 let find_cgi_page request reg sub_path =
   let find_file (filename, re, doc_root) =
     (* See also module Files in eliom.ml *)
-    Ocsigen_messages.debug (fun () -> "--Cgimod: Testing \""^filename^"\".");
+    Lwt_log.ign_info_f ~section "Testing %S." filename;
     try
       let stat = Unix.LargeFile.stat filename in
       let filename =
         if (stat.Unix.LargeFile.st_kind = Unix.S_DIR)
         then
-          (Ocsigen_messages.debug2 "--Cgimod: this is a directory.";
+           (Lwt_log.ign_info ~section "This is a directory.";
            raise (Ocsigen_Is_a_directory request))
         else filename
       in
-      Ocsigen_messages.debug (fun () -> "--Cgimod: Looking for \""^filename^"\".");
+      Lwt_log.ign_info_f ~section "Looking for %S." filename;
 
       if (stat.Unix.LargeFile.st_kind = Unix.S_REG)
       then begin
@@ -382,8 +383,8 @@ let recupere_cgi head re doc_root filename ri hostname =
          (function
            | Unix.Unix_error (Unix.EPIPE, _, _) ->
              Lwt_unix.close post_in
-           | e ->
-             Ocsigen_messages.unexpected_exception e "Cgimod.recupere_cgi (1)";
+           | exn ->
+             Lwt_log.ign_warning ~exn "Unexpected at Cgimod.recupere_cgi (1)";
              Lwt_unix.close post_in
          ));
 
@@ -393,15 +394,15 @@ let recupere_cgi head re doc_root filename ri hostname =
     let err_channel = Lwt_chan.in_channel_of_descr err_out in
     let rec get_errors () =
       Lwt_chan.input_line err_channel >>= fun err ->
-      Ocsigen_messages.warning ("CGI says: "^err);
+      Lwt_log.ign_warning ~section err;
       get_errors ()
     in ignore
       (catch
          get_errors
          (function
            | End_of_file -> Lwt_unix.close err_out
-           | e ->
-             Ocsigen_messages.unexpected_exception e "Cgimod.recupere_cgi (2)";
+           | exn ->
+             Lwt_log.ign_warning ~exn "Unexpected at Cgimod.recupere_cgi (2)";
              Lwt_unix.close err_out));
     (* This threads terminates, as you can see by doing:
        in ignore (catch get_errors (fun _ -> print_endline "the end";
@@ -420,9 +421,9 @@ let recupere_cgi head re doc_root filename ri hostname =
        (match status with
         | Unix.WEXITED 0 -> ()
         | Unix.WEXITED i ->
-          Ocsigen_messages.warning ("CGI exited with code "^(string_of_int i))
+          Lwt_log.ign_warning_f ~section "Exited with code %d" i
         | Unix.WSIGNALED i ->
-          Ocsigen_messages.warning ("CGI killed by signal "^(string_of_int i))
+          Lwt_log.ign_warning_f ~section "Killed by signal %d" i
         | Unix.WSTOPPED i ->
           (* Cannot occur without Unix.WUNTRACED wait_flag *)
           assert false
@@ -470,7 +471,7 @@ let gen reg = function
     catch
       (* Is it a cgi page? *)
       (fun () ->
-         Ocsigen_messages.debug2 "--Cgimod: Is it a cgi file?";
+         Lwt_log.ign_info ~section "Is it a cgi file?";
          let (filename, re, doc_root) =
            find_cgi_page ri reg (Ocsigen_request_info.sub_path ri.request_info)
          in
@@ -574,7 +575,7 @@ let rec set_env = function
   | [] -> []
   | (Element("setenv", [("var",vr);("val",vl)], []))::l ->
     if List.mem vr environment
-    then (Ocsigen_messages.debug (fun () -> "--Cgimod: variable no set "^vr);
+    then (Lwt_log.ign_info_f ~section "Variable no set %s" vr;
           set_env l)
     else (vr,vl)::set_env l
   | _ :: l -> raise (Error_in_config_file "Bad config tag for <cgi>")

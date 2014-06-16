@@ -23,6 +23,8 @@
 open Ocsigen_lib
 open Lwt
 
+let section = Lwt_log.Section.make "ocsigen:ext:cors"
+
 (*** MAIN FUNCTION ***)
 
 let default_frame () =
@@ -44,7 +46,7 @@ let add_headers config rq response =
                     .origin rq.Ocsigen_extensions.request_info) with
   | None -> return Ocsigen_extensions.Ext_do_nothing
   | Some origin ->
-    Ocsigen_messages.debug (fun () -> Printf.sprintf "CORS: request with origin: %s" origin);
+    Lwt_log.ign_info_f ~section "request with origin: %s" origin;
     let res_headers = (Ocsigen_http_frame.Result.headers response) in
 
     let res_headers = Http_headers.add
@@ -83,7 +85,7 @@ let add_headers config rq response =
             Http_headers.access_control_allow_methods
             request_method res_headers
         else
-          (Ocsigen_messages.debug (fun () -> "CORS: Method refused");
+           (Lwt_log.ign_info ~section "Method refused";
            raise Refused) in
 
     let res_headers =
@@ -122,13 +124,13 @@ let main config = function
     begin match (Ocsigen_request_info.meth
                    rq.Ocsigen_extensions.request_info) with
     | Ocsigen_http_frame.Http_header.OPTIONS ->
-      Ocsigen_messages.debug (fun () -> "CORS: OPTIONS request");
+      Lwt_log.ign_info ~section "OPTIONS request";
       begin
         try
           add_headers config rq (default_frame ())
         with
         | Refused ->
-          Ocsigen_messages.debug (fun () -> "CORS: Refused request");
+          Lwt_log.ign_info ~section "Refused request";
           Lwt.return Ocsigen_extensions.Ext_do_nothing
       end
     | _ ->
@@ -136,7 +138,7 @@ let main config = function
     end
 
   | Ocsigen_extensions.Req_found (rq,response) ->
-    Ocsigen_messages.debug (fun () -> "CORS: answered request");
+    Lwt_log.ign_info ~section "answered request";
     add_headers config rq response
 
 (*** EPILOGUE ***)

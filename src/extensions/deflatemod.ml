@@ -28,6 +28,7 @@ open Ocsigen_extensions
 open Simplexmlparser
 open Ocsigen_headers
 
+let section = Lwt_log.Section.make "ocsigen:ext:deflate"
 
 (* Content-type *)
 type filter = Type of string option * string option | Extension of string
@@ -84,8 +85,8 @@ let rec output oz f buf pos len  =
   if len = 0 then next_cont oz f else
   if oz.avail = 0 then
     (let cont () = output oz f buf pos len in
-     Ocsigen_messages.debug2 "--Deflatemod: Flushing because output buffer is full";
-     flush oz cont)
+    Lwt_log.ign_info ~section "Flushing because output buffer is full";
+    flush oz cont)
   else (
     (catch
        (fun () ->
@@ -113,7 +114,7 @@ let rec output oz f buf pos len  =
 and flush oz cont =
   let len = oz.pos in
   let s = String.sub oz.buf 0 len in
-  Ocsigen_messages.debug2 "--Deflatemod: Flushing!";
+  Lwt_log.ign_info ~section "Flushing!";
   oz.pos <- 0 ;
   oz.avail <- String.length oz.buf ;
   if len > 0 then Ocsigen_stream.cont s cont else cont ()
@@ -122,7 +123,7 @@ and next_cont oz stream =
   Ocsigen_stream.next stream >>= fun e ->
   match e with
   | Ocsigen_stream.Finished None ->
-    Ocsigen_messages.debug2 "--Deflatemod: End of stream: big cleaning for zlib" ;
+    Lwt_log.ign_info ~section "End of stream: big cleaning for zlib" ;
 
     (* loop until there is nothing left to compress and flush *)
     let rec after_flushing () =
@@ -139,8 +140,8 @@ and next_cont oz stream =
         if not finished then
           after_flushing ()
         else
-          (Ocsigen_messages.debug2 "--Deflatemod: Zlib.deflate finished, last flush" ;
-           flush oz (fun () -> Ocsigen_stream.empty None))) in
+            (Lwt_log.ign_info ~section "Zlib.deflate finished, last flush" ;
+            flush oz (fun () -> Ocsigen_stream.empty None))) in
 
     flush oz after_flushing
   | Ocsigen_stream.Finished (Some s) -> next_cont oz s
@@ -153,11 +154,11 @@ let compress deflate stream =
   let finalize status =
     Ocsigen_stream.finalize stream status >>= fun e ->
     (try
-       Zlib.deflate_end zstream
-     with
-     (* ignore errors, deflate_end cleans everything anyway *)
-       Zlib.Error _ -> ());
-    return (Ocsigen_messages.debug2 "--Deflatemod: Zlib stream closed") in
+      Zlib.deflate_end zstream
+    with
+      (* ignore errors, deflate_end cleans everything anyway *)
+      Zlib.Error _ -> ());
+    return (Lwt_log.ign_info ~section "Zlib stream closed") in
   let oz =
     { stream = zstream ;
       buf = String.create !buffer_size;
@@ -165,7 +166,7 @@ let compress deflate stream =
       avail = !buffer_size
     } in
   let new_stream () = next_cont oz (Ocsigen_stream.get stream) in
-  Ocsigen_messages.debug2 "--Deflatemod: Zlib stream initialized" ;
+  Lwt_log.ign_info ~section "Zlib stream initialized" ;
   if deflate then
     Ocsigen_stream.make ~finalize new_stream
   else
