@@ -41,10 +41,12 @@ let gen filter = function
 	  begin
 	    try
               let header_values =
-		Http_headers.find_all header (Ocsigen_http_frame.Result.headers res)
+		Http_headers.find_all header
+                  (Ocsigen_http_frame.Result.headers res)
               in
               let h =
-		Http_headers.replace_opt header None (Ocsigen_http_frame.Result.headers res)
+		Http_headers.replace_opt header None
+                   (Ocsigen_http_frame.Result.headers res)
               in
 	      List.fold_left
 		(fun h value ->
@@ -60,7 +62,7 @@ let gen filter = function
 	  end
 	| Add_header (header, dest, replace) ->
 	  begin
-	    match replace with
+            match replace with
 	      | None ->
 		begin
 		  try
@@ -80,8 +82,15 @@ let gen filter = function
       (Ocsigen_extensions.Ext_found
 	 (fun () ->
 	   Lwt.return
-      (Ocsigen_http_frame.Result.update res
-        ~headers:new_headers ())))
+             (Ocsigen_http_frame.Result.update res ~headers:new_headers ())))
+
+let gen_code code = function
+  | Req_not_found (code,_) -> return (Ext_next code)
+  | Req_found (ri, res) ->
+    Lwt.return
+      (Ocsigen_extensions.Ext_found
+	 (fun () ->
+            Lwt.return (Ocsigen_http_frame.Result.update res ~code ())))
 
 
 
@@ -122,6 +131,17 @@ let parse_config = function
           raise
             (Error_in_config_file
                "Wrong attributes for <outputfilter header=... dest=... (regexp=... / replace=...)/>"))
+  | Element ("sethttpcode", atts, []) ->
+    (match atts with
+     | [("code", c)] ->
+       let code = try int_of_string c
+         with Failure _ ->
+           raise (Error_in_config_file
+                    "invalid code attribute in <sethttpcode>")
+       in gen_code code
+     | _ ->
+       raise (Error_in_config_file
+                "Wrong attribute for <sethttpcode code=... />"))
   | Element ("outputfilter", _, _) -> badconfig "Bad syntax for tag <outputfilter header=... dest=... (regexp=... / replace=...)/>"
   | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ ->
