@@ -37,51 +37,51 @@ let gen filter = function
   | Req_found (ri, res) ->
     let new_headers =
       match filter with
-	| Rewrite_header (header, regexp, dest) ->
-	  begin
-	    try
+        | Rewrite_header (header, regexp, dest) ->
+          begin
+            try
               let header_values =
-		Http_headers.find_all header
+                Http_headers.find_all header
                   (Ocsigen_http_frame.Result.headers res)
               in
               let h =
-		Http_headers.replace_opt header None
+                Http_headers.replace_opt header None
                    (Ocsigen_http_frame.Result.headers res)
               in
-	      List.fold_left
-		(fun h value ->
-		  Http_headers.add
+              List.fold_left
+                (fun h value ->
+                  Http_headers.add
                     header
                     (Netstring_pcre.global_replace regexp dest value)
                     h
-		)
-		h
-		header_values
-	    with
-	      | Not_found -> Ocsigen_http_frame.Result.headers res
-	  end
-	| Add_header (header, dest, replace) ->
-	  begin
+                )
+                h
+                header_values
+            with
+              | Not_found -> Ocsigen_http_frame.Result.headers res
+          end
+        | Add_header (header, dest, replace) ->
+          begin
             match replace with
-	      | None ->
-		begin
-		  try
-		    ignore (Http_headers.find header (Ocsigen_http_frame.Result.headers res));
-		    (Ocsigen_http_frame.Result.headers res)
-		  with
-		    | Not_found ->
-		      Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
-		end
-	      | Some false ->
-		Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
-	      | Some true ->
-		Http_headers.replace header dest (Ocsigen_http_frame.Result.headers res)
-	  end
+              | None ->
+                begin
+                  try
+                    ignore (Http_headers.find header (Ocsigen_http_frame.Result.headers res));
+                    (Ocsigen_http_frame.Result.headers res)
+                  with
+                    | Not_found ->
+                      Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
+                end
+              | Some false ->
+                Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
+              | Some true ->
+                Http_headers.replace header dest (Ocsigen_http_frame.Result.headers res)
+          end
     in
     Lwt.return
       (Ocsigen_extensions.Ext_found
-	 (fun () ->
-	   Lwt.return
+         (fun () ->
+           Lwt.return
              (Ocsigen_http_frame.Result.update res ~headers:new_headers ())))
 
 let gen_code code = function
@@ -89,7 +89,7 @@ let gen_code code = function
   | Req_found (ri, res) ->
     Lwt.return
       (Ocsigen_extensions.Ext_found
-	 (fun () ->
+         (fun () ->
             Lwt.return (Ocsigen_http_frame.Result.update res ~code ())))
 
 
@@ -107,14 +107,14 @@ let parse_config = function
         | ("dest", dest)::l when d = None ->
             parse_attrs (h, r, Some dest, rep) l
         | ("replace", replace)::l when rep = None ->
-	    let replace =
-	      try
-		bool_of_string replace
-	      with
-		| Invalid_argument _ ->
-		  raise (Error_in_config_file
-			   (Printf.sprintf "Wrong value for attribute replace of <outputfilter/>: %s. is should be true or false" replace))
-	    in
+            let replace =
+              try
+                bool_of_string replace
+              with
+                | Invalid_argument _ ->
+                  raise (Error_in_config_file
+                           (Printf.sprintf "Wrong value for attribute replace of <outputfilter/>: %s. is should be true or false" replace))
+            in
             parse_attrs (h, r, d, Some replace ) l
         | _ -> raise (Error_in_config_file "Wrong attribute for <outputfilter header=... dest=... (regexp=... / replace=...)/>")
       in
