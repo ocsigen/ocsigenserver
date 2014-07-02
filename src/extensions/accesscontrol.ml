@@ -337,7 +337,7 @@ let parse_config parse_fun = function
             badconfig "Bad syntax for argument of tag allow-forward-for" )
             | _ -> badconfig "Bad syntax for argument of tag allow-forward-for"
         in
-        if equal_ip or (not need_equal_ip)
+        if equal_ip || (not need_equal_ip)
         then
           { request with request_info =
               (Ocsigen_request_info.update request.request_info

@@ -775,9 +775,13 @@ module Configuration = struct
               raise (Error_in_user_config_file
                        ("Unexpected attribute "^attribute^" in tag "^in_tag))
 
-  let rec process_element ~in_tag ~elements:spec_elements ?pcdata:spec_pcdata ?other_elements:spec_other_elements =
-    function | Simplexmlparser.PCData str ->
-          let spec_pcdata = Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata in
+  let rec process_element ~in_tag ~elements:spec_elements
+      ?pcdata:spec_pcdata ?other_elements:spec_other_elements =
+    function
+      | Simplexmlparser.PCData str ->
+          let spec_pcdata =
+            Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata
+          in
           spec_pcdata str
       | Simplexmlparser.Element (name, attributes, elements) ->
           try
@@ -805,10 +809,11 @@ module Configuration = struct
               | Some spec_other_elements ->
                   spec_other_elements name attributes elements
               | None ->
-                  raise (Error_in_user_config_file
+                  raise (Error_in_config_file
                            ("Unknown tag "^name^" in tag "^in_tag))
 
-  let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements ?(init=ignore) elements =
+  let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements
+      ?(init=ignore) elements =
     List.iter
       (check_element_occurrence ~in_tag elements)
       spec_elements;

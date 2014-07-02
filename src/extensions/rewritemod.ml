@@ -73,7 +73,7 @@ let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
 
 (*****************************************************************************)
 (** The function that will generate the pages from the request. *)
-let gen regexp = function
+let gen regexp continue = function
 | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
 | Ocsigen_extensions.Req_not_found (err, ri) ->
@@ -89,15 +89,28 @@ let gen regexp = function
              | Some g -> (Ocsigen_request_info.sub_path_string ri) ^ "?" ^ g)
       in
       Ocsigen_messages.debug (fun () ->
-        "--Rewritemod: YES! rewrite to: "^redir);
-      return
-        (Ext_retry_with
-           ({ ri with request_info =
-                Ocsigen_extensions.ri_of_url
-                  ~full_rewrite:fullrewrite
-                  redir ri.request_info },
-            Ocsigen_cookies.Cookies.empty)
-        )
+        "--Rewritemod: YES! rewrite to: "^redir
+        ^(if continue then " (and continue)" else " (and restart)"));
+      if continue
+      then
+        return
+          (Ext_continue_with
+             ({ ri with request_info =
+                          Ocsigen_extensions.ri_of_url
+                            ~full_rewrite:fullrewrite
+                            redir ri.request_info },
+              Ocsigen_cookies.Cookies.empty,
+              err)
+          )
+      else
+        return
+          (Ext_retry_with
+             ({ ri with request_info =
+                          Ocsigen_extensions.ri_of_url
+                            ~full_rewrite:fullrewrite
+                            redir ri.request_info },
+              Ocsigen_cookies.Cookies.empty)
+          )
     )
     (function
       | Not_concerned -> return (Ext_next err)
@@ -108,26 +121,44 @@ let gen regexp = function
 
 (*****************************************************************************)
 
-let parse_config = function
-  | Element ("rewrite", atts, []) ->
-      let regexp = match atts with
-      | [] ->
-          raise (Error_in_config_file
-                   "regexp attribute expected for <rewrite>")
-      | [("regexp", s); ("url", t)]
-      | [("regexp", s); ("dest", t)] ->
-          Regexp ((Netstring_pcre.regexp ("^"^s^"$")), t, false)
-      | [("regexp", s); ("url", t); ("fullrewrite", "fullrewrite")]
-      | [("regexp", s); ("dest", t); ("fullrewrite", "fullrewrite")] ->
-          Regexp ((Netstring_pcre.regexp ("^"^s^"$")), t, true)
-      | _ -> raise (Error_in_config_file "Wrong attribute for <rewrite>")
-      in
-      gen regexp
-  | Element (t, _, _) ->
-      raise (Bad_config_tag_for_extension t)
-  | _ -> raise (Error_in_config_file "(rewritemod extension) Bad data")
-
-
+let parse_config element =
+  let regexp = ref "" in
+  let dest = ref None in
+  let fullrewrite = ref false in
+  let continue = ref false in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[Configuration.element
+                   ~name:"rewrite"
+                   ~attributes:[Configuration.attribute
+                                  ~name:"regexp"
+                                  ~obligatory:true
+                                  (fun s -> regexp := s);
+                                Configuration.attribute
+                                  ~name:"url"
+                                  (fun s -> dest := Some s);
+                                Configuration.attribute
+                                  ~name:"dest"
+                                  (fun s -> dest := Some s);
+                                Configuration.attribute
+                                  ~name:"fullrewrite"
+                                  (fun s -> fullrewrite := (s = "fullrewrite"
+                                                            || s = "true"));
+                                Configuration.attribute
+                                  ~name:"continue"
+                                  (fun s -> continue := (s = "continue"
+                                                         || s = "true"));
+                               ]
+                   ()]
+      element
+  );
+  match !dest with
+  | None -> raise (Error_in_config_file "url attribute expected for <rewrite>")
+  | Some dest ->
+    gen (Regexp ((Netstring_pcre.regexp ("^"^ !regexp^"$")),
+                 dest, !fullrewrite))
+      !continue
 
 
 (*****************************************************************************)
