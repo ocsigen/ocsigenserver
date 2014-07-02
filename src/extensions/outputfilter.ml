@@ -97,6 +97,7 @@ let gen_code code = function
 (*****************************************************************************)
 
 let parse_config = function
+(*VVV TODO: rewrite using Ocsigen_extensions.Configuration (see rewritemod) *)
   | Element ("outputfilter", atts, []) ->
       let rec parse_attrs ((h, r, d, rep) as res) = function
         | [] -> res
