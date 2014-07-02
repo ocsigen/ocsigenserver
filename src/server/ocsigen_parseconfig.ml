@@ -642,7 +642,7 @@ let parse_facility = function
   | "syslog" -> `Syslog
   | "uucp" -> `UUCP
   | "user" -> `User
-  | tag -> raise (Invalid_argument tag);;
+  | t -> raise (Config_file_error ("Unknown " ^ t ^ " facility in <syslog>"))
 
 (* First parsing of config file *)
 let extract_info c =
@@ -671,12 +671,8 @@ let extract_info c =
         aux user group ssl ports sslports minthreads maxthreads ll
     | (Element ("syslog" as st, [], p))::ll ->
         let str = String.lowercase (parse_string_tag st p) in
-        begin
-          (try set_syslog_facility (Some (parse_facility str))
-           with Invalid_argument tag ->
-             Ocsigen_messages.warning ("Unknown tag: " ^ tag));
-          aux user group ssl ports sslports minthreads maxthreads ll
-        end
+        set_syslog_facility (Some (parse_facility str));
+        aux user group ssl ports sslports minthreads maxthreads ll
     | (Element ("port" as st, atts, p))::ll ->
         (match atts with
           []
