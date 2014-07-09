@@ -27,6 +27,8 @@ module Connection = struct
   exception Connection_closed
 end
 
+let section = Lwt_log.Section.make "server"
+
 (** print_cohttp_request Print request for debug
  * @param out_ch output for debug
  * @param request Cohttp request *)
@@ -117,12 +119,18 @@ let handler ~address ~port ~extensions_connector (edn, conn) request body =
             request
             body)
         (fun ri ->
+           let log =
+             Ocsigen_log.of_string "%h %l %t \"%r\""
+             |> fun str res -> Ocsigen_log.to_string ri res str
+           in
            Lwt.try_bind
              (extensions_connector ri)
-             (fun res ->
-                Ocsigen_range.compute_range ri res
+             (fun result ->
+                Ocsigen_range.compute_range ri result
                 >|= To_cohttp.to_response_and_body
-                >>= Lwt.return)
+                >>= fun (res, body) ->
+                Lwt.return (Ocsigen_messages.warning (log res))
+                >>= fun () -> Lwt.return (res, body))
              (function
                | Ocsigen_Is_a_directory fun_request ->
                  Server.respond_redirect
