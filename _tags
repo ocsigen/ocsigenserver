@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 00fc0c172ff522f11f1a3ffb29db1ec3)
+# DO NOT EDIT (digest: 335dcbf5dc475f913f600b2e179c0f99)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -33,22 +33,22 @@
 <src/baselib/*.ml{,i}>: package(netstring)
 <src/baselib/*.ml{,i}>: package(netstring-pcre)
 <src/baselib/*.ml{,i}>: package(optcomp)
-<src/baselib/*.ml{,i}>: package(threads)
 <src/baselib/*.ml{,i}>: package(tyxml)
+# Object base
 # Library http
 "src/http/http.cmxs": use_http
+<src/http/*.ml{,i}>: package(lwt.ssl)
+# Object cookies
 <src/http/*.ml{,i}>: package(cryptokit)
 <src/http/*.ml{,i}>: package(dynlink)
 <src/http/*.ml{,i}>: package(findlib)
 <src/http/*.ml{,i}>: package(ipaddr)
 <src/http/*.ml{,i}>: package(lwt)
 <src/http/*.ml{,i}>: package(lwt.extra)
-<src/http/*.ml{,i}>: package(lwt.ssl)
 <src/http/*.ml{,i}>: package(lwt.syntax)
 <src/http/*.ml{,i}>: package(netstring)
 <src/http/*.ml{,i}>: package(netstring-pcre)
 <src/http/*.ml{,i}>: package(optcomp)
-<src/http/*.ml{,i}>: package(threads)
 <src/http/*.ml{,i}>: package(tyxml)
 <src/http/*.ml{,i}>: use_baselib
 # Library server
@@ -65,14 +65,13 @@
 <src/server/*.ml{,i}>: package(netstring)
 <src/server/*.ml{,i}>: package(netstring-pcre)
 <src/server/*.ml{,i}>: package(optcomp)
-<src/server/*.ml{,i}>: package(threads)
 <src/server/*.ml{,i}>: package(tyxml)
 <src/server/*.ml{,i}>: package(tyxml.parser)
 <src/server/*.ml{,i}>: use_baselib
 <src/server/*.ml{,i}>: use_http
 <src/server/*.ml{,i}>: use_polytables
-# Library extensions
-"src/extensions/extensions.cmxs": use_extensions
+# Library ext
+"src/extensions/ext.cmxs": use_ext
 # Library staticmod
 "src/extensions/staticmod.cmxs": use_staticmod
 # Library accesscontrol
@@ -115,7 +114,6 @@
 <src/extensions/*.ml{,i}>: package(netstring)
 <src/extensions/*.ml{,i}>: package(netstring-pcre)
 <src/extensions/*.ml{,i}>: package(optcomp)
-<src/extensions/*.ml{,i}>: package(threads)
 <src/extensions/*.ml{,i}>: package(tyxml)
 <src/extensions/*.ml{,i}>: package(tyxml.parser)
 <src/extensions/*.ml{,i}>: use_baselib
@@ -136,7 +134,6 @@
 "bin/server_main.native": package(netstring)
 "bin/server_main.native": package(netstring-pcre)
 "bin/server_main.native": package(optcomp)
-"bin/server_main.native": package(threads)
 "bin/server_main.native": package(tyxml)
 "bin/server_main.native": package(tyxml.parser)
 "bin/server_main.native": use_baselib
@@ -155,7 +152,6 @@
 <bin/*.ml{,i}>: package(netstring)
 <bin/*.ml{,i}>: package(netstring-pcre)
 <bin/*.ml{,i}>: package(optcomp)
-<bin/*.ml{,i}>: package(threads)
 <bin/*.ml{,i}>: package(tyxml)
 <bin/*.ml{,i}>: package(tyxml.parser)
 <bin/*.ml{,i}>: use_baselib
@@ -168,3 +164,4 @@
 <bin/*.ml{,i}>: linkall
 "bin/server_main.native": linkall
 <src/baselib/dynlink_wrapper.ml>: package(optcomp), syntax(camlp4o)
+true: thread

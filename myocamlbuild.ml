@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: d5b069d538e6850da0e7296e60778c9e) *)
+(* DO NOT EDIT (digest: 6eefc9cc02b13183612d820366b30ed3) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -602,9 +602,11 @@ let package_default =
           ("commandline", ["src/commandline/yes"], []);
           ("nocommandline", ["src/commandline/no"], []);
           ("baselib", ["src/baselib"], []);
+          ("base", ["src/baselib"], []);
           ("http", ["src/http"], []);
+          ("cookies", ["src/http"], []);
           ("server", ["src/server"], []);
-          ("extensions", ["src/extensions"], []);
+          ("ext", ["src/extensions"], []);
           ("staticmod", ["src/extensions"], []);
           ("accesscontrol", ["src/extensions"], []);
           ("authbasic", ["src/extensions"], []);
@@ -635,7 +637,7 @@ let package_default =
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 639 "myocamlbuild.ml"
+# 641 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 (* VVV: pour être clair, cette liste contient tout les dépendances du serveur

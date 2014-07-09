@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: c016101aec23efb4bdea6d160656a6d9)
+# DO NOT EDIT (digest: d6987fd61bdff1cadc0dce083b74459b)
 version = "0.1"
 description = "HTTP Server in OCaml"
 archive(byte) = "ocsigenserver.cma"
@@ -11,7 +11,7 @@ package "server" (
  version = "0.1"
  description = "HTTP Server in OCaml"
  requires =
- "ocsigenserver.baselib ocsigenserver.polytables ocsigenserver.http lwt.unix netstring netstring-pcre cryptokit findlib tyxml tyxml.parser lwt.syntax lwt.extra ipaddr threads"
+ "ocsigenserver.baselib ocsigenserver.polytables ocsigenserver.http lwt.unix netstring netstring-pcre cryptokit findlib tyxml tyxml.parser lwt.syntax lwt.extra ipaddr"
  archive(byte) = "server.cma"
  archive(byte, plugin) = "server.cma"
  archive(native) = "server.cmxa"
@@ -50,14 +50,14 @@ package "http" (
  exists_if = "http.cma"
 )
 
-package "extensions" (
+package "ext" (
  version = "0.1"
  description = "HTTP Server in OCaml"
- archive(byte) = "extensions.cma"
- archive(byte, plugin) = "extensions.cma"
- archive(native) = "extensions.cmxa"
- archive(native, plugin) = "extensions.cmxs"
- exists_if = "extensions.cma"
+ archive(byte) = "ext.cma"
+ archive(byte, plugin) = "ext.cma"
+ archive(native) = "ext.cmxa"
+ archive(native, plugin) = "ext.cmxs"
+ exists_if = "ext.cma"
  package "userconf" (
   version = "0.1"
   description = "HTTP Server in OCaml"
@@ -226,6 +226,15 @@ package "extensions" (
  )
 )
 
+package "cookies" (
+ version = "0.1"
+ description = "HTTP Server in OCaml"
+ requires = "ocsigenserver.baselib netstring netstring-pcre"
+ archive(byte) = "ocsigen_cookies.cmo"
+ archive(native) = "ocsigen_cookies.cmx"
+ exists_if = "ocsigen_cookies.cmo"
+)
+
 package "commandline" (
  version = "0.1"
  description = "HTTP Server in OCaml"
@@ -240,12 +249,19 @@ package "baselib" (
  version = "0.1"
  description = "HTTP Server in OCaml"
  requires =
- "lwt netstring netstring-pcre cryptokit findlib tyxml lwt.syntax lwt.extra ipaddr threads dynlink optcomp"
+ "lwt netstring netstring-pcre cryptokit findlib tyxml lwt.syntax lwt.extra ipaddr dynlink optcomp"
  archive(byte) = "baselib.cma"
  archive(byte, plugin) = "baselib.cma"
  archive(native) = "baselib.cmxa"
  archive(native, plugin) = "baselib.cmxs"
  exists_if = "baselib.cma"
+ package "base" (
+  version = "0.1"
+  description = "HTTP Server in OCaml"
+  archive(byte) = "ocsigen_lib_base.cmo"
+  archive(native) = "ocsigen_lib_base.cmx"
+  exists_if = "ocsigen_lib_base.cmo"
+ )
 )
 # OASIS_STOP
 
