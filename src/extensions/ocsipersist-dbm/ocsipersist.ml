@@ -159,6 +159,33 @@ let init_fun config =
     Ocsigen_messages.warning "...Initialization of Ocsipersist-dbm complete";
   )
 
+(**
+  * init : initialization of ocsipersis-dbm
+  *
+  * @param directory_store directory of database
+  * @param ocsidbm_conf binary of dbm
+  * @param delay_loading
+*)
+
+let init ?directory_store ?ocsidbm_conf ?(delay_loading = false) () =
+  directory_store |> (function
+      | None -> ()
+      | Some d -> directory := d);
+  ocsidbm_conf |> (function
+      | None -> ()
+      | Some d -> ocsidbm := d);
+  let indescr = get_indescr 2 in
+  if delay_loading then
+    begin
+      inch := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
+      outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
+    end
+  else
+    begin
+      let r = Lwt_unix.run indescr in
+      inch := return (Lwt_chan.in_channel_of_descr r);
+      outch := return (Lwt_chan.out_channel_of_descr r);
+    end
 
 let send =
   let previous = ref (return Ok) in
@@ -322,33 +349,33 @@ let iter_block a b = failwith "iter_block not implemented for DBM. Please use Oc
    let nextl = String.length next in
    (Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 >>=
    (fun socket ->
-     Lwt_unix.connect
-       (Lwt_unix.Plain socket)
-       (Unix.ADDR_UNIX (directory^"/"^socketname)) >>=
-     (fun () -> return (Lwt_unix.Plain socket)) >>=
-     (fun indescr ->
-       let inch = Lwt_unix.in_channel_of_descr indescr in
-       let nextkey next nextl =
-         Lwt_unix.write indescr next 0 nextl >>=
-         (fun l2 -> if l2 <> nextl
-         then fail Ocsipersist_error
-         else (Lwt_unix.input_line inch >>=
-               fun answ -> return (Marshal.from_string answ 0)))
-       in
-       let rec aux n l =
-         nextkey n l >>=
-         (function
-           | End -> return ()
-           | Key k -> find table k >>= f k
-           | Error e -> fail e
-           | _ -> fail Ocsipersist_error) >>=
-         (fun () -> aux next nextl)
-       in
-       catch
-         (fun () ->
-           aux first firstl >>=
-           (fun () -> Unix.close socket; return ()))
-         (fun e -> Unix.close socket; fail e))))
+   Lwt_unix.connect
+     (Lwt_unix.Plain socket)
+     (Unix.ADDR_UNIX (directory^"/"^socketname)) >>=
+   (fun () -> return (Lwt_unix.Plain socket)) >>=
+   (fun indescr ->
+     let inch = Lwt_unix.in_channel_of_descr indescr in
+     let nextkey next nextl =
+       Lwt_unix.write indescr next 0 nextl >>=
+       (fun l2 -> if l2 <> nextl
+       then fail Ocsipersist_error
+       else (Lwt_unix.input_line inch >>=
+             fun answ -> return (Marshal.from_string answ 0)))
+     in
+     let rec aux n l =
+       nextkey n l >>=
+       (function
+         | End -> return ()
+         | Key k -> find table k >>= f k
+         | Error e -> fail e
+         | _ -> fail Ocsipersist_error) >>=
+       (fun () -> aux next nextl)
+     in
+     catch
+       (fun () ->
+         aux first firstl >>=
+         (fun () -> Unix.close socket; return ()))
+       (fun e -> Unix.close socket; fail e))))
 
 *)
 
