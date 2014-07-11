@@ -132,33 +132,6 @@ let rec get_indescr i =
 let inch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
 let outch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
 
-let init_fun config =
-  let (store, ocsidbmconf, delay_loading) =
-    parse_global_config (None, None, false) config
-  in
-  (match store with
-   | None -> ()
-   | Some d -> directory := d);
-  (match ocsidbmconf with
-   | None -> ()
-   | Some d -> ocsidbm := d);
-
-  Ocsigen_messages.warning
-    (if delay_loading then
-       "Asynchronuous initialization of Ocsipersist-dbm (may fail later)"
-     else
-       "Initializing Ocsipersist-dbm...");
-  let indescr = get_indescr 2 in
-  if delay_loading then (
-    inch  := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
-    outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
-  ) else (
-    let r = Lwt_unix.run indescr in
-    inch  := return (Lwt_chan.in_channel_of_descr r);
-    outch := return (Lwt_chan.out_channel_of_descr r);
-    Ocsigen_messages.warning "...Initialization of Ocsipersist-dbm complete";
-  )
-
 (**
   * init : initialization of ocsipersis-dbm
   *
@@ -174,6 +147,11 @@ let init ?directory_store ?ocsidbm_conf ?(delay_loading = false) () =
   ocsidbm_conf |> (function
       | None -> ()
       | Some d -> ocsidbm := d);
+  Ocsigen_messages.warning
+    (if delay_loading then
+       "Asynchronuous initialization of Ocsipersist-dbm (may fail later)"
+     else
+       "Initializing Ocsipersist-dbm...");
   let indescr = get_indescr 2 in
   if delay_loading then
     begin
@@ -186,6 +164,11 @@ let init ?directory_store ?ocsidbm_conf ?(delay_loading = false) () =
       inch := return (Lwt_chan.in_channel_of_descr r);
       outch := return (Lwt_chan.out_channel_of_descr r);
     end
+
+let init_fun config =
+  let (directory_store, ocsidbm_conf, delay_loading) =
+    parse_global_config (None, None, false) config
+  in init ?directory_store ?ocsidbm_conf ~delay_loading ()
 
 let send =
   let previous = ref (return Ok) in
