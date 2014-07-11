@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-(** Config file parsing *)
+(** Config file parsing.
+    See also module {! Ocsigen_extensions.​Configuration } *)
 
 (** Parse a size ("infinity" or using SI or binary units,
     e.g. 10 10B 10o 10ko 10kB 10kiB 10MiB 10TB ...).
