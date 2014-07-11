@@ -319,7 +319,7 @@ let length table =
 
 (* Registration of the extension *)
 
-let init config =
+let init_fun config =
   db_file := Ocsigen_config.get_datadir () ^"/ocsidb";
   (match parse_global_config config with
    | None -> ()
@@ -335,8 +335,26 @@ let init config =
           rights" !db_file);
     raise e
 
+(**
+ * init : initialization of ocsipersit-sqlite
+ *
+ * @param database file of database
+*)
+
+let init ?database () =
+  database |> (function
+      | None -> db_file := (Ocsigen_config.get_datadir () ^ "/ocsidb")
+      | Some d -> db_file := d);
+  try Lwt_unix.run (exec_safely (fun _ -> ()))
+  with exn ->
+    Ocsigen_messages.errlog
+      (Printf.sprintf
+         "Error opening database file '%s' when registering Ocsipersist. \
+          Check that the directory exists, and that Ocsigen has enough \
+          rights" !db_file);
+    raise exn
 
 let _ = Ocsigen_extensions.register_extension
     ~name:"ocsipersist"
-    ~init_fun:init
+    ~init_fun
     ()
