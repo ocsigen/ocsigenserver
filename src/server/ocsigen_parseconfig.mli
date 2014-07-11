@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Config file parsing.
     See also module {! Ocsigen_extensions.​Configuration } *)
@@ -65,7 +65,7 @@ val extract_info :
   Simplexmlparser.xml list ->
   (string option * string option) *
   ((string option * string option) option *
-     (socket_type * int) list * (socket_type * int) list) * (int * int)
+   (socket_type * int) list * (socket_type * int) list) * (int * int)
 val parse_config :
   ?file:string ->
   unit ->

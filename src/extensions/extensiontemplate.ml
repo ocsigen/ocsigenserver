@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (*****************************************************************************)
 (*****************************************************************************)
 (* This is an example of extension for Ocsigen                               *)
@@ -29,12 +29,12 @@
    It is very similar to this example, but using
    Ocsigen_extensions.register_output_filter
    instead of Ocsigen_extensions.register_extension.
- *)
+*)
 
 (* To compile it:
-ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
+   ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
 
-Then load it dynamically from Ocsigen's config file:
+   Then load it dynamically from Ocsigen's config file:
    <extension module=".../extensiontemplate.cmo"/>
 
 *)
@@ -48,13 +48,13 @@ open Simplexmlparser
 (*****************************************************************************)
 (** Extensions may take some options from the config file.
     These options are written in xml inside the <extension> tag.
-   For example:
-   <extension module=".../extensiontemplate.cmo">
+    For example:
+    <extension module=".../extensiontemplate.cmo">
      <myoption myattr="hello">
         ...
      </myoption>
-   </extension>
- *)
+    </extension>
+*)
 
 let rec parse_global_config = function
   | [] -> ()
@@ -73,23 +73,23 @@ let rec parse_global_config = function
     - [Ocsigen_extensions.req_state] is the request, possibly modified by previous
     extensions, or already found
 
- *)
+*)
 let gen = function
   | Ocsigen_extensions.Req_found _ ->
-      (* If previous extension already found the page, you can
-         modify the result (if you write a filter) or return it
-         without modification like this: *)
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+    (* If previous extension already found the page, you can
+       modify the result (if you write a filter) or return it
+       without modification like this: *)
+    Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, ri) ->
-      (* If previous extensions did not find the result,
-         I decide here to answer with a default page
-         (for the example):
-      *)
-      return (Ext_found
-                (fun () ->
-                   let content = "Extensiontemplate page" in
-                   Ocsigen_senders.Text_content.result_of_content
-                     (content, "text/plain")))
+    (* If previous extensions did not find the result,
+       I decide here to answer with a default page
+       (for the example):
+    *)
+    return (Ext_found
+              (fun () ->
+                 let content = "Extensiontemplate page" in
+                 Ocsigen_senders.Text_content.result_of_content
+                   (content, "text/plain")))
 
 
 
@@ -97,39 +97,39 @@ let gen = function
 (** Extensions may define new tags for configuring each site.
     These tags are inside <site ...>...</site> in the config file.
 
-   For example:
-   <site dir="">
+    For example:
+    <site dir="">
      <extensiontemplate module=".../mymodule.cmo" />
-   </site>
+    </site>
 
-   Each extension will set its own configuration options, for example:
-   <site dir="">
+    Each extension will set its own configuration options, for example:
+    <site dir="">
      <extensiontemplate module=".../mymodule.cmo" />
      <eliom module=".../myeliommodule.cmo" />
      <static dir="/var/www/plop" />
-   </extension>
+    </extension>
 
     Here parse_site is the function used to parse the config file inside this
     site. Use this if you want to put extensions config options inside
     your own option. For example:
 
-{[
-  | Element ("iffound", [], sub) ->
-      let ext = parse_fun sub in
-(* DANGER: parse_fun MUST be called BEFORE the function! *)
-      (fun charset -> function
-        | Ocsigen_extensions.Req_found (_, _) ->
-            Lwt.return (Ext_sub_result ext)
-        | Ocsigen_extensions.Req_not_found (err, ri) ->
-            Lwt.return (Ocsigen_extensions.Ext_not_found err))
-]}
- *)
+    {[
+      | Element ("iffound", [], sub) ->
+        let ext = parse_fun sub in
+        (* DANGER: parse_fun MUST be called BEFORE the function! *)
+        (fun charset -> function
+           | Ocsigen_extensions.Req_found (_, _) ->
+             Lwt.return (Ext_sub_result ext)
+           | Ocsigen_extensions.Req_not_found (err, ri) ->
+             Lwt.return (Ocsigen_extensions.Ext_not_found err))
+    ]}
+*)
 
 let parse_config path _ parse_site = function
   | Element ("extensiontemplate", atts, []) -> gen
   | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ ->
-      raise (Error_in_config_file "Unexpected data in config file")
+    raise (Error_in_config_file "Unexpected data in config file")
 
 
 
@@ -150,7 +150,7 @@ let end_init () =
 (** A function that will create an error message from the exceptions
     that may be raised during the initialisation phase, and raise again
     all other exceptions. That function has type exn -> string. Use the
-   raise function if you don't need any. *)
+    raise function if you don't need any. *)
 let exn_handler = raise
 
 
@@ -176,11 +176,11 @@ let exn_handler = raise
 let site_creator 
     (hostpattern : Ocsigen_extensions.virtual_hosts)
     (config_info : Ocsigen_extensions.config_info)
-    = parse_config
-   (* hostpattern has type Ocsigen_extensions.virtual_hosts
-      and represents the name of the virtual host.
-      The path and the charset are declared in <site path... charset=.../>
-    *)
+  = parse_config
+(* hostpattern has type Ocsigen_extensions.virtual_hosts
+   and represents the name of the virtual host.
+   The path and the charset are declared in <site path... charset=.../>
+*)
 
 
 (* Same thing if the extension is loaded inside a local config
@@ -192,19 +192,19 @@ let user_site_creator (path : Ocsigen_extensions.userconf_info) = site_creator
 (*****************************************************************************)
 (** Registration of the extension *)
 let () = register_extension
-  ~name:"extensionname"
-  ~fun_site:site_creator
+    ~name:"extensionname"
+    ~fun_site:site_creator
 
-  (* If your extension is safe for users and if you want to allow
-     exactly the same options as for global configuration, use the same
-     [site_creator] function for [user_fun_site] as for [fun_site].
+    (* If your extension is safe for users and if you want to allow
+       exactly the same options as for global configuration, use the same
+       [site_creator] function for [user_fun_site] as for [fun_site].
 
-     If you don't want to allow users to use that extension in their
-     configuration files, you can omit user_fun_site.
-  *)
-  ~user_fun_site:user_site_creator
-  ~init_fun: parse_global_config
+       If you don't want to allow users to use that extension in their
+       configuration files, you can omit user_fun_site.
+    *)
+    ~user_fun_site:user_site_creator
+    ~init_fun: parse_global_config
 
-  ~begin_init ~end_init ~exn_handler
-  ()
+    ~begin_init ~end_init ~exn_handler
+    ()
 

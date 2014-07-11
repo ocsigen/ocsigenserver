@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Writing messages in the logs *)
 
@@ -47,11 +47,11 @@ val console : (unit -> string) -> unit
 val console2 : string -> unit
 
 (** Use that function for all impossible cases in exception handlers
-   ([try ... with ... | e -> unexpected_exception ...] or [Lwt.catch ...]).
-   A message will be written in [warnings.log].
-   Put something in the string to help locating the problem (usually the name
-   of the function where is has been called).
- *)
+    ([try ... with ... | e -> unexpected_exception ...] or [Lwt.catch ...]).
+    A message will be written in [warnings.log].
+    Put something in the string to help locating the problem (usually the name
+    of the function where is has been called).
+*)
 val unexpected_exception : exn -> string -> unit
 
 (** Path to the error log file *)
@@ -64,7 +64,7 @@ val error_log_path : unit -> string
     registered section (or else nothing happens), and <level_name> must be one
     of `Debug`, `Info`, `Notice`, `Warning`, `Error`, `Fatal` (or else the
     default level is restored)
- *)
+*)
 val register_section: Lwt_log.section -> unit
 
 (**/**)

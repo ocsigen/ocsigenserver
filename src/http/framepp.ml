@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** pretty printer for http frames*)
 open Ocsigen_http_frame
@@ -24,33 +24,33 @@ module H = Http_header
 (** converts the method into a string*)
 let string_of_method =
   function
-    | H.GET -> "GET"
-    | H.POST -> "POST"
-    | H.HEAD -> "HEAD"
-    | H.PUT -> "PUT"
-    | H.DELETE -> "DELETE"
-    | H.TRACE -> "TRACE"
-    | H.OPTIONS -> "OPTIONS"
-    | H.CONNECT -> "CONNECT"
-    | H.LINK -> "LINK"
-    | H.UNLINK -> "UNLINK"
-    | H.PATCH -> "PATCH"
+  | H.GET -> "GET"
+  | H.POST -> "POST"
+  | H.HEAD -> "HEAD"
+  | H.PUT -> "PUT"
+  | H.DELETE -> "DELETE"
+  | H.TRACE -> "TRACE"
+  | H.OPTIONS -> "OPTIONS"
+  | H.CONNECT -> "CONNECT"
+  | H.LINK -> "LINK"
+  | H.UNLINK -> "UNLINK"
+  | H.PATCH -> "PATCH"
 
 (** converts a string to a method *)
 let method_of_string =
   function
-    | "GET" -> H.GET
-    | "POST" -> H.POST
-    | "HEAD" -> H.HEAD
-    | "PUT" -> H.PUT
-    | "DELETE" -> H.DELETE
-    | "TRACE" -> H.TRACE
-    | "OPTIONS" -> H.OPTIONS
-    | "CONNECT" -> H.CONNECT
-    | "LINK" -> H.LINK
-    | "UNLINK" -> H.UNLINK
-    | "PATCH" -> H.PATCH
-    | _ -> failwith "method_of_string"
+  | "GET" -> H.GET
+  | "POST" -> H.POST
+  | "HEAD" -> H.HEAD
+  | "PUT" -> H.PUT
+  | "DELETE" -> H.DELETE
+  | "TRACE" -> H.TRACE
+  | "OPTIONS" -> H.OPTIONS
+  | "CONNECT" -> H.CONNECT
+  | "LINK" -> H.LINK
+  | "UNLINK" -> H.UNLINK
+  | "PATCH" -> H.PATCH
+  | _ -> failwith "method_of_string"
 
 (** converts the protocol into a string *)
 let string_of_proto = function
@@ -68,11 +68,11 @@ let fst_line buf header =
   match header.H.mode with
   | H.Nofirstline -> ()
   | H.Answer code ->
-      Printf.bprintf buf "%s %i %s\r\n" (string_of_proto header.H.proto)
-        code (Http_error.expl_of_code code)
+    Printf.bprintf buf "%s %i %s\r\n" (string_of_proto header.H.proto)
+      code (Http_error.expl_of_code code)
   | H.Query (meth, url) ->
-      Printf.bprintf buf "%s %s %s\r\n"
-        (string_of_method meth) url (string_of_proto header.H.proto)
+    Printf.bprintf buf "%s %s %s\r\n"
+      (string_of_method meth) url (string_of_proto header.H.proto)
 
 
 (** Prints the content of a header. To prevent http header injection,
@@ -89,28 +89,28 @@ let print_header_content buf content =
     else
       let add_prev () = Buffer.add_substring buf content prev (i-prev) in
       match content.[i] with
-        | '\n' | '\r' as c ->
-            let i' = i+1 in
-            let escape_c () =
-              add_prev ();
-              Buffer.add_char buf c;
-              Buffer.add_char buf ' ';
-              aux i' i'
-            in
-            if i' < s then
-              (match content.[i'] with
-                 | '\n' | '\r' as c' when c <> c' ->
-                     add_prev ();
-                     Buffer.add_char buf c; Buffer.add_char buf c';
-                     Buffer.add_char buf ' ';
-                     aux (i+2) (i+2)
+      | '\n' | '\r' as c ->
+        let i' = i+1 in
+        let escape_c () =
+          add_prev ();
+          Buffer.add_char buf c;
+          Buffer.add_char buf ' ';
+          aux i' i'
+        in
+        if i' < s then
+          (match content.[i'] with
+           | '\n' | '\r' as c' when c <> c' ->
+             add_prev ();
+             Buffer.add_char buf c; Buffer.add_char buf c';
+             Buffer.add_char buf ' ';
+             aux (i+2) (i+2)
 
-                 | _ -> escape_c ()
-              ) else
-                escape_c ()
+           | _ -> escape_c ()
+          ) else
+          escape_c ()
 
-        | _ ->
-            aux prev (i+1)
+      | _ ->
+        aux prev (i+1)
   in
   aux 0 0
 

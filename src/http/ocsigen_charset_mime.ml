@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 open Ocsigen_lib
 
@@ -47,14 +47,14 @@ let find_in_assoc file assoc =
   let rec aux = function
     | [] -> assoc.assoc_default
     | Extension (ext', v) :: q ->
-        if ext = ext' then v else aux q
+      if ext = ext' then v else aux q
     | File (filename', v) :: q ->
-        if filename = filename' then v else aux q
+      if filename = filename' then v else aux q
     | Regexp (reg, v) :: q ->
-        if Netstring_pcre.string_match reg file 0 <> None then v else aux q
+      if Netstring_pcre.string_match reg file 0 <> None then v else aux q
     | Map m :: q ->
-        try MapString.find ext m
-        with Not_found -> aux q
+      try MapString.find ext m
+      with Not_found -> aux q
   in
   aux assoc.assoc_list
 
@@ -65,7 +65,7 @@ let set_default assoc default = { assoc with assoc_default = default }
 
 let update_ext assoc (ext : extension) v =
   { assoc with assoc_list =
-      Extension (String.lowercase ext, v) :: assoc.assoc_list}
+                 Extension (String.lowercase ext, v) :: assoc.assoc_list}
 
 let update_file assoc (file : filename) v =
   { assoc with assoc_list = File (file, v) :: assoc.assoc_list}
@@ -134,11 +134,11 @@ let parse_mime_types ~filename : mime_type assoc =
       match  strlist with
       | [] | [_] -> (* No extension on this line *) read_and_split mimemap in_ch
       | mime :: extensions ->
-          let mimemap =
-            List.fold_left (fun mimemap ext ->
-                              MapString.add ext mime mimemap) mimemap extensions
-          in
-          read_and_split mimemap in_ch
+        let mimemap =
+          List.fold_left (fun mimemap ext ->
+              MapString.add ext mime mimemap) mimemap extensions
+        in
+        read_and_split mimemap in_ch
     with End_of_file -> mimemap
   in
   { assoc_list =
@@ -152,9 +152,9 @@ let parse_mime_types ~filename : mime_type assoc =
               close_in in_ch;
               map
             with Sys_error s ->
-	      Ocsigen_messages.errlog
-		(Printf.sprintf "Ocsigen_charser_mime: unable to read the mime.types file (Error: %s)." s);
-	      MapString.empty
+              Ocsigen_messages.errlog
+                (Printf.sprintf "Ocsigen_charser_mime: unable to read the mime.types file (Error: %s)." s);
+              MapString.empty
            )];
     assoc_default = default_mime_type;
   }
@@ -163,11 +163,11 @@ let parse_mime_types ~filename : mime_type assoc =
 let default_mime_assoc () =
   let parsed = ref None in
   match !parsed with
-    | None ->
-        let file = Ocsigen_config.get_mimefile () in
-        Ocsigen_messages.debug
-          (fun () -> Printf.sprintf "Loading mime types in '%s'" file);
-        let map = parse_mime_types file in
-        parsed := Some map;
-        map
-    | Some map -> map
+  | None ->
+    let file = Ocsigen_config.get_mimefile () in
+    Ocsigen_messages.debug
+      (fun () -> Printf.sprintf "Loading mime types in '%s'" file);
+    let map = parse_mime_types file in
+    parsed := Some map;
+    map
+  | Some map -> map
