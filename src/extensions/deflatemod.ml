@@ -311,7 +311,21 @@ let rec parse_global_config = function
   | _ -> raise (Error_in_config_file
                   "Unexpected content inside deflatemod config")
 
+(** init : initialization of deflatemod
+ *
+ * @param level level of compression
+ * @param size size of buffer
+*)
 
+let init ?level ?size () =
+  level |> (function
+      | None -> ()
+      | Some i when i >= 0 && i <= 9 -> compress_level := i
+      | _ -> raise (Invalid_argument "Deflatemod.init"));
+  size |> (function
+      | None -> ()
+      | Some i when i > 0 -> buffer_size := i
+      | _ -> raise (Invalid_argument "Deflatemod.init"))
 
 
 (*****************************************************************************)
