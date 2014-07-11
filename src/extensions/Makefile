@@ -44,6 +44,9 @@ ifeq "$(NATDYNLINK)" "YES"
 opt:: ${FILES:.ml=.cmxs}
 endif
 
+OBJS := ${FILES:.ml=.cmo}
+library: ${OBJS:.cmo=.cma}
+
 ### SQLite ###
 
 ifeq "$(OCSIPERSISTSQLITE)" "YES"
