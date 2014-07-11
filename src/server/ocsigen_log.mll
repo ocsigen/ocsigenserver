@@ -1,16 +1,21 @@
 {
 
 type t =
-  | Host
-  | L
+  | Host (** Host of request *)
+  | L (** Delimiter *)
   (* | User *)
-  | Time
-  | Request
-  | Status
+  | Time (** Time of received request *)
+  | Request (** Protocol version of request *)
+  | Status (** Status code of response *)
   | Byte (* XXX: byte receive (no byte send) *)
-  | Header of string
-  | Other of char
-  | EOF
+  | Header of string (** Header of request (! no response) *)
+  | Other of char (** Simple character *)
+  | EOF (** End of file *)
+
+(** string_of_month : convert number to word of month
+ *
+ * The argument must be range between 0 and 11, or raise error
+ *)
 
 let string_of_month = function
   | 0 -> "Jan"
@@ -26,6 +31,13 @@ let string_of_month = function
   | 10 -> "Nov"
   | 11 -> "Dec"
   | _ -> raise (Invalid_argument "Ocsigen_log.string_of_month")
+
+(** to_string : convert format to a string
+ *
+ * @param ri : request info
+ * @param res : response
+ * @param fmt : format (like printf and apache log system)
+ *)
 
 let to_string ri res fmt =
   let rec aux buffer = function
@@ -44,6 +56,7 @@ let to_string ri res fmt =
         time.Unix.tm_hour
         time.Unix.tm_min
         time.Unix.tm_sec
+        (* XXX: Apache format insert timezone of date *)
     | Request ->
       Printf.bprintf buffer "%s /%s %s"
         (Ocsigen_request_info.meth ri
@@ -93,6 +106,11 @@ rule token = parse
   | _ as c                { Other c }
 
 {
+
+(** of_string : generate a format of string
+ *
+ * @param str format in string (like "ocsigenserver %h" for display host)
+ *)
 
 let of_string str =
   let lexbuf = Lexing.from_string str in
