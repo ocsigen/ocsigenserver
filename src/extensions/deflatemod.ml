@@ -281,36 +281,6 @@ let rec parse_filter = function
                  "Unexpected element inside contenttype (should be <type> or
                   <extension>)")
 
-let rec parse_global_config = function
-  | [] -> ()
-  | (Element ("compress", [("level", l)], []))::ll ->
-    let l = try int_of_string l
-      with Failure _ -> raise (Error_in_config_file
-                                 "Compress level should be an integer between 0 and 9") in
-    compress_level := if (l <= 9 && l >= 0) then l else 6 ;
-    parse_global_config ll
-  | (Element ("buffer", [("size", s)], []))::ll ->
-    let s = (try int_of_string s
-             with Failure _ -> raise (Error_in_config_file
-                                        "Buffer size should be a positive integer")) in
-    buffer_size := if s > 0 then s else 8192 ;
-    parse_global_config ll
-  (* TODO: Pas de filtre global pour l'instant
-   * le nom de balise contenttype est mauvais, au passage
-     | (Element ("contenttype", [("compress", b)], choices))::ll ->
-       let l = (try parse_filter choices
-               with Not_found -> raise (Error_in_config_file
-                    "Can't parse mime-type content")) in
-       (match b with
-       |"only" -> choice_list := Compress_only l
-       |"allbut" -> choice_list := All_but l
-       | _ ->  raise (Error_in_config_file
-       "Attribute \"compress\" should be \"allbut\" or \"only\""));
-       parse_global_config ll
-  *)
-  | _ -> raise (Error_in_config_file
-                  "Unexpected content inside deflatemod config")
-
 (** init : initialization of deflatemod
  *
  * @param level level of compression
@@ -327,6 +297,37 @@ let init ?level ?size () =
       | Some i when i > 0 -> buffer_size := i
       | _ -> raise (Invalid_argument "Deflatemod.init"))
 
+let rec parse_global_config xml =
+  let rec catch (level, size) = function
+    | [] -> (level, size)
+    | (Element ("compress", [("level", l)], []))::ll ->
+      let l = try int_of_string l
+        with Failure _ -> raise (Error_in_config_file
+                                   "Compress level should be an integer between 0 and 9") in
+
+      catch (Some (if l <= 9 && l >= 0 then l else 6), size) ll
+    | (Element ("buffer", [("size", s)], []))::ll ->
+      let s = (try int_of_string s
+               with Failure _ -> raise (Error_in_config_file
+                                          "Buffer size should be a positive integer")) in
+      catch (level, Some (if s > 0 then s else 8192)) ll
+    (* TODO: Pas de filtre global pour l'instant
+     * le nom de balise contenttype est mauvais, au passage
+       | (Element ("contenttype", [("compress", b)], choices))::ll ->
+         let l = (try parse_filter choices
+                 with Not_found -> raise (Error_in_config_file
+                      "Can't parse mime-type content")) in
+         (match b with
+         |"only" -> choice_list := Compress_only l
+         |"allbut" -> choice_list := All_but l
+         | _ ->  raise (Error_in_config_file
+         "Attribute \"compress\" should be \"allbut\" or \"only\""));
+         parse_global_config ll
+    *)
+    | _ -> raise (Error_in_config_file
+                    "Unexpected content inside deflatemod config")
+  in let (level, size) = catch (None, None) xml in
+  init ?level ?size ()
 
 (*****************************************************************************)
 
