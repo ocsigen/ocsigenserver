@@ -460,6 +460,15 @@ let rec parse_global_config = function
   | _ -> raise (Error_in_config_file
                   ("Unexpected content inside cgimod config"))
 
+(**
+ * init : initialization of cgimod
+ *
+ * timeout : time out of cgi
+*)
+
+let init ~timeout () =
+  cgitimeout := int_of_string timeout
+
 
 (*****************************************************************************)
 
