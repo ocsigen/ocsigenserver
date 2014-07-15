@@ -9,7 +9,7 @@ do_build_doc () {
   make -C doc doc
   make -C doc wikidoc
   cp -rf doc/api-wiki/*.wiki ${API_DIR}
-  cp -rf doc/api-wiki/*.wiki ${MANUAL_SRC_DIR}
+  cp -rf doc/manual-wiki/*.wiki ${MANUAL_SRC_DIR}
 }
 
 do_remove () {
