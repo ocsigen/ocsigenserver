@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 
 (** Persistent data on hard disk. *)
@@ -25,7 +25,7 @@
    There are currently two implementations of this module,
    one using a DBM database, and the other using SQLITE.
    Link the one your want with your program.
- *)
+*)
 
 
 (*****************************************************************************)
@@ -37,27 +37,27 @@
 type 'a t
 
 (** Data are divided into stores.
-   Create one store for your project, where you will save all your data. *)
+    Create one store for your project, where you will save all your data. *)
 type store
 
 (** Open a store (and create it if it does not exist)  *)
 val open_store : string -> store
 
 val make_persistent :
-    store:store -> name:string -> default:'a -> 'a t Lwt.t
+  store:store -> name:string -> default:'a -> 'a t Lwt.t
 (** [make_persistent store name default] find a persistent value
     named [name] in store [store]
     from database, or create it with the default value [default] if it
     does not exist. *)
 
 val make_persistent_lazy :
-    store:store -> name:string -> default:(unit -> 'a) -> 'a t Lwt.t
+  store:store -> name:string -> default:(unit -> 'a) -> 'a t Lwt.t
 (** Same as make_persistent but the default value is evaluated only
     if needed
 *)
 
 val make_persistent_lazy_lwt :
-    store:store -> name:string -> default:(unit -> 'a Lwt.t) -> 'a t Lwt.t
+  store:store -> name:string -> default:(unit -> 'a Lwt.t) -> 'a t Lwt.t
 (** Lwt version of make_persistent_lazy.
 *)
 
@@ -81,20 +81,20 @@ val open_table : string -> 'value table
 
 val find : 'value table -> string -> 'value Lwt.t
 (** [find table key] gives the value associated to [key].
-  Fails with [Not_found] if not found. *)
+    Fails with [Not_found] if not found. *)
 
 val add : 'value table -> string -> 'value -> unit Lwt.t
 (** [add table key value] associates [value] to [key].
-   If the database already contains data associated with [key],
-   that data is discarded and silently replaced by the new data.
- *)
+    If the database already contains data associated with [key],
+    that data is discarded and silently replaced by the new data.
+*)
 
 val replace_if_exists : 'value table -> string -> 'value -> unit Lwt.t
 (** [replace_if_exists table key value]
-   associates [value] to [key] only if [key] is already bound.
-   If the database does not contain any data associated with [key],
-   fails with [Not_found].
- *)
+    associates [value] to [key] only if [key] is already bound.
+    If the database does not contain any data associated with [key],
+    fails with [Not_found].
+*)
 
 val remove : 'value table -> string -> unit Lwt.t
 (** [remove table key] removes the entry in the table if it exists *)
@@ -107,7 +107,7 @@ val iter_step : (string -> 'a -> unit Lwt.t) -> 'a table -> unit Lwt.t
     if another thread is modifying it in the same time. Nonetheless, it should
     not miss more than a very few data from time to time, except if the table
     is very old (at least 9 223 372 036 854 775 807 insertions).
- *)
+*)
 
 val iter_table : (string -> 'a -> unit Lwt.t) -> 'a table -> unit Lwt.t
 (** Legacy interface for iter_step *)
@@ -118,7 +118,7 @@ val fold_step : (string -> 'a -> 'b -> 'b Lwt.t) ->
     if another thread is modifying it in the same time. Nonetheless, it should
     not miss more than a very few data from time to time, except if the table
     is very old (at least 9 223 372 036 854 775 807 insertions).
- *)
+*)
 
 val fold_table : (string -> 'a -> 'b -> 'b Lwt.t) ->
   'a table -> 'b -> 'b Lwt.t

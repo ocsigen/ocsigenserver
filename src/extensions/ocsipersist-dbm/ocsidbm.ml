@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 
 (** Module Ocsidbm: persistent data server for Ocsigen *)
@@ -55,9 +55,9 @@ let errlog s =
 (** Internal functions: storage in files using DBM *)
 
 module Tableoftables = Map.Make(struct
-  type t = string
-  let compare = compare
-end)
+    type t = string
+    let compare = compare
+  end)
 
 let tableoftables = ref Tableoftables.empty
 
@@ -66,9 +66,9 @@ let list_tables () =
     try
       Unix.opendir directory
     with
-      | Unix.Unix_error(error,_,_) ->
-	failwith ( Printf.sprintf "Ocsidbm: can't open directory  %s: %s"
-		     directory (Unix.error_message error))
+    | Unix.Unix_error(error,_,_) ->
+      failwith ( Printf.sprintf "Ocsidbm: can't open directory  %s: %s"
+                   directory (Unix.error_message error))
   in
   let rec aux () =
     try
@@ -76,7 +76,7 @@ let list_tables () =
       if Filename.check_suffix n suffix
       then (Filename.chop_extension n)::(aux ())
       else if Filename.check_suffix n (suffix^".pag")
-(* depending on the version of dbm, there may be a .pag suffix *)
+      (* depending on the version of dbm, there may be a .pag suffix *)
       then (Filename.chop_extension (Filename.chop_extension n))::(aux ())
       else aux ()
     with End_of_file -> Unix.closedir d; []
@@ -90,15 +90,15 @@ let _ =
   | Unix.Unix_error (Unix.ENOENT, _, _) ->
     begin
       try
-	Unix.mkdir directory 0o750
+        Unix.mkdir directory 0o750
       with
-	| Unix.Unix_error(error,_,_) ->
-	  failwith ( Printf.sprintf "Ocsidbm: can't create directory %s: %s"
-		       directory (Unix.error_message error) )
+      | Unix.Unix_error(error,_,_) ->
+        failwith ( Printf.sprintf "Ocsidbm: can't create directory %s: %s"
+                     directory (Unix.error_message error) )
     end
   | Unix.Unix_error(error,_,_) ->
     failwith ( Printf.sprintf "Ocsidbm: can't access directory %s: %s"
-		 directory (Unix.error_message error) )
+                 directory (Unix.error_message error) )
 
 
 let open_db name =
@@ -112,8 +112,8 @@ let open_db_if_exists name =
     tableoftables := Tableoftables.add name t !tableoftables;
     t
   with
-    | Unix.Unix_error (Unix.ENOENT, _, _)
-    | Dbm.Dbm_error _ -> raise Not_found
+  | Unix.Unix_error (Unix.ENOENT, _, _)
+  | Dbm.Dbm_error _ -> raise Not_found
 
 (* open all files and register them in the table of tables *)
 (*
@@ -158,9 +158,9 @@ let db_length t =
   let rec aux f n =
     catch
       (fun () ->
-        ignore (f table);
-        Lwt_unix.yield () >>=
-        (fun () -> aux Dbm.nextkey (n+1)))
+         ignore (f table);
+         Lwt_unix.yield () >>=
+         (fun () -> aux Dbm.nextkey (n+1)))
       (function
         | Not_found -> return n
         | e -> fail e)
@@ -186,7 +186,7 @@ let sigs = [sigabrt;sigalrm;sigfpe;sighup;sigill;sigint;
 
 let _ =
   List.iter (fun s ->
-    Sys.set_signal s (Signal_handle (close_all 0))) sigs
+      Sys.set_signal s (Signal_handle (close_all 0))) sigs
 
 
 let _ = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
@@ -205,38 +205,38 @@ let execute outch =
   let handle_errors f = try f () with e -> send outch (Error e) in
   function
   | Get (t, k) ->
-      handle_errors
+    handle_errors
       (fun () ->
-        try
-          send outch (Value (db_get t k))
-        with
-        | Not_found -> send outch Dbm_not_found)
+         try
+           send outch (Value (db_get t k))
+         with
+         | Not_found -> send outch Dbm_not_found)
   | Remove (t, k) -> handle_errors (fun () -> db_remove t k; send outch Ok)
   | Replace (t, k, v) ->
-      handle_errors (fun () -> db_replace t k v; send outch Ok)
+    handle_errors (fun () -> db_replace t k v; send outch Ok)
   | Replace_if_exists (t, k, v) ->
-      handle_errors (fun () ->
+    handle_errors (fun () ->
         try
           ignore (db_get t k);
           db_replace t k v;
           send outch Ok
         with Not_found -> send outch Dbm_not_found)
   | Firstkey t ->
-      handle_errors (fun () ->
+    handle_errors (fun () ->
         try send outch (Key (db_firstkey t))
         with Not_found -> send outch End)
   | Nextkey t ->
-      handle_errors (fun () ->
+    handle_errors (fun () ->
         try send outch (Key (db_nextkey t))
         with Not_found -> send outch End)
   | Length t ->
-      handle_errors (fun () ->
+    handle_errors (fun () ->
         catch
           (fun () ->
-            db_length t >>=
-            (fun i -> send outch (Value (Marshal.to_string i []))))
+             db_length t >>=
+             (fun i -> send outch (Value (Marshal.to_string i []))))
           (function Not_found -> send outch Dbm_not_found
-            | e -> send outch (Error e)))
+                  | e -> send outch (Error e)))
 
 let nb_clients = ref 0
 
@@ -257,36 +257,36 @@ let b = ref false
 let rec loop socket =
   Lwt_unix.accept socket >>=
   (fun (indescr, _) ->
-    ignore (
-    b := true;
-    nb_clients := !nb_clients + 1;
-    let inch = Lwt_chan.in_channel_of_descr indescr in
-    let outch = Lwt_chan.out_channel_of_descr indescr in
-    catch
-      (fun () -> listen_client inch outch >>= finish)
-      finish);
-    loop socket)
+     ignore (
+       b := true;
+       nb_clients := !nb_clients + 1;
+       let inch = Lwt_chan.in_channel_of_descr indescr in
+       let outch = Lwt_chan.out_channel_of_descr indescr in
+       catch
+         (fun () -> listen_client inch outch >>= finish)
+         finish);
+     loop socket)
 
 
 
 
 let _ = Lwt_unix.run
     (let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
-    (try
-      Lwt_unix.bind socket (Unix.ADDR_UNIX (directory^"/"^socketname))
-    with _ -> errlog ("Please make sure that the directory "^directory^" exists, writable for ocsidbm, and no other ocsidbm process is running on the same directory. If not, remove the file "^(directory^"/"^socketname)); the_end 1);
-    Lwt_unix.listen socket 20;
-(* Done in ocsipersist.ml
-   let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
-       Unix.dup2 devnull Unix.stdout;
-       Unix.dup2 devnull Unix.stderr;
-       Unix.close devnull;
-       Unix.close Unix.stdin; *)
-       ignore (Lwt_unix.sleep 4.1 >>=
-         (fun () -> if not !b then close_all 0 (); return ()));
-       (* If nothing happened during 5 seconds, I quit *)
+     (try
+        Lwt_unix.bind socket (Unix.ADDR_UNIX (directory^"/"^socketname))
+      with _ -> errlog ("Please make sure that the directory "^directory^" exists, writable for ocsidbm, and no other ocsidbm process is running on the same directory. If not, remove the file "^(directory^"/"^socketname)); the_end 1);
+     Lwt_unix.listen socket 20;
+     (* Done in ocsipersist.ml
+        let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
+            Unix.dup2 devnull Unix.stdout;
+            Unix.dup2 devnull Unix.stderr;
+            Unix.close devnull;
+            Unix.close Unix.stdin; *)
+     ignore (Lwt_unix.sleep 4.1 >>=
+             (fun () -> if not !b then close_all 0 (); return ()));
+     (* If nothing happened during 5 seconds, I quit *)
 
-    loop socket)
+     loop socket)
 
 
 
@@ -295,21 +295,21 @@ let _ = Lwt_unix.run
 (** Garbage collection of expired data *)
 (* Experimental
 
-exception Exn1
-let dbm_fold f t beg =
-  let rec aux nextkey beg =
+   exception Exn1
+   let dbm_fold f t beg =
+   let rec aux nextkey beg =
     try
       let k = try nextkey t with Not_found -> raise Exn1 in
       let v = try Dbm.find k t with Not_found -> raise Exn1 in
       aux Dbm.nextkey (f k v beg)
     with Exn1 -> beg
-  in
-  aux Dbm.firstkey beg
+   in
+   aux Dbm.firstkey beg
 
-let _ =
-  match sessiongcfrequency with
+   let _ =
+   match sessiongcfrequency with
     None -> () (* No garbage collection *)
-  | Some t ->
+   | Some t ->
       let rec f () =
         Lwt_unix.sleep t >>=
         (fun () ->

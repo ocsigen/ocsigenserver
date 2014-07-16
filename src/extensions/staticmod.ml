@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (*****************************************************************************)
 (*****************************************************************************)
 (* Ocsigen module to load static pages                                       *)
@@ -58,7 +58,7 @@ let http_status_match status_filter status =
   match status_filter with
   | None -> true
   | Some r ->
-      Netstring_pcre.string_match r (string_of_int status) 0 <> None
+    Netstring_pcre.string_match r (string_of_int status) 0 <> None
 
 
 (* Checks that the path specified in a userconf is correct.
@@ -81,36 +81,36 @@ let correct_user_local_file =
 let find_static_page ~request ~usermode ~dir ~err ~pathstring =
   let status_filter, filename, root = match dir with
     | Dir d ->
-        (false,
-         Filename.concat d pathstring,
-         (match usermode with
-            | None -> Some d
-            | Some { localfiles_root = r } -> Some r
-         ))
+      (false,
+       Filename.concat d pathstring,
+       (match usermode with
+        | None -> Some d
+        | Some { localfiles_root = r } -> Some r
+       ))
     | Regexp { source_regexp = source; dest = dest;
                http_status_filter = status_filter;
                root_checks = rc }
-          when http_status_match status_filter err ->
-        let status_filter = status_filter <> None
-        and file =
-          match Netstring_pcre.string_match source pathstring 0 with
-            | None -> raise Not_concerned
-            | Some _ ->
-                Ocsigen_extensions.replace_user_dir source dest pathstring
-        and root_checks =
-         (match rc, usermode with
-            | None, Some { localfiles_root = r } ->
-                Some r
-            | Some _, Some _ ->
-                raise (Ocsigen_extensions.Error_in_user_config_file
-                         "Staticmod: cannot specify option 'root' in \
-                           user configuration files")
-            | None, None -> None
-            | Some rc, None ->
-                Some (Ocsigen_extensions.replace_user_dir source rc pathstring)
-         )
-        in
-        status_filter, file, root_checks
+      when http_status_match status_filter err ->
+      let status_filter = status_filter <> None
+      and file =
+        match Netstring_pcre.string_match source pathstring 0 with
+        | None -> raise Not_concerned
+        | Some _ ->
+          Ocsigen_extensions.replace_user_dir source dest pathstring
+      and root_checks =
+        (match rc, usermode with
+         | None, Some { localfiles_root = r } ->
+           Some r
+         | Some _, Some _ ->
+           raise (Ocsigen_extensions.Error_in_user_config_file
+                    "Staticmod: cannot specify option 'root' in \
+                     user configuration files")
+         | None, None -> None
+         | Some rc, None ->
+           Some (Ocsigen_extensions.replace_user_dir source rc pathstring)
+        )
+      in
+      status_filter, file, root_checks
     | _ -> raise Not_concerned
   in
   if usermode = None || correct_user_local_file filename then
@@ -123,52 +123,52 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
 
 let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found (_, r) ->
-      Lwt.return (Ocsigen_extensions.Ext_do_nothing)
+    Lwt.return (Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_not_found (err, ri) ->
-      catch
-        (fun () ->
-           Ocsigen_messages.debug2 "--Staticmod: Is it a static file?";
-           let status_filter, page =
-             find_static_page ~request:ri ~usermode ~dir ~err
+    catch
+      (fun () ->
+         Ocsigen_messages.debug2 "--Staticmod: Is it a static file?";
+         let status_filter, page =
+           find_static_page ~request:ri ~usermode ~dir ~err
              ~pathstring:(Url.string_of_url_path ~encode:false
                             (Ocsigen_request_info.sub_path ri.request_info)) in
-           Ocsigen_local_files.content ri page
-           >>= fun answer ->
-           let answer =
-             if status_filter = false then
-               answer
-             else
-               (* The page is an error handler, we propagate
-                  the original error code *)
-               (Ocsigen_http_frame.Result.update answer ~code:err ())
-           in
-           let (<<) h (n, v) = Http_headers.replace n v h in
-	   let answer = match cache with
-	     | None -> answer
-	     | Some 0 ->
-	       (Ocsigen_http_frame.Result.update answer ~headers:
-		   ((Ocsigen_http_frame.Result.headers answer)
-		       << (Http_headers.cache_control, "no-cache")
-		       << (Http_headers.expires, "0")) ())
-	     | Some duration ->
-         (Ocsigen_http_frame.Result.update answer ~headers:
-		   ((Ocsigen_http_frame.Result.headers answer)
-		       << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
-		       << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
-	   in
-	   Lwt.return (Ext_found (fun () -> Lwt.return answer))
-        )
+         Ocsigen_local_files.content ri page
+         >>= fun answer ->
+         let answer =
+           if status_filter = false then
+             answer
+           else
+             (* The page is an error handler, we propagate
+                the original error code *)
+             (Ocsigen_http_frame.Result.update answer ~code:err ())
+         in
+         let (<<) h (n, v) = Http_headers.replace n v h in
+         let answer = match cache with
+           | None -> answer
+           | Some 0 ->
+             (Ocsigen_http_frame.Result.update answer ~headers:
+                ((Ocsigen_http_frame.Result.headers answer)
+                 << (Http_headers.cache_control, "no-cache")
+                 << (Http_headers.expires, "0")) ())
+           | Some duration ->
+             (Ocsigen_http_frame.Result.update answer ~headers:
+                ((Ocsigen_http_frame.Result.headers answer)
+                 << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
+                 << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
+         in
+         Lwt.return (Ext_found (fun () -> Lwt.return answer))
+      )
 
-        (function
-           | Ocsigen_local_files.Failed_403 -> return (Ext_next 403)
-               (* XXX We should try to leave an information about this
-                  error for later *)
-           | Ocsigen_local_files.NotReadableDirectory ->
-               return (Ext_next err)
-           | NoSuchUser | Not_concerned
-           | Ocsigen_local_files.Failed_404 -> return (Ext_next err)
-           | e -> fail e
-        )
+      (function
+        | Ocsigen_local_files.Failed_403 -> return (Ext_next 403)
+        (* XXX We should try to leave an information about this
+           error for later *)
+        | Ocsigen_local_files.NotReadableDirectory ->
+          return (Ext_next err)
+        | NoSuchUser | Not_concerned
+        | Ocsigen_local_files.Failed_404 -> return (Ext_next err)
+        | e -> fail e
+      )
 
 
 (*****************************************************************************)
@@ -178,9 +178,9 @@ open Simplexmlparser
 (* In userconf modes, paths must be relative to the root of the userconf config *)
 let rewrite_local_path userconf path =
   match userconf with
-    | None -> path
-    | Some { Ocsigen_extensions.localfiles_root = root } ->
-        root ^ "/" ^ path
+  | None -> path
+  | Some { Ocsigen_extensions.localfiles_root = root } ->
+    root ^ "/" ^ path
 
 type options = {
   opt_dir: string option;
@@ -194,89 +194,89 @@ type options = {
 let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
   let rec parse_attrs l opt =
     match l with
-      | [] -> opt
+    | [] -> opt
 
-      | ("dir", d)::l when opt.opt_dir = None ->
-          parse_attrs l
-            { opt with opt_dir = Some (rewrite_local_path userconf d)}
+    | ("dir", d)::l when opt.opt_dir = None ->
+      parse_attrs l
+        { opt with opt_dir = Some (rewrite_local_path userconf d)}
 
-      | ("regexp", s)::l when opt.opt_regexp = None ->
-          let s = try Netstring_pcre.regexp ("^"^s^"$")
-           with Pcre.Error (Pcre.BadPattern _) ->
-             bad_config ("Bad regexp \""^s^"\" in <static regexp=\"...\" />")
-          in
-          parse_attrs l { opt with opt_regexp = Some s }
+    | ("regexp", s)::l when opt.opt_regexp = None ->
+      let s = try Netstring_pcre.regexp ("^"^s^"$")
+        with Pcre.Error (Pcre.BadPattern _) ->
+          bad_config ("Bad regexp \""^s^"\" in <static regexp=\"...\" />")
+      in
+      parse_attrs l { opt with opt_regexp = Some s }
 
-      | ("code", c)::l when opt.opt_code = None ->
-          let c = try Netstring_pcre.regexp ("^"^c^"$")
-           with Pcre.Error (Pcre.BadPattern _) ->
-             bad_config ("Bad regexp \""^c^"\" in <static code=\"...\" />")
-          in
-          parse_attrs l { opt with opt_code = Some c }
+    | ("code", c)::l when opt.opt_code = None ->
+      let c = try Netstring_pcre.regexp ("^"^c^"$")
+        with Pcre.Error (Pcre.BadPattern _) ->
+          bad_config ("Bad regexp \""^c^"\" in <static code=\"...\" />")
+      in
+      parse_attrs l { opt with opt_code = Some c }
 
-      | ("dest", s)::l when opt.opt_dest = None ->
-          parse_attrs l
-            { opt with opt_dest =
-                Some (parse_user_dir (rewrite_local_path userconf s)) }
+    | ("dest", s)::l when opt.opt_dest = None ->
+      parse_attrs l
+        { opt with opt_dest =
+                     Some (parse_user_dir (rewrite_local_path userconf s)) }
 
-      | ("root", s) :: l when opt.opt_root_checks = None ->
-          parse_attrs l
-            { opt with opt_root_checks = Some (parse_user_dir s) }
+    | ("root", s) :: l when opt.opt_root_checks = None ->
+      parse_attrs l
+        { opt with opt_root_checks = Some (parse_user_dir s) }
 
-      | ("cache", s) :: l when opt.opt_cache = None ->
-	  let duration = try int_of_string s
-	    with _ ->
-	      if s = "no" then 0
-	      else bad_config ("Bad integer \""^s^"\" in <static cache=\"...\" />")
-	  in
-          parse_attrs l { opt with opt_cache = Some duration }
+    | ("cache", s) :: l when opt.opt_cache = None ->
+      let duration = try int_of_string s
+        with _ ->
+          if s = "no" then 0
+          else bad_config ("Bad integer \""^s^"\" in <static cache=\"...\" />")
+      in
+      parse_attrs l { opt with opt_cache = Some duration }
 
-      | _ -> bad_config "Wrong attribute for <static>"
+    | _ -> bad_config "Wrong attribute for <static>"
   in
   function
-    | Element ("static", atts, []) ->
-        let opt =
-          parse_attrs atts {
-            opt_dir = None;
-            opt_regexp = None;
-            opt_code = None;
-            opt_dest = None;
-            opt_root_checks = None;
-	    opt_cache = None;
-          }
-        in
-        let kind =
-          match opt.opt_dir, opt.opt_regexp, opt.opt_code, opt.opt_dest, opt.opt_root_checks with
-          | (None, None, None, _, _) ->
-              raise (Error_in_config_file
-                       "Missing attribute dir, regexp, or code for <static>")
+  | Element ("static", atts, []) ->
+    let opt =
+      parse_attrs atts {
+        opt_dir = None;
+        opt_regexp = None;
+        opt_code = None;
+        opt_dest = None;
+        opt_root_checks = None;
+        opt_cache = None;
+      }
+    in
+    let kind =
+      match opt.opt_dir, opt.opt_regexp, opt.opt_code, opt.opt_dest, opt.opt_root_checks with
+      | (None, None, None, _, _) ->
+        raise (Error_in_config_file
+                 "Missing attribute dir, regexp, or code for <static>")
 
-          | (Some d, None, None, None, None) ->
-              Dir (Url.remove_end_slash d)
+      | (Some d, None, None, None, None) ->
+        Dir (Url.remove_end_slash d)
 
-          | (None, Some r, code, Some t, rc) ->
-              Regexp { source_regexp = r;
-                       dest = t;
-                       http_status_filter = code;
-                       root_checks = rc;
-                     }
+      | (None, Some r, code, Some t, rc) ->
+        Regexp { source_regexp = r;
+                 dest = t;
+                 http_status_filter = code;
+                 root_checks = rc;
+               }
 
-          | (None, None, (Some _ as code), Some t, None) ->
-              Regexp { dest = t; http_status_filter = code; root_checks = None;
-                       source_regexp = Netstring_pcre.regexp "^.*$" }
+      | (None, None, (Some _ as code), Some t, None) ->
+        Regexp { dest = t; http_status_filter = code; root_checks = None;
+                 source_regexp = Netstring_pcre.regexp "^.*$" }
 
-          | _ -> raise (Error_in_config_file "Wrong attributes for <static>")
-        in
-        gen ~usermode:userconf ?cache:opt.opt_cache kind
-    | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-    | _ -> bad_config "(staticmod extension) Bad data"
+      | _ -> raise (Error_in_config_file "Wrong attributes for <static>")
+    in
+    gen ~usermode:userconf ?cache:opt.opt_cache kind
+  | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
+  | _ -> bad_config "(staticmod extension) Bad data"
 
 
 
 (*****************************************************************************)
 (** extension registration *)
 let () = register_extension
-  ~name:"staticmod"
-  ~fun_site:(fun _ -> parse_config None)
-  ~user_fun_site:(fun path _ -> parse_config (Some path))
-  ()
+    ~name:"staticmod"
+    ~fun_site:(fun _ -> parse_config None)
+    ~user_fun_site:(fun path _ -> parse_config (Some path))
+    ()

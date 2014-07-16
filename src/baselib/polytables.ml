@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (**
    @author Vincent Balat
    @author Jérôme Vouillon
@@ -23,9 +23,9 @@
 type 'a key = int * 'a option ref
 
 module T = Map.Make(struct 
-                      type t = int
-                      let compare = compare
-                    end)
+    type t = int
+    let compare = compare
+  end)
 
 type t = (unit -> unit) T.t ref
 
@@ -42,8 +42,8 @@ let set ~(table : t) ~key:((k, r) : 'a key) ~(value : 'a) =
 let get ~(table : t) ~key:((k, r) : 'a key) =
   (T.find k !table) ();
   match !r with
-    | Some v -> r:= None; v
-    | None -> failwith "Polytables.get"
+  | Some v -> r:= None; v
+  | None -> failwith "Polytables.get"
 
 let remove ~(table : t) ~key:((k, r) : 'a key) =
   table := T.remove k !table

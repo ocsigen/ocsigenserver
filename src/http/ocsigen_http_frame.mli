@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 open Ocsigen_lib
 open Ocsigen_cookies
@@ -24,16 +24,16 @@ open Ocsigen_cookies
 type etag = string
 
 (** [compute_new_ri_cookies now path ri_cookies cookies_to_set]
-   adds the cookies from [cookies_to_set]
-   to [ri_cookies], as if the cookies
-   had been send to the browser and the browser
-   was doing a new request to the url [path].
-   Only the cookies that match [path] (current path) are added. *)
+    adds the cookies from [cookies_to_set]
+    to [ri_cookies], as if the cookies
+    had been send to the browser and the browser
+    was doing a new request to the url [path].
+    Only the cookies that match [path] (current path) are added. *)
 val compute_new_ri_cookies :
-    float ->
-      string list ->
-        string String.Table.t ->
-          cookie String.Table.t Cookies.t -> string String.Table.t
+  float ->
+  string list ->
+  string String.Table.t ->
+  cookie String.Table.t Cookies.t -> string String.Table.t
 
 
 module Result : sig
@@ -48,7 +48,7 @@ module Result : sig
     result ->
     string Ocsigen_stream.t *
     (string Ocsigen_stream.t -> int64 -> string Ocsigen_stream.step Lwt.t)
-    option
+      option
   val content_length : result -> int64 option
   val content_type : result -> string option
   val headers : result -> Http_headers.t
@@ -59,71 +59,71 @@ module Result : sig
   val default : unit -> result
 
   val update :
-   result ->
-   ?cookies:Ocsigen_cookies.cookieset ->
-   ?lastmodified:float option ->
-   ?etag:string option ->
-   ?code:int ->
-   ?stream:string Ocsigen_stream.t *
-           (string Ocsigen_stream.t ->
-            int64 -> string Ocsigen_stream.step Lwt.t)
-           option ->
-   ?content_length:int64 option ->
-   ?content_type:string option ->
-   ?headers:Http_headers.t ->
-   ?charset:string option -> ?location:string option -> unit -> result
+    result ->
+    ?cookies:Ocsigen_cookies.cookieset ->
+    ?lastmodified:float option ->
+    ?etag:string option ->
+    ?code:int ->
+    ?stream:string Ocsigen_stream.t *
+    (string Ocsigen_stream.t ->
+     int64 -> string Ocsigen_stream.step Lwt.t)
+      option ->
+    ?content_length:int64 option ->
+    ?content_type:string option ->
+    ?headers:Http_headers.t ->
+    ?charset:string option -> ?location:string option -> unit -> result
 
   (** [result] for an empty page. *)
   val empty : unit -> result
 end
 
 include (module type of Result
-  with type result = Result.result)
+          with type result = Result.result)
 
 module type HTTP_CONTENT =
-  sig
-    type t
-    type options
-    val result_of_content : ?options:options -> t -> Result.result Lwt.t
-    val get_etag : ?options:options -> t -> etag option
-  end
+sig
+  type t
+  type options
+  val result_of_content : ?options:options -> t -> Result.result Lwt.t
+  val get_etag : ?options:options -> t -> etag option
+end
 module Http_header :
-  sig
-    type http_method =
-        GET | POST | HEAD | PUT | DELETE | TRACE
-      | OPTIONS | CONNECT | LINK | UNLINK | PATCH
-    type http_mode =
-        Query of (http_method * string)
-      | Answer of int
-      | Nofirstline
-    type proto = HTTP10 | HTTP11
-    type http_header = {
-      mode : http_mode;
-      proto : proto;
-      headers : Http_headers.t;
-    }
-    val get_firstline : http_header -> http_mode
-    val get_headers : http_header -> Http_headers.t
-    val get_headers_value : http_header -> Http_headers.name -> string
-    val get_headers_values : http_header -> Http_headers.name -> string list
-    val get_proto : http_header -> proto
-    val add_headers : http_header -> Http_headers.name -> string -> http_header
-  end
+sig
+  type http_method =
+      GET | POST | HEAD | PUT | DELETE | TRACE
+    | OPTIONS | CONNECT | LINK | UNLINK | PATCH
+  type http_mode =
+      Query of (http_method * string)
+    | Answer of int
+    | Nofirstline
+  type proto = HTTP10 | HTTP11
+  type http_header = {
+    mode : http_mode;
+    proto : proto;
+    headers : Http_headers.t;
+  }
+  val get_firstline : http_header -> http_mode
+  val get_headers : http_header -> Http_headers.t
+  val get_headers_value : http_header -> Http_headers.name -> string
+  val get_headers_values : http_header -> Http_headers.name -> string list
+  val get_proto : http_header -> proto
+  val add_headers : http_header -> Http_headers.name -> string -> http_header
+end
 module Http_error :
-  sig
-    exception Http_exception of int * string option * Http_headers.t option
-    val expl_of_code : int -> string
-    val display_http_exception : exn -> unit
-    val string_of_http_exception : exn -> string
-  end
+sig
+  exception Http_exception of int * string option * Http_headers.t option
+  val expl_of_code : int -> string
+  val display_http_exception : exn -> unit
+  val string_of_http_exception : exn -> string
+end
 
 
 (** The type of HTTP frames.
-   The content may be void (no body) or a stream.
-   While sending, a stream will be sent with chunked encoding if no
-   content-length is supplied.
-   abort is the function to be called if you want to cancel the stream
-   reading (closes the connection).
+    The content may be void (no body) or a stream.
+    While sending, a stream will be sent with chunked encoding if no
+    content-length is supplied.
+    abort is the function to be called if you want to cancel the stream
+    reading (closes the connection).
 *)
 type t =
   { frame_header : Http_header.http_header;

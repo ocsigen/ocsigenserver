@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Writing messages in the logs *)
 
@@ -51,59 +51,59 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
   | None ->
     (* log to files *)
 
-  let open_log path =
-    let path = full_path path in
-    try_lwt
-      Lwt_log.file path ()
-    with
+    let open_log path =
+      let path = full_path path in
+      try_lwt
+        Lwt_log.file path ()
+      with
       | Unix.Unix_error(error,_,_) ->
-	raise_lwt (Ocsigen_config.Config_file_error (
-	  Printf.sprintf "can't open log file %s: %s"
-	    path (Unix.error_message error)))
-  in
+        raise_lwt (Ocsigen_config.Config_file_error (
+            Printf.sprintf "can't open log file %s: %s"
+              path (Unix.error_message error)))
+    in
 
-  lwt acc = open_log access_file in
-  lwt war = open_log  warning_file in
-  lwt err = open_log  error_file in
-  loggers := [acc; war; err];
+    lwt acc = open_log access_file in
+    lwt war = open_log  warning_file in
+    lwt err = open_log  error_file in
+    loggers := [acc; war; err];
 
-  Lwt_log.default :=
-    Lwt_log.broadcast
-      [Lwt_log.dispatch
-         (fun sect lev ->
-            if sect = access_sect then acc else
-            match lev with
-            | Lwt_log.Error | Lwt_log.Fatal -> err
-            | _                             -> war);
-       Lwt_log.dispatch
-         (fun sect lev ->
-            let show =
-              match lev with
-              | Lwt_log.Error | Lwt_log.Fatal ->
+    Lwt_log.default :=
+      Lwt_log.broadcast
+        [Lwt_log.dispatch
+           (fun sect lev ->
+              if sect = access_sect then acc else
+                match lev with
+                | Lwt_log.Error | Lwt_log.Fatal -> err
+                | _                             -> war);
+         Lwt_log.dispatch
+           (fun sect lev ->
+              let show =
+                match lev with
+                | Lwt_log.Error | Lwt_log.Fatal ->
                   not (Ocsigen_config.get_silent ())
-              | _ ->
+                | _ ->
                   Ocsigen_config.get_verbose ()
-            in
-            if show then stderr else Lwt_log.null)];
+              in
+              if show then stderr else Lwt_log.null)];
 
-  let gid = match group with
-    | None -> Unix.getgid ()
-    | Some group -> (try
-                       (Unix.getgrnam group).Unix.gr_gid
-      with Not_found as e -> ignore (Lwt_log.error "Error: Wrong group"); raise e)
-  in
+    let gid = match group with
+      | None -> Unix.getgid ()
+      | Some group -> (try
+                         (Unix.getgrnam group).Unix.gr_gid
+                       with Not_found as e -> ignore (Lwt_log.error "Error: Wrong group"); raise e)
+    in
 
-  let uid = match user with
-    | None -> Unix.getuid ()
-    | Some user -> (try
-                      (Unix.getpwnam user).Unix.pw_uid
-      with Not_found as e -> ignore (Lwt_log.error "Error: Wrong user"); raise e)
-  in
-  lwt () = Lwt_unix.chown (full_path access_file) uid gid in
-  lwt () = Lwt_unix.chown (full_path warning_file) uid gid in
-  lwt () = Lwt_unix.chown (full_path error_file) uid gid in
+    let uid = match user with
+      | None -> Unix.getuid ()
+      | Some user -> (try
+                        (Unix.getpwnam user).Unix.pw_uid
+                      with Not_found as e -> ignore (Lwt_log.error "Error: Wrong user"); raise e)
+    in
+    lwt () = Lwt_unix.chown (full_path access_file) uid gid in
+    lwt () = Lwt_unix.chown (full_path warning_file) uid gid in
+    lwt () = Lwt_unix.chown (full_path error_file) uid gid in
 
-  Lwt.return ()
+    Lwt.return ()
 
 (****)
 
@@ -185,16 +185,16 @@ let command_f exc _ = function
       try
         Lwt_log.Section.reset_level (find_section sect_name);
       with Not_found -> ()
-      end;
-      Lwt.return ()
+    end;
+    Lwt.return ()
   | [sect_name; level_name] -> begin
       try
         match level_of_string level_name with
         | None -> Lwt_log.Section.reset_level (find_section sect_name)
         | Some l -> Lwt_log.Section.set_level (find_section sect_name) l
       with Not_found -> ()
-      end;
-      Lwt.return ()
+    end;
+    Lwt.return ()
   | _ -> Lwt.fail exc
 
 

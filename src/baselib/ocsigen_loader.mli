@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Module [Ocsigen_loader]: Dynamic loading for Ocsigen. *)
 
@@ -33,51 +33,51 @@ exception Dynlink_error of string * exn
 exception Findlib_error of string * exn
 
 val translate : string -> string
-  (** [translate filename] translate .cmo/.cma extensions to .cmxs in
-      native mode, and .cmxs to .cmo (.cma if it exists) in bytecode
-      mode. *)
+(** [translate filename] translate .cmo/.cma extensions to .cmxs in
+    native mode, and .cmxs to .cmo (.cma if it exists) in bytecode
+    mode. *)
 
 val set_init_on_load: bool -> unit
-  (** If set to [true], the module initialization functions passed to
-      [set_module_init_function] will be executed directly. Otherwise,
-      they will have to be invoked using [init_module] at some later stage. *)
+(** If set to [true], the module initialization functions passed to
+    [set_module_init_function] will be executed directly. Otherwise,
+    they will have to be invoked using [init_module] at some later stage. *)
 
 val loadfile: (unit -> unit) -> (unit -> unit) -> bool -> string -> unit
-  (** [loadfile pre post force file] (dynamically) loads [file]. If
-      [force] is [false], remember [file] so that it isn't loaded
-      twice. If the loading effectively occurs, [pre] (resp. [post])
-      is called before (resp. after) the loading. [post] will be
-      called even if the loading fails. *)
+(** [loadfile pre post force file] (dynamically) loads [file]. If
+    [force] is [false], remember [file] so that it isn't loaded
+    twice. If the loading effectively occurs, [pre] (resp. [post])
+    is called before (resp. after) the loading. [post] will be
+    called even if the loading fails. *)
 
 val loadfiles: (unit -> unit) -> (unit -> unit) -> bool -> string list -> unit
-  (** [loadfiles pre post force file] loads all the [files], using
-      [loadfile (fun () -> ()) (fun () -> ()) false] for all the files
-      but the last one, and [loadfile pre post force] for the last one
-      (if any). *)
+(** [loadfiles pre post force file] loads all the [files], using
+    [loadfile (fun () -> ()) (fun () -> ()) false] for all the files
+    but the last one, and [loadfile pre post force] for the last one
+    (if any). *)
 
 val set_module_init_function : string -> (unit -> unit) -> unit
-  (** [set_module_init_function name f] registers the function [f], which will
-      be used to initialize the module when [init_module name] is called.  *)
+(** [set_module_init_function name f] registers the function [f], which will
+    be used to initialize the module when [init_module name] is called.  *)
 
 val init_module : (unit -> unit) -> (unit -> unit) -> bool -> string -> unit
-  (** [init_module pre post force name] runs the init function for the module
-      [name]. If [force] is [false], remember [name] so that the init function
-      isn't executed twice. If the function is executed, [pre] (resp. [post])
-      is called before (resp. after) the loading. [post] will be
-      called even if the loading fails. *)
+(** [init_module pre post force name] runs the init function for the module
+    [name]. If [force] is [false], remember [name] so that the init function
+    isn't executed twice. If the function is executed, [pre] (resp. [post])
+    is called before (resp. after) the loading. [post] will be
+    called even if the loading fails. *)
 
 val get_ocamlpath: unit -> string list
-  (** Returns the current Findlib library search path. *)
+(** Returns the current Findlib library search path. *)
 
 val set_ocamlpath: string list -> unit
-  (** Sets the current Findlib library search path. The OCaml standard
-      library path and some site-specific paths are always implicitly
-      added. *)
+(** Sets the current Findlib library search path. The OCaml standard
+    library path and some site-specific paths are always implicitly
+    added. *)
 
 val add_ocamlpath: string -> unit
-  (** Adds a path to the Findlib library search path. *)
+(** Adds a path to the Findlib library search path. *)
 
 val findfiles: string -> string list
-  (** [findfiles pkg] returns the list of files needed to load Findlib
-      package [pkg], including dependencies. The archive files of
-      [pkg] will appear last in the returned result. *)
+(** [findfiles pkg] returns the list of files needed to load Findlib
+    package [pkg], including dependencies. The archive files of
+    [pkg] will appear last in the returned result. *)

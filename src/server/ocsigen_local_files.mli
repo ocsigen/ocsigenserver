@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (** The requested file does not exists *)
 exception Failed_404
 (** The requested file cannot be served: does not exists, not
@@ -37,8 +37,8 @@ val default_options : options
 
 
 (** Local file corresponding to a request. The string argument
-   represents the real file or directory to serve, eg. foo/index.html
-   instead of foo *)
+    represents the real file or directory to serve, eg. foo/index.html
+    instead of foo *)
 type resolved =
   | RFile of string
   | RDir of string

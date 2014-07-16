@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 open Ocsigen_extensions
 
 (* Displaying of a local file or directory. Currently used in
@@ -28,7 +28,7 @@ exception NotReadableDirectory
 
 (* Policies for following symlinks *)
 type symlink_policy =
-    stat:Unix.LargeFile.stats -> lstat:Unix.LargeFile.stats -> bool
+  stat:Unix.LargeFile.stats -> lstat:Unix.LargeFile.stats -> bool
 
 let never_follow_symlinks : symlink_policy =
   fun ~stat ~lstat -> false
@@ -55,7 +55,7 @@ let check_symlinks_aux
    [filename]. Paths upwards [no_check_for] are not checked. *)
 let rec check_symlinks_parent_directories ~filename ~no_check_for (policy : symlink_policy) =
   (* Ocsigen_messages.debug
-    (fun () -> Printf.sprintf "Checking %s (until %s)"
+     (fun () -> Printf.sprintf "Checking %s (until %s)"
        filename (match no_check_for with None -> "" | Some s -> s)); *)
   if filename = "/" || filename = "." || Some filename = no_check_for then
     true
@@ -92,9 +92,9 @@ let check_symlinks ~no_check_for ~filename policy =
       check_symlinks_parent_directories filename no_check_for policy
   in
   match policy with
-    | AlwaysFollowSymlinks -> true
-    | DoNotFollowSymlinks -> aux never_follow_symlinks
-    | FollowSymlinksIfOwnerMatch -> aux follow_symlinks_if_owner_match
+  | AlwaysFollowSymlinks -> true
+  | DoNotFollowSymlinks -> aux never_follow_symlinks
+  | FollowSymlinksIfOwnerMatch -> aux follow_symlinks_if_owner_match
 
 let check_dotdot =
   let regexp = Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
@@ -110,7 +110,7 @@ let can_send filename request =
     Neturl.join_path (Neturl.norm_path (Neturl.split_path filename)) in
   Ocsigen_messages.debug
     (fun () -> Printf.sprintf "--LocalFiles: checking if file %s can be sent"
-       filename);
+        filename);
   let matches arg =
     Netstring_pcre.string_match (Ocsigen_extensions.do_not_serve_to_regexp arg)
       filename 0 <> None
@@ -119,9 +119,9 @@ let can_send filename request =
     Ocsigen_messages.debug2 "--LocalFiles: this file is forbidden";
     raise Failed_403)
   else
-    if matches request.do_not_serve_404 then (
-      Ocsigen_messages.debug2 "--LocalFiles: this file must be hidden";
-      raise Failed_404)
+  if matches request.do_not_serve_404 then (
+    Ocsigen_messages.debug2 "--LocalFiles: this file must be hidden";
+    raise Failed_404)
 
 
 (* Return type of a request for a local file. The string argument
@@ -174,24 +174,24 @@ let resolve ?no_check_for ~request ~filename () =
         else
           let rec find_index = function
             | [] ->
-                (* No suitable index, we try to list the directory *)
-                if request.request_config.list_directory_content then (
-                  Ocsigen_messages.debug2
-                    "--LocalFiles: Displaying directory content";
-                  (filename, stat))
-                else (
-                  (* No suitable index *)
-                  Ocsigen_messages.debug2 "--LocalFiles: No index and no listing";
-                  raise NotReadableDirectory)
+              (* No suitable index, we try to list the directory *)
+              if request.request_config.list_directory_content then (
+                Ocsigen_messages.debug2
+                  "--LocalFiles: Displaying directory content";
+                (filename, stat))
+              else (
+                (* No suitable index *)
+                Ocsigen_messages.debug2 "--LocalFiles: No index and no listing";
+                raise NotReadableDirectory)
             | e :: q ->
-                let index = filename ^ e in
-                Ocsigen_messages.debug
-                  (fun () -> "--LocalFiles: Testing \""^index
-                     ^"\" as possible index.");
-                try
-                  (index, Unix.LargeFile.stat index)
-                with
-                  | Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q
+              let index = filename ^ e in
+              Ocsigen_messages.debug
+                (fun () -> "--LocalFiles: Testing \""^index
+                           ^"\" as possible index.");
+              try
+                (index, Unix.LargeFile.stat index)
+              with
+              | Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q
           in find_index request.request_config.default_directory_index
 
       else (filename, stat)
@@ -202,9 +202,9 @@ let resolve ?no_check_for ~request ~filename () =
          (fun () -> "--Filenames cannot contain .. as in \""^filename^"\".");
        raise Failed_403)
     else if check_symlinks ~filename ~no_check_for
-      request.request_config.follow_symlinks
+        request.request_config.follow_symlinks
     then (
-        can_send filename request.request_config;
+      can_send filename request.request_config;
       (* If the previous function did not fail, we are authorized to
          send this file *)
       Ocsigen_messages.debug
@@ -222,24 +222,24 @@ let resolve ?no_check_for ~request ~filename () =
         (fun () -> "--Failed symlink check for \""^filename^"\".");
       raise Failed_403)
   with
-    (* We can get an EACCESS here, if are missing some rights on a directory *)
-    | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403
-    | Unix.Unix_error (Unix.ENOENT,_,_) -> raise Failed_404
+  (* We can get an EACCESS here, if are missing some rights on a directory *)
+  | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403
+  | Unix.Unix_error (Unix.ENOENT,_,_) -> raise Failed_404
 
 
 (* Given a local file or directory, we retrieve its content *)
 let content ~request ~file =
   try
     match file with
-      | RDir dirname ->
-          Ocsigen_senders.Directory_content.result_of_content
-            (dirname, Ocsigen_request_info.full_path request.request_info)
-      | RFile filename ->
-          Ocsigen_senders.File_content.result_of_content
-            (filename,
-             request.request_config.charset_assoc,
-             request.request_config.mime_assoc
-            )
+    | RDir dirname ->
+      Ocsigen_senders.Directory_content.result_of_content
+        (dirname, Ocsigen_request_info.full_path request.request_info)
+    | RFile filename ->
+      Ocsigen_senders.File_content.result_of_content
+        (filename,
+         request.request_config.charset_assoc,
+         request.request_config.mime_assoc
+        )
 
   with
-    | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403
+  | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403

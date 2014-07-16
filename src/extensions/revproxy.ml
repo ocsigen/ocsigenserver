@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Reverse proxy for Ocsigen *)
 
@@ -50,11 +50,11 @@ exception Bad_answer_from_http_server
 (*****************************************************************************)
 (* The table of redirections for each virtual server                         *)
 type redir =
-    { regexp: Netstring_pcre.regexp;
-      full_url: yesnomaybe;
-      dest: string;
-      pipeline: bool;
-      keephost: bool}
+  { regexp: Netstring_pcre.regexp;
+    full_url: yesnomaybe;
+    dest: string;
+    pipeline: bool;
+    keephost: bool}
 
 
 (*****************************************************************************)
@@ -64,115 +64,115 @@ type redir =
 (** The function that will generate the pages from the request. *)
 
 let gen dir = function
-| Ocsigen_extensions.Req_found _ ->
+  | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
-| Ocsigen_extensions.Req_not_found (err, ri) ->
-  catch
-    (* Is it a redirection? *)
-    (fun () ->
-       Ocsigen_messages.debug2 "--Revproxy: Is it a redirection?";
-       let dest =
-         let ri = ri.request_info in
-         let fi full =
-           Ocsigen_extensions.find_redirection
-             dir.regexp
-             full
-             dir.dest
-             (Ocsigen_request_info.ssl ri)
-             (Ocsigen_request_info.host ri)
-             (Ocsigen_request_info.server_port ri)
-             (Ocsigen_request_info.get_params_string ri)
-             (Ocsigen_request_info.sub_path_string ri)
-             (Ocsigen_request_info.full_path_string ri)
-         in
-         match dir.full_url with
+  | Ocsigen_extensions.Req_not_found (err, ri) ->
+    catch
+      (* Is it a redirection? *)
+      (fun () ->
+         Ocsigen_messages.debug2 "--Revproxy: Is it a redirection?";
+         let dest =
+           let ri = ri.request_info in
+           let fi full =
+             Ocsigen_extensions.find_redirection
+               dir.regexp
+               full
+               dir.dest
+               (Ocsigen_request_info.ssl ri)
+               (Ocsigen_request_info.host ri)
+               (Ocsigen_request_info.server_port ri)
+               (Ocsigen_request_info.get_params_string ri)
+               (Ocsigen_request_info.sub_path_string ri)
+               (Ocsigen_request_info.full_path_string ri)
+           in
+           match dir.full_url with
            | Yes -> fi true
            | No -> fi false
            | Maybe ->
-               try fi false
-               with Ocsigen_extensions.Not_concerned -> fi true
-       in
-       let (https, host, port, uri) =
-         try
-           match Url.parse dest with
+             try fi false
+             with Ocsigen_extensions.Not_concerned -> fi true
+         in
+         let (https, host, port, uri) =
+           try
+             match Url.parse dest with
              | (Some https, Some host, port, uri, _, _, _) ->
-                 let port = match port with
-                   | None -> if https then 443 else 80
-                   | Some p -> p
-                 in
-                 (https, host, port, uri)
+               let port = match port with
+                 | None -> if https then 443 else 80
+                 | Some p -> p
+               in
+               (https, host, port, uri)
              | _ -> raise (Ocsigen_extensions.Error_in_config_file
                              ("Revproxy : error in destination URL "^dest))
-(*VVV catch only Neturl exceptions! *)
-         with e -> raise (Ocsigen_extensions.Error_in_config_file
-                            ("Revproxy : error in destination URL "^dest^" - "^
+           (*VVV catch only Neturl exceptions! *)
+           with e -> raise (Ocsigen_extensions.Error_in_config_file
+                              ("Revproxy : error in destination URL "^dest^" - "^
                                Printexc.to_string e))
-       in
-       let uri = "/"^uri in
-       Ocsigen_messages.debug
-         (fun () ->
-            "--Revproxy: YES! Redirection to "^
+         in
+         let uri = "/"^uri in
+         Ocsigen_messages.debug
+           (fun () ->
+              "--Revproxy: YES! Redirection to "^
               (if https then "https://" else "http://")^host^":"^
               (string_of_int port)^uri);
 
-       Ip_address.get_inet_addr host >>= fun inet_addr ->
+         Ip_address.get_inet_addr host >>= fun inet_addr ->
 
-       (* It is now safe to start processing next request.
-          We are sure that the request won't be taken in disorder.
-          => We return.
-       *)
+         (* It is now safe to start processing next request.
+            We are sure that the request won't be taken in disorder.
+            => We return.
+         *)
 
-       let host =
-         match
-           if dir.keephost
-           then match Ocsigen_request_info.host ri.request_info with
-             | Some h -> Some h
-             | None -> None
-           else None
-         with
+         let host =
+           match
+             if dir.keephost
+             then match Ocsigen_request_info.host ri.request_info with
+               | Some h -> Some h
+               | None -> None
+             else None
+           with
            | Some h -> h
            | None -> host
-       in
+         in
 
-       let do_request =
-         let ri = ri.request_info in
-	 let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
-	 let forward =
-	   String.concat ", "
-      ((Ocsigen_request_info.remote_ip ri)
-       :: ((Ocsigen_request_info.forward_ip ri)
-           @ [address]))
-	 in
-	 let proto =
-	   if Ocsigen_request_info.ssl ri
-	   then "https"
-	   else "http"
-	 in
-	 let headers =
-	   Http_headers.replace
-	     Http_headers.x_forwarded_proto
-	     proto
-	     (Http_headers.replace
-		Http_headers.x_forwarded_for
-		forward
-		((Ocsigen_request_info.http_frame ri)
-     .Ocsigen_http_frame.frame_header
-     .Ocsigen_http_frame.Http_header.headers)) in
-         if dir.pipeline then
-           Ocsigen_http_client.raw_request
-             ~headers
-             ~https
-             ~port
-             ~client:(Ocsigen_request_info.client ri)
-             ~keep_alive:true
-             ~content:
-               (Ocsigen_request_info.http_frame ri)
-               .Ocsigen_http_frame.frame_content
-             ?content_length:(Ocsigen_request_info.content_length ri)
-             ~http_method:(Ocsigen_request_info.meth ri)
-             ~host
-             ~inet_addr
-             ~uri ()
+         let do_request =
+           let ri = ri.request_info in
+           let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
+           let forward =
+             String.concat ", "
+               ((Ocsigen_request_info.remote_ip ri)
+                :: ((Ocsigen_request_info.forward_ip ri)
+                    @ [address]))
+           in
+           let proto =
+             if Ocsigen_request_info.ssl ri
+             then "https"
+             else "http"
+           in
+           let headers =
+             Http_headers.replace
+               Http_headers.x_forwarded_proto
+               proto
+               (Http_headers.replace
+                  Http_headers.x_forwarded_for
+                  forward
+                  ((Ocsigen_request_info.http_frame ri)
+                   .Ocsigen_http_frame.frame_header
+                   .Ocsigen_http_frame.Http_header.headers)) in
+           if dir.pipeline then
+             Ocsigen_http_client.raw_request
+               ~headers
+               ~https
+               ~port
+               ~client:(Ocsigen_request_info.client ri)
+               ~keep_alive:true
+               ~content:
+                 (Ocsigen_request_info.http_frame ri)
+                 .Ocsigen_http_frame.frame_content
+               ?content_length:(Ocsigen_request_info.content_length ri)
+               ~http_method:(Ocsigen_request_info.meth ri)
+               ~host
+               ~inet_addr
+               ~uri ()
            else
              fun () ->
                Ocsigen_http_client.basic_raw_request
@@ -187,72 +187,72 @@ let gen dir = function
                  ~host
                  ~inet_addr
                  ~uri ()
-       in
-       Lwt.return
-         (Ext_found
-            (fun () ->
-               do_request ()
+         in
+         Lwt.return
+           (Ext_found
+              (fun () ->
+                 do_request ()
 
-               >>= fun http_frame ->
-               let headers =
-                 http_frame
-                 .Ocsigen_http_frame.frame_header
-                 .Ocsigen_http_frame.Http_header.headers
-               in
-               let code =
-                 match
+                 >>= fun http_frame ->
+                 let headers =
                    http_frame
                    .Ocsigen_http_frame.frame_header
-                   .Ocsigen_http_frame.Http_header.mode
-                 with
+                   .Ocsigen_http_frame.Http_header.headers
+                 in
+                 let code =
+                   match
+                     http_frame
+                     .Ocsigen_http_frame.frame_header
+                     .Ocsigen_http_frame.Http_header.mode
+                   with
                    | Ocsigen_http_frame.Http_header.Answer code -> code
                    | _ -> raise Bad_answer_from_http_server
-               in
-               match http_frame.Ocsigen_http_frame.frame_content with
+                 in
+                 match http_frame.Ocsigen_http_frame.frame_content with
                  | None ->
-                     let empty_result = Ocsigen_http_frame.Result.empty () in
-                     let length =
-                       Ocsigen_headers.get_content_length http_frame
-                     in
-                     Ocsigen_stream.add_finalizer
-                       (fst (Ocsigen_http_frame.Result.stream empty_result))
-                       (fun outcome ->
-                          match outcome with
-                            `Failure ->
-                              http_frame.Ocsigen_http_frame.frame_abort ()
-                          | `Success ->
-                              Lwt.return ());
-                     Lwt.return
-                       (Ocsigen_http_frame.Result.update empty_result
-                          ~content_length:length
-                          ~headers
-                          ~code ())
+                   let empty_result = Ocsigen_http_frame.Result.empty () in
+                   let length =
+                     Ocsigen_headers.get_content_length http_frame
+                   in
+                   Ocsigen_stream.add_finalizer
+                     (fst (Ocsigen_http_frame.Result.stream empty_result))
+                     (fun outcome ->
+                        match outcome with
+                          `Failure ->
+                          http_frame.Ocsigen_http_frame.frame_abort ()
+                        | `Success ->
+                          Lwt.return ());
+                   Lwt.return
+                     (Ocsigen_http_frame.Result.update empty_result
+                        ~content_length:length
+                        ~headers
+                        ~code ())
                  | Some stream ->
-                     let default_result =
-                       Ocsigen_http_frame.Result.default ()
-                     in
-                     let length =
-                       Ocsigen_headers.get_content_length http_frame
-                     in
-                     Ocsigen_stream.add_finalizer stream
-                       (fun outcome ->
-                          match outcome with
-                            `Failure ->
-                              http_frame.Ocsigen_http_frame.frame_abort ()
-                          | `Success ->
-                              Lwt.return ());
-                     Lwt.return
-                       (Ocsigen_http_frame.Result.update default_result
-                          ~content_length:length
-                          ~stream:(stream, None)
-                          ~headers
-                          ~code ())
-            )
-         )
-    )
-    (function
-       | Not_concerned -> return (Ext_next err)
-       | e -> fail e)
+                   let default_result =
+                     Ocsigen_http_frame.Result.default ()
+                   in
+                   let length =
+                     Ocsigen_headers.get_content_length http_frame
+                   in
+                   Ocsigen_stream.add_finalizer stream
+                     (fun outcome ->
+                        match outcome with
+                          `Failure ->
+                          http_frame.Ocsigen_http_frame.frame_abort ()
+                        | `Success ->
+                          Lwt.return ());
+                   Lwt.return
+                     (Ocsigen_http_frame.Result.update default_result
+                        ~content_length:length
+                        ~stream:(stream, None)
+                        ~headers
+                        ~code ())
+              )
+           )
+      )
+      (function
+        | Not_concerned -> return (Ext_next err)
+        | e -> fail e)
 
 
 
@@ -262,54 +262,54 @@ let gen dir = function
 
 let parse_config = function
   | Element ("revproxy", atts, []) ->
-      let rec parse_attrs ((r, f, d, pipeline, h) as res) = function
-        | [] -> res
-        | ("regexp", regexp)::l when r = None -> (* deprecated *)
-            parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
-               d, pipeline, h)
-              l
-        | ("fullurl", regexp)::l when r = None ->
-            parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
-               d, pipeline, h)
-              l
-        | ("suburl", regexp)::l when r = None ->
-            parse_attrs
-              (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
-               d, pipeline, h)
-              l
-        | ("dest", dest)::l when d = None ->
-            parse_attrs
-              (r, f, Some dest, pipeline, h)
-              l
-        | ("keephost", "keephost")::l ->
-            parse_attrs
-              (r, f, d, pipeline, true)
-              l
-        | ("nopipeline", "nopipeline")::l ->
-            parse_attrs
-              (r, f, d, false, h)
-              l
-        | (a, _) :: _ ->
-            badconfig "Wrong or duplicate attribute '%s' for <revproxy>" a
-      in
-      let dir =
-          match parse_attrs (None, Yes, None, true, false) atts with
-          | (None, _, _, _, _) ->
-              badconfig "Missing attribute 'regexp' for <revproxy>"
-          | (_, _, None, _, _) ->
-              badconfig "Missing attribute 'dest' for <revproxy>"
-          | (Some r, full, Some d, pipeline, h) ->
-              {
-                regexp=r;
-                full_url=full;
-                dest=d;
-                pipeline=pipeline;
-                keephost=h;
-             }
-        in
-        gen dir
+    let rec parse_attrs ((r, f, d, pipeline, h) as res) = function
+      | [] -> res
+      | ("regexp", regexp)::l when r = None -> (* deprecated *)
+        parse_attrs
+          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
+           d, pipeline, h)
+          l
+      | ("fullurl", regexp)::l when r = None ->
+        parse_attrs
+          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
+           d, pipeline, h)
+          l
+      | ("suburl", regexp)::l when r = None ->
+        parse_attrs
+          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
+           d, pipeline, h)
+          l
+      | ("dest", dest)::l when d = None ->
+        parse_attrs
+          (r, f, Some dest, pipeline, h)
+          l
+      | ("keephost", "keephost")::l ->
+        parse_attrs
+          (r, f, d, pipeline, true)
+          l
+      | ("nopipeline", "nopipeline")::l ->
+        parse_attrs
+          (r, f, d, false, h)
+          l
+      | (a, _) :: _ ->
+        badconfig "Wrong or duplicate attribute '%s' for <revproxy>" a
+    in
+    let dir =
+      match parse_attrs (None, Yes, None, true, false) atts with
+      | (None, _, _, _, _) ->
+        badconfig "Missing attribute 'regexp' for <revproxy>"
+      | (_, _, None, _, _) ->
+        badconfig "Missing attribute 'dest' for <revproxy>"
+      | (Some r, full, Some d, pipeline, h) ->
+        {
+          regexp=r;
+          full_url=full;
+          dest=d;
+          pipeline=pipeline;
+          keephost=h;
+        }
+    in
+    gen dir
   | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ -> raise (Error_in_config_file "(revproxy extension) Bad data")
 
@@ -320,9 +320,9 @@ let parse_config = function
 (*****************************************************************************)
 (** Registration of the extension *)
 let () = register_extension
-  ~name:"revproxy"
-  ~fun_site:(fun _ _ _ _ _ -> parse_config)
-  ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
-  ~respect_pipeline:true (* We ask ocsigen to respect pipeline order
-                            when sending to extensions! *)
-  ()
+    ~name:"revproxy"
+    ~fun_site:(fun _ _ _ _ _ -> parse_config)
+    ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
+    ~respect_pipeline:true (* We ask ocsigen to respect pipeline order
+                              when sending to extensions! *)
+    ()

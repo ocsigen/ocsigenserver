@@ -16,13 +16,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Ocsigen_comet server extension : provides low-level server to client communication
     scheme. *)
 
 module Channels :
-(** A module with all the base primitive needed for server push. *)
+  (** A module with all the base primitive needed for server push. *)
 sig
 
   exception Too_many_virtual_channels
@@ -72,10 +72,10 @@ sig
 end
 
 module Security :
-(** This module is to be used carefully, it provides functions to interrupt and
-    restart Comet related connections. It is however useful to prevent Comet
-    based DOS attacks. These functions can also be called from the Ocsigen
-    command pipe. *)
+  (** This module is to be used carefully, it provides functions to interrupt and
+      restart Comet related connections. It is however useful to prevent Comet
+      based DOS attacks. These functions can also be called from the Ocsigen
+      command pipe. *)
 sig
 
   val set_timeout : ?reset:bool -> float -> unit
@@ -106,17 +106,17 @@ end
 
 (** Usage:
 
-  On the server side :
+    On the server side :
     1) create needed channels
     2) transmit their identifiers to clients
     3) write when appropriate (using the outcome mechanism if necessary
 
-  On the client :
+    On the client :
     1) make a XmlHttpRequest (XHR) with a list of channel identifiers.
     2) wait for the reply
     3) GOTO 1
 
-  Encoding for client-to-server requests:
+    Encoding for client-to-server requests:
     * The content type header should be set to [application/x-ocsigen-comet]
       (without quotes)
     * A POST parameter is required. Its name should be [registration] and its
@@ -126,7 +126,7 @@ end
       the [escape] JavaScript primitive
 
 
-  Encoding for server-to-client answer:
+    Encoding for server-to-client answer:
     * The server answer is either empty (when no channel was written upon before
       timeout) or a list of pairs of channel identifiers and message content.
       The pairs are separated by [:] (colon) while the list elements are
@@ -136,7 +136,7 @@ end
       When receiving such a message, the client should lose hope of ever
       connecting to that particular channel ever again.
 
-  *)
+*)
 (** Conf-file options:
 
     One can use the configuration file to tweak Ocsigen_comet settings. The supported
@@ -152,7 +152,7 @@ end
         already maxed out, the exception
         [Ocsigen_comet.Channels.Too_many_virtual_channels] is raised.
 
-  *)
+*)
 (** Commands:
 
     Comet provides commands (to be piped into Ocsigen's command pipe). The
@@ -176,7 +176,7 @@ end
         if the second optional parameter is used. If not, connections are
         carried out with their old timeout unchanged.
 
-  *)
+*)
 
 
 (** Note to Eliom users:
@@ -192,4 +192,4 @@ end
     compatible unmarshalling which may be difficult to find in a non
     js_of_ocaml/O'browser based client). It may also be used to add your own
     high level wrapper with a custom communication protocol.
-  *)
+*)

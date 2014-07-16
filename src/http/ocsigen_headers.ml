@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (* TODO: rewrite header parsing! *)
 
@@ -52,12 +52,12 @@ let rec quoted_split char (* char is not used in that version *) s =
       if i>=longueur
       then failwith ""
       else
-        if s.[i] = '"'
-        then i
-        else
-          if s.[i] = '\\'
-          then nextquote s (i+2)
-          else nextquote s (i+1)
+      if s.[i] = '"'
+      then i
+      else
+      if s.[i] = '\\'
+      then nextquote s (i+2)
+      else nextquote s (i+1)
     in
     try
       let first = (nextquote s deb) + 1 in
@@ -65,8 +65,8 @@ let rec quoted_split char (* char is not used in that version *) s =
       let value = String.sub s first (afterlast - first) in
       value::
       (if (afterlast + 1) < longueur
-      then aux (afterlast + 1)
-      else [])
+       then aux (afterlast + 1)
+       else [])
     with Failure _ | Invalid_argument _ -> []
   in
   aux 0
@@ -111,8 +111,8 @@ let rec parse_cookies s =
   try
     List.fold_left
       (fun beg a ->
-        let (n, v) = String.sep '=' a in
-        CookiesTable.add n v beg)
+         let (n, v) = String.sep '=' a in
+         CookiesTable.add n v beg)
       CookiesTable.empty
       splitted
   with _ -> CookiesTable.empty
@@ -126,30 +126,30 @@ http://ws.bokeland.com/blog/376/1043/2006/10/27/76832
 
 let get_keepalive http_header =
   Http_header.get_proto http_header = Ocsigen_http_frame.Http_header.HTTP11
-    &&
+  &&
   try
     String.lowercase
       (Http_header.get_headers_value http_header Http_headers.connection)
-      <> "close"
+    <> "close"
   with Not_found ->
     true
-  (* 06/02/2008
-     If HTTP/1.0, we do not keep alive, even if the client asks so.
-     It would be possible, but only if the content-length is known.
-     Chunked encoding is not possible with HTTP/1.0.
-     As we cannot know if the output will be chunked or not,
-     we decided that we won't keep the connection open at all for
-     HTTP/1.0.
-     Another solution would be to keep it open if the client asks so,
-     and answer connection:close (and close) if we don't know the size
-     of the document. In that case, all requests that have been pipelined
-     would be processed by the server, but not sent back to the client.
-     Which one is the best? It really depends on the client.
-     If the client waits the answer before doing the following request,
-     it would be ok to keep the connection opened,
-     otherwise it is better not.
-     (+ pb with non-idempotent requests, that should not be pipelined)
-   *)
+(* 06/02/2008
+   If HTTP/1.0, we do not keep alive, even if the client asks so.
+   It would be possible, but only if the content-length is known.
+   Chunked encoding is not possible with HTTP/1.0.
+   As we cannot know if the output will be chunked or not,
+   we decided that we won't keep the connection open at all for
+   HTTP/1.0.
+   Another solution would be to keep it open if the client asks so,
+   and answer connection:close (and close) if we don't know the size
+   of the document. In that case, all requests that have been pipelined
+   would be processed by the server, but not sent back to the client.
+   Which one is the best? It really depends on the client.
+   If the client waits the answer before doing the following request,
+   it would be ok to keep the connection opened,
+   otherwise it is better not.
+   (+ pb with non-idempotent requests, that should not be pipelined)
+*)
 
 
 
@@ -166,12 +166,12 @@ let get_host_from_host_header =
           http_frame.Ocsigen_http_frame.frame_header Http_headers.host
       in
       match Netstring_pcre.string_match host_re hostport 0 with
-        | Some m ->
-            (Some (Netstring_pcre.matched_group m 1 hostport),
-             try Some (int_of_string
-                         (Netstring_pcre.matched_group m 3 hostport))
-             with Not_found -> None | Failure _ -> raise Ocsigen_Bad_Request)
-        | None -> raise Ocsigen_Bad_Request
+      | Some m ->
+        (Some (Netstring_pcre.matched_group m 1 hostport),
+         try Some (int_of_string
+                     (Netstring_pcre.matched_group m 3 hostport))
+         with Not_found -> None | Failure _ -> raise Ocsigen_Bad_Request)
+      | None -> raise Ocsigen_Bad_Request
     with Not_found ->
       (None, None)
 
@@ -244,20 +244,20 @@ let get_content_type http_frame =
 let parse_content_type = function
   | None -> None
   | Some s ->
-      match String.split ';' s with
-        | [] -> None
-        | a::l ->
+    match String.split ';' s with
+    | [] -> None
+    | a::l ->
+      try
+        let typ, subtype = String.sep '/' a in
+        let params =
           try
-            let typ, subtype = String.sep '/' a in
-            let params =
-              try
-                List.map (String.sep '=') l
-              with Not_found -> []
-            in
-(*VVV If syntax error, we return no parameter at all *)
-            Some ((typ, subtype), params)
-(*VVV If syntax error in type, we return None *)
-          with Not_found -> None
+            List.map (String.sep '=') l
+          with Not_found -> []
+        in
+        (*VVV If syntax error, we return no parameter at all *)
+        Some ((typ, subtype), params)
+      (*VVV If syntax error in type, we return None *)
+      with Not_found -> None
 
 let get_content_length http_frame =
   try
