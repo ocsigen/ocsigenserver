@@ -37,56 +37,67 @@ let gen filter = function
   | Req_found (ri, res) ->
     let new_headers =
       match filter with
-	| Rewrite_header (header, regexp, dest) ->
-	  begin
-	    try
+        | Rewrite_header (header, regexp, dest) ->
+          begin
+            try
               let header_values =
-		Http_headers.find_all header res.Ocsigen_http_frame.res_headers
+                Http_headers.find_all header
+                  (Ocsigen_http_frame.Result.headers res)
               in
               let h =
-		Http_headers.replace_opt header None res.Ocsigen_http_frame.res_headers
+                Http_headers.replace_opt header None
+                   (Ocsigen_http_frame.Result.headers res)
               in
-	      List.fold_left
-		(fun h value ->
-		  Http_headers.add
+              List.fold_left
+                (fun h value ->
+                  Http_headers.add
                     header
                     (Netstring_pcre.global_replace regexp dest value)
                     h
-		)
-		h
-		header_values
-	    with
-	      | Not_found -> res.Ocsigen_http_frame.res_headers
-	  end
-	| Add_header (header, dest, replace) ->
-	  begin
-	    match replace with
-	      | None ->
-		begin
-		  try
-		    ignore (Http_headers.find header res.Ocsigen_http_frame.res_headers);
-		    res.Ocsigen_http_frame.res_headers
-		  with
-		    | Not_found ->
-		      Http_headers.add header dest res.Ocsigen_http_frame.res_headers
-		end
-	      | Some false ->
-		Http_headers.add header dest res.Ocsigen_http_frame.res_headers
-	      | Some true ->
-		Http_headers.replace header dest res.Ocsigen_http_frame.res_headers
-	  end
+                )
+                h
+                header_values
+            with
+              | Not_found -> Ocsigen_http_frame.Result.headers res
+          end
+        | Add_header (header, dest, replace) ->
+          begin
+            match replace with
+              | None ->
+                begin
+                  try
+                    ignore (Http_headers.find header (Ocsigen_http_frame.Result.headers res));
+                    (Ocsigen_http_frame.Result.headers res)
+                  with
+                    | Not_found ->
+                      Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
+                end
+              | Some false ->
+                Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
+              | Some true ->
+                Http_headers.replace header dest (Ocsigen_http_frame.Result.headers res)
+          end
     in
     Lwt.return
       (Ocsigen_extensions.Ext_found
-	 (fun () ->
-	   Lwt.return
-             {res with Ocsigen_http_frame.res_headers = new_headers}))
+         (fun () ->
+           Lwt.return
+             (Ocsigen_http_frame.Result.update res ~headers:new_headers ())))
+
+let gen_code code = function
+  | Req_not_found (code,_) -> return (Ext_next code)
+  | Req_found (ri, res) ->
+    Lwt.return
+      (Ocsigen_extensions.Ext_found
+         (fun () ->
+            Lwt.return (Ocsigen_http_frame.Result.update res ~code ())))
 
 
 
 (*****************************************************************************)
 
 let parse_config = function
+(*VVV TODO: rewrite using Ocsigen_extensions.Configuration (see rewritemod) *)
   | Element ("outputfilter", atts, []) ->
       let rec parse_attrs ((h, r, d, rep) as res) = function
         | [] -> res
@@ -97,14 +108,14 @@ let parse_config = function
         | ("dest", dest)::l when d = None ->
             parse_attrs (h, r, Some dest, rep) l
         | ("replace", replace)::l when rep = None ->
-	    let replace =
-	      try
-		bool_of_string replace
-	      with
-		| Invalid_argument _ ->
-		  raise (Error_in_config_file
-			   (Printf.sprintf "Wrong value for attribute replace of <outputfilter/>: %s. is should be true or false" replace))
-	    in
+            let replace =
+              try
+                bool_of_string replace
+              with
+                | Invalid_argument _ ->
+                  raise (Error_in_config_file
+                           (Printf.sprintf "Wrong value for attribute replace of <outputfilter/>: %s. is should be true or false" replace))
+            in
             parse_attrs (h, r, d, Some replace ) l
         | _ -> raise (Error_in_config_file "Wrong attribute for <outputfilter header=... dest=... (regexp=... / replace=...)/>")
       in
@@ -121,6 +132,17 @@ let parse_config = function
           raise
             (Error_in_config_file
                "Wrong attributes for <outputfilter header=... dest=... (regexp=... / replace=...)/>"))
+  | Element ("sethttpcode", atts, []) ->
+    (match atts with
+     | [("code", c)] ->
+       let code = try int_of_string c
+         with Failure _ ->
+           raise (Error_in_config_file
+                    "invalid code attribute in <sethttpcode>")
+       in gen_code code
+     | _ ->
+       raise (Error_in_config_file
+                "Wrong attribute for <sethttpcode code=... />"))
   | Element ("outputfilter", _, _) -> badconfig "Bad syntax for tag <outputfilter header=... dest=... (regexp=... / replace=...)/>"
   | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ ->

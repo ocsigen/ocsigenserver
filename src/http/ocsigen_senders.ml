@@ -65,16 +65,14 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
 	  Typed_xml.Info.alternative_content_types
 	  Typed_xml.Info.content_type in
       let x = Xhtmlprinter.print ~advert c in
-      let default_result = default_result () in
+      let default_result = Result.default () in
       Lwt.return
-        {default_result with
-          res_content_length = None;
-          res_content_type = Some content_type;
-          res_etag = get_etag c;
-          res_headers= Http_headers.dyn_headers;
-          res_stream = (x, None)
-	}
-
+        (Result.update default_result
+          ~content_length:None
+          ~content_type:(Some content_type)
+          ~etag:(get_etag c)
+          ~headers:Http_headers.dyn_headers
+          ~stream:(x, None) ())
   end
 
 module Html5_content = Make_XML_Content(Xml)(Html5.M)
@@ -104,21 +102,18 @@ module Text_content =
 
     let result_of_content ?(options = ()) ((c, ct) as content) =
       let md5 = get_etag content in
-      let default_result = default_result () in
+      let default_result = Result.default () in
       Lwt.return
-        {default_result with
-         res_content_length = Some (Int64.of_int (String.length c));
-         res_etag = md5;
-         res_content_type = Some ct;
-         res_headers= Http_headers.dyn_headers;
-         res_stream =
+        (Result.update default_result
+         ~content_length:(Some (Int64.of_int (String.length c)))
+         ~etag:md5
+         ~content_type:(Some ct)
+         ~headers:Http_headers.dyn_headers
+         ~stream:
             (Ocsigen_stream.make
                (fun () ->
                   Ocsigen_stream.cont c (fun () -> Ocsigen_stream.empty None)),
-             None)
-
-            }
-
+             None) ())
   end
 
 (*****************************************************************************)
@@ -132,12 +127,12 @@ module Stream_content =
     let get_etag ?options c = None
 
     let result_of_content ?(options = ()) c =
-      let default_result = default_result () in
+      let default_result = Result.default () in
       Lwt.return
-        {default_result with
-         res_content_length = None;
-         res_headers= Http_headers.dyn_headers;
-         res_stream = (c, None)}
+        (Result.update default_result
+         ~content_length:None
+         ~headers:Http_headers.dyn_headers
+         ~stream:(c, None) ())
 
   end
 
@@ -189,16 +184,15 @@ module Streamlist_content =
         finalize `Failure >>= fun () ->
         next_stream l
       in
-      let default_result = default_result () in
+      let default_result = Result.default () in
       Lwt.return
-        {default_result with
-         res_content_length = None;
-         res_etag = get_etag c;
-         res_stream =
-            (Ocsigen_stream.make ~finalize (fun _ -> next_stream c), None);
-         res_headers= Http_headers.dyn_headers;
-         res_content_type = Some ct}
-
+        (Result.update default_result
+         ~content_length:None
+         ~etag:(get_etag c)
+         ~stream:
+            (Ocsigen_stream.make ~finalize (fun _ -> next_stream c), None)
+         ~headers:(Http_headers.dyn_headers)
+         ~content_type:(Some ct) ())
   end
 
 
@@ -211,7 +205,7 @@ module Empty_content =
 
     let get_etag ?options c = None
 
-    let result_of_content ?(options = ()) c = Lwt.return (empty_result ())
+    let result_of_content ?(options = ()) c = Lwt.return (Result.empty ())
 
   end
 
@@ -270,25 +264,24 @@ module File_content =
           let st = Unix.LargeFile.fstat fdu in
           let etag = get_etag_aux st in
           let stream = read_file fd in
-          let default_result = default_result () in
+          let default_result = Result.default () in
           Lwt.return
-            {default_result with
-               res_content_length = Some st.Unix.LargeFile.st_size;
-               res_content_type =
-                Some (Ocsigen_charset_mime.find_mime c mime_assoc);
-               res_charset =
-                Some (Ocsigen_charset_mime.find_charset c charset_assoc);
-               res_lastmodified = Some st.Unix.LargeFile.st_mtime;
-               res_etag = etag;
-               res_stream =
+            (Result.update default_result
+               ~content_length:(Some st.Unix.LargeFile.st_size)
+               ~content_type:
+                (Some (Ocsigen_charset_mime.find_mime c mime_assoc))
+               ~charset:
+                (Some (Ocsigen_charset_mime.find_charset c charset_assoc))
+               ~lastmodified:(Some st.Unix.LargeFile.st_mtime)
+               ~etag:etag
+               ~stream:
                 (Ocsigen_stream.make
                    ~finalize:
                    (fun _ ->
                       Ocsigen_messages.debug2 "closing file";
                       Lwt_unix.close fd)
                    stream,
-                 Some (skip fd))
-            }
+                 Some (skip fd)) ())
         with e -> Lwt_unix.close fd >>= fun () -> raise e
       with e -> Ocsigen_messages.debug2 (Printexc.to_string e);  fail e
 
@@ -453,13 +446,10 @@ module Directory_content =
       let etag = get_etag_aux stat in
       Text_content.result_of_content (c, "text/html") >>= fun r ->
       Lwt.return
-        {r with
-         res_lastmodified = Some stat.Unix.LargeFile.st_mtime;
-         res_etag = etag;
-         res_charset= Some "utf-8"
-       }
-
-
+        (Result.update r
+         ~lastmodified:(Some stat.Unix.LargeFile.st_mtime)
+         ~etag:etag
+         ~charset:(Some "utf-8") ())
   end
 
 
@@ -528,14 +518,11 @@ module Error_content =
       in
       Html5_content.result_of_content err_page >>= fun r ->
       Lwt.return
-          {r with
-           res_cookies = cookies_to_set;
-           res_code = error_code;
-           res_charset = Some "utf-8";
-           res_headers = headers;
-         }
-
-
+          (Result.update r
+           ~cookies:cookies_to_set
+           ~code:error_code
+           ~charset:(Some "utf-8")
+           ~headers:headers ())
   end
 
 
