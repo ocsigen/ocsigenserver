@@ -63,8 +63,6 @@ endif
 
 ##########
 
-%.cma: %.cmo
-	$(OCAMLC) ${LIBS} -a $< -o $@
 %.cmi: %.mli
 	$(OCAMLC) ${LIBS} -c $<
 %.cmo: %.ml
