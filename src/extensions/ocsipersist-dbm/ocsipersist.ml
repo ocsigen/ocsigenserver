@@ -144,10 +144,8 @@ let outch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
 let init ?directory_store ?ocsidbm_conf ?(delay_loading = false) () =
   Ocsigen_lib_base.Option.iter (fun x -> directory := x) directory_store;
   Ocsigen_lib_base.Option.iter (fun x -> ocsidbm := x) ocsidbm_conf;
-  Ocsigen_messages.warning
   (if delay_loading then
        Lwt_log.ign_warning ~section "Asynchronuous initialization (may fail later)"
-       "Asynchronuous initialization of Ocsipersist-dbm (may fail later)"
      else
        Lwt_log.ign_warning ~section "Initializing ...");
   let indescr = get_indescr 2 in

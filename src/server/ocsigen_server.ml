@@ -568,7 +568,8 @@ let handle_result_frame ri res send =
     Ocsigen_range.compute_range ri res
     >>= send
 
-let service receiver sender_slot request meth url port sockaddr =
+
+let service ~connector receiver sender_slot request meth url port sockaddr =
   (* sender_slot is here for pipelining:
      we must wait before sending the page,
      because the previous one may not be sent *)
@@ -732,8 +733,7 @@ let service receiver sender_slot request meth url port sockaddr =
 
              (* Generation of pages is delegated to extensions: *)
              Lwt.try_bind
-               (fun () -> Ocsigen_extensions.compute_result
-                   ~awake_next_request:true ri)
+               (fun () -> connector ri)
                (fun res ->
                   finish_request ();
                   handle_result_frame ri res send_aux
@@ -851,7 +851,7 @@ let add_to_receivers_waiting_for_pipeline,
         (Lwt.return ())
         l))
 
-let handle_connection port in_ch sockaddr =
+let handle_connection ~connector port in_ch sockaddr =
   let receiver = Ocsigen_http_com.create_receiver
       (Ocsigen_config.get_client_timeout ()) Query in_ch
   in
@@ -955,7 +955,7 @@ let handle_connection port in_ch sockaddr =
              Lwt.catch
                (fun () ->
                   (*XXX Why do we need the port but not the host name? *)
-                  service receiver slot request meth url port sockaddr)
+                  service ~connector receiver slot request meth url port sockaddr)
                handle_write_errors);
          if not !shutdown &&
             get_keepalive request.Ocsigen_http_frame.frame_header
@@ -977,7 +977,7 @@ let handle_connection port in_ch sockaddr =
   in (* body of handle_connection *)
   handle_request ()
 
-let rec wait_connection use_ssl port socket =
+let rec wait_connection ~connector use_ssl port socket =
   let handle_exn e =
     Lwt_unix.yield () >>= fun () -> match e with
     | Socket_closed ->
@@ -987,10 +987,10 @@ let rec wait_connection use_ssl port socket =
       (* this should not happen, report it *)
       Lwt_log.ign_error ~section
         "Max number of file descriptors reached unexpectedly, please check...";
-      wait_connection use_ssl port socket
+      wait_connection ~connector use_ssl port socket
     | e ->
       Lwt_log.ign_info_f ~section ~exn:e "Accept failed";
-      wait_connection use_ssl port socket
+      wait_connection ~connector use_ssl port socket
   in
   try_bind'
     (fun () ->
@@ -1013,7 +1013,7 @@ let rec wait_connection use_ssl port socket =
        let number_of_accepts = List.length l in
        Lwt_log.ign_info_f ~section "received %d accepts" number_of_accepts;
        incr_connected number_of_accepts;
-       if e = None then ignore (wait_connection use_ssl port socket);
+       if e = None then ignore (wait_connection ~connector use_ssl port socket);
 
        let handle_one (s, sockaddr) =
          Lwt_log.ign_info ~section
@@ -1027,7 +1027,7 @@ let rec wait_connection use_ssl port socket =
                 else
                   Lwt.return (Lwt_ssl.plain s)
               end >>= fun in_ch ->
-              handle_connection port in_ch sockaddr)
+              handle_connection ~connector port in_ch sockaddr)
            (fun e ->
               Ocsigen_messages.unexpected_exception e
                 "Server.wait_connection (handle connection)";
@@ -1053,7 +1053,7 @@ let stop n fmt =
   Printf.ksprintf (fun s -> Lwt_log.ign_error ~section s; exit n) fmt
 
 (** Thread waiting for events on a the listening port *)
-let listen use_ssl (addr, port) wait_end_init =
+let listen use_ssl ~connector (addr, port) wait_end_init =
   let listening_sockets =
     try
       let sockets = make_sockets addr port in
@@ -1069,7 +1069,8 @@ let listen use_ssl (addr, port) wait_end_init =
   in
   List.iter (fun x ->
       ignore (wait_end_init >>= fun () ->
-              wait_connection use_ssl port x)) listening_sockets;
+              wait_connection ~connector use_ssl port x))
+    listening_sockets;
   listening_sockets
 
 (* fatal errors messages *)
@@ -1186,15 +1187,26 @@ let _ =
   in
   Ocsigen_extensions.register_command_function f
 
-let start_server () = try
 
-    (* initialization functions for modules (Ocsigen extensions or application
-       code) loaded from now on will be executed directly. *)
-    Ocsigen_loader.set_init_on_load true;
 
-    let config_servers = parse_config () in
+let start_server
+    ?(connector = Ocsigen_extensions.compute_result
+        ~awake_next_request:true
+        ~previous_cookies:Ocsigen_cookies.Cookies.empty)
+    ?(configuration =
+        (* initialization functions for modules (Ocsigen extensions or
+         * application code) loaded from now on will be executed directly.
+         *)
+        Ocsigen_loader.set_init_on_load true;
 
-    let number_of_servers = List.length config_servers in
+        List.map
+          (fun x -> let s = extract_info x in parse_server false x; s)
+          (parse_config ()))
+    () = try
+
+    (* Ocsigen_loader.set_init_on_load true; *)
+
+    let number_of_servers = List.length configuration in
 
     if number_of_servers > 1
     then Lwt_log.ign_warning ~section "Multiple servers not supported anymore";
@@ -1228,9 +1240,9 @@ let start_server () = try
       let wait_end_init, wait_end_init_awakener = wait () in
       (* Listening on all ports: *)
       sockets := List.fold_left
-          (fun a i -> (listen false i wait_end_init) @ a) [] ports;
+          (fun a i -> (listen ~connector false i wait_end_init) @ a) [] ports;
       sslsockets := List.fold_left
-          (fun a i -> (listen true i wait_end_init) @ a) [] sslports;
+          (fun a i -> (listen ~connector true i wait_end_init) @ a) [] sslports;
 
       begin match ports with
         | (_, p)::_ -> Ocsigen_config.set_default_port p
@@ -1314,8 +1326,6 @@ let start_server () = try
       Dynlink_wrapper.allow_unsafe_modules true;
 
       Ocsigen_extensions.start_initialisation ();
-
-      parse_server false s;
 
       Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
       (* As libraries are reloaded each time the config file is read,
@@ -1416,14 +1426,14 @@ let start_server () = try
     let rec launch = function
       | [] -> ()
       | [h] ->
-        let user_info, sslinfo, threadinfo = extract_info h in
+        let user_info, sslinfo, threadinfo = h in
         set_passwd_if_needed sslinfo;
         if (get_daemon ())
         then
           let pid = Lwt_unix.fork () in
           if pid = 0
           then
-            Lwt_main.run (run user_info sslinfo threadinfo h)
+            Lwt_unix.run (run user_info sslinfo threadinfo h)
           else begin
             Ocsigen_messages.console
               (fun () -> "Process "^(string_of_int pid)^" detached");
@@ -1431,12 +1441,12 @@ let start_server () = try
           end
         else begin
           write_pid (Unix.getpid ());
-          Lwt_main.run (run user_info sslinfo threadinfo h)
+          Lwt_unix.run (run user_info sslinfo threadinfo h)
         end
       | _ -> () (* Multiple servers not supported any more *)
 
     in
-    launch config_servers
+    launch configuration
 
   with e ->
     let msg, errno = errmsg e in

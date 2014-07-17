@@ -25,4 +25,14 @@
 val reload: ?file:string -> unit -> unit
 
 (** Start the server (does not return) *)
-val start_server: unit -> unit
+
+ val start_server :
+   ?connector:(Ocsigen_extensions.Ocsigen_request_info.request_info ->
+               Ocsigen_http_frame.result Lwt.t) ->
+   ?configuration:((string option * string option) *
+                   ((string option * string option) option *
+                    (Ocsigen_parseconfig.socket_type * int) list *
+                    (Ocsigen_parseconfig.socket_type * int) list) *
+                   (int * int))
+                  list ->
+   unit -> unit
