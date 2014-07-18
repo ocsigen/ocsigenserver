@@ -1192,15 +1192,14 @@ let start_server
     ?(connector = Ocsigen_extensions.compute_result
         ~awake_next_request:true
         ~previous_cookies:Ocsigen_cookies.Cookies.empty)
+    ?(configuration = List.map extract_info (parse_config ()))
     () = try
 
     (* initialization functions for modules (Ocsigen extensions or application
        code) loaded from now on will be executed directly. *)
     Ocsigen_loader.set_init_on_load true;
 
-    let config_servers = parse_config () in
-
-    let number_of_servers = List.length config_servers in
+    let number_of_servers = List.length configuration in
 
     if number_of_servers > 1
     then ignore (Ocsigen_messages.warning "Multiple servers not supported anymore");
@@ -1313,7 +1312,7 @@ let start_server
 
          Ocsigen_extensions.start_initialisation ();
 
-         parse_server false s;
+         (* parse_server false s; *)
 
          Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
          (* As libraries are reloaded each time the config file is read,
@@ -1413,7 +1412,7 @@ let start_server
     let rec launch = function
       | [] -> ()
       | [h] ->
-        let user_info, sslinfo, threadinfo = extract_info h in
+        let user_info, sslinfo, threadinfo = h in
         set_passwd_if_needed sslinfo;
         if (get_daemon ())
         then
@@ -1433,7 +1432,7 @@ let start_server
       | _ -> () (* Multiple servers not supported any more *)
 
     in
-    launch config_servers
+    launch configuration
 
   with e ->
     let msg, errno = errmsg e in
