@@ -1192,12 +1192,18 @@ let start_server
     ?(connector = Ocsigen_extensions.compute_result
         ~awake_next_request:true
         ~previous_cookies:Ocsigen_cookies.Cookies.empty)
-    ?(configuration = List.map extract_info (parse_config ()))
+    ?(configuration =
+        (* initialization functions for modules (Ocsigen extensions or
+         * application code) loaded from now on will be executed directly.
+         *)
+        Ocsigen_loader.set_init_on_load true;
+
+        List.map
+          (fun x -> let s = extract_info x in parse_server false x; s)
+          (parse_config ()))
     () = try
 
-    (* initialization functions for modules (Ocsigen extensions or application
-       code) loaded from now on will be executed directly. *)
-    Ocsigen_loader.set_init_on_load true;
+    (* Ocsigen_loader.set_init_on_load true; *)
 
     let number_of_servers = List.length configuration in
 
