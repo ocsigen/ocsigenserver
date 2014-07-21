@@ -311,8 +311,8 @@ let rec parse_global_config xml =
                with Failure _ -> raise (Error_in_config_file
                                           "Buffer size should be a positive integer")) in
       catch (level, Some (if s > 0 then s else 8192)) ll
-    (* TODO: Pas de filtre global pour l'instant
-     * le nom de balise contenttype est mauvais, au passage
+    (* TODO: no global filter for now
+     * the name tag "contenttype" is wrong
        | (Element ("contenttype", [("compress", b)], choices))::ll ->
          let l = (try parse_filter choices
                  with Not_found -> raise (Error_in_config_file

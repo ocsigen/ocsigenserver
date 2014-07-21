@@ -323,9 +323,9 @@ let length table =
 *)
 
 let init ?database () =
-  database |> (function
-      | None -> db_file := (Ocsigen_config.get_datadir () ^ "/ocsidb")
-      | Some d -> db_file := d);
+  db_file := Ocsigen_lib_base.Option.get'
+      (Ocsigen_config.get_datadir () ^ "/ocsidb")
+      database;
   try Lwt_unix.run (exec_safely (fun _ -> ()))
   with exn ->
     Ocsigen_messages.errlog

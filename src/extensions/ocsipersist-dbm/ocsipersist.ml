@@ -141,12 +141,8 @@ let outch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
 *)
 
 let init ?directory_store ?ocsidbm_conf ?(delay_loading = false) () =
-  directory_store |> (function
-      | None -> ()
-      | Some d -> directory := d);
-  ocsidbm_conf |> (function
-      | None -> ()
-      | Some d -> ocsidbm := d);
+  Ocsigen_lib_base.Option.iter (fun x -> directory := x) directory_store;
+  Ocsigen_lib_base.Option.iter (fun x -> ocsidbm := x) ocsidbm_conf;
   Ocsigen_messages.warning
     (if delay_loading then
        "Asynchronuous initialization of Ocsipersist-dbm (may fail later)"
