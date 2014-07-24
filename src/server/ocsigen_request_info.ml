@@ -78,6 +78,7 @@ type request_info =
    timeofday: float; (** An Unix timestamp computed at the beginning of the request *)
    mutable nb_tries: int; (** For internal use:
                                  used to prevent loops of requests *)
+   connection_closed : unit Lwt.t;
   }
 
 (* used to modify the url in ri (for example for retrying after rewrite) *)
@@ -161,6 +162,7 @@ let make
      * ?(range=lazy (Ocsigen_range.get_range http_frame)) *)
     ?(timeofday=Unix.gettimeofday ())
     ?(nb_tries=0)
+    ?(connection_closed=Lwt.return_unit)
     () =
   {
     url_string;
@@ -209,6 +211,7 @@ let make
     range;
     timeofday;
     nb_tries;
+    connection_closed;
   }
 
 let update ri
@@ -258,6 +261,7 @@ let update ri
     ?(range=ri.range)
     ?(timeofday=ri.timeofday)
     ?(nb_tries=ri.nb_tries)
+    ?(connection_closed=ri.connection_closed)
     () =
   {
     url_string;
@@ -306,6 +310,7 @@ let update ri
     range;
     timeofday;
     nb_tries;
+    connection_closed;
   }
 
 let update_nb_tries ri value = ri.nb_tries <- value
@@ -358,4 +363,4 @@ let timeofday { timeofday; _ } = timeofday
 let accept_language { accept_language; _ } = accept_language
 let accept_encoding { accept_encoding; _ } = accept_encoding
 let accept { accept; _ } = accept
-let connection_closed _ = Lwt.return_unit
+let connection_closed { connection_closed; _ } = connection_closed

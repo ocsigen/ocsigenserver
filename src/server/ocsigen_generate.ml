@@ -130,7 +130,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
   Lwt.return (!params, !files)
 
 let of_cohttp_request ~address ~port
-    filenames sockaddr request body =
+    filenames sockaddr request body connection_closed =
 
   let client_inet_addr = ip_of_sockaddr sockaddr in
   let ipstring = Unix.string_of_inet_addr client_inet_addr in
@@ -254,6 +254,7 @@ let of_cohttp_request ~address ~port
        ~accept_language:accept_language
        ~http_frame:http_frame (* XXX: not tested ! *)
        ~range:(lazy (Ocsigen_range.get_range http_frame))
+       ~connection_closed
        ()
     )
 
