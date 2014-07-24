@@ -75,6 +75,7 @@ val make :
            Lazy.t ->
   ?timeofday:float ->
   ?nb_tries:int ->
+  ?connection_closed:unit Lwt.t ->
   unit -> request_info
 
 val update :
@@ -131,6 +132,7 @@ val update :
          Lazy.t ->
   ?timeofday:float ->
   ?nb_tries:int ->
+  ?connection_closed:unit Lwt.t ->
   unit -> request_info
 
 val update_nb_tries : request_info -> int -> unit

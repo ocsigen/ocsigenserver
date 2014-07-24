@@ -16,7 +16,8 @@ val of_cohttp_request :
   string list ref ->
   Lwt_unix.sockaddr ->
   Cohttp.Request.t ->
-  Cohttp_lwt_body.t -> Ocsigen_request_info.request_info Lwt.t
+  Cohttp_lwt_body.t ->
+  unit Lwt.t -> Ocsigen_request_info.request_info Lwt.t
 
 (** Create a Cohttp Request (for Cohttp_lwt.Client) according to
  * Ocsigen_request_info.request_info

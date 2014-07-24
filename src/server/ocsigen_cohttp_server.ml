@@ -54,9 +54,14 @@ let print_cohttp_request out_ch request =
          (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
     request.headers
 
+let waiters = Hashtbl.create 256
+
 let handler ~address ~port ~extensions_connector (edn, conn) request body =
   let filenames = ref [] in
   let sockaddr = Lwt_unix_conduit.sockname edn in
+
+  let (waiter, wakener) = Lwt.wait () in
+  Hashtbl.add waiters conn wakener;
 
   let handle_error exn =
     let string_of_exn = Printexc.to_string exn in
@@ -117,7 +122,8 @@ let handler ~address ~port ~extensions_connector (edn, conn) request body =
             filenames
             sockaddr
             request
-            body)
+            body
+            waiter)
         (fun ri ->
            let log =
              Ocsigen_log.of_string "%h %l %t \"%r\""
@@ -148,6 +154,11 @@ let handler ~address ~port ~extensions_connector (edn, conn) request body =
                   a (Printexc.to_string e)))
            !filenames; Lwt.return ())
 
+let conn_closed conn () =
+  try let wakener = Hashtbl.find waiters conn in
+      Lwt.wakeup wakener (); Hashtbl.remove waiters conn
+  with Not_found -> ()
+
 let stop, stop_wakener = Lwt.wait ()
 
 let shutdown_server timeout =
@@ -163,6 +174,7 @@ let shutdown_server timeout =
 
 let number_of_client () = 0
 let get_number_of_connected = number_of_client
+
 
 let service ?ssl ~address ~port ~connector () =
   let conn_closed _ () = () in
