@@ -1,13 +1,13 @@
-PKG lwt
-PKG findlib
-PKG react
-PKG pcre
-PKG ssl
-PKG cryptokit
-PKG netstring
-PKG netstring-pcre
-PKG ipaddr
-PKG tyxml
+S src/baselib/
+S src/extensions/
+S src/http/
+S src/migrate/
+S src/server/
 
-S src/**
-B src/**
+B src/baselib/
+B src/extensions/
+B src/http/
+B src/migrate/
+B src/server/
+
+PKG lwt.ssl lwt.extra ipaddr netstring netstring netstring-pcre findlib cryptokit tyxml tyxml.parser dynlink cohttp camlzip
