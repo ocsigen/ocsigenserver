@@ -804,7 +804,7 @@ let configuration = [
   ("_OCSIGEN_USER_", BaseEnvLight.var_get "ocsigen_user" env);
   ("_OCSIGEN_GROUP_", BaseEnvLight.var_get "ocsigen_group" env);
   ("_PROJECT_NAME_", name);
-  ("_COMMAND_PIPE_", BaseEnvLight.var_get "command_pipe" env);
+  ("_COMMAND_PIPE_", BaseEnvLight.var_get "commandpipe" env);
   ("_CONFIG_DIR_", BaseEnvLight.var_get "sysconfdir" env);
   ("_PREEMPTIVE_", preemptive);
   ("_IS_NATIVE_", string_of_bool native);

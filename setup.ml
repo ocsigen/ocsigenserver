@@ -7660,7 +7660,7 @@ let _ = BaseEnv.var_define
     ~short_desc:(fun () -> "Command pipe")
     ~arg_help:"file"
     ~cli:BaseEnv.CLIAuto
-    "command_pipe"
+    "commandpipe"
     (fun () -> "/var/run/ocsigenserver_command")
 
 let _ = BaseEnv.var_define
