@@ -32,6 +32,7 @@ depends: [
   "tyxml" {>= "3.1.0"}
   ("dbm" | "sqlite3-ocaml")
   "ipaddr" {>= "2.1"}
+  "optcomp"
 ]
 depopts: [
   "camlzip"
