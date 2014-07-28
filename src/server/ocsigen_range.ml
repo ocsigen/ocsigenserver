@@ -92,13 +92,14 @@ let compute_range ri res =
     || (Ocsigen_config.get_disablepartialrequests ())
     then Lwt.return res
     else begin
-      let res = Ocsigen_http_frame.Result.update res
+      let res =
+        Ocsigen_http_frame.Result.update res
           ~headers:
             (Http_headers.replace
                Http_headers.accept_ranges "bytes"
-               (Ocsigen_http_frame.Result.headers res)) ()
+               (Ocsigen_http_frame.headers res)) ()
       in
-      match change_range (Lazy.force @@ Ocsigen_request_info.range ri) with
+      match change_range (Lazy.force (Ocsigen_request_info.range ri)) with
       | None -> Lwt.return res
       | Some (_, _, Ocsigen_extensions.IR_ifmatch etag)
         when (match Ocsigen_http_frame.Result.etag res with
@@ -125,7 +126,7 @@ let compute_range ri res =
              in
 
              let resstream, skipfun =
-               Ocsigen_http_frame.Result.stream res
+               (Ocsigen_http_frame.Result.stream res)
              in
              (* stream transform *)
              let skipfun =
@@ -142,7 +143,7 @@ let compute_range ri res =
                resstream
              >>= fun new_s ->
              Lwt.return
-               (Ocsigen_http_frame.update res
+               (Ocsigen_http_frame.Result.update res
                   ~stream:(new_s, None)
                   ~code:206
                   ~headers:
@@ -165,9 +166,9 @@ let compute_range ri res =
                      (Http_headers.replace
                         Http_headers.content_range
                         ("bytes */"^Int64.to_string cl)
-                        (Ocsigen_http_frame.Result.headers res)) ())
+                        (Ocsigen_http_frame.Result.headers dr))
+                   ())
             | e -> Lwt.fail e)
-
     end
 
 let get_range http_frame =

@@ -14,61 +14,61 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (**
-Cache.
-Association tables (from any kind of database)
-that keep the most recently used values in memory.
-It is also possible to set a maximum lifetime for data in the cache.
+   Cache.
+   Association tables (from any kind of database)
+   that keep the most recently used values in memory.
+   It is also possible to set a maximum lifetime for data in the cache.
 
-It is based on a structure of doubly linked lists with maximum size,
-that keeps only the mostly recently used values first, if you call the [up]
-function each time you use a value.
-(Insertion, remove and "up" in time 1).
-This structure is exported, so that it can be used in other cases.
+   It is based on a structure of doubly linked lists with maximum size,
+   that keeps only the mostly recently used values first, if you call the [up]
+   function each time you use a value.
+   (Insertion, remove and "up" in time 1).
+   This structure is exported, so that it can be used in other cases.
 
-Not (preemptive) thread safe.
+   Not (preemptive) thread safe.
 
-@author Vincent Balat
-@author Raphaël Proust (adding timers)
+   @author Vincent Balat
+   @author Raphaël Proust (adding timers)
 *)
 
 module Make :
   functor (A : sig type key type value end) ->
-    sig
+  sig
 
-      (** [new cache finder ?timer size] creates a cache object where [finder]
-          is the function responsible for retrieving non-cached data, [timer]
-          (if any) is the life span of cached values (in seconds) (values in the
-          cache are removed after their time is up) and [size] is the upper
-          bound to the number of simultaneoulsy cached elements.
+    (** [new cache finder ?timer size] creates a cache object where [finder]
+        is the function responsible for retrieving non-cached data, [timer]
+        (if any) is the life span of cached values (in seconds) (values in the
+        cache are removed after their time is up) and [size] is the upper
+        bound to the number of simultaneoulsy cached elements.
 
-          Whenever a value is found (using [find] method), it's lifespan is set
-          to [timer] (or not if the cache is not time bounded). If the value was
-          already cached, it's lifespan is reset to [timer].
+        Whenever a value is found (using [find] method), it's lifespan is set
+        to [timer] (or not if the cache is not time bounded). If the value was
+        already cached, it's lifespan is reset to [timer].
 
-          Using [timer] allow one to create a cache
-          bounded both in space and time. It is to be noted that real lifespan
-          of values is always slightly greater than [timer]. *)
-      class cache : (A.key -> A.value Lwt.t) -> ?timer:float -> int ->
+        Using [timer] allow one to create a cache
+        bounded both in space and time. It is to be noted that real lifespan
+        of values is always slightly greater than [timer]. *)
+    class cache : (A.key -> A.value Lwt.t) -> ?timer:float -> int ->
       object
 
-      (** Find the cached value associated to the key, or binds this
-          value in the cache using the function [finder] passed as argument
-          to [create], and returns this value *)
-      method find : A.key -> A.value Lwt.t
+        (** Find the cached value associated to the key, or binds this
+            value in the cache using the function [finder] passed as argument
+            to [create], and returns this value *)
+        method find : A.key -> A.value Lwt.t
 
-      (** Find the cached value associated to the key. Raises [Not_found]
-          if the key is not present in the cache *)
-      method find_in_cache : A.key -> A.value
+        (** Find the cached value associated to the key. Raises [Not_found]
+            if the key is not present in the cache *)
+        method find_in_cache : A.key -> A.value
 
-      method remove : A.key -> unit
-      method add : A.key -> A.value -> unit
-      method clear : unit -> unit
-      method size : int
-    end
- end
+        method remove : A.key -> unit
+        method add : A.key -> A.value -> unit
+        method clear : unit -> unit
+        method size : int
+      end
+  end
 
 
 (** Clear the contents of all the existing caches *)

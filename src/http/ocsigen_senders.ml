@@ -424,8 +424,8 @@ struct
        <title>Listing Directory: "^st^"</title>\n</head>\n\
                                        <body><h1>"^st^"</h1>\n\
                                                        <table summary=\"Contenu du dossier "^st^"\">\n\
-                                                                                                 <tr id=\"headers\"><th></th><th>Name</th><th>Size</th>\
-                                                                                                 <th>Last modified</th></tr>\n"
+                                                                 <tr id=\"headers\"><th></th><th>Name</th><th>Size</th>\
+                                                                 <th>Last modified</th></tr>\n"
 
     and back = match parent with
       | None -> ""
@@ -434,8 +434,8 @@ struct
          <td class=\"img\"><img src=\"/ocsigenstuff/back.png\" alt=\"\" /></td>\n\
          <td><a href=\""^parent^"\">Parent Directory</a></td>\n\
                                  <td>"^(Int64.to_string stat.Unix.LargeFile.st_size)^"</td>\n\
-                                                                                      <td>"^(date stat.Unix.LargeFile.st_mtime)^"</td>\n\
-                                                                                                                                 </tr>\n"
+                                                                                     <td>"^(date stat.Unix.LargeFile.st_mtime)^"</td>\n\
+                                                                                                        </tr>\n"
 
     and after=
       "</table>\

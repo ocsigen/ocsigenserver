@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Sending and receiving HTTP frames *)
 
@@ -69,8 +69,8 @@ val wait_all_senders : connection -> unit Lwt.t
 (****)
 
 (**
-This function may return any I/O error from the channel, or a
-interrupted stream exception.
+   This function may return any I/O error from the channel, or a
+   interrupted stream exception.
 *)
 val write_stream :
   ?chunked:bool -> Lwt_chan.out_channel -> string Ocsigen_stream.t -> unit Lwt.t
@@ -92,18 +92,18 @@ val send_100_continue : slot -> unit Lwt.t
 (** send an HTTP message.
     [send] may also fail with [Interrupted_stream] exception if the input
     stream is interrupted.
- *)
+*)
 val send :
-    ?reopen:(unit -> unit Lwt.t) ->
-    slot ->
-    clientproto:Ocsigen_http_frame.Http_header.proto ->
-    ?mode:Ocsigen_http_frame.Http_header.http_mode ->
-    ?proto:Ocsigen_http_frame.Http_header.proto ->
-    ?keep_alive:bool ->
-    head:bool ->
-    sender:sender_type ->
-    Ocsigen_http_frame.result ->
-    unit Lwt.t
+  ?reopen:(unit -> unit Lwt.t) ->
+  slot ->
+  clientproto:Ocsigen_http_frame.Http_header.proto ->
+  ?mode:Ocsigen_http_frame.Http_header.http_mode ->
+  ?proto:Ocsigen_http_frame.Http_header.proto ->
+  ?keep_alive:bool ->
+  head:bool ->
+  sender:sender_type ->
+  Ocsigen_http_frame.result ->
+  unit Lwt.t
 
 val abort : connection -> unit
 

@@ -94,9 +94,6 @@ module Make (Server : Ocsigen_common_server.S) = struct
         (("Fatal - Uncaught exception: "^Printexc.to_string exn),
          100)
 
-
-
-
   (* loading new configuration *)
   let reload_conf s =
     try
@@ -114,6 +111,11 @@ module Make (Server : Ocsigen_common_server.S) = struct
 
     (* That function cannot be interrupted??? *)
     Ocsigen_messages.warning "Reloading config file" ;
+    (try
+       match parse_config ?file () with
+       | [] -> ()
+       | s::_ -> reload_conf s
+     with e -> errlog (fst (errmsg e)));
 
     (try
        match parse_config ?file () with

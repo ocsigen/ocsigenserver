@@ -129,7 +129,7 @@ let gen dir = function
          let host =
            match
              if dir.keephost
-             then match RI.host ri.request_info with
+             then match Ocsigen_request_info.host ri.request_info with
                | Some h -> Some h
                | None -> None
              else None
@@ -152,18 +152,60 @@ let gen dir = function
 
          let do_request () =
            let ri = ri.request_info in
-           (* let address = Unix.string_of_inet_addr (fst (get_server_address
-            * ri)) in *)
-           let address = Unix.string_of_inet_addr
-             @@ RI.remote_inet_addr ri in
+           let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
            let forward =
-             String.concat ", " (RI.remote_ip ri :: (RI.forward_ip ri @ [address]))
+             String.concat ", "
+               ((Ocsigen_request_info.remote_ip ri)
+                :: ((Ocsigen_request_info.forward_ip ri)
+                    @ [address]))
            in
            let proto =
-             if RI.ssl ri
+             if Ocsigen_request_info.ssl ri
              then "https"
              else "http"
            in
+(*
+           let headers =
+             Http_headers.replace
+               Http_headers.x_forwarded_proto
+               proto
+               (Http_headers.replace
+                  Http_headers.x_forwarded_for
+                  forward
+                  ((Ocsigen_request_info.http_frame ri)
+                   .Ocsigen_http_frame.frame_header
+                   .Ocsigen_http_frame.Http_header.headers)) in
+           if dir.pipeline then
+             Ocsigen_http_client.raw_request
+               ~headers
+               ~https
+               ~port
+               ~client:(Ocsigen_request_info.client ri)
+               ~keep_alive:true
+               ~content:
+                 (Ocsigen_request_info.http_frame ri)
+                 .Ocsigen_http_frame.frame_content
+               ?content_length:(Ocsigen_request_info.content_length ri)
+               ~http_method:(Ocsigen_request_info.meth ri)
+               ~host
+               ~inet_addr
+               ~uri ()
+           else
+             fun () ->
+               Ocsigen_http_client.basic_raw_request
+                 ~headers
+                 ~https
+                 ~port
+                 ~content:
+                   (Ocsigen_request_info.http_frame ri)
+                   .Ocsigen_http_frame.frame_content
+                 ?content_length:(Ocsigen_request_info.content_length ri)
+                 ~http_method:(Ocsigen_request_info.meth ri)
+                 ~host
+                 ~inet_addr
+                 ~uri ()
+*)
+
            let (meth, version, headers, uri', body) =
              Ocsigen_generate.to_cohttp_request ri in
            let headers =
@@ -186,13 +228,16 @@ let gen dir = function
 
                  >|= frame_of_cohttp
                  >>= fun http_frame ->
-
                  let headers =
-                   http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.headers
+                   http_frame
+                   .Ocsigen_http_frame.frame_header
+                   .Ocsigen_http_frame.Http_header.headers
                  in
                  let code =
                    match
-                     http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.mode
+                     http_frame
+                     .Ocsigen_http_frame.frame_header
+                     .Ocsigen_http_frame.Http_header.mode
                    with
                    | Ocsigen_http_frame.Http_header.Answer code -> code
                    | _ -> raise Bad_answer_from_http_server
@@ -211,8 +256,6 @@ let gen dir = function
                           http_frame.Ocsigen_http_frame.frame_abort ()
                         | `Success ->
                           Lwt.return ());
-
-
                    Lwt.return
                      (Ocsigen_http_frame.Result.update empty_result
                         ~content_length:length
@@ -232,7 +275,6 @@ let gen dir = function
                           http_frame.Ocsigen_http_frame.frame_abort ()
                         | `Success ->
                           Lwt.return ());
-
                    Lwt.return
                      (Ocsigen_http_frame.Result.update default_result
                         ~content_length:length

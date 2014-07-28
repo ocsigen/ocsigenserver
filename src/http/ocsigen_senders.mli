@@ -15,22 +15,22 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (** Functions to create results for various kinds of documents *)
 
 
 module File_content : Ocsigen_http_frame.HTTP_CONTENT
   with  type t =
-   string * Ocsigen_charset_mime.charset_assoc * Ocsigen_charset_mime.mime_assoc
+    string * Ocsigen_charset_mime.charset_assoc * Ocsigen_charset_mime.mime_assoc
 
 module Html5_content :
   Ocsigen_http_frame.HTTP_CONTENT with type t = Html5.M.doc
 
 module Make_XML_Content(Xml : Xml_sigs.Iterable)
-                       (Typed_xml : Xml_sigs.Typed_xml with module Xml := Xml) :
+    (Typed_xml : Xml_sigs.Typed_xml with module Xml := Xml) :
   Ocsigen_http_frame.HTTP_CONTENT
   with type t = Typed_xml.doc
-  and type options = Http_headers.accept Lazy.t
+   and type options = Http_headers.accept Lazy.t
 
 
 (** content * content-type *)
@@ -43,8 +43,8 @@ module Stream_content :
 (** streams and content-type *)
 module Streamlist_content :
   Ocsigen_http_frame.HTTP_CONTENT
-with type t = (unit -> string Ocsigen_stream.t Lwt.t) list
-      * string
+  with type t = (unit -> string Ocsigen_stream.t Lwt.t) list
+                * string
 
 module Empty_content :
   Ocsigen_http_frame.HTTP_CONTENT with type t = unit
@@ -56,20 +56,20 @@ module Directory_content :
 (** error code and/or exception *)
 module Error_content :
   Ocsigen_http_frame.HTTP_CONTENT
-with type t = int option * exn option * Ocsigen_cookies.cookieset
+  with type t = int option * exn option * Ocsigen_cookies.cookieset
 
 
 
 (** Sending an error page *)
 val send_error :
-    ?code:int ->
-    ?exn:exn ->
-    Ocsigen_http_com.slot ->
-    clientproto:Ocsigen_http_frame.Http_header.proto ->
-    ?mode:Ocsigen_http_frame.Http_header.http_mode ->
-    ?proto:Ocsigen_http_frame.Http_header.proto ->
-    ?cookies:Ocsigen_cookies.cookieset ->
-    head:bool ->
-    sender:Ocsigen_http_com.sender_type ->
-    unit ->
-    unit Lwt.t
+  ?code:int ->
+  ?exn:exn ->
+  Ocsigen_http_com.slot ->
+  clientproto:Ocsigen_http_frame.Http_header.proto ->
+  ?mode:Ocsigen_http_frame.Http_header.http_mode ->
+  ?proto:Ocsigen_http_frame.Http_header.proto ->
+  ?cookies:Ocsigen_cookies.cookieset ->
+  head:bool ->
+  sender:Ocsigen_http_com.sender_type ->
+  unit ->
+  unit Lwt.t

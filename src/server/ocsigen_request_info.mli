@@ -3,12 +3,12 @@ open Ocsigen_cookies
 type ifrange = IR_No | IR_Ifunmodsince of float | IR_ifmatch of string
 
 type file_info = {
-    tmp_filename: string;
-    filesize: int64;
-    raw_original_filename: string;
-    original_basename: string ;
-    file_content_type: ((string * string) * (string * string) list) option;
-  }
+  tmp_filename: string;
+  filesize: int64;
+  raw_original_filename: string;
+  original_basename: string ;
+  file_content_type: ((string * string) * (string * string) list) option;
+}
 
 (** The request info *)
 type request_info
@@ -39,11 +39,11 @@ val make :
   get_params:(string * string) list Lazy.t ->
   ?initial_get_params:(string * string) list Lazy.t ->
   post_params:(string option * Int64.t option ->
-                  (string * string) list Lwt.t)
-                 option ->
+               (string * string) list Lwt.t)
+      option ->
   files:(string option * Int64.t option ->
-            (string * file_info) list Lwt.t)
-           option ->
+         (string * file_info) list Lwt.t)
+      option ->
   remote_inet_addr:Unix.inet_addr ->
   remote_ip:string ->
   ?remote_ip_parsed:Ipaddr.t Lazy.t ->
@@ -58,7 +58,7 @@ val make :
   ifnonematch:string list option ->
   ifmatch:string list option ->
   content_type:((string * string) * (string * string) list)
-                  option ->
+      option ->
   content_type_string:string option ->
   content_length:int64 option ->
   referer:string option Lazy.t ->
@@ -72,7 +72,7 @@ val make :
   http_frame:Ocsigen_http_frame.t ->
   ?request_cache:Polytables.t ->
   range:((int64 * int64) list * int64 option * ifrange) option
-           Lazy.t ->
+      Lazy.t ->
   ?timeofday:float ->
   ?nb_tries:int ->
   ?connection_closed:unit Lwt.t ->
@@ -97,10 +97,10 @@ val update :
   ?initial_get_params:(string * string) list Lazy.t ->
   ?post_params:(string option * Int64.t option ->
                 (string * string) list Lwt.t)
-               option ->
+    option ->
   ?files:(string option * Int64.t option ->
           (string * file_info) list Lwt.t)
-         option ->
+    option ->
   ?remote_inet_addr:Unix.inet_addr ->
   ?remote_ip:string ->
   ?remote_ip_parsed:Ipaddr.t Lazy.t ->
@@ -115,7 +115,7 @@ val update :
   ?ifnonematch:string list option ->
   ?ifmatch:string list option ->
   ?content_type:((string * string) * (string * string) list)
-                option ->
+    option ->
   ?content_type_string:string option ->
   ?content_length:int64 option ->
   ?referer:string option Lazy.t ->
@@ -129,7 +129,7 @@ val update :
   ?http_frame:Ocsigen_http_frame.t ->
   ?request_cache:Polytables.t ->
   ?range:((int64 * int64) list * int64 option * ifrange) option
-         Lazy.t ->
+    Lazy.t ->
   ?timeofday:float ->
   ?nb_tries:int ->
   ?connection_closed:unit Lwt.t ->

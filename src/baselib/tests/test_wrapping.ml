@@ -4,11 +4,11 @@ let _ = Printexc.record_backtrace true
 (*** simple wrap test ***)
 
 type a =
-    { a : float;
-      a_wrap : a Ocsigen_wrap.wrapper; }
+  { a : float;
+    a_wrap : a Ocsigen_wrap.wrapper; }
 
 let a_wrap () = Ocsigen_wrap.create_wrapper 
-  (fun t -> { a = t.a +. 1.; a_wrap = Ocsigen_wrap.empty_wrapper })
+    (fun t -> { a = t.a +. 1.; a_wrap = Ocsigen_wrap.empty_wrapper })
 
 let a i = { a = i; a_wrap = a_wrap () }
 
@@ -26,13 +26,13 @@ let _,_ = Ocsigen_wrap.wrap va
 (*** multiple wrap test ***)
 
 type b =
-    { b : string;
-      ba : a;
-      b' : string;
-      b_wrap : b Ocsigen_wrap.wrapper; }
+  { b : string;
+    ba : a;
+    b' : string;
+    b_wrap : b Ocsigen_wrap.wrapper; }
 
 let b_wrap () = Ocsigen_wrap.create_wrapper 
-  (fun t -> t.b, t.ba )
+    (fun t -> t.b, t.ba )
 
 let b s f = { b = s; b' = s; b_wrap = b_wrap (); ba = a f }
 
@@ -50,17 +50,17 @@ let _,vb'' = Ocsigen_wrap.wrap [2,[1.,[vb,4,ref 0],ref 42]]
 
 let () =
   match vb'' with
-    | [2,[1.,[vb',4,{ contents = 0}],{ contents = 42}]] ->
-      assert (
-	let (t,f) = Obj.magic (vb') in
-	t == tst_string && ( f -. 4.14 < 0.0001 ))
-    | _ -> assert false
+  | [2,[1.,[vb',4,{ contents = 0}],{ contents = 42}]] ->
+    assert (
+      let (t,f) = Obj.magic (vb') in
+      t == tst_string && ( f -. 4.14 < 0.0001 ))
+  | _ -> assert false
 
 
 (*** create wrap during wrap test ***)
 
 let b'_wrap () = Ocsigen_wrap.create_wrapper 
-  (fun t -> t.b, a 1.2 )
+    (fun t -> t.b, a 1.2 )
 
 let b' s f = { b = s; b' = s; b_wrap = b'_wrap (); ba = a f }
 
@@ -70,9 +70,9 @@ let _,vb'' = Ocsigen_wrap.wrap vb'
 
 let () =
   match (Obj.magic vb'') with
-    | (x,y) -> 
-      assert (x == vb'.b);
-      assert (y.a -. 4.14 < 0.0001 )
+  | (x,y) -> 
+    assert (x == vb'.b);
+    assert (y.a -. 4.14 < 0.0001 )
 
 
 (*** big value copy ***)
@@ -109,9 +109,9 @@ let d_val = (Some (ref 0))
 let _ = Weak.set d 0 d_val
 
 type d =
-    { da : int;
-      dw : int Weak.t;
-      dm : d Ocsigen_wrap.wrapper; }
+  { da : int;
+    dw : int Weak.t;
+    dm : d Ocsigen_wrap.wrapper; }
 
 let d_wrap () = Ocsigen_wrap.create_wrapper (fun {da;dw} -> Weak.get dw 0,da)
 
@@ -136,14 +136,14 @@ let r',push = React.E.create ()
 let r = React.E.map (fun i -> i+1) r'
 
 type toto =
-    { a : float;
-      mtoto : toto Ocsigen_wrap.wrapper; }
+  { a : float;
+    mtoto : toto Ocsigen_wrap.wrapper; }
 
 type t =
-    { v1 : int;
-      v2 : toto;
-      v3 : int React.event;
-      mt : t Ocsigen_wrap.wrapper; }
+  { v1 : int;
+    v2 : toto;
+    v3 : int React.event;
+    mt : t Ocsigen_wrap.wrapper; }
 
 let i = ref 0
 
@@ -162,13 +162,13 @@ let _,v' = Ocsigen_wrap.wrap vt
 (*** closure copy test ***)
 
 type t1 =
-    { t1a : float;
-      t1mark : t1 Ocsigen_wrap.wrapper; }
+  { t1a : float;
+    t1mark : t1 Ocsigen_wrap.wrapper; }
 
 type t2 =
-    { t2t1 : t1;
-      t2f : (int ref -> unit) option;
-      t2mark : t2 Ocsigen_wrap.wrapper; }
+  { t2t1 : t1;
+    t2f : (int ref -> unit) option;
+    t2mark : t2 Ocsigen_wrap.wrapper; }
 
 let r1 = ref 13
 let r2 = ref 42
@@ -176,10 +176,10 @@ let r3 = ref 88
 
 let t1mark () = Ocsigen_wrap.create_wrapper (fun t -> incr r1; { t1a = 3.14; t1mark = Ocsigen_wrap.empty_wrapper } )
 let t2mark () = Ocsigen_wrap.create_wrapper (fun t -> 
-  (match t.t2f with
-    | Some f -> f r2;
-    | None -> assert false);
-  { t with t2f = None; t2mark = Ocsigen_wrap.empty_wrapper } )
+    (match t.t2f with
+     | Some f -> f r2;
+     | None -> assert false);
+    { t with t2f = None; t2mark = Ocsigen_wrap.empty_wrapper } )
 
 let t1 = { t1a = 1.1; t1mark = t1mark () }
 let t2 = { t2t1 = t1; t2f = Some (fun r -> incr r; incr r3); t2mark = t2mark () }

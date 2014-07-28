@@ -156,7 +156,7 @@ let gen ~usermode ?cache dir = function
              (Ocsigen_http_frame.Result.update answer ~headers:
                 ((Ocsigen_http_frame.Result.headers answer)
                  << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
-                 << (Http_headers.expires, To_cohttp.to_date (Unix.time () +. float_of_int duration))) ())
+                 << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
          in
          Lwt.return (Ext_found (fun () -> Lwt.return answer))
       )
