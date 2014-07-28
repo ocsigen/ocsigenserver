@@ -404,7 +404,7 @@ module Configuration : sig
       @param elements Specifications of the child elements
       @param pcdata Function to be applied on the PCDATA ([ignore_blank_pcdata] by default)
       @param other_elements Optional function to be applied on unexpected child elements
-      @raise Error_in_user_config_file If an element (resp. attribute) occurs
+      @raise Error_in_config_file If an element (resp. attribute) occurs
         which is not specified by the [element] (resp. [attribute]) parameter
         and no function [other_elements] (resp. other_attributes) is provided
     *)

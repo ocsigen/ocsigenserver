@@ -11,3 +11,10 @@ Then configure your hosts as in this example:
 <rewrite regexp="(.*)" url="toto/\1"/>
 }}}
 The syntax of regular expression is PCRE's one.
+
+By default, the modified request will restart from the beginning, as if
+it were a new request.
+If you do not want to restart, but just continue to the next options
+in the configuration file, add attribute {{{continue="continue"}}}.
+
+<<| Attribute fullrewrite is not documented. What is it? --Vincent >>

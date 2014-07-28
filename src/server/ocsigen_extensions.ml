@@ -809,41 +809,45 @@ module Make (Server : Ocsigen_common_server.S) = struct
           | None ->
             raise (Error_in_user_config_file
                      ("Unexpected attribute "^attribute^" in tag "^in_tag))
-
-    let rec process_element ~in_tag ~elements:spec_elements ?pcdata:spec_pcdata ?other_elements:spec_other_elements =
-      function | Simplexmlparser.PCData str ->
-        let spec_pcdata = Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata in
+    let rec process_element ~in_tag ~elements:spec_elements
+        ?pcdata:spec_pcdata ?other_elements:spec_other_elements =
+      function
+      | Simplexmlparser.PCData str ->
+        let spec_pcdata =
+          Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata
+        in
         spec_pcdata str
-               | Simplexmlparser.Element (name, attributes, elements) ->
-                 try
-                   let spec = List.assoc name spec_elements in
-                   List.iter
-                     (check_attribute_occurrence ~in_tag:name attributes)
-                     spec.attributes;
-                   List.iter
-                     (check_element_occurrence ~in_tag:name elements)
-                     spec.elements;
-                   spec.init ();
-                   List.iter
-                     (process_attribute ~in_tag:name
-                        ~attributes:spec.attributes
-                        ?other_attributes:spec.other_attributes)
-                     attributes;
-                   List.iter
-                     (process_element ~in_tag:name
-                        ~elements:spec.elements
-                        ?pcdata:spec.pcdata
-                        ?other_elements:spec.other_elements)
-                     elements
-                 with Not_found ->
-                   match spec_other_elements with
-                   | Some spec_other_elements ->
-                     spec_other_elements name attributes elements
-                   | None ->
-                     raise (Error_in_user_config_file
-                              ("Unknown tag "^name^" in tag "^in_tag))
+      | Simplexmlparser.Element (name, attributes, elements) ->
+        try
+          let spec = List.assoc name spec_elements in
+          List.iter
+            (check_attribute_occurrence ~in_tag:name attributes)
+            spec.attributes;
+          List.iter
+            (check_element_occurrence ~in_tag:name elements)
+            spec.elements;
+          spec.init ();
+          List.iter
+            (process_attribute ~in_tag:name
+               ~attributes:spec.attributes
+               ?other_attributes:spec.other_attributes)
+            attributes;
+          List.iter
+            (process_element ~in_tag:name
+               ~elements:spec.elements
+               ?pcdata:spec.pcdata
+               ?other_elements:spec.other_elements)
+            elements
+        with Not_found ->
+          match spec_other_elements with
+          | Some spec_other_elements ->
+            spec_other_elements name attributes elements
+          | None ->
+            raise (Error_in_config_file
+                     ("Unknown tag "^name^" in tag "^in_tag))
 
-    let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements ?(init=ignore) elements =
+    let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements
+        ?(init=ignore) elements =
       List.iter
         (check_element_occurrence ~in_tag elements)
         spec_elements;
