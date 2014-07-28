@@ -1,5 +1,6 @@
 
 opam repository add 3.0.0-cohttp ./opam-3.0.0-cohttp/
+opam update
 opam pin add --no-action ocsigenserver .
 opam install camlzip
 opam install --deps-only ocsigenserver
