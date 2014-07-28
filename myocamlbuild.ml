@@ -715,16 +715,16 @@ let subst vars s =
 
 let subst_rule file args =
   rule file ~dep:(file^".in") ~prod:file
-    (fun env build ->
-       let ifile = env (file^".in") in
-       let ic = open_in ifile in
-       let ilen = in_channel_length ic in
-       let content = String.create ilen in
+      (fun env build ->
+         let ifile = env (file^".in") in
+         let ic = open_in ifile in
+         let ilen = in_channel_length ic in
+         let content = String.create ilen in
 
-       really_input ic content 0 ilen;
+         really_input ic content 0 ilen;
 
-       let res = subst args content in
-       Echo( [ res ], env file));;
+         let res = subst args content in
+         Echo( [ res ], env file));;
 
 let fold func =
   let l = ref [] in
@@ -756,12 +756,12 @@ let dependences =
       (["query"; "-p-format"; "-recursive" ] @ server_packages) input_line in
   concat (List.mapi
             (fun i x -> if i = 0 then p "\"%s\"" x else p "; \"%s\"" x) (l @
-            server_packages'))
+                                                                         server_packages'))
 
 let where_ocaml =
   let concat l = List.fold_right (^) l "" in
   let result = Ocamlbuild_pack.My_unix.run_and_open "ocamlc -where"
-    (fun ic -> fold (fun () -> input_line ic))
+      (fun ic -> fold (fun () -> input_line ic))
   in concat result
 
 let env_filename = Pathname.basename BaseEnvLight.default_filename
@@ -774,12 +774,12 @@ let name = BaseEnvLight.var_get "pkg_name" env
 
 let choose_rule ifiles ofile func =
   rule ofile
-    ~deps:ifiles
-    ~prod:ofile
-    (fun env build ->
-       let file = func ifiles in
-       let content = load_file file in
-       Echo( [ content ], env ofile));;
+      ~deps:ifiles
+      ~prod:ofile
+      (fun env build ->
+         let file = func ifiles in
+         let content = load_file file in
+         Echo( [ content ], env ofile));;
 
 let version =
   let fd = open_in "VERSION" in
@@ -788,24 +788,24 @@ let version =
 
 (* Or
  * let version = BaseEnvLight.var_get "pkg_version" env
- *)
+*)
 
 let configuration = [
   ("_VERSION_", version);
   ("_WARNING_",
    "Warning: this file has been generated from ocsigen_config.ml.in");
-  ("_LOG_DIR_", "/var/log/" ^ name);
-  ("_DATA_DIR_", "/var/lib/" ^ name);
-  ("_BIN_DIR_", "/usr/local/bin");
+  ("_LOG_DIR_", BaseEnvLight.var_get "logdir" env);
+  ("_DATA_DIR_", BaseEnvLight.var_get "datadir" env);
+  ("_BIN_DIR_", BaseEnvLight.var_get "bindir" env);
   ("_LIB_DIR_", libdir);
   ("_EXT_DIR_", libdir ^ "/" ^ name ^ "/extensions");
-  ("_STATIC_PAGES_DIR_", "/var/www/" ^ name);
+  ("_STATIC_PAGES_DIR_", BaseEnvLight.var_get "staticpagesdir" env);
   ("_UPLOAD_DIR_", "/tmp/");
-  ("_OCSIGEN_USER_", "www-data");
-  ("_OCSIGEN_GROUP_", "www-data");
+  ("_OCSIGEN_USER_", BaseEnvLight.var_get "ocsigen_user" env);
+  ("_OCSIGEN_GROUP_", BaseEnvLight.var_get "ocsigen_group" env);
   ("_PROJECT_NAME_", name);
-  ("_COMMAND_PIPE_", "/var/run/" ^ name ^ "_command");
-  ("_CONFIG_DIR_", "/etc/" ^ name);
+  ("_COMMAND_PIPE_", BaseEnvLight.var_get "command_pipe" env);
+  ("_CONFIG_DIR_", BaseEnvLight.var_get "sysconfdir" env);
   ("_PREEMPTIVE_", preemptive);
   ("_IS_NATIVE_", string_of_bool native);
   ("_DEPENDENCES_", dependences);
@@ -820,7 +820,7 @@ Ocamlbuild_plugin.dispatch (function
 
       if native
       then tag_file "src/baselib/dynlink_wrapper.ml"
-        ["native( " ^ (string_of_bool native) ^ ")"];
+          ["native( " ^ (string_of_bool native) ^ ")"];
 
       if commandline
       then
@@ -836,10 +836,10 @@ Ocamlbuild_plugin.dispatch (function
 
       pflag ["ocaml"; "ocamldep"] "native"
         (fun value ->
-          S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
+           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
       pflag ["ocaml"; "compile"] "native"
         (fun value ->
-          S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
+           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
 
       ()
     | x -> dispatch_default x);;

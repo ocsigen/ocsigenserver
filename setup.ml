@@ -7641,4 +7641,40 @@ let setup () = BaseSetup.setup setup_t;;
 
 # 7643 "setup.ml"
 (* OASIS_STOP *)
+
+let _ = BaseEnv.var_define
+    ~short_desc:(fun () -> "Ocsigen user")
+    ~arg_help:"user"
+    ~cli:BaseEnv.CLIAuto
+    "ocsigen_user"
+    (fun () -> "www-data")
+
+let _ = BaseEnv.var_define
+    ~short_desc:(fun () -> "Ocsigen group")
+    ~arg_help:"group"
+    ~cli:BaseEnv.CLIAuto
+    "ocsigen_group"
+    (fun () -> "www-data")
+
+let _ = BaseEnv.var_define
+    ~short_desc:(fun () -> "Command pipe")
+    ~arg_help:"file"
+    ~cli:BaseEnv.CLIAuto
+    "command_pipe"
+    (fun () -> "/var/run/ocsigenserver_command")
+
+let _ = BaseEnv.var_define
+    ~short_desc:(fun () -> "Log dir")
+    ~arg_help:"dir"
+    ~cli:BaseEnv.CLIAuto
+    "logdir"
+    (fun () -> "/var/log/ocsigenserver/")
+
+let _ = BaseEnv.var_define
+    ~short_desc:(fun () -> "Static files dir")
+    ~arg_help:"dir"
+    ~cli:BaseEnv.CLIAuto
+    "staticpagesdir"
+    (fun () -> "/var/www/ocsigenserver/")
+
 let () = setup ();;
