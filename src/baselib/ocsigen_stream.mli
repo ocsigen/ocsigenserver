@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 exception Interrupted of exn
 exception Cancelled
@@ -26,10 +26,10 @@ exception Finalized
 type 'a stream
 
 (** A stream may be composed by several substreams.
-   Thus a stream is either something that contains the current buffer and
-   a function to retrieve the following data,
-   or a finished stream with possibly another stream following.
- *)
+    Thus a stream is either something that contains the current buffer and
+    a function to retrieve the following data,
+    or a finished stream with possibly another stream following.
+*)
 type 'a step = private
   | Finished of 'a stream option
   | Cont of 'a * 'a stream
@@ -69,7 +69,7 @@ val finalize : 'a t -> outcome -> unit Lwt.t
 (** Cancel the stream, i.e. read the stream until the end, without decoding.
     Further tries to read on the stream will fail with exception
     {!Ocsigen_stream.Cancelled}
- *)
+*)
 val cancel : 'a t -> unit Lwt.t
 
 (** Consume without cancelling.
@@ -78,7 +78,7 @@ val consume : 'a t -> unit Lwt.t
 
 
 exception Stream_too_small
-  (** possibly with the size of the stream *)
+(** possibly with the size of the stream *)
 
 exception Stream_error of string
 exception String_too_large
@@ -109,8 +109,8 @@ val substream : string -> string step -> string step Lwt.t
 (*VVV à revoir : *)
 
 (** returns a stream reading from a file.
-   Do not forget to finalize the stream to close the file.
- *)
+    Do not forget to finalize the stream to close the file.
+*)
 val of_file : string -> string t
 
 (** returns a stream containing a string. *)

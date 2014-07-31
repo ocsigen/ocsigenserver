@@ -1,0 +1,13 @@
+S src/baselib/
+S src/extensions/
+S src/http/
+S src/migrate/
+S src/server/
+
+B src/baselib/
+B src/extensions/
+B src/http/
+B src/migrate/
+B src/server/
+
+PKG lwt.ssl lwt.extra ipaddr netstring netstring netstring-pcre findlib cryptokit tyxml tyxml.parser dynlink cohttp

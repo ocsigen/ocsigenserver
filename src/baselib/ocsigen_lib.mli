@@ -14,19 +14,19 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** This module contains some auxiliaries for the Ocsigenserver. In contrast to
     {!Ocsigen_lib_base}, the function may also refer to libraries other than the
     standard library.
-  *)
+*)
 
 include module type of Ocsigen_lib_base
   with type poly = Ocsigen_lib_base.poly
-  and type yesnomaybe = Ocsigen_lib_base.yesnomaybe
-  and type ('a, 'b) leftright = ('a, 'b) Ocsigen_lib_base.leftright
-  and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
-  and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
+   and type yesnomaybe = Ocsigen_lib_base.yesnomaybe
+   and type ('a, 'b) leftright = ('a, 'b) Ocsigen_lib_base.leftright
+   and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
+   and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
 
 (** Generate an unique and cryptographically safe random string.
     It is impossible to guess for other people and
@@ -59,8 +59,8 @@ module Url : sig
   val string_of_url_path : encode:bool -> path -> uri
   val parse : t ->
     bool option * string option * int option *
-      string (** the path, as a string, without the first / *) *
-      string list * string option *
-      (string * string) list Lazy.t
+    string (** the path, as a string, without the first / *) *
+    string list * string option *
+    (string * string) list Lazy.t
 
 end

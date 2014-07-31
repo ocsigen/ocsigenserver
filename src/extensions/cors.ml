@@ -27,15 +27,15 @@ open Lwt
 
 let default_frame () =
   (Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.default ())
-    ~code:200
-    ~content_length:(Some 0L) ())
+     ~code:200
+     ~content_length:(Some 0L) ())
 
 type config =
-    { allowed_method : Ocsigen_http_frame.Http_header.http_method list option;
-      (* None means: all method are accepted *)
-      allowed_credentials : bool;
-      max_age : int option;
-      exposed_headers : string list }
+  { allowed_method : Ocsigen_http_frame.Http_header.http_method list option;
+    (* None means: all method are accepted *)
+    allowed_credentials : bool;
+    max_age : int option;
+    exposed_headers : string list }
 
 let default_config =
   { allowed_method = None;
@@ -48,10 +48,10 @@ exception Refused
 let add_headers config rq response =
   match Lazy.force (Ocsigen_request_info
                     .origin rq.Ocsigen_extensions.request_info) with
-    | None -> return Ocsigen_extensions.Ext_do_nothing
-    | Some origin ->
-      Ocsigen_messages.debug (fun () -> Printf.sprintf "CORS: request with origin: %s" origin);
-      let res_headers = (Ocsigen_http_frame.Result.headers response) in
+  | None -> return Ocsigen_extensions.Ext_do_nothing
+  | Some origin ->
+    Ocsigen_messages.debug (fun () -> Printf.sprintf "CORS: request with origin: %s" origin);
+    let res_headers = (Ocsigen_http_frame.Result.headers response) in
 
     let res_headers = Http_headers.add
         Http_headers.access_control_allow_origin
@@ -65,81 +65,81 @@ let add_headers config rq response =
           Http_headers.access_control_allow_credentials
           "true"
           res_headers
-        else res_headers
-      in
+      else res_headers
+    in
 
-      let res_headers =
-        let req_method = Lazy.force
+    let res_headers =
+      let req_method = Lazy.force
           (Ocsigen_request_info
            .access_control_request_method rq.Ocsigen_extensions.request_info)
-        in
-        match req_method with
-            None -> res_headers
-          | Some request_method ->
-            let allowed_method =
-              match config.allowed_method with
-                | None -> true
-                | Some l ->
-                  try
-                    List.mem (Framepp.method_of_string request_method) l
-                  with
-                    | _ -> false in
-            if allowed_method
-            then Http_headers.add
-              Http_headers.access_control_allow_methods
-              request_method res_headers
-            else
-              (Ocsigen_messages.debug (fun () -> "CORS: Method refused");
-               raise Refused) in
+      in
+      match req_method with
+        None -> res_headers
+      | Some request_method ->
+        let allowed_method =
+          match config.allowed_method with
+          | None -> true
+          | Some l ->
+            try
+              List.mem (Framepp.method_of_string request_method) l
+            with
+            | _ -> false in
+        if allowed_method
+        then Http_headers.add
+            Http_headers.access_control_allow_methods
+            request_method res_headers
+        else
+          (Ocsigen_messages.debug (fun () -> "CORS: Method refused");
+           raise Refused) in
 
-      let res_headers =
-        let req_headers = Lazy.force
+    let res_headers =
+      let req_headers = Lazy.force
           (Ocsigen_request_info
            .access_control_request_headers rq.Ocsigen_extensions.request_info)
-        in
-        match req_headers with
-            None -> res_headers
-          | Some request_headers ->
-            Http_headers.add Http_headers.access_control_allow_headers
-              (String.concat ", " request_headers) res_headers in
+      in
+      match req_headers with
+        None -> res_headers
+      | Some request_headers ->
+        Http_headers.add Http_headers.access_control_allow_headers
+          (String.concat ", " request_headers) res_headers in
 
-      let res_headers =
-        match config.max_age with
-          | None -> res_headers
-          | Some max_age ->
-            Http_headers.add Http_headers.access_control_max_age
-              (string_of_int max_age) res_headers in
+    let res_headers =
+      match config.max_age with
+      | None -> res_headers
+      | Some max_age ->
+        Http_headers.add Http_headers.access_control_max_age
+          (string_of_int max_age) res_headers in
 
-      let res_headers =
-        match config.exposed_headers with
-          | [] -> res_headers
-          | _ ->
-            Http_headers.add Http_headers.access_control_expose_headers
-              (String.concat ", " config.exposed_headers) res_headers in
+    let res_headers =
+      match config.exposed_headers with
+      | [] -> res_headers
+      | _ ->
+        Http_headers.add Http_headers.access_control_expose_headers
+          (String.concat ", " config.exposed_headers) res_headers in
 
-      return
-        (Ocsigen_extensions.Ext_found (fun () -> return
-          (Ocsigen_http_frame.Result.update response
-            ~headers:res_headers ())))
+    return
+      (Ocsigen_extensions.Ext_found (fun () -> return
+                                        (Ocsigen_http_frame.Result.update response
+                                           ~headers:res_headers ())))
 
 let main config = function
 
   | Ocsigen_extensions.Req_not_found (_, rq) ->
-      begin match (Ocsigen_request_info.meth
-                     rq.Ocsigen_extensions.request_info) with
-        | Ocsigen_http_frame.Http_header.OPTIONS ->
-          Ocsigen_messages.debug (fun () -> "CORS: OPTIONS request");
-          begin
-            try
-              add_headers config rq (default_frame ())
-            with
-              | Refused ->
-                Ocsigen_messages.debug (fun () -> "CORS: Refused request");
-                Lwt.return Ocsigen_extensions.Ext_do_nothing
-          end
-        | _ ->
+    begin match (Ocsigen_request_info.meth
+                   rq.Ocsigen_extensions.request_info) with
+    | Ocsigen_http_frame.Http_header.OPTIONS ->
+      Ocsigen_messages.debug (fun () -> "CORS: OPTIONS request");
+      begin
+        try
+          add_headers config rq (default_frame ())
+        with
+        | Refused ->
+          Ocsigen_messages.debug (fun () -> "CORS: Refused request");
           Lwt.return Ocsigen_extensions.Ext_do_nothing
       end
+    | _ ->
+      Lwt.return Ocsigen_extensions.Ext_do_nothing
+    end
 
   | Ocsigen_extensions.Req_found (rq,response) ->
     Ocsigen_messages.debug (fun () -> "CORS: answered request");
@@ -183,7 +183,7 @@ let site_creator (_ : Ocsigen_extensions.virtual_hosts) _ = parse_config
 let user_site_creator (_ : Ocsigen_extensions.userconf_info) = site_creator
 
 let () = Ocsigen_extensions.register_extension
-  ~name:"CORS"
-  ~fun_site:site_creator
-  ~user_fun_site:user_site_creator
-  ()
+    ~name:"CORS"
+    ~fun_site:site_creator
+    ~user_fun_site:user_site_creator
+    ()

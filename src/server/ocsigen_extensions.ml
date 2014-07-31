@@ -142,7 +142,47 @@ module Make (Server : Ocsigen_common_server.S) = struct
 
   (*****************************************************************************)
 
-  (* Main server configuration *)
+  let do_not_serve_to_regexp d =
+    try Hashtbl.find hash_consed_do_not_serve d
+    with Not_found ->
+      let wrap l = if l = [] then None else Some l
+      and bind f = function None -> None | Some v -> Some (f v)
+      in
+      let files, extensions, regexps =
+        wrap d.do_not_serve_files,
+        wrap d.do_not_serve_extensions,
+        wrap d.do_not_serve_regexps
+      in
+      let paren_quote l =
+        String.concat "|" (List.map (fun s -> Printf.sprintf "(%s)"
+                                        (Netstring_pcre.quote s)) l)
+      and paren l =
+        String.concat "|" (List.map (fun s -> Printf.sprintf "(%s)"  s) l)
+      in
+      let files = bind paren_quote files
+      and extensions = bind paren_quote extensions
+      and regexps = bind paren regexps
+      in
+      let files = bind (Printf.sprintf ".*/(%s)") files
+      and extensions = bind (Printf.sprintf ".*\\.(%s)") extensions
+      in
+      let l = List.fold_left (fun r -> function None -> r | Some v -> v :: r)
+          [] [files;extensions;regexps]
+      in
+      let regexp =
+        if l = [] then
+          (* This regexp should not never match *) "$^"
+        else
+          Printf.sprintf "^(%s)$" (paren l)
+      in
+      (try
+         Ocsigen_messages.debug (fun () -> Printf.sprintf
+                                    "Compiling exclusion regexp %s" regexp);
+         let r = Netstring_pcre.regexp regexp in
+         Hashtbl.add hash_consed_do_not_serve d r;
+         r
+       with _ -> raise (IncorrectRegexpes d)
+      )
 
 
   type config_info = {
@@ -181,11 +221,16 @@ module Make (Server : Ocsigen_common_server.S) = struct
                                      target have the same owner *)
     | AlwaysFollowSymlinks (** Always follow symlinks *)
 
+
+
   (* Requests *)
   type request = {
     request_info: request_info;
     request_config: config_info;
   }
+
+  exception Ocsigen_Is_a_directory of (Ocsigen_request_info.request_info ->
+                                       Neturl.url)
 
 
   type answer =
@@ -300,7 +345,6 @@ module Make (Server : Ocsigen_common_server.S) = struct
   (*****************************************************************************)
 
 
-
   (* Default hostname is either the Host header or the hostname set in
      the configuration file. *)
   let get_hostname req =
@@ -376,9 +420,6 @@ module Make (Server : Ocsigen_common_server.S) = struct
     match site_path, url with
     | [], [] -> Some []
     | _ -> aux site_path url
-
-
-
 
   let add_to_res_cookies res cookies_to_set =
     if cookies_to_set = Ocsigen_cookies.Cookies.empty then
@@ -497,29 +538,30 @@ module Make (Server : Ocsigen_common_server.S) = struct
                                                            Ocsigen_charset_mime.set_default_charset
                                                              oldri.request_config.charset_assoc charset } }
           in
-          match site_match oldri path @@ Ocsigen_request_info.full_path oldri.request_info with
+          match site_match oldri path (Ocsigen_request_info.full_path oldri.request_info) with
           | None ->
             Ocsigen_messages.debug (fun () ->
                 "site \""^
                 (Url.string_of_url_path ~encode:true path)^
                 "\" does not match url \""^
                 (Url.string_of_url_path ~encode:true
-                 @@ Ocsigen_request_info.full_path oldri.request_info)^
+                   (Ocsigen_request_info.full_path oldri.request_info))^
                 "\".");
             Lwt.return (Ext_next e, cookies_to_set)
           | Some sub_path ->
             Ocsigen_messages.debug (fun () ->
                 "-------- site found: url \""^
                 (Url.string_of_url_path ~encode:true
-                 @@ Ocsigen_request_info.full_path oldri.request_info)^
+                   (Ocsigen_request_info.full_path oldri.request_info))^
                 "\" matches \""^
                 (Url.string_of_url_path ~encode:true path)^"\".");
             let ri = {oldri with
-                      request_info = Ocsigen_request_info.update
-                          oldri.request_info
-                          ~sub_path:sub_path
-                          ~sub_path_string:
-                            (Url.string_of_url_path ~encode:true sub_path) () }
+                      request_info =
+                        (Ocsigen_request_info.update oldri.request_info
+                           ~sub_path:sub_path
+                           ~sub_path_string:
+                             (Url.string_of_url_path
+                                ~encode:true sub_path) ()) }
             in
             parse_config awake cookies_to_set (Req_not_found (e, ri))
             >>= function
@@ -625,7 +667,6 @@ module Make (Server : Ocsigen_common_server.S) = struct
   let extension_void_fun_site : parse_config = fun _ _ _ _ _ -> function
     | Simplexmlparser.Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
     | _ -> raise (Error_in_config_file "Unexpected data in config file")
-
 
   let register_extension, parse_config_item, parse_user_site_item, get_beg_init, get_end_init, get_init_exn_handler =
     let ref_fun_site = ref default_parse_config in
@@ -810,40 +851,45 @@ module Make (Server : Ocsigen_common_server.S) = struct
             raise (Error_in_user_config_file
                      ("Unexpected attribute "^attribute^" in tag "^in_tag))
 
-    let rec process_element ~in_tag ~elements:spec_elements ?pcdata:spec_pcdata ?other_elements:spec_other_elements =
-      function | Simplexmlparser.PCData str ->
-        let spec_pcdata = Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata in
+    let rec process_element ~in_tag ~elements:spec_elements
+        ?pcdata:spec_pcdata ?other_elements:spec_other_elements =
+      function
+      | Simplexmlparser.PCData str ->
+        let spec_pcdata =
+          Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata
+        in
         spec_pcdata str
-               | Simplexmlparser.Element (name, attributes, elements) ->
-                 try
-                   let spec = List.assoc name spec_elements in
-                   List.iter
-                     (check_attribute_occurrence ~in_tag:name attributes)
-                     spec.attributes;
-                   List.iter
-                     (check_element_occurrence ~in_tag:name elements)
-                     spec.elements;
-                   spec.init ();
-                   List.iter
-                     (process_attribute ~in_tag:name
-                        ~attributes:spec.attributes
-                        ?other_attributes:spec.other_attributes)
-                     attributes;
-                   List.iter
-                     (process_element ~in_tag:name
-                        ~elements:spec.elements
-                        ?pcdata:spec.pcdata
-                        ?other_elements:spec.other_elements)
-                     elements
-                 with Not_found ->
-                   match spec_other_elements with
-                   | Some spec_other_elements ->
-                     spec_other_elements name attributes elements
-                   | None ->
-                     raise (Error_in_user_config_file
-                              ("Unknown tag "^name^" in tag "^in_tag))
+      | Simplexmlparser.Element (name, attributes, elements) ->
+        try
+          let spec = List.assoc name spec_elements in
+          List.iter
+            (check_attribute_occurrence ~in_tag:name attributes)
+            spec.attributes;
+          List.iter
+            (check_element_occurrence ~in_tag:name elements)
+            spec.elements;
+          spec.init ();
+          List.iter
+            (process_attribute ~in_tag:name
+               ~attributes:spec.attributes
+               ?other_attributes:spec.other_attributes)
+            attributes;
+          List.iter
+            (process_element ~in_tag:name
+               ~elements:spec.elements
+               ?pcdata:spec.pcdata
+               ?other_elements:spec.other_elements)
+            elements
+        with Not_found ->
+          match spec_other_elements with
+          | Some spec_other_elements ->
+            spec_other_elements name attributes elements
+          | None ->
+            raise (Error_in_config_file
+                     ("Unknown tag "^name^" in tag "^in_tag))
 
-    let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements ?(init=ignore) elements =
+    let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements
+        ?(init=ignore) elements =
       List.iter
         (check_element_occurrence ~in_tag elements)
         spec_elements;
@@ -910,24 +956,25 @@ module Make (Server : Ocsigen_common_server.S) = struct
     let host = Ocsigen_request_info.host ri in
     let port = Ocsigen_request_info.server_port ri in
 
-    (* let conn = Ocsigen_request_info.client ri in *)
+    (* let conn = client_connection (Ocsigen_request_info.client ri) in *)
     let awake = fun () -> () in
-      (*
-        if awake_next_request
-        then
-          (let tobeawoken = ref true in
-           (* must be awoken once and only once *)
-           fun () ->
-             if !tobeawoken then begin
-               tobeawoken := false;
-               Ocsigen_http_com.wakeup_next_request conn
-             end)
-        else id
-      *)
+    (*
+      if awake_next_request
+      then
+        (let tobeawoken = ref true in
+         (* must be awoken once and only once *)
+         fun () ->
+           if !tobeawoken then begin
+             tobeawoken := false;
+             Ocsigen_http_com.wakeup_next_request conn
+           end)
+      else id
+    in
+    *)
 
     let rec do2 sites cookies_to_set ri =
       Ocsigen_request_info.update_nb_tries ri (Ocsigen_request_info.nb_tries ri + 1);
-      if Ocsigen_request_info.nb_tries ri > Ocsigen_config.get_maxretries ()
+      if (Ocsigen_request_info.nb_tries ri) > Ocsigen_config.get_maxretries ()
       then fail Ocsigen_Looping_request
       else
         let string_of_host_option = function
@@ -935,7 +982,7 @@ module Make (Server : Ocsigen_common_server.S) = struct
           | Some h -> h^":"^(string_of_int port)
         in
         let rec aux_host ri prev_err cookies_to_set = function
-          | [] -> fail (Server.Ocsigen_http_error (cookies_to_set, prev_err))
+          | [] -> fail (Ocsigen_http_error (cookies_to_set, prev_err))
           | (h, conf_info, host_function)::l when
               host_match ~virtual_hosts:h ~host ~port ->
             Ocsigen_messages.debug (fun () ->
@@ -971,7 +1018,7 @@ module Make (Server : Ocsigen_common_server.S) = struct
                aux_host ri e (Ocsigen_cookies.add_cookies cook cookies_to_set) l
              (* try next site *)
              | Ext_stop_all (cook, e) ->
-               fail (Server.Ocsigen_http_error (cookies_to_set, e))
+               fail (Ocsigen_http_error (cookies_to_set, e))
              | Ext_continue_with (_, cook, e) ->
                aux_host ri e
                  (Ocsigen_cookies.add_cookies cook cookies_to_set) l
@@ -1000,6 +1047,109 @@ module Make (Server : Ocsigen_common_server.S) = struct
          awake ();
          Lwt.return ()
       )
+
+
+  (*****************************************************************************)
+
+
+
+  (* used to modify the url in ri (for example for retrying after rewrite) *)
+  let ri_of_url ?(full_rewrite = false) url ri =
+    let (_, host, _, url, path, params, get_params) = Url.parse url in
+    let host = match host with
+      | Some h -> host
+      | None -> Ocsigen_request_info.host ri
+    in
+    let path_string = Url.string_of_url_path ~encode:true path in
+    let original_fullpath, original_fullpath_string =
+      if full_rewrite
+      then (path, path_string)
+      else (Ocsigen_request_info.original_full_path ri, Ocsigen_request_info.original_full_path_string ri)
+    in
+    (* ri_original_full_path is not changed *)
+    Ocsigen_request_info.update ri
+      ~url_string:url
+      ~host:host
+      ~full_path_string:path_string
+      ~full_path:path
+      ~original_full_path_string:original_fullpath_string
+      ~original_full_path:original_fullpath
+      ~sub_path:path
+      ~sub_path_string:path_string
+      ~get_params_string:params
+      ~get_params:get_params ()
+
+
+
+  (*****************************************************************************)
+  (* This is used by server.ml.
+     I put that here because I need it to be accessible for profiling. *)
+  let sockets = ref []
+  let sslsockets = ref []
+
+  let get_number_of_connected,
+      incr_connected,
+      decr_connected,
+      wait_fewer_connected =
+    let connected = ref 0 in
+    let maxr = ref (-1000) in
+    let mvar = Lwt_mvar.create_empty () in
+    ((fun () -> !connected),
+     (fun n -> connected := !connected + n),
+     (fun () ->
+        let c = !connected in
+        connected := c - 1;
+        if !connected <= 0 && !sockets = [] && !sslsockets = []
+        then exit 0;
+        if c = !maxr
+        then begin
+          Ocsigen_messages.warning "Number of connections now ok";
+          maxr := -1000;
+          Lwt_mvar.put mvar ()
+        end
+        else Lwt.return ()
+     ),
+     (fun max ->
+        maxr := max;
+        Lwt_mvar.take mvar)
+    )
+
+  (*
+  let get_server_address ri =
+    let socket = Ocsigen_http_com.connection_fd (client_connection (Ocsigen_request_info.client ri)) in
+    match Lwt_ssl.getsockname socket with
+    | Unix.ADDR_UNIX _ -> failwith "unix domain socket have no ip"
+    | Unix.ADDR_INET (addr,port) -> addr,port
+  *)
+
+
+  (*****************************************************************************)
+  (* Default hostname is either the Host header or the hostname set in
+     the configuration file. *)
+  let get_hostname req =
+    if Ocsigen_config.get_usedefaulthostname ()
+    then req.request_config.default_hostname
+    else match Ocsigen_request_info.host req.request_info with
+      | None -> req.request_config.default_hostname
+      | Some host -> host
+
+
+  (*****************************************************************************)
+  (* Default port is either
+     - the port the server is listening at
+     - or the port in the Host header
+     - or the default port set in the configuration file. *)
+  let get_port req =
+    if Ocsigen_config.get_usedefaulthostname ()
+    then (if Ocsigen_request_info.ssl req.request_info
+          then req.request_config.default_httpsport
+          else req.request_config.default_httpport)
+    else match Ocsigen_request_info.port_from_host_field req.request_info with
+      | Some p -> p
+      | None ->
+        match Ocsigen_request_info.host req.request_info with
+        | Some _ -> if Ocsigen_request_info.ssl req.request_info then 443 else 80
+        | None -> Ocsigen_request_info.server_port req.request_info
 
   (*****************************************************************************)
   (* user directories *)
@@ -1035,6 +1185,8 @@ module Make (Server : Ocsigen_common_server.S) = struct
       with Not_found ->
         Ocsigen_messages.debug (fun () -> "No such user " ^ u);
         raise NoSuchUser
+
+  exception Not_concerned
 
 
   (*****************************************************************************)
@@ -1076,6 +1228,32 @@ module Make (Server : Ocsigen_common_server.S) = struct
       | None -> raise Not_concerned
       | Some _ -> (* Matching regexp found! *)
         Netstring_pcre.global_replace regexp dest path
+
+  (******************************************************************)
+  (* Extending commands *)
+  exception Unknown_command
+
+  let register_command_function, get_command_function =
+    let command_function = ref (fun ?prefix _ _ -> Lwt.fail Unknown_command) in
+    ((fun ?prefix f ->
+        let prefix' = prefix in
+        let old_command_function = !command_function in
+        command_function :=
+          (fun ?prefix s c ->
+             Lwt.catch (fun () -> old_command_function ?prefix s c)
+               (function
+                 | Unknown_command ->
+                   if prefix = prefix'
+                   then f s c
+                   else Lwt.fail Unknown_command
+                 | e -> Lwt.fail e))),
+     (fun () -> !command_function))
+
+
+  let () =
+    register_command_function
+      ~prefix:"logs"
+      (Ocsigen_messages.command_f Unknown_command)
 end
 
 include (Make(Ocsigen_cohttp_server))

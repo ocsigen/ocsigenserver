@@ -93,10 +93,10 @@ let rec try_connect sname =
          Unix.close Unix.stdin;
          Unix.execv !ocsidbm param
        in
-       let pid = Unix.fork () in
+       let pid = Lwt_unix.fork () in
        if pid = 0
        then begin (* double fork *)
-         if Unix.fork () = 0
+         if Lwt_unix.fork () = 0
          then begin
            child ()
          end

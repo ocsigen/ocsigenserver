@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Module [Authbasic]: Basic HTTP Authentication. *)
 
@@ -35,27 +35,27 @@
 
 val register_basic_authentication_method :
   (Simplexmlparser.xml -> string -> string -> bool Lwt.t) -> unit
-  (** This function registers an authentication plugin: it adds a new
-      parser to the list of available authentication schemes.
+(** This function registers an authentication plugin: it adds a new
+    parser to the list of available authentication schemes.
 
-      A parser takes as argument an XML tree (corresponding to the
-      first son of an <authbasic> element in the configuration
-      file) and returns an authentication function [f]. [f] will be
-      called for each request with the supplied user and password and
-      should return (cooperatively) a boolean telling whether access
-      is granted or not. Exceptions are handled the same way as for
-      extension parsers.
+    A parser takes as argument an XML tree (corresponding to the
+    first son of an <authbasic> element in the configuration
+    file) and returns an authentication function [f]. [f] will be
+    called for each request with the supplied user and password and
+    should return (cooperatively) a boolean telling whether access
+    is granted or not. Exceptions are handled the same way as for
+    extension parsers.
 
-      The <authbasic> element must have a {i realm} attribute,
-      giving some identifier to the resource which is protected
-      (several resources on the same hostname can share the same
-      realm). This gives a general customization scheme "for free"
-      from the point of view of plugin developers and is totally
-      transparent to the plugin. *)
+    The <authbasic> element must have a {i realm} attribute,
+    giving some identifier to the resource which is protected
+    (several resources on the same hostname can share the same
+    realm). This gives a general customization scheme "for free"
+    from the point of view of plugin developers and is totally
+    transparent to the plugin. *)
 
 
 val get_basic_authentication_method :
   Simplexmlparser.xml -> string -> string -> bool Lwt.t
-  (** This function combines all the parsers registered with
-      [register_basic_authentication_method]. It might be useful for
-      other extensions. Not for the casual user. *)
+(** This function combines all the parsers registered with
+    [register_basic_authentication_method]. It might be useful for
+    other extensions. Not for the casual user. *)

@@ -636,7 +636,8 @@ let parse_facility = function
   | "security" -> `Security
   | "syslog" -> `Syslog
   | "uucp" -> `UUCP
-  | "user" -> `User;;
+  | "user" -> `User
+  | t -> raise (Config_file_error ("Unknown " ^ t ^ " facility in <syslog>"))
 
 (* First parsing of config file *)
 let extract_info c =

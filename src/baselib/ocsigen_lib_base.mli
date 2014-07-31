@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** This module just contains only extensions of the standard library and very
     basic Ocsigen values and exceptions. Cf. {!Ocsigen_lib} for functionality
     which depends on specific external libraries.
-  *)
+*)
 
 exception Ocsigen_Internal_Error of string
 exception Input_is_too_large
@@ -147,7 +147,7 @@ module Url_base : sig
   type uri = string
 
   val make_absolute_url :
-      https:bool -> host:string -> port:int -> uri -> t
+    https:bool -> host:string -> port:int -> uri -> t
 
   type path = string list
 
