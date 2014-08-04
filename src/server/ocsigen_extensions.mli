@@ -59,7 +59,30 @@ val badconfig : ('a, unit, string, 'b) format4 -> 'a
     (which is a glob-like pattern that can contains [*]), a regexp
     parsing this pattern, and optionnaly a port.
 *)
-type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+
+module VirtualHost : sig
+  type t
+
+  (** Function to make new virtual host *)
+  val make :
+    host:string ->
+    pattern:Netstring_pcre.regexp ->
+    ?port:int -> unit -> t
+
+  (** Hash virtual host (only hash host and port, no pattern) *)
+  val hash : t -> int
+  (** Equal of virtual host (only compare host and port, no pattern) *)
+  val equal : t -> t -> bool
+
+  (** Host accessor for virtual host *)
+  val host : t -> string
+  (** Pattern accessor for virtual host *)
+  val pattern : t -> Netstring_pcre.regexp
+  (** Port accessor for virtual host *)
+  val port : t -> int option
+end
+
+type virtual_hosts = VirtualHost.t list
 
 val hash_virtual_hosts : virtual_hosts -> int
 val equal_virtual_hosts : virtual_hosts -> virtual_hosts -> bool

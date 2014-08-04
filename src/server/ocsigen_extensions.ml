@@ -57,7 +57,26 @@ let badconfig fmt = Printf.ksprintf (fun s -> raise (Error_in_config_file s)) fm
 
 (*****************************************************************************)
 (* virtual hosts: *)
-type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+
+module VirtualHost = struct
+  type t = (string * Netstring_pcre.regexp * int option)
+
+  let make
+    ~host
+    ~pattern
+    ?port
+    () = (host, pattern, port)
+
+  let hash (host, _, port) = Hashtbl.hash (host, port)
+  let equal (h1, _r1, p1) (h2, _r2, p2) =
+    h1 = h2 && p1 = p2
+
+  let host (host, _, _) = host
+  let pattern (_, pattern, _) = pattern
+  let port (_, _, port) = port
+end
+
+type virtual_hosts = VirtualHost.t list
 
 (* We cannot use generic comparison, as regexpes are abstract values that
    cannot be compared or hashed. However the string essentially contains
