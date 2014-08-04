@@ -13,19 +13,6 @@ let () =
   Ocsigen_config.set_mimefile
     "/home/dinosaure/bin/ocsigenserver/src/files/mime.types"
 
-(* `serve_everything` is present in Ocsigen_parseconfig.ml:522 It's filter for
- * `do_not_serve_404` and `do_not_serve_403`. Here, we simply filter nothing, so
- * all any computation may respond with a 404 or 403 code.
- *)
-
-let serve_everything : Ocsigen_extensions.do_not_serve =
-  let open Ocsigen_extensions in
-  {
-    do_not_serve_regexps = [];
-    do_not_serve_files = [];
-    do_not_serve_extensions = [];
-  }
-
 (* An extension has a default configuration of server. This
  * configuration is moved from extensions to extensions by dispatch (see
  * default `~connector` of `Ocsigen_server.start_server`), and extension can
@@ -45,8 +32,8 @@ let staticmod_conf : Ocsigen_extensions.config_info =
     default_directory_index = ["index.html"];
     list_directory_content = false;
     follow_symlinks = Ocsigen_extensions.FollowSymlinksIfOwnerMatch;
-    do_not_serve_404 = serve_everything;
-    do_not_serve_403 = serve_everything;
+    do_not_serve_404 = Ocsigen_extensions.serve_everything;
+    do_not_serve_403 = Ocsigen_extensions.serve_everything;
     uploaddir = Ocsigen_config.get_uploaddir ();
     maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize ();
   }
