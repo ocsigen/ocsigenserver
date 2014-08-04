@@ -99,6 +99,9 @@ type do_not_serve = {
   do_not_serve_extensions: string list;
 }
 
+(** Default configuration to hide/forbid local files.
+    For this, no file is filtered *)
+val serve_everything : do_not_serve
 
 exception IncorrectRegexpes of do_not_serve
 
@@ -528,7 +531,6 @@ val parse_config_item : parse_config
 val parse_user_site_item : parse_config_user
 
 val set_hosts : (virtual_hosts * config_info * extension2) list -> unit
-
 val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
 
 (** Compute the result to be sent to the client,

@@ -111,6 +111,13 @@ type do_not_serve = {
   do_not_serve_extensions: string list;
 }
 
+let serve_everything =
+  {
+    do_not_serve_regexps = [];
+    do_not_serve_files = [];
+    do_not_serve_extensions = [];
+  }
+
 (* BY TODO : Use unbalanced trees instead *)
 let join_do_not_serve d1 d2 = {
   do_not_serve_regexps = d1.do_not_serve_regexps @ d2.do_not_serve_regexps;
