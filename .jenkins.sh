@@ -4,6 +4,8 @@ opam install camlzip
 opam install --deps-only ocsigenserver
 opam install --verbose ocsigenserver
 
+./configure
+make all
 make -C src/sandbox/ all
 
 do_build_doc () {
