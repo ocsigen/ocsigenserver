@@ -60,7 +60,9 @@ let staticmod_conf : Ocsigen_extensions.config_info =
 let staticmod_compute : (Ocsigen_extensions.virtual_hosts
                          * Ocsigen_extensions.config_info
                          * Ocsigen_extensions.extension2) =
-  ([("*", Netstring_pcre.regexp ".*$", None)], staticmod_conf,
+  ([Ocsigen_extensions.VirtualHost.make
+      ~host:"*"
+      ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
    (* first argument is `awake` for pipeline
     * and second argument is cookies *)
    (fun _ _ ri -> Printf.printf "My Staticmod\n%!";
