@@ -599,10 +599,10 @@ let parse_server isreloading c =
 
 
 (* Types of socket declarable in configuration file *)
-type socket_type =
+type socket_type = Ocsigen_socket.socket_type =
+  | All
   | IPv4 of Unix.inet_addr
   | IPv6 of Unix.inet_addr
-  | All
 
 (* Parsing <port> tags *)
 let parse_port =
@@ -734,7 +734,10 @@ let extract_info c =
     | _ ->
       raise (Config_file_error "Syntax error")
   in
-  let (user, group), si, (mint, maxt) = aux None None None [] [] None None c in
+  let (user, group),
+      (ssl, ports, ssl_ports),
+      (mint, maxt) =
+      aux None None None [] [] None None c in
   let user = match user with
       None -> None (* Some (get_default_user ()) *)
     | Some s -> if s = "" then None else Some s
@@ -751,7 +754,12 @@ let extract_info c =
     | Some t -> t
     | None -> get_maxthreads ()
   in
-  ((user, group), si, (mint, maxt))
+  let ssl_context = match ssl with
+    | Some (Some a, Some b) -> Some (a, b)
+    | _ -> None
+  in
+  Ocsigen_server_configuration.make
+    ?user ?group ?ssl_context ~threads:(mint, maxt) ports ssl_ports
 
 let parse_config ?file () =
   let file =

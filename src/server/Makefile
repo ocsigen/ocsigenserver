@@ -13,9 +13,11 @@ all: byte opt
 
 ### Common files ###
 
-FILES := ocsigen_request_info.ml \
+FILES := ocsigen_socket.ml \
+         ocsigen_request_info.ml \
          ocsigen_extensions.ml  \
          ocsigen_range.ml       \
+         ocsigen_server_configuration.ml \
          ocsigen_parseconfig.ml \
          ocsigen_http_client.ml \
          ocsigen_local_files.ml  \
