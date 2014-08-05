@@ -65,12 +65,9 @@ let staticmod_compute : (Ocsigen_extensions.virtual_hosts
  *)
 
 let server_conf =
-  ( (* User, Group *)
-    (None, None),
-    (* SSL, ports, SSL ports *)
-    (None, [ (Ocsigen_parseconfig.All, 8080) ], []),
-    (* minimum thread, maximum thread *)
-    (Ocsigen_config.get_minthreads (), Ocsigen_config.get_maxthreads ()))
+  Ocsigen_server_configuration.make
+    [(Ocsigen_socket.All, 8080)]
+    []
 
 let () =
   Cgimod.init ~timeout:5 ();
