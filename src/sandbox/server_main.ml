@@ -1,10 +1,10 @@
 open Lwt
 
-(* This is an initialization of global variable before configuration of
- * extension. For example, if the mime file is specified after the configuration
- * of Staticmod, the server delivered a binary file (even if the file is HTML)
- *)
-
+(** This is an initialization of global variable before configuration of
+    extension. For example, if the mime file is specified after the
+    configuration of Staticmod, the server delivered a binary file (even if the
+    file is HTML)
+*)
 let () =
   Ocsigen_config.set_logdir "/home/dinosaure/bin/ocsigenserver/local/var/log";
   Ocsigen_config.set_datadir "/home/dinosaure/bin/ocsigenserver/local/var/lib";
@@ -13,12 +13,14 @@ let () =
   Ocsigen_config.set_mimefile
     "/home/dinosaure/bin/ocsigenserver/src/files/mime.types"
 
-(* An extension has a default configuration of server. This
- * configuration is moved from extensions to extensions by dispatch (see
- * default `~connector` of `Ocsigen_server.start_server`), and extension can
- * modify this config.
- *)
+(** An extension has a default configuration of server. This
+    configuration is moved from extensions to extensions by dispatch (see
+    default `~connector` of `Ocsigen_server.start_server`), and extension can
+    modify this config.
 
+    same as:
+    <host charset="utf-8" hostfilter="*"></host>
+*)
 let staticmod_conf : Ocsigen_extensions.config_info =
   let open Ocsigen_extensions in
   {
@@ -38,31 +40,149 @@ let staticmod_conf : Ocsigen_extensions.config_info =
     maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize ();
   }
 
-(* An extension has a compute function for request. This function is associated
- * with an initial `config_info` and a virtual host. When the request matches
- * the virtual host, we execute the function.
- * In this example, the compute function matches with all the hosts.
- *)
+let site_match request (site_path : string list) url =
+  (* We are sure that there is no / at the end or beginning of site_path *)
+  (* and no / at the beginning of url *)
+  (* and no // or ../ inside both of them *)
+  (* We return the subpath without / at beginning *)
+  let open Ocsigen_extensions in
+  let rec aux site_path url =
+    match site_path, url with
+    | [], [] -> raise (Ocsigen_Is_a_directory request)
+    | [], p -> Some p
+    | a::l, aa::ll when a = aa -> aux l ll
+    | _ -> None
+  in
+  match site_path, url with
+  | [], [] -> Some []
+  | _ -> aux site_path url
 
-let staticmod_compute : (Ocsigen_extensions.virtual_hosts
-                         * Ocsigen_extensions.config_info
-                         * Ocsigen_extensions.extension2) =
+let endpoint_of_extension awake cookies =
+  let open Ocsigen_extensions in
+  function
+  | Req_found (ri, res) ->
+    Lwt.return (Ext_found_continue_with' (res, ri), cookies)
+  | Req_not_found (e, ri) ->
+    Lwt.return
+      (Ext_continue_with
+         (ri, Ocsigen_cookies.Cookies.empty, e), cookies)
+
+let make_site ~path ?charset ?(closure = endpoint_of_extension) =
+  let open Ocsigen_extensions in
+  let open Ocsigen_lib in
+  fun awake cookies ->
+    function
+    | Req_found (ri, res) ->
+      Lwt.return (Ext_found_continue_with' (res, ri), cookies)
+    | Req_not_found (e, oldri) ->
+      let oldri = match charset with
+        | None -> oldri
+        | Some charset ->
+          { oldri
+            with request_config =
+                   { oldri.request_config
+                     with charset_assoc =
+                            Ocsigen_charset_mime.set_default_charset
+                              oldri.request_config.charset_assoc charset } }
+      in
+      match site_match oldri path
+              (Ocsigen_request_info.full_path oldri.request_info) with
+      | None ->
+        Ocsigen_messages.debug (fun () ->
+            "site \""^
+            (Url.string_of_url_path ~encode:true path)^
+            "\" does not match url \""^
+            (Url.string_of_url_path ~encode:true
+               (Ocsigen_request_info.full_path oldri.request_info))^
+            "\".");
+        Lwt.return (Ext_next e, cookies)
+      | Some sub_path ->
+        Ocsigen_messages.debug (fun () ->
+            "-------- site found: url \""^
+            (Url.string_of_url_path ~encode:true
+               (Ocsigen_request_info.full_path oldri.request_info))^
+            "\" matches \""^
+            (Url.string_of_url_path ~encode:true path)^"\".");
+        let ri = {oldri with
+                  request_info =
+                    (Ocsigen_request_info.update oldri.request_info
+                       ~sub_path:sub_path
+                       ~sub_path_string:
+                         (Url.string_of_url_path
+                            ~encode:true sub_path) ()) }
+        in
+        closure awake cookies (Req_not_found (e, ri))
+        >>= function
+          (* After a site, we turn back to old ri *)
+        | (Ext_stop_site (cs, err), cookies)
+        | (Ext_continue_with (_, cs, err), cookies) ->
+          Lwt.return
+            (Ext_continue_with (oldri, cs, err), cookies)
+        | (Ext_found_continue_with r, cookies) ->
+          awake ();
+          r () >>= fun (r', req) ->
+          Lwt.return
+            (Ext_found_continue_with' (r', oldri), cookies)
+        | (Ext_found_continue_with' (r, req), cookies) ->
+          Lwt.return
+            (Ext_found_continue_with' (r, oldri), cookies)
+        | (Ext_do_nothing, cookies) ->
+          Lwt.return
+            (Ext_continue_with (oldri,
+                                Ocsigen_cookies.Cookies.empty,
+                                e), cookies)
+        | r -> Lwt.return r
+
+(** same as:
+    <host>
+      <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www" />
+    </host>
+
+    An extension has a compute function for request. This function is associated
+    with an initial `config_info` and a virtual host. When the request matches
+    the virtual host, we execute the function.
+    In this example, the compute function matches with all the hosts.
+*)
+let staticmod : (Ocsigen_extensions.virtual_hosts
+                 * Ocsigen_extensions.config_info
+                 * Ocsigen_extensions.extension2) =
   ([Ocsigen_extensions.VirtualHost.make
       ~host:"*"
       ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
-   (* first argument is `awake` for pipeline
-    * and second argument is cookies *)
-   (fun _ _ ri -> Printf.printf "My Staticmod\n%!";
-     Staticmod.gen ~usermode:None (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/") ri
-     >>= fun res -> Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
+   (fun _ _ request_state ->
+     Printf.printf "My Staticmod\n%!";
+     Staticmod.gen
+       ~usermode:None
+       (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/")
+       request_state
+     >>= fun res ->
+     Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
 
-(* This function has the same way of `Ocsigen_parseconfig.extract_info`.
- * Indeed, it's now optional to use the configuration file specifying the
- * `~configuration` parameter of `Ocsigen_server.start_server`.
- *
- * The structure is not explicit (since it's a tuple). Comments are there to say
- * what it's but it should be something more readable.
- *)
+(** same as:
+    <host>
+      <site path="ocsigenstuff" charset="utf-8">
+        <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/ocsigenstuff" />
+      </site>
+    </host>
+*)
+let ocsigenstuff : (Ocsigen_extensions.virtual_hosts
+                    * Ocsigen_extensions.config_info
+                    * Ocsigen_extensions.extension2) =
+  ([Ocsigen_extensions.VirtualHost.make
+      ~host:"*"
+      ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
+   make_site
+     ~path:["ocsigenstuff"]
+     ~charset:"utf-8"
+     ~closure:(fun _ _ request_state ->
+         Printf.printf "My Staticmod Ocsigenstuff\n%!";
+         Staticmod.gen
+           ~usermode:None
+           (Staticmod.Dir
+              "/home/dinosaure/bin/ocsigenserver/local/var/www/ocsigenstuff/")
+           request_state
+         >>= fun res ->
+         Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
 
 let server_conf =
   Ocsigen_server_configuration.make
@@ -72,5 +192,5 @@ let server_conf =
 let () =
   Cgimod.init ~timeout:5 ();
   Deflatemod.init ~level:5 ~size:1024 ();
-  Ocsigen_extensions.set_hosts [ staticmod_compute ];
+  Ocsigen_extensions.set_hosts [ ocsigenstuff; staticmod ];
   Ocsigen_server.start_server ~configuration:[ server_conf ] ()
