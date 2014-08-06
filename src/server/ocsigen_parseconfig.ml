@@ -281,7 +281,9 @@ let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
     let rec aux = function
       | [] -> default_default_hostname
       | x :: _ when
-        String.contains (Ocsigen_extensions.VirtualHost.host x) '*' = false ->
+        String.contains (Ocsigen_extensions.VirtualHost.host x) '*' = false
+        && ((Ocsigen_extensions.VirtualHost.port x) = Some 80
+            || (Ocsigen_extensions.VirtualHost.port x) = None) ->
         Ocsigen_extensions.VirtualHost.host x
       | _ :: q -> aux q
     in
