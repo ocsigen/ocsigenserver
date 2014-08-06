@@ -367,9 +367,6 @@ let site_match request (site_path : string list) url =
   | [], [] -> Some []
   | _ -> aux site_path url
 
-
-
-
 let add_to_res_cookies res cookies_to_set =
   if cookies_to_set = Ocsigen_cookies.Cookies.empty then
     res
