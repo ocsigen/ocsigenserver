@@ -184,6 +184,86 @@ let ocsigenstuff : (Ocsigen_extensions.virtual_hosts
          >>= fun res ->
          Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
 
+let condition_header name pattern =
+  let open Ocsigen_http_frame in
+  (fun ri ->
+     List.exists
+       (fun a -> Netstring_pcre.string_match pattern a 0 <> None)
+       (try Http_headers.find_all
+              (Http_headers.name name)
+              (Ocsigen_request_info.http_frame ri)
+              .Ocsigen_http_frame.frame_header
+              .Ocsigen_http_frame.Http_header.headers
+        with Not_found -> []))
+
+(** same as:
+    <redirect fullurl=".+" dest="http://www.mozilla.org/fr/firefox/new/"
+*)
+let redirectmod_for_firefox =
+  (fun _ _ request_state ->
+    Printf.printf "My RedirectMod\n%!";
+    Redirectmod.gen
+      (Redirectmod.Regexp
+        (Netstring_pcre.regexp ".+",
+         "https://www.mozilla.org/fr/firefox/new/",
+         Ocsigen_lib_base.Yes, false))
+      request_state
+    >>= fun res ->
+    Lwt.return (res, Ocsigen_cookies.Cookies.empty))
+
+(** same as:
+    <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/">
+*)
+let staticmod_for_firefox =
+  (fun _ _ request_state ->
+    Printf.printf "My Staticmod for firefox\n%!";
+    Staticmod.gen
+      ~usermode:None
+      (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/")
+      request_state
+    >>= fun res ->
+    Lwt.return (res, Ocsigen_cookies.Cookies.empty))
+
+(** same as:
+    <host>
+      <site path="restricted-area" charset="utf-8">
+        <if>
+          <header name="User-Agent" regexp=".*Firefox.*" />
+          <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/" />
+        </if>
+        <else>
+          <redirect fullurl=".+" dest="http://www.mozilla.org/fr/firefox/new/" />
+        </else>
+      </site>
+    </host>
+*)
+let accesscontrol : (Ocsigen_extensions.virtual_hosts
+                     * Ocsigen_extensions.config_info
+                     * Ocsigen_extensions.extension2) =
+  ([Ocsigen_extensions.VirtualHost.make
+      ~host:"*"
+      ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
+   make_site
+     ~path:["restricted-area"]
+     ~charset:"utf-8"
+     ~closure:(fun awake cookies request_state ->
+         Printf.printf "My AccessControl\n%!";
+         let open Ocsigen_extensions in
+         match request_state with
+         | Ocsigen_extensions.Req_found (ri, _)
+         | Ocsigen_extensions.Req_not_found (_, ri) ->
+           if (condition_header
+                "User-Agent"
+                (Netstring_pcre.regexp ".*Firefox.*"))
+              ri.request_info
+           then
+             begin Printf.printf "> firefox\n%!";
+             staticmod_for_firefox awake cookies request_state end
+           else
+             begin Printf.printf "< firefox\n%!";
+             redirectmod_for_firefox awake cookies request_state end
+      ))
+
 let server_conf =
   Ocsigen_server_configuration.make
     [(Ocsigen_socket.All, 8080)]
@@ -192,5 +272,5 @@ let server_conf =
 let () =
   Cgimod.init ~timeout:5 ();
   Deflatemod.init ~level:5 ~size:1024 ();
-  Ocsigen_extensions.set_hosts [ ocsigenstuff; staticmod ];
+  Ocsigen_extensions.set_hosts [ accesscontrol; ocsigenstuff; staticmod ];
   Ocsigen_server.start_server ~configuration:[ server_conf ] ()
