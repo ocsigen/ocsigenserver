@@ -259,63 +259,68 @@ let gen dir = function
 
 (*****************************************************************************)
 
-
-let parse_config = function
-  | Element ("revproxy", atts, []) ->
-    let rec parse_attrs ((r, f, d, pipeline, h) as res) = function
-      | [] -> res
-      | ("regexp", regexp)::l when r = None -> (* deprecated *)
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
-           d, pipeline, h)
-          l
-      | ("fullurl", regexp)::l when r = None ->
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
-           d, pipeline, h)
-          l
-      | ("suburl", regexp)::l when r = None ->
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
-           d, pipeline, h)
-          l
-      | ("dest", dest)::l when d = None ->
-        parse_attrs
-          (r, f, Some dest, pipeline, h)
-          l
-      | ("keephost", "keephost")::l ->
-        parse_attrs
-          (r, f, d, pipeline, true)
-          l
-      | ("nopipeline", "nopipeline")::l ->
-        parse_attrs
-          (r, f, d, false, h)
-          l
-      | (a, _) :: _ ->
-        badconfig "Wrong or duplicate attribute '%s' for <revproxy>" a
-    in
-    let dir =
-      match parse_attrs (None, Yes, None, true, false) atts with
-      | (None, _, _, _, _) ->
-        badconfig "Missing attribute 'regexp' for <revproxy>"
-      | (_, _, None, _, _) ->
-        badconfig "Missing attribute 'dest' for <revproxy>"
-      | (Some r, full, Some d, pipeline, h) ->
-        {
-          regexp=r;
-          full_url=full;
-          dest=d;
-          pipeline=pipeline;
-          keephost=h;
-        }
-    in
-    gen dir
-  | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ -> raise (Error_in_config_file "(revproxy extension) Bad data")
-
-
-
-
+let parse_config element =
+  let regexp = ref None in
+  let full_url = ref Yes in
+  let dest = ref None in
+  let pipeline = ref true in
+  let keephost = ref false in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[
+        Configuration.element
+          ~name:"revproxy"
+          ~attributes:[
+            Configuration.attribute
+              ~name:"regexp"
+              (fun s ->
+                let s = Some (Netstring_pcre.regexp ("^" ^ s ^ "$")) in
+                regexp := s;
+                full_url := Yes);
+            Configuration.attribute
+              ~name:"fullurl"
+              (fun s ->
+                let s = Some (Netstring_pcre.regexp ("^" ^ s ^ "$")) in
+                regexp := s;
+                full_url := Yes);
+            Configuration.attribute
+              ~name:"suburl"
+              (fun s ->
+                let s = Some (Netstring_pcre.regexp ("^" ^ s ^ "$")) in
+                regexp := s;
+                full_url := No);
+            Configuration.attribute
+              ~name:"dest"
+              (fun s -> dest := Some s);
+            Configuration.attribute
+              ~name:"keephost"
+              (function "keephost" -> keephost := true
+                      | _ -> ());
+            Configuration.attribute
+              ~name:"nopipeline"
+              (function "nopipeline" -> pipeline := false
+                      | _ -> ());
+          ]
+      ()]
+    element
+  );
+  let dir =
+    match !regexp, !full_url, !dest, !pipeline, !keephost with
+    | (None, _, _, _, _) ->
+      badconfig "Missing attribute 'regexp' for <revproxy>"
+    | (_, _, None, _, _) ->
+      badconfig "Missing attribute 'dest' for <revproxy>"
+    | (Some regexp, full_url, Some dest, pipeline, keephost) ->
+      {
+        regexp;
+        full_url;
+        dest;
+        pipeline;
+        keephost;
+      }
+  in
+  gen dir
 
 (*****************************************************************************)
 (** Registration of the extension *)
