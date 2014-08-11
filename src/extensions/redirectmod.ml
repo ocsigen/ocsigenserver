@@ -104,55 +104,48 @@ let gen dir = function
 
 (*****************************************************************************)
 
-let parse_config = function
-  | Element ("redirect", atts, []) ->
-    let rec parse_attrs ((r, f, d, temp) as res) = function
-      | [] -> res
-      | ("regexp", regexp)::l when r = None -> (* deprecated *)
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
-           d, temp)
-          l
-      | ("fullurl", regexp)::l when r = None ->
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
-           d, temp)
-          l
-      | ("suburl", regexp)::l when r = None ->
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
-           d, temp)
-          l
-      | ("dest", dest)::l when d = None ->
-        parse_attrs
-          (r, f, Some dest, temp)
-          l
-      | ("temporary", "temporary")::l ->
-        parse_attrs
-          (r, f, d, true)
-          l
-      | _ -> raise (Error_in_config_file "Wrong attribute for <redirect>")
-    in
-    let dir =
-      match parse_attrs (None, Yes, None, false) atts with
-      | (None, _, _, _) ->
-        raise (Error_in_config_file
-                 "Missing attribute regexp for <redirect>")
-      | (_, _, None, _) ->
-        raise (Error_in_config_file
-                 "Missing attribute dest for <redirect>>")
-      | (Some r, full, Some d, temp) ->
-        Regexp (r, d, full, temp)
-    in
-    gen dir
-  | Element ("redirect" as s, _, _) -> badconfig "Bad syntax for tag %s" s
-
-  | Element (t, _, _) ->
-    raise (Bad_config_tag_for_extension t)
-  | _ -> raise (Error_in_config_file "(redirectmod extension) Bad data")
-
-
-
+let parse_config element =
+  let pattern = ref None in
+  let dest = ref "" in
+  let mode = ref Yes in
+  let temporary = ref false in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[Configuration.element
+                   ~name:"redirect"
+                   ~attributes:[Configuration.attribute
+                                  ~name:"regexp"
+                                  (fun s ->
+                                     pattern := Some ("^" ^ s ^ "$");
+                                     mode := Maybe);
+                                Configuration.attribute
+                                  ~name:"fullurl"
+                                  (fun s ->
+                                     pattern := Some ("^" ^ s ^ "$");
+                                     mode := Yes);
+                                Configuration.attribute
+                                  ~name:"suburl"
+                                  (fun s ->
+                                     pattern := Some ("^" ^ s ^ "$");
+                                     mode := No);
+                                Configuration.attribute
+                                  ~name:"dest"
+                                  ~obligatory:true
+                                  (fun s -> dest := s);
+                                Configuration.attribute
+                                  ~name:"temporary"
+                                  (function "temporary" -> temporary := true
+                                          | _ -> ());
+                               ]
+                   ()]
+      element
+  );
+  match !pattern with
+  | None ->
+    raise (Error_in_config_file "Missing attribute regexp for <redirect>")
+  | Some regexp ->
+    gen (Regexp (Netstring_pcre.regexp regexp, !dest, !mode, !temporary))
 
 (*****************************************************************************)
 (** Registration of the extension *)
