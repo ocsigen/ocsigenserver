@@ -96,34 +96,64 @@ let gen_code code = function
 
 (*****************************************************************************)
 
-let parse_config = function
-  (*VVV TODO: rewrite using Ocsigen_extensions.Configuration (see rewritemod) *)
-  | Element ("outputfilter", atts, []) ->
-    let rec parse_attrs ((h, r, d, rep) as res) = function
-      | [] -> res
-      | ("header", header)::l when h = None ->
-        parse_attrs (Some header, r, d, rep) l
-      | ("regexp", regexp)::l when r = None ->
-        parse_attrs (h, Some (Netstring_pcre.regexp regexp), d, rep) l
-      | ("dest", dest)::l when d = None ->
-        parse_attrs (h, r, Some dest, rep) l
-      | ("replace", replace)::l when rep = None ->
-        let replace =
-          try
-            bool_of_string replace
-          with
-          | Invalid_argument _ ->
-            raise (Error_in_config_file
-                     (Printf.sprintf "Wrong value for attribute replace of <outputfilter/>: %s. is should be true or false" replace))
-        in
-        parse_attrs (h, r, d, Some replace ) l
-      | _ -> raise (Error_in_config_file "Wrong attribute for <outputfilter header=... dest=... (regexp=... / replace=...)/>")
-    in
-    (match parse_attrs (None, None, None, None) atts with
+let parse_config element =
+  let header = ref None in
+  let regexp = ref None in
+  let dest = ref None in
+  let replace = ref None in
+  let code = ref None in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[
+        Configuration.element
+          ~name:"outputfilter"
+          ~attributes:[
+            Configuration.attribute
+              ~name:"header"
+              (fun s -> header := Some s);
+            Configuration.attribute
+              ~name:"regexp"
+              (fun s -> regexp := Some (Netstring_pcre.regexp s));
+            Configuration.attribute
+              ~name:"dest"
+              (fun s -> dest := Some s);
+            Configuration.attribute
+              ~name:"replace"
+              (fun s ->
+                 let s =
+                   try bool_of_string s
+                   with
+                   | Invalid_argument _ ->
+                     raise (Error_in_config_file
+                              (Printf.sprintf "Wrong value for attribute \
+                                               replace of <outputfilter/>: \
+                                               %s. is should be true or false"
+                                 s))
+                 in replace := Some s);
+          ] ();
+        Configuration.element
+          ~name:"sethttpcode"
+          ~attributes:[Configuration.attribute ~name:"code"
+                         (fun s ->
+                            let s = try int_of_string s
+                              with Failure _ ->
+                                raise (Error_in_config_file
+                                         "invalid code attribute in \
+                                          <sethttpcode>")
+                            in code := Some s);
+                      ]
+          ()]
+      element
+  );
+  !code |> function
+  | None ->
+    (match !header, !regexp, !dest, !replace with
      | (_, Some _, _, Some _) ->
        raise
          (Error_in_config_file
-            "Wrong attributes for <outputfilter/>: attributes regexp and replace can't be set simultaneously")
+            "Wrong attributes for <outputfilter/>: attributes regexp and \
+             replace can't be set simultaneously")
      | (Some h, Some r, Some d, None) ->
        gen (Rewrite_header (Http_headers.name h, r, d))
      | (Some h, None, Some d, rep) ->
@@ -131,26 +161,9 @@ let parse_config = function
      | _ ->
        raise
          (Error_in_config_file
-            "Wrong attributes for <outputfilter header=... dest=... (regexp=... / replace=...)/>"))
-  | Element ("sethttpcode", atts, []) ->
-    (match atts with
-     | [("code", c)] ->
-       let code = try int_of_string c
-         with Failure _ ->
-           raise (Error_in_config_file
-                    "invalid code attribute in <sethttpcode>")
-       in gen_code code
-     | _ ->
-       raise (Error_in_config_file
-                "Wrong attribute for <sethttpcode code=... />"))
-  | Element ("outputfilter", _, _) -> badconfig "Bad syntax for tag <outputfilter header=... dest=... (regexp=... / replace=...)/>"
-  | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ ->
-    raise (Error_in_config_file "Unexpected data in config file")
-
-
-
-
+            "Wrong attributes for <outputfilter header=... dest=... \
+             (regexp=... / replace=...)/>"))
+  | Some code -> gen_code code
 
 (*****************************************************************************)
 (** Registration of the extension *)
