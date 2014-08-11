@@ -310,27 +310,29 @@ let parse_config element =
       ~in_tag:"host"
       ~elements:[Configuration.element
                    ~name:"deflate"
-                   ~attributes:[Configuration.attribute
-                                  ~name:"compress"
-                                  ~obligatory:true
-                                  (function "only" -> mode := Compress_only []
-                                          | "allbut" -> mode := All_but []
-                                          | _ -> raise (Error_in_config_file
-                                                          "Attribute 'compress' \
-                                                           should be 'allbut' or \
-                                                           'only'"));
-                               ]
-                   ~elements:[Configuration.element
-                                ~name:"type"
-                                ~pcdata:(fun s -> let (a, b) =
-                                          Ocsigen_headers.parse_mime_type s in
-                                          pages := Type (a, b) :: !pages) ();
-                              Configuration.element
-                                ~name:"extension"
-                                ~pcdata:(fun s ->
-                                    pages := Extension s :: !pages) ();
+                   ~attributes:[
+                     Configuration.attribute
+                       ~name:"compress"
+                       ~obligatory:true
+                       (function "only" -> mode := Compress_only []
+                               | "allbut" -> mode := All_but []
+                               | _ -> raise (Error_in_config_file
+                                               "Attribute 'compress' \
+                                                should be 'allbut' or \
+                                                'only'"));
+                   ]
+                   ~elements:[
+                     Configuration.element
+                       ~name:"type"
+                       ~pcdata:(fun s -> let (a, b) =
+                                 Ocsigen_headers.parse_mime_type s in
+                                 pages := Type (a, b) :: !pages) ();
+                     Configuration.element
+                       ~name:"extension"
+                       ~pcdata:(fun s ->
+                           pages := Extension s :: !pages) ();
 
-                             ]
+                   ]
                    ()]
       element
   );
