@@ -142,19 +142,19 @@ let gen ~usermode ?cache dir = function
                 the original error code *)
              (Ocsigen_http_frame.Result.update answer ~code:err ())
          in
-         let (<<) h (n, v) = Http_headers.replace n v h in
+         let (<~) h (n, v) = Http_headers.replace n v h in
          let answer = match cache with
            | None -> answer
            | Some 0 ->
              (Ocsigen_http_frame.Result.update answer ~headers:
                 ((Ocsigen_http_frame.Result.headers answer)
-                 << (Http_headers.cache_control, "no-cache")
-                 << (Http_headers.expires, "0")) ())
+                 <~ (Http_headers.cache_control, "no-cache")
+                 <~ (Http_headers.expires, "0")) ())
            | Some duration ->
              (Ocsigen_http_frame.Result.update answer ~headers:
                 ((Ocsigen_http_frame.Result.headers answer)
-                 << (Http_headers.cache_control, "max-age: "^ string_of_int duration)
-                 << (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
+                 <~ (Http_headers.cache_control, "max-age: "^ string_of_int duration)
+                 <~ (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
          in
          Lwt.return (Ext_found (fun () -> Lwt.return answer))
       )
@@ -173,7 +173,6 @@ let gen ~usermode ?cache dir = function
 
 (*****************************************************************************)
 (** Parsing of config file *)
-open Simplexmlparser
 
 (* In userconf modes, paths must be relative to the root of the userconf config *)
 let rewrite_local_path userconf path =
@@ -191,87 +190,103 @@ type options = {
   opt_cache: int option;
 }
 
-let parse_config userconf _ : parse_config_aux = fun _ _ _ ->
-  let rec parse_attrs l opt =
-    match l with
-    | [] -> opt
-
-    | ("dir", d)::l when opt.opt_dir = None ->
-      parse_attrs l
-        { opt with opt_dir = Some (rewrite_local_path userconf d)}
-
-    | ("regexp", s)::l when opt.opt_regexp = None ->
-      let s = try Netstring_pcre.regexp ("^"^s^"$")
-        with Pcre.Error (Pcre.BadPattern _) ->
-          bad_config ("Bad regexp \""^s^"\" in <static regexp=\"...\" />")
-      in
-      parse_attrs l { opt with opt_regexp = Some s }
-
-    | ("code", c)::l when opt.opt_code = None ->
-      let c = try Netstring_pcre.regexp ("^"^c^"$")
-        with Pcre.Error (Pcre.BadPattern _) ->
-          bad_config ("Bad regexp \""^c^"\" in <static code=\"...\" />")
-      in
-      parse_attrs l { opt with opt_code = Some c }
-
-    | ("dest", s)::l when opt.opt_dest = None ->
-      parse_attrs l
-        { opt with opt_dest =
-                     Some (parse_user_dir (rewrite_local_path userconf s)) }
-
-    | ("root", s) :: l when opt.opt_root_checks = None ->
-      parse_attrs l
-        { opt with opt_root_checks = Some (parse_user_dir s) }
-
-    | ("cache", s) :: l when opt.opt_cache = None ->
-      let duration = try int_of_string s
-        with _ ->
-          if s = "no" then 0
-          else bad_config ("Bad integer \""^s^"\" in <static cache=\"...\" />")
-      in
-      parse_attrs l { opt with opt_cache = Some duration }
-
-    | _ -> bad_config "Wrong attribute for <static>"
+let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
+  let opt = ref
+    {
+      opt_dir = None;
+      opt_regexp = None;
+      opt_code = None;
+      opt_dest = None;
+      opt_root_checks = None;
+      opt_cache = None;
+    }
   in
-  function
-  | Element ("static", atts, []) ->
-    let opt =
-      parse_attrs atts {
-        opt_dir = None;
-        opt_regexp = None;
-        opt_code = None;
-        opt_dest = None;
-        opt_root_checks = None;
-        opt_cache = None;
-      }
-    in
-    let kind =
-      match opt.opt_dir, opt.opt_regexp, opt.opt_code, opt.opt_dest, opt.opt_root_checks with
-      | (None, None, None, _, _) ->
-        raise (Error_in_config_file
-                 "Missing attribute dir, regexp, or code for <static>")
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[
+        Configuration.element
+          ~name:"static"
+          ~attributes:[
+            Configuration.attribute
+              ~name:"dir"
+              (fun s ->
+                 opt := { !opt with opt_dir = Some s });
+            Configuration.attribute
+              ~name:"regexp"
+              (fun s ->
+                 let s =
+                   try Netstring_pcre.regexp ("^"^s^"$")
+                   with Pcre.Error (Pcre.BadPattern _) ->
+                     badconfig
+                       "Bad regexp \"%s\" in <static regexp=\"...\" />" s
+                 in
+                 opt := { !opt with opt_regexp = Some s});
+            Configuration.attribute
+              ~name:"code"
+              (fun s ->
+                 let c = try Netstring_pcre.regexp ("^" ^ s ^"$")
+                   with Pcre.Error (Pcre.BadPattern _) ->
+                     badconfig
+                       "Bad regexp \"%s\" in <static code=\"...\" />" s
+                 in
+                 opt := { !opt with opt_code = Some c });
+            Configuration.attribute
+              ~name:"dest"
+              (fun s ->
+                 let s =
+                   Some (parse_user_dir (rewrite_local_path userconf s))
+                 in
+                 opt := { !opt with opt_dest = s });
+            Configuration.attribute
+              ~name:"root"
+              (fun s ->
+                 let s = Some (parse_user_dir s) in
+                 opt := { !opt with opt_root_checks = s });
+            Configuration.attribute
+              ~name:"cache"
+              (fun s ->
+                 let duration = match s with
+                   | "no" -> 0
+                   | s ->
+                     try int_of_string s
+                     with _ ->
+                       badconfig
+                         "Bad integer \"%s\" in <static cache=\"...\" />"
+                         s
+                 in
+                 opt := { !opt with opt_cache = Some duration });
+          ]
+          ()
+      ]
+    element
+  );
+  let kind =
+    match !opt.opt_dir,
+          !opt.opt_regexp,
+          !opt.opt_code,
+          !opt.opt_dest,
+          !opt.opt_root_checks with
+    | (None, None, None, _, _) ->
+      badconfig "Missing attribute dir, regexp, or code for <static>"
 
-      | (Some d, None, None, None, None) ->
-        Dir (Url.remove_end_slash d)
+    | (Some d, None, None, None, None) ->
+      Dir (Url.remove_end_slash d)
 
-      | (None, Some r, code, Some t, rc) ->
-        Regexp { source_regexp = r;
-                 dest = t;
-                 http_status_filter = code;
-                 root_checks = rc;
-               }
+    | (None, Some r, code, Some t, rc) ->
+      Regexp { source_regexp = r;
+               dest = t;
+               http_status_filter = code;
+               root_checks = rc;
+             }
 
-      | (None, None, (Some _ as code), Some t, None) ->
-        Regexp { dest = t; http_status_filter = code; root_checks = None;
-                 source_regexp = Netstring_pcre.regexp "^.*$" }
+    | (None, None, (Some _ as code), Some t, None) ->
+      Regexp { dest = t; http_status_filter = code; root_checks = None;
+               source_regexp = Netstring_pcre.regexp "^.*$" }
 
-      | _ -> raise (Error_in_config_file "Wrong attributes for <static>")
-    in
-    gen ~usermode:userconf ?cache:opt.opt_cache kind
-  | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ -> bad_config "(staticmod extension) Bad data"
-
-
+    | _ -> badconfig "Wrong attributes for <static>"
+  in
+  gen ~usermode:userconf ?cache:!opt.opt_cache kind
 
 (*****************************************************************************)
 (** extension registration *)
