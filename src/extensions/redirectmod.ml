@@ -34,9 +34,7 @@
 
 open Ocsigen_lib
 
-open Lwt
 open Ocsigen_extensions
-open Simplexmlparser
 
 
 
@@ -55,7 +53,7 @@ let gen dir = function
   | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, ri) ->
-    catch
+    Lwt.catch
       (* Is it a redirection? *)
       (fun () ->
          Ocsigen_messages.debug2 "--Redirectmod: Is it a redirection?";
@@ -86,7 +84,7 @@ let gen dir = function
               (if temp then "Temporary " else "Permanent ")^
               "redirection to: "^redir);
          let empty_result = Ocsigen_http_frame.Result.empty () in
-         return
+         Lwt.return
            (Ext_found
               (fun () ->
                  Lwt.return
@@ -96,63 +94,56 @@ let gen dir = function
                         (if temp then 302 else 301) ())))
       )
       (function
-        | Ocsigen_extensions.Not_concerned -> return (Ext_next err)
-        | e -> fail e)
+        | Ocsigen_extensions.Not_concerned -> Lwt.return (Ext_next err)
+        | e -> Lwt.fail e)
 
 
 
 
 (*****************************************************************************)
 
-let parse_config = function
-  | Element ("redirect", atts, []) ->
-    let rec parse_attrs ((r, f, d, temp) as res) = function
-      | [] -> res
-      | ("regexp", regexp)::l when r = None -> (* deprecated *)
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Maybe,
-           d, temp)
-          l
-      | ("fullurl", regexp)::l when r = None ->
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), Yes,
-           d, temp)
-          l
-      | ("suburl", regexp)::l when r = None ->
-        parse_attrs
-          (Some (Netstring_pcre.regexp ("^"^regexp^"$")), No,
-           d, temp)
-          l
-      | ("dest", dest)::l when d = None ->
-        parse_attrs
-          (r, f, Some dest, temp)
-          l
-      | ("temporary", "temporary")::l ->
-        parse_attrs
-          (r, f, d, true)
-          l
-      | _ -> raise (Error_in_config_file "Wrong attribute for <redirect>")
-    in
-    let dir =
-      match parse_attrs (None, Yes, None, false) atts with
-      | (None, _, _, _) ->
-        raise (Error_in_config_file
-                 "Missing attribute regexp for <redirect>")
-      | (_, _, None, _) ->
-        raise (Error_in_config_file
-                 "Missing attribute dest for <redirect>>")
-      | (Some r, full, Some d, temp) ->
-        Regexp (r, d, full, temp)
-    in
-    gen dir
-  | Element ("redirect" as s, _, _) -> badconfig "Bad syntax for tag %s" s
-
-  | Element (t, _, _) ->
-    raise (Bad_config_tag_for_extension t)
-  | _ -> raise (Error_in_config_file "(redirectmod extension) Bad data")
-
-
-
+let parse_config config_elem =
+  let pattern = ref None in
+  let dest = ref "" in
+  let mode = ref Yes in
+  let temporary = ref false in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[
+        Configuration.element
+          ~name:"redirect"
+          ~attributes:[
+            Configuration.attribute
+              ~name:"regexp"
+              (fun s ->
+                 pattern := Some ("^" ^ s ^ "$");
+                 mode := Maybe);
+            Configuration.attribute
+              ~name:"fullurl"
+              (fun s ->
+                 pattern := Some ("^" ^ s ^ "$");
+                 mode := Yes);
+            Configuration.attribute
+              ~name:"suburl"
+              (fun s ->
+                 pattern := Some ("^" ^ s ^ "$");
+                 mode := No);
+            Configuration.attribute
+              ~name:"dest"
+              ~obligatory:true
+              (fun s -> dest := s);
+            Configuration.attribute
+              ~name:"temporary"
+              (function "temporary" -> temporary := true | _ -> ());
+          ]
+          ()]
+      config_elem
+  );
+  match !pattern with
+  | None -> badconfig "Missing attribute regexp for <redirect>"
+  | Some regexp ->
+    gen (Regexp (Netstring_pcre.regexp regexp, !dest, !mode, !temporary))
 
 (*****************************************************************************)
 (** Registration of the extension *)
