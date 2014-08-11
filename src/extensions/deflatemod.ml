@@ -331,13 +331,13 @@ let parse_config element =
                                     pages := Extension s :: !pages) ();
 
                              ]
-                ()]
+                   ()]
       element
   );
   match !pages with
   | [] -> raise (Error_in_config_file
-                   "Unexpected element inside contenttype (should be <type> or
-                  <extension>)")
+                   "Unexpected element inside contenttype (should be <type> or \
+                    <extension>)")
   | l -> !mode |> function
     | Compress_only _ -> filter (Compress_only l)
     | All_but _ -> filter (All_but l)
