@@ -155,43 +155,56 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
 
 (*****************************************************************************)
 (** Parsing of config file *)
-open Simplexmlparser
 
-let parse_config hostpattern _ path = fun _ _ ->
-  let rec parse_attrs_local l ((regexp, conf, url, prefix, path) as r) =
-    match l with
-    | [] -> r
-    | ("regexp", s)::l when regexp = None ->
-      (try parse_attrs_local l
-             (Some (Netstring_pcre.regexp ("^"^s^"$")), conf, url, prefix, path)
-       with Failure _ ->
-         badconfig "Bad regexp '%s' in <userconf regexp=\"...\" />" s)
-    | ("conf", s)::l when conf = None ->
-      parse_attrs_local l
-        (regexp, Some (Ocsigen_extensions.parse_user_dir s), url, prefix, path)
-    | ("url", s)::l when url = None ->
-      parse_attrs_local l (regexp, conf, Some s, prefix, path)
-    | ("prefix", s)::l when prefix = None ->
-      parse_attrs_local l (regexp, conf, url, Some s, path)
-    | ("localpath", s) :: l when path = None ->
-      parse_attrs_local l
-        (regexp, conf, url, prefix, Some (Ocsigen_extensions.parse_user_dir s))
-    | (a, _) :: _ ->
-      badconfig "Wrong or duplicate attribute %s for <userconf>" a
+let parse_config hostpattern _ path _ _ config_elem =
+  let regexp = ref None in
+  let conf = ref None in
+  let url = ref None in
+  let prefix = ref None in
+  let localpath = ref None in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[
+        Configuration.element
+          ~name:"userconf"
+          ~attributes:[
+            Configuration.attribute
+              ~name:"regexp"
+              ~obligatory:true
+              (fun s ->
+                 let s = Netstring_pcre.regexp ("^" ^ s ^ "$") in
+                 regexp := Some s);
+            Configuration.attribute
+              ~name:"conf"
+              ~obligatory:true
+              (fun s ->
+                 let s = Ocsigen_extensions.parse_user_dir s in
+                 conf := Some s);
+            Configuration.attribute
+              ~name:"url"
+              ~obligatory:true
+              (fun s -> url := Some s);
+            Configuration.attribute
+              ~name:"prefix"
+              ~obligatory:true
+              (fun s -> prefix := Some s);
+            Configuration.attribute
+              ~name:"localpath"
+              ~obligatory:true
+              (fun s ->
+                 let s = Ocsigen_extensions.parse_user_dir s in
+                 localpath := Some s)
+          ]
+          ()]
+      config_elem
+  );
+  let info =
+    match !regexp, !conf, !url, !prefix, !localpath  with
+    | (Some r, Some t, Some u, Some p, Some p') -> (r, t, u, p, p')
+    | _ -> badconfig "Missing attributes for <userconf>"
   in
-  function
-  | Element ("userconf", atts, []) ->
-    let info =
-      match parse_attrs_local atts (None, None, None, None, None)  with
-      | (Some r, Some t, Some u, Some p, Some p') -> (r, t, u, p, p')
-      | _ -> badconfig "Missing attributes for <userconf>"
-    in
-    gen hostpattern path info
-  | Element ("userconf", _, _ :: _) ->
-    badconfig "Incorrect (useless) data inside <userconf>"
-  | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ -> badconfig "Bad data in conf file"
-
+  gen hostpattern path info
 
 (*****************************************************************************)
 (** extension registration *)
