@@ -15,26 +15,26 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Using Ocsigen as a HTTP client *)
 
 val get :
-    ?v6:bool ->
-    ?https: bool ->
-    ?port:int ->
-    ?headers: Http_headers.t ->
-    host:string ->
-    uri:string ->
-    unit ->
-    Ocsigen_http_frame.t Lwt.t
+  ?v6:bool ->
+  ?https: bool ->
+  ?port:int ->
+  ?headers: Http_headers.t ->
+  host:string ->
+  uri:string ->
+  unit ->
+  Ocsigen_http_frame.t Lwt.t
 (** Do a GET HTTP request.
     The default port is 80 for HTTP, 443 for HTTPS.
     The default protocol is http ([https=false]).
 
     Warning: the stream must be finalized manually after reading, using
     {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
- *)
+*)
 
 val get_url : ?v6:bool -> ?headers: Http_headers.t -> string -> Ocsigen_http_frame.t Lwt.t
 (** Do a GET HTTP request. The string must be a full URL.
@@ -60,7 +60,7 @@ val post_string :
 
     Warning: the stream must be finalized manually after reading, using
     {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
- *)
+*)
 
 val post_string_url :
   ?v6:bool ->
@@ -91,7 +91,7 @@ val post_urlencoded :
 
     Warning: the stream must be finalized manually after reading, using
     {!Ocsigen_stream.finalize}, otherwise you will have fd leaks.
- *)
+*)
 
 val post_urlencoded_url :
   ?v6:bool ->
@@ -108,20 +108,20 @@ val post_urlencoded_url :
 
 
 val raw_request :
-    ?client: Ocsigen_extensions.client ->
-    ?keep_alive: bool ->
-    ?headers: Http_headers.t ->
-    ?https: bool ->
-    ?port:int ->
-    content: string Ocsigen_stream.t option ->
-    ?content_length: int64 ->
-    http_method: Ocsigen_http_frame.Http_header.http_method ->
-    host:string ->
-    inet_addr:Unix.inet_addr ->
-    uri:string ->
-    unit ->
-    unit ->
-    Ocsigen_http_frame.t Lwt.t
+  ?client: Ocsigen_extensions.client ->
+  ?keep_alive: bool ->
+  ?headers: Http_headers.t ->
+  ?https: bool ->
+  ?port:int ->
+  content: string Ocsigen_stream.t option ->
+  ?content_length: int64 ->
+  http_method: Ocsigen_http_frame.Http_header.http_method ->
+  host:string ->
+  inet_addr:Unix.inet_addr ->
+  uri:string ->
+  unit ->
+  unit ->
+  Ocsigen_http_frame.t Lwt.t
 (**
    Do an HTTP request (low level).
 
@@ -160,22 +160,22 @@ val raw_request :
    When called without the last parameter, the function will pipeline
    the request (if needed), then return the function to get the page.
    This allows to keep pipeline order when writing an extension.
- *)
+*)
 (*VVV Dangerous!! *)
 
 
 val basic_raw_request :
-    ?headers: Http_headers.t ->
-    ?https: bool ->
-    ?port:int ->
-    content: string Ocsigen_stream.t option ->
-    ?content_length: int64 ->
-    http_method: Ocsigen_http_frame.Http_header.http_method ->
-    host:string ->
-    inet_addr:Unix.inet_addr ->
-    uri:string ->
-    unit ->
-    Ocsigen_http_frame.t Lwt.t
+  ?headers: Http_headers.t ->
+  ?https: bool ->
+  ?port:int ->
+  content: string Ocsigen_stream.t option ->
+  ?content_length: int64 ->
+  http_method: Ocsigen_http_frame.Http_header.http_method ->
+  host:string ->
+  inet_addr:Unix.inet_addr ->
+  uri:string ->
+  unit ->
+  Ocsigen_http_frame.t Lwt.t
 (** Same as {!Ocsigen_http_client.raw_request},
     but does not try to reuse connections.
     Opens a new connections for each request. Far less efficient.

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 
 (*XXX Can have multiple headers with the same name...*)
@@ -92,8 +92,8 @@ val replace_opt : name -> string option -> t -> t
 
 val find : name -> t -> string
 (** find one of the values bound to [name] in the HTTP header [t].
-   Raise [Not_found] if it is not bound.
- *)
+    Raise [Not_found] if it is not bound.
+*)
 
 val find_all : name -> t -> string list
 (** find all the values bound to [name] in the HTTP header [t].
@@ -104,15 +104,15 @@ val fold : (name -> string list -> 'a -> 'a) -> t -> 'a -> 'a
 
 val with_defaults : t -> t -> t
 (** [with_defaults h1 h2] adds headers from [h1] to [h2].
-   If some headers were present, the are replaced by those from [h1].
- *)
+    If some headers were present, the are replaced by those from [h1].
+*)
 
 
 val dyn_headers : t
 (** Headers for dynamic pages (non cachable) *)
 
 type accept =
-    ( (string option * string option)
-      * float option
-      * (string * string) list ) list
+  ( (string option * string option)
+    * float option
+    * (string * string) list ) list
 

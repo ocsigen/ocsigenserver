@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 
 (** Module Ocsipersist: persistent data *)
@@ -27,7 +27,7 @@ open Printf
 
 (** Data are divided into stores.
     Create one store for your project, where you will save all your data.
- *)
+*)
 type store = string Lwt.t
 
 exception Ocsipersist_error
@@ -57,39 +57,39 @@ let yield () =
 let rec bind_safely stmt = function
   | [] -> stmt
   | (value, name)::q as l ->
-      match Sqlite3.bind stmt (bind_parameter_index stmt name) value with
-      | Rc.OK -> bind_safely stmt q
-      | Rc.BUSY | Rc.LOCKED -> yield () ; bind_safely stmt l
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+    match Sqlite3.bind stmt (bind_parameter_index stmt name) value with
+    | Rc.OK -> bind_safely stmt q
+    | Rc.BUSY | Rc.LOCKED -> yield () ; bind_safely stmt l
+    | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
 
 let close_safely db =
- if not (db_close db) then
-   ignore (Ocsigen_messages.errlog "Couldn't close database")
+  if not (db_close db) then
+    ignore (Ocsigen_messages.errlog "Couldn't close database")
 
 let m = Mutex.create ()
 
 let exec_safely f =
   let aux () =
-   let db =
-     Mutex.lock m ;
-     try db_open !db_file with e -> Mutex.unlock m; raise e
-   in
+    let db =
+      Mutex.lock m ;
+      try db_open !db_file with e -> Mutex.unlock m; raise e
+    in
     (try
-      let r = f db in
-      close_safely db ;
-      Mutex.unlock m ;
-      r
-    with e -> (
-      close_safely db ;
-      Mutex.unlock m ;
-      raise e))
+       let r = f db in
+       close_safely db ;
+       Mutex.unlock m ;
+       r
+     with e -> (
+         close_safely db ;
+         Mutex.unlock m ;
+         raise e))
   in
   Lwt_preemptive.detach aux ()
 
 (* Référence indispensable pour les codes de retours et leur signification :
  * http://sqlite.org/capi3ref.html
  * Langage compris par SQLite : http://www.sqlite.org/lang.html
- *)
+*)
 
 let db_create table =
   let sql = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BLOB,  PRIMARY KEY(key) ON CONFLICT REPLACE)" table in
@@ -126,12 +126,12 @@ let (db_get, db_replace, db_replace_if_exists) =
     let rec aux () =
       match step stmt with
       | Rc.ROW ->
-          let value = match column stmt 0 with
+        let value = match column stmt 0 with
           | Data.BLOB s -> s
           | _ -> assert false
-          in
-          ignore (finalize stmt);
-          value
+        in
+        ignore (finalize stmt);
+        value
       | Rc.DONE -> ignore(finalize stmt) ;  raise Not_found
       | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
       | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
@@ -165,11 +165,11 @@ let db_iter_step table rowid =
     let rec aux () =
       match step stmt with
       | Rc.ROW ->
-          (match (column stmt 0,column stmt 1, column stmt 2) with
-          | (Data.TEXT k, Data.BLOB v, Data.INT rowid) ->
-              ignore(finalize stmt) ;
-              Some (k, v, rowid)
-          | _ -> assert false )
+        (match (column stmt 0,column stmt 1, column stmt 2) with
+         | (Data.TEXT k, Data.BLOB v, Data.INT rowid) ->
+           ignore(finalize stmt) ;
+           Some (k, v, rowid)
+         | _ -> assert false )
       | Rc.DONE -> ignore(finalize stmt) ; None
       | Rc.BUSY | Rc.LOCKED -> yield () ; aux ()
       | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
@@ -184,9 +184,9 @@ let db_iter_block table f =
     let rec aux () =
       match step stmt with
       | Rc.ROW ->
-          (match (column stmt 0,column stmt 1) with
-          | (Data.TEXT k, Data.BLOB v) -> f k (Marshal.from_string v 0); aux()
-          | _ -> assert false )
+        (match (column stmt 0,column stmt 1) with
+         | (Data.TEXT k, Data.BLOB v) -> f k (Marshal.from_string v 0); aux()
+         | _ -> assert false )
       | Rc.DONE -> ignore(finalize stmt)
       | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
       | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
@@ -201,12 +201,12 @@ let db_length table =
     let rec aux () =
       match step stmt with
       | Rc.ROW ->
-          let  value = match column stmt 0 with
+        let  value = match column stmt 0 with
           | Data.INT s -> Int64.to_int s
           | _ -> assert false
-          in
-          ignore (finalize stmt);
-          value
+        in
+        ignore (finalize stmt);
+        value
       | Rc.DONE -> ignore(finalize stmt) ;  raise Not_found
       | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
       | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
@@ -235,8 +235,8 @@ let make_persistent_lazy_lwt ~store ~name ~default =
      (fun () -> db_get pvname >>= (fun _ -> return ()))
      (function
        | Not_found ->
-           default () >>= fun def ->
-           db_replace pvname (Marshal.to_string def [])
+         default () >>= fun def ->
+         db_replace pvname (Marshal.to_string def [])
        | e -> fail e)) >>=
   (fun () -> return pvname)
 
@@ -289,7 +289,7 @@ let iter_step f table =
     (function
       | None -> return ()
       | Some (k,v,rowid') ->
-          f k (Marshal.from_string v 0) >>= (fun () -> aux rowid'))
+        f k (Marshal.from_string v 0) >>= (fun () -> aux rowid'))
   in
   aux Int64.zero
 
@@ -300,7 +300,7 @@ let fold_step f table beg =
     (function
       | None -> return beg
       | Some (k, v, rowid') ->
-          f k (Marshal.from_string v 0) beg >>= (fun res -> aux rowid' res))
+        f k (Marshal.from_string v 0) beg >>= (fun res -> aux rowid' res))
   in
   aux Int64.zero beg
 
@@ -322,8 +322,8 @@ let length table =
 let init config =
   db_file := Ocsigen_config.get_datadir () ^"/ocsidb";
   (match parse_global_config config with
-    | None -> ()
-    | Some d -> db_file := d
+   | None -> ()
+   | Some d -> db_file := d
   );
   (* We check that we can access the database *)
   try Lwt_unix.run (exec_safely (fun _ -> ()))
@@ -337,6 +337,6 @@ let init config =
 
 
 let _ = Ocsigen_extensions.register_extension
-  ~name:"ocsipersist"
-  ~init_fun:init
-  ()
+    ~name:"ocsipersist"
+    ~init_fun:init
+    ()

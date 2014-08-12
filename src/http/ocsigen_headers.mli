@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Getting informations from HTTP header. *)
 (** This module uses the lowel level module Ocsigen_http_frame.Http_header.
@@ -25,8 +25,8 @@ open Ocsigen_cookies
 
 val find : string -> Ocsigen_http_frame.t -> string
 (** find one of the values bound to [name] in the HTTP headers of the frame.
-   Raise [Not_found] if it is not bound.
- *)
+    Raise [Not_found] if it is not bound.
+*)
 
 val find_all : string -> Ocsigen_http_frame.t -> string list
 (** find all the values bound to [name] in the HTTP headers of the frame.

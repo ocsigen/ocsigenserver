@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Configuring Ocsigen server *)
 
@@ -46,7 +46,7 @@ val set_max_number_of_connections : int -> unit
 val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
 (* val set_keepalive_timeout : int -> unit
-val set_keepopen_timeout : int -> unit *)
+   val set_keepopen_timeout : int -> unit *)
 val set_netbuffersize : int -> unit
 val set_filebuffersize : int -> unit
 val set_maxrequestbodysize : int64 option -> unit
@@ -85,7 +85,7 @@ val get_max_number_of_connections : unit -> int
 val get_client_timeout : unit -> int
 val get_server_timeout : unit -> int
 (*val get_keepalive_timeout : unit -> int
-val get_keepopen_timeout : unit -> int*)
+  val get_keepopen_timeout : unit -> int*)
 val get_netbuffersize : unit -> int
 val get_filebuffersize : unit -> int
 val get_maxrequestbodysize : unit -> int64 option

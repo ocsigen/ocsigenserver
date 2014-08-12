@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 exception Ocsigen_Internal_Error of string
 exception Input_is_too_large
@@ -67,8 +67,8 @@ module Option = struct
     Some x
   let bind opt k =
     match opt with
-      | Some x -> k x
-      | None -> None
+    | Some x -> k x
+    | None -> None
   let to_list = function
     | None -> []
     | Some v -> [v]
@@ -83,8 +83,8 @@ module List = struct
       | [] -> acc
       | t::q ->
         match f t with
-          | None -> aux acc q
-          | Some r -> aux (r::acc) q
+        | None -> aux acc q
+        | Some r -> aux (r::acc) q
     in
     List.rev (aux [] l)
 
@@ -174,9 +174,9 @@ module Clist  : sig
 end = struct
 
   type 'a node =
-      { content : 'a option;
-        mutable prev : 'a node;
-        mutable next : 'a node }
+    { content : 'a option;
+      mutable prev : 'a node;
+      mutable next : 'a node }
 
   type 'a t = 'a node
 
@@ -209,20 +209,20 @@ end = struct
 
   let value c =
     match c.content with
-      | None -> failwith "Clist.value"
-      | Some c -> c
+    | None -> failwith "Clist.value"
+    | Some c -> c
 
   let rec iter f (node : 'a t) =
     match node.next.content with
-      | Some c ->
-          f c;
-          iter f node.next
-      | None -> ()
+    | Some c ->
+      f c;
+      iter f node.next
+    | None -> ()
 
   let rec fold_left f a (node : 'a t) =
     match node.next.content with
-      | Some c ->  fold_left f (f a c) node.next
-      | None -> a
+    | Some c ->  fold_left f (f a c) node.next
+    | None -> a
 
 end
 
@@ -231,9 +231,9 @@ end
 module Int = struct
 
   module Table = Map.Make(struct
-    type t = int
-    let compare = compare
-  end)
+      type t = int
+      let compare = compare
+    end)
 
 end
 
@@ -250,9 +250,9 @@ module String_base = struct
       if (i > endd) || (beg > i)
       then i
       else
-	if s.[i] = ' '
-	then find_not_space s (i+step) step
-	else i
+      if s.[i] = ' '
+      then find_not_space s (i+step) step
+      else i
     in
     let first = find_not_space s beg 1 in
     let last = find_not_space s endd (-1) in
@@ -271,7 +271,7 @@ module String_base = struct
 
   (* Cut a string to the next separator, removing spaces.
      Raises Not_found if the separator connot be found.
-   *)
+  *)
   let sep char s =
     let len = String.length s in
     let seppos = String.index s char in
@@ -285,14 +285,14 @@ module String_base = struct
       if deb >= longueur
       then []
       else
-	try
+        try
           let firstsep = String.index_from s deb char in
           if multisep && firstsep = deb then
             aux (deb + 1)
           else
             (remove_spaces s deb (firstsep-1))::
             (aux (firstsep+1))
-	with Not_found -> [remove_spaces s deb (longueur-1)]
+        with Not_found -> [remove_spaces s deb (longueur-1)]
     in
     aux 0
 
@@ -301,22 +301,22 @@ module String_base = struct
     | s2 -> s1^sep^s2
 
   let may_concat s1 ~sep s2 = match s1, s2 with
-  | _, "" -> s1
-  | "", _ -> s2
-  | _ -> String.concat sep [s1;s2]
+    | _, "" -> s1
+    | "", _ -> s2
+    | _ -> String.concat sep [s1;s2]
 
 
   (* returns the index of the first difference between s1 and s2,
      starting from n and ending at last.
      returns (last + 1) if no difference is found.
-   *)
+  *)
   let rec first_diff s1 s2 n last =
     try
       if s1.[n] = s2.[n]
       then
-	if n = last
-	then last+1
-	else first_diff s1 s2 (n+1) last
+        if n = last
+        then last+1
+        else first_diff s1 s2 (n+1) last
       else n
     with Invalid_argument _ -> n
 
@@ -336,13 +336,13 @@ module Url_base = struct
 
   let make_absolute_url ~https ~host ~port uri =
     (if https
-    then "https://"
-    else "http://"
+     then "https://"
+     else "http://"
     )^
     host^
     (if (port = 80 && not https) || (https && port = 443)
-    then ""
-    else ":"^string_of_int port)^
+     then ""
+     else ":"^string_of_int port)^
     uri
 
 
@@ -350,8 +350,8 @@ module Url_base = struct
     let rec aux = function
       | [] -> []
       | [""] as l -> l
-(*    | ""::l -> aux l *) (* we do not remove "//" any more,
-                             because of optional suffixes in Eliom *)
+      (*    | ""::l -> aux l *) (* we do not remove "//" any more,
+                                   because of optional suffixes in Eliom *)
       | ".."::l -> aux l
       | a::l -> a::(aux l)
     in function
@@ -434,8 +434,8 @@ module Printexc = struct
     let printer =
       let old = !exc_printer in
       (fun f_rec s ->
-        try p f_rec s
-        with e -> old f_rec s) in
+         try p f_rec s
+         with e -> old f_rec s) in
     exc_printer := printer
 
 end
