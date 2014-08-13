@@ -7,6 +7,7 @@ PACKAGE  := lwt.unix     \
             netstring    \
             netstring-pcre \
 	    tyxml.parser \
+			${SERVER_SYNTAX} ## See ../../Makefile.options
 
 LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}

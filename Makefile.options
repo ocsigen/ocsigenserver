@@ -42,7 +42,7 @@ SERVER_PACKAGE := lwt.ssl           \
 	          tyxml.parser      \
                   dynlink           \
 
-SERVER_SYNTAX :=  tyxml.syntax      \
+SERVER_SYNTAX :=  tyxml.syntax lwt.syntax.log \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \

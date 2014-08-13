@@ -1,6 +1,12 @@
 include ../../Makefile.config
+PACKAGE  := \
+	netstring \
+	netstring-pcre \
+	lwt.ssl \
+	tyxml \
+	${SERVER_SYNTAX} ## See ../../Makefile.options
 
-LIBS     := -package netstring,netstring-pcre,lwt.ssl,tyxml -I ../baselib
+LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
