@@ -827,11 +827,13 @@ Ocamlbuild_plugin.dispatch (function
         begin
           tag_file "src/baselib/ocsigen_commandline.ml" ["use_commandline"];
           tag_file "bin/server_main.native" ["use_commandline"];
+          tag_file "bin/server_main.byte" ["use_commandline"];
         end
       else
         begin
           tag_file "src/baselib/ocsigen_commandline.ml" ["use_nocommandline"];
           tag_file "bin/server_main.native" ["use_nocommandline"];
+          tag_file "bin/server_main.byte" ["use_nocommandline"];
         end;
 
       pflag ["ocaml"; "ocamldep"] "native"
