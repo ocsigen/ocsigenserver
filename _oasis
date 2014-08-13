@@ -275,10 +275,20 @@ Library userconf
                         ocsigenserver.server,
                         lwt
 
-Executable ocsigenserver
+Executable "ocsigenserver.opt"
   Path:			bin/
   MainIs:		server_main.ml
   CompiledObject:	native
+  BuildDepends:		lwt,
+                        ocsigenserver.baselib,
+                        ocsigenserver.polytables,
+                        ocsigenserver.http,
+                        ocsigenserver.server
+
+Executable ocsigenserver
+  Path:			bin/
+  MainIs:		server_main.ml
+  CompiledObject:	byte
   BuildDepends:		lwt,
                         ocsigenserver.baselib,
                         ocsigenserver.polytables,

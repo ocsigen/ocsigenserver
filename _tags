@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 335dcbf5dc475f913f600b2e179c0f99)
+# DO NOT EDIT (digest: e4ae942874b5fa54c4df9a7a28ad8523)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -121,7 +121,7 @@
 <src/extensions/*.ml{,i}>: use_ocsigenserver
 <src/extensions/*.ml{,i}>: use_polytables
 <src/extensions/*.ml{,i}>: use_server
-# Executable ocsigenserver
+# Executable ocsigenserver.opt
 "bin/server_main.native": package(cryptokit)
 "bin/server_main.native": package(dynlink)
 "bin/server_main.native": package(findlib)
@@ -140,6 +140,25 @@
 "bin/server_main.native": use_http
 "bin/server_main.native": use_polytables
 "bin/server_main.native": use_server
+# Executable ocsigenserver
+"bin/server_main.byte": package(cryptokit)
+"bin/server_main.byte": package(dynlink)
+"bin/server_main.byte": package(findlib)
+"bin/server_main.byte": package(ipaddr)
+"bin/server_main.byte": package(lwt)
+"bin/server_main.byte": package(lwt.extra)
+"bin/server_main.byte": package(lwt.ssl)
+"bin/server_main.byte": package(lwt.syntax)
+"bin/server_main.byte": package(lwt.unix)
+"bin/server_main.byte": package(netstring)
+"bin/server_main.byte": package(netstring-pcre)
+"bin/server_main.byte": package(optcomp)
+"bin/server_main.byte": package(tyxml)
+"bin/server_main.byte": package(tyxml.parser)
+"bin/server_main.byte": use_baselib
+"bin/server_main.byte": use_http
+"bin/server_main.byte": use_polytables
+"bin/server_main.byte": use_server
 <bin/*.ml{,i}>: package(cryptokit)
 <bin/*.ml{,i}>: package(dynlink)
 <bin/*.ml{,i}>: package(findlib)
