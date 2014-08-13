@@ -125,39 +125,31 @@ let console =
   else
     (fun s -> ())
 
-
-(*Dynamic log level changing*)
-
-module SectMap = Map.Make (String)
-let sectmap = ref SectMap.empty
-
-let register_section s = sectmap := SectMap.add (Lwt_log.Section.name s) s !sectmap
-
-let find_section s = SectMap.find s !sectmap
-
 let level_of_string = function
-  | "Debug"   | "debug"  -> Some Lwt_log.Debug
-  | "Info"    | "info"   -> Some Lwt_log.Info
-  | "Notice"  | "notice" -> Some Lwt_log.Notice
-  | "Warning" | "warning"-> Some Lwt_log.Warning
-  | "Error"   | "error"  -> Some Lwt_log.Error
-  | "Fatal"   | "fatal"  -> Some Lwt_log.Fatal
+  | "debug"  -> Some Lwt_log.Debug
+  | "info"   -> Some Lwt_log.Info
+  | "notice" -> Some Lwt_log.Notice
+  | "warning"-> Some Lwt_log.Warning
+  | "error"  -> Some Lwt_log.Error
+  | "fatal"  -> Some Lwt_log.Fatal
   | _ -> None
 
 let command_f exc _ = function
-  | [sect_name] -> begin
-      try
-        Lwt_log.Section.reset_level (find_section sect_name);
-      with Not_found -> ()
-    end;
-    Lwt.return ()
-  | [sect_name; level_name] -> begin
-      try
-        match level_of_string level_name with
-        | None -> Lwt_log.Section.reset_level (find_section sect_name)
-        | Some l -> Lwt_log.Section.set_level (find_section sect_name) l
-      with Not_found -> ()
-    end;
+  | [sect_name] ->
+    (* Lwt_log.Section.make :
+       if a section with the same name
+       already exists, it is returned. *)
+    let sect = Lwt_log.Section.make sect_name in
+    Lwt_log.Section.reset_level sect;
+    Lwt.return_unit
+  | [sect_name; level_name] ->
+    (* Lwt_log.Section.make :
+       if a section with the same name
+       already exists, it is returned. *)
+    let sect = Lwt_log.Section.make sect_name in
+    (match level_of_string (String.lowercase level_name) with
+    | None -> Lwt_log.Section.reset_level sect
+    | Some l -> Lwt_log.Section.set_level sect l);
     Lwt.return ()
   | _ -> Lwt.fail exc
 
