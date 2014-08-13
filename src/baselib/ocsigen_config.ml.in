@@ -89,7 +89,11 @@ let set_mimefile s = mimefile := s
 let set_verbose () = verbose := true
 let set_silent () = silent := true
 let set_daemon () = set_silent (); daemon := true
-let set_veryverbose () = verbose := true; veryverbose := true
+let set_veryverbose () =
+  verbose := true;
+  veryverbose := true;
+  Lwt_log.add_rule "*" Lwt_log.Debug
+
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i
 let set_max_number_of_threads_queued =
