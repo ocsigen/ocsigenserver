@@ -25,7 +25,7 @@ let post_string ?v6 ?https ?port ?(headers = Http_headers.empty)
 
 let get ?v6 ?https ?port ?headers ~host ~uri () =
   Ip_address.get_inet_addr ?v6 host >>= fun inet_addr ->
-  Cohttp_lwt_unix.Client.get (Uri.of_string uri)
+  Cohttp_lwt_unix.Client.get (Uri.of_string (host ^ uri))
   >|= Of_cohttp.of_response_and_body'
 
 let post_urlencoded ?v6 ?https ?port ?headers ~host ~uri ~content () =
