@@ -32,9 +32,8 @@ module Ip_address = struct
       | _::l -> aux l
     in
     let options = [if v6 then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6 else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET] in
-    Lwt.bind
-      (Lwt_unix.getaddrinfo host "" options)
-      aux
+    Lwt_unix.getaddrinfo host "" options
+    >>= fun l -> aux l
 
 end
 
