@@ -842,6 +842,9 @@ Ocamlbuild_plugin.dispatch (function
       pflag ["ocaml"; "compile"] "native"
         (fun value ->
            S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
+      pflag ["ocaml"; "doc"] "native"
+        (fun value ->
+           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
 
       ()
     | x -> dispatch_default x);;
