@@ -40,23 +40,6 @@ let staticmod_conf : Ocsigen_extensions.config_info =
     maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize ();
   }
 
-let site_match request (site_path : string list) url =
-  (* We are sure that there is no / at the end or beginning of site_path *)
-  (* and no / at the beginning of url *)
-  (* and no // or ../ inside both of them *)
-  (* We return the subpath without / at beginning *)
-  let open Ocsigen_extensions in
-  let rec aux site_path url =
-    match site_path, url with
-    | [], [] -> raise (Ocsigen_Is_a_directory request)
-    | [], p -> Some p
-    | a::l, aa::ll when a = aa -> aux l ll
-    | _ -> None
-  in
-  match site_path, url with
-  | [], [] -> Some []
-  | _ -> aux site_path url
-
 (** same as:
     <host>
       <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www" />
@@ -123,7 +106,7 @@ let condition_header name pattern =
     <redirect fullurl=".+" dest="http://www.mozilla.org/fr/firefox/new/"
 *)
 let redirectmod_for_firefox =
-  (fun _ _ request_state ->
+  (fun request_state ->
      Printf.printf "My RedirectMod\n%!";
      Redirectmod.gen
        (Redirectmod.Regexp
@@ -136,7 +119,7 @@ let redirectmod_for_firefox =
     <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/">
 *)
 let staticmod_for_firefox =
-  (fun _ _ request_state ->
+  (fun request_state ->
      Printf.printf "My Staticmod for firefox\n%!";
      Staticmod.gen
        ~usermode:None
@@ -177,12 +160,10 @@ let accesscontrol : (Ocsigen_extensions.virtual_hosts
                ri.request_info
            then
              begin Printf.printf "> firefox\n%!";
-               staticmod_for_firefox (fun x -> x)
-               Ocsigen_cookies.Cookies.empty request_state end
+               staticmod_for_firefox request_state end
            else
              begin Printf.printf "< firefox\n%!";
-               redirectmod_for_firefox (fun x -> x)
-               Ocsigen_cookies.Cookies.empty request_state end
+               redirectmod_for_firefox request_state end
        )])
 
 let server_conf =
