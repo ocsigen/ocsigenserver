@@ -587,6 +587,86 @@ and make_parse_config path parse_host l : extension2 =
   !fun_end ();
   r
 
+let endpoint_of_extension awake cookies =
+  function
+  | Req_found (ri, res) ->
+    Lwt.return (Ext_found_continue_with' (res, ri), cookies)
+  | Req_not_found (e, ri) ->
+    Lwt.return
+      (Ext_continue_with
+         (ri, Ocsigen_cookies.Cookies.empty, e), cookies)
+
+let rec make_site ~path ?charset ?(closure = []) =
+  let open Ocsigen_lib in
+  fun awake cookies ->
+    function
+    | Req_found (ri, res) ->
+      Lwt.return (Ext_found_continue_with' (res, ri), cookies)
+    | Req_not_found (e, oldri) ->
+      let oldri = match charset with
+        | None -> oldri
+        | Some charset ->
+          { oldri
+            with request_config =
+                   { oldri.request_config
+                     with charset_assoc =
+                            Ocsigen_charset_mime.set_default_charset
+                              oldri.request_config.charset_assoc charset } }
+      in
+      match site_match oldri path
+              (Ocsigen_request_info.full_path oldri.request_info) with
+      | None ->
+        Ocsigen_messages.debug (fun () ->
+            "site \""^
+            (Url.string_of_url_path ~encode:true path)^
+            "\" does not match url \""^
+            (Url.string_of_url_path ~encode:true
+               (Ocsigen_request_info.full_path oldri.request_info))^
+            "\".");
+        Lwt.return (Ext_next e, cookies)
+      | Some sub_path ->
+        Ocsigen_messages.debug (fun () ->
+            "-------- site found: url \""^
+            (Url.string_of_url_path ~encode:true
+               (Ocsigen_request_info.full_path oldri.request_info))^
+            "\" matches \""^
+            (Url.string_of_url_path ~encode:true path)^"\".");
+        let ri = {oldri with
+                  request_info =
+                    (Ocsigen_request_info.update oldri.request_info
+                       ~sub_path:sub_path
+                       ~sub_path_string:
+                         (Url.string_of_url_path
+                            ~encode:true sub_path) ()) }
+        in match closure with
+        | [] -> endpoint_of_extension awake cookies (Req_not_found (e, ri))
+        | x :: r ->
+          (fun awake cookies_to_set req_state ->
+            make_ext awake cookies_to_set req_state x
+              (make_site ~path ?charset ~closure:r))
+            (* XXX: I'm not sure, really ! *)
+          awake cookies (Req_not_found (e, ri))
+        >>= function
+          (* After a site, we turn back to old ri *)
+        | (Ext_stop_site (cs, err), cookies)
+        | (Ext_continue_with (_, cs, err), cookies) ->
+          Lwt.return
+            (Ext_continue_with (oldri, cs, err), cookies)
+        | (Ext_found_continue_with r, cookies) ->
+          awake ();
+          r () >>= fun (r', req) ->
+          Lwt.return
+            (Ext_found_continue_with' (r', oldri), cookies)
+        | (Ext_found_continue_with' (r, req), cookies) ->
+          Lwt.return
+            (Ext_found_continue_with' (r, oldri), cookies)
+        | (Ext_do_nothing, cookies) ->
+          Lwt.return
+            (Ext_continue_with (oldri,
+                                Ocsigen_cookies.Cookies.empty,
+                                e), cookies)
+        | r -> Lwt.return r
+
 (*****************************************************************************)
 
 type userconf_info = {
