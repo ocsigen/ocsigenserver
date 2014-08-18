@@ -640,40 +640,6 @@ let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 # 641 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
-(* VVV: pour être clair, cette liste contient tout les dépendances du serveur
- * pour éviter que Ocsigen_loader recharge toutes ces dépendances *)
-
-let server_packages = [
-  "lwt";
-  "lwt.ssl";
-  "netstring";
-  "netstring-pcre";
-  "cryptokit";
-  "findlib";
-  "tyxml";
-  "tyxml.parser";
-  "lwt.syntax";
-  "lwt.extra";
-  "ipaddr";
-  "dynlink";
-]
-
-(* VVV: sauf que les extensions dépendent de ocsigenserver.* et donc si on
- * rajouter pas à cette liste ces dernières dépendances, le serveur contenant
- * par exemple déjà ocsigenserver.baselib va essayer de recharger
- * ocsigenserver.baselib *)
-
-let server_packages' = [
-  "ocsigenserver";
-  "ocsigenserver.commandline";
-  "ocsigenserver.baselib";
-  "ocsigenserver.polytables";
-  "ocsigenserver.http";
-  "ocsigenserver.server";
-]
-
-(* TODO: il faudrait trouver un moyen plus « automatique » pour ceci *)
-
 (* Substitution *)
 
 let subst vars s =
@@ -749,15 +715,6 @@ let preemptive =
   try let _ = Ocamlbuild_pack.Findlib.query "lwt.preemptive" in "Lwt_preemptive"
   with _ -> "Fake_preempt";;
 
-let dependences =
-  let concat l = List.fold_right (^) l "" in
-  let p = Printf.sprintf in
-  let l = ocamlfind
-      (["query"; "-p-format"; "-recursive" ] @ server_packages) input_line in
-  concat (List.mapi
-            (fun i x -> if i = 0 then p "\"%s\"" x else p "; \"%s\"" x) (l @
-                                                                         server_packages'))
-
 let where_ocaml =
   let concat l = List.fold_right (^) l "" in
   let result = Ocamlbuild_pack.My_unix.run_and_open "ocamlc -where"
@@ -808,7 +765,6 @@ let configuration = [
   ("_CONFIG_DIR_", BaseEnvLight.var_get "sysconfdir" env);
   ("_PREEMPTIVE_", preemptive);
   ("_IS_NATIVE_", string_of_bool native);
-  ("_DEPENDENCES_", dependences);
 ];;
 
 (* Parametric compilation *)

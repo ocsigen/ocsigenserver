@@ -35,9 +35,40 @@ let full_server_name = server_name^"/"^version_number
 let is_native = %%_IS_NATIVE_%%
 let native_ext = if is_native then ".opt" else ""
 
+let fold func =
+  let l = ref [] in
+  (try while true do l := func () :: !l done with _ -> ()); (List.rev !l)
+
+let ocamlfind cmd func =
+  let p = Printf.sprintf in
+  let cmd = List.map (p "\"%s\"") cmd in
+  let cmd = p "ocamlfind %s" (String.concat " " cmd) in
+  let ic = Unix.open_process_in cmd in
+  fold (fun () -> func ic)
+
+let print_list ?(sep = "") print_data out lst =
+  let rec aux = function
+    | [] -> ()
+    | [ x ] -> Printf.fprintf out "%a" print_data x
+    | x :: r -> Printf.fprintf out "%a%s" print_data x sep; aux r
+  in aux lst
+
 let builtin_packages =
+  let l =
+    ocamlfind
+      (["query"; "-p-format"; "-recursive"; "ocsigenserver"])
+      input_line
+  in
+  let match_ocsigenserver = Netstring_pcre.regexp "^ocsigenserver" in
+  let l = List.filter
+    (fun x -> let re = Netstring_pcre.string_match match_ocsigenserver x 0 in
+      match re with
+      | None -> true
+      | Some _ -> false) l
+  in
+  Printf.printf "%a\n%!" (print_list ~sep:", " (fun _ -> print_string)) l;
   List.fold_left (fun a s -> String.Set.add s a)
-    String.Set.empty [%%_DEPENDENCES_%%]
+    String.Set.empty l
 
 module Fake_preempt =
 struct
