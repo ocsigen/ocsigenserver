@@ -53,6 +53,7 @@ type ('a, 'b) leftright = Left of 'a | Right of 'b
 
 val advert: string
 
+(** Module Option to compute type ['a option] *)
 module Option : sig
   type 'a t = 'a option
   val map : ('a -> 'b) -> 'a t -> 'b t
@@ -71,6 +72,7 @@ module Option : sig
 end
 end
 
+(** Improvement of module List *)
 module List : sig
   include module type of List
 
@@ -116,6 +118,7 @@ module Int : sig
   module Table : Map.S with type key = int
 end
 
+(** Improvement of module String *)
 module String_base : sig
 
   include module type of String
@@ -124,7 +127,7 @@ module String_base : sig
       removing spaces at the beginning and at the end *)
   val remove_spaces : string -> int -> int -> string
 
-  (* Cuts a string to the next separator *)
+  (** Cuts a string to the next separator *)
   val basic_sep : char -> string -> string * string
 
   (** Cuts a string to the next separator, removing spaces.
@@ -139,7 +142,7 @@ module String_base : sig
   val may_append : string -> sep:string -> string -> string (* WAS add_to_string *)
   val may_concat : string -> sep:string -> string -> string (* WAS concat_strings *)
 
-  (* [first_diff s1 s2 n last] returns the index of the first difference
+  (** [first_diff s1 s2 n last] returns the index of the first difference
      between s1 and s2, starting from n and ending at last.
      returns (last + 1) if no difference is found. *)
   val first_diff : string -> string -> int -> int -> int
@@ -150,26 +153,39 @@ module String_base : sig
 
 end
 
+(** Module Url_base *)
 module Url_base : sig
 
   type t = string
   type uri = string
 
+  (** [make_absolute_url https host port path] generate a new absolute url *)
   val make_absolute_url :
     https:bool -> host:string -> port:int -> uri -> t
 
   type path = string list
 
+  (** [remove_dotdot path] clean the path of [..] *)
   val remove_dotdot : path -> path
+
+  (** [remove_end_slash str] remove last [/] *)
   val remove_end_slash : string -> string
+
+  (** [remove_internal_slash path] clean the path of empty string *)
   val remove_internal_slash : path -> path
+
   val change_empty_list : path -> path
   val add_end_slash_if_missing : path -> path
   val remove_slash_at_end : path -> path
   val remove_slash_at_beginning : path -> path
+
   (* val recursively_remove_slash_at_beginning : path -> path *)
+
+  (** [is_prefix_skip_end_slash path1 path2] returns [true] if [path1] is a same
+      as [path2] before a first slash *)
   val is_prefix_skip_end_slash : string list -> string list -> bool
 
+  (** [split_fragment str] splits [str] at first '#' *)
   val split_fragment : string -> string * string option
 
 end

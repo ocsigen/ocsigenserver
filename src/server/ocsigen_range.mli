@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-val compute_range : 
+(** [compute_range] add in header of result a media-range *)
+val compute_range :
   Ocsigen_request_info.request_info ->
   Ocsigen_http_frame.result ->
   Ocsigen_http_frame.result Lwt.t
