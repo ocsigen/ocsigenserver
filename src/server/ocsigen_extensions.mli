@@ -518,6 +518,10 @@ exception Unknown_command
 val register_command_function :
   ?prefix:string -> (string -> string list -> unit Lwt.t) -> unit
 
+(** Equivalent to a suit of <site></site> in XML configuration file *)
+val make_site :
+  path:Url.path -> ?charset:Ocsigen_charset_mime.charset -> ?closure:extension list -> extension2
+
 (**/**)
 val get_command_function :
   unit -> (?prefix:string -> string -> string list -> unit Lwt.t)

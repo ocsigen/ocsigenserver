@@ -57,82 +57,6 @@ let site_match request (site_path : string list) url =
   | [], [] -> Some []
   | _ -> aux site_path url
 
-let endpoint_of_extension awake cookies =
-  let open Ocsigen_extensions in
-  function
-  | Req_found (ri, res) ->
-    Lwt.return (Ext_found_continue_with' (res, ri), cookies)
-  | Req_not_found (e, ri) ->
-    Lwt.return
-      (Ext_continue_with
-         (ri, Ocsigen_cookies.Cookies.empty, e), cookies)
-
-let make_site ~path ?charset ?(closure = endpoint_of_extension) =
-  let open Ocsigen_extensions in
-  let open Ocsigen_lib in
-  fun awake cookies ->
-    function
-    | Req_found (ri, res) ->
-      Lwt.return (Ext_found_continue_with' (res, ri), cookies)
-    | Req_not_found (e, oldri) ->
-      let oldri = match charset with
-        | None -> oldri
-        | Some charset ->
-          { oldri
-            with request_config =
-                   { oldri.request_config
-                     with charset_assoc =
-                            Ocsigen_charset_mime.set_default_charset
-                              oldri.request_config.charset_assoc charset } }
-      in
-      match site_match oldri path
-              (Ocsigen_request_info.full_path oldri.request_info) with
-      | None ->
-        Ocsigen_messages.debug (fun () ->
-            "site \""^
-            (Url.string_of_url_path ~encode:true path)^
-            "\" does not match url \""^
-            (Url.string_of_url_path ~encode:true
-               (Ocsigen_request_info.full_path oldri.request_info))^
-            "\".");
-        Lwt.return (Ext_next e, cookies)
-      | Some sub_path ->
-        Ocsigen_messages.debug (fun () ->
-            "-------- site found: url \""^
-            (Url.string_of_url_path ~encode:true
-               (Ocsigen_request_info.full_path oldri.request_info))^
-            "\" matches \""^
-            (Url.string_of_url_path ~encode:true path)^"\".");
-        let ri = {oldri with
-                  request_info =
-                    (Ocsigen_request_info.update oldri.request_info
-                       ~sub_path:sub_path
-                       ~sub_path_string:
-                         (Url.string_of_url_path
-                            ~encode:true sub_path) ()) }
-        in
-        closure awake cookies (Req_not_found (e, ri))
-        >>= function
-          (* After a site, we turn back to old ri *)
-        | (Ext_stop_site (cs, err), cookies)
-        | (Ext_continue_with (_, cs, err), cookies) ->
-          Lwt.return
-            (Ext_continue_with (oldri, cs, err), cookies)
-        | (Ext_found_continue_with r, cookies) ->
-          awake ();
-          r () >>= fun (r', req) ->
-          Lwt.return
-            (Ext_found_continue_with' (r', oldri), cookies)
-        | (Ext_found_continue_with' (r, req), cookies) ->
-          Lwt.return
-            (Ext_found_continue_with' (r, oldri), cookies)
-        | (Ext_do_nothing, cookies) ->
-          Lwt.return
-            (Ext_continue_with (oldri,
-                                Ocsigen_cookies.Cookies.empty,
-                                e), cookies)
-        | r -> Lwt.return r
-
 (** same as:
     <host>
       <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www" />
@@ -150,13 +74,13 @@ let staticmod : (Ocsigen_extensions.virtual_hosts
       ~host:"*"
       ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
    (fun _ _ request_state ->
-     Printf.printf "My Staticmod\n%!";
-     Staticmod.gen
-       ~usermode:None
-       (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/")
-       request_state
-     >>= fun res ->
-     Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
+      Printf.printf "My Staticmod\n%!";
+      Staticmod.gen
+        ~usermode:None
+        (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/")
+        request_state
+      >>= fun res ->
+      Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
 
 (** same as:
     <host>
@@ -171,18 +95,17 @@ let ocsigenstuff : (Ocsigen_extensions.virtual_hosts
   ([Ocsigen_extensions.VirtualHost.make
       ~host:"*"
       ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
-   make_site
+   Ocsigen_extensions.make_site
      ~path:["ocsigenstuff"]
      ~charset:"utf-8"
-     ~closure:(fun _ _ request_state ->
-         Printf.printf "My Staticmod Ocsigenstuff\n%!";
-         Staticmod.gen
-           ~usermode:None
-           (Staticmod.Dir
-              "/home/dinosaure/bin/ocsigenserver/local/var/www/ocsigenstuff/")
-           request_state
-         >>= fun res ->
-         Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
+     ~closure:[
+       (fun request_state ->
+          Printf.printf "My Staticmod Ocsigenstuff\n%!";
+          Staticmod.gen
+            ~usermode:None
+            (Staticmod.Dir
+               "/home/dinosaure/bin/ocsigenserver/local/var/www/ocsigenstuff/")
+            request_state)])
 
 let condition_header name pattern =
   let open Ocsigen_http_frame in
@@ -201,28 +124,24 @@ let condition_header name pattern =
 *)
 let redirectmod_for_firefox =
   (fun _ _ request_state ->
-    Printf.printf "My RedirectMod\n%!";
-    Redirectmod.gen
-      (Redirectmod.Regexp
-        (Netstring_pcre.regexp ".+",
-         "https://www.mozilla.org/fr/firefox/new/",
-         Ocsigen_lib_base.Yes, false))
-      request_state
-    >>= fun res ->
-    Lwt.return (res, Ocsigen_cookies.Cookies.empty))
+     Printf.printf "My RedirectMod\n%!";
+     Redirectmod.gen
+       (Redirectmod.Regexp
+          (Netstring_pcre.regexp ".+",
+           "https://www.mozilla.org/fr/firefox/new/",
+           Ocsigen_lib_base.Yes, false))
+       request_state)
 
 (** same as:
     <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/">
 *)
 let staticmod_for_firefox =
   (fun _ _ request_state ->
-    Printf.printf "My Staticmod for firefox\n%!";
-    Staticmod.gen
-      ~usermode:None
-      (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/")
-      request_state
-    >>= fun res ->
-    Lwt.return (res, Ocsigen_cookies.Cookies.empty))
+     Printf.printf "My Staticmod for firefox\n%!";
+     Staticmod.gen
+       ~usermode:None
+       (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/")
+       request_state)
 
 (** same as:
     <host>
@@ -243,26 +162,28 @@ let accesscontrol : (Ocsigen_extensions.virtual_hosts
   ([Ocsigen_extensions.VirtualHost.make
       ~host:"*"
       ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
-   make_site
+   Ocsigen_extensions.make_site
      ~path:["restricted-area"]
      ~charset:"utf-8"
-     ~closure:(fun awake cookies request_state ->
+     ~closure:[(fun request_state ->
          Printf.printf "My AccessControl\n%!";
          let open Ocsigen_extensions in
          match request_state with
          | Ocsigen_extensions.Req_found (ri, _)
          | Ocsigen_extensions.Req_not_found (_, ri) ->
            if (condition_header
-                "User-Agent"
-                (Netstring_pcre.regexp ".*Firefox.*"))
-              ri.request_info
+                 "User-Agent"
+                 (Netstring_pcre.regexp ".*Firefox.*"))
+               ri.request_info
            then
              begin Printf.printf "> firefox\n%!";
-             staticmod_for_firefox awake cookies request_state end
+               staticmod_for_firefox (fun x -> x)
+               Ocsigen_cookies.Cookies.empty request_state end
            else
              begin Printf.printf "< firefox\n%!";
-             redirectmod_for_firefox awake cookies request_state end
-      ))
+               redirectmod_for_firefox (fun x -> x)
+               Ocsigen_cookies.Cookies.empty request_state end
+       )])
 
 let server_conf =
   Ocsigen_server_configuration.make
