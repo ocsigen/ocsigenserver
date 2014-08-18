@@ -56,6 +56,16 @@ val parser_config : Simplexmlparser.xml list ->
   Simplexmlparser.xml list list
 val parse_server : bool -> Simplexmlparser.xml list -> unit
 
+(** First pass of parse XML file. Extracts this informations:
+    {ul
+    {- user to execute OcsigenServer (ex: www-data) }
+    {- group to execute OcsigenServer (ex: www-data) }
+    {- SSL key and SSL certificate }
+    {- list of HTTP port to listen (ex: 80) }
+    {- list of HTTPS port to listen (ex: 443) }
+    {- minimum and maximum of threads }
+    }
+*)
 val extract_info :
   Simplexmlparser.xml list ->
   (string option * string option) *

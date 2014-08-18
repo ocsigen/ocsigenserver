@@ -40,24 +40,36 @@ module Result : sig
   (** The type of answers to send *)
   type result
 
+  (** accessor for cookies of result *)
   val cookies : result -> Ocsigen_cookies.cookieset
+  (** accessor for Last-Modified value of header of result *)
   val lastmodified : result -> float option
+  (** accessor for ETag value of header of result *)
   val etag : result -> string option
+  (** accessor for response code of result *)
   val code : result -> int
+  (** accessor for content of result *)
   val stream :
     result ->
     string Ocsigen_stream.t *
     (string Ocsigen_stream.t -> int64 -> string Ocsigen_stream.step Lwt.t)
       option
+  (** accessor for Content-Length value of header of result *)
   val content_length : result -> int64 option
+  (** accessor for Content-Type value of header of result *)
   val content_type : result -> string option
+  (** accessor for HTTP header of result *)
   val headers : result -> Http_headers.t
+  (** accessor for charset of result *)
   val charset : result -> string option
+  (** accessor for location of result *)
   val location : result -> string option
 
   (** Default [result] to use as a base for constructing others. *)
   val default : unit -> result
 
+  (** Update [result] before sending.
+      If argument is unspecified, this function use old value of result. *)
   val update :
     result ->
     ?cookies:Ocsigen_cookies.cookieset ->

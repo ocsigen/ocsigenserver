@@ -19,6 +19,7 @@ type request_info
  *)
 val ri_of_url : ?full_rewrite:bool -> string -> request_info -> request_info
 
+(** Obtain bind address of server and port *)
 val get_server_address : request_info -> Unix.inet_addr * int
 
 (** Make a request_info *)
@@ -135,7 +136,9 @@ val update :
   ?connection_closed:unit Lwt.t ->
   unit -> request_info
 
+(** Update [nb_tries] slot of [request_info] *)
 val update_nb_tries : request_info -> int -> unit
+(** Update cache of [request_info] *)
 val update_request_cache : request_info -> Polytables.t -> unit
 
 (** Accessor for range of request_info *)
