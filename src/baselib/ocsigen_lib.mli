@@ -57,6 +57,18 @@ module Url : sig
   val decode : ?plus:bool -> string -> string
   val make_encoded_parameters : (string * string) list -> string
   val string_of_url_path : encode:bool -> path -> uri
+
+  (** [parse url] returns a tuple containing information about [url]
+      {ul
+      {- If url contains scheme 'https'}
+      {- host of url (ex: http://www.ocsigen.org/ -> www.ocsigen.org)}
+      {- port of url}
+      {- path as [string] without first '/'}
+      {- path as [string list]}
+      {- GET query of url}
+      {- lazy value to decode GET query }
+      }
+  *)
   val parse : t ->
     bool option * string option * int option *
     string (** the path, as a string, without the first / *) *
