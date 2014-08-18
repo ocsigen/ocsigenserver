@@ -1033,9 +1033,6 @@ let get_number_of_connected,
 
 
 
-let get_server_address ri = assert false (*XXX FIXME *)
-
-
 (* user directories *)
 
 exception NoSuchUser

@@ -113,6 +113,9 @@ let ri_of_url ?(full_rewrite = false) url ri =
    get_params = get_params;
    }
 
+let get_server_address ri =
+  raise (Invalid_argument "Ocsigen_request_info.get_server_address")
+
 let make
     ~url_string
     ~meth

@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 (**
-   Polymorphic tables (using Map) 
+   Polymorphic tables (using Map)
    @author Vincent Balat
    @author Jérôme Vouillon
 *)
