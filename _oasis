@@ -63,6 +63,7 @@ Object base
   Path:			src/baselib
   FindlibFullName:	ocsigenserver.baselib.base
   Modules:		Ocsigen_lib_base
+  BuildDepends:		lwt, ipaddr
 
 Library http
   Path:			src/http
@@ -86,9 +87,6 @@ Object cookies
   Path:			src/http
   Modules:		Ocsigen_cookies
   FindlibFullName:	ocsigenserver.cookies
-  BuildDepends:		ocsigenserver.baselib,
-                        netstring,
-                        netstring-pcre
 
 Library server
   Path:			src/server
@@ -118,6 +116,7 @@ Library server
 Library ext
   Path:			src/extensions/
   FindlibParent:	ocsigenserver
+  BuildDepends:		ipaddr
 
 Library staticmod
   Path:			src/extensions

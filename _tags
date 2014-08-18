@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: e4ae942874b5fa54c4df9a7a28ad8523)
+# DO NOT EDIT (digest: 7c79bfbd97bc469e23530fd0a01c5320)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -26,8 +26,6 @@
 <src/baselib/*.ml{,i}>: package(cryptokit)
 <src/baselib/*.ml{,i}>: package(dynlink)
 <src/baselib/*.ml{,i}>: package(findlib)
-<src/baselib/*.ml{,i}>: package(ipaddr)
-<src/baselib/*.ml{,i}>: package(lwt)
 <src/baselib/*.ml{,i}>: package(lwt.extra)
 <src/baselib/*.ml{,i}>: package(lwt.syntax)
 <src/baselib/*.ml{,i}>: package(netstring)
@@ -35,22 +33,24 @@
 <src/baselib/*.ml{,i}>: package(optcomp)
 <src/baselib/*.ml{,i}>: package(tyxml)
 # Object base
+<src/baselib/*.ml{,i}>: package(ipaddr)
+<src/baselib/*.ml{,i}>: package(lwt)
 # Library http
 "src/http/http.cmxs": use_http
-<src/http/*.ml{,i}>: package(lwt.ssl)
-# Object cookies
 <src/http/*.ml{,i}>: package(cryptokit)
 <src/http/*.ml{,i}>: package(dynlink)
 <src/http/*.ml{,i}>: package(findlib)
 <src/http/*.ml{,i}>: package(ipaddr)
 <src/http/*.ml{,i}>: package(lwt)
 <src/http/*.ml{,i}>: package(lwt.extra)
+<src/http/*.ml{,i}>: package(lwt.ssl)
 <src/http/*.ml{,i}>: package(lwt.syntax)
 <src/http/*.ml{,i}>: package(netstring)
 <src/http/*.ml{,i}>: package(netstring-pcre)
 <src/http/*.ml{,i}>: package(optcomp)
 <src/http/*.ml{,i}>: package(tyxml)
 <src/http/*.ml{,i}>: use_baselib
+# Object cookies
 # Library server
 "src/server/server.cmxs": use_server
 <src/server/*.ml{,i}>: package(cryptokit)
@@ -183,4 +183,3 @@
 <bin/*.ml{,i}>: linkall
 "bin/server_main.native": linkall
 <src/baselib/dynlink_wrapper.ml>: package(optcomp), syntax(camlp4o)
-true: thread

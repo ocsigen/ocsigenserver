@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: d6987fd61bdff1cadc0dce083b74459b)
+# DO NOT EDIT (digest: 3d45eb705385a40e4227c2de2bc0fd75)
 version = "0.1"
 description = "HTTP Server in OCaml"
 archive(byte) = "ocsigenserver.cma"
@@ -53,6 +53,7 @@ package "http" (
 package "ext" (
  version = "0.1"
  description = "HTTP Server in OCaml"
+ requires = "ipaddr"
  archive(byte) = "ext.cma"
  archive(byte, plugin) = "ext.cma"
  archive(native) = "ext.cmxa"
@@ -229,7 +230,6 @@ package "ext" (
 package "cookies" (
  version = "0.1"
  description = "HTTP Server in OCaml"
- requires = "ocsigenserver.baselib netstring netstring-pcre"
  archive(byte) = "ocsigen_cookies.cmo"
  archive(native) = "ocsigen_cookies.cmx"
  exists_if = "ocsigen_cookies.cmo"
@@ -258,6 +258,7 @@ package "baselib" (
  package "base" (
   version = "0.1"
   description = "HTTP Server in OCaml"
+  requires = "lwt ipaddr"
   archive(byte) = "ocsigen_lib_base.cmo"
   archive(native) = "ocsigen_lib_base.cmx"
   exists_if = "ocsigen_lib_base.cmo"

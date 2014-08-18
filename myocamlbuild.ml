@@ -711,9 +711,10 @@ let load_file file =
 
 let project_name = "ocsigenserver";;
 
-let preemptive =
-  try let _ = Ocamlbuild_pack.Findlib.query "lwt.preemptive" in "Lwt_preemptive"
-  with _ -> "Fake_preempt";;
+let has_preemptive, preemptive =
+  try let _ = Ocamlbuild_pack.Findlib.query "lwt.preemptive" in
+      true, "Lwt_preemptive"
+  with _ -> false, "Fake_preempt";;
 
 let where_ocaml =
   let concat l = List.fold_right (^) l "" in
@@ -790,6 +791,13 @@ Ocamlbuild_plugin.dispatch (function
           tag_file "src/baselib/ocsigen_commandline.ml" ["use_nocommandline"];
           tag_file "bin/server_main.native" ["use_nocommandline"];
           tag_file "bin/server_main.byte" ["use_nocommandline"];
+        end;
+
+      if has_preemptive
+      then
+        begin
+          flag ["ocaml"; "compile"] (S [A "-thread"]);
+          flag ["link"] (S [A "-thread"]);
         end;
 
       pflag ["ocaml"; "ocamldep"] "native"
