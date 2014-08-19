@@ -704,35 +704,16 @@ let subst_rule file args =
          let res = subst args content in
          Echo( [ res ], env file));;
 
-let fold func =
-  let l = ref [] in
-  (try while true do l @:= [func ()] done with _ -> ()); !l;;
-
-let ocamlfind cmd func =
-  let p = Printf.sprintf in
-  let cmd = List.map (p "\"%s\"") cmd in
-  let cmd = p "ocamlfind %s" (String.concat " " cmd) in
-  Ocamlbuild_pack.My_unix.run_and_open cmd
-    (fun ic -> fold (fun () -> func ic));;
-
 let load_file file =
   let ic = open_in file in
   let n = in_channel_length ic in
   let s = String.create n in
   really_input ic s 0 n; close_in ic; s;;
 
-let project_name = "ocsigenserver";;
-
 let has_lwt_preemptive, preemptive =
   try let _ = Ocamlbuild_pack.Findlib.query "lwt.preemptive" in
       true, "Lwt_preemptive"
   with _ -> false, "Fake_preempt";;
-
-let where_ocaml =
-  let concat l = List.fold_right (^) l "" in
-  let result = Ocamlbuild_pack.My_unix.run_and_open "ocamlc -where"
-      (fun ic -> fold (fun () -> input_line ic))
-  in concat result
 
 let env_filename = Pathname.basename BaseEnvLight.default_filename
 let env = BaseEnvLight.load ~filename:env_filename ~allow_empty:true ()
@@ -742,7 +723,7 @@ let is_native = bool_of_string (BaseEnvLight.var_get "is_native" env)
 let native_dynlink = bool_of_string (BaseEnvLight.var_get "native_dynlink" env)
 let preemptive = bool_of_string (BaseEnvLight.var_get "preemptive" env)
 let libdir = BaseEnvLight.var_get "libdir" env
-let name = BaseEnvLight.var_get "pkg_name" env
+let pkg_name = BaseEnvLight.var_get "pkg_name" env
 
 let choose_rule ifiles ofile func =
   rule ofile
@@ -770,12 +751,12 @@ let configuration = [
   ("_DATA_DIR_", BaseEnvLight.var_get "datadir" env);
   ("_BIN_DIR_", BaseEnvLight.var_get "bindir" env);
   ("_LIB_DIR_", libdir);
-  ("_EXT_DIR_", libdir ^ "/" ^ name ^ "/extensions");
+  ("_EXT_DIR_", libdir ^ "/" ^ pkg_name ^ "/extensions");
   ("_STATIC_PAGES_DIR_", BaseEnvLight.var_get "staticpagesdir" env);
   ("_UPLOAD_DIR_", "/tmp/");
   ("_OCSIGEN_USER_", BaseEnvLight.var_get "ocsigen_user" env);
   ("_OCSIGEN_GROUP_", BaseEnvLight.var_get "ocsigen_group" env);
-  ("_PROJECT_NAME_", name);
+  ("_PROJECT_NAME_", pkg_name);
   ("_COMMAND_PIPE_", BaseEnvLight.var_get "commandpipe" env);
   ("_CONFIG_DIR_", BaseEnvLight.var_get "sysconfdir" env);
   ("_PREEMPTIVE_", if preemptive then "Lwt_preemptive" else "Fake_preempt");
