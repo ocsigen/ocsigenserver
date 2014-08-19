@@ -14,7 +14,9 @@ build: [
     "--datadir" "%{lib}%/ocsigenserver/var/lib/ocsigenserver"
     "--sysconfdir" "%{lib}%/ocsigenserver/etc/ocsigenserver"
     "--%{camlzip:enable}%-camlzip"
-    "--%{base-threads:enable}%-preemptive"]
+    "--%{base-threads:enable}%-preemptive"
+    "--%{dbm:enable}%-dbm"
+    "--%{sqlite3-ocaml:enable}%-sqlite3"]
   [make]
   [make "install"]
 ]

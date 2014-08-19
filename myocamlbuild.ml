@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 230ff6fdac6a0682498bda79c5b1f7e3) *)
+(* DO NOT EDIT (digest: a49834815f8e58268967a57d39f43b6d) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -597,7 +597,6 @@ let package_default =
   {
      MyOCamlbuildBase.lib_ocaml =
        [
-          ("ocsigenserver", ["src"], []);
           ("polytables", ["src/polytables"], []);
           ("commandline", ["src/commandline/yes"], []);
           ("nocommandline", ["src/commandline/no"], []);
@@ -607,20 +606,27 @@ let package_default =
           ("cookies", ["src/http"], []);
           ("server", ["src/server"], []);
           ("ext", ["src/extensions"], []);
-          ("staticmod", ["src/extensions/staticmod"], []);
-          ("accesscontrol", ["src/extensions/accesscontrol"], []);
-          ("authbasic", ["src/extensions/authbasic"], []);
-          ("cgimod", ["src/extensions/cgimod"], []);
-          ("cors", ["src/extensions/cors"], []);
-          ("deflatemod", ["src/extensions/deflatemod"], []);
-          ("extendconfiguration", ["src/extensions/extendconfiguration"], []);
-          ("extensiontemplate", ["src/extensions/extensiontemplate"], []);
-          ("ocsigen_comet", ["src/extensions/ocsigen_comet"], []);
-          ("outputfilter", ["src/extensions/outputfilter"], []);
-          ("redirectmod", ["src/extensions/redirectmod"], []);
-          ("revproxy", ["src/extensions/revproxy"], []);
+          ("ocsigenserver", ["src"], []);
+          ("ocsipersist-sqlite",
+            ["src/extensions/ocsipersist/ocsipersist-sqlite"],
+            []);
+          ("ocsipersist-dbm",
+            ["src/extensions/ocsipersist/ocsipersist-dbm"],
+            []);
+          ("userconf", ["src/extensions/userconf"], []);
           ("rewritemod", ["src/extensions/rewritemod"], []);
-          ("userconf", ["src/extensions/userconf"], [])
+          ("revproxy", ["src/extensions/revproxy"], []);
+          ("redirectmod", ["src/extensions/redirectmod"], []);
+          ("outputfilter", ["src/extensions/outputfilter"], []);
+          ("ocsigen_comet", ["src/extensions/ocsigen_comet"], []);
+          ("extensiontemplate", ["src/extensions/extensiontemplate"], []);
+          ("extendconfiguration", ["src/extensions/extendconfiguration"], []);
+          ("deflatemod", ["src/extensions/deflatemod"], []);
+          ("cors", ["src/extensions/cors"], []);
+          ("cgimod", ["src/extensions/cgimod"], []);
+          ("authbasic", ["src/extensions/authbasic"], []);
+          ("accesscontrol", ["src/extensions/accesscontrol"], []);
+          ("staticmod", ["src/extensions/staticmod"], [])
        ];
      lib_c = [];
      flags = [];
@@ -628,20 +634,30 @@ let package_default =
        [
           ("src/server", ["src/baselib"; "src/http"; "src/polytables"]);
           ("src/http", ["src/baselib"]);
-          ("src/extensions/userconf", ["src/server"]);
-          ("src/extensions/staticmod", ["src/server"]);
-          ("src/extensions/rewritemod", ["src/server"]);
-          ("src/extensions/revproxy", ["src/server"]);
-          ("src/extensions/redirectmod", ["src/server"]);
-          ("src/extensions/outputfilter", ["src/server"]);
-          ("src/extensions/ocsigen_comet", ["src/server"]);
-          ("src/extensions/extensiontemplate", ["src/server"]);
-          ("src/extensions/extendconfiguration", ["src/server"]);
-          ("src/extensions/deflatemod", ["src/server"]);
-          ("src/extensions/cors", ["src/server"]);
-          ("src/extensions/cgimod", ["src/server"]);
-          ("src/extensions/authbasic", ["src/server"]);
-          ("src/extensions/accesscontrol", ["src/server"]);
+          ("src/extensions/userconf", ["src"]);
+          ("src/extensions/staticmod", ["src"]);
+          ("src/extensions/rewritemod", ["src"]);
+          ("src/extensions/revproxy", ["src"]);
+          ("src/extensions/redirectmod", ["src"]);
+          ("src/extensions/outputfilter", ["src"]);
+          ("src/extensions/ocsipersist/ocsipersist-sqlite", ["src"]);
+          ("src/extensions/ocsipersist/ocsipersist-dbm", ["src"]);
+          ("src/extensions/ocsigen_comet", ["src"]);
+          ("src/extensions/extensiontemplate", ["src"]);
+          ("src/extensions/extendconfiguration", ["src"]);
+          ("src/extensions/deflatemod", ["src"]);
+          ("src/extensions/cors", ["src"]);
+          ("src/extensions/cgimod", ["src"]);
+          ("src/extensions/authbasic", ["src"]);
+          ("src/extensions/accesscontrol", ["src"]);
+          ("src",
+            [
+               "src/baselib";
+               "src/extensions";
+               "src/http";
+               "src/polytables";
+               "src/server"
+            ]);
           ("bin", ["src/server"])
        ]
   }
@@ -649,7 +665,7 @@ let package_default =
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 653 "myocamlbuild.ml"
+# 669 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 (* Substitution *)
@@ -724,6 +740,8 @@ let native_dynlink = bool_of_string (BaseEnvLight.var_get "native_dynlink" env)
 let preemptive = bool_of_string (BaseEnvLight.var_get "preemptive" env)
 let libdir = BaseEnvLight.var_get "libdir" env
 let pkg_name = BaseEnvLight.var_get "pkg_name" env
+let sqlite3 = bool_of_string (BaseEnvLight.var_get "sqlite3" env)
+let dbm = bool_of_string (BaseEnvLight.var_get "dbm" env)
 
 let choose_rule ifiles ofile func =
   rule ofile
@@ -733,6 +751,10 @@ let choose_rule ifiles ofile func =
          let file = func ifiles in
          let content = load_file file in
          Echo( [ content ], env ofile));;
+
+let link_rule source dest =
+  rule (Printf.sprintf "%s -> %s" source dest) ~dep:source ~prod:dest
+    (fun env _ -> Cmd (S [A"ln"; A"-f"; P (env source); P (env dest)]));;
 
 let version =
   let fd = open_in "VERSION" in
@@ -801,6 +823,16 @@ Ocamlbuild_plugin.dispatch (function
                             A "-package";
                             A "lwt.preemptive"]);
         end;
+
+      if sqlite3 then
+        link_rule
+          "src/extensions/ocsipersist/ocsipersist.mli"
+          "src/extensions/ocsipersist/ocsipersist-sqlite/ocsipersist.mli";
+
+      if dbm then
+        link_rule
+          "src/extensions/ocsipersist/ocsipersist.mli"
+          "src/extensions/ocsipersist/ocsipersist-dbm/ocsipersist.mli";
 
       pflag ["ocaml"; "ocamldep"] "native_dynlink"
         (fun value ->

@@ -21,30 +21,33 @@ Flag commandline
   Description:         Parse command line
   Default:             true
 
-Library ocsigenserver
-  Path:			src/
-  Pack:			true
+Flag sqlite3
+  Description:         Ocsipersist with SQLite
+  Default:             false
+
+Flag dbm
+  Description:	       Ocsipersist with DBM
+  Default:	       false
 
 Library polytables
   Path:			src/polytables
-  FindlibParent:	ocsigenserver
   Modules:		Polytables
+  FindlibContainers:	ocsigenserver
 
 Library commandline
   Path:                src/commandline/yes
-  FindlibParent:       ocsigenserver
   Modules:             Ocsigen_getcommandline
   Build$:              flag(commandline)
+  FindlibContainers:       ocsigenserver
 
 Library nocommandline
   Path:                src/commandline/no
-  FindlibParent:       ocsigenserver
   Modules:             Ocsigen_getcommandline
   Build$:              !flag(commandline)
+  FindlibContainers:       ocsigenserver
 
 Library baselib
   Path:			src/baselib
-  FindlibParent:	ocsigenserver
   Modules:		Ocsigen_cache,
                         Ocsigen_commandline,
                         Ocsigen_config,
@@ -63,6 +66,7 @@ Library baselib
                         cryptokit,
                         findlib,
                         dynlink
+  FindlibContainers:	ocsigenserver
 
 Object base
   Path:			src/baselib
@@ -72,7 +76,6 @@ Object base
 
 Library http
   Path:			src/http
-  FindlibParent:	ocsigenserver
   Modules:		Ocsigen_cookies,
                         Ocsigen_http_frame,
                         Ocsigen_headers,
@@ -87,6 +90,7 @@ Library http
                         tyxml,
                         lwt.ssl,
                         ipaddr
+  FindlibContainers:	ocsigenserver
 
 Object cookies
   Path:			src/http
@@ -95,7 +99,6 @@ Object cookies
 
 Library server
   Path:			src/server
-  FindlibParent:	ocsigenserver
   Modules:		Ocsigen_extensions,
                         Ocsigen_range,
                         Ocsigen_parseconfig,
@@ -106,98 +109,124 @@ Library server
                         ocsigenserver.baselib,
                         ocsigenserver.http,
                         tyxml.parser
+  FindlibContainers:	ocsigenserver
 
 # EXTENSIONS
-
-Library ext
-  Path:			src/extensions/
-  FindlibParent:	ocsigenserver
 
 Library staticmod
   Path:			src/extensions/staticmod
   Modules:		Staticmod
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library accesscontrol
   Path:			src/extensions/accesscontrol
   Modules:		Accesscontrol
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library authbasic
   Path:			src/extensions/authbasic
   Modules:		Authbasic
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library cgimod
   Path:			src/extensions/cgimod
   Modules:		Cgimod
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library cors
   Path:			src/extensions/cors
   Modules:		Cors
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library deflatemod
   Build$:		flag(camlzip)
   Install$:		flag(camlzip)
   Path:			src/extensions/deflatemod
   Modules:		Deflatemod
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server, camlzip
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver, camlzip
 
 Library extendconfiguration
   Path:			src/extensions/extendconfiguration
   Modules:		Extendconfiguration
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library extensiontemplate
   Path:			src/extensions/extensiontemplate
   Modules:		Extensiontemplate
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library ocsigen_comet
   Path:			src/extensions/ocsigen_comet
   Modules:		Ocsigen_comet
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server, react
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver, react
 
 Library outputfilter
   Path:			src/extensions/outputfilter
   Modules:		Outputfilter
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library redirectmod
   Path:			src/extensions/redirectmod
   Modules:		Redirectmod
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library revproxy
   Path:			src/extensions/revproxy
   Modules:		Revproxy
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library rewritemod
   Path:			src/extensions/rewritemod
   Modules:		Rewritemod
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
 
 Library userconf
   Path:			src/extensions/userconf
   Modules:		Userconf
-  FindlibParent:	ext
-  BuildDepends:		ocsigenserver.server
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver
+
+Library "ocsipersist-dbm"
+  Path:			src/extensions/ocsipersist/ocsipersist-dbm
+  Modules:		Ocsipersist
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver, dbm
+  Build$:		flag(dbm)
+  Install$:		flag(dbm)
+
+Library "ocsipersist-sqlite"
+  Path:			src/extensions/ocsipersist/ocsipersist-sqlite
+  Modules:		Ocsipersist
+  FindlibContainers:	ext
+  BuildDepends:		ocsigenserver, sqlite3
+  Build$:		flag(sqlite3) && flag(preemptive)
+  Install$:		flag(sqlite3) && flag(preemptive)
+
+Library ext
+  Path:			src/extensions
+  Pack:			true
+  FindlibContainers:	ocsigenserver
+
+Library ocsigenserver
+  Path:			src
+  BuildDepends:		ocsigenserver.polytables,
+                        ocsigenserver.baselib,
+                        ocsigenserver.http,
+                        ocsigenserver.server,
+                        ocsigenserver.ext
 
 Executable "ocsigenserver.opt"
   Path:			bin/
@@ -210,10 +239,3 @@ Executable ocsigenserver
   MainIs:		server_main.ml
   CompiledObject:	byte
   BuildDepends:		ocsigenserver.server
-
-Document ocsigenserver
-  Type:			ocamlbuild (0.4)
-  BuildTools:		ocamldoc
-  Title:		ocsigenserver
-  XOCamlbuildPath:      .
-  XOCamlbuildLibraries: ocsigenserver.server
