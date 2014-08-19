@@ -12,7 +12,9 @@ build: [
     "--commandpipe" "%{lib}%/ocsigenserver/var/run/ocsigenserver_command"
     "--staticpagesdir" "%{lib}%/ocsigenserver/var/www"
     "--datadir" "%{lib}%/ocsigenserver/var/lib/ocsigenserver"
-    "--sysconfdir" "%{lib}%/ocsigenserver/etc/ocsigenserver"]
+    "--sysconfdir" "%{lib}%/ocsigenserver/etc/ocsigenserver"
+    "--%{camlzip:enable}%-camlzip"
+    "--%{lwt.preemptive}%-preemptive"]
   [make]
   [make "install"]
 ]
@@ -36,6 +38,7 @@ depends: [
 ]
 depopts: [
   "camlzip"
+  "lwt.preemptive"
 ]
 conflicts: [
   "camlzip" {< "1.04"}

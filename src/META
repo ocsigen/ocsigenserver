@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3d45eb705385a40e4227c2de2bc0fd75)
+# DO NOT EDIT (digest: 9d8d94e6aaa5bba0c31a0f98f07ebcb6)
 version = "0.1"
 description = "HTTP Server in OCaml"
 archive(byte) = "ocsigenserver.cma"
@@ -11,7 +11,7 @@ package "server" (
  version = "0.1"
  description = "HTTP Server in OCaml"
  requires =
- "ocsigenserver.baselib ocsigenserver.polytables ocsigenserver.http lwt.unix netstring netstring-pcre cryptokit findlib tyxml tyxml.parser lwt.syntax lwt.extra ipaddr"
+ "ocsigenserver.polytables ocsigenserver.baselib ocsigenserver.http tyxml.parser"
  archive(byte) = "server.cma"
  archive(byte, plugin) = "server.cma"
  archive(native) = "server.cmxa"
@@ -42,7 +42,7 @@ package "nocommandline" (
 package "http" (
  version = "0.1"
  description = "HTTP Server in OCaml"
- requires = "ocsigenserver.baselib netstring netstring-pcre lwt.ssl tyxml"
+ requires = "ocsigenserver.baselib tyxml lwt.ssl ipaddr"
  archive(byte) = "http.cma"
  archive(byte, plugin) = "http.cma"
  archive(native) = "http.cmxa"
@@ -53,7 +53,6 @@ package "http" (
 package "ext" (
  version = "0.1"
  description = "HTTP Server in OCaml"
- requires = "ipaddr"
  archive(byte) = "ext.cma"
  archive(byte, plugin) = "ext.cma"
  archive(native) = "ext.cmxa"
@@ -62,8 +61,7 @@ package "ext" (
  package "userconf" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "userconf.cma"
   archive(byte, plugin) = "userconf.cma"
   archive(native) = "userconf.cmxa"
@@ -74,7 +72,7 @@ package "ext" (
  package "staticmod" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires = "ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "staticmod.cma"
   archive(byte, plugin) = "staticmod.cma"
   archive(native) = "staticmod.cmxa"
@@ -85,8 +83,7 @@ package "ext" (
  package "rewritemod" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "rewritemod.cma"
   archive(byte, plugin) = "rewritemod.cma"
   archive(native) = "rewritemod.cmxa"
@@ -97,8 +94,7 @@ package "ext" (
  package "revproxy" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "revproxy.cma"
   archive(byte, plugin) = "revproxy.cma"
   archive(native) = "revproxy.cmxa"
@@ -109,8 +105,7 @@ package "ext" (
  package "redirectmod" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "redirectmod.cma"
   archive(byte, plugin) = "redirectmod.cma"
   archive(native) = "redirectmod.cmxa"
@@ -121,8 +116,7 @@ package "ext" (
  package "outputfilter" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "outputfilter.cma"
   archive(byte, plugin) = "outputfilter.cma"
   archive(native) = "outputfilter.cmxa"
@@ -133,8 +127,7 @@ package "ext" (
  package "ocsigen_comet" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre react ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server react"
   archive(byte) = "ocsigen_comet.cma"
   archive(byte, plugin) = "ocsigen_comet.cma"
   archive(native) = "ocsigen_comet.cmxa"
@@ -145,8 +138,7 @@ package "ext" (
  package "extensiontemplate" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "extensiontemplate.cma"
   archive(byte, plugin) = "extensiontemplate.cma"
   archive(native) = "extensiontemplate.cmxa"
@@ -157,8 +149,7 @@ package "ext" (
  package "extendconfiguration" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "extendconfiguration.cma"
   archive(byte, plugin) = "extendconfiguration.cma"
   archive(native) = "extendconfiguration.cmxa"
@@ -169,8 +160,7 @@ package "ext" (
  package "deflatemod" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre camlzip ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server camlzip"
   archive(byte) = "deflatemod.cma"
   archive(byte, plugin) = "deflatemod.cma"
   archive(native) = "deflatemod.cmxa"
@@ -181,8 +171,7 @@ package "ext" (
  package "cors" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "cors.cma"
   archive(byte, plugin) = "cors.cma"
   archive(native) = "cors.cmxa"
@@ -193,8 +182,7 @@ package "ext" (
  package "cgimod" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "cgimod.cma"
   archive(byte, plugin) = "cgimod.cma"
   archive(native) = "cgimod.cmxa"
@@ -205,8 +193,7 @@ package "ext" (
  package "authbasic" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "authbasic.cma"
   archive(byte, plugin) = "authbasic.cma"
   archive(native) = "authbasic.cmxa"
@@ -217,8 +204,7 @@ package "ext" (
  package "accesscontrol" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires =
-  "netstring-pcre ocsigenserver ocsigenserver.baselib ocsigenserver.server lwt"
+  requires = "ocsigenserver.server"
   archive(byte) = "accesscontrol.cma"
   archive(byte, plugin) = "accesscontrol.cma"
   archive(native) = "accesscontrol.cmxa"
@@ -249,7 +235,7 @@ package "baselib" (
  version = "0.1"
  description = "HTTP Server in OCaml"
  requires =
- "lwt netstring netstring-pcre cryptokit findlib tyxml lwt.syntax lwt.extra ipaddr dynlink optcomp"
+ "lwt lwt.unix lwt.syntax optcomp netstring netstring-pcre cryptokit findlib dynlink"
  archive(byte) = "baselib.cma"
  archive(byte, plugin) = "baselib.cma"
  archive(native) = "baselib.cmxa"
@@ -258,7 +244,7 @@ package "baselib" (
  package "base" (
   version = "0.1"
   description = "HTTP Server in OCaml"
-  requires = "lwt ipaddr"
+  requires = "lwt"
   archive(byte) = "ocsigen_lib_base.cmo"
   archive(native) = "ocsigen_lib_base.cmx"
   exists_if = "ocsigen_lib_base.cmo"

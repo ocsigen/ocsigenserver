@@ -9,13 +9,21 @@ BuildTools:		ocamlbuild
 OCamlVersion:		>= 4.01
 BetaFeatures:		section_object
 
+Flag camlzip
+  Description:		Build with CamlZip library
+  Default:		false
+
+Flag preemptive
+  Description:		Build with Lwt Preemptive library
+  Default:		false
+
+Flag commandline
+  Description:         Parse command line
+  Default:             true
+
 Library ocsigenserver
   Path:			src/
   Pack:			true
-
-Flag commandline
-  Description:		Parse command line
-  Default:		true
 
 Library polytables
   Path:			src/polytables
@@ -23,17 +31,16 @@ Library polytables
   Modules:		Polytables
 
 Library commandline
-  Path:			src/commandline/yes
-  FindlibParent:	ocsigenserver
-  Modules:		Ocsigen_getcommandline
-  Build$:		flag(commandline)
-
+  Path:                src/commandline/yes
+  FindlibParent:       ocsigenserver
+  Modules:             Ocsigen_getcommandline
+  Build$:              flag(commandline)
 
 Library nocommandline
-  Path:			src/commandline/no
-  FindlibParent:	ocsigenserver
-  Modules:		Ocsigen_getcommandline
-  Build$:		!flag(commandline)
+  Path:                src/commandline/no
+  FindlibParent:       ocsigenserver
+  Modules:             Ocsigen_getcommandline
+  Build$:              !flag(commandline)
 
 Library baselib
   Path:			src/baselib
@@ -48,22 +55,20 @@ Library baselib
                         Ocsigen_stream,
                         Dynlink_wrapper
   BuildDepends:		lwt,
+                        lwt.unix,
+                        lwt.syntax,
+                        optcomp,
                         netstring,
                         netstring-pcre,
                         cryptokit,
                         findlib,
-                        tyxml,
-                        lwt.syntax,
-                        lwt.extra,
-                        ipaddr,
-                        dynlink,
-                        optcomp
+                        dynlink
 
 Object base
   Path:			src/baselib
   FindlibFullName:	ocsigenserver.baselib.base
   Modules:		Ocsigen_lib_base
-  BuildDepends:		lwt, ipaddr
+  BuildDepends:		lwt
 
 Library http
   Path:			src/http
@@ -79,10 +84,10 @@ Library http
                         Http_headers,
                         Framepp
   BuildDepends:		ocsigenserver.baselib,
-                        netstring,
-                        netstring-pcre,
+                        tyxml,
                         lwt.ssl,
-                        tyxml
+                        ipaddr
+
 Object cookies
   Path:			src/http
   Modules:		Ocsigen_cookies
@@ -97,196 +102,118 @@ Library server
                         Ocsigen_http_client,
                         Ocsigen_local_files,
                         Ocsigen_server
-  BuildDepends:		ocsigenserver.baselib,
-                        ocsigenserver.polytables,
+  BuildDepends:		ocsigenserver.polytables,
+                        ocsigenserver.baselib,
                         ocsigenserver.http,
-                        lwt.unix,
-                        netstring,
-                        netstring-pcre,
-                        cryptokit,
-                        findlib,
-                        tyxml,
-                        tyxml.parser,
-                        lwt.syntax,
-                        lwt.extra,
-                        ipaddr
+                        tyxml.parser
 
 # EXTENSIONS
 
 Library ext
   Path:			src/extensions/
   FindlibParent:	ocsigenserver
-  BuildDepends:		ipaddr
 
 Library staticmod
-  Path:			src/extensions
+  Path:			src/extensions/staticmod
   Modules:		Staticmod
   FindlibParent:	ext
-  BuildDepends:		ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library accesscontrol
-  Path:			src/extensions
+  Path:			src/extensions/accesscontrol
   Modules:		Accesscontrol
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library authbasic
-  Path:			src/extensions
+  Path:			src/extensions/authbasic
   Modules:		Authbasic
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library cgimod
-  Path:			src/extensions
+  Path:			src/extensions/cgimod
   Modules:		Cgimod
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library cors
-  Path:			src/extensions
+  Path:			src/extensions/cors
   Modules:		Cors
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library deflatemod
-  Path:			src/extensions
+  Build$:		flag(camlzip)
+  Install$:		flag(camlzip)
+  Path:			src/extensions/deflatemod
   Modules:		Deflatemod
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        camlzip,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server, camlzip
 
 Library extendconfiguration
-  Path:			src/extensions
+  Path:			src/extensions/extendconfiguration
   Modules:		Extendconfiguration
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library extensiontemplate
-  Path:			src/extensions
+  Path:			src/extensions/extensiontemplate
   Modules:		Extensiontemplate
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library ocsigen_comet
-  Path:			src/extensions
+  Path:			src/extensions/ocsigen_comet
   Modules:		Ocsigen_comet
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        react,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server, react
 
 Library outputfilter
-  Path:			src/extensions
+  Path:			src/extensions/outputfilter
   Modules:		Outputfilter
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library redirectmod
-  Path:			src/extensions
+  Path:			src/extensions/redirectmod
   Modules:		Redirectmod
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library revproxy
-  Path:			src/extensions
+  Path:			src/extensions/revproxy
   Modules:		Revproxy
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library rewritemod
-  Path:			src/extensions
+  Path:			src/extensions/rewritemod
   Modules:		Rewritemod
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Library userconf
-  Path:			src/extensions
+  Path:			src/extensions/userconf
   Modules:		Userconf
   FindlibParent:	ext
-  BuildDepends:		netstring-pcre,
-                        ocsigenserver,
-                        ocsigenserver.baselib,
-                        ocsigenserver.server,
-                        lwt
+  BuildDepends:		ocsigenserver.server
 
 Executable "ocsigenserver.opt"
   Path:			bin/
   MainIs:		server_main.ml
   CompiledObject:	native
-  BuildDepends:		lwt,
-                        ocsigenserver.baselib,
-                        ocsigenserver.polytables,
-                        ocsigenserver.http,
-                        ocsigenserver.server
+  BuildDepends:		ocsigenserver.server
 
 Executable ocsigenserver
   Path:			bin/
   MainIs:		server_main.ml
   CompiledObject:	byte
-  BuildDepends:		lwt,
-                        ocsigenserver.baselib,
-                        ocsigenserver.polytables,
-                        ocsigenserver.http,
-                        ocsigenserver.server
+  BuildDepends:		ocsigenserver.server
 
 Document ocsigenserver
   Type:			ocamlbuild (0.4)
   BuildTools:		ocamldoc
   Title:		ocsigenserver
   XOCamlbuildPath:      .
-  XOCamlbuildLibraries: ocsigenserver.baselib,
-                        ocsigenserver.ext,
-                        ocsigenserver.ext.staticmod,
-                        ocsigenserver.http,
-                        ocsigenserver.polytables,
-                        ocsigenserver.server
+  XOCamlbuildLibraries: ocsigenserver.server

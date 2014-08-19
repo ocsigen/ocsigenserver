@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 6eefc9cc02b13183612d820366b30ed3) *)
+(* DO NOT EDIT (digest: 230ff6fdac6a0682498bda79c5b1f7e3) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -607,20 +607,20 @@ let package_default =
           ("cookies", ["src/http"], []);
           ("server", ["src/server"], []);
           ("ext", ["src/extensions"], []);
-          ("staticmod", ["src/extensions"], []);
-          ("accesscontrol", ["src/extensions"], []);
-          ("authbasic", ["src/extensions"], []);
-          ("cgimod", ["src/extensions"], []);
-          ("cors", ["src/extensions"], []);
-          ("deflatemod", ["src/extensions"], []);
-          ("extendconfiguration", ["src/extensions"], []);
-          ("extensiontemplate", ["src/extensions"], []);
-          ("ocsigen_comet", ["src/extensions"], []);
-          ("outputfilter", ["src/extensions"], []);
-          ("redirectmod", ["src/extensions"], []);
-          ("revproxy", ["src/extensions"], []);
-          ("rewritemod", ["src/extensions"], []);
-          ("userconf", ["src/extensions"], [])
+          ("staticmod", ["src/extensions/staticmod"], []);
+          ("accesscontrol", ["src/extensions/accesscontrol"], []);
+          ("authbasic", ["src/extensions/authbasic"], []);
+          ("cgimod", ["src/extensions/cgimod"], []);
+          ("cors", ["src/extensions/cors"], []);
+          ("deflatemod", ["src/extensions/deflatemod"], []);
+          ("extendconfiguration", ["src/extensions/extendconfiguration"], []);
+          ("extensiontemplate", ["src/extensions/extensiontemplate"], []);
+          ("ocsigen_comet", ["src/extensions/ocsigen_comet"], []);
+          ("outputfilter", ["src/extensions/outputfilter"], []);
+          ("redirectmod", ["src/extensions/redirectmod"], []);
+          ("revproxy", ["src/extensions/revproxy"], []);
+          ("rewritemod", ["src/extensions/rewritemod"], []);
+          ("userconf", ["src/extensions/userconf"], [])
        ];
      lib_c = [];
      flags = [];
@@ -628,16 +628,28 @@ let package_default =
        [
           ("src/server", ["src/baselib"; "src/http"; "src/polytables"]);
           ("src/http", ["src/baselib"]);
-          ("src/extensions", ["src"; "src/baselib"; "src/server"]);
-          ("bin",
-            ["src/baselib"; "src/http"; "src/polytables"; "src/server"])
+          ("src/extensions/userconf", ["src/server"]);
+          ("src/extensions/staticmod", ["src/server"]);
+          ("src/extensions/rewritemod", ["src/server"]);
+          ("src/extensions/revproxy", ["src/server"]);
+          ("src/extensions/redirectmod", ["src/server"]);
+          ("src/extensions/outputfilter", ["src/server"]);
+          ("src/extensions/ocsigen_comet", ["src/server"]);
+          ("src/extensions/extensiontemplate", ["src/server"]);
+          ("src/extensions/extendconfiguration", ["src/server"]);
+          ("src/extensions/deflatemod", ["src/server"]);
+          ("src/extensions/cors", ["src/server"]);
+          ("src/extensions/cgimod", ["src/server"]);
+          ("src/extensions/authbasic", ["src/server"]);
+          ("src/extensions/accesscontrol", ["src/server"]);
+          ("bin", ["src/server"])
        ]
   }
   ;;
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 641 "myocamlbuild.ml"
+# 653 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 (* Substitution *)
@@ -711,7 +723,7 @@ let load_file file =
 
 let project_name = "ocsigenserver";;
 
-let has_preemptive, preemptive =
+let has_lwt_preemptive, preemptive =
   try let _ = Ocamlbuild_pack.Findlib.query "lwt.preemptive" in
       true, "Lwt_preemptive"
   with _ -> false, "Fake_preempt";;
@@ -725,8 +737,10 @@ let where_ocaml =
 let env_filename = Pathname.basename BaseEnvLight.default_filename
 let env = BaseEnvLight.load ~filename:env_filename ~allow_empty:true ()
 
-let native = Sys.file_exists (where_ocaml ^ "/dynlink.cmxa")
 let commandline = bool_of_string (BaseEnvLight.var_get "commandline" env)
+let is_native = bool_of_string (BaseEnvLight.var_get "is_native" env)
+let native_dynlink = bool_of_string (BaseEnvLight.var_get "native_dynlink" env)
+let preemptive = bool_of_string (BaseEnvLight.var_get "preemptive" env)
 let libdir = BaseEnvLight.var_get "libdir" env
 let name = BaseEnvLight.var_get "pkg_name" env
 
@@ -764,8 +778,9 @@ let configuration = [
   ("_PROJECT_NAME_", name);
   ("_COMMAND_PIPE_", BaseEnvLight.var_get "commandpipe" env);
   ("_CONFIG_DIR_", BaseEnvLight.var_get "sysconfdir" env);
-  ("_PREEMPTIVE_", preemptive);
-  ("_IS_NATIVE_", string_of_bool native);
+  ("_PREEMPTIVE_", if preemptive then "Lwt_preemptive" else "Fake_preempt");
+  ("_IS_NATIVE_", string_of_bool is_native);
+  ("_NATIVE_DYNLINK_", string_of_bool native_dynlink);
 ];;
 
 (* Parametric compilation *)
@@ -775,9 +790,9 @@ Ocamlbuild_plugin.dispatch (function
       dispatch_default After_hygiene;
       subst_rule "src/baselib/ocsigen_config.ml" configuration;
 
-      if native
+      if native_dynlink
       then tag_file "src/baselib/dynlink_wrapper.ml"
-          ["native( " ^ (string_of_bool native) ^ ")"];
+          ["native_dynlink( " ^ (string_of_bool native_dynlink) ^ ")"];
 
       if commandline
       then
@@ -793,22 +808,29 @@ Ocamlbuild_plugin.dispatch (function
           tag_file "bin/server_main.byte" ["use_nocommandline"];
         end;
 
-      if has_preemptive
+      if preemptive
       then
         begin
-          flag ["ocaml"; "compile"] (S [A "-thread"]);
-          flag ["link"] (S [A "-thread"]);
+          flag ["ocaml"; "ocamldep"] (S [A "-thread";
+                                        A "-package";
+                                        A "lwt.preemptive"]);
+          flag ["ocaml"; "compile"] (S [A "-thread";
+                                        A "-package";
+                                        A "lwt.preemptive"]);
+          flag ["link"] (S [A "-thread";
+                            A "-package";
+                            A "lwt.preemptive"]);
         end;
 
-      pflag ["ocaml"; "ocamldep"] "native"
+      pflag ["ocaml"; "ocamldep"] "native_dynlink"
         (fun value ->
-           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
-      pflag ["ocaml"; "compile"] "native"
+           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native_dynlink=" ^ value)]);
+      pflag ["ocaml"; "compile"] "native_dynlink"
         (fun value ->
-           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
-      pflag ["ocaml"; "doc"] "native"
+           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native_dynlink=" ^ value)]);
+      pflag ["ocaml"; "doc"] "native_dynlink"
         (fun value ->
-           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native=" ^ value)]);
+           S [A "-ppopt"; A "-let"; A "-ppopt"; A ("native_dynlink=" ^ value)]);
 
       ()
     | x -> dispatch_default x);;

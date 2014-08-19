@@ -24,15 +24,16 @@ exception Config_file_error of string
 
 (* General config *)
 let config_file = ref "%%_CONFIG_DIR_%%/%%_PROJECT_NAME_%%.conf"
+(* XXX: or %%_CONFIG_DIR_%%/$(pkg_name) *)
 let verbose = ref false
 let silent = ref false
 let daemon = ref false
 let veryverbose = ref false
-let version_number = "%%_VERSION_%%"
+let version_number = "%%_VERSION_%%" (* XXX: or $(pkg_version) *)
 let pidfile = ref None
 let server_name = "Ocsigen"
 let full_server_name = server_name^"/"^version_number
-let is_native = %%_IS_NATIVE_%%
+let is_native = %%_IS_NATIVE_%% (* XXX: or $(is_native) *)
 let native_ext = if is_native then ".opt" else ""
 
 let fold func =
@@ -97,8 +98,8 @@ let maxrequestbodysize = ref (Some (Int64.of_int 8000000))
 let maxrequestbodysizeinmemory = ref 8192
 let maxuploadfilesize = ref (Some (Int64.of_int 2000000))
 let defaultcharset = ref (None : string option)
-let datadir = ref "%%_DATA_DIR_%%"
-let bindir = ref "%%_BIN_DIR_%%"
+let datadir = ref "%%_DATA_DIR_%%" (* XXX: or $(datadir) *)
+let bindir = ref "%%_BIN_DIR_%%" (* XXX: $(bindir) *)
 let extdir = ref "%%_EXT_DIR_%%"
 let user = ref (Some !default_user)
 let group = ref (Some !default_group)
