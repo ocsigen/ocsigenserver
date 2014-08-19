@@ -14,7 +14,7 @@ build: [
     "--datadir" "%{lib}%/ocsigenserver/var/lib/ocsigenserver"
     "--sysconfdir" "%{lib}%/ocsigenserver/etc/ocsigenserver"
     "--%{camlzip:enable}%-camlzip"
-    "--%{lwt.preemptive}%-preemptive"]
+    "--%{base-threads:enable}%-preemptive"]
   [make]
   [make "install"]
 ]
@@ -38,7 +38,7 @@ depends: [
 ]
 depopts: [
   "camlzip"
-  "lwt.preemptive"
+  "base-threads"
 ]
 conflicts: [
   "camlzip" {< "1.04"}

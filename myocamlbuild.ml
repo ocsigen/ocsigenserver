@@ -792,9 +792,8 @@ Ocamlbuild_plugin.dispatch (function
       if preemptive
       then
         begin
-          flag ["ocaml"; "ocamldep"] (S [A "-thread";
-                                        A "-package";
-                                        A "lwt.preemptive"]);
+          flag ["ocaml"; "ocamldep"] (S [A "-package";
+                                         A "lwt.preemptive"]);
           flag ["ocaml"; "compile"] (S [A "-thread";
                                         A "-package";
                                         A "lwt.preemptive"]);
