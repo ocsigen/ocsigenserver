@@ -32,10 +32,6 @@ open Ocsigen_lib
 
 (*** PREAMBLE ***)
 
-(* infix monad binders *)
-let ( >>= ) = Lwt.( >>= )
-let ( >|= ) = Lwt.( >|= ) (* AKA map, AKA lift *)
-
 (* small addition to the standard library *)
 let map_rev_accu_split func lst accu1 accu2 =
   let rec aux accu1 accu2 = function
@@ -62,16 +58,6 @@ let tbl_initial_size = 16
 
 let max_virtual_channels_ref = ref None
 let get_max_virtual_channels () = !max_virtual_channels_ref
-
-let rec parse_options = function
-  | [] -> ()
-  | ("max_virtual_channels", "") :: tl ->
-    max_virtual_channels_ref := None ; parse_options tl
-  | ("max_virtual_channels", s) :: tl ->
-    max_virtual_channels_ref := Some (int_of_string s) ; parse_options tl
-  | _ :: _ -> raise (Ocsigen_extensions.Error_in_config_file "Unexpected data in config file")
-
-
 
 (*** CORE ***)
 
@@ -539,15 +525,34 @@ let main = function
 
 (*** EPILOGUE ***)
 
-(* registering extension and the such *)
-let parse_config _ _ _ = function
-  | Simplexmlparser.Element ("comet", attrs, []) ->
-    parse_options attrs ;
-    main
-  | Simplexmlparser.Element (t, _, _) ->
-    raise (Ocsigen_extensions.Bad_config_tag_for_extension t)
-  | _ ->
-    raise (Ocsigen_extensions.Error_in_config_file "Unexpected data in config file")
+let parse_config _ _ _ config_elem =
+  max_virtual_channels_ref := None;
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[
+        Configuration.element
+          ~name:"comet"
+          ~attributes:[
+            Configuration.attribute
+              ~name:"max_virtual_channels"
+              (function
+                | "" -> max_virtual_channels_ref := None
+                | s ->
+                  try max_virtual_channels_ref :=  Some (int_of_string s)
+                  with _ ->
+                    badconfig
+                      "Wrong value for attribute max_virtual_channels\
+                       of <comet>: %s. It should be \"\" or an integer"
+                      s
+              )
+          ]
+          ()]
+      config_elem
+  );
+  main
+
+
 let site_creator (_ : Ocsigen_extensions.virtual_hosts) _ = parse_config
 let user_site_creator (_ : Ocsigen_extensions.userconf_info) = site_creator
 
