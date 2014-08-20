@@ -64,76 +64,82 @@ let _ = register_basic_authentication_method
 
 (*****************************************************************************)
 
-let parse_config = function
-
-  | Element ("authbasic", ["realm", realm], auth::[]) ->
-    (* http://www.ietf.org/rfc/rfc2617.txt *)
-    (* TODO: check that realm is correct *)
-    let auth =
-      try
-        get_basic_authentication_method auth
-      with Bad_config_tag_for_extension _ ->
-        raise (Error_in_config_file "Unable to find proper authentication method")
+let gen ~realm ~auth rs =
+  match rs with
+  | Ocsigen_extensions.Req_not_found (err, ri) ->
+    let reject () =
+      let h = Http_headers.add
+          (Http_headers.name "WWW-Authenticate")
+          (sprintf "Basic realm=\"%s\"" realm)
+          Http_headers.empty
+      in
+      Ocsigen_messages.debug2 "--Access control (auth): invalid credentials!";
+      fail (Http_error.Http_exception (401, None, Some h))
     in
-    (fun rs ->
-       match rs with
-       | Ocsigen_extensions.Req_not_found (err, ri) ->
-         let reject () =
-           let h = Http_headers.add
-               (Http_headers.name "WWW-Authenticate")
-               (sprintf "Basic realm=\"%s\"" realm)
-               Http_headers.empty
-           in
-           Ocsigen_messages.debug2 "--Access control (auth): invalid credentials!";
-           fail (Http_error.Http_exception (401, None, Some h))
-         in
-         begin try
-             let (login, password) =
-               let credentials =
-                 Http_headers.find
-                   (Http_headers.name "Authorization")
-                   (Ocsigen_request_info.http_frame ri.request_info)
-                   .Ocsigen_http_frame.frame_header
-                   .Ocsigen_http_frame.Http_header.headers
-               in
-               let encoded =
-                 let n = String.length credentials in
-                 if n > 6 && String.sub credentials 0 6 = "Basic " then
-                   String.sub credentials 6 (n-6)
-                 else
-                   failwith "credentials"
-               in
-               let decoded = Netencoding.Base64.decode encoded in
-               let i = String.index decoded ':' in
-               (String.sub decoded 0 i,
-                String.sub decoded (i+1) (String.length decoded - (i+1)))
-             in
-             auth login password >>=
-             (fun r ->
-                if r then begin
-                  Ocsigen_messages.debug2 "--Access control (auth): valid credentials!";
-                  Lwt.return (Ocsigen_extensions.Ext_next err)
-                end
-                else reject ())
-           with
-           | Not_found -> reject ()
-           | e ->
-             Ocsigen_messages.debug
-               (fun () -> sprintf
-                   "--Access control (auth): Invalid Authorization header (%s)"
-                   (Printexc.to_string e));
-             fail (Ocsigen_http_error (Ocsigen_cookies.Cookies.empty, 400))
-         end
-       | Ocsigen_extensions.Req_found (ri, r) ->
-         Lwt.return Ocsigen_extensions.Ext_do_nothing)
+    begin try
+        let (login, password) =
+          let credentials =
+            Http_headers.find
+              (Http_headers.name "Authorization")
+              (Ocsigen_request_info.http_frame ri.request_info)
+              .Ocsigen_http_frame.frame_header
+              .Ocsigen_http_frame.Http_header.headers
+          in
+          let encoded =
+            let n = String.length credentials in
+            if n > 6 && String.sub credentials 0 6 = "Basic " then
+              String.sub credentials 6 (n-6)
+            else
+              failwith "credentials"
+          in
+          let decoded = Netencoding.Base64.decode encoded in
+          let i = String.index decoded ':' in
+          (String.sub decoded 0 i,
+           String.sub decoded (i+1) (String.length decoded - (i+1)))
+        in
+        auth login password >>=
+        (fun r ->
+           if r then begin
+             Ocsigen_messages.debug2 "--Access control (auth): valid credentials!";
+             Lwt.return (Ocsigen_extensions.Ext_next err)
+           end
+           else reject ())
+      with
+      | Not_found -> reject ()
+      | e ->
+        Ocsigen_messages.debug
+          (fun () -> sprintf
+              "--Access control (auth): Invalid Authorization header (%s)"
+              (Printexc.to_string e));
+        fail (Ocsigen_http_error (Ocsigen_cookies.Cookies.empty, 400))
+    end
+  | Ocsigen_extensions.Req_found (ri, r) ->
+    Lwt.return Ocsigen_extensions.Ext_do_nothing
 
-  | Element ("authbasic" as s, _, _) -> badconfig "Bad syntax for tag %s" s
-
-  | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ -> raise (Error_in_config_file "(authbasic extension) Bad data")
-
-
-
+let parse_config element =
+  let realm_ref = ref "" in
+  let rest_ref = ref [] in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[Configuration.element
+                   ~name:"authbasic"
+                   ~attributes:[
+                     Configuration.attribute
+                       ~name:"realm"
+                       ~obligatory:true
+                       (fun s -> realm_ref := s)
+                   ]
+                   ~other_elements:(fun name attrs content ->
+                      rest_ref := Element (name, attrs, content) :: !rest_ref)
+      ()]
+      element
+  );
+  let realm = !realm_ref in
+  let auth = match !rest_ref  with
+    | [ x ] -> get_basic_authentication_method x
+    | _ -> badconfig "Bad syntax for tag authbasic"
+  in gen ~realm ~auth
 
 (*****************************************************************************)
 (** Registration of the extension *)
