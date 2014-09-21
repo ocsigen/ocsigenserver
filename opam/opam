@@ -2,7 +2,21 @@ opam-version: "1"
 maintainer: "dev@ocsigen.org"
 version: "dev"
 build: [
-  ["sh" "configure" "--prefix" "%{prefix}%" "--ocsigen-user" "%{user}%" "--ocsigen-group" "%{group}%" "--commandpipe" "%{lib}%/ocsigenserver/var/run/ocsigenserver_command" "--logdir" "%{lib}%/ocsigenserver/var/log/ocsigenserver" "--mandir" "%{man}%/man1" "--docdir" "%{lib}%/ocsigenserver/share/doc/ocsigenserver" "--commandpipe" "%{lib}%/ocsigenserver/var/run/ocsigenserver_command" "--staticpagesdir" "%{lib}%/ocsigenserver/var/www" "--datadir" "%{lib}%/ocsigenserver/var/lib/ocsigenserver" "--sysconfdir" "%{lib}%/ocsigenserver/etc/ocsigenserver"]
+  ["sh" "configure" "--prefix" "%{prefix}%"
+    "--ocsigen-user" "%{user}%"
+    "--ocsigen-group" "%{group}%"
+    "--commandpipe" "%{lib}%/ocsigenserver/var/run/ocsigenserver_command"
+    "--logdir" "%{lib}%/ocsigenserver/var/log/ocsigenserver"
+    "--mandir" "%{man}%/man1"
+    "--docdir" "%{lib}%/ocsigenserver/share/doc/ocsigenserver"
+    "--commandpipe" "%{lib}%/ocsigenserver/var/run/ocsigenserver_command"
+    "--staticpagesdir" "%{lib}%/ocsigenserver/var/www"
+    "--datadir" "%{lib}%/ocsigenserver/var/lib/ocsigenserver"
+    "--sysconfdir" "%{lib}%/ocsigenserver/etc/ocsigenserver"
+    "--%{camlzip:enable}%-camlzip"
+    "--%{base-threads:enable}%-preemptive"
+    "--%{dbm:enable}%-dbm"
+    "--%{sqlite3-ocaml:enable}%-sqlite3"]
   [make]
   [make "install"]
 ]
@@ -22,9 +36,11 @@ depends: [
   "tyxml" {>= "3.1.0"}
   ("dbm" | "sqlite3-ocaml")
   "ipaddr" {>= "2.1"}
+  "optcomp"
 ]
 depopts: [
   "camlzip"
+  "base-threads"
 ]
 conflicts: [
   "camlzip" {< "1.04"}
