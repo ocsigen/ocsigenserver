@@ -72,6 +72,24 @@ module Option = struct
   let to_list = function
     | None -> []
     | Some v -> [v]
+  module Lwt = struct
+    let map f = function
+      | Some x -> lwt v = f x in Lwt.return (Some v)
+      | None -> Lwt.return None
+    let get f = function
+      | Some x -> Lwt.return x
+      | None -> f ()
+    let get' a = function
+      | Some x -> Lwt.return x
+      | None -> a
+    let iter f = function
+      | Some x -> f x
+      | None -> Lwt.return ()
+    let bind opt k =
+      match opt with
+      | Some x -> k x
+      | None -> Lwt.return None
+  end
 end
 
 module List = struct

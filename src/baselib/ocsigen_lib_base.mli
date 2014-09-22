@@ -59,6 +59,13 @@ module Option : sig
   val return : 'a -> 'a t
   val bind : 'a t -> ('a -> 'b t) -> 'b t
   val to_list : 'a t -> 'a list
+  module Lwt : sig
+    val map : ('a -> 'b Lwt.t) -> 'a t -> 'b t Lwt.t
+    val get : (unit -> 'a Lwt.t) -> 'a t -> 'a Lwt.t
+    val get' : 'a Lwt.t -> 'a t -> 'a Lwt.t
+    val iter : ('a -> unit Lwt.t) -> 'a t -> unit Lwt.t
+    val bind : 'a t -> ('a -> 'b t Lwt.t) -> 'b t Lwt.t
+end
 end
 
 module List : sig
