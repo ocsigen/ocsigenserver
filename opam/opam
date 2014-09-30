@@ -22,7 +22,7 @@ depends: [
   "tyxml" {>= "3.1.0"}
   ("dbm" | "sqlite3-ocaml")
   "ipaddr" {>= "2.1"}
-  "cohttp" {>= "9999"}
+  "cohttp"
 ]
 depopts: [
   "camlzip"
