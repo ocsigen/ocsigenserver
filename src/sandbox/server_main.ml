@@ -1,17 +1,19 @@
 open Lwt
 
+let root = "/home/dinosaure/bin/ocsigenserver"
+
 (** This is an initialization of global variable before configuration of
     extension. For example, if the mime file is specified after the
     configuration of Staticmod, the server delivered a binary file (even if the
     file is HTML)
 *)
 let () =
-  Ocsigen_config.set_logdir "/home/dinosaure/bin/ocsigenserver/local/var/log";
-  Ocsigen_config.set_datadir "/home/dinosaure/bin/ocsigenserver/local/var/lib";
+  Ocsigen_config.set_logdir (root ^ "/local/var/log");
+  Ocsigen_config.set_datadir (root ^ "/local/var/lib");
   Ocsigen_config.set_command_pipe
-    "/home/dinosaure/bin/ocsigenserver/local/var/run/ocsigenserver_command";
+    (root ^ "/local/var/run/ocsigenserver_command");
   Ocsigen_config.set_mimefile
-    "/home/dinosaure/bin/ocsigenserver/src/files/mime.types"
+    (root ^ "/src/files/mime.types")
 
 (** An extension has a default configuration of server. This
     configuration is moved from extensions to extensions by dispatch (see
@@ -21,7 +23,7 @@ let () =
     same as:
     <host charset="utf-8" hostfilter="*"></host>
 *)
-let staticmod_conf : Ocsigen_extensions.config_info =
+let default_config : Ocsigen_extensions.config_info =
   let open Ocsigen_extensions in
   {
     default_hostname = "localhost";
@@ -42,7 +44,7 @@ let staticmod_conf : Ocsigen_extensions.config_info =
 
 (** same as:
     <host>
-      <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www" />
+      <static dir="$root/local/var/www" />
     </host>
 
     An extension has a compute function for request. This function is associated
@@ -50,34 +52,34 @@ let staticmod_conf : Ocsigen_extensions.config_info =
     the virtual host, we execute the function.
     In this example, the compute function matches with all the hosts.
 *)
-let staticmod : (Ocsigen_extensions.virtual_hosts
-                 * Ocsigen_extensions.config_info
-                 * Ocsigen_extensions.extension2) =
-  ([Ocsigen_extensions.VirtualHost.make
-      ~host:"*"
-      ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
-   (fun _ _ request_state ->
-      Printf.printf "My Staticmod\n%!";
-      Staticmod.gen
-        ~usermode:None
-        (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/")
-        request_state
-      >>= fun res ->
-      Lwt.return (res, Ocsigen_cookies.Cookies.empty)))
-
-(** same as:
-    <host>
-      <site path="ocsigenstuff" charset="utf-8">
-        <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/ocsigenstuff" />
-      </site>
-    </host>
-*)
-let ocsigenstuff : (Ocsigen_extensions.virtual_hosts
+let virtualhost1 : (Ocsigen_extensions.virtual_hosts
                     * Ocsigen_extensions.config_info
                     * Ocsigen_extensions.extension2) =
   ([Ocsigen_extensions.VirtualHost.make
       ~host:"*"
-      ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
+      ~pattern:(Netstring_pcre.regexp ".*$") ()], default_config,
+   (fun awake cookies request_state ->
+      Printf.printf "My Staticmod\n%!";
+      Staticmod.gen
+        ~usermode:None
+        (Staticmod.Dir (root ^ "/local/var/www/"))
+        request_state
+      >>= fun res ->
+      Lwt.return (res, cookies)))
+
+(** same as:
+    <host>
+      <site path="ocsigenstuff" charset="utf-8">
+        <static dir="$root/local/var/www/ocsigenstuff" />
+      </site>
+    </host>
+*)
+let virtualhost2 : (Ocsigen_extensions.virtual_hosts
+                    * Ocsigen_extensions.config_info
+                    * Ocsigen_extensions.extension2) =
+  ([Ocsigen_extensions.VirtualHost.make
+      ~host:"*"
+      ~pattern:(Netstring_pcre.regexp ".*$") ()], default_config,
    Ocsigen_extensions.make_site
      ~path:["ocsigenstuff"]
      ~charset:"utf-8"
@@ -87,7 +89,7 @@ let ocsigenstuff : (Ocsigen_extensions.virtual_hosts
           Staticmod.gen
             ~usermode:None
             (Staticmod.Dir
-               "/home/dinosaure/bin/ocsigenserver/local/var/www/ocsigenstuff/")
+               (root ^ "/local/var/www/ocsigenstuff/"))
             request_state)])
 
 let condition_header name pattern =
@@ -116,14 +118,14 @@ let redirectmod_for_firefox =
        request_state)
 
 (** same as:
-    <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/">
+    <static dir="$root/local/var/www/firefox/">
 *)
 let staticmod_for_firefox =
   (fun request_state ->
      Printf.printf "My Staticmod for firefox\n%!";
      Staticmod.gen
        ~usermode:None
-       (Staticmod.Dir "/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/")
+       (Staticmod.Dir (root ^ "/local/var/www/firefox/"))
        request_state)
 
 (** same as:
@@ -131,7 +133,7 @@ let staticmod_for_firefox =
       <site path="restricted-area" charset="utf-8">
         <if>
           <header name="User-Agent" regexp=".*Firefox.*" />
-          <static dir="/home/dinosaure/bin/ocsigenserver/local/var/www/firefox/" />
+          <static dir="$root/local/var/www/firefox/" />
         </if>
         <else>
           <redirect fullurl=".+" dest="http://www.mozilla.org/fr/firefox/new/" />
@@ -139,12 +141,12 @@ let staticmod_for_firefox =
       </site>
     </host>
 *)
-let accesscontrol : (Ocsigen_extensions.virtual_hosts
-                     * Ocsigen_extensions.config_info
-                     * Ocsigen_extensions.extension2) =
+let complexe_example : (Ocsigen_extensions.virtual_hosts
+                        * Ocsigen_extensions.config_info
+                        * Ocsigen_extensions.extension2) =
   ([Ocsigen_extensions.VirtualHost.make
       ~host:"*"
-      ~pattern:(Netstring_pcre.regexp ".*$") ()], staticmod_conf,
+      ~pattern:(Netstring_pcre.regexp ".*$") ()], default_config,
    Ocsigen_extensions.make_site
      ~path:["restricted-area"]
      ~charset:"utf-8"
@@ -173,6 +175,5 @@ let server_conf =
 
 let () =
   Cgimod.init ~timeout:5 ();
-  Deflatemod.init ~level:5 ~size:1024 ();
-  Ocsigen_extensions.set_hosts [ accesscontrol; ocsigenstuff; staticmod ];
+  Ocsigen_extensions.set_hosts [ complexe_example; virtualhost2; virtualhost1 ];
   Ocsigen_server.start_server ~configuration:[ server_conf ] ()
