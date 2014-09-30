@@ -37,13 +37,13 @@ Library polytables
 Library commandline
   Path                : src/commandline/yes
   Modules             : Ocsigen_getcommandline
-  Build$              : flag(commandline)
+  Build               $: flag(commandline)
   FindlibContainers   : ocsigenserver
 
 Library nocommandline
   Path                : src/commandline/no
   Modules             : Ocsigen_getcommandline
-  Build$              : !flag(commandline)
+  Build               $: !flag(commandline)
   FindlibContainers   : ocsigenserver
 
 Library baselib
@@ -144,8 +144,8 @@ Library cors
   BuildDepends        : ocsigenserver
 
 Library deflatemod
-  Build$              : flag(camlzip)
-  Install$            : flag(camlzip)
+  Build               $: flag(camlzip)
+  Install             $: flag(camlzip)
   Path                : src/extensions/deflatemod
   Modules             : Deflatemod
   FindlibParent       : ext
@@ -204,16 +204,16 @@ Library "ocsipersist-dbm"
   Modules             : Ocsipersist
   FindlibParent       : ext
   BuildDepends        : ocsigenserver, dbm
-  Build$              : flag(dbm)
-  Install$            : flag(dbm)
+  Build               $: flag(dbm)
+  Install             $: flag(dbm)
 
 Library "ocsipersist-sqlite"
   Path                : src/extensions/ocsipersist/ocsipersist-sqlite
   Modules             : Ocsipersist
   FindlibParent       : ext
   BuildDepends        : ocsigenserver, sqlite3
-  Build$              : flag(sqlite3) && flag(preemptive)
-  Install$            : flag(sqlite3) && flag(preemptive)
+  Build               $: flag(sqlite3) && flag(preemptive)
+  Install             $: flag(sqlite3) && flag(preemptive)
 
 Library ext
   Path                : src/extensions
