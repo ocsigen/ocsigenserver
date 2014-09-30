@@ -28,13 +28,13 @@ open Ocsigen_stream
 
 
 (*****************************************************************************)
-(** this module instantiate the HTTP_CONTENT signature for an Xhtml content*)
+(** this module instantiate the HTTP_CONTENT signature for an Html content*)
 
 module Make_XML_Content(Xml : Xml_sigs.Iterable)
     (Typed_xml : Xml_sigs.Typed_xml with module Xml := Xml)
 = struct
 
-  module Xhtmlprinter =
+  module Htmlprinter =
     Xml_print.Make_typed(Xml)(Typed_xml)(Ocsigen_stream.StringStream)
 
   type t = Typed_xml.doc
@@ -64,13 +64,15 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
       choose_content_type options
         Typed_xml.Info.alternative_content_types
         Typed_xml.Info.content_type in
-    let x = Xhtmlprinter.print ~advert c in
+    let encode x = fst (Xml_print.Utf8.normalize_html x) in
+    let x = Htmlprinter.print ~encode ~advert c in
     let default_result = Result.default () in
     Lwt.return
       (Result.update default_result
          ~content_length:None
          ~content_type:(Some content_type)
          ~etag:(get_etag c)
+         ~charset:(Some "utf-8")
          ~headers:Http_headers.dyn_headers
          ~stream:(x, None) ())
 end
