@@ -1,4 +1,3 @@
-opam pin add --no-action tyxml 'https://github.com/ocsigen/tyxml.git#master'
 opam pin add --no-action ocsigenserver .
 opam install camlzip
 opam install --deps-only ocsigenserver
