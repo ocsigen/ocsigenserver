@@ -23,7 +23,7 @@ depends: [
   "ocamlnet" {>= "3.6.0"}
   "pcre-ocaml"
   "cryptokit"
-  "tyxml" {>= "dev"}
+  "tyxml" {>= "3.3.0"}
   ("dbm" | "sqlite3-ocaml")
   "ipaddr" {>= "2.1"}
 ]
