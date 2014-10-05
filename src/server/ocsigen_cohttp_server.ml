@@ -54,10 +54,22 @@ let print_cohttp_request out_ch request =
 
 let waiters = Hashtbl.create 256
 
-let handler ~address ~port ~extensions_connector (edn, conn) request body =
+let handler ~address ~port ~extensions_connector (flow, conn) request body =
   let filenames = ref [] in
-  let sockaddr = Lwt_unix_conduit.sockname edn in
+  let edn = Conduit_lwt_unix.endp_of_flow flow in
+  let rec getsockname = function
+    | `OpenSSL (host, ip, port) ->
+      Unix.ADDR_INET (Ipaddr_unix.to_inet_addr ip, port)
+    | `TCP (ip, port) ->
+      Unix.ADDR_INET (Ipaddr_unix.to_inet_addr ip, port)
+    | `Unix_domain_socket path ->
+      Unix.ADDR_UNIX path
+    | `TLS (_, edn) -> getsockname edn
+    | `Unknown err -> raise (Failure ("resolution failed: " ^ err))
+    | `Vchan _ -> raise (Failure "VChan not supported")
+  in
 
+  let sockaddr = getsockname edn in
   let (waiter, wakener) = Lwt.wait () in
   Hashtbl.add waiters conn wakener;
 
@@ -177,7 +189,7 @@ let service ?ssl ~address ~port ~connector () =
    | Some (crt, key, Some password) ->
      Server.create
        ~stop
-       ~mode:(`SSL
+       ~mode:(`OpenSSL
                 (`Crt_file_path crt,
                  `Key_file_path key,
                  `Password password,
@@ -186,7 +198,7 @@ let service ?ssl ~address ~port ~connector () =
    | Some (crt, key, None) ->
      Server.create
        ~stop
-       ~mode:(`SSL
+       ~mode:(`OpenSSL
                 (`Crt_file_path crt,
                  `Key_file_path key,
                  `No_password,

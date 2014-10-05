@@ -92,7 +92,7 @@ let of_response_and_body (resp, body) =
   let content_length =
     let open Cohttp.Transfer in
     match Cohttp.Response.encoding resp with
-    | Fixed i -> Some (Int64.of_int i)
+    | Fixed i -> Some i
     | _  -> None in
   let content_type = Cohttp.Header.get_media_type
     @@ Cohttp.Response.headers resp in

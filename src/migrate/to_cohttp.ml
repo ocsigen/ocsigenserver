@@ -147,7 +147,7 @@ let to_response_and_body res =
   in
   let encoding = match res_content_length with
     | Some length when length <= Int64.of_int max_int ->
-      Cohttp.Transfer.Fixed (Int64.to_int length)
+      Cohttp.Transfer.Fixed length
     | _ -> Cohttp.Transfer.Chunked
   in
   let headers = match res_content_type with
