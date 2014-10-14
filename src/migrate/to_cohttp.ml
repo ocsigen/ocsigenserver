@@ -101,13 +101,13 @@ let to_request_and_body ?encoding
   (to_request ?encoding frame_header uri, `Stream stream)
 
 let to_date date =
-  let x = Netdate.mk_mail_date ~zone:0 date in
+  let x = Netdate.mk_mail_date ~zone:0 date |> Bytes.unsafe_of_string in
   try
-    let ind_plus = String.index x '+' in
-    String.set x ind_plus 'G';
-    String.set x (ind_plus + 1) 'M';
-    String.set x (ind_plus + 2) 'T';
-    String.sub x 0 (ind_plus + 3)
+    let ind_plus = Bytes.index x '+' in
+    Bytes.set x ind_plus 'G';
+    Bytes.set x (ind_plus + 1) 'M';
+    Bytes.set x (ind_plus + 2) 'T';
+    Bytes.sub x 0 (ind_plus + 3)
   with Invalid_argument _ | Not_found -> (); x
 
 let to_type ty charset =
