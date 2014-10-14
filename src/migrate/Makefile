@@ -39,7 +39,7 @@ migrate.cmxa: $(FILES:.ml=.cmx)
 ## Clean up
 
 clean:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
+	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
 distclean: clean
 	-rm -f *~ \#* .\#*
