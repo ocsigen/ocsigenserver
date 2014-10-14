@@ -141,9 +141,9 @@ module Url = struct
 
     let to_hex2 k =
       (* Converts k to a 2-digit hex string *)
-      let s = String.create 2 in
-      s.[0] <- hex_digits.( (k lsr 4) land 15 );
-      s.[1] <- hex_digits.( k land 15 );
+      let s = Bytes.create 2 in
+      Bytes.set s 0 hex_digits.( (k lsr 4) land 15 );
+      Bytes.set s 1 hex_digits.( k land 15 );
       s
 
     let url_encoding_re =
