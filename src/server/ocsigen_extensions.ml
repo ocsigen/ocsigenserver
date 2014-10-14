@@ -411,7 +411,7 @@ module Make (Server : Ocsigen_common_server.S) = struct
     let rec aux site_path url =
       match site_path, url with
       | [], [] ->
-        raise (Ocsigen_cohttp_server.Ocsigen_Is_a_directory
+        raise (Server.Ocsigen_Is_a_directory
                  (new_url_of_directory_request request))
       | [], p -> Some p
       | a::l, aa::ll when a = aa -> aux l ll
