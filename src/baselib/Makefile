@@ -145,10 +145,10 @@ ${INTF_NOP4:.mli=.cmi}: \
 ## Clean up
 
 clean:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
+	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
-	-cd commandline; rm -f *.cm[iox]* *.annot *.o
-	-cd nocommandline; rm -f *.cm[iox]* *.annot *.o
+	-cd commandline; rm -f *.cm* *.annot *.o
+	-cd nocommandline; rm -f *.cm* *.annot *.o
 
 distclean: clean
 	-rm -f *~ \#* .\#*
