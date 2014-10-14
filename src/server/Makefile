@@ -81,9 +81,9 @@ servertop: ${SERVERLIBS}
 ## Clean up
 
 clean:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
+	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
-	-rm -r ${PROJECTNAME} ${PROJECTNAME}.opt
+	-rm -f ${PROJECTNAME} ${PROJECTNAME}.opt
 	-rm -f servertop
 distclean: clean
 	-rm -f *~ \#* .\#*

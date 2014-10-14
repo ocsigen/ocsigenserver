@@ -1,13 +1,15 @@
 include ../../Makefile.config
 
-PACKAGE  := lwt.unix     \
-			ipaddr       \
-	    lwt.ssl      \
-	    lwt.react    \
-            netstring    \
-            netstring-pcre \
-	    tyxml.parser \
-			${SERVER_SYNTAX} ## See ../../Makefile.options
+PACKAGE  :=		\
+	bytes		\
+	lwt.unix	\
+	ipaddr		\
+	lwt.ssl		\
+	lwt.react	\
+	netstring	\
+	netstring-pcre	\
+	tyxml.parser	\
+	${SERVER_SYNTAX} ## See ../../Makefile.options
 
 LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
@@ -79,7 +81,7 @@ clean: clean.local
 	${MAKE} -C ocsipersist-dbm clean
 	${MAKE} -C ocsipersist-sqlite clean
 clean.local:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
+	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
 distclean: clean.local
 	-rm -f *~ \#* .\#*
