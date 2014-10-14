@@ -4,7 +4,7 @@ all: byte opt
 
 PACKAGE  := ${SERVER_PACKAGE} ${SERVER_SYNTAX} ## See ../../Makefile.options
 LIBS     := -I ../baselib -I ../http -I ../migrate \
-  ${addprefix -package ,${PACKAGE}} -I .
+	${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
@@ -86,9 +86,9 @@ servertop: ${SERVERLIBS}
 ## Clean up
 
 clean:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
+	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
-	-rm -r ${PROJECTNAME} ${PROJECTNAME}.opt
+	-rm -f ${PROJECTNAME} ${PROJECTNAME}.opt
 	-rm -f servertop
 distclean: clean
 	-rm -f *~ \#* .\#*

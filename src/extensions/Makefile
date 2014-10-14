@@ -82,7 +82,7 @@ clean: clean.local
 	${MAKE} -C ocsipersist-dbm clean
 	${MAKE} -C ocsipersist-sqlite clean
 clean.local:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
+	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
 distclean: clean.local
 	-rm -f *~ \#* .\#*
