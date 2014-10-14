@@ -138,7 +138,7 @@ let create_receiver timeout mode fd =
                Lwt.fail (convert_io_error e)));
     timeout = timeout;
     r_mode = mode;
-    buf=String.create buffer_size;
+    buf=Bytes.create buffer_size;
     read_pos = 0;
     write_pos = 0;
     closed = Lwt.wait ();
@@ -167,13 +167,13 @@ let block_next_request conn = Lwt_mutex.lock conn.extension_mutex
 
 (** the number of byte in the buffer*)
 let buf_used buffer = buffer.write_pos - buffer.read_pos
-let buf_size buffer = String.length buffer.buf
+let buf_size buffer = Bytes.length buffer.buf
 
 let buf_get_string buffer len =
   let pos = buffer.read_pos in
   assert (pos + len <= buffer.write_pos);
   buffer.read_pos <- buffer.read_pos + len;
-  String.sub buffer.buf pos len
+  Bytes.sub buffer.buf pos len
 
 (** Receive some more data. *)
 let receive receiver =
@@ -183,7 +183,7 @@ let receive receiver =
     Lwt.fail Buffer_full
   else begin
     if receiver.read_pos > 0 then begin
-      String.blit receiver.buf receiver.read_pos receiver.buf 0 used;
+      Bytes.blit receiver.buf receiver.read_pos receiver.buf 0 used;
       receiver.write_pos <- used;
       receiver.read_pos <- 0
     end;
@@ -587,10 +587,10 @@ let (<<?) h (n, v) =
 let gmtdate d =
   let x = Netdate.mk_mail_date ~zone:0 d in try
     (*XXX !!!*)
-    let ind_plus =  String.index x '+' in
-    String.set x ind_plus 'G';
-    String.set x (ind_plus + 1) 'M';
-    String.set x (ind_plus + 2) 'T';
+    let ind_plus =  Bytes.index x '+' in
+    Bytes.set x ind_plus 'G';
+    Bytes.set x (ind_plus + 1) 'M';
+    Bytes.set x (ind_plus + 2) 'T';
     String.sub x 0 (ind_plus + 3)
   with Invalid_argument _ | Not_found -> Lwt_log.ign_debug ~section "no +"; x
 
@@ -650,7 +650,7 @@ let default_sender = create_sender ~server_name:Ocsigen_config.server_name ()
 let write_stream_chunked out_ch stream =
   let buf_size = 4096 in
   let size_for_not_buffering = 900 in
-  let buffer = String.create buf_size in
+  let buffer = Bytes.create buf_size in
   let rec aux stream len =
     Ocsigen_stream.next stream >>= fun e ->
     match e with

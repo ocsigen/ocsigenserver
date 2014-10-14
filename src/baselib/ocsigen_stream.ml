@@ -40,13 +40,13 @@ type 'a t =
 let empty follow =
   match follow with
     None    -> Lwt.return (Finished None)
-  | Some st -> Lwt.return (Finished (Some (Lazy.lazy_from_fun st)))
+  | Some st -> Lwt.return (Finished (Some (Lazy.from_fun st)))
 
 let cont stri f =
-  Lwt.return (Cont (stri, Lazy.lazy_from_fun f))
+  Lwt.return (Cont (stri, Lazy.from_fun f))
 
 let make ?finalize:(g = fun _ -> Lwt.return ()) f =
-  { stream = Lazy.lazy_from_fun f; in_use = false; finalizer = g }
+  { stream = Lazy.from_fun f; in_use = false; finalizer = g }
 
 let next = Lazy.force
 
@@ -230,13 +230,13 @@ let of_file filename =
       (Unix.openfile filename [Unix.O_RDONLY;Unix.O_NONBLOCK] 0o666)
   in
   let ch = Lwt_chan.in_channel_of_descr fd in
-  let buf = String.create 1024 in
+  let buf = Bytes.create 1024 in
   let rec aux () =
     Lwt_chan.input ch buf 0 1024 >>= fun n ->
     if n = 0 then empty None else
       (* Streams should be immutable, thus we always make a copy
          of the buffer *)
-      cont (String.sub buf 0 n) aux
+      cont (Bytes.sub buf 0 n) aux
   in make ~finalize:(fun _ -> Lwt_unix.close fd) aux
 
 let of_string s =

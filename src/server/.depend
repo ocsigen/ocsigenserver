@@ -1,6 +1,8 @@
 ocsigen_cohttp_server.cmi : ocsigen_request_info.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi
 ocsigen_command.cmi :
+ocsigen_common_server.cmi : ocsigen_request_info.cmi \
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi
 ocsigen_extensions.cmi : ocsigen_request_info.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi \
     ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi
@@ -36,14 +38,14 @@ ocsigen_extensions.cmo : ocsigen_request_info.cmi \
     ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_loader.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_cookies.cmi ../baselib/ocsigen_config.cmi \
-    ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi \
-    ocsigen_extensions.cmi
+    ocsigen_command.cmi ocsigen_cohttp_server.cmi \
+    ../http/ocsigen_charset_mime.cmi ocsigen_extensions.cmi
 ocsigen_extensions.cmx : ocsigen_request_info.cmx \
     ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_loader.cmx \
     ../baselib/ocsigen_lib.cmx ../http/ocsigen_http_frame.cmx \
     ../http/ocsigen_cookies.cmx ../baselib/ocsigen_config.cmx \
-    ocsigen_command.cmx ../http/ocsigen_charset_mime.cmx \
-    ocsigen_extensions.cmi
+    ocsigen_command.cmx ocsigen_cohttp_server.cmx \
+    ../http/ocsigen_charset_mime.cmx ocsigen_extensions.cmi
 ocsigen_generate.cmo : ../migrate/to_cohttp.cmi ../migrate/of_cohttp.cmi \
     ../baselib/ocsigen_stream.cmi ocsigen_socket.cmi ocsigen_request_info.cmi \
     ocsigen_range.cmi ../baselib/ocsigen_messages.cmi \

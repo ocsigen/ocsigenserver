@@ -60,12 +60,12 @@ let compress_level = ref 6
 
 (* Minimal header, by X. Leroy *)
 let gzip_header_length = 10
-let gzip_header = String.make gzip_header_length (Char.chr 0)
+let gzip_header = Bytes.make gzip_header_length (Char.chr 0)
 let () =
-  gzip_header.[0] <- Char.chr 0x1F;
-  gzip_header.[1] <- Char.chr 0x8B;
-  gzip_header.[2] <- Char.chr 8;
-  gzip_header.[9] <- Char.chr 0xFF
+  Bytes.set gzip_header 0 @@ Char.chr 0x1F;
+  Bytes.set gzip_header 1 @@ Char.chr 0x8B;
+  Bytes.set gzip_header 2 @@ Char.chr 8;
+  Bytes.set gzip_header 9 @@ Char.chr 0xFF
 
 
 (* inspired by an auxiliary function from camlzip, by Xavier Leroy *)
@@ -113,10 +113,10 @@ let rec output oz f buf pos len  =
  * and returns the continuation of the stream *)
 and flush oz cont =
   let len = oz.pos in
-  let s = String.sub oz.buf 0 len in
+  let s = Bytes.sub oz.buf 0 len in
   Lwt_log.ign_info ~section "Flushing!";
   oz.pos <- 0 ;
-  oz.avail <- String.length oz.buf ;
+  oz.avail <- Bytes.length oz.buf ;
   if len > 0 then Ocsigen_stream.cont s cont else cont ()
 
 and next_cont oz stream =
@@ -161,7 +161,7 @@ let compress deflate stream =
     return (Lwt_log.ign_info ~section "Zlib stream closed") in
   let oz =
     { stream = zstream ;
-      buf = String.create !buffer_size;
+      buf = Bytes.create !buffer_size;
       pos = 0;
       avail = !buffer_size
     } in
