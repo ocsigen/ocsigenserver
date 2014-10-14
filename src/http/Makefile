@@ -1,6 +1,6 @@
 include ../../Makefile.config
 
-LIBS     := -package netstring,netstring-pcre,lwt.ssl,tyxml,cohttp -I ../baselib
+LIBS     := -package bytes,netstring,netstring-pcre,lwt.ssl,tyxml,cohttp -I ../baselib
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc

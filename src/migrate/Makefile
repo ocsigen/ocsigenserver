@@ -1,6 +1,6 @@
 include ../../Makefile.config
 
-LIBS     := -package lwt -package cohttp -package netstring -package re.emacs -I ../baselib -I ../http
+LIBS     := -package bytes,lwt,cohttp,netstring,re.emacs -I ../baselib -I ../http
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc

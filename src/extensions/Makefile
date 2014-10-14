@@ -1,14 +1,16 @@
 include ../../Makefile.config
 
-PACKAGE  := lwt.unix     \
-	    ipaddr       \
-	    lwt.ssl      \
-	    lwt.react    \
-            netstring    \
-            netstring-pcre \
-	    tyxml.parser \
-	    cohttp       \
-	    cohttp.lwt   \
+PACKAGE  :=		\
+	bytes		\
+	lwt.unix	\
+	ipaddr		\
+	lwt.ssl		\
+	lwt.react	\
+	netstring	\
+	netstring-pcre	\
+	tyxml.parser	\
+	cohttp		\
+	cohttp.lwt	\
 
 LIBS     := -I ../baselib -I ../http -I ../migrate/ -I ../server ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}

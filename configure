@@ -76,7 +76,7 @@ set_defaults () {
     name="ocsigenserver"
     enable_natdynlink=1
     enable_debug=0
-    enable_annot=0
+    enable_annot=1
     with_sqlite=1
     with_camlzip=1
     with_dbm=1
@@ -180,7 +180,7 @@ usage () {
 usage: ./configure [ options ]
 
   --enable-debug,	--disable-debug		Enable/disable debug output
-  --enable-annot,	--disable-annot		Enable/disable .annot files generation
+  --enable-annot,	--disable-annot		Enable/disable .cmt{,i} files generation
   --enable-natdynlink,	--disable-natdynlink	Enable/disable nativecode dynamic linking
 
   --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
@@ -578,7 +578,7 @@ PREEMPTIVE:=$with_preempt
 # Do you want debugging information (-g) ? YES/NO
 DEBUG:=$enable_debug
 
-# Do you want annot files (-dtypes) ? YES/NO
+# Do you want annot files (-bin-annot) ? YES/NO
 ANNOT:=$enable_annot
 
 # Profiling (always put NO here - but if you want to debug ocsigen):
