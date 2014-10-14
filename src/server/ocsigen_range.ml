@@ -101,12 +101,12 @@ let compute_range ri res =
       in
       match change_range (Lazy.force (Ocsigen_request_info.range ri)) with
       | None -> Lwt.return res
-      | Some (_, _, Ocsigen_extensions.IR_ifmatch etag)
+      | Some (_, _, Ocsigen_request_info.IR_ifmatch etag)
         when (match Ocsigen_http_frame.Result.etag res with
             | None -> true
             | Some resetag -> String.compare etag resetag <> 0) ->
         Lwt.return res
-      | Some (_, _, Ocsigen_extensions.IR_Ifunmodsince date)
+      | Some (_, _, Ocsigen_request_info.IR_Ifunmodsince date)
         when (match Ocsigen_http_frame.Result.lastmodified res with
             | None -> true
             | Some l -> l > date)
@@ -217,9 +217,9 @@ let get_range http_frame =
             Http_headers.if_range
         in
         try
-          Ocsigen_extensions.IR_Ifunmodsince (Netdate.parse_epoch ifrangeheader)
-        with _ -> Ocsigen_extensions.IR_ifmatch ifrangeheader
-        with Not_found -> Ocsigen_extensions.IR_No
+          Ocsigen_request_info.IR_Ifunmodsince (Netdate.parse_epoch ifrangeheader)
+        with _ -> Ocsigen_request_info.IR_ifmatch ifrangeheader
+        with Not_found -> Ocsigen_request_info.IR_No
     in
 
     Some (interval, from, ifrange)
