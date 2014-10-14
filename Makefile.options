@@ -1,4 +1,3 @@
-
 BYTEDBG :=
 OPTDBG  :=
 THREAD  :=
@@ -9,8 +8,8 @@ OPTDBG  += -g
 endif
 
 ifeq "$(ANNOT)" "YES"
-BYTEDBG += -dtypes
-OPTDBG  += -dtypes
+BYTEDBG += -bin-annot
+OPTDBG  += -bin-annot
 endif
 
 ifeq "$(PROFILING)" "YES"
@@ -26,25 +25,25 @@ endif
 ## but also to generate src/baselib/ocsigen_config.ml and src/files/META
 
 ifeq "$(PREEMPTIVE)" "YES"
-LWT_EXTRA_PACKAGE:=lwt.extra
+	LWT_EXTRA_PACKAGE:=lwt.extra
 endif
 
-BASE_PACKAGE := lwt ipaddr
+BASE_PACKAGE := lwt ipaddr bytes
 
-SERVER_PACKAGE := lwt.ssl           \
-	          ${LWT_EXTRA_PACKAGE} \
-            ipaddr            \
-	          netstring         \
-	          netstring-pcre    \
-                  findlib           \
-	          cryptokit         \
-		  tyxml             \
-	          tyxml.parser      \
-                  dynlink           \
-		  cohttp            \
-		  cohttp.lwt        \
+SERVER_PACKAGE := lwt.ssl		\
+		bytes			\
+		${LWT_EXTRA_PACKAGE}	\
+		ipaddr			\
+		netstring		\
+		netstring-pcre		\
+		findlib			\
+		cryptokit		\
+		tyxml			\
+		tyxml.parser		\
+		dynlink			\
+		cohttp.lwt		\
 
-SERVER_SYNTAX :=  tyxml.syntax      \
+SERVER_SYNTAX := tyxml.syntax
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \

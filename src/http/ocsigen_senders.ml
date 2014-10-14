@@ -228,7 +228,7 @@ struct
       | Some s -> s
     in
     Ocsigen_messages.debug2 "start reading file (file opened)";
-    let buf = String.create buffer_size in
+    let buf = Bytes.create buffer_size in
     let rec read_aux () =
       Lwt_unix.read fd buf 0 buffer_size >>= fun read ->
       if read = 0 then
