@@ -227,19 +227,19 @@ struct
     let buffer_size = match buffer_size with
       | None -> Ocsigen_config.get_filebuffersize ()
       | Some s -> s
-      in
-      Lwt_log.ign_info ~section "start reading file (file opened)";
-      let buf = String.create buffer_size in
-      let rec read_aux () =
-          Lwt_unix.read fd buf 0 buffer_size >>= fun read ->
-          if read = 0 then
-            Ocsigen_stream.empty None
-          else begin
-            if read = buffer_size
-            then Ocsigen_stream.cont buf read_aux
-            else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
-          end
-      in read_aux
+    in
+    Lwt_log.ign_info ~section "start reading file (file opened)";
+    let buf = Bytes.create buffer_size in
+    let rec read_aux () =
+      Lwt_unix.read fd buf 0 buffer_size >>= fun read ->
+      if read = 0 then
+        Ocsigen_stream.empty None
+      else begin
+        if read = buffer_size
+        then Ocsigen_stream.cont buf read_aux
+        else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
+      end
+    in read_aux
 
   let get_etag_aux st =
     Some (Printf.sprintf "%Lx-%x-%f" st.Unix.LargeFile.st_size
