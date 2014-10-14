@@ -1,5 +1,6 @@
 include ../../Makefile.config
 PACKAGE  := \
+	bytes \
 	netstring \
 	netstring-pcre \
 	lwt.ssl \

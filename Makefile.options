@@ -1,4 +1,3 @@
-
 BYTEDBG :=
 OPTDBG  :=
 THREAD  :=
@@ -9,8 +8,8 @@ OPTDBG  += -g
 endif
 
 ifeq "$(ANNOT)" "YES"
-BYTEDBG += -dtypes
-OPTDBG  += -dtypes
+BYTEDBG += -bin-annot
+OPTDBG  += -bin-annot
 endif
 
 ifeq "$(PROFILING)" "YES"
@@ -29,9 +28,10 @@ ifeq "$(PREEMPTIVE)" "YES"
 LWT_PREEMPTIVE_PACKAGE:=lwt.preemptive
 endif
 
-BASE_PACKAGE := lwt ipaddr
+BASE_PACKAGE := lwt ipaddr bytes
 
 SERVER_PACKAGE := lwt.ssl           \
+		  bytes			\
 	          ${LWT_PREEMPTIVE_PACKAGE} \
                   ipaddr            \
 	          netstring         \

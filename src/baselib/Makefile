@@ -1,6 +1,7 @@
 include ../../Makefile.config
 
 PACKAGE  := \
+	bytes \
 	lwt.unix \
 	netstring \
 	netstring-pcre \
