@@ -16,7 +16,7 @@ depends: [
   "ounit"
   "fieldslib" {>= "109.20.00"}
   "sexplib" {>= "109.53.00"}
-  "conduit" {>= "9999"}
+  "conduit" {>= "0.6.0"}
   "stringext"
 ]
 depopts: [
@@ -28,3 +28,4 @@ conflicts: [
   "async" {<"109.15.00"}
   "lwt" {<"2.4.3"}
 ]
+ocaml-version: [>="4.01.0"]

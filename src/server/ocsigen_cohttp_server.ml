@@ -58,15 +58,14 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
   let rec getsockname = function
-    | `OpenSSL (host, ip, port) ->
-      Unix.ADDR_INET (Ipaddr_unix.to_inet_addr ip, port)
     | `TCP (ip, port) ->
       Unix.ADDR_INET (Ipaddr_unix.to_inet_addr ip, port)
     | `Unix_domain_socket path ->
       Unix.ADDR_UNIX path
     | `TLS (_, edn) -> getsockname edn
     | `Unknown err -> raise (Failure ("resolution failed: " ^ err))
-    | `Vchan _ -> raise (Failure "VChan not supported")
+    | `Vchan_direct _ -> raise (Failure "VChan not supported")
+    | `Vchan_domain_socket _ -> raise (Failure "VChan not supported")
   in
 
   let sockaddr = getsockname edn in
