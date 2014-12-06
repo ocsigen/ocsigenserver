@@ -468,7 +468,7 @@ end = struct
            Lwt.choose
              [ (choosed >|= fun x -> Some x);
                (Lwt_unix.sleep (get_timeout ()) >|= fun () -> None);
-               (Lwt_event.next Security.kill >>= fun () -> Lwt.fail Kill);
+               (Lwt_react.E.next Security.kill >>= fun () -> Lwt.fail Kill);
              ] >|= fun x ->
            List.iter (fun c -> Channels.send_listeners c (-1)) active ;
            let s = Messages.encode_downgoing ended x in
