@@ -37,12 +37,6 @@ type config =
     max_age : int option;
     exposed_headers : string list }
 
-let default_config =
-  { allowed_method = None;
-    allowed_credentials = false;
-    max_age = None;
-    exposed_headers = [] }
-
 exception Refused
 
 let add_headers config rq response =
@@ -153,31 +147,48 @@ open Simplexmlparser
 
 let comma_space_regexp = Netstring_pcre.regexp "[[:blank:]\n]*,[[:blank:]\n]*"
 
-let parse_attributes config = function
-  | ("credentials",b) ->
-    { config with allowed_credentials = bool_of_string b }
-  | ("max_age",i) ->
-    { config with max_age = Some (int_of_string i) }
-  | ("exposed_headers",h) ->
-    { config with exposed_headers =
-                    Netstring_pcre.split comma_space_regexp h }
-  | ("methods",m) ->
-    let l = Netstring_pcre.split comma_space_regexp m in
-    { config with allowed_method =
-                    Some (List.map Framepp.method_of_string l) }
-  | (a,_) ->
-    Ocsigen_extensions.badconfig "Unexpected attribute %s for tag cors" a
-
-let parse_config _ _ parse_fun = function
-  | Element ("cors", attrs, []) ->
-    let config =
-      List.fold_left parse_attributes default_config attrs in
-    main config
-  | Element ("cors", _, _) ->
-    Ocsigen_extensions.badconfig "cors tag should not have children"
-  | Element (t, _, _) -> raise (Ocsigen_extensions.Bad_config_tag_for_extension t)
-  | _ ->
-    Ocsigen_extensions.badconfig "Unexpected data in config file"
+let parse_config _ _ parse_fun element =
+  let config = ref
+      { allowed_method = None;
+        allowed_credentials = false;
+        max_age = None;
+        exposed_headers = [] }
+  in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[Configuration.element
+                   ~name:"cors"
+                   ~attributes:[
+                     Configuration.attribute
+                       ~name:"credentials"
+                       (fun s ->
+                          let s = bool_of_string s in
+                          config := { !config
+                                      with allowed_credentials = s });
+                     Configuration.attribute
+                       ~name:"max_age"
+                       (fun s ->
+                          let s = Some (int_of_string s) in
+                          config := { !config
+                                      with max_age = s });
+                     Configuration.attribute
+                       ~name:"exposed_headers"
+                       (fun s ->
+                          let s = Netstring_pcre.split comma_space_regexp s in
+                          config := { !config
+                                      with exposed_headers = s });
+                     Configuration.attribute
+                       ~name:"methods"
+                       (fun s ->
+                          let s = Netstring_pcre.split comma_space_regexp s in
+                          let s = Some (List.map Framepp.method_of_string s) in
+                          config := { !config
+                                      with allowed_method = s });
+                   ]
+                   ()]
+  );
+  main !config
 
 let site_creator (_ : Ocsigen_extensions.virtual_hosts) _ = parse_config
 let user_site_creator (_ : Ocsigen_extensions.userconf_info) = site_creator

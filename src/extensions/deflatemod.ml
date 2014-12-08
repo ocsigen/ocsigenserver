@@ -270,17 +270,6 @@ let filter choice_list = function
 
 (*****************************************************************************)
 
-let rec parse_filter = function
-  |[] -> []
-  |(Element ("type",[],[PCData t]))::q ->
-    let (a,b) = (Ocsigen_headers.parse_mime_type t)
-    in Type (a,b) :: parse_filter q
-  |(Element ("extension",[],[PCData t]))::q ->
-    (Extension t) :: parse_filter q
-  |_ -> raise (Error_in_config_file
-                 "Unexpected element inside contenttype (should be <type> or
-                  <extension>)")
-
 let rec parse_global_config = function
   | [] -> ()
   | (Element ("compress", [("level", l)], []))::ll ->
@@ -311,30 +300,49 @@ let rec parse_global_config = function
   | _ -> raise (Error_in_config_file
                   "Unexpected content inside deflatemod config")
 
-
-
-
 (*****************************************************************************)
 
-let parse_config = function
-  | Element ("deflate", [("compress",b)], choices) ->
-    let l = (try parse_filter choices
-             with Not_found -> raise (Error_in_config_file
-                                        "Can't parse filter content")) in
-    (match b with
-     |"only" -> filter (Compress_only l)
-     |"allbut" -> filter (All_but l)
-     | _ ->  raise (Error_in_config_file
-                      "Attribute \"compress\" should be \"allbut\" or \"only\""))
-  | Element ("deflate" as s, _, _) -> badconfig "Bad syntax for tag %s" s
+let parse_config element =
+  let mode = ref (Compress_only []) in
+  let pages = ref [] in
+  Ocsigen_extensions.(
+    Configuration.process_element
+      ~in_tag:"host"
+      ~elements:[Configuration.element
+                   ~name:"deflate"
+                   ~attributes:[
+                     Configuration.attribute
+                       ~name:"compress"
+                       ~obligatory:true
+                       (function "only" -> mode := Compress_only []
+                               | "allbut" -> mode := All_but []
+                               | _ -> raise (Error_in_config_file
+                                               "Attribute 'compress' \
+                                                should be 'allbut' or \
+                                                'only'"));
+                   ]
+                   ~elements:[
+                     Configuration.element
+                       ~name:"type"
+                       ~pcdata:(fun s -> let (a, b) =
+                                 Ocsigen_headers.parse_mime_type s in
+                                 pages := Type (a, b) :: !pages) ();
+                     Configuration.element
+                       ~name:"extension"
+                       ~pcdata:(fun s ->
+                           pages := Extension s :: !pages) ();
 
-  | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ ->
-    raise (Error_in_config_file "Unexpected data in config file")
-
-
-
-
+                   ]
+                   ()]
+      element
+  );
+  match !pages with
+  | [] -> raise (Error_in_config_file
+                   "Unexpected element inside contenttype (should be <type> or \
+                    <extension>)")
+  | l -> !mode |> function
+    | Compress_only _ -> filter (Compress_only l)
+    | All_but _ -> filter (All_but l)
 
 (*****************************************************************************)
 (** Registration of the extension *)
