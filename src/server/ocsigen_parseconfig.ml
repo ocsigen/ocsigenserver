@@ -224,7 +224,10 @@ let parse_host_field =
      try Hashtbl.find h hostfilter
      with Not_found ->
        let r = match hostfilter with
-         | None -> ["*", Netstring_pcre.regexp ".*$", None] (* default = "*:*" *)
+         | None ->
+           [Ocsigen_extensions.VirtualHost.make
+              ~host:"*"
+              ~pattern:(Netstring_pcre.regexp ".*$") ()] (* default = "*:*" *)
          | Some s ->
            let parse_one_host ss =
              let host, port =
@@ -246,13 +249,17 @@ let parse_host_field =
                | Netstring_str.Delim _ -> ".*"
                | Netstring_str.Text t -> Netstring_pcre.quote t
              in
-             (host,
-              Netstring_pcre.regexp
-                (String.concat ""
-                   ((List.map split_host
-                       (Netstring_str.full_split
-                          (Netstring_str.regexp "[*]+") host))@["$"])),
-              port)
+             let pattern =
+               Netstring_pcre.regexp
+                 (String.concat ""
+                    ((List.map split_host
+                        (Netstring_str.full_split
+                           (Netstring_str.regexp "[*]+") host))@["$"]))
+             in
+             Ocsigen_extensions.VirtualHost.make
+               ~host
+               ~pattern
+               ?port ()
            in
            List.map parse_one_host
              (Netstring_str.split (Netstring_str.regexp "[ \t]+") s)
@@ -271,8 +278,11 @@ let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
     (* Something more clever could be envisioned *)
     let rec aux = function
       | [] -> default_default_hostname
-      | (t, _, (Some 80 | None)) :: _ when String.contains t '*' = false ->
-        t
+      | x :: _ when
+        String.contains (Ocsigen_extensions.VirtualHost.host x) '*' = false
+        && ((Ocsigen_extensions.VirtualHost.port x) = Some 80
+            || (Ocsigen_extensions.VirtualHost.port x) = None) ->
+        Ocsigen_extensions.VirtualHost.host x
       | _ :: q -> aux q
     in
     let host = aux host in
@@ -592,10 +602,10 @@ let parse_server isreloading c =
 
 
 (* Types of socket declarable in configuration file *)
-type socket_type =
+type socket_type = Ocsigen_socket.socket_type =
+  | All
   | IPv4 of Unix.inet_addr
   | IPv6 of Unix.inet_addr
-  | All
 
 (* Parsing <port> tags *)
 let parse_port =
@@ -727,7 +737,10 @@ let extract_info c =
     | _ ->
       raise (Config_file_error "Syntax error")
   in
-  let (user, group), si, (mint, maxt) = aux None None None [] [] None None c in
+  let (user, group),
+      (ssl, ports, ssl_ports),
+      (mint, maxt) =
+      aux None None None [] [] None None c in
   let user = match user with
       None -> None (* Some (get_default_user ()) *)
     | Some s -> if s = "" then None else Some s
@@ -744,7 +757,12 @@ let extract_info c =
     | Some t -> t
     | None -> get_maxthreads ()
   in
-  ((user, group), si, (mint, maxt))
+  let ssl_context = match ssl with
+    | Some (Some a, Some b) -> Some (a, b)
+    | _ -> None
+  in
+  Ocsigen_server_configuration.make
+    ?user ?group ?ssl_context ~threads:(mint, maxt) ports ssl_ports
 
 let parse_config ?file () =
   let file =

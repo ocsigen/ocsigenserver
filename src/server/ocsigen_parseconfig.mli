@@ -56,16 +56,11 @@ val parser_config : Simplexmlparser.xml list ->
   Simplexmlparser.xml list list
 val parse_server : bool -> Simplexmlparser.xml list -> unit
 
-type socket_type =
-  | IPv4 of Unix.inet_addr
-  | IPv6 of Unix.inet_addr
-  | All
+type socket_type = Ocsigen_socket.socket_type
 
 val extract_info :
   Simplexmlparser.xml list ->
-  (string option * string option) *
-  ((string option * string option) option *
-   (socket_type * int) list * (socket_type * int) list) * (int * int)
+  Ocsigen_server_configuration.t
 val parse_config :
   ?file:string ->
   unit ->

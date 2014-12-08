@@ -132,33 +132,39 @@ let rec get_indescr i =
 let inch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
 let outch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
 
-let init_fun config =
-  let (store, ocsidbmconf, delay_loading) =
-    parse_global_config (None, None, false) config
-  in
-  (match store with
-   | None -> ()
-   | Some d -> directory := d);
-  (match ocsidbmconf with
-   | None -> ()
-   | Some d -> ocsidbm := d);
+(**
+  * init : initialization of ocsipersis-dbm
+  *
+  * @param directory_store directory of database
+  * @param ocsidbm_conf binary of dbm
+  * @param delay_loading
+*)
 
+let init ?directory_store ?ocsidbm_conf ?(delay_loading = false) () =
+  Ocsigen_lib_base.Option.iter (fun x -> directory := x) directory_store;
+  Ocsigen_lib_base.Option.iter (fun x -> ocsidbm := x) ocsidbm_conf;
   Ocsigen_messages.warning
     (if delay_loading then
        "Asynchronuous initialization of Ocsipersist-dbm (may fail later)"
      else
        "Initializing Ocsipersist-dbm...");
   let indescr = get_indescr 2 in
-  if delay_loading then (
-    inch  := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
-    outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
-  ) else (
-    let r = Lwt_unix.run indescr in
-    inch  := return (Lwt_chan.in_channel_of_descr r);
-    outch := return (Lwt_chan.out_channel_of_descr r);
-    Ocsigen_messages.warning "...Initialization of Ocsipersist-dbm complete";
-  )
+  if delay_loading then
+    begin
+      inch := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
+      outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
+    end
+  else
+    begin
+      let r = Lwt_unix.run indescr in
+      inch := return (Lwt_chan.in_channel_of_descr r);
+      outch := return (Lwt_chan.out_channel_of_descr r);
+    end
 
+let init_fun config =
+  let (directory_store, ocsidbm_conf, delay_loading) =
+    parse_global_config (None, None, false) config
+  in init ?directory_store ?ocsidbm_conf ~delay_loading ()
 
 let send =
   let previous = ref (return Ok) in
@@ -322,33 +328,33 @@ let iter_block a b = failwith "iter_block not implemented for DBM. Please use Oc
    let nextl = String.length next in
    (Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 >>=
    (fun socket ->
-     Lwt_unix.connect
-       (Lwt_unix.Plain socket)
-       (Unix.ADDR_UNIX (directory^"/"^socketname)) >>=
-     (fun () -> return (Lwt_unix.Plain socket)) >>=
-     (fun indescr ->
-       let inch = Lwt_unix.in_channel_of_descr indescr in
-       let nextkey next nextl =
-         Lwt_unix.write indescr next 0 nextl >>=
-         (fun l2 -> if l2 <> nextl
-         then fail Ocsipersist_error
-         else (Lwt_unix.input_line inch >>=
-               fun answ -> return (Marshal.from_string answ 0)))
-       in
-       let rec aux n l =
-         nextkey n l >>=
-         (function
-           | End -> return ()
-           | Key k -> find table k >>= f k
-           | Error e -> fail e
-           | _ -> fail Ocsipersist_error) >>=
-         (fun () -> aux next nextl)
-       in
-       catch
-         (fun () ->
-           aux first firstl >>=
-           (fun () -> Unix.close socket; return ()))
-         (fun e -> Unix.close socket; fail e))))
+   Lwt_unix.connect
+     (Lwt_unix.Plain socket)
+     (Unix.ADDR_UNIX (directory^"/"^socketname)) >>=
+   (fun () -> return (Lwt_unix.Plain socket)) >>=
+   (fun indescr ->
+     let inch = Lwt_unix.in_channel_of_descr indescr in
+     let nextkey next nextl =
+       Lwt_unix.write indescr next 0 nextl >>=
+       (fun l2 -> if l2 <> nextl
+       then fail Ocsipersist_error
+       else (Lwt_unix.input_line inch >>=
+             fun answ -> return (Marshal.from_string answ 0)))
+     in
+     let rec aux n l =
+       nextkey n l >>=
+       (function
+         | End -> return ()
+         | Key k -> find table k >>= f k
+         | Error e -> fail e
+         | _ -> fail Ocsipersist_error) >>=
+       (fun () -> aux next nextl)
+     in
+     catch
+       (fun () ->
+         aux first firstl >>=
+         (fun () -> Unix.close socket; return ()))
+       (fun e -> Unix.close socket; fail e))))
 
 *)
 

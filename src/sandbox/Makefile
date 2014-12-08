@@ -1,41 +1,18 @@
 include ../../Makefile.config
 
-all: byte opt
+all: byte
 
-PACKAGE  := ${SERVER_PACKAGE} ${SERVER_SYNTAX} ## See ../../Makefile.options
-LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}} -I .
+PACKAGE  := ${SERVER_PACKAGE} ${SERVER_SYNTAX} lwt.react ## See ../../Makefile.options
+LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}} \
+	    -I ../server -I ../extensions/
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
 
-all: byte opt
-
-### Common files ###
-
-FILES := ocsigen_socket.ml \
-         ocsigen_request_info.ml \
-         ocsigen_extensions.ml  \
-         ocsigen_range.ml       \
-         ocsigen_server_configuration.ml \
-         ocsigen_parseconfig.ml \
-         ocsigen_http_client.ml \
-         ocsigen_local_files.ml  \
-         ocsigen_server.ml      \
-
-
-byte:: ${PROJECTNAME}.cma
-opt:: ${PROJECTNAME}.cmxa
-
-${PROJECTNAME}.cma: $(FILES:.ml=.cmo)
-	${OCAMLC} -a -o $@ $^
-${PROJECTNAME}.cmxa: $(FILES:.ml=.cmx)
-	${OCAMLOPT} -a -o $@ $^
-
-### Server ###
+all: byte
 
 byte:: ${PROJECTNAME}
-opt:: ${PROJECTNAME}.opt
 
 ifdef DONOTPARSECOMMANDLINE
 PARSECOMMANDLINE := ../baselib/donotparsecommandline.cma
@@ -47,14 +24,32 @@ SERVERLIBS := ${PARSECOMMANDLINE}       \
               ../baselib/baselib.cma    \
 	      ../baselib/polytables.cma \
 	      ../http/http.cma          \
-	      ${PROJECTNAME}.cma         \
+	      ../server/${PROJECTNAME}.cma         \
 
-SERVEROBJS := server_main.cmo
+SERVEROBJS := ../extensions/accesscontrol.cmo \
+	      ../extensions/authbasic.cmo \
+	      ../extensions/cgimod.cmo \
+	      ../extensions/cors.cmo \
+	      ../extensions/extendconfiguration.cmo \
+	      ../extensions/extensiontemplate.cmo \
+	      ../extensions/ocsigen_comet.cmo \
+	      ../extensions/outputfilter.cmo \
+	      ../extensions/redirectmod.cmo \
+	      ../extensions/revproxy.cmo \
+	      ../extensions/rewritemod.cmo \
+	      ../extensions/staticmod.cmo \
+	      ../extensions/userconf.cmo \
+
+ifeq "$(CAMLZIP)" "YES"
+SERVEROBJS += ../extensions/deflatemod.cmo
+LIBS += -package ${CAMLZIPNAME}
+endif
+
+SERVEROBJS += server_main.cmo
+
 
 ${PROJECTNAME}: ${SERVERLIBS} ${SERVEROBJS}
 	${OCAMLC} -o $@ -linkpkg -linkall ${THREAD} ${LIBS} $^
-${PROJECTNAME}.opt: ${SERVERLIBS:.cma=.cmxa} ${SERVEROBJS:.cmo=.cmx}
-	${OCAMLOPT} -o $@ -linkpkg -linkall ${THREAD} ${LIBS} $^
 
 ### Toplevel ####
 
@@ -83,7 +78,7 @@ servertop: ${SERVERLIBS}
 clean:
 	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
 	-rm -f ${PREDEP}
-	-rm -r ${PROJECTNAME} ${PROJECTNAME}.opt
+	-rm -r ${PROJECTNAME}
 	-rm -f servertop
 distclean: clean
 	-rm -f *~ \#* .\#*
