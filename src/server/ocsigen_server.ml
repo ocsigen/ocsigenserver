@@ -1017,7 +1017,7 @@ let rec wait_connection use_ssl port socket =
 
        let handle_one (s, sockaddr) =
          Lwt_log.ign_info ~section
-           "\n__________________NEW CONNECTION__________________________";
+           "** New CONNECTION";
          Lwt.catch
            (fun () ->
               Lwt_unix.set_close_on_exec s;
