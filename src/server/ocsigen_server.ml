@@ -1040,7 +1040,7 @@ let rec wait_connection use_ssl port socket =
          >>= decr_connected
        in
 
-       Lwt_util.iter handle_one l >>= fun () ->
+       Lwt_list.iter_p handle_one l >>= fun () ->
        match e with
        | Some e -> handle_exn e
        | None -> Lwt.return ())
