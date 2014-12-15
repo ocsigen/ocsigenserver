@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
+let section = Lwt_log.Section.make "ocsipersist:sqlite"
 
 (** Module Ocsipersist: persistent data *)
 
@@ -63,8 +64,8 @@ let rec bind_safely stmt = function
     | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
 
 let close_safely db =
-  if not (db_close db) then
-    ignore (Ocsigen_messages.errlog "Couldn't close database")
+ if not (db_close db) then
+   Lwt_log.ign_error ~section "Couldn't close database"
 
 let m = Mutex.create ()
 

@@ -74,7 +74,8 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
               if sect = access_sect then acc else
                 match lev with
                 | Lwt_log.Error | Lwt_log.Fatal -> err
-                | _                             -> war);
+                | Lwt_log.Warning               -> war
+                | _                             -> Lwt_log.null);
          Lwt_log.dispatch
            (fun sect lev ->
               let show =
@@ -107,47 +108,16 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
 
 (****)
 
-let accesslog s =
-  ignore (Lwt_log.notice ~section:access_sect s : unit Lwt.t)
+let accesslog s = Lwt_log.ign_notice ~section:access_sect s
 
-let errlog ?section s = ignore (Lwt_log.error ?section s : unit Lwt.t)
+let errlog ?section s = Lwt_log.ign_error ?section s
 
-let warning ?section s = ignore (Lwt_log.warning ?section s : unit Lwt.t)
+let warning ?section s = Lwt_log.ign_warning ?section s
 
 let unexpected_exception e s =
-  warning ("Unexpected exception in "^s^": "^Printexc.to_string e)
+  Lwt_log.ign_warning_f ~exn:e "Unexpected exception in %s" s
 
 (****)
-
-let debug_noel =
-  if Ocsigen_config.get_veryverbose () then
-    (fun s -> Pervasives.prerr_string (s ()))
-  else
-    (fun s -> ())
-
-let debug_noel2 =
-  if Ocsigen_config.get_veryverbose () then
-    Pervasives.prerr_string
-  else
-    (fun s -> ())
-
-let debug =
-  if Ocsigen_config.get_veryverbose () then
-    (fun s -> Pervasives.prerr_endline (s ()))
-  else
-    (fun s -> ())
-
-let debug2 =
-  if Ocsigen_config.get_veryverbose () then
-    Pervasives.prerr_endline
-  else
-    (fun s -> ())
-
-let bip =
-  if Ocsigen_config.get_veryverbose () then
-    (fun i -> Pervasives.prerr_endline ("bip"^(string_of_int i)))
-  else
-    (fun i -> ())
 
 let console =
   if (not (Ocsigen_config.get_silent ())) then
@@ -155,45 +125,31 @@ let console =
   else
     (fun s -> ())
 
-let console2 =
-  if (not (Ocsigen_config.get_silent ())) then
-    print_endline
-  else
-    (fun s -> ())
-
-
-(*Dynamic log level changing*)
-
-module SectMap = Map.Make (String)
-let sectmap = ref SectMap.empty
-
-let register_section s = sectmap := SectMap.add (Lwt_log.Section.name s) s !sectmap
-
-let find_section s = SectMap.find s !sectmap
-
 let level_of_string = function
-  | "Debug"   | "debug"  -> Some Lwt_log.Debug
-  | "Info"    | "info"   -> Some Lwt_log.Info
-  | "Notice"  | "notice" -> Some Lwt_log.Notice
-  | "Warning" | "warning"-> Some Lwt_log.Warning
-  | "Error"   | "error"  -> Some Lwt_log.Error
-  | "Fatal"   | "fatal"  -> Some Lwt_log.Fatal
+  | "debug"  -> Some Lwt_log.Debug
+  | "info"   -> Some Lwt_log.Info
+  | "notice" -> Some Lwt_log.Notice
+  | "warning"-> Some Lwt_log.Warning
+  | "error"  -> Some Lwt_log.Error
+  | "fatal"  -> Some Lwt_log.Fatal
   | _ -> None
 
 let command_f exc _ = function
-  | [sect_name] -> begin
-      try
-        Lwt_log.Section.reset_level (find_section sect_name);
-      with Not_found -> ()
-    end;
-    Lwt.return ()
-  | [sect_name; level_name] -> begin
-      try
-        match level_of_string level_name with
-        | None -> Lwt_log.Section.reset_level (find_section sect_name)
-        | Some l -> Lwt_log.Section.set_level (find_section sect_name) l
-      with Not_found -> ()
-    end;
+  | [sect_name] ->
+    (* Lwt_log.Section.make :
+       if a section with the same name
+       already exists, it is returned. *)
+    let sect = Lwt_log.Section.make sect_name in
+    Lwt_log.Section.reset_level sect;
+    Lwt.return_unit
+  | [sect_name; level_name] ->
+    (* Lwt_log.Section.make :
+       if a section with the same name
+       already exists, it is returned. *)
+    let sect = Lwt_log.Section.make sect_name in
+    (match level_of_string (String.lowercase level_name) with
+    | None -> Lwt_log.Section.reset_level sect
+    | Some l -> Lwt_log.Section.set_level sect l);
     Lwt.return ()
   | _ -> Lwt.fail exc
 

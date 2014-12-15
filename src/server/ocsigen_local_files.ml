@@ -21,6 +21,7 @@ open Ocsigen_extensions
 (* Displaying of a local file or directory. Currently used in
    staticmod and eliom_predefmod*)
 
+let section = Lwt_log.Section.make "ocsigen:local-file"
 exception Failed_403
 exception Failed_404
 exception NotReadableDirectory
@@ -54,9 +55,6 @@ let check_symlinks_aux
 (* Check that there are no invalid symlinks in the directories leading to
    [filename]. Paths upwards [no_check_for] are not checked. *)
 let rec check_symlinks_parent_directories ~filename ~no_check_for (policy : symlink_policy) =
-  (* Ocsigen_messages.debug
-     (fun () -> Printf.sprintf "Checking %s (until %s)"
-       filename (match no_check_for with None -> "" | Some s -> s)); *)
   if filename = "/" || filename = "." || Some filename = no_check_for then
     true
   else
@@ -108,20 +106,18 @@ let check_dotdot =
 let can_send filename request =
   let filename =
     Neturl.join_path (Neturl.norm_path (Neturl.split_path filename)) in
-  Ocsigen_messages.debug
-    (fun () -> Printf.sprintf "--LocalFiles: checking if file %s can be sent"
-        filename);
+  Lwt_log.ign_info_f ~section "checking if file %s can be sent" filename;
   let matches arg =
     Netstring_pcre.string_match (Ocsigen_extensions.do_not_serve_to_regexp arg)
       filename 0 <> None
   in
   if matches request.do_not_serve_403 then (
-    Ocsigen_messages.debug2 "--LocalFiles: this file is forbidden";
+    Lwt_log.ign_info ~section "this file is forbidden";
     raise Failed_403)
   else
-  if matches request.do_not_serve_404 then (
-    Ocsigen_messages.debug2 "--LocalFiles: this file must be hidden";
-    raise Failed_404)
+    if matches request.do_not_serve_404 then (
+      Lwt_log.ign_info ~section "this file must be hidden";
+      raise Failed_404)
 
 
 (* Return type of a request for a local file. The string argument
@@ -157,8 +153,7 @@ let resolve ?no_check_for ~request ~filename () =
       filename
   in
   try
-    Ocsigen_messages.debug
-      (fun () -> "--LocalFiles: Testing \""^filename^"\".");
+    Lwt_log.ign_info_f ~section "Testing \"%s\"." filename;
     let stat = Unix.LargeFile.stat filename in
     let (filename, stat) =
       if stat.Unix.LargeFile.st_kind = Unix.S_DIR then
@@ -166,40 +161,35 @@ let resolve ?no_check_for ~request ~filename () =
           (* In this case, [filename] is a directory but this is not visible in
              its name as there is no final slash. We signal this fact to
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
-          Ocsigen_messages.debug
-            (fun () -> "--LocalFiles: "^filename^" is a directory");
+          Lwt_log.ign_info_f ~section "%s is a directory" filename;
           raise (Ocsigen_extensions.Ocsigen_Is_a_directory request)
         end
 
         else
           let rec find_index = function
             | [] ->
-              (* No suitable index, we try to list the directory *)
-              if request.request_config.list_directory_content then (
-                Ocsigen_messages.debug2
-                  "--LocalFiles: Displaying directory content";
-                (filename, stat))
-              else (
-                (* No suitable index *)
-                Ocsigen_messages.debug2 "--LocalFiles: No index and no listing";
-                raise NotReadableDirectory)
+                (* No suitable index, we try to list the directory *)
+                if request.request_config.list_directory_content then (
+                  Lwt_log.ign_info ~section "Displaying directory content";
+                  (filename, stat))
+                else (
+                  (* No suitable index *)
+                  Lwt_log.ign_info ~section "No index and no listing";
+                  raise NotReadableDirectory)
             | e :: q ->
-              let index = filename ^ e in
-              Ocsigen_messages.debug
-                (fun () -> "--LocalFiles: Testing \""^index
-                           ^"\" as possible index.");
-              try
-                (index, Unix.LargeFile.stat index)
-              with
-              | Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q
+                let index = filename ^ e in
+                Lwt_log.ign_info_f ~section "Testing \"%s\" as possible index." index;
+                try
+                  (index, Unix.LargeFile.stat index)
+                with
+                  | Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q
           in find_index request.request_config.default_directory_index
 
       else (filename, stat)
     in
     if not (check_dotdot ~filename)
     then
-      (Ocsigen_messages.debug
-         (fun () -> "--Filenames cannot contain .. as in \""^filename^"\".");
+      (Lwt_log.ign_info_f ~section "Filenames cannot contain .. as in \"%s\"." filename;
        raise Failed_403)
     else if check_symlinks ~filename ~no_check_for
         request.request_config.follow_symlinks
@@ -207,8 +197,7 @@ let resolve ?no_check_for ~request ~filename () =
       can_send filename request.request_config;
       (* If the previous function did not fail, we are authorized to
          send this file *)
-      Ocsigen_messages.debug
-        (fun () -> "--LocalFiles: Returning \""^filename^"\".");
+        Lwt_log.ign_info_f ~section "Returning \"%s\"." filename;
       if stat.Unix.LargeFile.st_kind = Unix.S_REG then
         RFile filename
       else if stat.Unix.LargeFile.st_kind = Unix.S_DIR then
@@ -218,8 +207,7 @@ let resolve ?no_check_for ~request ~filename () =
     else (
       (* [filename] is accessed through as symlink which we should not
          follow according to the current policy *)
-      Ocsigen_messages.debug
-        (fun () -> "--Failed symlink check for \""^filename^"\".");
+      Lwt_log.ign_info_f ~section "Failed symlink check for \"%s\"." filename;
       raise Failed_403)
   with
   (* We can get an EACCESS here, if are missing some rights on a directory *)

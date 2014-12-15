@@ -29,6 +29,8 @@ open Ocsigen_lib
 open Ocsigen_stream
 open Ocsigen_cookies
 
+let section = Lwt_log.Section.make "ocsigen:http:frame"
+
 type etag = string
 
 
@@ -76,30 +78,30 @@ let compute_new_ri_cookies
 module Result = struct
   (** The type of answers to send *)
   type result =
-    {cookies: cookieset; (** cookies to set (with optional path) *)
-     lastmodified: float option; (** Default: [None] *)
-     etag: string option;
-     code: int; (** HTTP code, if not 200 *)
-     stream: string Ocsigen_stream.t *
-             (string Ocsigen_stream.t -> 
-              int64 -> 
+      {cookies: cookieset; (** cookies to set (with optional path) *)
+       lastmodified: float option; (** Default: [None] *)
+       etag: string option;
+       code: int; (** HTTP code, if not 200 *)
+       stream: string Ocsigen_stream.t *
+         (string Ocsigen_stream.t ->
+            int64 ->
               string Ocsigen_stream.step Lwt.t) option
-    ; (** Default: empty stream. 
-          The second field is (optionaly)
-          the function used to skip a part of the 
-          stream, if you do not you want to use
-          a basic reading of the stream. 
-          For example, for static files, you can optimize it by using
-          a [seek] function.
-      *)
-     (* It is not a new field of the record to remember to change it
-        if we change the stream. *)
-     content_length: int64 option; (** [None] means Transfer-encoding: chunked *)
-     content_type: string option;
-     headers: Http_headers.t; (** The headers you want to add *)
-     charset: string option; (** Default: None *)
-     location: string option; (** Default: None *)
-    }
+       ; (** Default: empty stream.
+             The second field is (optionaly)
+             the function used to skip a part of the
+             stream, if you do not you want to use
+             a basic reading of the stream.
+             For example, for static files, you can optimize it by using
+             a [seek] function.
+         *)
+       (* It is not a new field of the record to remember to change it
+          if we change the stream. *)
+       content_length: int64 option; (** [None] means Transfer-encoding: chunked *)
+       content_type: string option;
+       headers: Http_headers.t; (** The headers you want to add *)
+       charset: string option; (** Default: None *)
+       location: string option; (** Default: None *)
+     }
 
   let cookies { cookies; _ } = cookies
   let lastmodified { lastmodified; _ } = lastmodified
@@ -115,59 +117,59 @@ module Result = struct
   (** Default [result] to use as a base for constructing others. *)
   let default () =
     {
-      cookies = Cookies.empty;
-      lastmodified = None;
-      (* No date => proxies use etag *)
-      etag = None;
-      code = 200;
-      stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None), 
-                None);
-      content_length = Some 0L;
-      content_type = None;
-      headers= Http_headers.empty;
-      charset= None;
-      location= None;
-    }
+     cookies = Cookies.empty;
+     lastmodified = None;
+     (* No date => proxies use etag *)
+     etag = None;
+     code = 200;
+     stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None),
+                   None);
+     content_length = Some 0L;
+     content_type = None;
+     headers= Http_headers.empty;
+     charset= None;
+     location= None;
+   }
 
   let update result
-      ?(cookies=result.cookies)
-      ?(lastmodified=result.lastmodified)
-      ?(etag=result.etag)
-      ?(code=result.code)
-      ?(stream=result.stream)
-      ?(content_length=result.content_length)
-      ?(content_type=result.content_type)
-      ?(headers=result.headers)
-      ?(charset=result.charset)
-      ?(location=result.location) () =
-    {
-      cookies;
-      lastmodified;
-      etag;
-      code;
-      stream;
-      content_length;
-      content_type;
-      headers;
-      charset;
-      location;
-    }
+    ?(cookies=result.cookies)
+    ?(lastmodified=result.lastmodified)
+    ?(etag=result.etag)
+    ?(code=result.code)
+    ?(stream=result.stream)
+    ?(content_length=result.content_length)
+    ?(content_type=result.content_type)
+    ?(headers=result.headers)
+    ?(charset=result.charset)
+    ?(location=result.location) () =
+      {
+        cookies;
+        lastmodified;
+        etag;
+        code;
+        stream;
+        content_length;
+        content_type;
+        headers;
+        charset;
+        location;
+      }
 
   (** [result] for an empty page. *)
   let empty () =
     {
-      cookies = Cookies.empty;
-      lastmodified = None;
-      etag = None;
-      code = 204; (* No content *)
-      stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None), 
-                None);
-      content_length = Some 0L;
-      content_type = None;
-      headers= Http_headers.empty;
-      charset= None;
-      location= None;
-    }
+     cookies = Cookies.empty;
+     lastmodified = None;
+     etag = None;
+     code = 204; (* No content *)
+     stream = (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None),
+                   None);
+     content_length = Some 0L;
+     content_type = None;
+     headers= Http_headers.empty;
+     charset= None;
+     location= None;
+   }
 end
 
 include Result
@@ -313,19 +315,16 @@ struct
     | 505 -> "Version Not Supported"
     | _   -> "Unknown Error" (*!!!*)
 
-  let display_http_exception e =
-    match e with
-    | Http_exception (n, Some s, Some _) ->
-      Ocsigen_messages.debug
-        (fun () -> Format.sprintf "%s: %s (with headers)" (expl_of_code n) s)
-    | Http_exception (n, Some s, None) ->
-      Ocsigen_messages.debug
-        (fun () -> Format.sprintf "%s: %s" (expl_of_code n) s)
-    | Http_exception (n, None, _) ->
-      Ocsigen_messages.debug
-        (fun () -> Format.sprintf "%s" (expl_of_code n))
-    | _ ->
-      raise e
+        let display_http_exception e =
+          match e with
+          | Http_exception (n, Some s, Some _) ->
+            Lwt_log.ign_info_f ~section "%s: %s (with headers)" (expl_of_code n) s
+          | Http_exception (n, Some s, None) ->
+            Lwt_log.ign_info_f ~section "%s: %s" (expl_of_code n) s
+          | Http_exception (n, None, _) ->
+            Lwt_log.ign_info ~section (expl_of_code n)
+          | _ ->
+              raise e
 
   let string_of_http_exception e =
     match e with

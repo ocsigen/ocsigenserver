@@ -19,7 +19,6 @@
 *)
 
 open Lwt
-open Ocsigen_messages
 open Ocsigen_lib
 open Ocsigen_extensions
 open Ocsigen_http_frame
@@ -48,11 +47,13 @@ let () = Ocsigen_commandline.cmdline
    an exception ... *)
 let _ = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
 
+let section = Lwt_log.Section.make "ocsigen:main"
+
 (* Initialize exception handler for Lwt timeouts: *)
 let _ =
   Lwt_timeout.set_exn_handler
-    (fun e -> Ocsigen_messages.errlog ("Uncaught Exception after lwt timeout: "^
-                                       Printexc.to_string e))
+    (fun e -> Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt \
+                                                 timeout")
 
 let make_ipv6_socket addr port =
   let socket = Lwt_unix.socket Unix.PF_INET6 Unix.SOCK_STREAM 0 in
@@ -117,14 +118,14 @@ type to_write =
 let counter = let c = ref (Random.int 1000000) in fun () -> c := !c + 1 ; !c
 
 let warn sockaddr s =
-  let ip = Unix.string_of_inet_addr (ip_of_sockaddr sockaddr) in
-  Ocsigen_messages.warning ("While talking to " ^ ip ^ ": " ^ s)
-
+  Lwt_log.ign_warning_f ~section "While talking to %a:%s"
+    (fun () sockaddr ->
+       Unix.string_of_inet_addr (ip_of_sockaddr sockaddr)) sockaddr s
 let dbg sockaddr s =
-  Ocsigen_messages.debug
-    (fun () ->
-       let ip = Unix.string_of_inet_addr (ip_of_sockaddr sockaddr) in
-       "While talking to " ^ ip ^ ": " ^ s)
+  Lwt_log.ign_info_f ~section "While talking to %a:%s"
+    (fun () sockaddr ->
+       Unix.string_of_inet_addr (ip_of_sockaddr sockaddr)) sockaddr s
+
 
 
 let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
@@ -190,7 +191,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
         let fd = Unix.openfile fname
             [Unix.O_CREAT; Unix.O_TRUNC; Unix.O_WRONLY; Unix.O_NONBLOCK] 0o666
         in
-        Ocsigen_messages.debug2 ("Upload file opened: " ^ fname);
+        Lwt_log.ign_info_f ~section "Upload file opened: %s" fname;
         filenames := fname::!filenames;
         A_File (p_name, fname, store, fd, content_type)
       | None -> raise Ocsigen_upload_forbidden
@@ -216,7 +217,6 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
         (params := !params @ [(p_name, Buffer.contents to_buf)])
     (* a la fin ? *)
     | A_File (p_name,fname,oname,wh, content_type) ->
-      (* Ocsigen_messages.debug "closing file"; *)
       files :=
         !files@[(p_name, {tmp_filename=fname;
                           filesize=size;
@@ -300,14 +300,14 @@ let get_request_infos
        *)
        (*  Here we don't trust the port information given by the request.
            We use the port we are listening on. *)
-       Ocsigen_messages.debug
-         (fun () ->
-            "- host="^(match headerhost with None -> "<none>" | Some h -> h));
+       Lwt_log.ign_info_f ~section "host=%s"
+         (match headerhost with None -> "<none>" | Some h -> h);
 
        (* Servers MUST report a 400 (Bad Request) error if an HTTP/1.1
           request does not include a Host request-header. *)
 
-       if clientproto = Ocsigen_http_frame.Http_header.HTTP11 && headerhost = None
+       if clientproto = Ocsigen_http_frame.Http_header.HTTP11
+       && headerhost = None
        then raise Ocsigen_Bad_Request;
 
        let useragent = get_user_agent http_frame in
@@ -394,7 +394,9 @@ let get_request_infos
          (Ocsigen_request_info.make
             ~url_string:url
             ~meth:meth
-            ~protocol:http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto
+            ~protocol:http_frame.Ocsigen_http_frame
+                      .frame_header.Ocsigen_http_frame.Http_header
+                      .proto
             ~ssl:(Lwt_ssl.is_ssl (Ocsigen_http_com.connection_fd receiver))
             ~full_path_string:path_string
             ~full_path:path
@@ -442,8 +444,7 @@ let get_request_infos
             ~connection_closed:(Ocsigen_http_com.closed receiver) ())
     )
     (fun e ->
-       Ocsigen_messages.debug (fun () -> "~~~ Exn during get_request_infos : "^
-                                         Printexc.to_string e);
+       Lwt_log.ign_info ~section ~exn:e "Exn during get_request_infos";
        Lwt.fail e)
 
 
@@ -525,20 +526,23 @@ let handle_result_frame ri res send =
     match handle_header if_match (Ocsigen_request_info.ifmatch ri) with
     | `Precondition_failed -> `Precondition_failed
     | `No_header | `Ignore_header ->
-      match handle_header if_unmodified_since (Ocsigen_request_info.ifunmodifiedsince ri) with
+      match handle_header if_unmodified_since
+              (Ocsigen_request_info.ifunmodifiedsince ri) with
       | `Precondition_failed -> `Precondition_failed
       | `No_header | `Ignore_header ->
-        match handle_header if_none_match (Ocsigen_request_info.ifnonematch ri) with
+        match handle_header if_none_match
+                (Ocsigen_request_info.ifnonematch ri) with
         | `Precondition_failed -> `Precondition_failed
         | `Ignore_header_and_ModifiedSince -> `Std
         | `Unmodified | `No_header as r1 ->
-          (match handle_header if_modified_since (Ocsigen_request_info.ifmodifiedsince ri) with
-           | `Unmodified | `No_header as r2 ->
-             if r1 = `No_header && r2 = `No_header then
-               `Std
-             else
-               `Unmodified
-           | `Ignore_header -> `Std)
+          (match handle_header if_modified_since
+                   (Ocsigen_request_info.ifmodifiedsince ri) with
+          | `Unmodified | `No_header as r2 ->
+            if r1 = `No_header && r2 = `No_header then
+              `Std
+            else
+              `Unmodified
+          | `Ignore_header -> `Std)
         | `Ignore_header ->
           (* We cannot return a 304, so there is no need to consult
              if_modified_since *)
@@ -546,7 +550,7 @@ let handle_result_frame ri res send =
   in
   match r with
   | `Unmodified ->
-    Ocsigen_messages.debug2 "-> Sending 304 Not modified ";
+    Lwt_log.ign_info ~section "Sending 304 Not modified";
     Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
     send (Result.update (Ocsigen_http_frame.Result.empty ())
             ~code:304  (* Not modified *)
@@ -554,8 +558,8 @@ let handle_result_frame ri res send =
             ~etag:(Result.etag res) ())
 
   | `Precondition_failed ->
-    Ocsigen_messages.debug2 "-> Sending 412 Precondition Failed \
-                             (conditional headers)";
+    Lwt_log.ign_info ~section
+      "Sending 412 Precondition Failed (conditional headers)";
     Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
     send (Result.update (Ocsigen_http_frame.Result.empty ())
             ~code:412 (* Precondition failed *) ())
@@ -563,7 +567,6 @@ let handle_result_frame ri res send =
   | `Std ->
     Ocsigen_range.compute_range ri res
     >>= send
-
 
 let service receiver sender_slot request meth url port sockaddr =
   (* sender_slot is here for pipelining:
@@ -576,8 +579,7 @@ let service receiver sender_slot request meth url port sockaddr =
 
   let handle_service_errors e =
     (* Exceptions during page generation *)
-    Ocsigen_messages.debug
-      (fun () -> "~~~ Exception during generation/sending: " ^ Printexc.to_string e);
+    Lwt_log.ign_info ~section ~exn:e "Exception during generation/sending";
     let send_error ?cookies code =
       Ocsigen_senders.send_error ~exn:e sender_slot ~clientproto ?cookies ~head
         ~code ~sender:Ocsigen_http_com.default_sender ()
@@ -585,39 +587,39 @@ let service receiver sender_slot request meth url port sockaddr =
     match e with
     (* EXCEPTIONS WHILE COMPUTING A PAGE *)
     | Ocsigen_http_error (cookies_to_set, i) ->
-      Ocsigen_messages.debug
-        (fun () -> "-> Sending HTTP error "^(string_of_int i)^" "^
-                   Ocsigen_http_frame.Http_error.expl_of_code i);
+      Lwt_log.ign_info_f ~section
+        "Sending HTTP error %d %s"
+        i
+        (Ocsigen_http_frame.Http_error.expl_of_code i);
       send_error ~cookies:cookies_to_set i
     | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
-      Ocsigen_messages.warning
+      Lwt_log.ign_warning ~section
         "Cannot read the request twice. You probably have \
          two incompatible options in <site> configuration, \
          or the order of the options in the config file is wrong.";
       send_error 500 (* Internal error *)
     | Unix.Unix_error (Unix.EACCES,_,_)
     | Ocsigen_upload_forbidden ->
-      Ocsigen_messages.debug2 "-> Sending 403 Forbidden";
+      Lwt_log.ign_info ~section "Sending 403 Forbidden";
       send_error 403
     | Http_error.Http_exception (code,_,_) ->
       Ocsigen_http_frame.Http_error.display_http_exception e;
       send_error code
     | Ocsigen_Bad_Request ->
-      Ocsigen_messages.debug2 "-> Sending 400";
+      Lwt_log.ign_info ~section "Sending 400";
       send_error 400
     | Ocsigen_unsupported_media ->
-      Ocsigen_messages.debug2 "-> Sending 415";
+      Lwt_log.ign_info ~section "Sending 415";
       send_error 415
     | Neturl.Malformed_URL ->
-      Ocsigen_messages.debug2 "-> Sending 400 (Malformed URL)";
+      Lwt_log.ign_info ~section "Sending 400 (Malformed URL)";
       send_error 400
     | Ocsigen_Request_too_long ->
-      Ocsigen_messages.debug2 "-> Sending 413 (Entity too large)";
+      Lwt_log.ign_info ~section "Sending 413 (Entity too large)";
       send_error 413
     | e ->
-      Ocsigen_messages.warning
-        ("Exn during page generation: " ^ Printexc.to_string e ^" (sending 500)");
-      Ocsigen_messages.debug2 "-> Sending 500";
+      Lwt_log.ign_warning_f ~section ~exn:e
+        "Exn during page generation (sending 500)";
       send_error 500
   in
   let finish_request () =
@@ -697,12 +699,15 @@ let service receiver sender_slot request meth url port sockaddr =
           (fun ri ->
              (* *** Now we generate the page and send it *)
              (* Log *)
-             accesslog
+             Ocsigen_messages.accesslog
                (try
-                  let x_forwarded_for = Http_headers.find Http_headers.x_forwarded_for
-                      (Ocsigen_request_info.http_frame ri).frame_header.Http_header.headers in
+                  let x_forwarded_for = Http_headers.find
+                      Http_headers.x_forwarded_for
+                      (Ocsigen_request_info.http_frame ri)
+                      .frame_header.Http_header.headers in
                   Format.sprintf
-                    "connection for %s from %s (%s) with X-Forwarded-For: %s: %s"
+                    "connection for %s from %s (%s) with X-Forwarded-For: \
+                     %s: %s"
                     (match Ocsigen_request_info.host ri with
                      | None   -> "<host not specified in the request>"
                      | Some h -> h)
@@ -740,12 +745,14 @@ let service receiver sender_slot request meth url port sockaddr =
                     (* User requested a directory. We redirect it to
                        the correct url (with a slash), so that relative
                        urls become correct *)
-                    Ocsigen_messages.debug2 "-> Sending 301 Moved permanently";
+                    Lwt_log.ign_info ~section "Sending 301 Moved permanently";
                     let port = Ocsigen_extensions.get_port request in
                     let new_url = Neturl.make_url
-                        ~scheme:(if (Ocsigen_request_info.ssl ri) then "https" else "http")
+                        ~scheme:(if (Ocsigen_request_info.ssl ri)
+                                 then "https" else "http")
                         ~host:(Ocsigen_extensions.get_hostname request)
-                        ?port:(if (port = 80 && not (Ocsigen_request_info.ssl ri))
+                        ?port:(if (port = 80
+                                   && not (Ocsigen_request_info.ssl ri))
                                || ((Ocsigen_request_info.ssl ri) && port = 443)
                                then None
                                else Some port)
@@ -770,14 +777,13 @@ let service receiver sender_slot request meth url port sockaddr =
       (fun () ->
          (* We remove all the files created by the request
             (files sent by the client) *)
-         if !filenames <> [] then Ocsigen_messages.debug2 "** Removing files";
+         if !filenames <> [] then Lwt_log.ign_info ~section "** Removing files";
          List.iter
            (fun a ->
               try Unix.unlink a
               with Unix.Unix_error _ as e ->
-                Ocsigen_messages.warning
-                  (Format.sprintf "Error while removing file %s: %s"
-                     a (Printexc.to_string e)))
+                Lwt_log.ign_warning_f ~section ~exn:e "Error while removing \
+                                                       file %s" a )
            !filenames;
          return ())
   end
@@ -815,7 +821,7 @@ let linger in_ch receiver =
           senders to terminate in order to avoid a deadlock *)
        let linger_thread = linger_aux () in
        Ocsigen_http_com.wait_all_senders receiver >>= fun () ->
-       Ocsigen_messages.debug2 "** SHUTDOWN";
+       Lwt_log.ign_info ~section "** SHUTDOWN";
        Lwt_ssl.ssl_shutdown in_ch >>= fun () ->
        Lwt_ssl.shutdown in_ch Unix.SHUTDOWN_SEND;
        linger_thread >>= fun () ->
@@ -860,7 +866,8 @@ let handle_connection port in_ch sockaddr =
       | Ocsigen_http_com.Aborted ->
         dbg sockaddr "writing thread aborted"
       | Ocsigen_stream.Interrupted e' ->
-        warn sockaddr ("interrupted content stream (" ^ Printexc.to_string e' ^ ")")
+        warn sockaddr ("interrupted content stream ("
+                       ^ Printexc.to_string e' ^ ")")
       | _ ->
         Ocsigen_messages.unexpected_exception e "Server.handle_write_errors"
     end;
@@ -912,7 +919,7 @@ let handle_connection port in_ch sockaddr =
   let rec handle_request ?receiver_pos () =
     try_bind'
       (fun () ->
-         Ocsigen_messages.debug2 "** Receiving HTTP message";
+         Lwt_log.ign_info ~section "** Receiving HTTP message";
          (if Ocsigen_config.get_respect_pipeline () then
             (* if we lock this mutex, requests from a same connection will be sent
                to extensions in the same order they are received on pipeline.
@@ -974,16 +981,15 @@ let rec wait_connection use_ssl port socket =
   let handle_exn e =
     Lwt_unix.yield () >>= fun () -> match e with
     | Socket_closed ->
-      Ocsigen_messages.debug2 "Socket closed";
+      Lwt_log.ign_info ~section "Socket closed";
       Lwt.return ()
     | Unix.Unix_error ((Unix.EMFILE | Unix.ENFILE), _, _) ->
       (* this should not happen, report it *)
-      Ocsigen_messages.errlog
+      Lwt_log.ign_error ~section
         "Max number of file descriptors reached unexpectedly, please check...";
       wait_connection use_ssl port socket
     | e ->
-      Ocsigen_messages.debug
-        (fun () -> Format.sprintf "Accept failed: %s" (Printexc.to_string e));
+      Lwt_log.ign_info_f ~section ~exn:e "Accept failed";
       wait_connection use_ssl port socket
   in
   try_bind'
@@ -994,10 +1000,9 @@ let rec wait_connection use_ssl port socket =
        (if get_number_of_connected () < max
         then Lwt.return ()
         else begin
-          ignore
-            (Ocsigen_messages.warning
-               (Format.sprintf "Max simultaneous connections (%d) reached."
-                  (get_max_number_of_connections ())));
+          Lwt_log.ign_warning_f ~section
+            "Max simultaneous connections (%d) reached."
+            (get_max_number_of_connections ());
           wait_fewer_connected max
         end) >>= fun () ->
        (* We do several accept(), as explained in
@@ -1006,14 +1011,13 @@ let rec wait_connection use_ssl port socket =
     handle_exn
     (fun (l, e) ->
        let number_of_accepts = List.length l in
-       Ocsigen_messages.debug
-         (fun () -> "received "^string_of_int number_of_accepts^" accepts"  );
+       Lwt_log.ign_info_f ~section "received %d accepts" number_of_accepts;
        incr_connected number_of_accepts;
        if e = None then ignore (wait_connection use_ssl port socket);
 
        let handle_one (s, sockaddr) =
-         Ocsigen_messages.debug2
-           "\n__________________NEW CONNECTION__________________________";
+         Lwt_log.ign_info ~section
+           "** New CONNECTION";
          Lwt.catch
            (fun () ->
               Lwt_unix.set_close_on_exec s;
@@ -1029,7 +1033,7 @@ let rec wait_connection use_ssl port socket =
                 "Server.wait_connection (handle connection)";
               return ())
          >>= fun () ->
-         Ocsigen_messages.debug2 "** CLOSE";
+         Lwt_log.ign_info ~section "** CLOSE";
          catch
            (fun () -> Lwt_unix.close s)
            (function Unix.Unix_error _ as e ->
@@ -1045,10 +1049,8 @@ let rec wait_connection use_ssl port socket =
        | Some e -> handle_exn e
        | None -> Lwt.return ())
 
-
-
-let stop m n =
-  errlog m; exit n
+let stop n fmt =
+  Printf.ksprintf (fun s -> Lwt_log.ign_error ~section s; exit n) fmt
 
 (** Thread waiting for events on a the listening port *)
 let listen use_ssl (addr, port) wait_end_init =
@@ -1059,13 +1061,11 @@ let listen use_ssl (addr, port) wait_end_init =
       sockets
     with
     | Unix.Unix_error (Unix.EACCES, _, _) ->
-      stop
-        (Format.sprintf "Fatal - You are not allowed to use port %d." port)
-        7
+      stop 7 "Fatal - You are not allowed to use port %d." port
     | Unix.Unix_error (Unix.EADDRINUSE, _, _) ->
-      stop (Format.sprintf "Fatal - The port %d is already in use." port) 8
+      stop 8 "Fatal - The port %d is already in use." port
     | exn ->
-      stop ("Fatal - Uncaught exception: " ^ Printexc.to_string exn) 100
+      stop 100 "Fatal - Uncaught exception: %s" (Printexc.to_string exn)
   in
   List.iter (fun x ->
       ignore (wait_end_init >>= fun () ->
@@ -1117,21 +1117,21 @@ let reload_conf s =
     Ocsigen_extensions.end_initialisation ();
   with e ->
     Ocsigen_extensions.end_initialisation ();
-    errlog (fst (errmsg e))
+    Lwt_log.ign_error ~section (fst (errmsg e))
 
 (* reloading the config file *)
 let reload ?file () =
 
   (* That function cannot be interrupted??? *)
-  Ocsigen_messages.warning "Reloading config file" ;
+  Lwt_log.ign_warning ~section "Reloading config file" ;
 
   (try
      match parse_config ?file () with
      | [] -> ()
      | s::_ -> reload_conf s
-   with e -> errlog (fst (errmsg e)));
+   with e -> Lwt_log.ign_error ~section (fst (errmsg e)));
 
-  Ocsigen_messages.warning "Config file reloaded"
+  Lwt_log.ign_warning ~section "Config file reloaded"
 
 
 let shutdown_server s l =
@@ -1143,7 +1143,7 @@ let shutdown_server s l =
         Some (float_of_string t)
       | _ -> failwith "syntax error in command"
     in
-    Ocsigen_messages.warning "Shutting down";
+    Lwt_log.ign_warning ~section "Shutting down";
     List.iter
       (fun s -> Lwt_unix.abort s Socket_closed) !sockets;
     List.iter
@@ -1164,29 +1164,27 @@ let shutdown_server s l =
             Ocsigen_http_com.abort receiver;
             Lwt.return ()));
   with Failure e ->
-    Ocsigen_messages.warning ("Wrong command: " ^ s ^ " (" ^ e ^ ")")
+    Lwt_log.ign_warning_f ~section "Wrong command: %s (%s)" s e
 
 
 let _ =
   let f s = function
     | ["reopen_logs"] ->
       Ocsigen_messages.open_files () >>= fun () ->
-      Ocsigen_messages.warning "Log files reopened";
+      Lwt_log.ign_warning ~section "Log files reopened";
       Lwt.return ()
     | ["reload"] -> reload (); Lwt.return ()
     | ["reload"; file] -> reload ~file (); Lwt.return ()
     | "shutdown"::l -> shutdown_server s l; Lwt.return ()
     | ["gc"] ->
       Gc.compact ();
-      Ocsigen_messages.warning "Heap compaction requested by user";
+      Lwt_log.ign_warning ~section "Heap compaction requested by user";
       Lwt.return ()
     | ["clearcache"] -> Ocsigen_cache.clear_all_caches ();
       Lwt.return ()
     | _ -> Lwt.fail Ocsigen_extensions.Unknown_command
   in
   Ocsigen_extensions.register_command_function f
-
-
 
 let start_server () = try
 
@@ -1199,12 +1197,13 @@ let start_server () = try
     let number_of_servers = List.length config_servers in
 
     if number_of_servers > 1
-    then ignore (Ocsigen_messages.warning "Multiple servers not supported anymore");
+    then Lwt_log.ign_warning ~section "Multiple servers not supported anymore";
 
     let ask_for_passwd sslports _ =
       print_string "Please enter the password for the HTTPS server listening \
                     on port(s) ";
-      print_string (String.concat ", " (List.map (fun (_,p) -> string_of_int p) sslports));
+      print_string (String.concat ", " (List.map (fun (_,p) -> string_of_int p)
+                                          sslports));
       print_string ": ";
       let old_term= Unix.tcgetattr Unix.stdin in
       let old_echo = old_term.Unix.c_echo in
@@ -1224,155 +1223,165 @@ let start_server () = try
 
     let run (user, group) (_, ports, sslports) (minthreads, maxthreads) s =
 
-      Lwt_unix.run (Ocsigen_messages.open_files ~user ~group ());
+      Ocsigen_messages.open_files ~user ~group () >>= fun () ->
 
-      Lwt_unix.run
-        (let wait_end_init, wait_end_init_awakener = wait () in
-         (* Listening on all ports: *)
-         sockets := List.fold_left (fun a i -> (listen false i wait_end_init)@a) [] ports;
-         sslsockets := List.fold_left (fun a i -> (listen true i wait_end_init)@a) [] sslports;
+      let wait_end_init, wait_end_init_awakener = wait () in
+      (* Listening on all ports: *)
+      sockets := List.fold_left
+          (fun a i -> (listen false i wait_end_init) @ a) [] ports;
+      sslsockets := List.fold_left
+          (fun a i -> (listen true i wait_end_init) @ a) [] sslports;
 
-         begin match ports with
-           | (_, p)::_ -> Ocsigen_config.set_default_port p
-           | _ -> ()
-         end;
-         begin match sslports with
-           | (_, p)::_ -> Ocsigen_config.set_default_sslport p
-           | _ -> ()
-         end;
+      begin match ports with
+        | (_, p)::_ -> Ocsigen_config.set_default_port p
+        | _ -> ()
+      end;
+      begin match sslports with
+        | (_, p)::_ -> Ocsigen_config.set_default_sslport p
+        | _ -> ()
+      end;
 
-         let current_uid = Unix.getuid () in
+      let current_uid = Unix.getuid () in
 
-         let gid = match group with
-           | None -> Unix.getgid ()
-           | Some group -> (try
-                              (Unix.getgrnam group).Unix.gr_gid
-                            with Not_found as e -> errlog ("Error: Wrong group"); raise e)
-         in
+      let gid = match group with
+        | None -> Unix.getgid ()
+        | Some group -> (try
+                           (Unix.getgrnam group).Unix.gr_gid
+                         with Not_found as e ->
+                           Lwt_log.ign_error ~section "Error: Wrong group";
+                           raise e)
+      in
 
-         let uid = match user with
-           | None -> current_uid
-           | Some user -> (try
-                             (Unix.getpwnam user).Unix.pw_uid
-                           with Not_found as e -> (errlog ("Error: Wrong user"); raise e))
-         in
+      let uid = match user with
+        | None -> current_uid
+        | Some user -> (try
+                          (Unix.getpwnam user).Unix.pw_uid
+                        with Not_found as e ->
+                          Lwt_log.ign_error ~section "Error: Wrong user";
+                          raise e)
+      in
 
-         (* A pipe to communicate with the server *)
-         let commandpipe = get_command_pipe () in
+      (* A pipe to communicate with the server *)
+      let commandpipe = get_command_pipe () in
+      (try
+         ignore (Unix.stat commandpipe);
+       with Unix.Unix_error _ ->
          (try
-            ignore (Unix.stat commandpipe);
-          with Unix.Unix_error _ ->
-            (try
-               let umask = Unix.umask 0 in
-               Unix.mkfifo commandpipe 0o660;
-               Unix.chown commandpipe uid gid;
-               ignore (Unix.umask umask);
-               ignore (Ocsigen_messages.warning "Command pipe created");
-             with e ->
-               Ocsigen_messages.errlog
-                 ("Cannot create the command pipe: "^(Printexc.to_string e))));
+            let umask = Unix.umask 0 in
+            Unix.mkfifo commandpipe 0o660;
+            Unix.chown commandpipe uid gid;
+            ignore (Unix.umask umask);
+            Lwt_log.ign_warning ~section "Command pipe created";
+          with e ->
+            Lwt_log.ign_error ~section ~exn:e
+              "Cannot create the command pipe"));
 
-         (* I change the user for the process *)
-         begin try
-             if current_uid = 0 then begin
-               match user with
-               | None -> ()
-               | Some user -> Unix.initgroups user gid
-             end;
-             Unix.setgid gid;
-             Unix.setuid uid;
-           with (Unix.Unix_error _ | Failure _) as e ->
-             Ocsigen_messages.errlog ("Error: Wrong user or group"); raise e
-         end;
+      (* I change the user for the process *)
+      begin try
+          if current_uid = 0 then begin
+            match user with
+            | None -> ()
+            | Some user -> Unix.initgroups user gid
+          end;
+          Unix.setgid gid;
+          Unix.setuid uid;
+        with (Unix.Unix_error _ | Failure _) as e ->
+          Lwt_log.ign_error ~section "Error: Wrong user or group";
+          raise e
+      end;
 
-         Ocsigen_config.set_user user;
-         Ocsigen_config.set_group group;
+      Ocsigen_config.set_user user;
+      Ocsigen_config.set_group group;
 
-         (* Je suis fou :
-            let rec f () =
-              print_endline "-";
-              Lwt_unix.yield () >>= f
-              in f (); *)
-
-         if maxthreads < minthreads
-         then
-           raise
-             (Config_file_error "maxthreads should be greater than minthreads");
-
-         ignore (Ocsigen_config.init_preempt minthreads maxthreads Ocsigen_messages.errlog);
-
-         (* Now I can load the modules *)
-         Dynlink_wrapper.init ();
-         Dynlink_wrapper.allow_unsafe_modules true;
-
-         Ocsigen_extensions.start_initialisation ();
-
-         parse_server false s;
-
-         Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
-         (* As libraries are reloaded each time the config file is read,
-            we do not allow to register extensions in libraries *)
-         (* seems it does not work :-/ *)
-
-
-         (* Closing stderr, stdout stdin if silent *)
-         if (Ocsigen_config.get_silent ())
-         then begin
-           (* redirect stdout and stderr to /dev/null *)
-           let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
-           Unix.dup2 devnull Unix.stdout;
-           Unix.dup2 devnull Unix.stderr;
-           Unix.close devnull;
-           Unix.close Unix.stdin;
-         end;
-
-         (* detach from the terminal *)
-         if (Ocsigen_config.get_daemon ())
-         then ignore (Unix.setsid ());
-
-         Ocsigen_extensions.end_initialisation ();
-
-         let pipe = Lwt_chan.in_channel_of_descr
-             (Lwt_unix.of_unix_file_descr
-                (Unix.openfile commandpipe
-                   [Unix.O_RDWR; Unix.O_NONBLOCK; Unix.O_APPEND] 0o660)) in
-
+      (* Je suis fou :
          let rec f () =
-           Lwt_chan.input_line pipe >>= fun s ->
-           Ocsigen_messages.warning ("Command received: "^s);
-           (Lwt.catch
-              (fun () ->
-                 let prefix, c =
-                   match String.split ~multisep:true ' ' s with
-                   | [] -> raise Ocsigen_extensions.Unknown_command
-                   | a::l ->
-                     try
-                       let aa, ab = String.sep ':' a in
-                       (Some aa, (ab::l))
-                     with Not_found -> None, (a::l)
-                 in
-                 Ocsigen_extensions.get_command_function () ?prefix s c)
-              (function
-                | Unknown_command -> Ocsigen_messages.warning "Unknown command";
-                  Lwt.return ()
-                | e ->
-                  Ocsigen_messages.errlog ("Uncaught Exception after command: "^
-                                           Printexc.to_string e);
-                  Lwt.fail e))
-           >>= f
-         in ignore (f ());
+           print_endline "-";
+           Lwt_unix.yield () >>= f
+           in f (); *)
 
-         Lwt.async_exception_hook := (fun e ->
-             (* replace the default "exit 2" behaviour *)
-             Ocsigen_messages.errlog ("Uncaught Exception: "^ Printexc.to_string e)
-           );
+      if maxthreads < minthreads
+      then
+        raise
+          (Config_file_error "maxthreads should be greater than minthreads");
 
-         Lwt.wakeup wait_end_init_awakener ();
+      ignore (Ocsigen_config.init_preempt
+                minthreads
+                maxthreads
+                (fun s -> Lwt_log.ign_error ~section s));
 
-         Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
+      (* Now I can load the modules *)
+      Dynlink_wrapper.init ();
+      Dynlink_wrapper.allow_unsafe_modules true;
 
-         fst (Lwt.wait ())
-        )
+      Ocsigen_extensions.start_initialisation ();
+
+      parse_server false s;
+
+      Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
+      (* As libraries are reloaded each time the config file is read,
+         we do not allow to register extensions in libraries *)
+      (* seems it does not work :-/ *)
+      (* Closing stderr, stdout stdin if silent *)
+
+      if (Ocsigen_config.get_silent ())
+      then begin
+        (* redirect stdout and stderr to /dev/null *)
+        let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
+        Unix.dup2 devnull Unix.stdout;
+        Unix.dup2 devnull Unix.stderr;
+        Unix.close devnull;
+        Unix.close Unix.stdin;
+      end;
+
+      (* detach from the terminal *)
+      if (Ocsigen_config.get_daemon ())
+      then ignore (Unix.setsid ());
+
+      Ocsigen_extensions.end_initialisation ();
+
+      let pipe = Lwt_chan.in_channel_of_descr
+          (Lwt_unix.of_unix_file_descr
+             (Unix.openfile commandpipe
+                [Unix.O_RDWR; Unix.O_NONBLOCK; Unix.O_APPEND] 0o660)) in
+
+      let rec f () =
+        Lwt_chan.input_line pipe >>= fun s ->
+        Lwt_log.ign_warning_f ~section "Command received: %s" s;
+        (Lwt.catch
+           (fun () ->
+              let prefix, c =
+                match String.split ~multisep:true ' ' s with
+                | [] -> raise Ocsigen_extensions.Unknown_command
+                | a::l ->
+                  try
+                    let aa, ab = String.sep ':' a in
+                    (Some aa, (ab::l))
+                  with Not_found -> None, (a::l)
+              in
+              Ocsigen_extensions.get_command_function () ?prefix s c)
+           (function
+             | Unknown_command ->
+               Lwt_log.ign_warning ~section "Unknown command";
+               Lwt.return ()
+             | e ->
+               Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after \
+                                                  command";
+               Lwt.fail e))
+        >>= f
+      in ignore (f ());
+
+      Lwt.async_exception_hook := (fun e ->
+        (* replace the default "exit 2" behaviour *)
+        Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
+      );
+
+      Lwt.wakeup wait_end_init_awakener ();
+
+      Lwt_log.ign_warning ~section "Ocsigen has been launched \
+                                    (initialisations ok)";
+
+      fst (Lwt.wait ())
+
     in
 
     let set_passwd_if_needed (ssl, ports, sslports) =
@@ -1413,16 +1422,16 @@ let start_server () = try
         then
           let pid = Lwt_unix.fork () in
           if pid = 0
-          then run user_info sslinfo threadinfo h
+          then
+            Lwt_main.run (run user_info sslinfo threadinfo h)
           else begin
-            ignore
-              (Ocsigen_messages.console
-                 (fun () -> "Process "^(string_of_int pid)^" detached"));
-            write_pid pid;
+            Ocsigen_messages.console
+              (fun () -> "Process "^(string_of_int pid)^" detached");
+            write_pid pid
           end
         else begin
           write_pid (Unix.getpid ());
-          run user_info sslinfo threadinfo h
+          Lwt_main.run (run user_info sslinfo threadinfo h)
         end
       | _ -> () (* Multiple servers not supported any more *)
 
@@ -1431,4 +1440,4 @@ let start_server () = try
 
   with e ->
     let msg, errno = errmsg e in
-    stop msg errno
+    stop errno "%s" msg

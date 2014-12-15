@@ -30,6 +30,7 @@
 
 open Ocsigen_lib
 
+let section = Lwt_log.Section.make "ocsigen:ext:comet"
 (*** PREAMBLE ***)
 
 (* small addition to the standard library *)
@@ -40,10 +41,7 @@ let map_rev_accu_split func lst accu1 accu2 =
       | Left y -> aux (y :: accu1) accu2 xs
       | Right y -> aux accu1 (y :: accu2) xs
   in
-  aux accu1 accu2 lst
-
-let section = Lwt_log.Section.make "Comet"
-let () = Ocsigen_messages.register_section section
+    aux accu1 accu2 lst
 
 (*** EXTENSION OPTIONS ***)
 
@@ -158,8 +156,7 @@ end = struct
   let do_create name =
     if maxed_out_virtual_channels ()
     then begin
-      Ocsigen_messages.warning
-        ~section
+      Lwt_log.ign_warning ~section
         "Too many virtual channels, associated exception raised";
       raise Too_many_virtual_channels
     end else
@@ -351,13 +348,13 @@ end = struct
         if !activated then
           ()
         else begin
-          Ocsigen_messages.warning ~section "Comet is being activated";
+          Lwt_log.ign_warning ~section "Comet is being activated";
           activated := true
         end
      ),
      (fun () ->
         if !activated then begin
-          Ocsigen_messages.warning ~section "Comet is being deactivated";
+          Lwt_log.ign_warning ~section "Comet is being deactivated";
           activated := false;
           kill_all_connections ()
         end else
@@ -367,7 +364,7 @@ end = struct
 
   let warn_kill =
     React.E.map
-      (fun () -> Ocsigen_messages.warning "Comet connections kill notice is being sent.")
+     (fun () -> Lwt_log.ign_warning "Comet connections kill notice is being sent.")
       kill
   let `R _ = React.E.retain kill (fun () -> ignore warn_kill)
 
@@ -421,22 +418,22 @@ end = struct
    * terminates when one of the channel is written upon. *)
   let treat_decoded = function
     | [], [] -> (* error : empty request *)
-      Ocsigen_messages.debug (fun () -> "Incorrect or empty Comet request");
-      Lwt.return
-        (Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.default ())
-           ~stream:
-             (Ocsigen_stream.of_string "Empty or incorrect registration", None)
-           ~code:400(* BAD REQUEST *)
-           ~content_type:(Some "text/plain")
-           ~content_length:None ())
+      Lwt_log.ign_info ~section "Incorrect or empty Comet request";
+        Lwt.return
+          (Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.default ())
+               ~stream:
+                 (Ocsigen_stream.of_string "Empty or incorrect registration", None)
+               ~code:400(* BAD REQUEST *)
+               ~content_type:(Some "text/plain")
+               ~content_length:None ())
     | [], (_::_ as ended) -> (* All channels are closed *)
-      let end_notice = Messages.encode_ended ended in
-      Ocsigen_messages.debug (fun () -> "Comet request served");
-      Lwt.return
-        (Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.default ())
-           ~stream:(Ocsigen_stream.of_string end_notice, None)
-           ~content_length:None
-           ~content_type:(Some "text/plain") ())
+        let end_notice = Messages.encode_ended ended in
+        Lwt_log.ign_info ~section "Comet request served";
+        Lwt.return
+          (Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.default ())
+               ~stream:(Ocsigen_stream.of_string end_notice, None)
+               ~content_length:None
+               ~content_type:(Some "text/plain") ())
     | (_::_ as active), ended -> (* generic case *)
       let choosed =
         let readings =
@@ -448,6 +445,7 @@ end = struct
         (*wait for one thread to terminate and get all terminated threads  *)
         Lwt.choose readings >>= fun _ -> Lwt.nchoose readings
       in
+
       List.iter (fun c -> Channels.send_listeners c 1) active ;
       Lwt.catch
         (fun () ->
@@ -458,7 +456,7 @@ end = struct
              ] >|= fun x ->
            List.iter (fun c -> Channels.send_listeners c (-1)) active ;
            let s = Messages.encode_downgoing ended x in
-           Ocsigen_messages.debug (fun () -> "Comet request served");
+           Lwt_log.ign_info ~section "Comet request served";
 
            (Ocsigen_http_frame.Result.update (Ocsigen_http_frame.Result.default ())
               ~stream:(s, None)
@@ -468,7 +466,7 @@ end = struct
         (function
           | Kill -> (* Comet stopped for security *)
             List.iter (fun c -> Channels.send_listeners c (-1)) active ;
-            Ocsigen_messages.debug (fun () -> "Killed Comet request handling");
+            Lwt_log.ign_info ~section "Killed Comet request handling";
             frame_503 ()
           | e -> Lwt.fail e
         )
@@ -478,10 +476,10 @@ end = struct
   let main r () =
     if Security.activated ()
     then
-      (Ocsigen_messages.debug (fun () -> "Serving Comet request");
+      (Lwt_log.ign_info ~section "Serving Comet request";
        Messages.decode_upcomming r >>= treat_decoded)
     else
-      (Ocsigen_messages.debug (fun () -> "Refusing Comet request (Comet deactivated)");
+      (Lwt_log.ign_info ~section "Refusing Comet request (Comet deactivated)";
        frame_503 ())
 
 end
@@ -505,17 +503,20 @@ let main = function
   | Ocsigen_extensions.Req_not_found (_, rq) -> (* Else check for content type *)
     begin match (Ocsigen_request_info.content_type
                    rq.Ocsigen_extensions.request_info) with
-    | Some (hd, tl) when has_comet_content_type (hd :: tl) ->
-      Ocsigen_messages.debug (fun () -> "Comet message: " ^ debug_content_type (hd :: tl));
-      Lwt.return (Ocsigen_extensions.Ext_found (Main.main rq))
+        | Some (hd, tl) when has_comet_content_type (hd :: tl) ->
+          Lwt_log.ign_info_f ~section
+            "Comet message: %a" (fun () -> debug_content_type) (hd :: tl);
+          Lwt.return (Ocsigen_extensions.Ext_found (Main.main rq))
 
-    | Some (hd, tl) ->
-      Ocsigen_messages.debug (fun () -> "Non comet message: " ^ debug_content_type (hd :: tl));
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
-    | None ->
-      Ocsigen_messages.debug (fun () -> "Non comet message: no content type");
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
-    end
+        | Some (hd, tl) ->
+          Lwt_log.ign_info_f ~section
+            "Non comet message: %a" (fun () -> debug_content_type) (hd :: tl);
+          Lwt.return Ocsigen_extensions.Ext_do_nothing
+        | None ->
+          Lwt_log.ign_info ~section
+            "Non comet message: no content type";
+          Lwt.return Ocsigen_extensions.Ext_do_nothing
+      end
 
   | Ocsigen_extensions.Req_found _ -> (* If recognized by some other extension... *)
     Lwt.return Ocsigen_extensions.Ext_do_nothing (* ...do nothing *)

@@ -23,6 +23,7 @@ open Ocsigen_lib
 exception Dynlink_error of string * exn
 exception Findlib_error of string * exn
 
+let section = Lwt_log.Section.make "ocsigen:dynlink"
 
 (************************************************************************)
 
@@ -65,7 +66,7 @@ let loadfile pre post force file =
   try
     if force then begin
       pre ();
-      Ocsigen_messages.debug (fun () -> "Loading "^file^" (will be reloaded every times)");
+      Lwt_log.ign_info_f ~section "Loading %s (will be reloaded every times)" file;
       begin try
           Dynlink_wrapper.loadfile file; post ()
         with e ->
@@ -74,7 +75,7 @@ let loadfile pre post force file =
     end
     else if not (isloaded file) then begin
       pre ();
-      Ocsigen_messages.debug (fun () -> "Loading extension "^file);
+      Lwt_log.ign_info_f ~section "Loading extension %s" file;
       begin try
           Dynlink_wrapper.loadfile file; post ()
         with e ->
@@ -83,7 +84,7 @@ let loadfile pre post force file =
       addloaded file;
     end
     else
-      Ocsigen_messages.debug (fun () -> "Extension "^file^" already loaded")
+      Lwt_log.ign_info_f ~section "Extension %s already loaded" file
   with
   | e -> raise (Dynlink_error (file, e))
 
@@ -113,7 +114,7 @@ let init_module pre post force name =
   in try
     if force then begin
       pre ();
-      Ocsigen_messages.debug (fun () -> "Initializing "^name^" (will be initialized every time)");
+      Lwt_log.ign_info_f ~section "Initializing %s (will be initialized every time)" name;
       begin try
           f (); post ()
         with e ->
@@ -122,7 +123,7 @@ let init_module pre post force name =
     end
     else if not (isloaded name) then begin
       pre ();
-      Ocsigen_messages.debug (fun () -> "Initializing module "^name);
+      Lwt_log.ign_info_f ~section "Initializing module %s " name;
       begin try
           f (); post ()
         with e ->
@@ -131,7 +132,7 @@ let init_module pre post force name =
       addloaded name;
     end
     else
-      Ocsigen_messages.debug (fun () -> "Module "^name^" already initialized.")
+      Lwt_log.ign_info_f ~section "Module %s already initialized." name
   with
   | e -> raise (Dynlink_error (name, e))
 
@@ -168,10 +169,9 @@ let findfiles =
       let preds = [(if Ocsigen_config.is_native then "native" else "byte"); "plugin"; "mt"] in
       let deps = Findlib.package_deep_ancestors preds [package] in
       let deps = List.filter
-          (fun a -> not (String.Set.mem a Ocsigen_config.builtin_packages)) deps in
-      Ocsigen_messages.debug
-        (fun () ->
-           Printf.sprintf "-- Dependencies of %s: %s" package (String.concat ", " deps));
+        (fun a -> not (String.Set.mem a Ocsigen_config.builtin_packages)) deps in
+      Lwt_log.ign_info_f ~section
+        "Dependencies of %s: %s" package (String.concat ", " deps);
       let rec aux = function
         | [] -> []
         | a::q ->
@@ -188,9 +188,7 @@ let findfiles =
           (List.map (Findlib.resolve_path ~base) mods) @ (aux q)
       in
       let res = aux deps in
-      Ocsigen_messages.debug
-        (fun () ->
-           Printf.sprintf "-- Needed: %s" (String.concat ", " res));
+      Lwt_log.ign_info_f ~section "Needed: %s" (String.concat ", " res);
       res
     with
     | e -> raise (Findlib_error (package, e))

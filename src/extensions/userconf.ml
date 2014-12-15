@@ -30,6 +30,7 @@ open Ocsigen_extensions
 
 exception NoConfFile
 
+let section = Lwt_log.Section.make "ocsigen:ext:userconf"
 (*****************************************************************************)
 
 let err_500 =
@@ -39,15 +40,15 @@ let err_500 =
 (* Catch invalid userconf files and report an error *)
 let handle_parsing_error req = function
   | Ocsigen_extensions.Error_in_config_file s ->
-    Ocsigen_messages.errlog (Printf.sprintf
-                               "Syntax error in userconf configuration file for url %s: %s"
-                               (Ocsigen_request_info.url_string req.request_info) s);
+    Lwt_log.ign_error_f ~section
+      "Syntax error in userconf configuration file for url %s: %s"
+      (Ocsigen_request_info.url_string req.request_info) s;
     Lwt.return err_500
 
   | Ocsigen_extensions.Error_in_user_config_file s ->
-    Ocsigen_messages.errlog  (Printf.sprintf
-                                "Unauthorized option in user configuration for url %s: %s"
-                                (Ocsigen_request_info.url_string req.request_info) s);
+    Lwt_log.ign_error_f ~section
+      "Unauthorized option in user configuration for url %s: %s"
+      (Ocsigen_request_info.url_string req.request_info) s;
     Lwt.return err_500
 
   | e -> Lwt.fail e
@@ -110,38 +111,38 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
     Lwt.return Ext_do_nothing
 
   | Req_not_found (previous_err, req) as req_state->
-    let path = (Ocsigen_request_info.sub_path_string req.request_info) in
-    match Netstring_pcre.string_match regexp path 0 with
-    | None -> Lwt.return (Ext_next previous_err)
-    | Some _ ->
-      try
-        Ocsigen_messages.debug2 "--Userconf: Using user configuration";
-        let conf0 = Ocsigen_extensions.replace_user_dir regexp conf path in
-        let url = Netstring_pcre.global_replace regexp url path
-        and prefix = Netstring_pcre.global_replace regexp prefix path
-        and userconf_options = {
-          Ocsigen_extensions.localfiles_root =
-            Ocsigen_extensions.replace_user_dir regexp localpath path }
-        and conf = conf_to_xml conf0
-        in
-        let user_parse_host = Ocsigen_extensions.parse_user_site_item
-            userconf_options hostpattern req.request_config in
-        (* Inside userconf, we create a new virtual site starting
-           after [prefix], and use a request modified accordingly*)
-        let user_parse_site = Ocsigen_extensions.make_parse_config
-            (sitepath@[prefix]) user_parse_host
-        and path =
-          Url.remove_slash_at_beginning
-            (Url.remove_dotdot (Neturl.split_path url))
-        in
-        let new_req =
-          { req with request_info =
-                       (Ocsigen_request_info.update req.request_info
-                          ~sub_path:path
-                          ~sub_path_string:url ())}
-        in
-        Lwt.return
-          (subresult new_req user_parse_site conf previous_err req req_state)
+      let path = (Ocsigen_request_info.sub_path_string req.request_info) in
+      match Netstring_pcre.string_match regexp path 0 with
+      | None -> Lwt.return (Ext_next previous_err)
+      | Some _ ->
+          try
+            Lwt_log.ign_info ~section "Using user configuration";
+            let conf0 = Ocsigen_extensions.replace_user_dir regexp conf path in
+            let url = Netstring_pcre.global_replace regexp url path
+            and prefix = Netstring_pcre.global_replace regexp prefix path
+            and userconf_options = {
+              Ocsigen_extensions.localfiles_root =
+                Ocsigen_extensions.replace_user_dir regexp localpath path }
+            and conf = conf_to_xml conf0
+            in
+            let user_parse_host = Ocsigen_extensions.parse_user_site_item
+              userconf_options hostpattern req.request_config in
+            (* Inside userconf, we create a new virtual site starting
+               after [prefix], and use a request modified accordingly*)
+            let user_parse_site = Ocsigen_extensions.make_parse_config
+              (sitepath@[prefix]) user_parse_host
+            and path =
+              Url.remove_slash_at_beginning
+                (Url.remove_dotdot (Neturl.split_path url))
+            in
+            let new_req =
+              { req with request_info =
+                  (Ocsigen_request_info.update req.request_info
+                   ~sub_path:path
+                   ~sub_path_string:url ())}
+            in
+            Lwt.return
+             (subresult new_req user_parse_site conf previous_err req req_state)
 
       with
       | Ocsigen_extensions.NoSuchUser

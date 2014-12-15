@@ -23,7 +23,7 @@ open Lwt
 open Ocsigen_extensions
 open Ocsigen_http_frame
 
-
+let section = Lwt_log.Section.make "ocsigen:ext:access-control"
 
 (*****************************************************************************)
 (* Management of basic authentication methods *)
@@ -74,7 +74,7 @@ let gen ~realm ~auth rs =
           (sprintf "Basic realm=\"%s\"" realm)
           Http_headers.empty
       in
-      Ocsigen_messages.debug2 "--Access control (auth): invalid credentials!";
+      Lwt_log.ign_info ~section "AUTH: invalid credentials!";
       fail (Http_error.Http_exception (401, None, Some h))
     in
     begin try
@@ -101,17 +101,15 @@ let gen ~realm ~auth rs =
         auth login password >>=
         (fun r ->
            if r then begin
-             Ocsigen_messages.debug2 "--Access control (auth): valid credentials!";
+             Lwt_log.ign_info ~section "AUTH: invalid credentials!";
              Lwt.return (Ocsigen_extensions.Ext_next err)
            end
            else reject ())
       with
       | Not_found -> reject ()
-      | e ->
-        Ocsigen_messages.debug
-          (fun () -> sprintf
-              "--Access control (auth): Invalid Authorization header (%s)"
-              (Printexc.to_string e));
+      | exn ->
+        Lwt_log.ign_info ~exn ~section
+          "AUTH: Invalid Authorization header";
         fail (Ocsigen_http_error (Ocsigen_cookies.Cookies.empty, 400))
     end
   | Ocsigen_extensions.Req_found (ri, r) ->

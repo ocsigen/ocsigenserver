@@ -25,7 +25,7 @@ open Ocsigen_http_com
 open Lwt
 open Ocsigen_stream
 
-
+let section = Lwt_log.Section.make "ocsigen:http:sender"
 
 (*****************************************************************************)
 (** this module instantiate the HTTP_CONTENT signature for an Html content*)
@@ -149,46 +149,45 @@ struct
 
   let get_etag ?options c = None
 
-  let result_of_content ?(options = ()) (c, ct) =
-    let finalizer = ref (fun _ -> Lwt.return ()) in
-    let finalize status =
-      let f = !finalizer in
-      finalizer := (fun _ -> Lwt.return ());
-      f status
-    in
-    let rec next stream l =
-      Lwt.try_bind (fun () -> Ocsigen_stream.next stream)
-        (fun s ->
-           match s with
-             Ocsigen_stream.Finished None ->
-             finalize `Success >>= fun () ->
-             next_stream l
-           | Ocsigen_stream.Finished (Some stream) ->
-             next stream l
-           | Ocsigen_stream.Cont (v, stream) ->
-             Ocsigen_stream.cont v (fun () -> next stream l))
-        (function Interrupted e | e ->
-          (*XXX string_of_exn should know how to print "Interrupted _" exceptions*)
-          exnhandler e l)
-    and next_stream l =
-      match l with
-        [] -> Ocsigen_stream.empty None
-      | f :: l ->
-        Lwt.try_bind f
-          (fun stream ->
-             finalizer :=
-               (fun status -> Ocsigen_stream.finalize stream status);
-             next (Ocsigen_stream.get stream) l)
-          (fun e -> exnhandler e l)
-    and exnhandler e l =
-      Ocsigen_messages.warning
-        ("Error while reading stream list: " ^ Printexc.to_string e);
-      finalize `Failure >>= fun () ->
-      next_stream l
-    in
-    let default_result = Result.default () in
-    Lwt.return
-      (Result.update default_result
+    let result_of_content ?(options = ()) (c, ct) =
+      let finalizer = ref (fun _ -> Lwt.return ()) in
+      let finalize status =
+        let f = !finalizer in
+        finalizer := (fun _ -> Lwt.return ());
+        f status
+      in
+      let rec next stream l =
+        Lwt.try_bind (fun () -> Ocsigen_stream.next stream)
+          (fun s ->
+             match s with
+               Ocsigen_stream.Finished None ->
+                 finalize `Success >>= fun () ->
+                 next_stream l
+             | Ocsigen_stream.Finished (Some stream) ->
+                 next stream l
+             | Ocsigen_stream.Cont (v, stream) ->
+                 Ocsigen_stream.cont v (fun () -> next stream l))
+          (function Interrupted e | e ->
+(*XXX string_of_exn should know how to print "Interrupted _" exceptions*)
+             exnhandler e l)
+      and next_stream l =
+        match l with
+          [] -> Ocsigen_stream.empty None
+        | f :: l ->
+            Lwt.try_bind f
+              (fun stream ->
+                 finalizer :=
+                   (fun status -> Ocsigen_stream.finalize stream status);
+                 next (Ocsigen_stream.get stream) l)
+              (fun e -> exnhandler e l)
+      and exnhandler e l =
+        Lwt_log.ign_warning ~section ~exn:e "Error while reading stream list";
+        finalize `Failure >>= fun () ->
+        next_stream l
+      in
+      let default_result = Result.default () in
+      Lwt.return
+        (Result.update default_result
          ~content_length:None
          ~etag:(get_etag c)
          ~stream:
@@ -228,19 +227,19 @@ struct
     let buffer_size = match buffer_size with
       | None -> Ocsigen_config.get_filebuffersize ()
       | Some s -> s
-    in
-    Ocsigen_messages.debug2 "start reading file (file opened)";
-    let buf = String.create buffer_size in
-    let rec read_aux () =
-      Lwt_unix.read fd buf 0 buffer_size >>= fun read ->
-      if read = 0 then
-        Ocsigen_stream.empty None
-      else begin
-        if read = buffer_size
-        then Ocsigen_stream.cont buf read_aux
-        else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
-      end
-    in read_aux
+      in
+      Lwt_log.ign_info ~section "start reading file (file opened)";
+      let buf = String.create buffer_size in
+      let rec read_aux () =
+          Lwt_unix.read fd buf 0 buffer_size >>= fun read ->
+          if read = 0 then
+            Ocsigen_stream.empty None
+          else begin
+            if read = buffer_size
+            then Ocsigen_stream.cont buf read_aux
+            else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
+          end
+      in read_aux
 
   let get_etag_aux st =
     Some (Printf.sprintf "%Lx-%x-%f" st.Unix.LargeFile.st_size
@@ -280,12 +279,13 @@ struct
                (Ocsigen_stream.make
                   ~finalize:
                     (fun _ ->
-                       Ocsigen_messages.debug2 "closing file";
+                       Lwt_log.ign_info ~section "closing file";
                        Lwt_unix.close fd)
                   stream,
                 Some (skip fd)) ())
-      with e -> Lwt_unix.close fd >>= fun () -> raise e
-      with e -> Ocsigen_messages.debug2 (Printexc.to_string e);  fail e
+        with e -> Lwt_unix.close fd >>= fun () -> raise e
+     with e -> Lwt_log.ign_info ~section ~exn:e "Exc";
+       fail e
 
 end
 
