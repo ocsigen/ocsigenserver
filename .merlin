@@ -1,0 +1,13 @@
+PKG lwt
+PKG findlib
+PKG react
+PKG pcre
+PKG ssl
+PKG cryptokit
+PKG netstring
+PKG netstring-pcre
+PKG ipaddr
+PKG tyxml
+
+S src/**
+B src/**
