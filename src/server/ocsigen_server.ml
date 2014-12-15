@@ -1223,166 +1223,165 @@ let start_server () = try
 
     let run (user, group) (_, ports, sslports) (minthreads, maxthreads) s =
 
-      Lwt_unix.run (Ocsigen_messages.open_files ~user ~group ());
+      Ocsigen_messages.open_files ~user ~group () >>= fun () ->
 
-      Lwt_unix.run
-        (let wait_end_init, wait_end_init_awakener = wait () in
-         (* Listening on all ports: *)
-         sockets := List.fold_left
-             (fun a i -> (listen false i wait_end_init) @ a) [] ports;
-         sslsockets := List.fold_left
-             (fun a i -> (listen true i wait_end_init) @ a) [] sslports;
+      let wait_end_init, wait_end_init_awakener = wait () in
+      (* Listening on all ports: *)
+      sockets := List.fold_left
+          (fun a i -> (listen false i wait_end_init) @ a) [] ports;
+      sslsockets := List.fold_left
+          (fun a i -> (listen true i wait_end_init) @ a) [] sslports;
 
-         begin match ports with
-           | (_, p)::_ -> Ocsigen_config.set_default_port p
-           | _ -> ()
-         end;
-         begin match sslports with
-           | (_, p)::_ -> Ocsigen_config.set_default_sslport p
-           | _ -> ()
-         end;
+      begin match ports with
+        | (_, p)::_ -> Ocsigen_config.set_default_port p
+        | _ -> ()
+      end;
+      begin match sslports with
+        | (_, p)::_ -> Ocsigen_config.set_default_sslport p
+        | _ -> ()
+      end;
 
-         let current_uid = Unix.getuid () in
+      let current_uid = Unix.getuid () in
 
-         let gid = match group with
-           | None -> Unix.getgid ()
-           | Some group -> (try
-                              (Unix.getgrnam group).Unix.gr_gid
-                            with Not_found as e ->
-                              Lwt_log.ign_error ~section "Error: Wrong group";
-                              raise e)
-         in
+      let gid = match group with
+        | None -> Unix.getgid ()
+        | Some group -> (try
+                           (Unix.getgrnam group).Unix.gr_gid
+                         with Not_found as e ->
+                           Lwt_log.ign_error ~section "Error: Wrong group";
+                           raise e)
+      in
 
-         let uid = match user with
-           | None -> current_uid
-           | Some user -> (try
-                             (Unix.getpwnam user).Unix.pw_uid
-                           with Not_found as e ->
-                             Lwt_log.ign_error ~section "Error: Wrong user";
-                             raise e)
-         in
+      let uid = match user with
+        | None -> current_uid
+        | Some user -> (try
+                          (Unix.getpwnam user).Unix.pw_uid
+                        with Not_found as e ->
+                          Lwt_log.ign_error ~section "Error: Wrong user";
+                          raise e)
+      in
 
-         (* A pipe to communicate with the server *)
-         let commandpipe = get_command_pipe () in
+      (* A pipe to communicate with the server *)
+      let commandpipe = get_command_pipe () in
+      (try
+         ignore (Unix.stat commandpipe);
+       with Unix.Unix_error _ ->
          (try
-            ignore (Unix.stat commandpipe);
-          with Unix.Unix_error _ ->
-            (try
-               let umask = Unix.umask 0 in
-               Unix.mkfifo commandpipe 0o660;
-               Unix.chown commandpipe uid gid;
-               ignore (Unix.umask umask);
-               Lwt_log.ign_warning ~section "Command pipe created";
-             with e ->
-               Lwt_log.ign_error ~section ~exn:e
-                 "Cannot create the command pipe"));
+            let umask = Unix.umask 0 in
+            Unix.mkfifo commandpipe 0o660;
+            Unix.chown commandpipe uid gid;
+            ignore (Unix.umask umask);
+            Lwt_log.ign_warning ~section "Command pipe created";
+          with e ->
+            Lwt_log.ign_error ~section ~exn:e
+              "Cannot create the command pipe"));
 
-         (* I change the user for the process *)
-         begin try
-             if current_uid = 0 then begin
-               match user with
-               | None -> ()
-               | Some user -> Unix.initgroups user gid
-             end;
-             Unix.setgid gid;
-             Unix.setuid uid;
-           with (Unix.Unix_error _ | Failure _) as e ->
-             Lwt_log.ign_error ~section "Error: Wrong user or group";
-             raise e
-         end;
+      (* I change the user for the process *)
+      begin try
+          if current_uid = 0 then begin
+            match user with
+            | None -> ()
+            | Some user -> Unix.initgroups user gid
+          end;
+          Unix.setgid gid;
+          Unix.setuid uid;
+        with (Unix.Unix_error _ | Failure _) as e ->
+          Lwt_log.ign_error ~section "Error: Wrong user or group";
+          raise e
+      end;
 
-         Ocsigen_config.set_user user;
-         Ocsigen_config.set_group group;
+      Ocsigen_config.set_user user;
+      Ocsigen_config.set_group group;
 
-         (* Je suis fou :
-            let rec f () =
-              print_endline "-";
-              Lwt_unix.yield () >>= f
-              in f (); *)
-
-         if maxthreads < minthreads
-         then
-           raise
-             (Config_file_error "maxthreads should be greater than minthreads");
-
-         ignore (Ocsigen_config.init_preempt
-                   minthreads
-                   maxthreads
-                   (fun s -> Lwt_log.ign_error ~section s));
-
-         (* Now I can load the modules *)
-         Dynlink_wrapper.init ();
-         Dynlink_wrapper.allow_unsafe_modules true;
-
-         Ocsigen_extensions.start_initialisation ();
-
-         parse_server false s;
-
-         Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
-         (* As libraries are reloaded each time the config file is read,
-            we do not allow to register extensions in libraries *)
-         (* seems it does not work :-/ *)
-         (* Closing stderr, stdout stdin if silent *)
-
-         if (Ocsigen_config.get_silent ())
-         then begin
-           (* redirect stdout and stderr to /dev/null *)
-           let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
-           Unix.dup2 devnull Unix.stdout;
-           Unix.dup2 devnull Unix.stderr;
-           Unix.close devnull;
-           Unix.close Unix.stdin;
-         end;
-
-         (* detach from the terminal *)
-         if (Ocsigen_config.get_daemon ())
-         then ignore (Unix.setsid ());
-
-         Ocsigen_extensions.end_initialisation ();
-
-         let pipe = Lwt_chan.in_channel_of_descr
-             (Lwt_unix.of_unix_file_descr
-                (Unix.openfile commandpipe
-                   [Unix.O_RDWR; Unix.O_NONBLOCK; Unix.O_APPEND] 0o660)) in
-
+      (* Je suis fou :
          let rec f () =
-           Lwt_chan.input_line pipe >>= fun s ->
-           Lwt_log.ign_warning_f ~section "Command received: %s" s;
-           (Lwt.catch
-              (fun () ->
-                 let prefix, c =
-                   match String.split ~multisep:true ' ' s with
-                   | [] -> raise Ocsigen_extensions.Unknown_command
-                   | a::l ->
-                     try
-                       let aa, ab = String.sep ':' a in
-                       (Some aa, (ab::l))
-                     with Not_found -> None, (a::l)
-                 in
-                 Ocsigen_extensions.get_command_function () ?prefix s c)
-              (function
-                | Unknown_command ->
-                  Lwt_log.ign_warning ~section "Unknown command";
-                  Lwt.return ()
-                | e ->
-                  Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after \
-                                                     command";
-                  Lwt.fail e))
-           >>= f
-         in ignore (f ());
+           print_endline "-";
+           Lwt_unix.yield () >>= f
+           in f (); *)
 
-         Lwt.async_exception_hook := (fun e ->
-             (* replace the default "exit 2" behaviour *)
-             Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
-           );
+      if maxthreads < minthreads
+      then
+        raise
+          (Config_file_error "maxthreads should be greater than minthreads");
 
-         Lwt.wakeup wait_end_init_awakener ();
+      ignore (Ocsigen_config.init_preempt
+                minthreads
+                maxthreads
+                (fun s -> Lwt_log.ign_error ~section s));
 
-         Lwt_log.ign_warning ~section "Ocsigen has been launched \
-                                       (initialisations ok)";
+      (* Now I can load the modules *)
+      Dynlink_wrapper.init ();
+      Dynlink_wrapper.allow_unsafe_modules true;
 
-         fst (Lwt.wait ())
-        )
+      Ocsigen_extensions.start_initialisation ();
+
+      parse_server false s;
+
+      Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
+      (* As libraries are reloaded each time the config file is read,
+         we do not allow to register extensions in libraries *)
+      (* seems it does not work :-/ *)
+      (* Closing stderr, stdout stdin if silent *)
+
+      if (Ocsigen_config.get_silent ())
+      then begin
+        (* redirect stdout and stderr to /dev/null *)
+        let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
+        Unix.dup2 devnull Unix.stdout;
+        Unix.dup2 devnull Unix.stderr;
+        Unix.close devnull;
+        Unix.close Unix.stdin;
+      end;
+
+      (* detach from the terminal *)
+      if (Ocsigen_config.get_daemon ())
+      then ignore (Unix.setsid ());
+
+      Ocsigen_extensions.end_initialisation ();
+
+      let pipe = Lwt_chan.in_channel_of_descr
+          (Lwt_unix.of_unix_file_descr
+             (Unix.openfile commandpipe
+                [Unix.O_RDWR; Unix.O_NONBLOCK; Unix.O_APPEND] 0o660)) in
+
+      let rec f () =
+        Lwt_chan.input_line pipe >>= fun s ->
+        Lwt_log.ign_warning_f ~section "Command received: %s" s;
+        (Lwt.catch
+           (fun () ->
+              let prefix, c =
+                match String.split ~multisep:true ' ' s with
+                | [] -> raise Ocsigen_extensions.Unknown_command
+                | a::l ->
+                  try
+                    let aa, ab = String.sep ':' a in
+                    (Some aa, (ab::l))
+                  with Not_found -> None, (a::l)
+              in
+              Ocsigen_extensions.get_command_function () ?prefix s c)
+           (function
+             | Unknown_command ->
+               Lwt_log.ign_warning ~section "Unknown command";
+               Lwt.return ()
+             | e ->
+               Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after \
+                                                  command";
+               Lwt.fail e))
+        >>= f
+      in ignore (f ());
+
+      Lwt.async_exception_hook := (fun e ->
+        (* replace the default "exit 2" behaviour *)
+        Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
+      );
+
+      Lwt.wakeup wait_end_init_awakener ();
+
+      Lwt_log.ign_warning ~section "Ocsigen has been launched \
+                                    (initialisations ok)";
+
+      fst (Lwt.wait ())
+
     in
 
     let set_passwd_if_needed (ssl, ports, sslports) =
@@ -1423,16 +1422,16 @@ let start_server () = try
         then
           let pid = Lwt_unix.fork () in
           if pid = 0
-          then run user_info sslinfo threadinfo h
+          then
+            Lwt_main.run (run user_info sslinfo threadinfo h)
           else begin
-            ignore
-              (Ocsigen_messages.console
-                 (fun () -> "Process "^(string_of_int pid)^" detached"));
-            write_pid pid;
+            Ocsigen_messages.console
+              (fun () -> "Process "^(string_of_int pid)^" detached");
+            write_pid pid
           end
         else begin
           write_pid (Unix.getpid ());
-          run user_info sslinfo threadinfo h
+          Lwt_main.run (run user_info sslinfo threadinfo h)
         end
       | _ -> () (* Multiple servers not supported any more *)
 
