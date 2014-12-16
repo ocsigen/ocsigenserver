@@ -616,21 +616,18 @@ let rec make_site ~path ?charset ?(closure = []) =
       match site_match oldri path
               (Ocsigen_request_info.full_path oldri.request_info) with
       | None ->
-        Ocsigen_messages.debug (fun () ->
-            "site \""^
-            (Url.string_of_url_path ~encode:true path)^
-            "\" does not match url \""^
-            (Url.string_of_url_path ~encode:true
-               (Ocsigen_request_info.full_path oldri.request_info))^
-            "\".");
+        Lwt_log.ign_info_f ~section
+          "site \"%s\" does not match url \"%s\"."
+          (Url.string_of_url_path ~encode:true path)
+          (Url.string_of_url_path ~encode:true
+            (Ocsigen_request_info.full_path oldri.request_info));
         Lwt.return (Ext_next e, cookies)
       | Some sub_path ->
-        Ocsigen_messages.debug (fun () ->
-            "-------- site found: url \""^
-            (Url.string_of_url_path ~encode:true
-               (Ocsigen_request_info.full_path oldri.request_info))^
-            "\" matches \""^
-            (Url.string_of_url_path ~encode:true path)^"\".");
+        Lwt_log.ign_info_f ~section
+          "-------- site found url \"%s\" matches \"%s\"."
+          (Url.string_of_url_path ~encode:true
+            (Ocsigen_request_info.full_path oldri.request_info))
+          (Url.string_of_url_path ~encode:true path);
         let ri = {oldri with
                   request_info =
                     (Ocsigen_request_info.update oldri.request_info
