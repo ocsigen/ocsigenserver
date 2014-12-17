@@ -24,10 +24,20 @@
 *)
 val reload: ?file:string -> unit -> unit
 
-(** Start the server (does not return) *)
+(** Start the server (does not return)
 
- val start_server :
-   ?connector:(Ocsigen_extensions.Ocsigen_request_info.request_info ->
-               Ocsigen_http_frame.result Lwt.t) ->
-   ?configuration:Ocsigen_server_configuration.t list ->
-   unit -> unit
+    @param connector function to connect the main loop of the server with
+    the extensions engine (by default, the extensions engine is Ocsigen
+    Extensions)
+
+    @param configuration the optionnal argument can load OcsigenServer's
+    extensions by default according to the configuration file. Otherwise,
+    it waits a server configuration (like [(Ocsigen_socket.All, 8080)]).
+    In the latter case, you must load extensions by hand (using the [init]
+    function) before the application of this function.
+*)
+val start_server :
+  ?connector:(Ocsigen_extensions.Ocsigen_request_info.request_info ->
+              Ocsigen_http_frame.result Lwt.t) ->
+  ?configuration:Ocsigen_server_configuration.t list ->
+  unit -> unit

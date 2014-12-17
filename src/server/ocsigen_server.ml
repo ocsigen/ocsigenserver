@@ -1149,9 +1149,6 @@ let start_server
         ~awake_next_request:true
         ~previous_cookies:Ocsigen_cookies.Cookies.empty)
     ?(configuration =
-        (* initialization functions for modules (Ocsigen extensions or
-         * application code) loaded from now on will be executed directly.
-         *)
         Ocsigen_loader.set_init_on_load true;
 
         List.map

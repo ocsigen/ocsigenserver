@@ -1,4 +1,3 @@
-(* TODO: do documentation ! *)
 type t =
   {
     user : string option;
