@@ -5,7 +5,7 @@ opam install --verbose ocsigenserver
 
 ./configure
 make all
-make -C src/sandbox/ all
+make -C src/example/ all
 
 do_build_doc () {
   make -C doc clean
