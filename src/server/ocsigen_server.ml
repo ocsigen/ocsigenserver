@@ -1156,8 +1156,6 @@ let start_server
           (parse_config ()))
     () = try
 
-    (* Ocsigen_loader.set_init_on_load true; *)
-
     let number_of_servers = List.length configuration in
 
     if number_of_servers > 1
