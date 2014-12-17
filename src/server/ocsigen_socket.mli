@@ -6,7 +6,7 @@ type socket_type =
   | IPv4 of Unix.inet_addr
   | IPv6 of Unix.inet_addr
 
-(** [make_sockets addr port] create sockets ready to listen to ["addr:port"].
+(** [make_sockets addr port] creates a socket ready to listen on ["addr:port"].
 *)
 val make_sockets : socket_type -> int -> Lwt_unix.file_descr list
 
@@ -24,7 +24,7 @@ val port_of_sockaddr : Unix.sockaddr -> int
 *)
 val string_of_socket_type : socket_type -> string
 
-(** [socket_type_of_string] cast a string ["addr:port"] to a socket type
+(** [socket_type_of_string] casts a string ["addr:port"] to a socket type
     @param str string in format "addr:port"
 *)
 val socket_type_of_string : string -> socket_type

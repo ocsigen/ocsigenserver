@@ -1,9 +1,15 @@
+(** This file is an example of a Ocsigen Server in standalone mode, ie the
+    server configuration is written in OCaml and does not rely on an external
+    file. This is a translation of the example configuration file
+    "ocsigenserver.conf.sample".
+*)
+
 open Lwt
 
 (** Global variables should be initialized before extensions.
 
     For example, if the mime file is specified after the configuration
-    of Staticmod, the server delivered a binary file (even if the file
+    of Staticmod, the server will deliver a binary file (even if the file
     is HTML).
 *)
 let global_initialization root =
@@ -16,7 +22,7 @@ let global_initialization root =
 
 (** Default configuration of the server. This configuration is moved from
     extensions to extensions by dispatch (see default [~connector] of
-    {!Ocsigen_server.start_server}), and extension can modify this config.
+    {!Ocsigen_server.start_server}), and an extension can modify this config.
 
     same as:
     <host charset="utf-8" hostfilter="*"></host>
@@ -41,9 +47,9 @@ let default_config () : Ocsigen_extensions.config_info =
   }
 
 (** An extension is composed of a list of virtual hosts, an initial configuration
-    and a function that handle requests.
+    and a function that handles requests.
 
-    When the request matches one of the virtual host, we execute the function.
+    When the request matches one of the virtual hosts, we execute the function.
     In this example, the function matches with all the hosts.
 
     same as:
