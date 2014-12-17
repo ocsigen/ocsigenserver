@@ -1,14 +1,12 @@
 open Lwt
 
-let root = "/home/dinosaure/bin/ocsigenserver"
-
 (** Global variables should be initialized before extensions.
 
     For example, if the mime file is specified after the configuration
     of Staticmod, the server delivered a binary file (even if the file
     is HTML).
 *)
-let () =
+let global_initialization root =
   Ocsigen_config.set_logdir (root ^ "/local/var/log");
   Ocsigen_config.set_datadir (root ^ "/local/var/lib");
   Ocsigen_config.set_command_pipe
@@ -23,7 +21,7 @@ let () =
     same as:
     <host charset="utf-8" hostfilter="*"></host>
 *)
-let default_config : Ocsigen_extensions.config_info =
+let default_config () : Ocsigen_extensions.config_info =
   let open Ocsigen_extensions in
   {
     default_hostname = "localhost";
@@ -53,7 +51,7 @@ let default_config : Ocsigen_extensions.config_info =
       <static dir="$root/local/var/www" />
     </host>
 *)
-let virtualhost1
+let make_virtualhost1 root
   : Ocsigen_extensions.virtual_hosts
     * Ocsigen_extensions.config_info
     * Ocsigen_extensions.extension2
@@ -61,7 +59,7 @@ let virtualhost1
   ( [Ocsigen_extensions.VirtualHost.make
        ~host:"*"
        ~pattern:(Netstring_pcre.regexp ".*$") ()]
-  , default_config
+  , default_config ()
   , fun awake cookies request_state ->
     Printf.printf "My Staticmod\n%!";
     Staticmod.gen
@@ -80,7 +78,7 @@ let virtualhost1
       </site>
     </host>
 *)
-let virtualhost2
+let make_virtualhost2 root
   : Ocsigen_extensions.virtual_hosts
     * Ocsigen_extensions.config_info
     * Ocsigen_extensions.extension2
@@ -88,7 +86,7 @@ let virtualhost2
   ( [Ocsigen_extensions.VirtualHost.make
        ~host:"*"
        ~pattern:(Netstring_pcre.regexp ".*$") ()]
-  , default_config
+  , default_config ()
   , Ocsigen_extensions.make_site
       ~path:["ocsigenstuff"]
       ~charset:"utf-8"
@@ -125,16 +123,6 @@ let redirectmod_for_firefox request_state =
     request_state
 
 (** same as:
-    <static dir="$root/local/var/www/firefox/">
-*)
-let staticmod_for_firefox request_state =
-  Printf.printf "My Staticmod for firefox\n%!";
-  Staticmod.gen
-    ~usermode:None
-    (Staticmod.Dir (root ^ "/local/var/www/firefox/"))
-    request_state
-
-(** same as:
     <host>
       <site path="restricted-area" charset="utf-8">
         <if>
@@ -147,15 +135,25 @@ let staticmod_for_firefox request_state =
       </site>
     </host>
 *)
-let complexe_example
+let make_complex_example root
   : Ocsigen_extensions.virtual_hosts
     * Ocsigen_extensions.config_info
     * Ocsigen_extensions.extension2
   =
+  (** same as:
+      <static dir="$root/local/var/www/firefox/">
+  *)
+  let staticmod_for_firefox request_state =
+    Printf.printf "My Staticmod for firefox\n%!";
+    Staticmod.gen
+      ~usermode:None
+      (Staticmod.Dir (root ^ "/local/var/www/firefox/"))
+      request_state
+  in
   ( [Ocsigen_extensions.VirtualHost.make
        ~host:"*"
        ~pattern:(Netstring_pcre.regexp ".*$") ()]
-  , default_config
+  , default_config ()
   , Ocsigen_extensions.make_site
       ~path:["restricted-area"]
       ~charset:"utf-8"
@@ -183,6 +181,15 @@ let server_conf =
     []
 
 let () =
+  let root =
+    if Array.length Sys.argv >= 2
+    then Sys.argv.(1)
+    else Sys.getenv "HOME"
+  in
+  global_initialization root;
   Cgimod.init ~timeout:5 ();
-  Ocsigen_extensions.set_hosts [ complexe_example; virtualhost2; virtualhost1 ];
+  Ocsigen_extensions.set_hosts
+    [ make_complex_example root;
+      make_virtualhost2 root;
+      make_virtualhost1 root ];
   Ocsigen_server.start_server ~configuration:[ server_conf ] ()
