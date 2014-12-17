@@ -17,7 +17,7 @@
 *)
 (**
    @author Vincent Balat
-   @author Jérôme Vouillon
+   @author JÃ©rÃ´me Vouillon
 *)
 
 type 'a key = int * 'a option ref
