@@ -106,8 +106,6 @@ val substream : string -> string step -> string step Lwt.t
 
 
 
-(*VVV à revoir : *)
-
 (** returns a stream reading from a file.
     Do not forget to finalize the stream to close the file.
 *)
