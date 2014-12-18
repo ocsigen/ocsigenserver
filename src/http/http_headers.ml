@@ -1,7 +1,7 @@
 (* Ocsigen
  * http://www.ocsigen.org
  * Module http_headers.mli
- * Copyright (C) 2007 Jérôme Vouillon
+ * Copyright (C) 2007 JÃ©rÃ´me Vouillon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
