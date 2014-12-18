@@ -57,7 +57,26 @@ let badconfig fmt = Printf.ksprintf (fun s -> raise (Error_in_config_file s)) fm
 
 (*****************************************************************************)
 (* virtual hosts: *)
-type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+
+module VirtualHost = struct
+  type t = (string * Netstring_pcre.regexp * int option)
+
+  let make
+    ~host
+    ~pattern
+    ?port
+    () = (host, pattern, port)
+
+  let hash (host, _, port) = Hashtbl.hash (host, port)
+  let equal (h1, _r1, p1) (h2, _r2, p2) =
+    h1 = h2 && p1 = p2
+
+  let host (host, _, _) = host
+  let pattern (_, pattern, _) = pattern
+  let port (_, _, port) = port
+end
+
+type virtual_hosts = VirtualHost.t list
 
 (* We cannot use generic comparison, as regexpes are abstract values that
    cannot be compared or hashed. However the string essentially contains
@@ -91,6 +110,13 @@ type do_not_serve = {
   do_not_serve_files: string list;
   do_not_serve_extensions: string list;
 }
+
+let serve_everything =
+  {
+    do_not_serve_regexps = [];
+    do_not_serve_files = [];
+    do_not_serve_extensions = [];
+  }
 
 (* BY TODO : Use unbalanced trees instead *)
 let join_do_not_serve d1 d2 = {
@@ -342,9 +368,6 @@ let site_match request (site_path : string list) url =
   | [], [] -> Some []
   | _ -> aux site_path url
 
-
-
-
 let add_to_res_cookies res cookies_to_set =
   if cookies_to_set = Ocsigen_cookies.Cookies.empty then
     res
@@ -563,6 +586,83 @@ and make_parse_config path parse_host l : extension2 =
   in
   !fun_end ();
   r
+
+let endpoint_of_extension awake cookies =
+  function
+  | Req_found (ri, res) ->
+    Lwt.return (Ext_found_continue_with' (res, ri), cookies)
+  | Req_not_found (e, ri) ->
+    Lwt.return
+      (Ext_continue_with
+         (ri, Ocsigen_cookies.Cookies.empty, e), cookies)
+
+let rec make_site ~path ?charset ?(closure = []) =
+  let open Ocsigen_lib in
+  fun awake cookies ->
+    function
+    | Req_found (ri, res) ->
+      Lwt.return (Ext_found_continue_with' (res, ri), cookies)
+    | Req_not_found (e, oldri) ->
+      let oldri = match charset with
+        | None -> oldri
+        | Some charset ->
+          { oldri
+            with request_config =
+                   { oldri.request_config
+                     with charset_assoc =
+                            Ocsigen_charset_mime.set_default_charset
+                              oldri.request_config.charset_assoc charset } }
+      in
+      match site_match oldri path
+              (Ocsigen_request_info.full_path oldri.request_info) with
+      | None ->
+        Lwt_log.ign_info_f ~section
+          "site \"%s\" does not match url \"%s\"."
+          (Url.string_of_url_path ~encode:true path)
+          (Url.string_of_url_path ~encode:true
+            (Ocsigen_request_info.full_path oldri.request_info));
+        Lwt.return (Ext_next e, cookies)
+      | Some sub_path ->
+        Lwt_log.ign_info_f ~section
+          "-------- site found url \"%s\" matches \"%s\"."
+          (Url.string_of_url_path ~encode:true
+            (Ocsigen_request_info.full_path oldri.request_info))
+          (Url.string_of_url_path ~encode:true path);
+        let ri = {oldri with
+                  request_info =
+                    (Ocsigen_request_info.update oldri.request_info
+                       ~sub_path:sub_path
+                       ~sub_path_string:
+                         (Url.string_of_url_path
+                            ~encode:true sub_path) ()) }
+        in match closure with
+        | [] -> endpoint_of_extension awake cookies (Req_not_found (e, ri))
+        | x :: r ->
+          (fun awake cookies_to_set req_state ->
+            make_ext awake cookies_to_set req_state x
+              (make_site ~path ?charset ~closure:r))
+            (* XXX: I'm not sure, really ! *)
+          awake cookies (Req_not_found (e, ri))
+        >>= function
+          (* After a site, we turn back to old ri *)
+        | (Ext_stop_site (cs, err), cookies)
+        | (Ext_continue_with (_, cs, err), cookies) ->
+          Lwt.return
+            (Ext_continue_with (oldri, cs, err), cookies)
+        | (Ext_found_continue_with r, cookies) ->
+          awake ();
+          r () >>= fun (r', req) ->
+          Lwt.return
+            (Ext_found_continue_with' (r', oldri), cookies)
+        | (Ext_found_continue_with' (r, req), cookies) ->
+          Lwt.return
+            (Ext_found_continue_with' (r, oldri), cookies)
+        | (Ext_do_nothing, cookies) ->
+          Lwt.return
+            (Ext_continue_with (oldri,
+                                Ocsigen_cookies.Cookies.empty,
+                                e), cookies)
+        | r -> Lwt.return r
 
 (*****************************************************************************)
 

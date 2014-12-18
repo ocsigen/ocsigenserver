@@ -59,7 +59,30 @@ val badconfig : ('a, unit, string, 'b) format4 -> 'a
     (which is a glob-like pattern that can contains [*]), a regexp
     parsing this pattern, and optionnaly a port.
 *)
-type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+
+module VirtualHost : sig
+  type t
+
+  (** Function to make new virtual host *)
+  val make :
+    host:string ->
+    pattern:Netstring_pcre.regexp ->
+    ?port:int -> unit -> t
+
+  (** Hash virtual host (only hash host and port, no pattern) *)
+  val hash : t -> int
+  (** Equal of virtual host (only compare host and port, no pattern) *)
+  val equal : t -> t -> bool
+
+  (** Host accessor for virtual host *)
+  val host : t -> string
+  (** Pattern accessor for virtual host *)
+  val pattern : t -> Netstring_pcre.regexp
+  (** Port accessor for virtual host *)
+  val port : t -> int option
+end
+
+type virtual_hosts = VirtualHost.t list
 
 val hash_virtual_hosts : virtual_hosts -> int
 val equal_virtual_hosts : virtual_hosts -> virtual_hosts -> bool
@@ -76,6 +99,9 @@ type do_not_serve = {
   do_not_serve_extensions: string list;
 }
 
+(** Default configuration to hide/forbid local files.
+    For this, no file is filtered *)
+val serve_everything : do_not_serve
 
 exception IncorrectRegexpes of do_not_serve
 
@@ -492,6 +518,10 @@ exception Unknown_command
 val register_command_function :
   ?prefix:string -> (string -> string list -> unit Lwt.t) -> unit
 
+(** Equivalent to a series of <site></site> in XML configuration file *)
+val make_site :
+  path:Url.path -> ?charset:Ocsigen_charset_mime.charset -> ?closure:extension list -> extension2
+
 (**/**)
 val get_command_function :
   unit -> (?prefix:string -> string -> string list -> unit Lwt.t)
@@ -505,7 +535,6 @@ val parse_config_item : parse_config
 val parse_user_site_item : parse_config_user
 
 val set_hosts : (virtual_hosts * config_info * extension2) list -> unit
-
 val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
 
 (** Compute the result to be sent to the client,
