@@ -270,7 +270,7 @@ let rec loop socket =
 
 
 
-let _ = Lwt_unix.run
+let _ = Lwt_main.run
     (let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
      (try
         Lwt_unix.bind socket (Unix.ADDR_UNIX (directory^"/"^socketname))

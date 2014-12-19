@@ -327,7 +327,7 @@ let init config =
    | Some d -> db_file := d
   );
   (* We check that we can access the database *)
-  try Lwt_unix.run (exec_safely (fun _ -> ()))
+  try Lwt_main.run (exec_safely (fun _ -> ()))
   with e ->
     Ocsigen_messages.errlog
       (Printf.sprintf

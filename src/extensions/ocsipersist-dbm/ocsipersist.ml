@@ -154,7 +154,7 @@ let init_fun config =
     inch  := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
     outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
   ) else (
-    let r = Lwt_unix.run indescr in
+    let r = Lwt_main.run indescr in
     inch  := return (Lwt_chan.in_channel_of_descr r);
     outch := return (Lwt_chan.out_channel_of_descr r);
     Lwt_log.ign_warning ~section "...Initialization complete";
