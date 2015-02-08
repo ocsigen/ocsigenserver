@@ -1,7 +1,7 @@
 (* Ocsigen
  * http://www.ocsigen.org
  * Module ocsigen_parseconfig.ml
- * Copyright (C) 2005-2008 Vincent Balat, Nataliya Guts, Stéphane Glondu
+ * Copyright (C) 2005-2008 Vincent Balat, Nataliya Guts, StÃ©phane Glondu
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
