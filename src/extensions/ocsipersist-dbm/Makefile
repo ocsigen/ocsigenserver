@@ -1,6 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := ${LWT_EXTRA_PACKAGE} \
+PACKAGE  := ${LWT_PREEMPTIVE_PACKAGE} \
 	    lwt.unix     \
 	    tyxml.parser \
 	    dbm          \
