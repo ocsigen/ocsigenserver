@@ -8,7 +8,7 @@ PACKAGE  := \
 	findlib \
 	tyxml \
 	lwt.syntax \
-	${LWT_EXTRA_PACKAGE} \
+	${LWT_PREEMPTIVE_PACKAGE} \
 	ipaddr \
 	${SERVER_SYNTAX} ## See ../../Makefile.options
 LIBS     := ${addprefix -package ,${PACKAGE}}
