@@ -30,9 +30,6 @@ open Ocsigen_extensions
 let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
 exception Not_concerned
 
-let bad_config s = raise (Error_in_config_file s)
-
-
 (*****************************************************************************)
 (* Structures describing the static pages a each virtual server *)
 
@@ -205,6 +202,7 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
   Ocsigen_extensions.(
     Configuration.process_element
       ~in_tag:"host"
+      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:[
         Configuration.element
           ~name:"static"
@@ -212,7 +210,8 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
             Configuration.attribute
               ~name:"dir"
               (fun s ->
-                 opt := { !opt with opt_dir = Some s });
+                 opt := { !opt with opt_dir =
+                             Some (rewrite_local_path userconf s) });
             Configuration.attribute
               ~name:"regexp"
               (fun s ->
@@ -251,7 +250,7 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
                    | "no" -> 0
                    | s ->
                      try int_of_string s
-                     with _ ->
+                     with Failure _ ->
                        badconfig
                          "Bad integer \"%s\" in <static cache=\"...\" />"
                          s
