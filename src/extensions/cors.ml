@@ -157,6 +157,7 @@ let parse_config _ _ parse_fun config_elem =
   Ocsigen_extensions.(
     Configuration.process_element
       ~in_tag:"host"
+      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:[
         Configuration.element
           ~name:"cors"

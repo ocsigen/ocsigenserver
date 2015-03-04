@@ -166,6 +166,7 @@ let parse_config hostpattern _ path _ _ config_elem =
   Ocsigen_extensions.(
     Configuration.process_element
       ~in_tag:"host"
+      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:[
         Configuration.element
           ~name:"userconf"
