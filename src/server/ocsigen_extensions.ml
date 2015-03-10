@@ -37,6 +37,7 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
+include Ocsigen_request_info
 include Ocsigen_command
 
 module Ocsigen_request_info = Ocsigen_request_info
@@ -191,19 +192,7 @@ and follow_symlink =
 
 
 (* Requests *)
-type ifrange = Ocsigen_request_info.ifrange =
-  | IR_No
-  | IR_Ifunmodsince of float
-  | IR_ifmatch of string
-type file_info = Ocsigen_request_info.file_info = {
-  tmp_filename: string;
-  filesize: int64;
-  raw_original_filename: string;
-  original_basename: string ;
-  file_content_type: ((string * string) * (string * string) list) option;
-}
-type request_info = Ocsigen_request_info.request_info
-and request = {
+type request = {
   request_info: request_info;
   request_config: config_info;
 }
@@ -969,38 +958,6 @@ let compute_result
        awake ();
        Lwt.return ()
     )
-
-
-(*****************************************************************************)
-
-
-
-(* used to modify the url in ri (for example for retrying after rewrite) *)
-let ri_of_url ?(full_rewrite = false) url ri =
-  let (_, host, _, url, path, params, get_params) = Url.parse url in
-  let host = match host with
-    | Some h -> host
-    | None -> Ocsigen_request_info.host ri
-  in
-  let path_string = Url.string_of_url_path ~encode:true path in
-  let original_fullpath, original_fullpath_string =
-    if full_rewrite
-    then (path, path_string)
-    else (Ocsigen_request_info.original_full_path ri, Ocsigen_request_info.original_full_path_string ri)
-  in
-  (* ri_original_full_path is not changed *)
-  Ocsigen_request_info.update ri
-    ~url_string:url
-    ~host:host
-    ~full_path_string:path_string
-    ~full_path:path
-    ~original_full_path_string:original_fullpath_string
-    ~original_full_path:original_fullpath
-    ~sub_path:path
-    ~sub_path_string:path_string
-    ~get_params_string:params
-    ~get_params:get_params ()
-
 
 
 (*****************************************************************************)
