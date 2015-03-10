@@ -71,7 +71,6 @@ type request_info =
        for example, information for subsequent
        extensions
    *)
-   client: Ocsigen_http_com.connection; (** The request connection *)
    range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
    (** Range HTTP header. [None] means all the document.
        List of intervals + possibly from an index to the end of the document.
@@ -112,6 +111,9 @@ let ri_of_url ?(full_rewrite = false) url ri =
    get_params_string = params;
    get_params ;
    }
+
+let get_server_address ri =
+  raise (Invalid_argument "Ocsigen_request_info.get_server_address")
 
 let make
     ~url_string
@@ -157,7 +159,6 @@ let make
     ~accept_language
     ~http_frame
     ?(request_cache=Polytables.create ())
-    ~client
     ~range
     (* XXX: We should have this line but it would produce a circular dependency
      * between the two modules
@@ -165,7 +166,7 @@ let make
      * ?(range=lazy (Ocsigen_range.get_range http_frame)) *)
     ?(timeofday=Unix.gettimeofday ())
     ?(nb_tries=0)
-    ?(connection_closed=Ocsigen_http_com.closed client)
+    ?(connection_closed=Lwt.return_unit) (*XXX FIXME*)
     () =
   {
     url_string;
@@ -211,7 +212,6 @@ let make
     accept_language;
     http_frame;
     request_cache;
-    client;
     range;
     timeofday;
     nb_tries;
@@ -262,7 +262,6 @@ let update ri
     ?(accept_language=ri.accept_language)
     ?(http_frame=ri.http_frame)
     ?(request_cache=ri.request_cache)
-    ?(client=ri.client)
     ?(range=ri.range)
     ?(timeofday=ri.timeofday)
     ?(nb_tries=ri.nb_tries)
@@ -312,7 +311,6 @@ let update ri
     accept_language;
     http_frame;
     request_cache;
-    client;
     range;
     timeofday;
     nb_tries;
@@ -340,7 +338,6 @@ let port_from_host_field { port_from_host_field; _ } =
 let server_port { server_port; _ } = server_port
 let full_path { full_path; _ } = full_path
 let get_params_string { get_params_string; _ } = get_params_string
-let client { client; _ } = client
 let nb_tries { nb_tries; _ } = nb_tries
 let sub_path { sub_path; _ } = sub_path
 let content_length { content_length; _ } = content_length

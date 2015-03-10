@@ -43,6 +43,10 @@ open Ocsigen_lib
 open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
+open Cohttp
+open Cohttp_lwt_unix
+
+module RI = Ocsigen_request_info
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 
@@ -134,7 +138,19 @@ let gen dir = function
            | None -> host
          in
 
-         let do_request =
+         let frame_of_cohttp (response, body) =
+           let open Ocsigen_http_frame in
+           {
+             frame_header = Of_cohttp.of_response response;
+             frame_content = Some
+                 (Ocsigen_stream.of_lwt_stream
+                    (fun x -> x)
+                    (Cohttp_lwt_body.to_stream body));
+             frame_abort = (fun () -> Lwt.return ());
+           }
+         in
+
+         let do_request () =
            let ri = ri.request_info in
            let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
            let forward =
@@ -148,6 +164,7 @@ let gen dir = function
              then "https"
              else "http"
            in
+(*
            let headers =
              Http_headers.replace
                Http_headers.x_forwarded_proto
@@ -187,12 +204,29 @@ let gen dir = function
                  ~host
                  ~inet_addr
                  ~uri ()
+*)
+
+           let (meth, version, headers, uri', body) =
+             Ocsigen_generate.to_cohttp_request ri in
+           let headers =
+             Cohttp.Header.add headers
+               "X-Forwarded-Proto"
+               (Cohttp.Code.string_of_version version) in
+           let headers =
+             Cohttp.Header.add headers
+               "X-Forwarded-For"
+               forward in
+           let headers = Cohttp.Header.remove headers "host" in
+           let uri = Printf.sprintf "%s://%s%s"
+               proto host uri in
+           Client.call ~headers ~body meth (Uri.of_string uri)
          in
          Lwt.return
            (Ext_found
               (fun () ->
                  do_request ()
 
+                 >|= frame_of_cohttp
                  >>= fun http_frame ->
                  let headers =
                    http_frame
