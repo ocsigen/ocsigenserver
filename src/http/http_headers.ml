@@ -20,7 +20,7 @@
 
 type name = string
 let name : string -> name = String.lowercase
-let name_to_string : name -> string = String.lowercase
+let name_to_string (nm : name) : string = nm
 
 let accept = name "Accept"
 let accept_charset = name "Accept-Charset"
