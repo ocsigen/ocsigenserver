@@ -4,6 +4,7 @@ PACKAGE  := \
 	netstring-pcre \
 	lwt.ssl \
 	tyxml \
+	cohttp \
 	${SERVER_SYNTAX} ## See ../../Makefile.options
 
 LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}
