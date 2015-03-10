@@ -87,6 +87,32 @@ type request_info =
     (and vice versa).
 *)
 
+(* used to modify the url in ri (for example for retrying after rewrite) *)
+let ri_of_url ?(full_rewrite = false) url ri =
+  let (_, host, _, url, path, params, get_params) = Url.parse url in
+  let host = match host with
+    | Some h -> host
+    | None -> ri.host
+  in
+  let path_string = Url.string_of_url_path ~encode:true path in
+  let original_full_path, original_full_path_string =
+    if full_rewrite
+    then (path, path_string)
+    else (ri.original_full_path, ri.original_full_path_string)
+  in
+  {ri with
+   url_string = url;
+   host ;
+   full_path_string = path_string;
+   full_path = path;
+   original_full_path_string ;
+   original_full_path ;
+   sub_path = path;
+   sub_path_string = path_string;
+   get_params_string = params;
+   get_params ;
+   }
+
 let make
     ~url_string
     ~meth
