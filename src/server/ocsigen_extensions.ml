@@ -188,8 +188,7 @@ type request = {
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory
-  of (Ocsigen_request_info.request_info -> Neturl.url)
+exception Ocsigen_Is_a_directory = Ocsigen_cohttp_server.Ocsigen_Is_a_directory
 
 type answer =
   | Ext_do_nothing
