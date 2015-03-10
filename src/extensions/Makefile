@@ -9,9 +9,11 @@ PACKAGE  :=		\
 	netstring	\
 	netstring-pcre	\
 	tyxml.parser	\
+  cohttp.lwt      \
 	${SERVER_SYNTAX} ## See ../../Makefile.options
 
-LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
+LIBS     := -I ../baselib -I ../http -I ../migrate -I ../server \
+            ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
