@@ -133,16 +133,6 @@ and follow_symlink =
 
 (*****************************************************)
 
-
-type client = Ocsigen_http_com.connection
-(** A value of this type represents the client who did the request. *)
-
-val client_id : client -> int
-(** Returns the id number of the connection *)
-
-val client_connection : client -> Ocsigen_http_com.connection
-(** Returns the connection *)
-
 type ifrange = Ocsigen_request_info.ifrange =
   | IR_No
   | IR_Ifunmodsince of float
@@ -522,8 +512,6 @@ val get_numberofreloads : unit -> int
 val get_init_exn_handler : unit -> exn -> string
 
 val set_config : Simplexmlparser.xml list -> unit
-
-val client_of_connection : Ocsigen_http_com.connection -> client
 
 val get_server_address : request_info -> Unix.inet_addr * int
 

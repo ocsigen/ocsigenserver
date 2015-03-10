@@ -1,7 +1,5 @@
-of_cohttp.cmi : ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi \
-    ../http/http_headers.cmi
-to_cohttp.cmi : ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi \
-    ../http/http_headers.cmi
+of_cohttp.cmi : ../http/ocsigen_http_frame.cmi ../http/http_headers.cmi
+to_cohttp.cmi : ../http/ocsigen_http_frame.cmi ../http/http_headers.cmi
 of_cohttp.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi \
     ../http/http_headers.cmi of_cohttp.cmi

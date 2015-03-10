@@ -78,15 +78,6 @@ let rec equal_virtual_hosts (l1 : virtual_hosts) (l2 : virtual_hosts) =
 
 (*****************************************************************************)
 
-type client = Ocsigen_http_com.connection
-
-let client_id = Ocsigen_http_com.connection_id
-let client_connection x = x
-let client_of_connection x = x
-
-
-(*****************************************************************************)
-
 (* Server configuration, for local files that must not be sent *)
 
 type do_not_serve = {
@@ -927,19 +918,7 @@ let compute_result
   let host = Ocsigen_request_info.host ri in
   let port = Ocsigen_request_info.server_port ri in
 
-  let conn = client_connection (Ocsigen_request_info.client ri) in
-  let awake =
-    if awake_next_request
-    then
-      (let tobeawoken = ref true in
-       (* must be awoken once and only once *)
-       fun () ->
-         if !tobeawoken then begin
-           tobeawoken := false;
-           Ocsigen_http_com.wakeup_next_request conn
-         end)
-    else id
-  in
+  let awake () = () in (*XXX FIXME: kill awake *)
 
   let rec do2 sites cookies_to_set ri =
     Ocsigen_request_info.update_nb_tries ri (Ocsigen_request_info.nb_tries ri + 1);
@@ -1054,11 +1033,7 @@ let get_number_of_connected,
 
 
 
-let get_server_address ri =
-  let socket = Ocsigen_http_com.connection_fd (client_connection (Ocsigen_request_info.client ri)) in
-  match Lwt_ssl.getsockname socket with
-  | Unix.ADDR_UNIX _ -> failwith "unix domain socket have no ip"
-  | Unix.ADDR_INET (addr,port) -> addr,port
+let get_server_address ri = assert false (*XXX FIXME *)
 
 
 (* user directories *)

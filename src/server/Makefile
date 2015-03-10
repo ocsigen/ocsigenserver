@@ -3,7 +3,8 @@ include ../../Makefile.config
 all: byte opt
 
 PACKAGE  := ${SERVER_PACKAGE} ${SERVER_SYNTAX} ## See ../../Makefile.options
-LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}} -I .
+LIBS     := -I ../baselib -I ../http -I ../migrate \
+            ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
@@ -17,6 +18,8 @@ FILES := ocsigen_socket.ml      \
          ocsigen_request_info.ml \
          ocsigen_command.ml     \
          ocsigen_range.ml       \
+         ocsigen_generate.ml    \
+         ocsigen_cohttp_server.ml \
          ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
          ocsigen_http_client.ml \
@@ -47,6 +50,7 @@ SERVERLIBS := ${PARSECOMMANDLINE}       \
               ../baselib/baselib.cma    \
 	      ../baselib/polytables.cma \
 	      ../http/http.cma          \
+              ../migrate/migrate.cma    \
 	      ${PROJECTNAME}.cma         \
 
 SERVEROBJS := server_main.cmo
