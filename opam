@@ -27,6 +27,7 @@ depends: [
   ("dbm" | "sqlite3")
   "ipaddr" {>= "2.1"}
   "camlp4"
+  "cohttp"
 ]
 depopts: "camlzip"
 conflicts: "camlzip" {< "1.04"}
