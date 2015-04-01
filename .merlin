@@ -10,6 +10,7 @@ PKG ipaddr
 PKG tyxml tyxml.parser
 PKG camlzip
 PKG dynlink
+PKG cohttp
 
 S src/**
 B src/**
