@@ -27,6 +27,9 @@ let (>>=) = Lwt.bind
 let (>|=) = Lwt.(>|=)
 let (!!) = Lazy.force
 
+let (|>) x f = f x
+let (@@) f x = f x
+
 let comp f g x = f (g x)
 let curry f x y = f (x, y)
 let uncurry f (x, y) = f x y

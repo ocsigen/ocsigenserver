@@ -30,6 +30,9 @@ val (>>=) : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
 val (>|=) : 'a Lwt.t -> ('a -> 'b) -> 'b Lwt.t
 val (!!) : 'a Lazy.t -> 'a
 
+val (|>) : 'a -> ('a -> 'b) -> 'b
+val (@@) : ('a -> 'b) -> 'a -> 'b
+
 external id : 'a -> 'a = "%identity"
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
