@@ -1,20 +1,10 @@
 (** Module to cast Cohttp value to OcsigenServer value *)
 
 (** [of_version] cast version of protocol *)
-val of_version :
-  [> `HTTP_1_0 | `HTTP_1_1 ] -> Ocsigen_http_frame.Http_header.proto
+val of_version : Cohttp.Code.version -> Ocsigen_http_frame.Http_header.proto
 
 (** [of_meth] cast method of request *)
-val of_meth :
-  [< `DELETE
-   | `GET
-   | `HEAD
-   | `OPTIONS
-   | `Other of string
-   | `PATCH
-   | `POST
-   | `PUT ] ->
-  Ocsigen_http_frame.Http_header.http_method
+val of_meth : Cohttp.Code.meth -> Ocsigen_http_frame.Http_header.http_method
 
 (** [of_headers] cast Cohttp headers to OcsigenServer headers (this function is
     [fun x -> x] with simply annotation) *)
