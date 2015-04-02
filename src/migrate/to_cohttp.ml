@@ -98,7 +98,7 @@ let to_request_and_body ?encoding
                   s
     | None -> (Lwt_stream.from (fun () -> Lwt.return None) : string Lwt_stream.t)
   in
-  (to_request ?encoding frame_header uri, `Stream stream)
+  (to_request ?encoding frame_header uri, Cohttp_lwt_body.of_stream stream)
 
 let to_date date =
   let x = Netdate.mk_mail_date ~zone:0 date |> Bytes.unsafe_of_string in
@@ -162,6 +162,6 @@ let to_response_and_body res =
      ~encoding
      ~headers
      (),
-   `Stream (Ocsigen_stream.to_lwt_stream
-              ~is_empty:(fun x -> String.length x = 0)
-              (fst res_stream)))
+   Cohttp_lwt_body.of_stream (Ocsigen_stream.to_lwt_stream
+                                ~is_empty:(fun x -> String.length x = 0)
+                                (fst res_stream)))
