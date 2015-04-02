@@ -1,66 +1,62 @@
-framepp.cmi: ocsigen_http_frame.cmi
-http_headers.cmi:
-multipart.cmi: ../baselib/ocsigen_stream.cmi
-ocsigen_charset_mime.cmi:
-ocsigen_cookies.cmi: ../baselib/ocsigen_lib.cmi
-ocsigen_headers.cmi: ../baselib/ocsigen_lib.cmi ocsigen_http_frame.cmi \
+framepp.cmi : ocsigen_http_frame.cmi
+http_headers.cmi :
+multipart.cmi : ../baselib/ocsigen_stream.cmi
+ocsigen_charset_mime.cmi :
+ocsigen_cookies.cmi : ../baselib/ocsigen_lib.cmi
+ocsigen_headers.cmi : ../baselib/ocsigen_lib.cmi ocsigen_http_frame.cmi \
     ocsigen_cookies.cmi
-ocsigen_http_com.cmi: ../baselib/ocsigen_stream.cmi ocsigen_http_frame.cmi \
+ocsigen_http_com.cmi : ../baselib/ocsigen_stream.cmi ocsigen_http_frame.cmi \
     http_headers.cmi
-ocsigen_http_frame.cmi: ../baselib/ocsigen_stream.cmi \
+ocsigen_http_frame.cmi : ../baselib/ocsigen_stream.cmi \
     ../baselib/ocsigen_lib.cmi ocsigen_cookies.cmi http_headers.cmi
-ocsigen_senders.cmi: ../baselib/ocsigen_stream.cmi ocsigen_http_frame.cmi \
+ocsigen_senders.cmi : ../baselib/ocsigen_stream.cmi ocsigen_http_frame.cmi \
     ocsigen_http_com.cmi ocsigen_cookies.cmi ocsigen_charset_mime.cmi \
     http_headers.cmi
-framepp.cmo: ocsigen_http_frame.cmi http_headers.cmi framepp.cmi
-framepp.cmx: ocsigen_http_frame.cmx http_headers.cmx framepp.cmi
-http_headers.cmo: http_headers.cmi
-http_headers.cmx: http_headers.cmi
-http_lexer.cmo: ocsigen_http_frame.cmi http_headers.cmi
-http_lexer.cmx: ocsigen_http_frame.cmx http_headers.cmx
-multipart.cmo: ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
+framepp.cmo : ocsigen_http_frame.cmi http_headers.cmi framepp.cmi
+framepp.cmx : ocsigen_http_frame.cmx http_headers.cmx framepp.cmi
+http_headers.cmo : http_headers.cmi
+http_headers.cmx : http_headers.cmi
+http_lexer.cmo : ocsigen_http_frame.cmi http_headers.cmi
+http_lexer.cmx : ocsigen_http_frame.cmx http_headers.cmx
+multipart.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
     multipart.cmi
-multipart.cmx: ../baselib/ocsigen_stream.cmx ../baselib/ocsigen_lib.cmx \
+multipart.cmx : ../baselib/ocsigen_stream.cmx ../baselib/ocsigen_lib.cmx \
     multipart.cmi
-ocsigen_charset_mime.cmo: ../baselib/ocsigen_messages.cmi \
-    ../baselib/ocsigen_lib.cmi ../baselib/ocsigen_config.cmi \
-    ocsigen_charset_mime.cmi
-ocsigen_charset_mime.cmx: ../baselib/ocsigen_messages.cmx \
-    ../baselib/ocsigen_lib.cmx ../baselib/ocsigen_config.cmx \
-    ocsigen_charset_mime.cmi
-ocsigen_cookies.cmo: ocsigen_cookies.cmi
-ocsigen_cookies.cmx: ocsigen_cookies.cmi
-ocsigen_headers.cmo: ocsigen_senders.cmi ../baselib/ocsigen_lib.cmi \
+ocsigen_charset_mime.cmo : ../baselib/ocsigen_lib.cmi \
+    ../baselib/ocsigen_config.cmi ocsigen_charset_mime.cmi
+ocsigen_charset_mime.cmx : ../baselib/ocsigen_lib.cmx \
+    ../baselib/ocsigen_config.cmx ocsigen_charset_mime.cmi
+ocsigen_cookies.cmo : ocsigen_cookies.cmi
+ocsigen_cookies.cmx : ocsigen_cookies.cmi
+ocsigen_headers.cmo : ocsigen_senders.cmi ../baselib/ocsigen_lib.cmi \
     ocsigen_http_frame.cmi ocsigen_cookies.cmi http_headers.cmi \
     ocsigen_headers.cmi
-ocsigen_headers.cmx: ocsigen_senders.cmx ../baselib/ocsigen_lib.cmx \
+ocsigen_headers.cmx : ocsigen_senders.cmx ../baselib/ocsigen_lib.cmx \
     ocsigen_http_frame.cmx ocsigen_cookies.cmx http_headers.cmx \
     ocsigen_headers.cmi
-ocsigen_http_com.cmo: ../baselib/ocsigen_stream.cmi \
-    ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_lib.cmi \
-    ocsigen_http_frame.cmi ocsigen_cookies.cmi ../baselib/ocsigen_config.cmi \
-    http_lexer.cmo http_headers.cmi framepp.cmi ocsigen_http_com.cmi
-ocsigen_http_com.cmx: ../baselib/ocsigen_stream.cmx \
-    ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_lib.cmx \
-    ocsigen_http_frame.cmx ocsigen_cookies.cmx ../baselib/ocsigen_config.cmx \
-    http_lexer.cmx http_headers.cmx framepp.cmx ocsigen_http_com.cmi
-ocsigen_http_frame.cmo: ../baselib/ocsigen_stream.cmi \
-    ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_lib.cmi \
-    ocsigen_cookies.cmi http_headers.cmi ocsigen_http_frame.cmi
-ocsigen_http_frame.cmx: ../baselib/ocsigen_stream.cmx \
-    ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_lib.cmx \
-    ocsigen_cookies.cmx http_headers.cmx ocsigen_http_frame.cmi
-ocsigen_senders.cmo: ../baselib/ocsigen_stream.cmi \
-    ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_lib.cmi \
-    ocsigen_http_frame.cmi ocsigen_http_com.cmi ocsigen_cookies.cmi \
-    ../baselib/ocsigen_config.cmi ocsigen_charset_mime.cmi http_headers.cmi \
-    ocsigen_senders.cmi
-ocsigen_senders.cmx: ../baselib/ocsigen_stream.cmx \
-    ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_lib.cmx \
-    ocsigen_http_frame.cmx ocsigen_http_com.cmx ocsigen_cookies.cmx \
-    ../baselib/ocsigen_config.cmx ocsigen_charset_mime.cmx http_headers.cmx \
-    ocsigen_senders.cmi
-test_parser.cmo: ocsigen_http_frame.cmi http_lexer.cmo
-test_parser.cmx: ocsigen_http_frame.cmx http_lexer.cmx
-test_pp.cmo: ocsigen_http_frame.cmi framepp.cmi
-test_pp.cmx: ocsigen_http_frame.cmx framepp.cmx
+ocsigen_http_com.cmo : ../baselib/ocsigen_stream.cmi \
+    ../baselib/ocsigen_lib.cmi ocsigen_http_frame.cmi ocsigen_cookies.cmi \
+    ../baselib/ocsigen_config.cmi http_lexer.cmo http_headers.cmi framepp.cmi \
+    ocsigen_http_com.cmi
+ocsigen_http_com.cmx : ../baselib/ocsigen_stream.cmx \
+    ../baselib/ocsigen_lib.cmx ocsigen_http_frame.cmx ocsigen_cookies.cmx \
+    ../baselib/ocsigen_config.cmx http_lexer.cmx http_headers.cmx framepp.cmx \
+    ocsigen_http_com.cmi
+ocsigen_http_frame.cmo : ../baselib/ocsigen_stream.cmi \
+    ../baselib/ocsigen_lib.cmi ocsigen_cookies.cmi http_headers.cmi \
+    ocsigen_http_frame.cmi
+ocsigen_http_frame.cmx : ../baselib/ocsigen_stream.cmx \
+    ../baselib/ocsigen_lib.cmx ocsigen_cookies.cmx http_headers.cmx \
+    ocsigen_http_frame.cmi
+ocsigen_senders.cmo : ../baselib/ocsigen_stream.cmi \
+    ../baselib/ocsigen_lib.cmi ocsigen_http_frame.cmi ocsigen_http_com.cmi \
+    ocsigen_cookies.cmi ../baselib/ocsigen_config.cmi \
+    ocsigen_charset_mime.cmi http_headers.cmi ocsigen_senders.cmi
+ocsigen_senders.cmx : ../baselib/ocsigen_stream.cmx \
+    ../baselib/ocsigen_lib.cmx ocsigen_http_frame.cmx ocsigen_http_com.cmx \
+    ocsigen_cookies.cmx ../baselib/ocsigen_config.cmx \
+    ocsigen_charset_mime.cmx http_headers.cmx ocsigen_senders.cmi
+test_parser.cmo : ocsigen_http_frame.cmi http_lexer.cmo
+test_parser.cmx : ocsigen_http_frame.cmx http_lexer.cmx
+test_pp.cmo : ocsigen_http_frame.cmi framepp.cmi
+test_pp.cmx : ocsigen_http_frame.cmx framepp.cmx
