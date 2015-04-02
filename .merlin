@@ -1,4 +1,4 @@
-PKG lwt
+PKG lwt lwt.extra lwt.ssl
 PKG findlib
 PKG react
 PKG pcre
@@ -7,7 +7,9 @@ PKG cryptokit
 PKG netstring
 PKG netstring-pcre
 PKG ipaddr
-PKG tyxml
+PKG tyxml tyxml.parser
+PKG camlzip
+PKG dynlink
 
 S src/**
 B src/**
