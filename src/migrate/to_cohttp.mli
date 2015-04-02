@@ -14,15 +14,7 @@ val to_version :
 
 (** [to_meth] cast method of request *)
 val to_meth :
-  Ocsigen_http_frame.Http_header.http_method ->
-  [> `DELETE
-   | `GET
-   | `HEAD
-   | `OPTIONS
-   | `Other of string
-   | `PATCH
-   | `POST
-   | `PUT ]
+  Ocsigen_http_frame.Http_header.http_method -> Cohttp.Code.meth
 
 (** [to_headers] cast OcsigenServer headers to Cohttp headers (this function is
     [fun x -> x] with simply annotation) *)
