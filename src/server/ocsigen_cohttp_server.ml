@@ -179,9 +179,8 @@ let get_number_of_connected = number_of_client
 
 
 let service ?ssl ~address ~port ~connector () =
-  let conn_closed _ () = () in
   let callback = handler ~address ~port ~extensions_connector:connector in
-  let config = { Server.callback; Server.conn_closed; } in
+  let config = Server.make ~callback () in
   (match ssl with
    | None -> Server.create ~stop ~mode:(`TCP (`Port port)) config
    | Some (crt, key, Some password) ->
