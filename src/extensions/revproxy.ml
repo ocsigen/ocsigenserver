@@ -25,7 +25,7 @@
    experimental Ocsigen_http_client module.
 
    TODO
-   - Change the policy for « trusted servers » for pipelining?
+   - Change the policy for trusted servers for pipelining?
    (see ocsigen_http_client.ml)
    - enhance pipelining
    - HTTP/1.0
@@ -138,18 +138,6 @@ let gen dir = function
            | None -> host
          in
 
-         let frame_of_cohttp (response, body) =
-           let open Ocsigen_http_frame in
-           {
-             frame_header = Of_cohttp.of_response response;
-             frame_content = Some
-                 (Ocsigen_stream.of_lwt_stream
-                    (fun x -> x)
-                    (Cohttp_lwt_body.to_stream body));
-             frame_abort = (fun () -> Lwt.return ());
-           }
-         in
-
          let do_request () =
            let ri = ri.request_info in
            let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
@@ -226,7 +214,7 @@ let gen dir = function
               (fun () ->
                  do_request ()
 
-                 >|= frame_of_cohttp
+                 >|= Of_cohttp.of_response_and_body'
                  >>= fun http_frame ->
                  let headers =
                    http_frame
