@@ -1,8 +1,8 @@
-ocsigen_cache.cmi :
 ocsigen_loader.cmi :
+ocsigen_cache.cmi :
+ocsigen_stream.cmi :
 ocsigen_config.cmi : ocsigen_lib.cmi
 ocsigen_messages.cmi :
-ocsigen_stream.cmi :
 ocsigen_getcommandline.cmi :
 polytables.cmi :
 dynlink_wrapper.cmo :
