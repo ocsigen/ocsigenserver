@@ -35,7 +35,7 @@ val to_request :
 val to_request_and_body :
   ?encoding:Cohttp.Transfer.encoding ->
   Ocsigen_http_frame.t ->
-  Uri.t -> Cohttp.Request.t * [> `Stream of string Lwt_stream.t ]
+  Uri.t -> Cohttp.Request.t * Cohttp_lwt_body.t
 
 (** [to_date] cast a date (as timestamp) to a string *)
 val to_date : float -> string
@@ -45,4 +45,4 @@ val to_type : string -> string option -> string
 (** [to_response_and_body] cast a OcsigenServer response to Cohttp response *)
 val to_response_and_body :
   Ocsigen_http_frame.result ->
-  Cohttp.Response.t * [> `Stream of string Lwt_stream.t ]
+  Cohttp.Response.t * Cohttp_lwt_body.t
