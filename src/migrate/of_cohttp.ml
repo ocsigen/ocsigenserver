@@ -24,8 +24,6 @@ let of_meth meth =
   | `Other "UNLINK" -> UNLINK
   | `Other _ -> raise (Invalid_argument "Http_header.meth_of_cohttp_meth")
 
-let of_headers : Cohttp.Header.t -> Http_headers.t = fun x -> x
-
 let of_request req =
   let open Ocsigen_http_frame.Http_header in
   {
@@ -33,7 +31,7 @@ let of_request req =
         (of_meth @@ Cohttp.Request.meth req,
          Uri.to_string @@ Cohttp.Request.uri req);
     proto = of_version @@ Cohttp.Request.version req;
-    headers = of_headers @@ Cohttp.Request.headers req;
+    headers =  Cohttp.Request.headers req;
   }
 
 let of_response resp =
@@ -41,7 +39,7 @@ let of_response resp =
   {
     mode = Answer (Cohttp.Code.code_of_status @@ Cohttp.Response.status resp);
     proto = of_version @@ Cohttp.Response.version resp;
-    headers = of_headers @@ Cohttp.Response.headers resp;
+    headers =  Cohttp.Response.headers resp;
   }
 
 let of_request_and_body (req, body) =
@@ -95,7 +93,7 @@ let of_response_and_body (resp, body) =
     | _  -> None in
   let content_type = Cohttp.Header.get_media_type
     @@ Cohttp.Response.headers resp in
-  let headers = of_headers @@ Cohttp.Response.headers resp in
+  let headers =  Cohttp.Response.headers resp in
   let charset =
     match Cohttp.Header.get (Cohttp.Response.headers resp) "Content-Type" with
     | None -> None
