@@ -6,10 +6,6 @@ val of_version : Cohttp.Code.version -> Ocsigen_http_frame.Http_header.proto
 (** [of_meth] cast method of request *)
 val of_meth : Cohttp.Code.meth -> Ocsigen_http_frame.Http_header.http_method
 
-(** [of_headers] cast Cohttp headers to OcsigenServer headers (this function is
-    [fun x -> x] with simply annotation) *)
-val of_headers : Cohttp.Header.t -> Http_headers.t
-
 (** [of_request] extracts only header of Cohttp request *)
 val of_request :
   Cohttp.Request.t -> Ocsigen_http_frame.Http_header.http_header
