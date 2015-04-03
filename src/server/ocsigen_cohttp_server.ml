@@ -156,7 +156,7 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
                   a (Printexc.to_string e)))
            !filenames; Lwt.return ())
 
-let conn_closed conn () =
+let conn_closed (flow, conn) =
   try let wakener = Hashtbl.find waiters conn in
       Lwt.wakeup wakener (); Hashtbl.remove waiters conn
   with Not_found -> ()
@@ -180,7 +180,7 @@ let get_number_of_connected = number_of_client
 
 let service ?ssl ~address ~port ~connector () =
   let callback = handler ~address ~port ~extensions_connector:connector in
-  let config = Server.make ~callback () in
+  let config = Server.make ~conn_closed ~callback () in
   (match ssl with
    | None -> Server.create ~stop ~mode:(`TCP (`Port port)) config
    | Some (crt, key, Some password) ->
