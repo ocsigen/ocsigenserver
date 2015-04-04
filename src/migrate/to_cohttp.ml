@@ -93,9 +93,7 @@ let to_request_and_body ?encoding
       Ocsigen_http_frame.frame_content;
     } uri =
   let stream = match frame_content with
-    | Some s -> Ocsigen_stream.to_lwt_stream
-                  ~is_empty:(fun x -> String.length x = 0)
-                  s
+    | Some s -> Ocsigen_stream.to_lwt_stream s
     | None -> (Lwt_stream.from (fun () -> Lwt.return None) : string Lwt_stream.t)
   in
   (to_request ?encoding frame_header uri, Cohttp_lwt_body.of_stream stream)
@@ -162,6 +160,4 @@ let to_response_and_body res =
      ~encoding
      ~headers
      (),
-   Cohttp_lwt_body.of_stream (Ocsigen_stream.to_lwt_stream
-                                ~is_empty:(fun x -> String.length x = 0)
-                                (fst res_stream)))
+   Cohttp_lwt_body.of_stream (Ocsigen_stream.to_lwt_stream (fst res_stream)))
