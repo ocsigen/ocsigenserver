@@ -42,7 +42,7 @@ include Ocsigen_command
 
 module Ocsigen_request_info = Ocsigen_request_info
 
-exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+exception Ocsigen_http_error = Ocsigen_cohttp_server.Ocsigen_http_error
 exception Ocsigen_Looping_request
 
 
