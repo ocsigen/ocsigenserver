@@ -1,5 +1,4 @@
 open Lwt
-open Ocsigen_messages
 open Ocsigen_socket
 open Ocsigen_lib
 open Ocsigen_request_info
@@ -11,6 +10,8 @@ open Ocsigen_generate
 open Lazy
 open Cohttp
 open Cohttp_lwt_unix
+
+let section = Lwt_log.Section.make "ocsigen:cohttp"
 
 module RI = Ocsigen_request_info (* An alias convenient for accessor *)
 
@@ -72,6 +73,9 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
   Hashtbl.add waiters conn wakener;
 
   let handle_error exn =
+    (* This may be a bit excessive, but ensure good logging. *)
+    Lwt_log.ign_error ~section ~exn "Error while handling request." ;
+
     let string_of_exn = Printexc.to_string exn in
 
     match exn with
@@ -150,10 +154,9 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
        if !filenames <> []
        then List.iter (fun a ->
            try Unix.unlink a
-           with Unix.Unix_error _ as e ->
-             Ocsigen_messages.warning
-               (Format.sprintf "Error while removing file %s: %s"
-                  a (Printexc.to_string e)))
+           with Unix.Unix_error _ as exn ->
+             Lwt_log.ign_warning_f ~section ~exn
+               "Error while removing file %s" a)
            !filenames; Lwt.return ())
 
 let conn_closed (flow, conn) =
