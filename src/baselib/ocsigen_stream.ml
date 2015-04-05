@@ -253,7 +253,7 @@ let of_lwt_stream stream =
 (** Convert an {!Ocsigen_stream.t} into a {!Lwt_stream.t}.
     @param is_empty function to skip empty chunk.
 *)
-let to_lwt_stream o_stream =
+let to_lwt_stream ?(is_empty = (fun _ -> false)) o_stream =
   let stream = ref (get o_stream) in
   let rec wrap () =
     next !stream >>= function
@@ -261,7 +261,9 @@ let to_lwt_stream o_stream =
     | Finished (Some next) -> stream := next; wrap ()
     | Cont (value, next) ->
       stream := next;
-      Lwt.return (Some value)
+      if is_empty value
+      then wrap ()
+      else Lwt.return (Some value)
   in Lwt_stream.from wrap
 
 module StringStream = struct
