@@ -121,7 +121,7 @@ val of_lwt_stream : 'a Lwt_stream.t -> 'a t
 (** Convert an {!Ocsigen_stream.t} into a {!Lwt_stream.t}.
     @param is_empty function to skip empty chunk.
 *)
-val to_lwt_stream : 'a t -> 'a Lwt_stream.t
+val to_lwt_stream : ?is_empty:('a -> bool) -> 'a t -> 'a Lwt_stream.t
 
 module StringStream : sig
 
