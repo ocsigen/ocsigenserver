@@ -75,7 +75,7 @@ check_library () {
 set_defaults () {
     name="ocsigenserver"
     enable_natdynlink=1
-    enable_debug=0
+    enable_debug=1
     enable_annot=0
     with_sqlite=1
     with_camlzip=1
