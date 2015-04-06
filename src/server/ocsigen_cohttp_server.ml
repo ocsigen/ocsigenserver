@@ -31,7 +31,7 @@ end
  * @param out_ch output for debug
  * @param request Cohttp request *)
 
-let print_cohttp_request out_ch request =
+let print_cohttp_request fmt request =
   let print_list print_data out_ch lst =
     let rec aux = function
       | [] -> ()
@@ -42,19 +42,26 @@ let print_cohttp_request out_ch request =
 
   let open Cohttp.Request in
 
-  Printf.fprintf out_ch "%s [%s/%s]:\n"
+  Format.fprintf fmt "%s [%s/%s]:\n"
     (Uri.to_string request.uri)
     (Cohttp.Code.string_of_version request.version)
-    (Cohttp.Code.string_of_method request.meth);
+    (Cohttp.Code.string_of_method request.meth) ;
+
   Cohttp.Header.iter
     (fun key values ->
-       Printf.fprintf out_ch "\t%s = %a\n" key
-         (print_list (fun out_ch x -> Printf.fprintf out_ch "%s" x)) values)
+       Format.fprintf fmt "\t%s = %a\n" key
+         (print_list Format.pp_print_string) values)
     request.headers
 
 let waiters = Hashtbl.create 256
 
 let handler ~address ~port ~extensions_connector (flow, conn) request body =
+
+  Lwt_log.ign_info_f ~section
+    "Receiving the request: %s"
+    (Format.asprintf "%a" print_cohttp_request request)
+  ;
+
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
   let rec getsockname = function
@@ -73,58 +80,39 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
   Hashtbl.add waiters conn wakener;
 
   let handle_error exn =
-    (* This may be a bit excessive, but ensure good logging. *)
-    Lwt_log.ign_error ~section ~exn "Error while handling request." ;
+
+    Lwt_log.ign_debug ~section ~exn "Got exception while handling request." ;
+
+    let ret_code = match exn with
+      | Ocsigen_http_error (cookies_to_set, code) ->
+        code
+      | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
+        500
+      | Unix.Unix_error (Unix.EACCES, _, _)
+      | Ocsigen_upload_forbidden ->
+        403
+      | Http_error.Http_exception (code, _, _) ->
+        code
+      | Ocsigen_Bad_Request ->
+        400
+      | Ocsigen_unsupported_media ->
+        415
+      | Neturl.Malformed_URL ->
+        400
+      | Ocsigen_Request_too_long ->
+        413
+      | exn ->
+        Lwt_log.ign_error ~section ~exn "Error while handling request." ;
+        500
+    in
+
+    Lwt_log.ign_warning_f ~section "Returning error code %i." ret_code ;
 
     let string_of_exn = Printexc.to_string exn in
-
-    match exn with
-    | Ocsigen_http_error (cookies_to_set, code) ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code code)
-        ~body:string_of_exn
-        ()
-    | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code 500)
-        ~body:string_of_exn
-        ()
-    | Unix.Unix_error (Unix.EACCES, _, _)
-    | Ocsigen_upload_forbidden ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code 403)
-        ~body:string_of_exn
-        ()
-    | Http_error.Http_exception (code, _, _) ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code code)
-        ~body:string_of_exn
-        ()
-    | Ocsigen_Bad_Request ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code 400)
-        ~body:string_of_exn
-        ()
-    | Ocsigen_unsupported_media ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code 415)
-        ~body:string_of_exn
-        ()
-    | Neturl.Malformed_URL ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code 400)
-        ~body:string_of_exn
-        ()
-    | Ocsigen_Request_too_long ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code 413)
-        ~body:string_of_exn
-        ()
-    | exn ->
-      Server.respond_error
-        ~status:(Cohttp.Code.status_of_code 500)
-        ~body:string_of_exn
-        ()
+    Server.respond_error
+      ~status:(Cohttp.Code.status_of_code ret_code)
+      ~body:string_of_exn
+      ()
   in
   Lwt.finalize (fun () ->
       Lwt.try_bind
