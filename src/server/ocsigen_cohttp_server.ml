@@ -108,11 +108,14 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
 
     Lwt_log.ign_warning_f ~section "Returning error code %i." ret_code ;
 
-    let string_of_exn = Printexc.to_string exn in
+    let body =
+      match ret_code with
+      | 404 -> "Not Found"
+      | _ -> Printexc.to_string exn in
+
     Server.respond_error
       ~status:(Cohttp.Code.status_of_code ret_code)
-      ~body:string_of_exn
-      ()
+      ~body ()
   in
   Lwt.finalize (fun () ->
       Lwt.try_bind
