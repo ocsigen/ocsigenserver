@@ -42,7 +42,6 @@ SERVER_PACKAGE := lwt.ssl           \
 	          tyxml.parser      \
                   dynlink           \
                   cohttp.lwt        \
-                  ppx_deriving.std
 
 SERVER_SYNTAX :=  tyxml.syntax lwt.syntax.log \
 

@@ -128,9 +128,6 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
             body
             waiter)
         (fun ri ->
-           Lwt_log.ign_debug_f ~section
-             "Generating the Ocsigen request info: %s"
-             (Format.asprintf "%a" Ocsigen_request_info.pp_request_info ri) ;
            Lwt.try_bind
              (extensions_connector ri)
              (fun res ->
