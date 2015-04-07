@@ -145,22 +145,31 @@ let of_cohttp_request ~address ~port
     Of_cohttp.of_version @@
     Request.version request
   in
-  let url =
-    let uri = request |> Request.uri in
-    let uri = match Uri.scheme uri with
-      | None -> Uri.with_scheme uri (Some "http")
-      | Some _ -> uri in
-    Uri.to_string uri in
+  let url = Request.uri request in
   let http_frame =
     Of_cohttp.of_request_and_body (request, body)
   in
-  let (_, headerhost, headerport, url, path, params, get_params) =
-    Url.parse url in
+
+  let url_string = Uri.to_string url in
+  Lwt_log.ign_debug_f ~section "Parsing url : %s" url_string ;
+  let headerhost = Uri.host url in
+  let headerport = Uri.port url in
+  let full_path_string = Uri.path url in
+  let path = String.split '/' full_path_string in
+  let query = Uri.query url in
+  let params = match query with
+    | [] -> None
+    | _ -> Some (Uri.encoded_of_query query)
+  in
+  let get_params =
+    lazy (List.map (fun (k, v) -> (k, String.concat "," v)) query) in
+
   let headerhost, headerport =
     match headerhost with
     | None -> get_host_from_host_header http_frame
     | _ -> headerhost, headerport
   in
+
   if clientproto = Ocsigen_http_frame.Http_header.HTTP11 && headerhost = None
   then raise Ocsigen_Bad_Request;
 
@@ -222,14 +231,12 @@ let of_cohttp_request ~address ~port
     | Some f -> Some (fun ci -> f ci >>= fun (_, b) -> Lwt.return b)
   in
 
-  let path_string = Url.string_of_url_path ~encode:true path in
-
   Lwt.return
     (Ocsigen_request_info.make
-       ~url_string:url
+       ~url_string
        ~meth:meth
        ~protocol:http_frame.Ocsigen_http_frame.frame_header.Ocsigen_http_frame.Http_header.proto
-       ~full_path_string:path_string
+       ~full_path_string
        ~full_path:path
        ~get_params_string:params
        ~host:headerhost
