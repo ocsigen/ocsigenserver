@@ -194,71 +194,78 @@ let start_server () = try
 
       Ocsigen_messages.open_files ~user ~group () >>= fun () ->
 
-        (let _ = () in (* it's for ocp-indent ... it's ugly ! *)
-         (*let wait_end_init, wait_end_init_awakener = wait () in *)
-         (* Listening on all ports: *)
-        (*
+      (*let wait_end_init, wait_end_init_awakener = wait () in *)
+      (* Listening on all ports: *)
+      (*
          sockets := List.fold_left
            (fun a i -> (listen false i wait_end_init extensions_connector)@a) [] ports;
          sslsockets := List.fold_left
            (fun a i -> (listen true i wait_end_init extensions_connector)@a) [] sslports;
-        *)
+      *)
 
-         let connection = match List.map
-                                  (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p) ports with
-         | [] -> [("0.0.0.0", 80)]
-         | l -> l
-         in
+      let l =
+        List.map (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p)
+          ports
+      in
+      let connection = match l with
+        | [] -> [("0.0.0.0", 80)]
+        | l -> l
+      in
 
-         let ssl_connection =
-           let ssl = match ssl with
-             | None
-             | Some (None, None) -> None
-             | Some (Some crt, Some key) -> Some (crt, key)
-             | Some (Some _, None) ->
-               raise (Ocsigen_config.Config_file_error "SSL key is missing")
-             | Some (None, Some _) ->
-               raise (Ocsigen_config.Config_file_error "SSL certificate is missing")
-           in match List.map
-                      (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p)
-                      sslports, ssl with
-           | [], Some (crt, key) -> [("0.0.0.0", 443, (crt, key))]
-           | l, Some (crt, key) ->
-             List.map (fun (a, p) -> (a, p, (crt, key))) l
-           | _ -> []
-         in
+      let ssl_connection =
+        let ssl = match ssl with
+          | None
+          | Some (None, None) -> None
+          | Some (Some crt, Some key) -> Some (crt, key)
+          | Some (Some _, None) ->
+            raise (Ocsigen_config.Config_file_error "SSL key is missing")
+          | Some (None, Some _) ->
+            raise (Ocsigen_config.Config_file_error "SSL certificate is missing")
+        in match List.map
+                   (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p)
+                   sslports, ssl with
+        | [], Some (crt, key) -> [("0.0.0.0", 443, (crt, key))]
+        | l, Some (crt, key) ->
+          List.map (fun (a, p) -> (a, p, (crt, key))) l
+        | _ -> []
+      in
 
-         begin match ports with
-           | (_, p)::_ -> Ocsigen_config.set_default_port p
-           | _ -> ()
-         end;
-         begin match sslports with
-           | (_, p)::_ -> Ocsigen_config.set_default_sslport p
-           | _ -> ()
-         end;
+      begin match ports with
+        | (_, p)::_ -> Ocsigen_config.set_default_port p
+        | _ -> ()
+      end;
+      begin match sslports with
+        | (_, p)::_ -> Ocsigen_config.set_default_sslport p
+        | _ -> ()
+      end;
 
-         let current_uid = Unix.getuid () in
+      let current_uid = Unix.getuid () in
 
-         let gid = match group with
-           | None -> Unix.getgid ()
-           | Some group -> (try
-                              (Unix.getgrnam group).Unix.gr_gid
-                            with Not_found as e -> errlog ("Error: Wrong group"); raise e)
-         in
+      let gid = match group with
+        | None -> Unix.getgid ()
+        | Some group ->
+          try (Unix.getgrnam group).Unix.gr_gid
+          with Not_found as e ->
+            errlog ("Error: Wrong group");
+            raise e
+      in
 
-         let uid = match user with
-           | None -> current_uid
-           | Some user -> (try
-                             (Unix.getpwnam user).Unix.pw_uid
-                           with Not_found as e -> (errlog ("Error: Wrong user"); raise e))
-         in
+      let uid = match user with
+        | None -> current_uid
+        | Some user ->
+          try (Unix.getpwnam user).Unix.pw_uid
+          with Not_found as e ->
+            errlog ("Error: Wrong user");
+            raise e
+      in
 
-         (* A pipe to communicate with the server *)
-         let commandpipe = get_command_pipe () in
-         (try
-            ignore (Unix.stat commandpipe);
-          with Unix.Unix_error _ ->
-           (try
+      (* A pipe to communicate with the server *)
+      let commandpipe = get_command_pipe () in
+      begin
+        try
+          ignore (Unix.stat commandpipe);
+        with Unix.Unix_error _ ->
+          try
             let umask = Unix.umask 0 in
             Unix.mkfifo commandpipe 0o660;
             Unix.chown commandpipe uid gid;
@@ -266,8 +273,8 @@ let start_server () = try
             Lwt_log.ign_warning ~section "Command pipe created";
           with e ->
             Lwt_log.ign_error ~section ~exn:e
-              "Cannot create the command pipe"));
-
+              "Cannot create the command pipe";
+      end ;
       (* I change the user for the process *)
       begin try
           if current_uid = 0 then begin
@@ -367,7 +374,7 @@ let start_server () = try
         Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
       );
 
-         (* Lwt.wakeup wait_end_init_awakener (); *)
+      (* Lwt.wakeup wait_end_init_awakener (); *)
        (*
        let config = {
          Server.callback =
@@ -394,23 +401,23 @@ let start_server () = try
        in Lwt.join process
        *)
 
-         Lwt.join
-           ((List.map (fun (address, port) -> Server.service
-                          ~address
-                          ~port
-                          ~connector:extensions_connector ()) connection)
-            @
-            (List.map (fun (address, port, (crt, key)) -> Server.service
-                          ~ssl:(crt, key, Some (ask_for_passwd [(address, port)]))
-                          ~address
-                          ~port
-                          ~connector:extensions_connector ())) ssl_connection)
+      Lwt.join
+        ((List.map (fun (address, port) -> Server.service
+                       ~address
+                       ~port
+                       ~connector:extensions_connector ()) connection)
+         @
+         (List.map (fun (address, port, (crt, key)) -> Server.service
+                       ~ssl:(crt, key, Some (ask_for_passwd [(address, port)]))
+                       ~address
+                       ~port
+                       ~connector:extensions_connector ())) ssl_connection)
        (*
          Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
 
        fst (Lwt.wait ())
        *)
-       )
+
     in
 
   (*
