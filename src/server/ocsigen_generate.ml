@@ -145,7 +145,12 @@ let of_cohttp_request ~address ~port
     Of_cohttp.of_version @@
     Request.version request
   in
-  let url = Uri.to_string @@ Request.uri request in
+  let url =
+    let uri = request |> Request.uri in
+    let uri = match Uri.scheme uri with
+      | None -> Uri.with_scheme uri (Some "http")
+      | Some _ -> uri in
+    Uri.to_string uri in
   let http_frame =
     Of_cohttp.of_request_and_body (request, body)
   in
