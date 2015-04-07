@@ -132,8 +132,7 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
              (extensions_connector ri)
              (fun res ->
                 Ocsigen_range.compute_range ri res
-                >|= To_cohttp.to_response_and_body
-                >>= Lwt.return)
+                >|= To_cohttp.to_response_and_body)
              (function
                | Ocsigen_Is_a_directory fun_request ->
                  Server.respond_redirect
