@@ -28,6 +28,9 @@ depends: [
   "ipaddr" {>= "2.1"}
   "camlp4"
   "cohttp" {>= "0.16.0"}
+
+  # REMOVE AFTER DEBUGGING
+  "ppx_deriving"
 ]
 depopts: "camlzip"
 conflicts: "camlzip" {< "1.04"}
