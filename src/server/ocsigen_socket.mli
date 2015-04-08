@@ -26,8 +26,3 @@ val port_of_sockaddr : Unix.sockaddr -> int
     @param A socket_type
 *)
 val string_of_socket_type : socket_type -> string
-
-(** socket_type_of_string cast a string addr:port to a socket_type
-    @param str string in format "addr:port"
-*)
-val socket_type_of_string : string -> socket_type
