@@ -309,27 +309,50 @@ let service ?ssl ~address ~port ~connector () =
   let connector ri () =
     connector ri () >>= fun res ->
     handle_result_frame ri res in
-  let callback = handler ~address ~port ~extensions_connector:connector in
-  let config = Server.make ~conn_closed ~callback () in
-  (match ssl with
-   | None -> Server.create ~stop ~mode:(`TCP (`Port port)) config
-   | Some (crt, key, Some password) ->
-     Server.create
-       ~stop
-       ~mode:(`OpenSSL
-                (`Crt_file_path crt,
-                 `Key_file_path key,
-                 `Password password,
-                 `Port port))
-       config
-   | Some (crt, key, None) ->
-     Server.create
-       ~stop
-       ~mode:(`OpenSSL
-                (`Crt_file_path crt,
-                 `Key_file_path key,
-                 `No_password,
-                 `Port port))
-       config)
-  >>= fun () ->
-  Lwt.return (Lwt.wakeup stop_wakener ())
+  let tls_server_key = match ssl with
+    | Some (crt, key, Some password) ->
+      `TLS (`Crt_file_path crt,
+            `Key_file_path key,
+            `Password password)
+    | Some (crt, key, None) ->
+      `TLS (`Crt_file_path crt,
+            `Key_file_path key,
+            `No_password)
+    | None -> `None
+  in
+  (* We create a specific context for Conduit and Cohttp. *)
+  Conduit_lwt_unix.init
+    ~src:address
+    ~tls_server_key ()
+  >>= fun conduit_ctx ->
+  Lwt.return
+    (Cohttp_lwt_unix_net.init
+       ~ctx:conduit_ctx ())
+  (* We catch the INET_ADDR of the server *)
+  >>= fun ctx ->
+  Lwt_unix.getaddrinfo
+    address
+    "0"
+    [Unix.AI_PASSIVE; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]
+  >>= function
+  | { ai_addr = ADDR_INET (ai_addr, _); } :: _ ->
+    let callback =
+      handler ~address:ai_addr ~port ~extensions_connector:connector
+    in
+    let config = Server.make ~conn_closed ~callback () in
+    let mode =
+      match tls_server_key with
+      | `None -> `TCP (`Port port)
+      | `TLS (crt, key, pass) ->
+        `OpenSSL (crt, key, pass, `Port port)
+    in
+    Server.create ~stop ~ctx ~mode  config
+    >>= fun () ->
+    Lwt.return (Lwt.wakeup stop_wakener ())
+  | _ ->
+    (* This case is not possible:
+       - Conduit raise an error if we have an [ADDR_UNIX].
+       - The result of [getaddrinfo] must not be empty
+         (or Conduit would also raise an error).
+    *)
+    assert false
