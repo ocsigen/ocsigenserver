@@ -50,6 +50,7 @@ val make :
   remote_port:int ->
   ?forward_ip:string list ->
   server_port:int ->
+  server_addr:Unix.inet_addr ->
   user_agent:string ->
   cookies_string:string option Lazy.t ->
   cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
@@ -106,6 +107,7 @@ val update :
   ?remote_port:int ->
   ?forward_ip:string list ->
   ?server_port:int ->
+  ?server_addr:Unix.inet_addr ->
   ?user_agent:string ->
   ?cookies_string:string option Lazy.t ->
   ?cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->

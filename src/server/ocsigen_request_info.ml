@@ -37,6 +37,7 @@ type request_info =
    remote_port: int;      (** Port used by the client *)
    forward_ip: string list; (** IPs of gateways the request went throught *)
    server_port: int;      (** Port of the request (server) *)
+   server_addr: Unix.inet_addr [@opaque]; (** Address of the request (server) *)
    user_agent: string;    (** User_agent of the browser *)
    cookies_string: string option Lazy.t [@opaque]; (** Cookies sent by the browser *)
    cookies: string CookiesTable.t Lazy.t [@opaque];  (** Cookies sent by the browser *)
@@ -113,9 +114,6 @@ let ri_of_url ?(full_rewrite = false) url ri =
    get_params ;
    }
 
-let get_server_address ri =
-  raise (Invalid_argument "Ocsigen_request_info.get_server_address")
-
 let make
     ~url_string
     ~meth
@@ -140,6 +138,7 @@ let make
     ~remote_port
     ?(forward_ip=[])
     ~server_port
+    ~server_addr
     ~user_agent
     ~cookies_string
     ~cookies
@@ -193,6 +192,7 @@ let make
     remote_port;
     forward_ip;
     server_port;
+    server_addr;
     user_agent;
     cookies_string;
     cookies;
@@ -243,6 +243,7 @@ let update ri
     ?(remote_port=ri.remote_port)
     ?(forward_ip=ri.forward_ip)
     ?(server_port=ri.server_port)
+    ?(server_addr=ri.server_addr)
     ?(user_agent=ri.user_agent)
     ?(cookies_string=ri.cookies_string)
     ?(cookies=ri.cookies)
@@ -292,6 +293,7 @@ let update ri
     remote_port;
     forward_ip;
     server_port;
+    server_addr;
     user_agent;
     cookies_string;
     cookies;
@@ -369,3 +371,6 @@ let accept_language { accept_language; _ } = accept_language
 let accept_encoding { accept_encoding; _ } = accept_encoding
 let accept { accept; _ } = accept
 let connection_closed { connection_closed; _ } = connection_closed
+
+let get_server_address ri =
+  (ri.server_addr, ri.server_port)
