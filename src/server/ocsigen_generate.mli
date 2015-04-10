@@ -12,7 +12,7 @@ exception Ocsigen_upload_forbidden
     @param body body of request
 *)
 val of_cohttp_request :
-  address:string ->
+  address:Unix.inet_addr ->
   port:int ->
   string list ref ->
   Lwt_unix.sockaddr ->

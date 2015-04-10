@@ -241,6 +241,7 @@ let of_cohttp_request ~address ~port
        ~remote_ip:ipstring
        ~remote_port:(port_of_sockaddr sockaddr)
        ~server_port:port
+       ~server_addr:address
        ~user_agent:useragent
        ~cookies_string:cookies_string
        ~cookies:cookies
