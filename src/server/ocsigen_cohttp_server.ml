@@ -318,27 +318,55 @@ let service ?ssl ~address ~port ~connector () =
   let connector ri () =
     connector ri () >>= fun res ->
     handle_result_frame ri res in
-  let callback = handler ~address ~port ~extensions_connector:connector in
-  let config = Server.make ~conn_closed ~callback () in
-  (match ssl with
-   | None -> Server.create ~stop ~mode:(`TCP (`Port port)) config
-   | Some (crt, key, Some password) ->
-     Server.create
-       ~stop
-       ~mode:(`OpenSSL
-                (`Crt_file_path crt,
-                 `Key_file_path key,
-                 `Password password,
-                 `Port port))
-       config
-   | Some (crt, key, None) ->
-     Server.create
-       ~stop
-       ~mode:(`OpenSSL
-                (`Crt_file_path crt,
-                 `Key_file_path key,
-                 `No_password,
-                 `Port port))
-       config)
-  >>= fun () ->
-  Lwt.return (Lwt.wakeup stop_wakener ())
+  let tls_server_key = match ssl with
+    | Some (crt, key, Some password) ->
+      `TLS (`Crt_file_path crt,
+            `Key_file_path key,
+            `Password password)
+    | Some (crt, key, None) ->
+      `TLS (`Crt_file_path crt,
+            `Key_file_path key,
+            `No_password)
+    | None -> `None
+  in
+  (* We create a specific context for Conduit and Cohttp. *)
+  (Conduit_lwt_unix.init
+    ~src:address
+    ~tls_server_key ())
+  >>= fun conduit_ctx ->
+    Lwt.return
+      (Cohttp_lwt_unix_net.init
+       ~ctx:conduit_ctx ())
+  (* We catch the INET_ADDR of the server *)
+  >>= fun ctx ->
+    Lwt_unix.getaddrinfo
+      address
+      "0"
+      [Unix.AI_PASSIVE; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]
+  >>= function
+    | { ai_addr = ADDR_INET (address, _); } :: _ ->
+      (* This pattern is not exhaustive but the other case is not possible (for
+       * the moment ?) because Conduit raise an error if we have an [ADDR_UNIX]
+       * (and the old version of ocsigen doesn't handle this case) and the
+       * result of [getaddrinfo] must not be empty (in other case, Conduit raise
+       * an error also).
+       *)
+      let callback = handler ~address ~port ~extensions_connector:connector in
+      let config = Server.make ~conn_closed ~callback () in
+      (match ssl with
+       | None -> Server.create ~stop ~ctx ~mode:(`TCP (`Port port)) config
+       | Some (crt, key, Some password) ->
+         Server.create
+           ~stop
+           ~ctx
+           ~mode:(`OpenSSL (server_tls_config_of_tls_server_key tls_server_key port))
+           config
+       | Some (crt, key, None) ->
+         Server.create
+           ~stop
+           ~ctx
+           ~mode:(`OpenSSL (server_tls_config_of_tls_server_key tls_server_key port))
+           config)
+      >>= fun () ->
+      Lwt.return (Lwt.wakeup stop_wakener ())
+  | _ -> assert false
