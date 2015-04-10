@@ -177,6 +177,15 @@ let shutdown_server timeout =
 let number_of_client () = 0
 let get_number_of_connected = number_of_client
 
+(* Avoid duplicate code between server_tls_config and tls_server_key type.
+ * It's conversion type specificaly for a TLS server. *)
+let server_tls_config_of_tls_server_key
+  : Conduit_lwt_unix.tls_server_key ->
+    (int -> Conduit_lwt_unix.server_tls_config) =
+  function `None -> assert false (* specific for a TLS server *)
+         | `TLS (crt, key, pass) ->
+           fun port -> (crt, key, pass, `Port port)
+
 (* An http result [res] frame has been computed. Depending on
    the If-(None-)?Match and If-(Un)?Modified-Since headers of [ri],
    we return this frame, a 304: Not-Modified, or a 412: Precondition Failed.
