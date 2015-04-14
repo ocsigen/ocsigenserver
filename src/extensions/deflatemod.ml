@@ -23,6 +23,7 @@
 (*****************************************************************************)
 (*****************************************************************************)
 
+open Ocsigen_lib
 open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
@@ -233,7 +234,7 @@ let stream_filter contentencoding url deflate choice res =
   return (Ext_found (fun () ->
       try (
         match Ocsigen_http_frame.Result.content_type res with
-        | None -> raise No_compress (* il faudrait défaut ? *)
+        | None -> raise No_compress (* il faudrait dÃ©faut ? *)
         | Some contenttype ->
           match Ocsigen_headers.parse_mime_type contenttype with
           | None, _ | _, None -> raise No_compress (* should never happen? *)
