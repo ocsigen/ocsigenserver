@@ -56,16 +56,24 @@ val parser_config : Simplexmlparser.xml list ->
   Simplexmlparser.xml list list
 val parse_server : bool -> Simplexmlparser.xml list -> unit
 
-type socket_type =
-  | IPv4 of Unix.inet_addr
-  | IPv6 of Unix.inet_addr
-  | All
-
+(** First pass of parse XML file. Extracts this informations:
+    {ul
+    {- user to execute OcsigenServer (ex: www-data) }
+    {- group to execute OcsigenServer (ex: www-data) }
+    {- SSL key and SSL certificate }
+    {- list of HTTP port to listen (ex: 80) }
+    {- list of HTTPS port to listen (ex: 443) }
+    {- minimum and maximum of threads }
+    }
+*)
 val extract_info :
   Simplexmlparser.xml list ->
   (string option * string option) *
   ((string option * string option) option *
-   (socket_type * int) list * (socket_type * int) list) * (int * int)
+   (Ocsigen_socket.socket_type * int) list *
+   (Ocsigen_socket.socket_type * int) list) *
+  (int * int)
+
 val parse_config :
   ?file:string ->
   unit ->

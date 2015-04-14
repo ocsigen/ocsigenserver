@@ -13,12 +13,14 @@ all: byte opt
 
 ### Common files ###
 
-FILES := ocsigen_request_info.ml \
-         ocsigen_extensions.ml  \
+FILES := ocsigen_socket.ml      \
+         ocsigen_request_info.ml \
+         ocsigen_command.ml     \
          ocsigen_range.ml       \
+         ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
          ocsigen_http_client.ml \
-         ocsigen_local_files.ml  \
+         ocsigen_local_files.ml \
          ocsigen_server.ml      \
 
 
@@ -79,9 +81,9 @@ servertop: ${SERVERLIBS}
 ## Clean up
 
 clean:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
+	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
-	-rm -r ${PROJECTNAME} ${PROJECTNAME}.opt
+	-rm -f ${PROJECTNAME} ${PROJECTNAME}.opt
 	-rm -f servertop
 distclean: clean
 	-rm -f *~ \#* .\#*

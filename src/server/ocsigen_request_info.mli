@@ -12,6 +12,13 @@ type file_info = {
 
 type request_info
 
+(** Parsing URLs.
+   This allows to modify the URL in the request_info.
+   (to be used for example with Ext_retry_with or Ext_continue_with)
+ *)
+val ri_of_url : ?full_rewrite:bool -> string -> request_info -> request_info
+
+(** Make a request_info *)
 val make :
   url_string:string ->
   meth:Ocsigen_http_frame.Http_header.http_method ->
@@ -125,7 +132,10 @@ val update :
   ?nb_tries:int ->
   ?connection_closed:unit Lwt.t -> unit -> request_info
 
+(** Update [nb_tries] slot of [request_info] *)
 val update_nb_tries : request_info -> int -> unit
+
+(** Update cache of [request_info] *)
 val update_request_cache : request_info -> Polytables.t -> unit
 
 (** Accessor for range of request_info *)

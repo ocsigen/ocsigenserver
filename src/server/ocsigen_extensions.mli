@@ -30,6 +30,8 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
+include (module type of Ocsigen_command)
+
 module Ocsigen_request_info : (module type of Ocsigen_request_info
                                 with type request_info = Ocsigen_request_info.request_info
                                  and type file_info = Ocsigen_request_info.file_info
@@ -155,8 +157,8 @@ and request = {
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory of request
-
+exception Ocsigen_Is_a_directory
+  of (Ocsigen_request_info.request_info -> Neturl.url)
 
 type answer =
   | Ext_do_nothing
@@ -438,9 +440,18 @@ end
 val get_hostname : request -> string
 
 (** Returns the port to be used for absolute links or redirections.
-    It is either the port the server is listening at or the default port set in
-    the configuration file. *)
+    It is either:
+    - the port the server is listening at
+    - or the port in the Host header
+    - or the default port set in the configuration file. *)
 val get_port : request -> int
+
+
+(** new_url_of_directory_request create a redirection and generating a new url
+    for the client (depending on the server configuration and request)
+    @param request configuration of the server
+    @param ri request *)
+val new_url_of_directory_request : request -> request_info -> Neturl.url
 
 (** Parsing URLs.
     This allows to modify the URL in the request_info.
@@ -475,26 +486,6 @@ val find_redirection :
   bool ->
   string option -> int -> string option -> string -> string -> string
 
-
-(** {3 Extending server commands} *)
-exception Unknown_command
-
-(** Use a prefix for all your commands when you want to create
-    extension-specific commands.
-    For example if the prefix is "myextension" and the commande "blah",
-    the actual command to be written by the user is "myextension:blah".
-    Give as parameter the function that will parse the command and do an action.
-    Its first parameter is the full command as a string.
-    The second one is the command without prefix, split by word.
-    It must raise [ocsigen_extensions.Unknown_command] if it does
-    not recognize the command.
-*)
-val register_command_function :
-  ?prefix:string -> (string -> string list -> unit Lwt.t) -> unit
-
-(**/**)
-val get_command_function :
-  unit -> (?prefix:string -> string -> string list -> unit Lwt.t)
 
 (**/**)
 (**/**)

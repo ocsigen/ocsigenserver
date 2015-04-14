@@ -19,6 +19,8 @@
 *)
 
 open Lwt
+open Ocsigen_messages
+open Ocsigen_socket
 open Ocsigen_lib
 open Ocsigen_extensions
 open Ocsigen_http_frame
@@ -54,42 +56,6 @@ let _ =
   Lwt_timeout.set_exn_handler
     (fun e -> Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt \
                                                  timeout")
-
-let make_ipv6_socket addr port =
-  let socket = Lwt_unix.socket Unix.PF_INET6 Unix.SOCK_STREAM 0 in
-  Lwt_unix.set_close_on_exec socket;
-  Lwt_unix.setsockopt socket Unix.SO_REUSEADDR true;
-  Lwt_unix.setsockopt socket Unix.IPV6_ONLY true;
-  Lwt_unix.bind socket (Unix.ADDR_INET (addr, port));
-  socket
-
-let make_ipv4_socket addr port =
-  let socket = Lwt_unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-  Lwt_unix.set_close_on_exec socket;
-  Lwt_unix.setsockopt socket Unix.SO_REUSEADDR true;
-  Lwt_unix.bind socket (Unix.ADDR_INET (addr, port));
-  socket
-
-let make_sockets addr port =
-  match addr with
-  | All ->
-    (* The user didn't specify a protocol in the configuration
-       file; we try to open an IPv6 socket (listening to IPv6
-       only) if possible and we open an IPv4 socket anyway. This
-       corresponds to the net.ipv6.bindv6only=0 behaviour on Linux,
-       but is portable and should work with
-       net.ipv6.bindv6only=1 as well. *)
-    let ipv6_socket =
-      try [make_ipv6_socket Unix.inet6_addr_any port]
-      with Unix.Unix_error
-          ((Unix.EAFNOSUPPORT | Unix.EPROTONOSUPPORT),
-           _, _) -> []
-    in
-    (make_ipv4_socket Unix.inet_addr_any port)::ipv6_socket
-  | IPv4 addr ->
-    [make_ipv4_socket addr port]
-  | IPv6 addr ->
-    [make_ipv6_socket addr port]
 
 let sslctx = Ocsigen_http_client.sslcontext
 
@@ -741,26 +707,11 @@ let service receiver sender_slot request meth url port sockaddr =
                (fun e ->
                   finish_request ();
                   match e with
-                  | Ocsigen_extensions.Ocsigen_Is_a_directory request ->
+                  | Ocsigen_extensions.Ocsigen_Is_a_directory fun_request ->
                     (* User requested a directory. We redirect it to
                        the correct url (with a slash), so that relative
                        urls become correct *)
-                    Lwt_log.ign_info ~section "Sending 301 Moved permanently";
-                    let port = Ocsigen_extensions.get_port request in
-                    let new_url = Neturl.make_url
-                        ~scheme:(if (Ocsigen_request_info.ssl ri)
-                                 then "https" else "http")
-                        ~host:(Ocsigen_extensions.get_hostname request)
-                        ?port:(if (port = 80
-                                   && not (Ocsigen_request_info.ssl ri))
-                               || ((Ocsigen_request_info.ssl ri) && port = 443)
-                               then None
-                               else Some port)
-                        ~path:(""::(Url.add_end_slash_if_missing
-                                      (Ocsigen_request_info.full_path ri)))
-                        ?query:(Ocsigen_request_info.get_params_string ri)
-                        http_url_syntax
-                    in
+                    let new_url = fun_request ri in
                     send_aux
                       (Result.update (Ocsigen_http_frame.Result.empty ())
                          ~code:301
@@ -1182,9 +1133,9 @@ let _ =
       Lwt.return ()
     | ["clearcache"] -> Ocsigen_cache.clear_all_caches ();
       Lwt.return ()
-    | _ -> Lwt.fail Ocsigen_extensions.Unknown_command
+    | _ -> Lwt.fail Ocsigen_command.Unknown_command
   in
-  Ocsigen_extensions.register_command_function f
+  Ocsigen_command.register_command_function f
 
 let start_server () = try
 
@@ -1346,21 +1297,21 @@ let start_server () = try
 
       let rec f () =
         Lwt_chan.input_line pipe >>= fun s ->
-        Lwt_log.ign_warning_f ~section "Command received: %s" s;
+        Ocsigen_messages.warning ("Command received: "^s);
         (Lwt.catch
            (fun () ->
               let prefix, c =
                 match String.split ~multisep:true ' ' s with
-                | [] -> raise Ocsigen_extensions.Unknown_command
+                | [] -> raise Ocsigen_command.Unknown_command
                 | a::l ->
                   try
                     let aa, ab = String.sep ':' a in
                     (Some aa, (ab::l))
                   with Not_found -> None, (a::l)
               in
-              Ocsigen_extensions.get_command_function () ?prefix s c)
+              Ocsigen_command.get_command_function () ?prefix s c)
            (function
-             | Unknown_command ->
+             | Ocsigen_command.Unknown_command ->
                Lwt_log.ign_warning ~section "Unknown command";
                Lwt.return ()
              | e ->

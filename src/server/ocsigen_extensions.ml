@@ -37,6 +37,9 @@ open Lwt
 open Ocsigen_lib
 open Ocsigen_cookies
 
+include Ocsigen_request_info
+include Ocsigen_command
+
 module Ocsigen_request_info = Ocsigen_request_info
 
 exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
@@ -189,25 +192,13 @@ and follow_symlink =
 
 
 (* Requests *)
-type ifrange = Ocsigen_request_info.ifrange =
-  | IR_No
-  | IR_Ifunmodsince of float
-  | IR_ifmatch of string
-type file_info = Ocsigen_request_info.file_info = {
-  tmp_filename: string;
-  filesize: int64;
-  raw_original_filename: string;
-  original_basename: string ;
-  file_content_type: ((string * string) * (string * string) list) option;
-}
-type request_info = Ocsigen_request_info.request_info
-and request = {
+type request = {
   request_info: request_info;
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory of request
-
+exception Ocsigen_Is_a_directory
+  of (Ocsigen_request_info.request_info -> Neturl.url)
 
 type answer =
   | Ext_do_nothing
@@ -317,6 +308,52 @@ let set_hosts v = hosts := v
 let get_hosts () = !hosts
 
 
+(* Default hostname is either the Host header or the hostname set in
+   the configuration file. *)
+let get_hostname req =
+  if Ocsigen_config.get_usedefaulthostname ()
+  then req.request_config.default_hostname
+  else match Ocsigen_request_info.host req.request_info with
+    | None -> req.request_config.default_hostname
+    | Some host -> host
+
+(* Default port is either
+   - the port the server is listening at
+   - or the port in the Host header
+   - or the default port set in the configuration file. *)
+let get_port req =
+  if Ocsigen_config.get_usedefaulthostname ()
+  then (if Ocsigen_request_info.ssl req.request_info
+        then req.request_config.default_httpsport
+        else req.request_config.default_httpport)
+  else match Ocsigen_request_info.port_from_host_field req.request_info with
+    | Some p -> p
+    | None ->
+      match Ocsigen_request_info.host req.request_info with
+      | Some _ -> if Ocsigen_request_info.ssl req.request_info then 443 else 80
+      | None -> Ocsigen_request_info.server_port req.request_info
+
+
+let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
+
+let new_url_of_directory_request request ri =
+  Lwt_log.ign_info ~section "Sending 301 Moved permanently";
+  let port = get_port request in
+  let ssl = Ocsigen_request_info.ssl ri in
+  let new_url = Neturl.make_url
+      ~scheme:(if ssl then "https" else "http")
+      ~host:(get_hostname request)
+      ?port:(if (port = 80 && not ssl)
+             || (ssl && port = 443)
+             then None
+             else Some port)
+      ~path:(""::(Url.add_end_slash_if_missing
+                    (Ocsigen_request_info.full_path ri)))
+      ?query:(Ocsigen_request_info.get_params_string ri)
+      http_url_syntax
+  in new_url
+
+
 
 (*****************************************************************************)
 (* To give parameters to extensions: *)
@@ -333,7 +370,9 @@ let site_match request (site_path : string list) url =
   (* We return the subpath without / at beginning *)
   let rec aux site_path url =
     match site_path, url with
-    | [], [] -> raise (Ocsigen_Is_a_directory request)
+    | [], [] ->
+      raise (Ocsigen_Is_a_directory
+               (new_url_of_directory_request request))
     | [], p -> Some p
     | a::l, aa::ll when a = aa -> aux l ll
     | _ -> None
@@ -971,37 +1010,6 @@ let compute_result
 
 (*****************************************************************************)
 
-
-
-(* used to modify the url in ri (for example for retrying after rewrite) *)
-let ri_of_url ?(full_rewrite = false) url ri =
-  let (_, host, _, url, path, params, get_params) = Url.parse url in
-  let host = match host with
-    | Some h -> host
-    | None -> Ocsigen_request_info.host ri
-  in
-  let path_string = Url.string_of_url_path ~encode:true path in
-  let original_fullpath, original_fullpath_string =
-    if full_rewrite
-    then (path, path_string)
-    else (Ocsigen_request_info.original_full_path ri, Ocsigen_request_info.original_full_path_string ri)
-  in
-  (* ri_original_full_path is not changed *)
-  Ocsigen_request_info.update ri
-    ~url_string:url
-    ~host:host
-    ~full_path_string:path_string
-    ~full_path:path
-    ~original_full_path_string:original_fullpath_string
-    ~original_full_path:original_fullpath
-    ~sub_path:path
-    ~sub_path_string:path_string
-    ~get_params_string:params
-    ~get_params:get_params ()
-
-
-
-(*****************************************************************************)
 (* This is used by server.ml.
    I put that here because I need it to be accessible for profiling. *)
 let sockets = ref []
@@ -1043,36 +1051,6 @@ let get_server_address ri =
   | Unix.ADDR_INET (addr,port) -> addr,port
 
 
-(*****************************************************************************)
-(* Default hostname is either the Host header or the hostname set in
-   the configuration file. *)
-let get_hostname req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then req.request_config.default_hostname
-  else match Ocsigen_request_info.host req.request_info with
-    | None -> req.request_config.default_hostname
-    | Some host -> host
-
-
-(*****************************************************************************)
-(* Default port is either
-   - the port the server is listening at
-   - or the port in the Host header
-   - or the default port set in the configuration file. *)
-let get_port req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then (if Ocsigen_request_info.ssl req.request_info
-        then req.request_config.default_httpsport
-        else req.request_config.default_httpport)
-  else match Ocsigen_request_info.port_from_host_field req.request_info with
-    | Some p -> p
-    | None ->
-      match Ocsigen_request_info.host req.request_info with
-      | Some _ -> if Ocsigen_request_info.ssl req.request_info then 443 else 80
-      | None -> Ocsigen_request_info.server_port req.request_info
-
-
-(*****************************************************************************)
 (* user directories *)
 
 exception NoSuchUser
@@ -1144,33 +1122,6 @@ let find_redirection regexp full_url dest
       | Some g -> sub_path_string ^ "?" ^ g
     in
     match Netstring_pcre.string_match regexp path 0 with
-      | None -> raise Not_concerned
-      | Some _ -> (* Matching regexp found! *)
-          Netstring_pcre.global_replace regexp dest path
-
-
-(******************************************************************)
-(* Extending commands *)
-exception Unknown_command
-
-let register_command_function, get_command_function =
-  let command_function = ref (fun ?prefix _ _ -> Lwt.fail Unknown_command) in
-  ((fun ?prefix f ->
-      let prefix' = prefix in
-      let old_command_function = !command_function in
-      command_function :=
-        (fun ?prefix s c ->
-           Lwt.catch (fun () -> old_command_function ?prefix s c)
-             (function
-               | Unknown_command ->
-                 if prefix = prefix'
-                 then f s c
-                 else Lwt.fail Unknown_command
-               | e -> Lwt.fail e))),
-   (fun () -> !command_function))
-
-
-let () =
-  register_command_function
-    ~prefix:"logs"
-    (Ocsigen_messages.command_f Unknown_command)
+    | None -> raise Not_concerned
+    | Some _ -> (* Matching regexp found! *)
+        Netstring_pcre.global_replace regexp dest path

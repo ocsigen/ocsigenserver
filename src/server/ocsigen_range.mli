@@ -18,9 +18,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-val compute_range : 
-  Ocsigen_extensions.request_info ->
+(** [compute_range] add in header of result a media-range *)
+val compute_range :
+  Ocsigen_request_info.request_info ->
   Ocsigen_http_frame.result ->
   Ocsigen_http_frame.result Lwt.t
 
-val get_range : Ocsigen_http_frame.t -> ((int64 * int64) list * int64 option * Ocsigen_extensions.ifrange) option
+val get_range : Ocsigen_http_frame.t ->
+  ((int64 * int64) list * int64 option * Ocsigen_request_info.ifrange) option
