@@ -80,11 +80,11 @@ end
 (*****************************************************************************)
 
 let make_cryptographic_safe_string =
-  let rng = Cryptokit.Random.device_rng "/dev/urandom"
-  and to_b64 = Cryptokit.Base64.encode_compact () in
+  let rng = Cryptokit.Random.device_rng "/dev/urandom" in
   fun () ->
     let random_part =
       let random_number = Cryptokit.Random.string rng 20 in
+      let to_b64 = Cryptokit.Base64.encode_compact () in
       Cryptokit.transform_string to_b64 random_number
     and sequential_part =
       (*VVV Use base 64 also here *)
