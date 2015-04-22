@@ -81,44 +81,41 @@ type output_buffer =
 (* puts in oz the content of buf, from pos to pos + len ;
  * f is the continuation of the current stream *)
 let rec output oz f buf pos len  =
-  if pos < 0 || len < 0 || pos + len > String.length buf then
-    assert false ;
-  if len = 0 then next_cont oz f else
-  if oz.avail = 0 then
-    (let cont () = output oz f buf pos len in
+  assert (pos >= 0 && len >= 0 && pos + len <= String.length buf);
+  if oz.avail = 0 then begin
+    let cont () = output oz f buf pos len in
     Lwt_log.ign_info ~section "Flushing because output buffer is full";
-    flush oz cont)
-  else (
-    (catch
-       (fun () ->
-          (try return(Zlib.deflate oz.stream buf pos len
-                        oz.buf oz.pos oz.avail
-                        Zlib.Z_SYNC_FLUSH)
-           with e -> fail e))
-       (function
-         |Zlib.Error(s, s') ->
-           fail (Ocsigen_stream.Stream_error("Error during compression: "^s^" "^s'))
-         | e -> fail e)) >>=
-    (fun  (_, used_in, used_out) ->
-       oz.pos <- oz.pos + used_out;
-       oz.avail <- oz.avail - used_out;
-       (* If we didn't deflate the whole input or if the buffer is full, continue *)
-       if (used_in < len) || (oz.avail = 0)
-       then output oz f buf (pos + used_in) (len - used_in)
-       (* otherwise, go to the next part of the stream *)
-       else
-         next_cont oz f
-    ))
+    flush oz cont
+  end else if len = 0 then
+    next_cont oz f
+  else begin
+    let  (_, used_in, used_out) =
+      try
+        Zlib.deflate
+          oz.stream buf pos len oz.buf oz.pos oz.avail Zlib.Z_NO_FLUSH
+      with Zlib.Error(s, s') ->
+        raise
+          (Ocsigen_stream.Stream_error("Error during compression: "^s^" "^s'))
+    in
+    oz.pos <- oz.pos + used_out;
+    oz.avail <- oz.avail - used_out;
+    output oz f buf (pos + used_in) (len - used_in)
+  end
 
 (* Flush oz, ie. produces a new_stream with the content of oz, cleans it
  * and returns the continuation of the stream *)
 and flush oz cont =
   let len = oz.pos in
-  let s = Bytes.sub oz.buf 0 len in
-  Lwt_log.ign_info ~section "Flushing!";
-  oz.pos <- 0 ;
-  oz.avail <- Bytes.length oz.buf ;
-  if len > 0 then Ocsigen_stream.cont s cont else cont ()
+  if len = 0 then
+    cont ()
+  else begin
+    let buf_len = Bytes.length oz.buf in
+    let s = if len = buf_len then oz.buf else Bytes.sub oz.buf 0 len in
+    Lwt_log.ign_info ~section "Flushing!";
+    oz.pos <- 0 ;
+    oz.avail <- buf_len;
+    Ocsigen_stream.cont s cont
+  end
 
 and next_cont oz stream =
   Ocsigen_stream.next stream >>= fun e ->
@@ -127,9 +124,9 @@ and next_cont oz stream =
     Lwt_log.ign_info ~section "End of stream: big cleaning for zlib" ;
 
     (* loop until there is nothing left to compress and flush *)
-    let rec after_flushing () =
+    let rec finish () =
       (* buffer full *)
-      if oz.avail = 0 then flush oz after_flushing
+      if oz.avail = 0 then flush oz finish
       else (
         (* no more input, deflates only what were left because output buffer
          * was full *)
@@ -139,12 +136,12 @@ and next_cont oz stream =
         oz.pos <- oz.pos + used_out;
         oz.avail <- oz.avail - used_out;
         if not finished then
-          after_flushing ()
+          finish ()
         else
             (Lwt_log.ign_info ~section "Zlib.deflate finished, last flush" ;
             flush oz (fun () -> Ocsigen_stream.empty None))) in
 
-    flush oz after_flushing
+    finish ()
   | Ocsigen_stream.Finished (Some s) -> next_cont oz s
   | Ocsigen_stream.Cont(s,f) ->
     output oz f s 0 (String.length s)
