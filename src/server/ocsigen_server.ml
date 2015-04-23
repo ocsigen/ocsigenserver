@@ -518,10 +518,20 @@ let handle_result_frame ri res send =
   | `Unmodified ->
     Lwt_log.ign_info ~section "Sending 304 Not modified";
     Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
+    let headers =
+      let keep h headers =
+        try
+          Http_headers.add h (Http_headers.find h (Result.headers res)) headers
+        with Not_found ->
+          headers
+      in
+      Http_headers.(keep cache_control (keep expires empty))
+    in
     send (Result.update (Ocsigen_http_frame.Result.empty ())
             ~code:304  (* Not modified *)
             ~lastmodified:(Result.lastmodified res)
-            ~etag:(Result.etag res) ())
+            ~etag:(Result.etag res)
+            ~headers ())
 
   | `Precondition_failed ->
     Lwt_log.ign_info ~section
