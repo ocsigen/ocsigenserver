@@ -18,8 +18,8 @@ let of_meth meth =
   | `DELETE -> DELETE
   | `OPTIONS -> OPTIONS
   | `PATCH -> PATCH
-  | `Other "TRACE" -> TRACE
-  | `Other "CONNECT" -> CONNECT
+  | `TRACE -> TRACE
+  | `CONNECT -> CONNECT
   | `Other "LINK" -> LINK
   | `Other "UNLINK" -> UNLINK
   | `Other _ -> raise (Invalid_argument "Http_header.meth_of_cohttp_meth")
