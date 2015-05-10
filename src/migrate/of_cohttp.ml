@@ -6,7 +6,7 @@ let of_version vrs =
   match vrs with
   | `HTTP_1_0 -> HTTP10
   | `HTTP_1_1 -> HTTP11
-  | _ -> raise (Invalid_argument "Http_header.proto_of_cohttp_version")
+  | _ -> raise Ocsigen_lib.Ocsigen_Bad_Request
 
 let of_meth meth =
   let open Ocsigen_http_frame.Http_header in
@@ -22,7 +22,7 @@ let of_meth meth =
   | `CONNECT -> CONNECT
   | `Other "LINK" -> LINK
   | `Other "UNLINK" -> UNLINK
-  | `Other _ -> raise (Invalid_argument "Http_header.meth_of_cohttp_meth")
+  | `Other _ -> raise Ocsigen_lib.Ocsigen_Bad_Request
 
 let of_request req =
   let open Ocsigen_http_frame.Http_header in
