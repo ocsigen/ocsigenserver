@@ -302,6 +302,9 @@ let handle_result_frame ri res =
     Ocsigen_range.compute_range ri res
 
 let service ?ssl ~address ~port ~connector () =
+  let connector ri () =
+    connector ri () >>= fun res ->
+    handle_result_frame ri res in
   let callback = handler ~address ~port ~extensions_connector:connector in
   let config = Server.make ~conn_closed ~callback () in
   (match ssl with
