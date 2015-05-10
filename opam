@@ -27,7 +27,7 @@ depends: [
   ("dbm" | "sqlite3")
   "ipaddr" {>= "2.1"}
   "camlp4"
-  "cohttp" {>= "0.16.0"}
+  "cohttp" {>= "0.17.0"}
 
   # REMOVE AFTER DEBUGGING
   "ppx_deriving"
