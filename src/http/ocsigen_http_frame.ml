@@ -347,6 +347,5 @@ type t =
     (*VVV abort looks like a hack.
       It has been added for the reverse proxy, to enable closing the connection
       if the request is cancelled ...
-      à revoir...
     *)
   }
