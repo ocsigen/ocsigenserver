@@ -173,6 +173,135 @@ let shutdown_server timeout =
 let number_of_client () = 0
 let get_number_of_connected = number_of_client
 
+(* An http result [res] frame has been computed. Depending on
+   the If-(None-)?Match and If-(Un)?Modified-Since headers of [ri],
+   we return this frame, a 304: Not-Modified, or a 412: Precondition Failed.
+   See RFC 2616, sections 14.24, 14.25, 14.26, 14.28 and 13.3.4
+*)
+let handle_result_frame ri res send =
+  (* Subfonctions to handle each header separately *)
+  let if_unmodified_since unmodified_since = (* Section 14.28 *)
+    if (Result.code res = 412 ||
+        (200 <= Result.code res && Result.code res < 300)) then
+      match Result.lastmodified res with
+      | Some r ->
+        if r <= unmodified_since then
+          `Ignore_header
+        else
+          `Precondition_failed
+      | None -> `Ignore_header
+    else
+      `Ignore_header
+
+  and if_modified_since modified_since = (* Section 14.25 *)
+    if Result.code res = 200 then
+      match Result.lastmodified res with
+      | Some r ->
+        if r <= modified_since then
+          `Unmodified
+        else
+          `Ignore_header
+      | _ -> `Ignore_header
+    else
+      `Ignore_header
+
+  and if_none_match if_none_match = (* Section 14.26 *)
+    if (Result.code res = 412 ||
+        (200 <= Result.code res && Result.code res < 300)) then
+      match Result.etag res with
+      | None   -> `Ignore_header
+      | Some e ->
+        if List.mem e if_none_match then
+          if (Ocsigen_request_info.meth ri) = Http_header.GET ||
+             (Ocsigen_request_info.meth ri) = Http_header.HEAD then
+            `Unmodified
+          else
+            `Precondition_failed
+        else
+          `Ignore_header_and_ModifiedSince
+    else
+      `Ignore_header
+
+  and if_match if_match = (* Section 14.24 *)
+    if (Result.code res = 412 ||
+        (200 <= Result.code res && Result.code res < 300)) then
+      match Result.etag res with
+      | None   -> `Precondition_failed
+      | Some e ->
+        if List.mem e if_match then
+          `Ignore_header
+        else
+          `Precondition_failed
+    else
+      `Ignore_header
+
+  in
+
+  let handle_header f h = match h with
+    | None -> `No_header
+    | Some h -> f h
+  in
+
+  (* Main code *)
+  let r =
+    (* For the cases unspecified with RFC2616. we follow more or less
+       the order used by Apache. See the function
+       modules/http/http_protocol.c/ap_meets_conditions in the Apache
+       source *)
+    match handle_header if_match (Ocsigen_request_info.ifmatch ri) with
+    | `Precondition_failed -> `Precondition_failed
+    | `No_header | `Ignore_header ->
+      match handle_header if_unmodified_since
+              (Ocsigen_request_info.ifunmodifiedsince ri) with
+      | `Precondition_failed -> `Precondition_failed
+      | `No_header | `Ignore_header ->
+        match handle_header if_none_match
+                (Ocsigen_request_info.ifnonematch ri) with
+        | `Precondition_failed -> `Precondition_failed
+        | `Ignore_header_and_ModifiedSince -> `Std
+        | `Unmodified | `No_header as r1 ->
+          (match handle_header if_modified_since
+                   (Ocsigen_request_info.ifmodifiedsince ri) with
+          | `Unmodified | `No_header as r2 ->
+            if r1 = `No_header && r2 = `No_header then
+              `Std
+            else
+              `Unmodified
+          | `Ignore_header -> `Std)
+        | `Ignore_header ->
+          (* We cannot return a 304, so there is no need to consult
+             if_modified_since *)
+          `Std
+  in
+  match r with
+  | `Unmodified ->
+    Lwt_log.ign_info ~section "Sending 304 Not modified";
+    Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
+    let headers =
+      let keep h headers =
+        try
+          Http_headers.add h (Http_headers.find h (Result.headers res)) headers
+        with Not_found ->
+          headers
+      in
+      Http_headers.(keep cache_control (keep expires empty))
+    in
+    send (Result.update (Ocsigen_http_frame.Result.empty ())
+            ~code:304  (* Not modified *)
+            ~lastmodified:(Result.lastmodified res)
+            ~etag:(Result.etag res)
+            ~headers ())
+
+  | `Precondition_failed ->
+    Lwt_log.ign_info ~section
+      "Sending 412 Precondition Failed (conditional headers)";
+    Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
+    send (Result.update (Ocsigen_http_frame.Result.empty ())
+            ~code:412 (* Precondition failed *) ())
+
+  | `Std ->
+    Ocsigen_range.compute_range ri res
+    >>= send
 
 let service ?ssl ~address ~port ~connector () =
   let callback = handler ~address ~port ~extensions_connector:connector in
