@@ -12,7 +12,7 @@ build: [
   [make]
 ]
 install: [make "install"]
-remove: ["rm" "-rf" "%{lib}%/ocsigenserver"]
+remove: ["ocamlfind" "remove" "ocsigenserver"]
 depends: [
   "ocamlfind"
   "base-unix"
