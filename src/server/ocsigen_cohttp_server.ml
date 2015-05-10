@@ -113,7 +113,14 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
       | 404 -> "Not Found"
       | _ -> Printexc.to_string exn in
 
+    let headers =
+      match exn with
+      | Ocsigen_http_error (cookies, _) ->
+        Some (To_cohttp.Cookie.serialize cookies (Header.init ()))
+      | _ -> None in
+
     Server.respond_error
+      ?headers
       ~status:(Cohttp.Code.status_of_code ret_code)
       ~body ()
   in
