@@ -1,7 +1,7 @@
 (* Ocsigen
  * http://www.ocsigen.org
  * ocsigen_http_com.ml Copyright (C) 2005
- * Denis Berthod, Vincent Balat, JÃ©rÃ´me Vouillon
+ * Denis Berthod, Vincent Balat, JÃƒÂ©rÃƒÂ´me Vouillon
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -94,8 +94,7 @@ let create_waiter block =
   else
     { w_wait = Lwt.return (); w_waker = None; w_did_wait = false }
 
-(** buffer de comunication permettant la reception et la recupération
-    des messages *)
+(** Communication buffer to receive messages. *)
 type connection =
   { id : int;
     fd : Lwt_ssl.socket;
@@ -893,13 +892,13 @@ let send
   in
 
   (*XXX Maybe we can compute this only at most once a second*)
-  (* ajout des options spécifiques à la page *)
+  (* Add options specific to the page. *)
   let date = gmtdate (Unix.time ()) in
 
   let headers =
     (Result.headers res)
     <<?
-    (* il faut récupérer la date de dernière modification *)
+    (* We must fetch the last modification. *)
     (Http_headers.last_modified,
      match Result.lastmodified res with
        None    -> None (* We do not put last modified for dynamically
