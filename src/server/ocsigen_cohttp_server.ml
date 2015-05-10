@@ -178,7 +178,7 @@ let get_number_of_connected = number_of_client
    we return this frame, a 304: Not-Modified, or a 412: Precondition Failed.
    See RFC 2616, sections 14.24, 14.25, 14.26, 14.28 and 13.3.4
 *)
-let handle_result_frame ri res send =
+let handle_result_frame ri res =
   (* Subfonctions to handle each header separately *)
   let if_unmodified_since unmodified_since = (* Section 14.28 *)
     if (Result.code res = 412 ||
@@ -286,22 +286,20 @@ let handle_result_frame ri res send =
       in
       Http_headers.(keep cache_control (keep expires empty))
     in
-    send (Result.update (Ocsigen_http_frame.Result.empty ())
-            ~code:304  (* Not modified *)
-            ~lastmodified:(Result.lastmodified res)
-            ~etag:(Result.etag res)
-            ~headers ())
-
+    Result.update (Ocsigen_http_frame.Result.empty ())
+      ~code:304  (* Not modified *)
+      ~lastmodified:(Result.lastmodified res)
+      ~etag:(Result.etag res)
+      ~headers ()
+    |> return
   | `Precondition_failed ->
     Lwt_log.ign_info ~section
       "Sending 412 Precondition Failed (conditional headers)";
-    Ocsigen_stream.finalize (fst (Result.stream res)) `Success >>= fun () ->
-    send (Result.update (Ocsigen_http_frame.Result.empty ())
-            ~code:412 (* Precondition failed *) ())
-
+    Ocsigen_stream.finalize (fst (Result.stream res)) `Success >|= fun () ->
+    Result.update (Ocsigen_http_frame.Result.empty ())
+      ~code:412 (* Precondition failed *) ()
   | `Std ->
     Ocsigen_range.compute_range ri res
-    >>= send
 
 let service ?ssl ~address ~port ~connector () =
   let callback = handler ~address ~port ~extensions_connector:connector in
