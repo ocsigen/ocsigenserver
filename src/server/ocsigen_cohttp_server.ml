@@ -83,27 +83,30 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
 
     Lwt_log.ign_debug ~section ~exn "Got exception while handling request." ;
 
-    let ret_code = match exn with
+    let headers, ret_code = match exn with
       | Ocsigen_http_error (cookies_to_set, code) ->
-        code
+        let headers =
+          To_cohttp.Cookie.serialize cookies_to_set (Cohttp.Header.init ())
+        in
+        Some headers, code
       | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
-        500
+        None, 500
       | Unix.Unix_error (Unix.EACCES, _, _)
       | Ocsigen_upload_forbidden ->
-        403
-      | Http_error.Http_exception (code, _, _) ->
-        code
+        None, 403
+      | Http_error.Http_exception (code, _, headers) ->
+        headers, code
       | Ocsigen_Bad_Request ->
-        400
+        None, 400
       | Ocsigen_unsupported_media ->
-        415
+        None, 415
       | Neturl.Malformed_URL ->
-        400
+        None, 400
       | Ocsigen_Request_too_long ->
-        413
+        None, 413
       | exn ->
         Lwt_log.ign_error ~section ~exn "Error while handling request." ;
-        500
+        None, 500
     in
 
     Lwt_log.ign_warning_f ~section "Returning error code %i." ret_code ;
@@ -114,6 +117,7 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
       | _ -> Printexc.to_string exn in
 
     Server.respond_error
+      ?headers
       ~status:(Cohttp.Code.status_of_code ret_code)
       ~body ()
   in
