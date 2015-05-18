@@ -134,7 +134,7 @@ let string_of_streams =
 *)
 
 let enlarge_stream = function
-  | Finished a -> Lwt.fail Stream_too_small
+  | Finished _ -> Lwt.fail Stream_too_small
   | Cont (s, f) ->
     let long = String.length s in
     let max = Ocsigen_config.get_netbuffersize () in
@@ -159,7 +159,7 @@ let rec stream_want s len =
   (* returns a stream with at least len bytes read if possible *)
   match s with
   | Finished _ -> Lwt.return s
-  | Cont (stri, f)  ->
+  | Cont (stri, _f)  ->
     if String.length stri >= len then
       Lwt.return s
     else
@@ -183,7 +183,7 @@ let rec skip s k = match s with
     let len = String.length s in
     let len64 = Int64.of_int len in
     if Int64.compare k len64 <= 0
-    then 
+    then
       let k = Int64.to_int k in
       Lwt.return (Cont (String.sub s k (len - k), f))
     else (enlarge_stream (Cont ("", f)) >>=
@@ -211,7 +211,7 @@ let substream delim s =
           with Not_found ->
             let pos = (len + 1 - ldelim) in
             cont (String.sub s 0 pos)
-              (fun () -> 
+              (fun () ->
                  next f >>= function
                  | Finished _ -> Lwt.fail Stream_too_small
                  | Cont (s', f') ->

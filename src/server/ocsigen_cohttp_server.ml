@@ -1,14 +1,7 @@
 open Lwt
-open Ocsigen_socket
-open Ocsigen_lib
-open Ocsigen_request_info
+open! Ocsigen_lib
 open Ocsigen_http_frame
-open Ocsigen_headers
-open Ocsigen_config
-open Ocsigen_cookies
 open Ocsigen_generate
-open Lazy
-open Cohttp
 open Cohttp_lwt_unix
 
 let section = Lwt_log.Section.make "ocsigen:cohttp"
@@ -156,7 +149,7 @@ let handler ~address ~port ~extensions_connector (flow, conn) request body =
                "Error while removing file %s" a)
            !filenames; Lwt.return ())
 
-let conn_closed (flow, conn) =
+let conn_closed (_flow, conn) =
   try let wakener = Hashtbl.find waiters conn in
       Lwt.wakeup wakener (); Hashtbl.remove waiters conn
   with Not_found -> ()

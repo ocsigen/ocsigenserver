@@ -27,8 +27,7 @@
 let section = Lwt_log.Section.make "ocsigen:ext"
 
 open Lwt
-open Ocsigen_lib
-open Ocsigen_cookies
+open! Ocsigen_lib
 
 include Ocsigen_request_info
 include Ocsigen_command

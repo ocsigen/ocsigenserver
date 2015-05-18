@@ -18,8 +18,6 @@
 
 (** Writing messages in the logs *)
 
-let (>>=) = Lwt.bind
-
 let access_file = "access.log"
 let warning_file = "warnings.log"
 let error_file = "errors.log"
@@ -77,7 +75,7 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
                 | Lwt_log.Warning               -> war
                 | _                             -> Lwt_log.null);
          Lwt_log.dispatch
-           (fun sect lev ->
+           (fun _sect lev ->
               let show =
                 match lev with
                 | Lwt_log.Error | Lwt_log.Fatal ->
@@ -123,7 +121,7 @@ let console =
   if (not (Ocsigen_config.get_silent ())) then
     (fun s -> print_endline (s ()))
   else
-    (fun s -> ())
+    (fun _ -> ())
 
 let level_of_string = function
   | "debug"  -> Some Lwt_log.Debug
