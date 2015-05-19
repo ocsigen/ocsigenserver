@@ -44,8 +44,6 @@ module Filename : sig
 
   include module type of Filename
 
-  (* val basename : string -> string *)
-  (* val extension : string -> string *)
   val extension_no_directory : string -> string
 
 end

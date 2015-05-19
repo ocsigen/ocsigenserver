@@ -1,5 +1,4 @@
-open Ocsigen_lib
-open Ocsigen_cookies
+open! Ocsigen_lib
 
 let of_version vrs =
   let open Ocsigen_http_frame.Http_header in

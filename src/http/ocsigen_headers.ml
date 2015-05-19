@@ -25,7 +25,6 @@
 (* Include in a better cooperative parser for header or use regexp?. *)
 
 open Ocsigen_http_frame
-open Ocsigen_senders
 open Ocsigen_lib
 open Ocsigen_cookies
 
@@ -45,7 +44,7 @@ let list_flat_map f l = List.flatten (List.map f l)
 
 (* splits a quoted string, for ex "azert", "  sdfmlskdf",    "dfdsfs" *)
 (* We are too kind ... We accept even if the separator is not ok :-( ? *)
-let rec quoted_split char (* char is not used in that version *) s =
+let quoted_split char (* char is not used in that version *) s =
   let longueur = String.length s in
   let rec aux deb =
     let rec nextquote s i =
@@ -106,7 +105,7 @@ let parse_list_with_extensions parse_name s =
 
 
 (*****************************************************************************)
-let rec parse_cookies s =
+let parse_cookies s =
   let splitted = String.split ';' s in
   try
     List.fold_left

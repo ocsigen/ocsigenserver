@@ -24,7 +24,7 @@
 (*****************************************************************************)
 
 open Lwt
-open Ocsigen_lib
+open! Ocsigen_lib
 open Ocsigen_extensions
 
 let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
@@ -190,77 +190,76 @@ type options = {
 
 let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
   let opt = ref
-    {
-      opt_dir = None;
-      opt_regexp = None;
-      opt_code = None;
-      opt_dest = None;
-      opt_root_checks = None;
-      opt_cache = None;
-    }
+      {
+        opt_dir = None;
+        opt_regexp = None;
+        opt_code = None;
+        opt_dest = None;
+        opt_root_checks = None;
+        opt_cache = None;
+      }
   in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[
-        Configuration.element
-          ~name:"static"
-          ~attributes:[
-            Configuration.attribute
-              ~name:"dir"
-              (fun s ->
-                 opt := { !opt with opt_dir =
-                             Some (rewrite_local_path userconf s) });
-            Configuration.attribute
-              ~name:"regexp"
-              (fun s ->
-                 let s =
-                   try Netstring_pcre.regexp ("^"^s^"$")
-                   with Pcre.Error (Pcre.BadPattern _) ->
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[
+      Configuration.element
+        ~name:"static"
+        ~attributes:[
+          Configuration.attribute
+            ~name:"dir"
+            (fun s ->
+               opt := { !opt with opt_dir =
+                                    Some (rewrite_local_path userconf s) });
+          Configuration.attribute
+            ~name:"regexp"
+            (fun s ->
+               let s =
+                 try Netstring_pcre.regexp ("^"^s^"$")
+                 with Pcre.Error (Pcre.BadPattern _) ->
+                   badconfig
+                     "Bad regexp \"%s\" in <static regexp=\"...\" />" s
+               in
+               opt := { !opt with opt_regexp = Some s});
+          Configuration.attribute
+            ~name:"code"
+            (fun s ->
+               let c = try Netstring_pcre.regexp ("^" ^ s ^"$")
+                 with Pcre.Error (Pcre.BadPattern _) ->
+                   badconfig
+                     "Bad regexp \"%s\" in <static code=\"...\" />" s
+               in
+               opt := { !opt with opt_code = Some c });
+          Configuration.attribute
+            ~name:"dest"
+            (fun s ->
+               let s =
+                 Some (parse_user_dir (rewrite_local_path userconf s))
+               in
+               opt := { !opt with opt_dest = s });
+          Configuration.attribute
+            ~name:"root"
+            (fun s ->
+               let s = Some (parse_user_dir s) in
+               opt := { !opt with opt_root_checks = s });
+          Configuration.attribute
+            ~name:"cache"
+            (fun s ->
+               let duration = match s with
+                 | "no" -> 0
+                 | s ->
+                   try int_of_string s
+                   with Failure _ ->
                      badconfig
-                       "Bad regexp \"%s\" in <static regexp=\"...\" />" s
-                 in
-                 opt := { !opt with opt_regexp = Some s});
-            Configuration.attribute
-              ~name:"code"
-              (fun s ->
-                 let c = try Netstring_pcre.regexp ("^" ^ s ^"$")
-                   with Pcre.Error (Pcre.BadPattern _) ->
-                     badconfig
-                       "Bad regexp \"%s\" in <static code=\"...\" />" s
-                 in
-                 opt := { !opt with opt_code = Some c });
-            Configuration.attribute
-              ~name:"dest"
-              (fun s ->
-                 let s =
-                   Some (parse_user_dir (rewrite_local_path userconf s))
-                 in
-                 opt := { !opt with opt_dest = s });
-            Configuration.attribute
-              ~name:"root"
-              (fun s ->
-                 let s = Some (parse_user_dir s) in
-                 opt := { !opt with opt_root_checks = s });
-            Configuration.attribute
-              ~name:"cache"
-              (fun s ->
-                 let duration = match s with
-                   | "no" -> 0
-                   | s ->
-                     try int_of_string s
-                     with Failure _ ->
-                       badconfig
-                         "Bad integer \"%s\" in <static cache=\"...\" />"
-                         s
-                 in
-                 opt := { !opt with opt_cache = Some duration });
-          ]
-          ()
-      ]
+                       "Bad integer \"%s\" in <static cache=\"...\" />"
+                       s
+               in
+               opt := { !opt with opt_cache = Some duration });
+        ]
+        ()
+    ]
     element
-  );
+  ;
   let kind =
     match !opt.opt_dir,
           !opt.opt_regexp,

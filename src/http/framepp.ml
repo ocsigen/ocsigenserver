@@ -114,11 +114,6 @@ let print_header_content buf content =
   in
   aux 0 0
 
-(* Debug *)
-let test s =
-  let b = Buffer.create 0 in print_header_content b s; Buffer.contents b
-
-
 (** Write the header lines to a string buffer *)
 let headers buf header =
   Http_headers.iter

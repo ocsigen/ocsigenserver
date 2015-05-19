@@ -25,7 +25,6 @@
 
 open Lwt
 open Ocsigen_extensions
-open Ocsigen_headers
 
 type outputfilter =
   | Rewrite_header of (Http_headers.name * Netstring_pcre.regexp * string)
@@ -101,48 +100,47 @@ let parse_config config_elem =
   let dest = ref None in
   let replace = ref None in
   let code = ref None in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[
-        Configuration.element
-          ~name:"outputfilter"
-          ~attributes:[
-            Configuration.attribute
-              ~name:"header"
-              (fun s -> header := Some s);
-            Configuration.attribute
-              ~name:"regexp"
-              (fun s -> regexp := Some (Netstring_pcre.regexp s));
-            Configuration.attribute
-              ~name:"dest"
-              (fun s -> dest := Some s);
-            Configuration.attribute
-              ~name:"replace"
-              (fun s ->
-                 try replace := Some (bool_of_string s)
-                 with
-                 | Invalid_argument _ ->
-                   badconfig "Wrong value for attribute \
-                              replace of <outputfilter/>: \
-                              %s. It should be true or false"
-                     s
-              );
-          ] ();
-        Configuration.element
-          ~name:"sethttpcode"
-          ~attributes:[
-            Configuration.attribute ~name:"code"
-              (fun s ->
-                 try code := Some (int_of_string s)
-                 with Failure _ ->
-                   badconfig "Invalid code attribute in <sethttpcode>"
-              );
-          ]
-          ()]
-      config_elem
-  );
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[
+      Configuration.element
+        ~name:"outputfilter"
+        ~attributes:[
+          Configuration.attribute
+            ~name:"header"
+            (fun s -> header := Some s);
+          Configuration.attribute
+            ~name:"regexp"
+            (fun s -> regexp := Some (Netstring_pcre.regexp s));
+          Configuration.attribute
+            ~name:"dest"
+            (fun s -> dest := Some s);
+          Configuration.attribute
+            ~name:"replace"
+            (fun s ->
+               try replace := Some (bool_of_string s)
+               with
+               | Invalid_argument _ ->
+                 badconfig "Wrong value for attribute \
+                            replace of <outputfilter/>: \
+                            %s. It should be true or false"
+                   s
+            );
+        ] ();
+      Configuration.element
+        ~name:"sethttpcode"
+        ~attributes:[
+          Configuration.attribute ~name:"code"
+            (fun s ->
+               try code := Some (int_of_string s)
+               with Failure _ ->
+                 badconfig "Invalid code attribute in <sethttpcode>"
+            );
+        ]
+        ()]
+    config_elem
+  ;
   match !code with
   | None ->
     begin match !header, !regexp, !dest, !replace with

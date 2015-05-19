@@ -44,7 +44,6 @@
 
 open Lwt
 open Ocsigen_extensions
-open Simplexmlparser
 
 let section = Lwt_log.Section.make "ocsigen:ext:rewritemod"
 
@@ -122,34 +121,33 @@ let parse_config element =
   let dest = ref None in
   let fullrewrite = ref false in
   let continue = ref false in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[Configuration.element
-                   ~name:"rewrite"
-                   ~attributes:[Configuration.attribute
-                                  ~name:"regexp"
-                                  ~obligatory:true
-                                  (fun s -> regexp := s);
-                                Configuration.attribute
-                                  ~name:"url"
-                                  (fun s -> dest := Some s);
-                                Configuration.attribute
-                                  ~name:"dest"
-                                  (fun s -> dest := Some s);
-                                Configuration.attribute
-                                  ~name:"fullrewrite"
-                                  (fun s -> fullrewrite := (s = "fullrewrite"
-                                                            || s = "true"));
-                                Configuration.attribute
-                                  ~name:"continue"
-                                  (fun s -> continue := (s = "continue"
-                                                         || s = "true"));
-                               ]
-                   ()]
-      element
-  );
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[Configuration.element
+                 ~name:"rewrite"
+                 ~attributes:[Configuration.attribute
+                                ~name:"regexp"
+                                ~obligatory:true
+                                (fun s -> regexp := s);
+                              Configuration.attribute
+                                ~name:"url"
+                                (fun s -> dest := Some s);
+                              Configuration.attribute
+                                ~name:"dest"
+                                (fun s -> dest := Some s);
+                              Configuration.attribute
+                                ~name:"fullrewrite"
+                                (fun s -> fullrewrite := (s = "fullrewrite"
+                                                          || s = "true"));
+                              Configuration.attribute
+                                ~name:"continue"
+                                (fun s -> continue := (s = "continue"
+                                                       || s = "true"));
+                             ]
+                 ()]
+    element
+  ;
   match !dest with
   | None -> raise (Error_in_config_file "url attribute expected for <rewrite>")
   | Some dest ->

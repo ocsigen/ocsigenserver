@@ -1,7 +1,4 @@
-open Lwt
 open Ocsigen_lib
-open Cohttp
-open Cohttp_lwt_unix
 
 let post_string ?v6 ?(https = false) ?port ?(headers = Http_headers.empty)
     ~host ~uri ~content ~content_type () =

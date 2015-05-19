@@ -419,7 +419,7 @@ end = struct
 
   let get_finaliser_before l = l.finaliser_before
 
-  let add_finaliser_before f l = 
+  let add_finaliser_before f l =
     let oldf = l.finaliser_before in
     l.finaliser_before <- (fun n -> oldf n; f n)
 
@@ -447,8 +447,6 @@ module Make =
              type value
            end) ->
   struct
-
-    type data = A.key
 
     module H = Hashtbl.Make(
       struct

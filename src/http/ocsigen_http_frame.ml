@@ -26,7 +26,6 @@ open Ocsigen_lib
 (** this signature provides a template to discribe the content of a http
     frame *)
 
-open Ocsigen_stream
 open Ocsigen_cookies
 
 let section = Lwt_log.Section.make "ocsigen:http:frame"

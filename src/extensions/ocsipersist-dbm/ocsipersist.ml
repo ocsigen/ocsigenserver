@@ -72,7 +72,7 @@ let (directory, ocsidbm) =
 
 external sys_exit : int -> 'a = "caml_sys_exit"
 
-let rec try_connect sname =
+let try_connect sname =
   catch
     (fun () ->
        let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in

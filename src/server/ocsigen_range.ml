@@ -33,7 +33,7 @@ exception Range_416
 (* We do not support multipart ranges. We send only an interval.
    The following function checks if we support the range requested.
 *)
-let rec change_range = function
+let change_range = function
   | Some ([], Some b, ifmatch) -> Some (b, None, ifmatch)
   | Some ([ (b, e) ], None, ifmatch) -> Some (b, Some e, ifmatch)
   | _ -> None

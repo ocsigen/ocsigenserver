@@ -107,40 +107,39 @@ let parse_config config_elem =
   let dest = ref "" in
   let mode = ref Yes in
   let temporary = ref false in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[
-        Configuration.element
-          ~name:"redirect"
-          ~attributes:[
-            Configuration.attribute
-              ~name:"regexp"
-              (fun s ->
-                 pattern := Some ("^" ^ s ^ "$");
-                 mode := Maybe);
-            Configuration.attribute
-              ~name:"fullurl"
-              (fun s ->
-                 pattern := Some ("^" ^ s ^ "$");
-                 mode := Yes);
-            Configuration.attribute
-              ~name:"suburl"
-              (fun s ->
-                 pattern := Some ("^" ^ s ^ "$");
-                 mode := No);
-            Configuration.attribute
-              ~name:"dest"
-              ~obligatory:true
-              (fun s -> dest := s);
-            Configuration.attribute
-              ~name:"temporary"
-              (function "temporary" -> temporary := true | _ -> ());
-          ]
-          ()]
-      config_elem
-  );
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[
+      Configuration.element
+        ~name:"redirect"
+        ~attributes:[
+          Configuration.attribute
+            ~name:"regexp"
+            (fun s ->
+               pattern := Some ("^" ^ s ^ "$");
+               mode := Maybe);
+          Configuration.attribute
+            ~name:"fullurl"
+            (fun s ->
+               pattern := Some ("^" ^ s ^ "$");
+               mode := Yes);
+          Configuration.attribute
+            ~name:"suburl"
+            (fun s ->
+               pattern := Some ("^" ^ s ^ "$");
+               mode := No);
+          Configuration.attribute
+            ~name:"dest"
+            ~obligatory:true
+            (fun s -> dest := s);
+          Configuration.attribute
+            ~name:"temporary"
+            (function "temporary" -> temporary := true | _ -> ());
+        ]
+        ()]
+    config_elem
+  ;
   match !pattern with
   | None -> badconfig "Missing attribute regexp for <redirect>"
   | Some regexp ->

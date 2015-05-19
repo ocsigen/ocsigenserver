@@ -24,7 +24,6 @@
 (*****************************************************************************)
 
 
-open Lwt
 open Ocsigen_lib
 open Ocsigen_extensions
 
@@ -163,44 +162,43 @@ let parse_config hostpattern _ path _ _ config_elem =
   let url = ref None in
   let prefix = ref None in
   let localpath = ref None in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[
-        Configuration.element
-          ~name:"userconf"
-          ~attributes:[
-            Configuration.attribute
-              ~name:"regexp"
-              ~obligatory:true
-              (fun s ->
-                 let s = Netstring_pcre.regexp ("^" ^ s ^ "$") in
-                 regexp := Some s);
-            Configuration.attribute
-              ~name:"conf"
-              ~obligatory:true
-              (fun s ->
-                 let s = Ocsigen_extensions.parse_user_dir s in
-                 conf := Some s);
-            Configuration.attribute
-              ~name:"url"
-              ~obligatory:true
-              (fun s -> url := Some s);
-            Configuration.attribute
-              ~name:"prefix"
-              ~obligatory:true
-              (fun s -> prefix := Some s);
-            Configuration.attribute
-              ~name:"localpath"
-              ~obligatory:true
-              (fun s ->
-                 let s = Ocsigen_extensions.parse_user_dir s in
-                 localpath := Some s)
-          ]
-          ()]
-      config_elem
-  );
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[
+      Configuration.element
+        ~name:"userconf"
+        ~attributes:[
+          Configuration.attribute
+            ~name:"regexp"
+            ~obligatory:true
+            (fun s ->
+               let s = Netstring_pcre.regexp ("^" ^ s ^ "$") in
+               regexp := Some s);
+          Configuration.attribute
+            ~name:"conf"
+            ~obligatory:true
+            (fun s ->
+               let s = Ocsigen_extensions.parse_user_dir s in
+               conf := Some s);
+          Configuration.attribute
+            ~name:"url"
+            ~obligatory:true
+            (fun s -> url := Some s);
+          Configuration.attribute
+            ~name:"prefix"
+            ~obligatory:true
+            (fun s -> prefix := Some s);
+          Configuration.attribute
+            ~name:"localpath"
+            ~obligatory:true
+            (fun s ->
+               let s = Ocsigen_extensions.parse_user_dir s in
+               localpath := Some s)
+        ]
+        ()]
+    config_elem
+  ;
   let info =
     match !regexp, !conf, !url, !prefix, !localpath  with
     | (Some r, Some t, Some u, Some p, Some p') -> (r, t, u, p, p')

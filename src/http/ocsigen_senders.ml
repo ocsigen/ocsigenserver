@@ -22,7 +22,6 @@
 open Ocsigen_lib
 open Ocsigen_http_frame
 open Ocsigen_http_com
-open Lwt
 open Ocsigen_stream
 
 let section = Lwt_log.Section.make "ocsigen:http:sender"
@@ -39,8 +38,6 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
 
   type t = Typed_xml.doc
   type options = Http_headers.accept Lazy.t
-
-  let get_etag_aux x = None
 
   let get_etag ?options c = None
 
@@ -285,7 +282,7 @@ struct
                 Some (skip fd)) ())
         with e -> Lwt_unix.close fd >>= fun () -> raise e
      with e -> Lwt_log.ign_info ~section ~exn:e "Exc";
-       fail e
+       Lwt.fail e
 
 end
 
@@ -352,12 +349,12 @@ struct
 
 
   (* An html row for a file in the directory listing *)
-  let file_row name icon stat = Printf.sprintf "
-<tr>
-  <td class=\"img\"><img src=\"%s\" alt=\"\" /></td>
-  <td><a href=\"%s\">%s</a></td>
-  <td>%Ld</td>
-  <td>%s</td>
+  let file_row name icon stat = Printf.sprintf "\
+<tr>\
+  <td class=\"img\"><img src=\"%s\" alt=\"\" /></td>\
+  <td><a href=\"%s\">%s</a></td>\
+  <td>%Ld</td>\
+  <td>%s</td>\
 </tr>"
       icon (Netencoding.Url.encode ~plus:false name) name
       stat.Unix.LargeFile.st_size (date stat.Unix.LargeFile.st_mtime)

@@ -23,15 +23,13 @@
 (* TODO
    - nph- scripts
 *)
-
-open Ocsigen_lib
-
 open Lwt
+open! Ocsigen_lib
+
 open Ocsigen_extensions
 open Simplexmlparser
 open Ocsigen_http_frame
 open Ocsigen_http_com
-open Ocsigen_senders
 
 let section = Lwt_log.Section.make "ocsigen:ext:cgimod"
 
@@ -454,7 +452,7 @@ let get_content str =
 
 
 (*****************************************************************************)
-let rec parse_global_config = function
+let parse_global_config = function
   | [] -> ()
   | (Element ("cgitimeout", [("value", s)], []))::[] ->
     cgitimeout := int_of_string s

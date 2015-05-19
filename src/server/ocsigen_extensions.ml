@@ -592,17 +592,8 @@ and parse_config_aux =
 
 
 
-let user_extension_void_fun_site : parse_config_user =
-  fun _ _ _ _ _ _ -> function
-    | Simplexmlparser.Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-    | _ -> raise (Error_in_config_file "Unexpected data in config file")
-
-let extension_void_fun_site : parse_config = fun _ _ _ _ _ -> function
-  | Simplexmlparser.Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ -> raise (Error_in_config_file "Unexpected data in config file")
-
-
-let register_extension, parse_config_item, parse_user_site_item, get_beg_init, get_end_init, get_init_exn_handler =
+let register_extension, parse_config_item, parse_user_site_item,
+    get_beg_init, get_end_init, get_init_exn_handler =
   let ref_fun_site = ref default_parse_config in
   let ref_user_fun_site = ref (fun (_ : userconf_info) -> default_parse_config) in
 
@@ -748,11 +739,6 @@ module Configuration = struct
              raise (Error_in_user_config_file
                       ("Non-blank PCDATA in tag "^in_tag)))
         str
-
-  let refuse_pcdata ~in_tag =
-    fun _ ->
-      raise (Error_in_user_config_file
-               ("No PCDATA allowed in tag "^in_tag))
 
   let check_attribute_occurrence ~in_tag ?other_elements attributes = function
     | name, { attribute_obligatory = true } ->

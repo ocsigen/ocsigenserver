@@ -38,12 +38,10 @@
    this data has been sent and is lost ...
 *)
 
-open Ocsigen_lib
-
 open Lwt
+open! Ocsigen_lib
+
 open Ocsigen_extensions
-open Simplexmlparser
-open Cohttp
 open Cohttp_lwt_unix
 
 module RI = Ocsigen_request_info
@@ -287,44 +285,43 @@ let parse_config config_elem =
   let dest = ref None in
   let pipeline = ref true in
   let keephost = ref false in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[
-        Configuration.element
-          ~name:"revproxy"
-          ~attributes:[
-            Configuration.attribute
-              ~name:"regexp"
-              (fun s ->
-                 regexp := Some s;
-                 full_url := Yes);
-            Configuration.attribute
-              ~name:"fullurl"
-              (fun s ->
-                 regexp := Some s;
-                 full_url := Yes);
-            Configuration.attribute
-              ~name:"suburl"
-              (fun s ->
-                 regexp := Some s;
-                 full_url := No);
-            Configuration.attribute
-              ~name:"dest"
-              (fun s -> dest := Some s);
-            Configuration.attribute
-              ~name:"keephost"
-              (function "keephost" -> keephost := true
-                      | _ -> ());
-            Configuration.attribute
-              ~name:"nopipeline"
-              (function "nopipeline" -> pipeline := false
-                      | _ -> ());
-          ]
-          ()]
-      config_elem
-  );
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[
+      Configuration.element
+        ~name:"revproxy"
+        ~attributes:[
+          Configuration.attribute
+            ~name:"regexp"
+            (fun s ->
+               regexp := Some s;
+               full_url := Yes);
+          Configuration.attribute
+            ~name:"fullurl"
+            (fun s ->
+               regexp := Some s;
+               full_url := Yes);
+          Configuration.attribute
+            ~name:"suburl"
+            (fun s ->
+               regexp := Some s;
+               full_url := No);
+          Configuration.attribute
+            ~name:"dest"
+            (fun s -> dest := Some s);
+          Configuration.attribute
+            ~name:"keephost"
+            (function "keephost" -> keephost := true
+                    | _ -> ());
+          Configuration.attribute
+            ~name:"nopipeline"
+            (function "nopipeline" -> pipeline := false
+                    | _ -> ());
+        ]
+        ()]
+    config_elem
+  ;
   match !regexp, !full_url, !dest, !pipeline, !keephost with
   | (None, _, _, _, _) ->
     badconfig "Missing attribute 'regexp' for <revproxy>"

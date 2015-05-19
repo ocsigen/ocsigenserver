@@ -118,25 +118,24 @@ let gen ~realm ~auth rs =
 let parse_config element =
   let realm_ref = ref "" in
   let rest_ref = ref [] in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[
-        Configuration.element
-          ~name:"authbasic"
-          ~attributes:[
-            Configuration.attribute
-              ~name:"realm"
-              ~obligatory:true
-              (fun s -> realm_ref := s)
-          ]
-          ~other_elements:(fun name attrs content ->
-            rest_ref :=
-              Simplexmlparser.Element (name, attrs, content) :: !rest_ref)
-      ()]
-      element
-  );
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[
+      Configuration.element
+        ~name:"authbasic"
+        ~attributes:[
+          Configuration.attribute
+            ~name:"realm"
+            ~obligatory:true
+            (fun s -> realm_ref := s)
+        ]
+        ~other_elements:(fun name attrs content ->
+          rest_ref :=
+            Simplexmlparser.Element (name, attrs, content) :: !rest_ref)
+        ()]
+    element
+  ;
   let realm = !realm_ref in
   let auth = match !rest_ref  with
     | [ x ] -> get_basic_authentication_method x

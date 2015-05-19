@@ -18,18 +18,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Lwt
 open Ocsigen_messages
-open Ocsigen_socket
 open Ocsigen_lib
-open Ocsigen_request_info
-open Ocsigen_extensions
-open Ocsigen_http_frame
-open Ocsigen_headers
 open Ocsigen_config
 open Ocsigen_parseconfig
-open Ocsigen_cookies
-open Lazy
 
 module Server = Ocsigen_cohttp_server
 
@@ -50,20 +42,6 @@ let _ =
   Lwt_timeout.set_exn_handler
     (fun e -> Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt \
                                                  timeout")
-
-let warn sockaddr s =
-  Lwt_log.ign_warning_f ~section "While talking to %a:%s"
-    (fun () sockaddr ->
-       Unix.string_of_inet_addr (ip_of_sockaddr sockaddr)) sockaddr s
-let dbg sockaddr s =
-  Lwt_log.ign_info_f ~section "While talking to %a:%s"
-    (fun () sockaddr ->
-       Unix.string_of_inet_addr (ip_of_sockaddr sockaddr)) sockaddr s
-
-
-let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
-
-let try_bind' f g h = Lwt.try_bind f h g
 
 (* fatal errors messages *)
 let errmsg = function
@@ -444,7 +422,7 @@ let start_server () = try
         Unix.close f
     in
 
-    let rec launch = function
+    let launch = function
       | [] -> ()
       | [h] ->
         let user_info, sslinfo, threadinfo = extract_info h in

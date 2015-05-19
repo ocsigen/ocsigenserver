@@ -1,7 +1,6 @@
-open Lwt
 open Cohttp
 
-open Ocsigen_lib
+open! Ocsigen_lib
 open Ocsigen_http_frame
 open Ocsigen_headers
 open Ocsigen_socket

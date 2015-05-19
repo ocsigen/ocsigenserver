@@ -56,7 +56,7 @@ open Simplexmlparser
     </extension>
 *)
 
-let rec parse_global_config = function
+let parse_global_config = function
   | [] -> ()
   | (Element ("myoption", [("myattr", s)], []))::ll -> ()
   | _ -> raise (Error_in_config_file
@@ -173,7 +173,7 @@ let exn_handler = raise
      {- raise [Bad_config_tag_for_extension] if it does not recognize that tag}
      {- return something of type [extension] (filter or page generator)}}
 *)
-let site_creator 
+let site_creator
     (hostpattern : Ocsigen_extensions.virtual_hosts)
     (config_info : Ocsigen_extensions.config_info)
   = parse_config
@@ -207,4 +207,3 @@ let () = register_extension
 
     ~begin_init ~end_init ~exn_handler
     ()
-

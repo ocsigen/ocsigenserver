@@ -26,9 +26,7 @@
 
 (** Writing extensions for Ocsigen                                           *)
 
-open Lwt
 open Ocsigen_lib
-open Ocsigen_cookies
 
 include (module type of Ocsigen_command)
 

@@ -175,8 +175,8 @@ let parse_string_tag tag s =
          ("While parsing <"^tag^"> - String expected."))
 
 
-let rec parser_config =
-  let rec verify_empty = function
+let parser_config =
+  let verify_empty = function
     | [] -> ()
     | _ -> raise (Config_file_error "Don't know what to do with trailing data")
   in let rec parse_servers n = function

@@ -23,11 +23,9 @@
 (*****************************************************************************)
 (*****************************************************************************)
 
-open Ocsigen_lib
-open Lwt
+open! Ocsigen_lib
 open Ocsigen_extensions
 open Simplexmlparser
-open Ocsigen_headers
 
 let section = Lwt_log.Section.make "ocsigen:ext:deflate"
 
@@ -156,7 +154,7 @@ let compress deflate stream =
     with
       (* ignore errors, deflate_end cleans everything anyway *)
       Zlib.Error _ -> ());
-    return (Lwt_log.ign_info ~section "Zlib stream closed") in
+    Lwt.return (Lwt_log.ign_info ~section "Zlib stream closed") in
   let oz =
     { stream = zstream ;
       buf = Bytes.create !buffer_size;
@@ -228,7 +226,7 @@ exception No_compress
 (* deflate = true -> mode deflate
  * deflate = false -> mode gzip *)
 let stream_filter contentencoding url deflate choice res =
-  return (Ext_found (fun () ->
+  Lwt.return (Ext_found (fun () ->
       try (
         match Ocsigen_http_frame.Result.content_type res with
         | None -> raise No_compress (* il faudrait défaut ? *)
@@ -237,7 +235,7 @@ let stream_filter contentencoding url deflate choice res =
           | None, _ | _, None -> raise No_compress (* should never happen? *)
           | (Some a, Some b)
             when should_compress (a, b) url choice ->
-            return
+            Lwt.return
               (Ocsigen_http_frame.Result.update res
                  ~content_length:None
                  ~etag:
@@ -252,19 +250,19 @@ let stream_filter contentencoding url deflate choice res =
                       Http_headers.content_encoding
                       contentencoding (Ocsigen_http_frame.Result.headers res)) ())
           | _ -> raise No_compress)
-      with Not_found | No_compress -> return res))
+      with Not_found | No_compress -> Lwt.return res))
 
 let filter choice_list = function
-  | Req_not_found (code,_) -> return (Ext_next code)
+  | Req_not_found (code,_) -> Lwt.return (Ext_next code)
   | Req_found ({ request_info = ri }, res) ->
     match select_encoding (Lazy.force(Ocsigen_request_info.accept_encoding ri)) with
     | Deflate ->
       stream_filter "deflate" (Ocsigen_request_info.sub_path_string ri) true choice_list res
     | Gzip ->
       stream_filter "gzip" (Ocsigen_request_info.sub_path_string ri)  false choice_list res
-    | Id | Star -> return (Ext_found (fun () -> return res))
+    | Id | Star -> Lwt.return (Ext_found (fun () -> Lwt.return res))
     | Not_acceptable ->
-      return (Ext_stop_all (Ocsigen_http_frame.Result.cookies res,406))
+      Lwt.return (Ext_stop_all (Ocsigen_http_frame.Result.cookies res,406))
 
 
 (*****************************************************************************)
@@ -304,40 +302,39 @@ let rec parse_global_config = function
 let parse_config config_elem =
   let mode = ref (Compress_only []) in
   let pages = ref [] in
-  Ocsigen_extensions.(
-    Configuration.process_element
-      ~in_tag:"host"
-      ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[
-        Configuration.element
-          ~name:"deflate"
-          ~attributes:[
-            Configuration.attribute
-              ~name:"compress"
-              ~obligatory:true
-              (function
-                | "only" -> mode := Compress_only []
-                | "allbut" -> mode := All_but []
-                | _ ->
-                  badconfig
-                    "Attribute 'compress' should be 'allbut' or 'only'"
-              );
-          ]
-          ~elements:[
-            Configuration.element
-              ~name:"type"
-              ~pcdata:(fun s ->
-                let (a, b) = Ocsigen_headers.parse_mime_type s in
-                pages := Type (a, b) :: !pages) ();
-            Configuration.element
-              ~name:"extension"
-              ~pcdata:(fun s ->
-                pages := Extension s :: !pages) ();
+  Configuration.process_element
+    ~in_tag:"host"
+    ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
+    ~elements:[
+      Configuration.element
+        ~name:"deflate"
+        ~attributes:[
+          Configuration.attribute
+            ~name:"compress"
+            ~obligatory:true
+            (function
+              | "only" -> mode := Compress_only []
+              | "allbut" -> mode := All_but []
+              | _ ->
+                badconfig
+                  "Attribute 'compress' should be 'allbut' or 'only'"
+            );
+        ]
+        ~elements:[
+          Configuration.element
+            ~name:"type"
+            ~pcdata:(fun s ->
+              let (a, b) = Ocsigen_headers.parse_mime_type s in
+              pages := Type (a, b) :: !pages) ();
+          Configuration.element
+            ~name:"extension"
+            ~pcdata:(fun s ->
+              pages := Extension s :: !pages) ();
 
-          ]
-          ()]
-      config_elem
-  );
+        ]
+        ()]
+    config_elem
+  ;
   match !pages with
   | [] ->
     badconfig

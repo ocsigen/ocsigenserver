@@ -61,20 +61,6 @@ module Filename = struct
     with Not_found ->
       raise Not_found
 
-  let extension filename =
-    try
-      let pos = String.rindex filename '.'
-      and slash =
-        try String.rindex filename '/'
-        with Not_found -> -1
-      in
-      if pos > slash then
-        String.sub filename (pos+1) ((String.length filename) - pos - 1)
-      else (* Dot before a directory separator *)
-        raise Not_found
-    with Not_found -> (* No dot in filename *)
-      raise Not_found
-
 end
 
 (*****************************************************************************)

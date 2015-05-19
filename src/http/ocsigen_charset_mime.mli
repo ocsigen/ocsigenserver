@@ -63,6 +63,9 @@ val default_mime_type : mime_type
 (** association between extensions and mime types, with default value *)
 type mime_assoc
 
+(** No mime association. Default is [application/octet-stream] *)
+val empty_mime_assoc : ?default:mime_type -> unit -> charset_assoc
+
 (** Default values, obtained by reading the file specified by
     [Ocsigen_config.get_mimefile] *)
 val default_mime_assoc : unit -> mime_assoc
@@ -83,10 +86,3 @@ val update_mime_ext : mime_assoc -> extension -> mime_type -> mime_assoc
 val update_mime_file : mime_assoc -> filename -> mime_type -> mime_assoc
 val update_mime_regexp :
   mime_assoc -> Netstring_pcre.regexp -> mime_type -> mime_assoc
-
-
-
-
-
-
-

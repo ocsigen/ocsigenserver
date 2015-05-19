@@ -22,7 +22,7 @@ let section = Lwt_log.Section.make "ocsipersist:sqlite"
 
 (** Module Ocsipersist: persistent data *)
 
-open Lwt
+open Ocsigen_lib
 open Sqlite3
 open Printf
 
@@ -31,14 +31,12 @@ open Printf
 *)
 type store = string Lwt.t
 
-exception Ocsipersist_error
-
 
 (*****************************************************************************)
 
 open Simplexmlparser
 (** getting the directory from config file *)
-let rec parse_global_config = function
+let parse_global_config = function
   | [] -> None
   | (Element ("database", [("file", s)], []))::[] -> Some s
   | _ -> raise (Ocsigen_extensions.Error_in_config_file
@@ -87,7 +85,7 @@ let exec_safely f =
   in
   Lwt_preemptive.detach aux ()
 
-(* Référence indispensable pour les codes de retours et leur signification :
+(* RÃ©fÃ©rence indispensable pour les codes de retours et leur signification :
  * http://sqlite.org/capi3ref.html
  * Langage compris par SQLite : http://www.sqlite.org/lang.html
 *)
@@ -105,7 +103,7 @@ let db_create table =
     aux ()
   in
   exec_safely create >>= fun () ->
-  return table
+  Lwt.return table
 
 let db_remove (table, key) =
   let sql =  sprintf "DELETE FROM %s WHERE key = :key " table in
@@ -232,14 +230,14 @@ let open_store name : store =
 let make_persistent_lazy_lwt ~store ~name ~default =
   store >>= fun store ->
   let pvname = (store, name) in
-  (catch
-     (fun () -> db_get pvname >>= (fun _ -> return ()))
+  (Lwt.catch
+     (fun () -> db_get pvname >>= (fun _ -> Lwt.return ()))
      (function
        | Not_found ->
          default () >>= fun def ->
          db_replace pvname (Marshal.to_string def [])
-       | e -> fail e)) >>=
-  (fun () -> return pvname)
+       | e -> Lwt.fail e)) >>=
+  (fun () -> Lwt.return pvname)
 
 let make_persistent_lazy ~store ~name ~default =
   let default () = Lwt.wrap default in
@@ -250,7 +248,7 @@ let make_persistent ~store ~name ~default =
 
 let get (pvname : 'a t) : 'a =
   db_get pvname >>=
-  (fun r -> return (Marshal.from_string r 0))
+  (fun r -> Lwt.return (Marshal.from_string r 0))
 
 let set pvname v =
   let data = Marshal.to_string v [] in
@@ -267,7 +265,7 @@ let table_name table = table
 let find table key =
   table >>= fun table ->
   db_get (table, key) >>= fun v ->
-  return (Marshal.from_string v 0)
+  Lwt.return (Marshal.from_string v 0)
 
 let add table key value =
   table >>= fun table ->
@@ -288,7 +286,7 @@ let iter_step f table =
   let rec aux rowid =
     db_iter_step table rowid >>=
     (function
-      | None -> return ()
+      | None -> Lwt.return ()
       | Some (k,v,rowid') ->
         f k (Marshal.from_string v 0) >>= (fun () -> aux rowid'))
   in
@@ -299,7 +297,7 @@ let fold_step f table beg =
   let rec aux rowid beg =
     db_iter_step table rowid >>=
     (function
-      | None -> return beg
+      | None -> Lwt.return beg
       | Some (k, v, rowid') ->
         f k (Marshal.from_string v 0) beg >>= (fun res -> aux rowid' res))
   in

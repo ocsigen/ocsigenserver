@@ -29,8 +29,6 @@ Then load it dynamically from Ocsigen's config file:
 
 open Ocsigen_lib
 
-open Printf
-open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
 open Ocsigen_http_frame

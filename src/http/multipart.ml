@@ -4,10 +4,10 @@
 
 (*VVV Check wether we should support int64 for large files? *)
 
-open Ocsigen_lib
 
 module S = Netstring_pcre
 open Lwt
+open! Ocsigen_lib
 open Ocsigen_stream
 
 exception Multipart_error of string
@@ -267,4 +267,3 @@ let scan_multipart_body_from_stream s ~boundary ~create ~add ~stop ~maxsize=
       | Stream_too_small -> fail Ocsigen_Bad_Request
       | e -> fail e)
 ;;
-

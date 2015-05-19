@@ -1,4 +1,3 @@
-open Ocsigen_lib
 
 type socket_type =
   | All
