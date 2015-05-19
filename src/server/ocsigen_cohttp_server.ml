@@ -177,15 +177,6 @@ let shutdown_server timeout =
 let number_of_client () = 0
 let get_number_of_connected = number_of_client
 
-(* Avoid duplicate code between server_tls_config and tls_server_key type.
- * It's conversion type specificaly for a TLS server. *)
-let server_tls_config_of_tls_server_key
-  : Conduit_lwt_unix.tls_server_key ->
-    (int -> Conduit_lwt_unix.server_tls_config) =
-  function `None -> assert false (* specific for a TLS server *)
-         | `TLS (crt, key, pass) ->
-           fun port -> (crt, key, pass, `Port port)
-
 (* An http result [res] frame has been computed. Depending on
    the If-(None-)?Match and If-(Un)?Modified-Since headers of [ri],
    we return this frame, a 304: Not-Modified, or a 412: Precondition Failed.
@@ -330,43 +321,38 @@ let service ?ssl ~address ~port ~connector () =
     | None -> `None
   in
   (* We create a specific context for Conduit and Cohttp. *)
-  (Conduit_lwt_unix.init
+  Conduit_lwt_unix.init
     ~src:address
-    ~tls_server_key ())
+    ~tls_server_key ()
   >>= fun conduit_ctx ->
-    Lwt.return
-      (Cohttp_lwt_unix_net.init
+  Lwt.return
+    (Cohttp_lwt_unix_net.init
        ~ctx:conduit_ctx ())
   (* We catch the INET_ADDR of the server *)
   >>= fun ctx ->
-    Lwt_unix.getaddrinfo
-      address
-      "0"
-      [Unix.AI_PASSIVE; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]
+  Lwt_unix.getaddrinfo
+    address
+    "0"
+    [Unix.AI_PASSIVE; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]
   >>= function
-    | { ai_addr = ADDR_INET (address, _); } :: _ ->
-      (* This pattern is not exhaustive but the other case is not possible (for
-       * the moment ?) because Conduit raise an error if we have an [ADDR_UNIX]
-       * (and the old version of ocsigen doesn't handle this case) and the
-       * result of [getaddrinfo] must not be empty (in other case, Conduit raise
-       * an error also).
-       *)
-      let callback = handler ~address ~port ~extensions_connector:connector in
-      let config = Server.make ~conn_closed ~callback () in
-      (match ssl with
-       | None -> Server.create ~stop ~ctx ~mode:(`TCP (`Port port)) config
-       | Some (crt, key, Some password) ->
-         Server.create
-           ~stop
-           ~ctx
-           ~mode:(`OpenSSL (server_tls_config_of_tls_server_key tls_server_key port))
-           config
-       | Some (crt, key, None) ->
-         Server.create
-           ~stop
-           ~ctx
-           ~mode:(`OpenSSL (server_tls_config_of_tls_server_key tls_server_key port))
-           config)
-      >>= fun () ->
-      Lwt.return (Lwt.wakeup stop_wakener ())
-  | _ -> assert false
+  | { ai_addr = ADDR_INET (ai_addr, _); } :: _ ->
+    let callback =
+      handler ~address:ai_addr ~port ~extensions_connector:connector
+    in
+    let config = Server.make ~conn_closed ~callback () in
+    let mode =
+      match tls_server_key with
+      | `None -> `TCP (`Port port)
+      | `TLS (crt, key, pass) ->
+        `OpenSSL (crt, key, pass, `Port port)
+    in
+    Server.create ~stop ~ctx ~mode  config
+    >>= fun () ->
+    Lwt.return (Lwt.wakeup stop_wakener ())
+  | _ ->
+    (* This case is not possible:
+       - Conduit raise an error if we have an [ADDR_UNIX].
+       - The result of [getaddrinfo] must not be empty
+         (or Conduit would also raise an error).
+    *)
+    assert false
