@@ -59,10 +59,10 @@ exception Timeout
 exception Keepalive_timeout
 exception Aborted
 
-(*XXX Provide the max size? *)
 let request_too_large max =
+  let s = Printf.sprintf "Request contents too large. Maximum size is %Li." max in
   Ocsigen_http_frame.Http_error.Http_exception
-    (413, Some "request contents too large", None)
+    (413, Some s, None)
 
 let convert_io_error e =
   match e with
