@@ -3,16 +3,16 @@ module Cookie = struct
   open Ocsigen_cookies
   open Ocsigen_lib
 
-  let serialize_cookie path exp name c secure =
-    Format.sprintf "%s=%s%s%s" name c
-      ("; path=/" ^ Url.string_of_url_path ~encode:true path)
-      (if secure then "; secure" else "") ^
-    (match exp with
-     | Some s -> "; expires=" ^
-                 Netdate.format
-                   "%a, %d-%b-%Y %H:%M:%S GMT"
-                   (Netdate.create s)
-     | None -> "")
+  let serialize_cookie_raw path exp name c secure =
+    Format.sprintf "%s=%s; path=/%s%s%s"
+      name (Url.string_of_url_path ~encode:true path)  c
+      (if secure then "; secure" else "")
+      (match exp with
+       | Some s -> "; expires=" ^
+                   Netdate.format
+                     "%a, %d-%b-%Y %H:%M:%S GMT"
+                     (Netdate.create s)
+       | None -> "")
 
   let serialize_cookies path table headers =
     CookiesTable.fold
@@ -22,8 +22,8 @@ module Cookie = struct
            | Ocsigen_cookies.OSet (t, v, secure) -> (t, v, secure)
          in
          Http_headers.add
-           Http_headers.set_cookie (serialize_cookie path exp name v secure)
-           headers)
+           Http_headers.set_cookie (serialize_cookie_raw path exp name v secure)
+           h)
       table
       headers
 
