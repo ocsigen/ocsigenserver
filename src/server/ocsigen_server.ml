@@ -203,12 +203,8 @@ let start_server () = try
            (fun a i -> (listen true i wait_end_init extensions_connector)@a) [] sslports;
       *)
 
-      let l =
-        List.map (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p)
-          ports
-      in
-      let connection = match l with
-        | [] -> [("0.0.0.0", 80)]
+      let connection = match ports with
+        | [] -> [(Ocsigen_socket.All, 80)]
         | l -> l
       in
 
@@ -221,10 +217,8 @@ let start_server () = try
             raise (Ocsigen_config.Config_file_error "SSL key is missing")
           | Some (None, Some _) ->
             raise (Ocsigen_config.Config_file_error "SSL certificate is missing")
-        in match List.map
-                   (fun (a, p) -> Ocsigen_socket.string_of_socket_type a, p)
-                   sslports, ssl with
-        | [], Some (crt, key) -> [("0.0.0.0", 443, (crt, key))]
+        in match sslports, ssl with
+        | [], Some (crt, key) -> [(Ocsigen_socket.All, 443, (crt, key))]
         | l, Some (crt, key) ->
           List.map (fun (a, p) -> (a, p, (crt, key))) l
         | _ -> []

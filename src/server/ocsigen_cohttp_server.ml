@@ -322,7 +322,7 @@ let service ?ssl ~address ~port ~connector () =
   in
   (* We create a specific context for Conduit and Cohttp. *)
   Conduit_lwt_unix.init
-    ~src:address
+    ~src:(Ocsigen_socket.string_of_socket_type address)
     ~tls_server_key ()
   >>= fun conduit_ctx ->
   Lwt.return
@@ -330,14 +330,8 @@ let service ?ssl ~address ~port ~connector () =
        ~ctx:conduit_ctx ())
   (* We catch the INET_ADDR of the server *)
   >>= fun ctx ->
-  Lwt_unix.getaddrinfo
-    address
-    "0"
-    [Unix.AI_PASSIVE; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]
-  >>= function
-  | { ai_addr = ADDR_INET (ai_addr, _); } :: _ ->
     let callback =
-      handler ~address:ai_addr ~port ~extensions_connector:connector
+      handler ~address:(Ocsigen_socket.to_inet_addr address) ~port ~extensions_connector:connector
     in
     let config = Server.make ~conn_closed ~callback () in
     let mode =
@@ -349,10 +343,3 @@ let service ?ssl ~address ~port ~connector () =
     Server.create ~stop ~ctx ~mode  config
     >>= fun () ->
     Lwt.return (Lwt.wakeup stop_wakener ())
-  | _ ->
-    (* This case is not possible:
-       - Conduit raise an error if we have an [ADDR_UNIX].
-       - The result of [getaddrinfo] must not be empty
-         (or Conduit would also raise an error).
-    *)
-    assert false
