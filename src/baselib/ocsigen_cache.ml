@@ -465,7 +465,7 @@ module Make =
                                a weak hash table *)
       }
 
-    let mk f ?timer size =
+    let mk ?timer size =
       let (l, t) as a = (Dlist.create ?timer size, H.create size) in
       Dlist.set_finaliser_after
         (fun n -> H.remove t (Dlist.value n))
@@ -474,7 +474,7 @@ module Make =
 
     let rec create f ?timer size =
       let rec cache =
-        let (l, t) = mk f ?timer size in
+        let (l, t) = mk ?timer size in
         {pointers = l;
          table = t;
          finder = f;
@@ -488,7 +488,7 @@ module Make =
     and clear cache =
       let size = Dlist.maxsize cache.pointers in
       let timer = Dlist.get_timer cache.pointers in
-      let (l, t) = mk cache.finder ?timer size in
+      let (l, t) = mk ?timer size in
       cache.pointers <- l;
       cache.table <- t
 
