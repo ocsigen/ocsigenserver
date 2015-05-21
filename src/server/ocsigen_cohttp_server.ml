@@ -281,7 +281,8 @@ let handle_result_frame ri res =
         with Not_found ->
           headers
       in
-      Http_headers.(keep cache_control (keep expires empty))
+      let open! Http_headers in
+      keep cache_control (keep expires empty)
     in
     Result.update (Ocsigen_http_frame.Result.empty ())
       ~code:304  (* Not modified *)
