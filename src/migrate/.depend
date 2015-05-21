@@ -1,0 +1,13 @@
+of_cohttp.cmi : ../http/ocsigen_http_frame.cmi
+to_cohttp.cmi : ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi \
+    ../http/http_headers.cmi
+of_cohttp.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi of_cohttp.cmi
+of_cohttp.cmx : ../baselib/ocsigen_stream.cmx ../baselib/ocsigen_lib.cmx \
+    ../http/ocsigen_http_frame.cmx ../http/ocsigen_cookies.cmx of_cohttp.cmi
+to_cohttp.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_cookies.cmi \
+    ../http/http_headers.cmi to_cohttp.cmi
+to_cohttp.cmx : ../baselib/ocsigen_stream.cmx ../baselib/ocsigen_lib.cmx \
+    ../http/ocsigen_http_frame.cmx ../http/ocsigen_cookies.cmx \
+    ../http/http_headers.cmx to_cohttp.cmi

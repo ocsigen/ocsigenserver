@@ -10,13 +10,16 @@ type file_info = {
   file_content_type: ((string * string) * (string * string) list) option;
 }
 
-type request_info
+type request_info [@@deriving show]
 
 (** Parsing URLs.
    This allows to modify the URL in the request_info.
    (to be used for example with Ext_retry_with or Ext_continue_with)
  *)
 val ri_of_url : ?full_rewrite:bool -> string -> request_info -> request_info
+
+(** Obtain bind address of server and port *)
+val get_server_address : request_info -> Unix.inet_addr * int
 
 (** Make a request_info *)
 val make :
@@ -47,6 +50,7 @@ val make :
   remote_port:int ->
   ?forward_ip:string list ->
   server_port:int ->
+  server_addr:Unix.inet_addr ->
   user_agent:string ->
   cookies_string:string option Lazy.t ->
   cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
@@ -68,7 +72,6 @@ val make :
   accept_language:(string * float option) list Lazy.t ->
   http_frame:Ocsigen_http_frame.t ->
   ?request_cache:Polytables.t ->
-  client:Ocsigen_http_com.connection ->
   range:((int64 * int64) list * int64 option * ifrange) option
       Lazy.t ->
   ?timeofday:float ->
@@ -104,6 +107,7 @@ val update :
   ?remote_port:int ->
   ?forward_ip:string list ->
   ?server_port:int ->
+  ?server_addr:Unix.inet_addr ->
   ?user_agent:string ->
   ?cookies_string:string option Lazy.t ->
   ?cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
@@ -125,7 +129,6 @@ val update :
   ?accept_language:(string * float option) list Lazy.t ->
   ?http_frame:Ocsigen_http_frame.t ->
   ?request_cache:Polytables.t ->
-  ?client:Ocsigen_http_com.connection ->
   ?range:((int64 * int64) list * int64 option * ifrange) option
     Lazy.t ->
   ?timeofday:float ->
@@ -188,9 +191,6 @@ val full_path : request_info -> string list
 
 (** Accessor for get_params_string of request_info *)
 val get_params_string : request_info -> string option
-
-(** Accessor for client of request_info *)
-val client : request_info -> Ocsigen_http_com.connection
 
 (** Accessor for nb_tries of request_info *)
 val nb_tries : request_info -> int

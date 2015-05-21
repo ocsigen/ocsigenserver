@@ -14,11 +14,11 @@ type file_info = {
 (** The request *)
 type request_info =
   {url_string: string; (** full URL *)
-   meth: Ocsigen_http_frame.Http_header.http_method; (** GET, POST, HEAD... *)
-   protocol: Ocsigen_http_frame.Http_header.proto; (** HTTP protocol used by client *)
+   meth: Ocsigen_http_frame.Http_header.http_method [@opaque]; (** GET, POST, HEAD... *)
+   protocol: Ocsigen_http_frame.Http_header.proto [@opaque]; (** HTTP protocol used by client *)
    ssl: bool; (** true if HTTPS, false if HTTP *)
-   full_path_string: string; (** full path of the URL *)
-   full_path: string list;   (** full path of the URL *)
+   full_path_string: string ; (** full path of the URL *)
+   full_path: string list [@printer fun fmt x -> fprintf fmt "%s" (Url.string_of_url_path ~encode:true x)]; (** full path of the URL *)
    original_full_path_string: string;   (** full path of the URL, as first sent by the client. Should not be changed by extensions, even rewritemod. It is used to create relative links. *)
    original_full_path: string list;   (** full path of the URL, as first sent by the client. See below. *)
    sub_path: string list;   (** path of the URL (only part concerning the site) *)
@@ -26,19 +26,21 @@ type request_info =
    get_params_string: string option; (** string containing GET parameters *)
    host: string option; (** Host field of the request (if any), without port *)
    port_from_host_field: int option; (** Port in the host field of the request (if any) *)
-   get_params: (string * string) list Lazy.t;  (** Association list of get parameters *)
-   initial_get_params: (string * string) list Lazy.t;  (** Association list of get parameters, as sent by the browser (must not be modified by extensions) *)
-   post_params: ((string option * Int64.t option) -> (string * string) list Lwt.t) option; (** Association list of post parameters, if urlencoded form parameters or multipart data. None if other content type or no content. *)
-   files: ((string option * Int64.t option) -> (string * file_info) list Lwt.t) option; (** Files sent in the request (multipart data). None if other content type or no content. *)
-   remote_inet_addr: Unix.inet_addr; (** IP of the client *)
+   get_params: (string * string) list Lazy.t [@opaque];  (** Association list of get parameters *)
+   initial_get_params: (string * string) list Lazy.t [@opaque];  (** Association list of get parameters, as sent by the browser (must not be modified by extensions) *)
+   post_params: ((string option * Int64.t option) -> (string * string) list Lwt.t) option [@opaque]; (** Association list of post parameters, if urlencoded form parameters or multipart data. None if other content type or no content. *)
+   files: ((string option * Int64.t option) -> (string * file_info) list Lwt.t) option [@opaque]; (** Files sent in the request (multipart data). None if other content type or no content. *)
+   remote_inet_addr: Unix.inet_addr
+       [@printer fun fmt x -> fprintf fmt "%s" (Unix.string_of_inet_addr x)]; (** IP of the client *)
    remote_ip: string;            (** IP of the client *)
-   remote_ip_parsed: Ipaddr.t Lazy.t;    (** IP of the client, parsed *)
+   remote_ip_parsed: Ipaddr.t Lazy.t [@opaque];    (** IP of the client, parsed *)
    remote_port: int;      (** Port used by the client *)
    forward_ip: string list; (** IPs of gateways the request went throught *)
    server_port: int;      (** Port of the request (server) *)
+   server_addr: Unix.inet_addr [@opaque]; (** Address of the request (server) *)
    user_agent: string;    (** User_agent of the browser *)
-   cookies_string: string option Lazy.t; (** Cookies sent by the browser *)
-   cookies: string CookiesTable.t Lazy.t;  (** Cookies sent by the browser *)
+   cookies_string: string option Lazy.t [@opaque]; (** Cookies sent by the browser *)
+   cookies: string CookiesTable.t Lazy.t [@opaque];  (** Cookies sent by the browser *)
    ifmodifiedsince: float option;   (** if-modified-since field *)
    ifunmodifiedsince: float option;   (** if-unmodified-since field *)
    ifnonematch: string list option;   (** if-none-match field ( * and weak entity tags not implemented) *)
@@ -46,33 +48,32 @@ type request_info =
    content_type: ((string * string) * (string * string) list) option; (** Content-Type HTTP header *)
    content_type_string: string option; (** Content-Type HTTP header *)
    content_length: int64 option; (** Content-Length HTTP header *)
-   referer: string option Lazy.t; (** Referer HTTP header *)
+   referer: string option Lazy.t [@opaque]; (** Referer HTTP header *)
 
-   origin: string option Lazy.t;
+   origin: string option Lazy.t [@opaque];
    (** Where the cross-origin request or preflight request originates from.
        http://www.w3.org/TR/cors/#origin-request-header *)
-   access_control_request_method : string option Lazy.t;
+   access_control_request_method : string option Lazy.t [@opaque];
    (** which method will be used in the actual request as part of
        the preflight request.
        http://www.w3.org/TR/cors/#access-control-request-method-request-he*)
-   access_control_request_headers : string list option Lazy.t;
+   access_control_request_headers : string list option Lazy.t [@opaque];
    (** Which headers will be used in the actual request as part of
        the preflight request.
        http://www.w3.org/TR/cors/#access-control-request-headers-request-h *)
 
-   accept: ((string option * string option) * float option * (string * string) list) list Lazy.t; (** Accept HTTP header. For example [(Some "text", None)] means ["text/*"]. The float is the "quality" value, if any. The last association list is for other extensions. *)
-   accept_charset: (string option * float option) list Lazy.t; (** Accept-Charset HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
-   accept_encoding: (string option * float option) list Lazy.t; (** Accept-Encoding HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
-   accept_language: (string * float option) list Lazy.t; (** Accept-Language HTTP header. The float is the "quality" value, if any. *)
+   accept: ((string option * string option) * float option * (string * string) list) list Lazy.t [@opaque]; (** Accept HTTP header. For example [(Some "text", None)] means ["text/*"]. The float is the "quality" value, if any. The last association list is for other extensions. *)
+   accept_charset: (string option * float option) list Lazy.t [@opaque]; (** Accept-Charset HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
+   accept_encoding: (string option * float option) list Lazy.t [@opaque]; (** Accept-Encoding HTTP header. [None] for the first value means "*". The float is the "quality" value, if any. *)
+   accept_language: (string * float option) list Lazy.t [@opaque]; (** Accept-Language HTTP header. The float is the "quality" value, if any. *)
 
-   http_frame: Ocsigen_http_frame.t; (** The full http_frame *)
-   mutable request_cache: Polytables.t;
+   http_frame: Ocsigen_http_frame.t [@opaque]; (** The full http_frame *)
+   mutable request_cache: Polytables.t [@opaque];
    (** Use this to put anything you want,
        for example, information for subsequent
        extensions
    *)
-   client: Ocsigen_http_com.connection; (** The request connection *)
-   range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t;
+   range: ((int64 * int64) list * int64 option * ifrange) option Lazy.t [@opaque];
    (** Range HTTP header. [None] means all the document.
        List of intervals + possibly from an index to the end of the document.
    *)
@@ -80,8 +81,8 @@ type request_info =
    mutable nb_tries: int; (** For internal use:
                                  used to prevent loops of requests *)
 
-   connection_closed: unit Lwt.t; (** a thread waking up when the connection is closed *)
-  }
+   connection_closed: unit Lwt.t [@opaque]; (** a thread waking up when the connection is closed *)
+  } [@@deriving show]
 (** If you force [ri_files] or [ri_post_params], the request is fully read,
     so it is not possible any more to read it from [ri_http_frame]
     (and vice versa).
@@ -137,6 +138,7 @@ let make
     ~remote_port
     ?(forward_ip=[])
     ~server_port
+    ~server_addr
     ~user_agent
     ~cookies_string
     ~cookies
@@ -157,7 +159,6 @@ let make
     ~accept_language
     ~http_frame
     ?(request_cache=Polytables.create ())
-    ~client
     ~range
     (* XXX: We should have this line but it would produce a circular dependency
      * between the two modules
@@ -165,7 +166,7 @@ let make
      * ?(range=lazy (Ocsigen_range.get_range http_frame)) *)
     ?(timeofday=Unix.gettimeofday ())
     ?(nb_tries=0)
-    ?(connection_closed=Ocsigen_http_com.closed client)
+    ?(connection_closed=Lwt.return_unit) (*XXX FIXME*)
     () =
   {
     url_string;
@@ -191,6 +192,7 @@ let make
     remote_port;
     forward_ip;
     server_port;
+    server_addr;
     user_agent;
     cookies_string;
     cookies;
@@ -211,7 +213,6 @@ let make
     accept_language;
     http_frame;
     request_cache;
-    client;
     range;
     timeofday;
     nb_tries;
@@ -242,6 +243,7 @@ let update ri
     ?(remote_port=ri.remote_port)
     ?(forward_ip=ri.forward_ip)
     ?(server_port=ri.server_port)
+    ?(server_addr=ri.server_addr)
     ?(user_agent=ri.user_agent)
     ?(cookies_string=ri.cookies_string)
     ?(cookies=ri.cookies)
@@ -262,7 +264,6 @@ let update ri
     ?(accept_language=ri.accept_language)
     ?(http_frame=ri.http_frame)
     ?(request_cache=ri.request_cache)
-    ?(client=ri.client)
     ?(range=ri.range)
     ?(timeofday=ri.timeofday)
     ?(nb_tries=ri.nb_tries)
@@ -292,6 +293,7 @@ let update ri
     remote_port;
     forward_ip;
     server_port;
+    server_addr;
     user_agent;
     cookies_string;
     cookies;
@@ -312,7 +314,6 @@ let update ri
     accept_language;
     http_frame;
     request_cache;
-    client;
     range;
     timeofday;
     nb_tries;
@@ -340,7 +341,6 @@ let port_from_host_field { port_from_host_field; _ } =
 let server_port { server_port; _ } = server_port
 let full_path { full_path; _ } = full_path
 let get_params_string { get_params_string; _ } = get_params_string
-let client { client; _ } = client
 let nb_tries { nb_tries; _ } = nb_tries
 let sub_path { sub_path; _ } = sub_path
 let content_length { content_length; _ } = content_length
@@ -371,3 +371,6 @@ let accept_language { accept_language; _ } = accept_language
 let accept_encoding { accept_encoding; _ } = accept_encoding
 let accept { accept; _ } = accept
 let connection_closed { connection_closed; _ } = connection_closed
+
+let get_server_address ri =
+  (ri.server_addr, ri.server_port)

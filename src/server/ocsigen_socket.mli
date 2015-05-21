@@ -26,3 +26,8 @@ val port_of_sockaddr : Unix.sockaddr -> int
     @param A socket_type
 *)
 val string_of_socket_type : socket_type -> string
+
+(** to_inet_addr accessor of inet addr
+    @param A socket_type
+*)
+val to_inet_addr : socket_type -> Unix.inet_addr
