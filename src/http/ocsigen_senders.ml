@@ -39,7 +39,7 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
   type t = Typed_xml.doc
   type options = Http_headers.accept Lazy.t
 
-  let get_etag ?options c = None
+  let get_etag ?options:_ _ = None
 
   let choose_content_type accepted alt default =
     match accepted, alt with
@@ -84,7 +84,7 @@ struct
 
   type options = unit
 
-  let get_etag ?options (x, _) = None
+  let get_etag ?options:_ (_x, _) = None
   (*      Some (Digest.to_hex (Digest.string x)) *)
   (* We do not add etags here because the content is
      probably generated and there are problemes with etags
@@ -99,7 +99,7 @@ struct
      is to never send etags *)
 
 
-  let result_of_content ?(options = ()) ((c, ct) as content) =
+  let result_of_content ?options:_ ((c, ct) as content) =
     let md5 = get_etag content in
     let default_result = Result.default () in
     Lwt.return
@@ -123,9 +123,9 @@ struct
 
   type options = unit
 
-  let get_etag ?options c = None
+  let get_etag ?options:_ _ = None
 
-  let result_of_content ?(options = ()) c =
+  let result_of_content ?options:_ c =
     let default_result = Result.default () in
     Lwt.return
       (Result.update default_result
@@ -144,9 +144,9 @@ struct
 
   type options = unit
 
-  let get_etag ?options c = None
+  let get_etag ?options:_ _ = None
 
-    let result_of_content ?(options = ()) (c, ct) =
+    let result_of_content ?options:_ (c, ct) =
       let finalizer = ref (fun _ -> Lwt.return ()) in
       let finalize status =
         let f = !finalizer in
@@ -201,9 +201,9 @@ struct
 
   type options = unit
 
-  let get_etag ?options c = None
+  let get_etag ?options:_ _ = None
 
-  let result_of_content ?(options = ()) c = Lwt.return (Result.empty ())
+  let result_of_content ?options:_ _ = Lwt.return (Result.empty ())
 
 end
 
@@ -242,7 +242,7 @@ struct
     Some (Printf.sprintf "%Lx-%x-%f" st.Unix.LargeFile.st_size
             st.Unix.LargeFile.st_ino st.Unix.LargeFile.st_mtime)
 
-  let get_etag ?options (f, _, _) =
+  let get_etag ?options:_ (f, _, _) =
     let st = Unix.LargeFile.stat f in
     get_etag_aux st
 
@@ -253,7 +253,7 @@ struct
       Ocsigen_stream.next (Ocsigen_stream.get stream)
     with e -> Lwt.fail e
 
-  let result_of_content ?options (c, charset_assoc, mime_assoc) =
+  let result_of_content ?options:_ (c, charset_assoc, mime_assoc) =
     (* open the file *)
     try
       let fdu = Unix.openfile c [Unix.O_RDONLY;Unix.O_NONBLOCK] 0o666 in
@@ -300,7 +300,7 @@ struct
     Some (Printf.sprintf "%Lx-%x-%f" st.Unix.LargeFile.st_size
             st.Unix.LargeFile.st_ino st.Unix.LargeFile.st_mtime)
 
-  let get_etag ?options (f, _) =
+  let get_etag ?options:_ (f, _) =
     let st = Unix.LargeFile.stat f in
     get_etag_aux st
 
@@ -402,7 +402,7 @@ struct
 
 
 
-  let result_of_content ?(options = ()) (filename, path) =
+  let result_of_content ?options:_ (filename, path) =
     let stat = Unix.LargeFile.stat filename in
     let rec back = function
       | [] | [""] -> assert false
@@ -461,7 +461,7 @@ struct
 
   type options = unit
 
-  let get_etag ?options c = None
+  let get_etag ?options:_ _ = None
 
   let error_page s msg c =
     Html5.M.html
@@ -472,14 +472,14 @@ struct
           c)
       )
 
-  let result_of_content ?(options = ()) (code, exn, cookies_to_set) =
+  let result_of_content ?options:_ (code, exn, cookies_to_set) =
     let code = match code with
       | None -> 500
       | Some c -> c
     in
     let (error_code, error_msg, headers) =
       match exn with
-      | Some (Http_error.Http_exception (errcode, msgs, h) as e) ->
+      | Some (Http_error.Http_exception (errcode, _msgs, h) as e) ->
         let msg = Http_error.string_of_http_exception e in
         let headers = match h with
           | Some h -> h

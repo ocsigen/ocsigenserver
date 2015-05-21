@@ -58,7 +58,7 @@ let compute_new_ri_cookies
     (fun path ct t ->
        if prefix path ripath then
          String.Table.fold
-           (fun n v beg ->
+           (fun n v _beg ->
               match v with
               | OSet (Some ti, v, _) when ti>now ->
                 String.Table.add n v t

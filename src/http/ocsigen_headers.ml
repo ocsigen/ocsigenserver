@@ -44,7 +44,7 @@ let list_flat_map f l = List.flatten (List.map f l)
 
 (* splits a quoted string, for ex "azert", "  sdfmlskdf",    "dfdsfs" *)
 (* We are too kind ... We accept even if the separator is not ok :-( ? *)
-let quoted_split char (* char is not used in that version *) s =
+let quoted_split s =
   let longueur = String.length s in
   let rec aux deb =
     let rec nextquote s i =
@@ -217,7 +217,7 @@ let get_if_unmodified_since http_frame =
 let get_if_none_match http_frame =
   try
     Some (list_flat_map
-            (quoted_split ',')
+            quoted_split
             (Http_header.get_headers_values
                http_frame.Ocsigen_http_frame.frame_header Http_headers.if_none_match))
   with _ -> None
@@ -227,7 +227,7 @@ let get_if_match http_frame =
   try
     Some
       (list_flat_map
-         (quoted_split ',')
+         quoted_split
          (Http_header.get_headers_values
             http_frame.Ocsigen_http_frame.frame_header Http_headers.if_match))
   with _ -> None

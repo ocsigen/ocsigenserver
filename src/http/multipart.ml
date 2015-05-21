@@ -91,7 +91,7 @@ let read_header ?downcase ?unfold ?strip s =
           Ocsigen_stream.enlarge_stream s >>=
           (function
               Finished _ -> fail Stream_too_small
-            | Cont (stri, _) as s -> find_end_of_header s)
+            | Cont _ as s -> find_end_of_header s)
         | e -> fail e)
   in
   find_end_of_header s >>= (fun (s, end_pos) ->
@@ -117,7 +117,7 @@ let read_multipart_body decode_part boundary s =
       Ocsigen_stream.enlarge_stream s >>=
       (function
         | Finished _ -> fail Stream_too_small
-        | Cont (stri, _) as s -> search_window s re start)
+        | Cont _ as s -> search_window s re start)
   in
   let search_end_of_line s k =
     (* Search LF beginning at position k *)
@@ -145,7 +145,7 @@ let read_multipart_body decode_part boundary s =
     let ldel = String.length del in
     Ocsigen_stream.stream_want s (ldel + 2) >>= (function
         | Finished _ as str2 -> return (str2, false, false)
-        | Cont (ss, f) as str2 ->
+        | Cont (ss, _) as str2 ->
           let long = String.length ss in
           let isdelim = (long >= ldel) && (String.sub ss 0 ldel = del) in
           let islast = isdelim && (String.sub ss ldel 2 = "--") in
@@ -168,7 +168,7 @@ let read_multipart_body decode_part boundary s =
     Ocsigen_stream.stream_want s (l_delimiter+2) >>= fun s ->
     let last_part = match s with
       | Finished _ -> false
-      | Cont (ss, f) ->
+      | Cont (ss, _) ->
         let long = String.length ss in
         (long >= (l_delimiter+2)) &&
         (ss.[l_delimiter] = '-') &&

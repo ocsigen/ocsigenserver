@@ -383,7 +383,7 @@ let get_maxsize = function
   | Query -> Ocsigen_config.get_maxrequestbodysize ()
 
 
-let return_with_no_body receiver = Lwt.return None
+let return_with_no_body _receiver = Lwt.return None
 
 
 (** get an http frame *)
@@ -477,7 +477,7 @@ let get_http_frame ?(head = false) receiver =
                would leave no possibility for the server to send back a response.)
             *)
             match header.Ocsigen_http_frame.Http_header.mode with
-              Ocsigen_http_frame.Http_header.Query (_, s) ->
+              Ocsigen_http_frame.Http_header.Query (_, _) ->
               return_with_no_body receiver
             | _ ->
               let st =
@@ -727,7 +727,7 @@ module H = Ocsigen_http_frame.Http_header
 
 let set_result_observer, observe_result =
   let observer = ref (fun _ _ -> Lwt.return ()) in
-  ((fun f -> 
+  ((fun f ->
       let o = !observer in
       observer := (fun a b -> o a b >>= fun () -> f a b)),
    (fun a b -> !observer a b))

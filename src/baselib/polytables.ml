@@ -22,7 +22,7 @@
 
 type 'a key = int * 'a option ref
 
-module T = Map.Make(struct 
+module T = Map.Make(struct
     type t = int
     let compare = compare
   end)
@@ -45,9 +45,8 @@ let get ~(table : t) ~key:((k, r) : 'a key) =
   | Some v -> r:= None; v
   | None -> failwith "Polytables.get"
 
-let remove ~(table : t) ~key:((k, r) : 'a key) =
+let remove ~(table : t) ~key:((k, _) : 'a key) =
   table := T.remove k !table
 
 let clear ~(table : t) =
   table := T.empty
-

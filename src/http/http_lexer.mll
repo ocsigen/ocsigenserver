@@ -40,13 +40,13 @@ let meth_of_string =
 let proto_of_string s = match String.uppercase s with
   | "HTTP/1.1" -> HTTP11
   | "HTTP/1.0" -> HTTP10
-  | s -> raise (Http_error.Http_exception (505, None, None))
+  | _ -> raise (Http_error.Http_exception (505, None, None))
 
 let add_header (n, v) h =
   let field = String.concat " " (List.rev v) in
   { h with headers = Http_headers.add n field h.headers }
 
-let handle_eof lexbuf =
+let handle_eof _lexbuf =
   raise (Http_error.Http_exception (400, Some "unexpected end of file", None))
 let handle_other lexbuf =
   raise (Http_error.Http_exception
