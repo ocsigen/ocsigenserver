@@ -171,15 +171,6 @@ let start_server () = try
 
       Ocsigen_messages.open_files ~user ~group () >>= fun () ->
 
-      (*let wait_end_init, wait_end_init_awakener = wait () in *)
-      (* Listening on all ports: *)
-      (*
-         sockets := List.fold_left
-           (fun a i -> (listen false i wait_end_init extensions_connector)@a) [] ports;
-         sslsockets := List.fold_left
-           (fun a i -> (listen true i wait_end_init extensions_connector)@a) [] sslports;
-      *)
-
       let connection = match ports with
         | [] -> [(Ocsigen_socket.All, 80)]
         | l -> l
@@ -263,12 +254,6 @@ let start_server () = try
       Ocsigen_config.set_user user;
       Ocsigen_config.set_group group;
 
-      (* Je suis fou :
-         let rec f () =
-           print_endline "-";
-           Lwt_unix.yield () >>= f
-           in f (); *)
-
       if maxthreads < minthreads
       then
         raise
@@ -345,33 +330,6 @@ let start_server () = try
         Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
       );
 
-      (* Lwt.wakeup wait_end_init_awakener (); *)
-       (*
-       let config = {
-         Server.callback =
-           Ocsigen_cohttp_server.service_cohttp
-             ~address
-             ~port
-             ~extensions_connector;
-         Server.conn_closed = (fun _ _ () -> ())
-       } in
-
-       let process = [ Server.create ~address ~port config ] in
-       let process = match ssl with
-         | Some (address, port) ->
-           let config = {
-             Server.callback =
-               Ocsigen_brouette.service_cohttp
-                 ~address
-                 ~port
-                 ~extensions_connector;
-             Server.conn_closed = (fun _ _ () -> ())
-
-           } in Server.create ~address ~port config :: process
-         | None -> process
-       in Lwt.join process
-       *)
-
       Lwt.join
         ((List.map (fun (address, port) -> Server.service
                        ~address
@@ -383,30 +341,8 @@ let start_server () = try
                        ~address
                        ~port
                        ~connector:extensions_connector ())) ssl_connection)
-       (*
-         Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
-
-       fst (Lwt.wait ())
-       *)
 
     in
-
-  (*
-  let set_passwd_if_needed (ssl, ports, sslports) =
-    if sslports <> []
-    then
-      match ssl with
-      | None
-      | Some (None, None) -> ()
-      | Some (None, _) -> raise (Ocsigen_config.Config_file_error
-                                   "SSL certificate is missing")
-      | Some (_, None) -> raise (Ocsigen_config.Config_file_error
-                                   "SSL key is missing")
-      | Some ((Some c), (Some k)) ->
-        Ssl.set_password_callback !Server.ssl_context (ask_for_passwd sslports);
-        Ssl.use_certificate !Server.ssl_context c k
-  in
-  *)
 
     let write_pid pid =
       match Ocsigen_config.get_pidfile () with
