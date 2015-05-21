@@ -32,7 +32,7 @@ exception Bad_config_tag_for_auth of string
 
 let register_basic_authentication_method, get_basic_authentication_method =
   let fun_auth = ref
-      (fun config ->
+      (fun _config ->
          raise (Bad_config_tag_for_auth "<unknown basic authentication method>"))
   in
 
@@ -44,7 +44,7 @@ let register_basic_authentication_method, get_basic_authentication_method =
           try
             old_fun_auth config
           with
-          | Bad_config_tag_for_auth c -> new_fun_auth config)),
+          | Bad_config_tag_for_auth _c -> new_fun_auth config)),
 
   (********* get_basic_authentication_method *********)
   (fun config ->
@@ -112,7 +112,7 @@ let gen ~realm ~auth rs =
           "AUTH: Invalid Authorization header";
         fail (Ocsigen_http_error (Ocsigen_cookies.Cookies.empty, 400))
     end
-  | Ocsigen_extensions.Req_found (ri, r) ->
+  | Ocsigen_extensions.Req_found (_ri, _r) ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
 
 let parse_config element =

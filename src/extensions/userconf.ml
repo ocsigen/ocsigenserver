@@ -56,8 +56,7 @@ let handle_parsing_error req = function
 (* Answer returned by userconf when the url matches *)
 let subresult new_req user_parse_site conf previous_err req req_state =
   Ext_sub_result
-    (fun cookies_to_set rs ->
-       (* XXX why is rs above never used ?? *)
+    (fun cookies_to_set _rs ->
        Lwt.catch
          (fun () ->
             user_parse_site conf cookies_to_set

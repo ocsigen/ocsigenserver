@@ -150,7 +150,7 @@ let find_cgi_page request reg sub_path =
         | None ->
           Unix.access filename [Unix.X_OK];
           (filename, re, doc_root)
-        | Some exec ->
+        | Some _exec ->
           Unix.access filename [Unix.R_OK];
           (filename, re, doc_root)
       end
@@ -422,7 +422,7 @@ let recupere_cgi head re doc_root filename ri hostname =
           Lwt_log.ign_warning_f ~section "Exited with code %d" i
         | Unix.WSIGNALED i ->
           Lwt_log.ign_warning_f ~section "Killed by signal %d" i
-        | Unix.WSTOPPED i ->
+        | Unix.WSTOPPED _i ->
           (* Cannot occur without Unix.WUNTRACED wait_flag *)
           assert false
        );
@@ -576,7 +576,7 @@ let rec set_env = function
     then (Lwt_log.ign_info_f ~section "Variable no set %s" vr;
           set_env l)
     else (vr,vl)::set_env l
-  | _ :: l -> raise (Error_in_config_file "Bad config tag for <cgi>")
+  | _ :: _ -> raise (Error_in_config_file "Bad config tag for <cgi>")
 
 let parse_config _ path _ _ = function
   | Element ("cgi", atts, l) ->

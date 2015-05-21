@@ -173,7 +173,7 @@ let db_length t =
 (* signals *)
 let close_all i _ =
   Unix.unlink (directory^"/"^socketname);
-  Tableoftables.iter (fun k t -> Dbm.close t) !tableoftables;
+  Tableoftables.iter (fun _ t -> Dbm.close t) !tableoftables;
   exit i
 
 let the_end i =
@@ -341,4 +341,3 @@ let _ = Lwt_main.run
       in ignore (f ())
 
 *)
-

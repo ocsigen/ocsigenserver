@@ -292,7 +292,7 @@ end = struct
     Lwt_list.iter_p
       (function
         (*when write has been made with outcome notifier*)
-        | (c, _, Some x) -> (Lwt.wakeup x outcome ; Lwt.return ())
+        | (_, _, Some x) -> (Lwt.wakeup x outcome ; Lwt.return ())
         (*when it hasn't*)
         | (_, _, None) -> Lwt.return ()
       )

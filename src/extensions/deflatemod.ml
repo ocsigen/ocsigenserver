@@ -148,7 +148,7 @@ and next_cont oz stream =
 let compress deflate stream =
   let zstream = Zlib.deflate_init !compress_level deflate in
   let finalize status =
-    Ocsigen_stream.finalize stream status >>= fun e ->
+    Ocsigen_stream.finalize stream status >>= fun () ->
     (try
       Zlib.deflate_end zstream
     with

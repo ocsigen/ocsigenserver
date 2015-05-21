@@ -120,7 +120,7 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
 
 
 let gen ~usermode ?cache dir = function
-  | Ocsigen_extensions.Req_found (_, r) ->
+  | Ocsigen_extensions.Req_found (_, _) ->
       Lwt.return (Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_not_found (err, ri) ->
       catch

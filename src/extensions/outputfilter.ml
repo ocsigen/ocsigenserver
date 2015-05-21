@@ -32,7 +32,7 @@ type outputfilter =
 
 let gen filter = function
   | Req_not_found (code,_) -> return (Ext_next code)
-  | Req_found (ri, res) ->
+  | Req_found (_ri, res) ->
     let new_headers =
       match filter with
       | Rewrite_header (header, regexp, dest) ->
@@ -84,7 +84,7 @@ let gen filter = function
 
 let gen_code code = function
   | Req_not_found (code,_) -> return (Ext_next code)
-  | Req_found (ri, res) ->
+  | Req_found (_ri, res) ->
     Lwt.return
       (Ocsigen_extensions.Ext_found
          (fun () ->

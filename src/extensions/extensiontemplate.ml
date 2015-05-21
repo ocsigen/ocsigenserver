@@ -58,7 +58,7 @@ open Simplexmlparser
 
 let parse_global_config = function
   | [] -> ()
-  | (Element ("myoption", [("myattr", s)], []))::ll -> ()
+  | (Element ("myoption", [("myattr", _)], []))::_ -> ()
   | _ -> raise (Error_in_config_file
                   ("Unexpected content inside extensiontemplate config"))
 
@@ -80,7 +80,7 @@ let gen = function
        modify the result (if you write a filter) or return it
        without modification like this: *)
     Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found (err, ri) ->
+  | Ocsigen_extensions.Req_not_found (_err, _ri) ->
     (* If previous extensions did not find the result,
        I decide here to answer with a default page
        (for the example):
@@ -125,8 +125,8 @@ let gen = function
     ]}
 *)
 
-let parse_config path _ parse_site = function
-  | Element ("extensiontemplate", atts, []) -> gen
+let parse_config _path _ _parse_site = function
+  | Element ("extensiontemplate", _atts, []) -> gen
   | Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ ->
     raise (Error_in_config_file "Unexpected data in config file")
@@ -174,8 +174,8 @@ let exn_handler = raise
      {- return something of type [extension] (filter or page generator)}}
 *)
 let site_creator
-    (hostpattern : Ocsigen_extensions.virtual_hosts)
-    (config_info : Ocsigen_extensions.config_info)
+    (_hostpattern : Ocsigen_extensions.virtual_hosts)
+    (_config_info : Ocsigen_extensions.config_info)
   = parse_config
 (* hostpattern has type Ocsigen_extensions.virtual_hosts
    and represents the name of the virtual host.
@@ -187,7 +187,7 @@ let site_creator
    file (using the userconf extension). However, we receive
    one additional argument, the root of the files the user
    can locally serve. See staticmod and userconf for details *)
-let user_site_creator (path : Ocsigen_extensions.userconf_info) = site_creator
+let user_site_creator (_path : Ocsigen_extensions.userconf_info) = site_creator
 
 (*****************************************************************************)
 (** Registration of the extension *)

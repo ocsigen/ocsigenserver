@@ -117,8 +117,6 @@ let gen dir = function
          "YES! Redirection to http%s://%s:%d%s"
          (if https then "s" else "") host port uri;
 
-         Ip_address.get_inet_addr host >>= fun inet_addr ->
-
          (* It is now safe to start processing next request.
             We are sure that the request won't be taken in disorder.
             => We return.
@@ -192,7 +190,7 @@ let gen dir = function
                  ~uri ()
 *)
 
-           let (meth, version, headers, uri', body) =
+           let (meth, version, headers, _uri, body) =
              Ocsigen_generate.to_cohttp_request ri in
            let headers =
              Cohttp.Header.add headers

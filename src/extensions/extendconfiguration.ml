@@ -56,7 +56,7 @@ let gather_do_not_serve_files tag =
     | Element ("extension", ["ext", f], []) :: q ->
       aux (regexps, files, f :: extensions) q
 
-    | _ :: q -> bad_config ("invalid options in tag " ^ tag)
+    | _ :: _ -> bad_config ("invalid options in tag " ^ tag)
   in aux ([], [], [])
 
 
@@ -114,7 +114,7 @@ let update_config usermode = function
            let r = Netstring_pcre.regexp regexp in
            aux (update_charset_regexp charset_assoc r charset) q
          with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
-      | _ :: q -> bad_config "invalid subtag in option charset"
+      | _ :: _ -> bad_config "invalid subtag in option charset"
     in
     gen (fun config ->
         let config = match attrs with
@@ -140,7 +140,7 @@ let update_config usermode = function
            let r = Netstring_pcre.regexp regexp in
            aux (update_mime_regexp mime_assoc r mime) q
          with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
-      | _ :: q -> bad_config "invalid subtag in option mime"
+      | _ :: _ -> bad_config "invalid subtag in option mime"
     in
     gen (fun config ->
         let config = match attrs with
@@ -159,7 +159,7 @@ let update_config usermode = function
       | [] -> List.rev indexes
       | Element ("index", [], [PCData f]) :: q ->
         aux (f :: indexes) q
-      | _ :: q -> bad_config "subtags must be of the form \
+      | _ :: _ -> bad_config "subtags must be of the form \
                               <index>...</index> \
                               in option defaultindex"
     in
@@ -220,5 +220,5 @@ let parse_config usermode : parse_config_aux = fun _ _ _ xml ->
 let () = register_extension
     ~name:"extendconfiguration"
     ~fun_site:(fun _ _ -> parse_config false)
-    ~user_fun_site:(fun path _ _ -> parse_config true)
+    ~user_fun_site:(fun _path _ _ -> parse_config true)
     ()

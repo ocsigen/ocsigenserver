@@ -57,7 +57,7 @@ let rec parse_global_config (store, ocsidbm, delayloading as d) = function
     else
       Ocsigen_extensions.badconfig "Ocsipersist: Duplicate <ocsidbm> tag"
 
-  | (Element (s,_,_))::ll -> Ocsigen_extensions.badconfig "Bad tag %s" s
+  | (Element (s,_,_))::_ -> Ocsigen_extensions.badconfig "Bad tag %s" s
 
   | _ -> Ocsigen_extensions.badconfig
            "Unexpected content inside Ocsipersist config"
@@ -312,7 +312,7 @@ let fold_table f table beg =
 
 let fold_step = fold_table
 
-let iter_block a b = failwith "iter_block not implemented for DBM. Please use Ocsipersist with sqlite"
+let iter_block _ _ = failwith "iter_block not implemented for DBM. Please use Ocsipersist with sqlite"
 
 (* iterator: with a separate connexion:
    exception Exn1

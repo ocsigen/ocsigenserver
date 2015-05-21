@@ -147,7 +147,7 @@ let main config = function
 
 let comma_space_regexp = Netstring_pcre.regexp "[[:blank:]\n]*,[[:blank:]\n]*"
 
-let parse_config _ _ parse_fun config_elem =
+let parse_config _ _ _parse_fun config_elem =
   let config = ref
       { allowed_method = None;
         allowed_credentials = false;
