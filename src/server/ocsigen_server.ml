@@ -80,7 +80,7 @@ let reload_conf s =
   try
     Ocsigen_extensions.start_initialisation ();
 
-    parse_server true s;
+    parse_server s;
 
     Ocsigen_extensions.end_initialisation ();
   with e ->
@@ -270,7 +270,7 @@ let start_server () = try
 
       Ocsigen_extensions.start_initialisation ();
 
-      parse_server false s;
+      parse_server s;
 
       Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
       (* As libraries are reloaded each time the config file is read,

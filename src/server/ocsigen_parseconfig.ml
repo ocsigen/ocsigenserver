@@ -266,7 +266,7 @@ let parse_host_field =
 
 
 (* Extract a default hostname from the "host" field if no default is provided *)
-let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
+let get_defaulthostname ~defaulthostname ~host =
     match defaulthostname with
       | Some d -> d
       | None ->
@@ -292,7 +292,7 @@ let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
 (* Config file is parsed twice.
    This is the second parsing (site loading)
 *)
-let parse_server isreloading c =
+let parse_server c =
   let rec parse_server_aux = function
       | [] -> []
       | (Element ("port", _atts, _))::ll ->
@@ -516,8 +516,7 @@ let parse_server isreloading c =
             | None -> Ocsigen_config.get_default_port ()
             | Some p -> int_of_string "host" p
           in
-          let defaulthostname = get_defaulthostname
-            ~defaulthostname ~defaulthttpport ~host in
+          let defaulthostname = get_defaulthostname ~defaulthostname ~host in
           let defaulthttpsport = match defaulthttpsport with
             | None -> Ocsigen_config.get_default_sslport ()
             | Some p -> int_of_string "host" p

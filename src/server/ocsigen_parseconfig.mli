@@ -54,7 +54,7 @@ val parse_host_field: string option -> Ocsigen_extensions.virtual_hosts
 
 val parser_config : Simplexmlparser.xml list ->
   Simplexmlparser.xml list list
-val parse_server : bool -> Simplexmlparser.xml list -> unit
+val parse_server : Simplexmlparser.xml list -> unit
 
 (** First pass of parse XML file. Extracts this informations:
     {ul

@@ -592,8 +592,7 @@ and parse_config_aux =
 
 
 
-let register_extension, parse_config_item, parse_user_site_item,
-    get_beg_init, get_end_init, get_init_exn_handler =
+let register_extension, parse_config_item, parse_user_site_item, get_init_exn_handler =
   let ref_fun_site = ref default_parse_config in
   let ref_user_fun_site = ref (fun (_ : userconf_info) -> default_parse_config) in
 
@@ -664,12 +663,6 @@ let register_extension, parse_config_item, parse_user_site_item,
 
     (* ********* parse_user_site_item ********* *)
     (fun host conf -> !ref_user_fun_site host conf),
-
-    (* ********* get_beg_init ********* *)
-    (fun () -> !fun_beg),
-
-    (* ********* get_end_init ********* *)
-    (fun () -> !fun_end),
 
     (* ********* get_init_exn_handler ********* *)
     (fun () -> !fun_exn)
