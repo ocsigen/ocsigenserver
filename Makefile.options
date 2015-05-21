@@ -3,7 +3,7 @@ BYTEDBG :=
 OPTDBG  :=
 THREAD  :=
 
-WARNINGS := -w +A-4-6-9-48-27-41 -strict-sequence
+WARNINGS := -w +A-4-6-9-48-41 -strict-sequence
 BYTEDBG += ${WARNINGS}
 OPTDBG += ${WARNINGS}
 
