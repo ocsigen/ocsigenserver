@@ -31,7 +31,7 @@ let get ?v6 ?(https = false) ?port ?headers ~host ~uri () =
   let host = Unix.string_of_inet_addr inet_addr in
   let scheme = if https then "https" else "http" in
   let target = Uri.make ~scheme ~host ?port ~path:uri () in
-  Cohttp_lwt_unix.Client.get target
+  Cohttp_lwt_unix.Client.get ?headers target
   >|= Of_cohttp.of_response_and_body'
 
 let post_urlencoded ?v6 ?https ?port ?headers ~host ~uri ~content () =
