@@ -233,7 +233,6 @@ and request_state =
   | Req_found of (request * Ocsigen_http_frame.result)
 
 and extension2 =
-  (unit -> unit) ->
   Ocsigen_cookies.cookieset ->
   request_state ->
   (answer * Ocsigen_cookies.cookieset) Lwt.t
