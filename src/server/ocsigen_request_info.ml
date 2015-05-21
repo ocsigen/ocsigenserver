@@ -92,7 +92,7 @@ type request_info =
 let ri_of_url ?(full_rewrite = false) url ri =
   let (_, host, _, url, path, params, get_params) = Url.parse url in
   let host = match host with
-    | Some h -> host
+    | Some _ -> host
     | None -> ri.host
   in
   let path_string = Url.string_of_url_path ~encode:true path in

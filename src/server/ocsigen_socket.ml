@@ -52,11 +52,11 @@ let make_sockets addr port =
 
 
 let ip_of_sockaddr = function
-  | Unix.ADDR_INET (ip, port) -> ip
+  | Unix.ADDR_INET (ip, _port) -> ip
   | _ -> raise (Ocsigen_lib_base.Ocsigen_Internal_Error "ip of unix socket")
 
 let port_of_sockaddr = function
-  | Unix.ADDR_INET (ip, port) -> port
+  | Unix.ADDR_INET (_ip, port) -> port
   | _ -> raise (Ocsigen_lib_base.Ocsigen_Internal_Error "port of unix socket")
 
 let string_of_socket_type = function

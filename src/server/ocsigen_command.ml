@@ -18,12 +18,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-let section = Lwt_log.Section.make "ocsigen:command"
+let _section = Lwt_log.Section.make "ocsigen:command"
 
 exception Unknown_command
 
 let register_command_function, get_command_function =
-  let command_function = ref (fun ?prefix _ _ -> Lwt.fail Unknown_command) in
+  let command_function = ref (fun ?prefix:_ _ _ -> Lwt.fail Unknown_command) in
   ((fun ?prefix f ->
       let prefix' = prefix in
       let old_command_function = !command_function in

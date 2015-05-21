@@ -295,20 +295,20 @@ let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
 let parse_server isreloading c =
   let rec parse_server_aux = function
       | [] -> []
-      | (Element ("port", atts, p))::ll ->
+      | (Element ("port", _atts, _))::ll ->
           parse_server_aux ll
-      | (Element ("charset" as st, atts, p))::ll ->
+      | (Element ("charset" as st, _atts, p))::ll ->
           set_default_charset (Some (parse_string_tag st p));
           parse_server_aux ll
-      | (Element ("logdir", [], p))::ll ->
+      | (Element ("logdir", [], _))::ll ->
           parse_server_aux ll
-      | (Element ("syslog", [], p))::ll ->
+      | (Element ("syslog", [], _))::ll ->
           parse_server_aux ll
-      | (Element ("ssl", [], p))::ll ->
+      | (Element ("ssl", [], _))::ll ->
           parse_server_aux ll
-      | (Element ("user", [], p))::ll ->
+      | (Element ("user", [], _))::ll ->
           parse_server_aux ll
-      | (Element ("group", [], p))::ll ->
+      | (Element ("group", [], _))::ll ->
           parse_server_aux ll
       | (Element ("uploaddir" as st, [], p))::ll ->
           set_uploaddir (Some (parse_string_tag st p));
@@ -654,7 +654,7 @@ let extract_info c =
          parse_ssl certificate (Some (parse_string_tag st p)) l
        | _ -> raise (Config_file_error
                        "Two private keys inside <ssl>"))
-    | (Element (tag,_,_))::l ->
+    | (Element (tag,_,_))::_ ->
       raise (Config_file_error ("<"^tag^"> tag unexpected inside <ssl>"))
     | _ -> raise (Config_file_error ("Unexpected content inside <ssl>"))
   in
@@ -716,7 +716,7 @@ let extract_info c =
     | (Element ("commandpipe" as st, [], p))::ll ->
       set_command_pipe (parse_string_tag st p);
       aux user group ssl ports sslports minthreads maxthreads ll
-    | (Element (tag, _, _))::ll ->
+    | (Element (_tag, _, _))::ll ->
       aux user group ssl ports sslports minthreads maxthreads ll
     | _ ->
       raise (Config_file_error "Syntax error")

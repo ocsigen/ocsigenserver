@@ -93,7 +93,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
   in
   let rec add where s =
     match where with
-    | No_File (p_name, to_buf) ->
+    | No_File (_p_name, to_buf) ->
       Buffer.add_string to_buf s;
       Lwt.return ()
     | A_File (_,_,_,wh,_) ->

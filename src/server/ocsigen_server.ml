@@ -106,8 +106,8 @@ let reload ?file () =
 
   Lwt_log.ign_warning ~section "Config file reloaded"
 
-let _ =
-  let f s = function
+let () =
+  let f _ = function
     | ["reopen_logs"] ->
       Ocsigen_messages.open_files () >>= fun () ->
       Lwt_log.ign_warning ~section "Log files reopened";

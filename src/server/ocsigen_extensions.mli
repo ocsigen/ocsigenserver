@@ -495,7 +495,6 @@ val compute_result :
 
 (** Profiling *)
 val get_number_of_connected : unit -> int
-val get_number_of_connected : unit -> int
 
 
 (** Server internal functions: *)

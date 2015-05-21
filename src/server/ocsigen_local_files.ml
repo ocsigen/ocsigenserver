@@ -32,7 +32,7 @@ type symlink_policy =
   stat:Unix.LargeFile.stats -> lstat:Unix.LargeFile.stats -> bool
 
 let never_follow_symlinks : symlink_policy =
-  fun ~stat ~lstat -> false
+  fun ~stat:_ ~lstat:_ -> false
 
 let follow_symlinks_if_owner_match : symlink_policy =
   fun ~stat ~lstat ->

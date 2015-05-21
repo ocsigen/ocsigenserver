@@ -69,7 +69,7 @@ let select_range length beg endopt skipfun stream =
               ~finalize:
                 (fun status -> Ocsigen_stream.finalize stream status)
               (fun () -> Lwt.return new_s)
-          | Some endc ->
+          | Some _endc ->
             Ocsigen_stream.make
               ~finalize:
                 (fun status -> Ocsigen_stream.finalize stream status)

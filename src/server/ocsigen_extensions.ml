@@ -427,11 +427,11 @@ let fun_end = ref (fun () -> ())
 let fun_exn = ref (fun exn -> (raise exn : string))
 
 let rec default_parse_config
-    (host : virtual_hosts)
-    config_info
+    _host  _config_info
     prevpath
     (Parse_host parse_host)
-    (parse_fun : parse_fun) = function
+    _parse_fun
+  = function
   | Simplexmlparser.Element ("site", atts, l) ->
     let rec parse_site_attrs (enc,dir) = function
       | [] -> (match dir with
@@ -505,10 +505,10 @@ let rec default_parse_config
                         Lwt.return
                           (Ext_continue_with (oldri, cs, err), cookies_to_set)
                     | (Ext_found_continue_with r, cookies_to_set) ->
-                        r () >>= fun (r', req) ->
+                        r () >>= fun (r', _req) ->
                         Lwt.return
                           (Ext_found_continue_with' (r', oldri), cookies_to_set)
-                    | (Ext_found_continue_with' (r, req), cookies_to_set) ->
+                    | (Ext_found_continue_with' (r, _req), cookies_to_set) ->
                         Lwt.return
                           (Ext_found_continue_with' (r, oldri), cookies_to_set)
                     | (Ext_do_nothing, cookies_to_set) ->
@@ -521,7 +521,7 @@ let rec default_parse_config
       (function
         | Req_found (ri, r) ->
             Lwt.return (Ext_found_continue_with' (r, ri))
-        | Req_not_found (err, ri) ->
+        | Req_not_found (_err, _ri) ->
             Lwt.return (Ext_sub_result ext))
   | Simplexmlparser.Element (tag,_,_) ->
     raise (Bad_config_tag_for_extension tag)
@@ -625,7 +625,7 @@ let register_extension, parse_config_item, parse_user_site_item,
                     try
                       oldf parse_config config_tag
                     with
-                    | Bad_config_tag_for_extension c ->
+                    | Bad_config_tag_for_extension _ ->
                       newf parse_config config_tag
              ));
 
@@ -644,7 +644,7 @@ let register_extension, parse_config_item, parse_user_site_item,
                     try
                       oldf parse_config config_tag
                     with
-                    | Bad_config_tag_for_extension c ->
+                    | Bad_config_tag_for_extension _ ->
                       newf parse_config config_tag
              ));
 
@@ -740,7 +740,7 @@ module Configuration = struct
                       ("Non-blank PCDATA in tag "^in_tag)))
         str
 
-  let check_attribute_occurrence ~in_tag ?other_elements attributes = function
+  let check_attribute_occurrence ~in_tag attributes = function
     | name, { attribute_obligatory = true } ->
       (try ignore (List.assoc name attributes)
        with Not_found ->
@@ -917,7 +917,7 @@ let compute_result
            | Ext_stop_site (cook, e) ->
              aux_host ri e (Ocsigen_cookies.add_cookies cook cookies_to_set) l
            (* try next site *)
-           | Ext_stop_all (cook, e) ->
+           | Ext_stop_all (_cook, e) ->
              fail (Ocsigen_http_error (cookies_to_set, e))
            | Ext_continue_with (_, cook, e) ->
              aux_host ri e
@@ -928,7 +928,7 @@ let compute_result
                (Ocsigen_cookies.add_cookies cook cookies_to_set)
                request2.request_info
            (* retry all *)
-           | Ext_sub_result sr ->
+           | Ext_sub_result _sr ->
              assert false
           )
         | (h, _, _)::l ->
