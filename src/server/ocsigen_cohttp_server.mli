@@ -21,7 +21,7 @@ val shutdown_server : float option -> unit
 (** initialize a main loop of http server *)
 val service :
   ?ssl:string * string * (bool -> string) option ->
-  address:string ->
+  address:Ocsigen_socket.socket_type ->
   port:int ->
   connector:(Ocsigen_request_info.request_info -> unit -> Ocsigen_http_frame.result Lwt.t) ->
   unit -> unit Lwt.t
