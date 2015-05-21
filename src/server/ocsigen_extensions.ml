@@ -886,7 +886,7 @@ let string_of_host (h : virtual_hosts) =
 
 let compute_result
     ?(previous_cookies = Ocsigen_cookies.Cookies.empty)
-    ?(awake_next_request = false) ri =
+    ri =
 
   let host = Ocsigen_request_info.host ri in
   let port = Ocsigen_request_info.server_port ri in

@@ -186,8 +186,7 @@ let start_server () = try
     in
 
     let extensions_connector =
-      (fun ri () -> Ocsigen_extensions.compute_result
-          ~awake_next_request:true ri)
+      (fun ri () -> Ocsigen_extensions.compute_result ri)
     in
 
     let run (user, group) (ssl, ports, sslports) (minthreads, maxthreads) s =
