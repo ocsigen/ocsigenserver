@@ -10,7 +10,7 @@ type file_info = {
   file_content_type: ((string * string) * (string * string) list) option;
 }
 
-type request_info [@@deriving show]
+type request_info
 
 (** Parsing URLs.
    This allows to modify the URL in the request_info.
