@@ -82,7 +82,10 @@ type t = Cohttp.Header.t
 
 let empty = Cohttp.Header.init ()
 
-let find_all name map = List.rev (Cohttp.Header.get_multi map name)
+let find_all name map =
+  let l = List.rev (Cohttp.Header.get_multi map name) in
+  if l = [] then raise Not_found;
+  l
 
 (*XXX We currently return the last header.
   Should we fail if there is more than one? *)
