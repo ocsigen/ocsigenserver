@@ -5,7 +5,7 @@ module Cookie = struct
 
   let serialize_cookie_raw path exp name c secure =
     Format.sprintf "%s=%s; path=/%s%s%s"
-      name (Url.string_of_url_path ~encode:true path)  c
+      name c (Url.string_of_url_path ~encode:true path)
       (if secure then "; secure" else "")
       (match exp with
        | Some s -> "; expires=" ^
