@@ -167,14 +167,6 @@ logrotate:
 
 ###
 
-.PHONY: dist
-
-VERSION := $(shell head -n 1 VERSION)
-dist:
-	DARCS_REPO=$(PWD) darcs dist -d $(PROJECTNAME)-$(VERSION)
-
-###
-
 .PHONY: depend
 depend:
 	${MAKE} -C src depend
