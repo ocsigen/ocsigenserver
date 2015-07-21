@@ -23,11 +23,11 @@ depends: [
   "base-threads"
   "react"
   "ssl"
-  "lwt" {>= "2.4.0"}
-  "ocamlnet" {>= "3.6.0"}
+  "lwt" {>= "2.4.7"}
+  "ocamlnet" {>= "4.0.2"}
   "pcre"
   "cryptokit"
-  "tyxml" {>= "3.3.0"}
+  "tyxml" {>= "3.4.0"}
   ("dbm" | "sqlite3")
   "ipaddr" {>= "2.1"}
   "camlp4"

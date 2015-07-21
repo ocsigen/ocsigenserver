@@ -1,4 +1,19 @@
-==== 2.4.0+dev ====
+==== 2.6.0 (2015-07-21) ====
+
+ * Fix cryptographic-safe string generation
+ * Fix performance bug in Deflatmod
+ * Fix max-age cache control directive in Staticmod
+ * Resend cache information with 304 (not modified) responses
+ * Expose Ocsigen_request_info interface.
+ * Wait for error message to be logged on shutdown (#81)
+ * Lots of fixes, UTF-8-ization, cosmetics, etc.
+
+==== 2.5.0 (2014-09-30) ====
+
+* New "sethttpcode" option in outputfilter
+* Adding "continue" option in rewritemod
+* use Lwt_unix.fork instead of Unix.fork
+* Xhtml -> Html5
 
 ==== 2.4.0 (2014-04-14) ====
 
