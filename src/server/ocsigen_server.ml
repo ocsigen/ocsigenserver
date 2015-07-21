@@ -36,6 +36,7 @@ exception Ocsigen_unsupported_media
 exception Ssl_Exception
 exception Ocsigen_upload_forbidden
 exception Socket_closed
+exception Stop of (int * string)
 
 let shutdown = ref false
 
@@ -1011,7 +1012,7 @@ let rec wait_connection use_ssl port socket =
        | None -> Lwt.return ())
 
 let stop n fmt =
-  Printf.ksprintf (fun s -> Lwt_log.ign_error ~section s; exit n) fmt
+  Printf.ksprintf (fun s -> raise (Stop (n, s))) fmt
 
 (** Thread waiting for events on a the listening port *)
 let listen use_ssl (addr, port) wait_end_init =
@@ -1399,6 +1400,11 @@ let start_server () = try
     in
     launch config_servers
 
-  with e ->
+  with
+  | Stop (n, s) ->
+    Lwt_main.run (Lwt_log.error ~section s);
+    exit n
+  | e ->
     let msg, errno = errmsg e in
-    stop errno "%s" msg
+    Lwt_main.run (Lwt_log.error ~section msg);
+    exit errno
