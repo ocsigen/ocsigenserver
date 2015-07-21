@@ -1010,28 +1010,6 @@ let rec wait_connection use_ssl port socket =
        | Some e -> handle_exn e
        | None -> Lwt.return ())
 
-let stop n fmt =
-  Printf.ksprintf (fun s -> Lwt_log.ign_error ~section s; exit n) fmt
-
-(** Thread waiting for events on a the listening port *)
-let listen use_ssl (addr, port) wait_end_init =
-  let listening_sockets =
-    try
-      let sockets = make_sockets addr port in
-      List.iter (fun x -> Lwt_unix.listen x 1024) sockets;
-      sockets
-    with
-    | Unix.Unix_error (Unix.EACCES, _, _) ->
-      stop 7 "Fatal - You are not allowed to use port %d." port
-    | Unix.Unix_error (Unix.EADDRINUSE, _, _) ->
-      stop 8 "Fatal - The port %d is already in use." port
-    | exn ->
-      stop 100 "Fatal - Uncaught exception: %s" (Printexc.to_string exn)
-  in
-  List.iter (fun x ->
-      ignore (wait_end_init >>= fun () ->
-              wait_connection use_ssl port x)) listening_sockets;
-  listening_sockets
 
 (* fatal errors messages *)
 let errmsg = function
@@ -1147,7 +1125,31 @@ let _ =
   in
   Ocsigen_command.register_command_function f
 
-let start_server () = try
+exception Stop of int * string
+
+let start_server () =
+  let stop n fmt = Printf.ksprintf (fun s -> raise (Stop (n, s))) fmt in
+  (** Thread waiting for events on a the listening port *)
+  let listen use_ssl (addr, port) wait_end_init =
+    let listening_sockets =
+      try
+        let sockets = make_sockets addr port in
+        List.iter (fun x -> Lwt_unix.listen x 1024) sockets;
+        sockets
+      with
+      | Unix.Unix_error (Unix.EACCES, _, _) ->
+        stop 7 "Fatal - You are not allowed to use port %d." port
+      | Unix.Unix_error (Unix.EADDRINUSE, _, _) ->
+        stop 8 "Fatal - The port %d is already in use." port
+      | exn ->
+        stop 100 "Fatal - Uncaught exception: %s" (Printexc.to_string exn)
+    in
+    List.iter (fun x ->
+      ignore (wait_end_init >>= fun () ->
+              wait_connection use_ssl port x)) listening_sockets;
+    listening_sockets
+  in
+  try
 
     (* initialization functions for modules (Ocsigen extensions or application
        code) loaded from now on will be executed directly. *)
@@ -1181,7 +1183,6 @@ let start_server () = try
         Unix.tcsetattr Unix.stdin Unix.TCSAFLUSH old_term;
         raise exn
     in
-
     let run (user, group) (_, ports, sslports) (minthreads, maxthreads) s =
 
       Ocsigen_messages.open_files ~user ~group () >>= fun () ->
@@ -1399,6 +1400,11 @@ let start_server () = try
     in
     launch config_servers
 
-  with e ->
+  with
+  | Stop (n, s) ->
+    Lwt_main.run (Lwt_log.error ~section s);
+    exit n
+  | e ->
     let msg, errno = errmsg e in
-    stop errno "%s" msg
+    Lwt_main.run (Lwt_log.error ~section msg);
+    exit errno
