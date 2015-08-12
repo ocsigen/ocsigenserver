@@ -264,7 +264,13 @@ struct
       try
         let st = Unix.LargeFile.fstat fdu in
         let etag = get_etag_aux st in
-        let stream = read_file fd in
+        let buffer_size =
+          if st.Unix.LargeFile.st_size <=
+             Int64.of_int (Ocsigen_config.get_filebuffersize ()) then
+            Some (Int64.to_int st.Unix.LargeFile.st_size)
+          else
+            None in
+        let stream = read_file ?buffer_size fd in
         let default_result = Result.default () in
         Lwt.return
           (Result.update default_result
