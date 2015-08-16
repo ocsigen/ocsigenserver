@@ -36,12 +36,12 @@ ocsigen_headers.cmx : ocsigen_senders.cmx ../baselib/ocsigen_lib.cmx \
     ocsigen_headers.cmi
 ocsigen_http_com.cmo : ../baselib/ocsigen_stream.cmi \
     ../baselib/ocsigen_lib.cmi ocsigen_http_frame.cmi ocsigen_cookies.cmi \
-    ../baselib/ocsigen_config.cmi http_lexer.cmo http_headers.cmi framepp.cmi \
-    ocsigen_http_com.cmi
+    ../baselib/ocsigen_config.cmi ../baselib/ocsigen_buffer_pool.cmi \
+    http_lexer.cmo http_headers.cmi framepp.cmi ocsigen_http_com.cmi
 ocsigen_http_com.cmx : ../baselib/ocsigen_stream.cmx \
     ../baselib/ocsigen_lib.cmx ocsigen_http_frame.cmx ocsigen_cookies.cmx \
-    ../baselib/ocsigen_config.cmx http_lexer.cmx http_headers.cmx framepp.cmx \
-    ocsigen_http_com.cmi
+    ../baselib/ocsigen_config.cmx ../baselib/ocsigen_buffer_pool.cmx \
+    http_lexer.cmx http_headers.cmx framepp.cmx ocsigen_http_com.cmi
 ocsigen_http_frame.cmo : ../baselib/ocsigen_stream.cmi \
     ../baselib/ocsigen_lib.cmi ocsigen_cookies.cmi http_headers.cmi \
     ocsigen_http_frame.cmi

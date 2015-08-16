@@ -936,7 +936,9 @@ let handle_connection port in_ch sockaddr =
       )
 
   in (* body of handle_connection *)
-  handle_request ()
+    Lwt.finalize
+       handle_request
+       (fun () -> return (Ocsigen_http_com.discard receiver))
 
 let rec wait_connection use_ssl port socket =
   let handle_exn e =

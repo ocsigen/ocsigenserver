@@ -122,14 +122,19 @@ let create_receiver timeout mode fd =
   let timeout =
     Lwt_timeout.create
       timeout
-      (fun () -> Lwt_ssl.abort fd Timeout)
-  in
+      (fun () -> Lwt_ssl.abort fd Timeout) in
+  let buffer, release = Ocsigen_buffer_pool.get_lwt_bytes buffer_size in
+  let buf, release2   = Ocsigen_buffer_pool.get_bytes buffer_size in
   { id = new_id ();
     fd = fd;
     chan =
       Lwt_io.make
         ~mode:Lwt_io.output
-        ~buffer:(Lwt_bytes.create buffer_size)
+        ~close:(fun () -> Lwt_timeout.stop timeout;
+                          release ();
+                          release2 ();
+                          Lwt.return_unit)
+        ~buffer
         (fun buf pos len ->
            Lwt_timeout.start timeout;
            Lwt.try_bind
@@ -139,7 +144,7 @@ let create_receiver timeout mode fd =
                Lwt.fail (convert_io_error e)));
     timeout = timeout;
     r_mode = mode;
-    buf=Bytes.create buffer_size;
+    buf;
     read_pos = 0;
     write_pos = 0;
     closed = Lwt.wait ();
@@ -156,7 +161,21 @@ let unlock_receiver receiver = Lwt_mutex.unlock receiver.read_mutex
 
 let abort conn =
   Lwt.wakeup (snd conn.closed) ();
-  Lwt_ssl.abort conn.fd Aborted
+  Lwt_ssl.abort conn.fd Aborted;
+  (* we discard the receive buffer so as to avoid errors in [receive] and such *)
+  conn.read_pos <- 0;
+  conn.write_pos <- 0;
+  (* so that we don't overwrite the buffer we no longer own by accident *)
+  conn.buf <- Bytes.create 8;
+  ignore (try Lwt_io.close conn.chan with _ -> Lwt.return_unit)
+
+let discard conn =
+  (* we discard the receive buffer so as to avoid errors in [receive] and such *)
+  conn.read_pos <- 0;
+  conn.write_pos <- 0;
+  (* so that we don't overwrite the buffer we no longer own by accident *)
+  conn.buf <- Bytes.create 8;
+  ignore (try Lwt_io.close conn.chan with _ -> Lwt.return_unit)
 
 let closed conn = fst conn.closed
 
@@ -651,7 +670,7 @@ let default_sender = create_sender ~server_name:Ocsigen_config.server_name ()
 let write_stream_chunked out_ch stream =
   let buf_size = 4096 in
   let size_for_not_buffering = 900 in
-  let buffer = Bytes.create buf_size in
+  let buffer, release = Ocsigen_buffer_pool.get_bytes buf_size in
   let rec aux stream len =
     Ocsigen_stream.next stream >>= fun e ->
     match e with
@@ -664,7 +683,9 @@ let write_stream_chunked out_ch stream =
           Lwt_io.write out_ch "\r\n"
         end else
          Lwt.return ()) >>= fun () ->
-      Lwt_io.write out_ch "0\r\n\r\n"
+      Lwt_io.write out_ch "0\r\n\r\n" >>= fun () ->
+      release ();
+      Lwt.return_unit
     | Ocsigen_stream.Cont (s, next) ->
       let l = String.length s in
       if l = 0 then
