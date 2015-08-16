@@ -34,7 +34,7 @@
   *
   * [make_buffer_pool] is used as follows:
   *
-  * {|
+  * {[
   *   let `Round_up get_buf, `Exact get_buf_exact =
   *     make_buffer_pool ?min_size ?max_size allocate_buffer
   *     (fun n -> how_many_buffers_to_keep_at_most n)
