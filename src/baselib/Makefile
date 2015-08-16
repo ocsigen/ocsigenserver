@@ -25,6 +25,7 @@ all: byte opt
 FILES := ocsigen_lib_base.ml       \
 	 ocsigen_lib.ml            \
 	 ocsigen_cache.ml          \
+	 ocsigen_buffer_pool.ml    \
          ocsigen_config.ml         \
 	 ocsigen_commandline.ml    \
 	 ocsigen_messages.ml       \

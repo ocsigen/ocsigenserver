@@ -1,5 +1,6 @@
 ocsigen_loader.cmi :
 ocsigen_cache.cmi :
+ocsigen_buffer_pool.cmi :
 ocsigen_stream.cmi :
 ocsigen_config.cmi : ocsigen_lib.cmi
 ocsigen_messages.cmi :
@@ -13,6 +14,8 @@ dynlink_wrapper.nonatdynlink.cmo :
 dynlink_wrapper.nonatdynlink.cmx :
 ocsigen_cache.cmo : ocsigen_cache.cmi
 ocsigen_cache.cmx : ocsigen_cache.cmi
+ocsigen_buffer_pool.cmo : ocsigen_buffer_pool.cmi
+ocsigen_buffer_pool.cmx : ocsigen_buffer_pool.cmi
 ocsigen_commandline.cmo : ocsigen_getcommandline.cmi ocsigen_config.cmi
 ocsigen_commandline.cmx : ocsigen_getcommandline.cmi ocsigen_config.cmx
 ocsigen_config.cmo : ocsigen_lib.cmi ocsigen_config.cmi

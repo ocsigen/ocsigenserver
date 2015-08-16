@@ -2,6 +2,7 @@ BIN := server/${PROJECTNAME}
 NATBIN := server/${PROJECTNAME}.opt
 
 INTF := baselib/ocsigen_cache.cmi	   \
+	baselib/ocsigen_buffer_pool.cmi	   \
 	baselib/ocsigen_lib_base.cmi	   \
 	baselib/ocsigen_lib.cmi	   \
 	baselib/ocsigen_config.cmi	   \
