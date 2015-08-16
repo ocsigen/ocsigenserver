@@ -149,6 +149,7 @@ and next_cont oz stream =
 (* deflate param : true = deflate ; false = gzip (no header in this case) *)
 let compress deflate stream =
   let zstream = Zlib.deflate_init !compress_level deflate in
+  let buf, release = Ocsigen_buffer_pool.get_bytes !buffer_size in
   let finalize status =
     Ocsigen_stream.finalize stream status >>= fun e ->
     (try
@@ -156,12 +157,13 @@ let compress deflate stream =
     with
       (* ignore errors, deflate_end cleans everything anyway *)
       Zlib.Error _ -> ());
+    release ();
     return (Lwt_log.ign_info ~section "Zlib stream closed") in
   let oz =
     { stream = zstream ;
-      buf = Bytes.create !buffer_size;
+      buf;
       pos = 0;
-      avail = !buffer_size
+      avail = Bytes.length buf;
     } in
   let new_stream () = next_cont oz (Ocsigen_stream.get stream) in
   Lwt_log.ign_info ~section "Zlib stream initialized" ;
