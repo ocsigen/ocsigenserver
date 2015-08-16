@@ -51,11 +51,13 @@ ocsigen_http_frame.cmx : ../baselib/ocsigen_stream.cmx \
 ocsigen_senders.cmo : ../baselib/ocsigen_stream.cmi \
     ../baselib/ocsigen_lib.cmi ocsigen_http_frame.cmi ocsigen_http_com.cmi \
     ocsigen_cookies.cmi ../baselib/ocsigen_config.cmi \
-    ocsigen_charset_mime.cmi http_headers.cmi ocsigen_senders.cmi
+    ocsigen_charset_mime.cmi ../baselib/ocsigen_buffer_pool.cmi \
+    http_headers.cmi ocsigen_senders.cmi
 ocsigen_senders.cmx : ../baselib/ocsigen_stream.cmx \
     ../baselib/ocsigen_lib.cmx ocsigen_http_frame.cmx ocsigen_http_com.cmx \
     ocsigen_cookies.cmx ../baselib/ocsigen_config.cmx \
-    ocsigen_charset_mime.cmx http_headers.cmx ocsigen_senders.cmi
+    ocsigen_charset_mime.cmx ../baselib/ocsigen_buffer_pool.cmx \
+    http_headers.cmx ocsigen_senders.cmi
 test_parser.cmo : ocsigen_http_frame.cmi http_lexer.cmo
 test_parser.cmx : ocsigen_http_frame.cmx http_lexer.cmx
 test_pp.cmo : ocsigen_http_frame.cmi framepp.cmi

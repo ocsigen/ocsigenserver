@@ -229,12 +229,16 @@ struct
       | Some s -> s
     in
     Lwt_log.ign_info ~section "start reading file (file opened)";
-    let buf = Bytes.create buffer_size in
+    let buf, release = Ocsigen_buffer_pool.get_bytes buffer_size in
+    (* get_bytes might round size up to next power of two *)
+    let buffer_size  = Bytes.length buf in
+
     let rec read_aux () =
       Lwt_unix.read fd buf 0 buffer_size >>= fun read ->
-      if read = 0 then
+      if read = 0 then begin
+        release ();
         Ocsigen_stream.empty None
-      else begin
+      end else begin
         if read = buffer_size
         then Ocsigen_stream.cont buf read_aux
         else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
