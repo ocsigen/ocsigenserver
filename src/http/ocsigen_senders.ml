@@ -229,17 +229,43 @@ struct
       | Some s -> s
     in
     Lwt_log.ign_info ~section "start reading file (file opened)";
-    let buf = Bytes.create buffer_size in
+    let buf, release = Ocsigen_buffer_pool.get_bytes buffer_size in
+    (* get_bytes might round size up to next power of two *)
+    let buffer_size  = Bytes.length buf in
+
     let rec read_aux () =
       Lwt_unix.read fd buf 0 buffer_size >>= fun read ->
-      if read = 0 then
+      if read = 0 then begin
+        release ();
         Ocsigen_stream.empty None
-      else begin
+      end else begin
         if read = buffer_size
         then Ocsigen_stream.cont buf read_aux
-        else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
+        else begin
+          let rec return_fragment release_prev off size remaining () =
+            release_prev ();
+            if remaining = 0 then begin
+              release ();
+              Ocsigen_stream.empty None
+            end else if remaining <= 128 then begin
+              Ocsigen_stream.cont (Bytes.sub buf off remaining)
+                (return_fragment (fun () -> ()) (off + size) (size / 2) 0)
+            end else if remaining >= size then begin
+              (* size should be a power of two, but we take no chances here *)
+              let next_buf, release_next = Ocsigen_buffer_pool.get_bytes_exact size in
+                Bytes.blit buf off next_buf 0 size;
+                Ocsigen_stream.cont next_buf
+                  (return_fragment release_next
+                     (off + size) (size / 2) (remaining - size))
+            end else begin
+              return_fragment (fun () -> ()) off (size / 2) remaining ()
+            end
+          in
+            return_fragment (fun () -> ()) 0 (buffer_size / 2) read ()
+        end
       end
-    in read_aux
+    in
+      read_aux
 
   let get_etag_aux st =
     Some (Printf.sprintf "%Lx-%x-%f" st.Unix.LargeFile.st_size

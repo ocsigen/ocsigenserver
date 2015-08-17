@@ -102,6 +102,7 @@ val send :
   unit Lwt.t
 
 val abort : connection -> unit
+val discard : connection -> unit
 
 
 (** Use this function to make an action just before sending the result 
