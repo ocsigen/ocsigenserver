@@ -11,6 +11,7 @@
 *.cmti
 *~
 Makefile.config
+src/baselib/dynlink_wrapper.ml
 src/baselib/ocsigen_config.ml
 src/http/http_lexer.ml
 src/http/http_parser.ml
@@ -21,6 +22,7 @@ src/extensions/ocsipersist.mli
 src/extensions/ocsipersist-dbm/ocsidbm
 src/extensions/ocsipersist-dbm/ocsidbm.opt
 src/extensions/ocsipersist-dbm/ocsipersist.mli
+src/extensions/ocsipersist-sqlite/ocsipersist.mli
 src/files/META
 src/files/META.ocsigenserver
 src/extensions/files/META
