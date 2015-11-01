@@ -8,7 +8,7 @@ PACKAGE  := \
 	${SERVER_SYNTAX} ## See ../../Makefile.options
 
 LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
+OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
