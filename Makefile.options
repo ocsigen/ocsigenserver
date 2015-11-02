@@ -13,7 +13,7 @@ OPTDBG  += -bin-annot
 endif
 
 ifeq "$(PROFILING)" "YES"
-BYTEDBG :=p ${BYTEDBG}
+BYTEDBG := -p ${BYTEDBG}
 OPTDBG  += -p
 endif
 

@@ -13,7 +13,7 @@ PACKAGE  := \
 	ipaddr \
 	${SERVER_SYNTAX} ## See ../../Makefile.options
 LIBS     := ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} ${THREAD}
+OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
