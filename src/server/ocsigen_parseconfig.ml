@@ -39,6 +39,14 @@ let blah_of_string f tag s =
 let int_of_string = blah_of_string int_of_string
 let float_of_string = blah_of_string float_of_string
 
+type ssl_info = {
+  ssl_certificate : string option;
+  ssl_privatekey  : string option;
+  ssl_ciphers     : string option;
+  ssl_dhfile      : string option;
+  ssl_curve       : string option
+}
+
 (*****************************************************************************)
 let default_default_hostname =
   let hostname = Unix.gethostname () in
@@ -639,25 +647,49 @@ let parse_facility = function
   | t -> raise (Config_file_error ("Unknown " ^ t ^ " facility in <syslog>"))
 
 (* First parsing of config file *)
+
+let config_error_for_some s = function
+  | None -> ()
+  | _ -> raise (Config_file_error s)
+
+let make_ssl_info ~certificate ~privatekey ~ciphers ~dhfile ~curve = {
+  ssl_certificate = certificate;
+  ssl_privatekey  = privatekey;
+  ssl_ciphers     = ciphers;
+  ssl_dhfile      = dhfile;
+  ssl_curve       = curve
+}
+
+let rec parse_ssl l ~certificate ~privatekey ~ciphers ~dhfile ~curve =
+  match l with
+  | [] ->
+    Some (make_ssl_info ~certificate ~privatekey ~ciphers ~dhfile ~curve)
+  | Element ("certificate" as st, [], p) :: l ->
+    config_error_for_some "Two certificates inside <ssl>" certificate;
+    let certificate = Some (parse_string_tag st p) in
+    parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve l
+  | Element ("privatekey" as st, [], p) ::l ->
+    config_error_for_some "Two private keys inside <ssl>" privatekey;
+    let privatekey = Some (parse_string_tag st p) in
+    parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve l
+  | Element ("ciphers" as st, [], p) :: l ->
+    config_error_for_some "Two cipher strings inside <ssl>" ciphers;
+    let ciphers = Some (parse_string_tag st p) in
+    parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve l
+  | Element ("dhfile" as st, [], p) :: l ->
+    config_error_for_some "Two DH files inside <ssl>" dhfile;
+    let dhfile = Some (parse_string_tag st p) in
+    parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve l
+  | Element ("curve" as st, [], p) :: l ->
+    config_error_for_some "Two (EC) curves inside <ssl>" curve;
+    let curve = Some (parse_string_tag st p) in
+    parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve l
+  | Element (tag, _, _) :: l ->
+    raise (Config_file_error ("<"^tag^"> tag unexpected inside <ssl>"))
+  | _ ->
+    raise (Config_file_error ("Unexpected content inside <ssl>"))
+
 let extract_info c =
-  let rec parse_ssl certificate privatekey = function
-      [] -> Some (certificate,privatekey)
-    | (Element ("certificate" as st, [], p))::l ->
-      (match certificate with
-         None ->
-         parse_ssl (Some (parse_string_tag st p)) privatekey l
-       | _ -> raise (Config_file_error
-                       "Two certificates inside <ssl>"))
-    | (Element ("privatekey" as st, [], p))::l ->
-      (match privatekey with
-         None ->
-         parse_ssl certificate (Some (parse_string_tag st p)) l
-       | _ -> raise (Config_file_error
-                       "Two private keys inside <ssl>"))
-    | (Element (tag,_,_))::l ->
-      raise (Config_file_error ("<"^tag^"> tag unexpected inside <ssl>"))
-    | _ -> raise (Config_file_error ("Unexpected content inside <ssl>"))
-  in
   let rec aux user group ssl ports sslports minthreads maxthreads = function
       [] -> ((user, group), (ssl, ports,sslports), (minthreads, maxthreads))
     | (Element ("logdir" as st, [], p))::ll ->
@@ -693,8 +725,15 @@ let extract_info c =
     | (Element ("ssl", [], p))::ll ->
       (match ssl with
          None ->
-         aux user group (parse_ssl None None p) ports sslports
-           minthreads maxthreads ll
+         let ssl =
+           let certificate = None
+           and privatekey = None
+           and ciphers = None
+           and dhfile = None
+           and curve = None in
+           parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve p
+         in
+         aux user group ssl ports sslports minthreads maxthreads ll
        | _ ->
          raise
            (Config_file_error

@@ -1356,14 +1356,49 @@ let start_server () =
       then
         match ssl with
         | None
-        | Some (None, None) -> ()
-        | Some (None, _) -> raise (Ocsigen_config.Config_file_error
-                                     "SSL certificate is missing")
-        | Some (_, None) -> raise (Ocsigen_config.Config_file_error
-                                     "SSL key is missing")
-        | Some ((Some c), (Some k)) ->
+        | Some {ssl_certificate = None; ssl_privatekey = None} -> ()
+        | Some {ssl_certificate = None} ->
+          raise (Ocsigen_config.Config_file_error
+                   "SSL certificate is missing")
+        | Some {ssl_privatekey = None} ->
+          raise (Ocsigen_config.Config_file_error
+                   "SSL key is missing")
+        | Some {ssl_certificate = Some c; ssl_privatekey = Some k} ->
           Ssl.set_password_callback !sslctx (ask_for_passwd sslports);
           Ssl.use_certificate !sslctx c k
+    in
+
+    let set_ciphers_if_needed = function
+      | Some {ssl_ciphers = Some s}, _, _ :: _ ->
+        (try
+           Ssl.set_cipher_list !sslctx s
+         with Ssl.Cipher_error ->
+           raise (Ocsigen_config.Config_file_error
+                    "Invalid cipher string"))
+      | _, _, _ ->
+        ()
+    in
+
+    let set_dhfile_if_needed = function
+      | Some {ssl_dhfile = Some e}, _, _ :: _ ->
+        (try
+           Ssl.init_dh_from_file !sslctx e
+         with Ssl.Diffie_hellman_error ->
+           raise (Ocsigen_config.Config_file_error
+                    "Invalid DH file"))
+      | _, _, _ ->
+        ()
+    in
+
+    let set_curve_if_needed = function
+      | Some {ssl_curve = Some c}, _, _ :: _ ->
+        (try
+           Ssl.init_ec_from_named_curve !sslctx c
+         with Ssl.Ec_curve_error ->
+           raise (Ocsigen_config.Config_file_error
+                    "Invalid EC curve"))
+      | _, _, _ ->
+        ()
     in
 
     let write_pid pid =
@@ -1385,6 +1420,9 @@ let start_server () =
       | [h] ->
         let user_info, sslinfo, threadinfo = extract_info h in
         set_passwd_if_needed sslinfo;
+        set_ciphers_if_needed sslinfo;
+        set_dhfile_if_needed sslinfo;
+        set_curve_if_needed sslinfo;
         if (get_daemon ())
         then
           let pid = Lwt_unix.fork () in

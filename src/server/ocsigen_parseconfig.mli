@@ -56,11 +56,20 @@ val parser_config : Simplexmlparser.xml list ->
   Simplexmlparser.xml list list
 val parse_server : bool -> Simplexmlparser.xml list -> unit
 
+type ssl_info = {
+  ssl_certificate : string option;
+  ssl_privatekey  : string option;
+  ssl_ciphers     : string option;
+  ssl_dhfile      : string option;
+  ssl_curve       : string option
+}
+
 (** First pass of parse XML file. Extracts this informations:
     {ul
     {- user to execute OcsigenServer (ex: www-data) }
     {- group to execute OcsigenServer (ex: www-data) }
-    {- SSL key and SSL certificate }
+    {- SSL key, SSL certificate, SSL ciphers list,
+       SSL DH file, SSL EC curve }
     {- list of HTTP port to listen (ex: 80) }
     {- list of HTTPS port to listen (ex: 443) }
     {- minimum and maximum of threads }
@@ -69,7 +78,7 @@ val parse_server : bool -> Simplexmlparser.xml list -> unit
 val extract_info :
   Simplexmlparser.xml list ->
   (string option * string option) *
-  ((string option * string option) option *
+  (ssl_info option *
    (Ocsigen_socket.socket_type * int) list *
    (Ocsigen_socket.socket_type * int) list) *
   (int * int)
