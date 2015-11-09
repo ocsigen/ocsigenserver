@@ -370,7 +370,10 @@ let raw_request
              fd sockaddr >>= fun () ->
 
            (if https then
-              Lwt_ssl.ssl_connect fd !sslcontext
+              let s = Lwt_ssl.embed_uninitialized_socket fd !sslcontext in
+              Ssl.set_client_SNI_hostname
+                (Lwt_ssl.ssl_socket_of_uninitialized_socket s) host;
+              Lwt_ssl.ssl_perform_handshake s
             else
               Lwt.return (Lwt_ssl.plain fd))
            >>= fun socket ->
@@ -757,7 +760,10 @@ let basic_raw_request
     (fun () ->
        Lwt_unix.connect fd sockaddr >>= fun () ->
        (if https then
-          Lwt_ssl.ssl_connect fd !sslcontext
+          let s = Lwt_ssl.embed_uninitialized_socket fd !sslcontext in
+          Ssl.set_client_SNI_hostname
+            (Lwt_ssl.ssl_socket_of_uninitialized_socket s) host;
+          Lwt_ssl.ssl_perform_handshake s
         else
           Lwt.return (Lwt_ssl.plain fd)))
     (handle_connection_error fd)
