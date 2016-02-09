@@ -36,6 +36,7 @@ val accept_language : name
 val accept_ranges : name
 val cache_control : name
 val connection : name
+val content_disposition : name
 val content_encoding : name
 val content_length : name
 val content_type : name
