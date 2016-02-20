@@ -370,11 +370,11 @@ The file associating file name extensions to their MIME type. Example:
 <mimefile>/etc/ocsigenserver/mime.types</mimefile>
 }}}
 
-===={{{<debugmod/>}}} : Error messages in pages
+===={{{<debugmode/>}}} : Error messages in pages
 Use this option for debugging your Web sites. Full error messages will be written in Error 500 pages. Example:
 
 {{{
-<debugmod/>
+<debugmode/>
 }}}
         ===={{{<usedefaulthostname/>}}} : Do not trust Host HTTP header for absolute links
 
