@@ -76,7 +76,19 @@ type output_buffer =
     buf: string;
     mutable pos: int;
     mutable avail: int;
+    mutable size : int32;
+    mutable crc : int32;
+    mutable add_trailer : bool
   }
+
+let write_int32 oz n =
+  for i = 0 to 3 do
+    Bytes.set oz.buf (oz.pos + i)
+      (Char.chr (Int32.to_int (Int32.shift_right_logical n (8 * i)) land 0xff))
+  done;
+  oz.pos <- oz.pos + 4;
+  oz.avail <- oz.avail - 4;
+  assert (oz.avail >= 0)
 
 (* puts in oz the content of buf, from pos to pos + len ;
  * f is the continuation of the current stream *)
@@ -99,6 +111,8 @@ let rec output oz f buf pos len  =
     in
     oz.pos <- oz.pos + used_out;
     oz.avail <- oz.avail - used_out;
+    oz.size <- Int32.add oz.size (Int32.of_int used_in);
+    oz.crc <- Zlib.update_crc oz.crc buf pos used_in;
     output oz f buf (pos + used_in) (len - used_in)
   end
 
@@ -138,9 +152,19 @@ and next_cont oz stream =
         if not finished then
           finish ()
         else
-            (Lwt_log.ign_info ~section "Zlib.deflate finished, last flush" ;
-            flush oz (fun () -> Ocsigen_stream.empty None))) in
-
+          write_trailer ())
+    and write_trailer () =
+      if oz.add_trailer && oz.avail < 8 then
+        flush oz write_trailer
+      else begin
+        if oz.add_trailer then begin
+          write_int32 oz oz.crc;
+          write_int32 oz oz.size
+        end;
+        Lwt_log.ign_info ~section "Zlib.deflate finished, last flush";
+        flush oz (fun () -> Ocsigen_stream.empty None)
+      end
+    in
     finish ()
   | Ocsigen_stream.Finished (Some s) -> next_cont oz s
   | Ocsigen_stream.Cont(s,f) ->
@@ -161,7 +185,8 @@ let compress deflate stream =
     { stream = zstream ;
       buf = Bytes.create !buffer_size;
       pos = 0;
-      avail = !buffer_size
+      avail = !buffer_size;
+      size = 0l; crc = 0l; add_trailer = not deflate
     } in
   let new_stream () = next_cont oz (Ocsigen_stream.get stream) in
   Lwt_log.ign_info ~section "Zlib stream initialized" ;
