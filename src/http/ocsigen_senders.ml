@@ -56,7 +56,7 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
                  | ((Some a, Some b),_,_) -> a^"/"^b = content_type
                  | _ -> false)
                (Lazy.force accepted))
-          alt
+          (default :: alt)
       with Not_found -> default
 
   let result_of_content ?options c =
