@@ -1,3 +1,11 @@
+==== 2.7.0 (2016-05-12) ====
+
+ * Fix content type selection for XML content
+ * Send gzip trailer in Deflatemod
+ * Log more details about SSL accept errors
+ * Support the Content-Disposition header
+ * Optimize buffering
+
 ==== 2.6.0 (2015-07-21) ====
 
  * Fix cryptographic-safe string generation
