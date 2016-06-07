@@ -1,6 +1,6 @@
 =Deflatemod=
 
-Deflatemod is in beta version. Submit your bugs and feature wishes [[https://github.com/ocsigen/ocsigenserver|here]].
+<<|Deflatemod is in beta version. Submit your bugs and feature wishes [[https://github.com/ocsigen/ocsigenserver|here]].>>
 
 == Usage ==
 
