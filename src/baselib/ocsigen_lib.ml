@@ -257,4 +257,6 @@ module Url = struct
 
       (https, host, port, uri_string, path, query, get_params)
 
+  let split_path = Neturl.split_path
+
 end
