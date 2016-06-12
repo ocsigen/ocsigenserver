@@ -1,11 +1,10 @@
 BIN := server/${PROJECTNAME}
 NATBIN := server/${PROJECTNAME}.opt
 
-INTF := baselib/ocsigen_cache.cmi	   \
+INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	baselib/ocsigen_lib_base.cmi	   \
 	baselib/ocsigen_lib.cmi	   \
 	baselib/ocsigen_config.cmi	   \
-	baselib/ocsigen_getcommandline.cmi \
 	baselib/ocsigen_messages.cmi       \
 	baselib/ocsigen_stream.cmi	   \
 	baselib/ocsigen_loader.cmi	   \
@@ -25,7 +24,9 @@ INTF := baselib/ocsigen_cache.cmi	   \
 	server/ocsigen_http_client.cmi     \
 	server/ocsigen_local_files.cmi     \
 	server/ocsigen_server.cmi	   \
-  server/ocsigen_request_info.cmi    \
+	server/ocsigen_request_info.cmi
+
+INTF := ${INTF_BASE} baselib/ocsigen_getcommandline.cmi
 
 IMPL := baselib/ocsigen_lib_base.cmo	   \
         baselib/baselib.cma		   \
@@ -38,6 +39,8 @@ IMPL := baselib/ocsigen_lib_base.cmo	   \
 	\
 	server/${PROJECTNAME}.cma          \
 	server/server_main.cmo             \
+
+INTF_CMX := $(patsubst %.cmi,%.cmx,${INTF_BASE})
 
 NATIMPL := $(patsubst %.cmo,%.cmx, $(filter %.cmo,${IMPL})) \
            $(patsubst %.cmo,%.o  , $(filter %.cmo,${IMPL})) \
