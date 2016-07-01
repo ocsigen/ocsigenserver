@@ -299,6 +299,7 @@ let raw_request
     ?client ?(keep_alive = true) ?headers ?(https=false) ?port
     ~content ?content_length ~http_method ~host ~inet_addr ~uri () =
 
+  let uri = if uri = "" then "/" else uri in
 
   let head = http_method = Ocsigen_http_frame.Http_header.HEAD in
 
