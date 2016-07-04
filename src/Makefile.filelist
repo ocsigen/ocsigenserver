@@ -82,6 +82,10 @@ ifeq "$(OCSIPERSISTSQLITE)" "YES"
 PLUGINS_IMPL += extensions/ocsipersist-sqlite.cma
 endif
 
+ifeq "$(OCSIPERSISTSQL)" "YES"
+PLUGINS_IMPL += extensions/ocsipersist-sql.cma
+endif
+
 ifeq "$(OCSIPERSISTDBM)" "YES"
 PLUGINS_IMPL += extensions/ocsipersist-dbm.cma
 PLUGINS_BIN += extensions/ocsipersist-dbm/ocsidbm

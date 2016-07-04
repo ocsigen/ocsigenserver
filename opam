@@ -30,6 +30,7 @@ depends: [
   "tyxml" {> "3.6.0"}
   "dbm"
   "sqlite3"
+  "macaque"
   "ipaddr" {>= "2.1"}
   "camlp4"
 ]
