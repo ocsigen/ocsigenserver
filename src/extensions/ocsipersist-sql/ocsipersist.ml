@@ -6,18 +6,23 @@ module Lwt_thread = struct
 end
 module Lwt_PGOCaml = PGOCaml_generic.Make(Lwt_thread)
 module Lwt_Query = Query.Make_with_Db(Lwt_thread)(Lwt_PGOCaml)
+module PGOCaml = Lwt_PGOCaml
 open Lwt
 
 type 'a t = string * 'a
 
-type store = string Lwt_PGOCaml.t Lwt_PGOCaml.monad
+type store = string
 
 let host = ref "localhost"
 let port = ref 3000
+let db   = ref "ocsipersist"
 
-let open_store db = Lwt_PGOCaml.connect ~host:!host ~port:!port ~database:db ()
+let connect = Lwt_PGOCaml.connect ~host:!host ~port:!port ~database:!db ()
+
+let open_store table = table
 
 let make_persistent ~store ~name ~default = failwith "TODO"
+  (* PGSQL(store) "SELECT a FROM b" *)
 
 let make_persistent_lazy ~store ~name ~default = failwith "TODO"
 
@@ -58,29 +63,31 @@ let iter_block = failwith "TODO"
 
 
 open Simplexmlparser
-let parse_global_config (host, port) = function
-  | [] -> (None, None)
+let parse_global_config (host, port, db) = function
+  | [] -> (None, None, None)
   | (Element ("database", attrs, []))::[] ->
-    let rec parse_attrs (host, port) = function
-      | ("host", h) :: xs -> parse_attrs (Some h, port) xs
+    let rec parse_attrs (host, port, db) = function
+      | ("host", h) :: xs -> parse_attrs (Some h, port, db) xs
       | ("port", p) :: xs -> begin try
-          parse_attrs (host, Some (int_of_string p)) xs
+          parse_attrs (host, Some (int_of_string p), db) xs
         with Failure _ -> raise (Ocsigen_extensions.Error_in_config_file
                                    ("port is not an integer"))
         end
-      | [] -> (host, port)
+      | ("database", db) :: xs -> parse_attrs (host, port, Some db) xs
+      | [] -> (host, port, db)
       | _ -> raise (Ocsigen_extensions.Error_in_config_file
                       ("Unexpected content inside Ocsipersist config"))
-    in parse_attrs (host, port) attrs
+    in parse_attrs (host, port, db) attrs
   | _ -> raise (Ocsigen_extensions.Error_in_config_file
                   ("Unexpected content inside Ocsipersist config"))
 
 
 let init_fun config =
   let maybe m f = match m with | None -> () | Some x -> f x in
-  let (h, p) = parse_global_config (None, None) config in
+  let (h, p, d) = parse_global_config (None, None, None) config in
   maybe h (fun h -> host := h);
-  maybe p (fun p -> port := p)
+  maybe p (fun p -> port := p);
+  maybe d (fun d -> db   := d)
 
 
 let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
