@@ -23,7 +23,6 @@ let section = Lwt_log.Section.make "ocsipersist:sqlite"
 (** Module Ocsipersist: persistent data *)
 
 open Lwt
-open Sqlite3
 open Printf
 
 (** Data are divided into stores.
@@ -58,10 +57,10 @@ let yield () =
 let rec bind_safely stmt = function
   | [] -> stmt
   | (value, name)::q as l ->
-    match Sqlite3.bind stmt (bind_parameter_index stmt name) value with
-    | Rc.OK -> bind_safely stmt q
-    | Rc.BUSY | Rc.LOCKED -> yield () ; bind_safely stmt l
-    | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+    match Sqlite3.bind stmt (Sqlite3.bind_parameter_index stmt name) value with
+    | Sqlite3.Rc.OK -> bind_safely stmt q
+    | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED -> yield () ; bind_safely stmt l
+    | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
 
 let close_safely db =
  if not (db_close db) then
@@ -98,9 +97,9 @@ let db_create table =
     let stmt = prepare db sql in
     let rec aux () =
       match step stmt with
-      | Rc.DONE -> ignore(finalize stmt)
-      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+      | Sqlite3.Rc.DONE -> ignore(finalize stmt)
+      | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
     in
     aux ()
   in
@@ -113,9 +112,9 @@ let db_remove (table, key) =
     let stmt =  bind_safely (prepare db sql) [Data.TEXT key,":key"] in
     let rec aux () =
       match step stmt with
-      | Rc.DONE -> ignore(finalize stmt)
-      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+      | Sqlite3.Rc.DONE -> ignore(finalize stmt)
+      | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
     in aux ()
   in
   exec_safely remove
@@ -126,16 +125,16 @@ let (db_get, db_replace, db_replace_if_exists) =
     let stmt = bind_safely (prepare db sqlget) [Data.TEXT key,":key"] in
     let rec aux () =
       match step stmt with
-      | Rc.ROW ->
+      | Sqlite3.Rc.ROW ->
         let value = match column stmt 0 with
           | Data.BLOB s -> s
           | _ -> assert false
         in
         ignore (finalize stmt);
         value
-      | Rc.DONE -> ignore(finalize stmt) ;  raise Not_found
-      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+      | Sqlite3.Rc.DONE -> ignore(finalize stmt) ;  raise Not_found
+      | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
     in aux ()
   in
   let replace (table, key) value db =
@@ -147,9 +146,9 @@ let (db_get, db_replace, db_replace_if_exists) =
     in
     let rec aux () =
       match step stmt with
-      | Rc.DONE -> ignore(finalize stmt)
-      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+      | Sqlite3.Rc.DONE -> ignore(finalize stmt)
+      | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
     in aux ()
   in
   ((fun tablekey -> exec_safely (get tablekey)),
@@ -165,15 +164,15 @@ let db_iter_step table rowid =
     let stmt = bind_safely (prepare db sql) [Data.INT rowid, ":rowid"] in
     let rec aux () =
       match step stmt with
-      | Rc.ROW ->
+      | Sqlite3.Rc.ROW ->
         (match (column stmt 0,column stmt 1, column stmt 2) with
          | (Data.TEXT k, Data.BLOB v, Data.INT rowid) ->
            ignore(finalize stmt) ;
            Some (k, v, rowid)
          | _ -> assert false )
-      | Rc.DONE -> ignore(finalize stmt) ; None
-      | Rc.BUSY | Rc.LOCKED -> yield () ; aux ()
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+      | Sqlite3.Rc.DONE -> ignore(finalize stmt) ; None
+      | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED -> yield () ; aux ()
+      | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
     in aux ()
   in
   exec_safely iter
@@ -184,13 +183,13 @@ let db_iter_block table f =
     let stmt = prepare db sql in
     let rec aux () =
       match step stmt with
-      | Rc.ROW ->
+      | Sqlite3.Rc.ROW ->
         (match (column stmt 0,column stmt 1) with
          | (Data.TEXT k, Data.BLOB v) -> f k (Marshal.from_string v 0); aux()
          | _ -> assert false )
-      | Rc.DONE -> ignore(finalize stmt)
-      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+      | Sqlite3.Rc.DONE -> ignore(finalize stmt)
+      | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
     in aux ()
   in
   exec_safely iter
@@ -201,16 +200,16 @@ let db_length table =
     let stmt = prepare db sql in
     let rec aux () =
       match step stmt with
-      | Rc.ROW ->
+      | Sqlite3.Rc.ROW ->
         let  value = match column stmt 0 with
           | Data.INT s -> Int64.to_int s
           | _ -> assert false
         in
         ignore (finalize stmt);
         value
-      | Rc.DONE -> ignore(finalize stmt) ;  raise Not_found
-      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
-      | rc -> ignore(finalize stmt) ; failwith (Rc.to_string rc)
+      | Sqlite3.Rc.DONE -> ignore(finalize stmt) ;  raise Not_found
+      | Sqlite3.Rc.BUSY | Sqlite3.Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore(finalize stmt) ; failwith (Sqlite3.Rc.to_string rc)
     in aux ()
   in
   exec_safely length
