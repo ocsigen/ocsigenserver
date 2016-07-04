@@ -2,6 +2,7 @@ include ../../../Makefile.config
 
 PACKAGE  := lwt.preemptive  \
 	    tyxml.parser \
+	    lwt.ppx \
 	    macaque.syntax \
 	    pgocaml.syntax \
 
