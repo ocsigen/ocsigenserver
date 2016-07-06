@@ -13,11 +13,11 @@ type 'a t = string * 'a
 
 type store = string
 
-let host = ref "localhost"
-let port = ref 3000
-let db   = ref "ocsipersist"
+let host = ref None
+let port = ref None
+let db   = ref None
 
-let connect = Lwt_PGOCaml.connect ~host:!host ~port:!port ~database:!db ()
+let connect = Lwt_PGOCaml.connect ?host:!host ?port:!port ?database:!db ()
 
 let open_store table = table
 
@@ -63,31 +63,24 @@ let iter_block = failwith "TODO"
 
 
 open Simplexmlparser
-let parse_global_config (host, port, db) = function
-  | [] -> (None, None, None)
-  | (Element ("database", attrs, []))::[] ->
-    let rec parse_attrs (host, port, db) = function
-      | ("host", h) :: xs -> parse_attrs (Some h, port, db) xs
-      | ("port", p) :: xs -> begin try
-          parse_attrs (host, Some (int_of_string p), db) xs
-        with Failure _ -> raise (Ocsigen_extensions.Error_in_config_file
-                                   ("port is not an integer"))
-        end
-      | ("database", db) :: xs -> parse_attrs (host, port, Some db) xs
-      | [] -> (host, port, db)
-      | _ -> raise (Ocsigen_extensions.Error_in_config_file
-                      ("Unexpected content inside Ocsipersist config"))
-    in parse_attrs (host, port, db) attrs
-  | _ -> raise (Ocsigen_extensions.Error_in_config_file
-                  ("Unexpected content inside Ocsipersist config"))
+let parse_global_config = function
+  | [] -> ()
+  | [Element ("database", attrs, [])] -> let parse_attr = function
+    | ("host", h) -> host := Some h
+    | ("port", p) -> begin
+        try port := Some (int_of_string p)
+        with Failure _ -> raise @@ Ocsigen_extensions.Error_in_config_file
+                                     "port is not an integer"
+      end
+    | ("database", d) -> db := Some d
+    | _ -> raise @@ Ocsigen_extensions.Error_in_config_file
+                      "Unexpected content inside Ocsipersist config"
+    in ignore @@ List.map parse_attr attrs; ()
+  | _ -> raise @@ Ocsigen_extensions.Error_in_config_file
+                    "Unexpected content inside Ocsipersist config"
 
 
-let init_fun config =
-  let maybe m f = match m with | None -> () | Some x -> f x in
-  let (h, p, d) = parse_global_config (None, None, None) config in
-  maybe h (fun h -> host := h);
-  maybe p (fun p -> port := p);
-  maybe d (fun d -> db   := d)
+let init_fun config = parse_global_config config
 
 
 let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
