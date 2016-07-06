@@ -70,7 +70,7 @@ let full_transaction_block f =
 let open_store table = table
 
 let make_persistent ~store ~name ~default = full_transaction_block @@ fun dbh ->
-  PGSQL(store) "SELECT a FROM b"
+  failwith "TODO"
 
 let make_persistent_lazy ~store ~name ~default = failwith "TODO"
 

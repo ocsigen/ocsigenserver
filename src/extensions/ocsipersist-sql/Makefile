@@ -1,6 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := pgocaml.syntax lwt.syntax
+PACKAGE  := tyxml.parser macaque.syntax lwt.syntax
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}
@@ -47,7 +47,7 @@ SYNTAX_FLAGS=-syntax camlp4o
 %.cmo: %.ml
 	$(OCAMLC) ${LIBS} ${SYNTAX_FLAGS} -c $<
 %.cmx: %.ml
-	$(OCAMLOPT) ${LIBS} -c $<
+	$(OCAMLOPT) ${LIBS} ${SYNTAX_FLAGS} -c $<
 %.cmxs: %.cmxa
 	$(OCAMLOPT) -shared -linkall -o $@ $<
 
