@@ -15,9 +15,18 @@ type store = string
 
 let host = ref None
 let port = ref None
-let db   = ref None
+let user = ref None
+let password = ref None
+let database = ref None
+let unix_domain_socket_dir = ref None
 
-let connect = Lwt_PGOCaml.connect ?host:!host ?port:!port ?database:!db ()
+let connect = Lwt_PGOCaml.connect
+                ?host:!host
+                ?port:!port
+                ?user:!user
+                ?password:!password
+                ?database:!database ()
+                ?unix_domain_socket_dir:!unix_domain_socket_dir
 
 let open_store table = table
 
@@ -72,7 +81,10 @@ let parse_global_config = function
         with Failure _ -> raise @@ Ocsigen_extensions.Error_in_config_file
                                      "port is not an integer"
       end
-    | ("database", d) -> db := Some d
+    | ("user", u) -> user := Some u
+    | ("password", pw) -> password := Some pw
+    | ("database", db) -> database := Some db
+    | ("unix_domain_socket_dir", udsd) -> unix_domain_socket_dir := Some udsd
     | _ -> raise @@ Ocsigen_extensions.Error_in_config_file
                       "Unexpected content inside Ocsipersist config"
     in ignore @@ List.map parse_attr attrs; ()
