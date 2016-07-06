@@ -34,45 +34,43 @@ let do_if cond actions = if cond then actions else Lwt.return ()
 
 (* ensure that connection to database is alive; throws exception otherwise. *)
 let with_db action =
-  let%lwt () = do_if (!db_handle = None) begin
-    let%lwt db = connect () in
+  lwt () = do_if (!db_handle = None) begin
+    lwt db = connect () in
     db_handle := Some db;
     Lwt.return ()
   end in
-  let%lwt () = match !db_handle with
+  lwt () = match !db_handle with
     | None -> failwith "forgot to use with_db?"
     | Some db ->
-      let%lwt alive = PGOCaml.alive db in
+      lwt alive = PGOCaml.alive db in
       do_if (not alive) begin
-      let%lwt db = connect () in
+      lwt db = connect () in
       db_handle := Some db;
       PGOCaml.ping db
     end
   in action
 
-let transaction_block db f = (* copied from Eba_db *)
+let transaction_block db f =
   Lwt_PGOCaml.begin_work db >>= fun _ ->
-  try%lwt
-    let%lwt r = f () in
-    let%lwt () = Lwt_PGOCaml.commit db in
+  try_lwt
+    lwt r = f () in
+    lwt () = Lwt_PGOCaml.commit db in
     Lwt.return r
   with e ->
-    let%lwt () = Lwt_PGOCaml.rollback db in
+    lwt () = Lwt_PGOCaml.rollback db in
     Lwt.fail e
 
-(* copied from Eba_db *)
 let pool : (string, bool) Hashtbl.t Lwt_PGOCaml.t Lwt_pool.t =
   Lwt_pool.create 16 ~validate:PGOCaml.alive connect
 
-let full_transaction_block f = (* copied from Eba_db *)
+let full_transaction_block f =
   Lwt_pool.use pool (fun db -> transaction_block db (fun () -> f db))
 
 
 let open_store table = table
 
 let make_persistent ~store ~name ~default = full_transaction_block @@ fun dbh ->
-	failwith "TODO"
-	(* PGSQL(store) "UPDATE $store SET $name = $default" *)
+  PGSQL(store) "SELECT a FROM b"
 
 let make_persistent_lazy ~store ~name ~default = failwith "TODO"
 

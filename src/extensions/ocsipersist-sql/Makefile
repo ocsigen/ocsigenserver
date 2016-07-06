@@ -1,10 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := lwt.preemptive  \
-	    tyxml.parser \
-	    lwt.ppx \
-	    macaque.syntax \
-	    pgocaml.syntax \
+PACKAGE  := pgocaml.syntax lwt.syntax
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}
@@ -44,10 +40,12 @@ ocsipersist.mli:
 
 ##########
 
+SYNTAX_FLAGS=-syntax camlp4o
+
 %.cmi: %.mli
 	$(OCAMLC) ${LIBS} -c $<
 %.cmo: %.ml
-	$(OCAMLC) ${LIBS} -c $<
+	$(OCAMLC) ${LIBS} ${SYNTAX_FLAGS} -c $<
 %.cmx: %.ml
 	$(OCAMLOPT) ${LIBS} -c $<
 %.cmxs: %.cmxa
