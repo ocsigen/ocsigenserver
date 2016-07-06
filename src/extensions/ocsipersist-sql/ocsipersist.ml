@@ -28,28 +28,6 @@ let connect = Lwt_PGOCaml.connect
                 ?database:!database
                 ?unix_domain_socket_dir:!unix_domain_socket_dir
 
-let db_handle = ref None
-
-let do_if cond actions = if cond then actions else Lwt.return ()
-
-(* ensure that connection to database is alive; throws exception otherwise. *)
-let with_db action =
-  lwt () = do_if (!db_handle = None) begin
-    lwt db = connect () in
-    db_handle := Some db;
-    Lwt.return ()
-  end in
-  lwt () = match !db_handle with
-    | None -> failwith "forgot to use with_db?"
-    | Some db ->
-      lwt alive = PGOCaml.alive db in
-      do_if (not alive) begin
-      lwt db = connect () in
-      db_handle := Some db;
-      PGOCaml.ping db
-    end
-  in action
-
 let transaction_block db f =
   Lwt_PGOCaml.begin_work db >>= fun _ ->
   try_lwt
@@ -84,11 +62,15 @@ type 'value table = string Lwt.t
 
 let table_name = failwith "TODO"
 
-let open_table = failwith "TODO"
+let open_table name = Lwt.return name
 
 let find = failwith "TODO"
 
-let add = failwith "TODO"
+let add table key value  =
+  table >>= fun table ->
+  full_transaction_block @@ fun dbh ->
+  let query = "UPDATE "^table^" SET "^key^" = " ^ Marshal.to_string value [] in
+  Lwt_PGOCaml.prepare dbh ~query ()
 
 let replace_if_exists = failwith "TODO"
 
