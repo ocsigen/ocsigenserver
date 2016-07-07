@@ -185,7 +185,7 @@ usage: ./configure [ options ]
   --enable-natdynlink,	--disable-natdynlink	Enable/disable nativecode dynamic linking
 
   --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
-  --with-sql,	--without-sql	Compile ocsipersist with SQL for persistent storage
+  --with-sql,		--without-sql		Compile ocsipersist with SQL for persistent storage
   --with-dbm,		--without-dbm		Compile ocsipersist with DBM for persistent storage
   --with-camlzip,	--without-camlzip	Compile deflatemod extension, requires camlzip
 
