@@ -17,13 +17,14 @@ let password = ref None
 let database = ref None
 let unix_domain_socket_dir = ref None
 
-let connect = PGOCaml.connect
-                ?host:!host
-                ?port:!port
-                ?user:!user
-                ?password:!password
-                ?database:!database
-                ?unix_domain_socket_dir:!unix_domain_socket_dir
+let connect () = PGOCaml.connect
+                   ?host:!host
+                   ?port:!port
+                   ?user:!user
+                   ?password:!password
+                   ?database:!database
+                   ?unix_domain_socket_dir:!unix_domain_socket_dir
+                   ()
 
 let (>>) f g = f >>= fun _ -> g
 
@@ -40,11 +41,12 @@ let transaction_block db f =
 let pool : (string, bool) Hashtbl.t PGOCaml.t Lwt_pool.t =
   Lwt_pool.create 16 ~validate:PGOCaml.alive connect
 
-(* same as full_transaction_block from Eba_db *)
-let full_transaction_block f =
+let full_transaction_block f = (* copied from Eba_db *)
   Lwt_pool.use pool (fun db -> transaction_block db (fun () -> f db))
 
 let exec db query params =
+  print_endline query;
+  List.iter print_endline params
   PGOCaml.prepare db ~query () >>
   PGOCaml.execute db ~params:(List.map (fun x -> Some x) params) ()
 
@@ -61,8 +63,9 @@ let one = function
 
 let unmarshal str = Marshal.from_string str 0
 
+(*TODO: BYTEA is Postgresql not SQL*)
 let create_table db table =
-  let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BLOB, \
+  let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BYTEA, \
                        PRIMARY KEY(key) ON CONFLICT REPLACE)" table
   in exec db query [] >> Lwt.return ()
 
