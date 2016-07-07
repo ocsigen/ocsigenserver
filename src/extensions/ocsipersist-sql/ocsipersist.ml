@@ -8,10 +8,9 @@ module Lwt_PGOCaml = PGOCaml_generic.Make(Lwt_thread)
 module Lwt_Query = Query.Make_with_Db(Lwt_thread)(Lwt_PGOCaml)
 module PGOCaml = Lwt_PGOCaml
 open Lwt
+open Printf
 
 type 'a t = string * 'a
-
-type store = string
 
 let host = ref None
 let port = ref None
@@ -28,14 +27,16 @@ let connect = Lwt_PGOCaml.connect
                 ?database:!database
                 ?unix_domain_socket_dir:!unix_domain_socket_dir
 
+let (>>) f g = f >>= fun _ -> g
+
 let transaction_block db f =
   Lwt_PGOCaml.begin_work db >>= fun _ ->
   try_lwt
     lwt r = f () in
-    lwt () = Lwt_PGOCaml.commit db in
+    Lwt_PGOCaml.commit db >>
     Lwt.return r
   with e ->
-    lwt () = Lwt_PGOCaml.rollback db in
+    Lwt_PGOCaml.rollback db >>
     Lwt.fail e
 
 let pool : (string, bool) Hashtbl.t Lwt_PGOCaml.t Lwt_pool.t =
@@ -44,10 +45,31 @@ let pool : (string, bool) Hashtbl.t Lwt_PGOCaml.t Lwt_pool.t =
 let full_transaction_block f =
   Lwt_pool.use pool (fun db -> transaction_block db (fun () -> f db))
 
+let exec dbh query params =
+  PGOCaml.prepare dbh ~query () >>
+  PGOCaml.execute dbh ~params:(List.map (fun x -> Some x) params) ()
+
+let (@.) f g = fun x -> f (g x) (* function composition *)
+
+(* get one value from the result of a query *)
+let one = function
+  | [key; Some value] :: _ -> value
+  | [] -> raise Not_found
+
+let unmarshal str = Marshal.from_string str 0
+
+let db_create table = full_transaction_block @@ fun dbh ->
+  let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BLOB,  PRIMARY KEY(key) ON CONFLICT REPLACE)" table in
+  exec dbh query [] >>
+  Lwt.return ()
+
+(* TODO: risk of SQL injections via the store name? *)
+type store = string
 
 let open_store table = table
 
 let make_persistent ~store ~name ~default = full_transaction_block @@ fun dbh ->
+  db_create store >>
   failwith "TODO"
 
 let make_persistent_lazy ~store ~name ~default = failwith "TODO"
@@ -64,17 +86,24 @@ let table_name = failwith "TODO"
 
 let open_table name = Lwt.return name
 
-let find = failwith "TODO"
-
-let add table key value  =
+let find table key = full_transaction_block @@ fun dbh ->
   table >>= fun table ->
-  full_transaction_block @@ fun dbh ->
-  let query = "UPDATE "^table^" SET "^key^" = " ^ Marshal.to_string value [] in
-  Lwt_PGOCaml.prepare dbh ~query ()
+  let query = sprintf "SELECT value FROM %s WHERE key = $1 " table in
+  Lwt.map (unmarshal @. one) (exec dbh query [key])
+
+let add table key value = full_transaction_block @@ fun dbh ->
+  table >>= fun table ->
+  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" table in
+  exec dbh query [key; Marshal.to_string value []] >>
+  Lwt.return ()
 
 let replace_if_exists = failwith "TODO"
 
-let remove = failwith "TODO"
+let remove get_table key = full_transaction_block @@ fun dbh ->
+  lwt table = get_table in
+  (* let query = "DELETE "^table^" SET "^key^" = " ^ Marshal.to_string value [] in *)
+  (* Lwt_PGOCaml.prepare dbh ~query () *)
+  Lwt.return (failwith "muh")
 
 let length = failwith "TODO"
 
