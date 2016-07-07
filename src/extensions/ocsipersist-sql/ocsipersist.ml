@@ -41,7 +41,7 @@ let pool : (string, bool) Hashtbl.t Lwt_PGOCaml.t Lwt_pool.t =
   Lwt_pool.create 16 ~validate:PGOCaml.alive connect
 
 (* same as full_transaction_block from Eba_db *)
-let with_db f =
+let full_transaction_block f =
   Lwt_pool.use pool (fun db -> transaction_block db (fun () -> f db))
 
 let exec db query params =
@@ -57,7 +57,7 @@ let one = function
 
 let unmarshal str = Marshal.from_string str 0
 
-let db_create table = with_db @@ fun db ->
+let create_table db table =
   let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BLOB,  PRIMARY KEY(key) ON CONFLICT REPLACE)" table in
   exec db query [] >>
   Lwt.return ()
@@ -73,8 +73,8 @@ type 'a t = {
 
 let open_store table = table
 
-let make_persistent ~store ~name ~default = with_db @@ fun db ->
-  db_create store >>
+let make_persistent ~store ~name ~default = full_transaction_block @@ fun db ->
+  create_table db store >>
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" store in
   exec db query [name; Marshal.to_string default []] >>
   Lwt.return {store = store; name = name; value = default}
@@ -83,11 +83,11 @@ let make_persistent_lazy ~store ~name ~default = failwith "TODO"
 
 let make_persistent_lazy_lwt ~store ~name ~default = failwith "TODO"
 
-let get p = with_db @@ fun db ->
+let get p = full_transaction_block @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " p.store in
   Lwt.map (unmarshal @. one) (exec db query [p.name])
 
-let set p v = with_db @@ fun db ->
+let set p v = full_transaction_block @@ fun db ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" p.store in
   exec db query [p.name; Marshal.to_string v []] >>
   Lwt.return ()
@@ -98,12 +98,12 @@ let table_name = failwith "TODO"
 
 let open_table name = Lwt.return name
 
-let find table key = with_db @@ fun db ->
+let find table key = full_transaction_block @@ fun db ->
   table >>= fun table ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " table in
   Lwt.map (unmarshal @. one) (exec db query [key])
 
-let add table key value = with_db @@ fun db ->
+let add table key value = full_transaction_block @@ fun db ->
   table >>= fun table ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" table in
   exec db query [key; Marshal.to_string value []] >>
@@ -111,8 +111,8 @@ let add table key value = with_db @@ fun db ->
 
 let replace_if_exists = failwith "TODO"
 
-let remove get_table key = with_db @@ fun db ->
-  lwt table = get_table in
+let remove get_table key = full_transaction_block @@ fun db ->
+  lwt table = get_table in (*TODO: create table?*)
   (* let query = "DELETE "^table^" SET "^key^" = " ^ Marshal.to_string value [] in *)
   (* Lwt_PGOCaml.prepare db ~query () *)
   Lwt.return (failwith "muh")
