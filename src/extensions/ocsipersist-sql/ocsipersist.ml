@@ -53,7 +53,7 @@ let (@.) f g = fun x -> f (g x) (* function composition *)
 (* get one value from the result of a query *)
 let one = function
   | [key; Some value] :: _ -> value
-  | [] -> raise Not_found
+  | _ -> raise Not_found
 
 let unmarshal str = Marshal.from_string str 0
 
@@ -71,7 +71,8 @@ type 'a t = {
   value : 'a
 }
 
-let open_store table = table
+let open_store store = full_transaction_block @@ fun db ->
+  create_table db store >> Lwt.return store
 
 let make_persistent ~store ~name ~default = full_transaction_block @@ fun db ->
   create_table db store >>
@@ -92,27 +93,25 @@ let set p v = full_transaction_block @@ fun db ->
   exec db query [p.name; Marshal.to_string v []] >>
   Lwt.return ()
 
-type 'value table = string Lwt.t
+type 'value table = string
 
 let table_name = failwith "TODO"
 
-let open_table name = Lwt.return name
+let open_table table = full_transaction_block @@ fun db ->
+  create_table db table >> Lwt.return table
 
 let find table key = full_transaction_block @@ fun db ->
-  table >>= fun table ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " table in
   Lwt.map (unmarshal @. one) (exec db query [key])
 
 let add table key value = full_transaction_block @@ fun db ->
-  table >>= fun table ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" table in
   exec db query [key; Marshal.to_string value []] >>
   Lwt.return ()
 
 let replace_if_exists = failwith "TODO"
 
-let remove get_table key = full_transaction_block @@ fun db ->
-  lwt table = get_table in (*TODO: create table?*)
+let remove table key = full_transaction_block @@ fun db ->
   (* let query = "DELETE "^table^" SET "^key^" = " ^ Marshal.to_string value [] in *)
   (* Lwt_PGOCaml.prepare db ~query () *)
   Lwt.return (failwith "muh")
