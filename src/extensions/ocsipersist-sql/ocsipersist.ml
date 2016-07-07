@@ -153,7 +153,7 @@ let fold_step f table x =
 
 let fold_table = fold_step
 
-let iter_block = failwith "Ocsipersist.iter_block: not implemented"
+let iter_block a b = failwith "Ocsipersist.iter_block: not implemented"
 
 
 open Simplexmlparser
@@ -171,7 +171,7 @@ let parse_global_config = function
     | ("database", db) -> database := Some db
     | ("unix_domain_socket_dir", udsd) -> unix_domain_socket_dir := Some udsd
     | _ -> raise @@ Ocsigen_extensions.Error_in_config_file
-                      "Unexpected content inside Ocsipersist config"
+                      "Unexpected attribute for <database> in Ocsipersist config"
     in ignore @@ List.map parse_attr attrs; ()
   | _ -> raise @@ Ocsigen_extensions.Error_in_config_file
                     "Unexpected content inside Ocsipersist config"
