@@ -4,9 +4,7 @@ module Lwt_thread = struct
   include Lwt
   include Lwt_chan
 end
-module Lwt_PGOCaml = PGOCaml_generic.Make(Lwt_thread)
-module Lwt_Query = Query.Make_with_Db(Lwt_thread)(Lwt_PGOCaml)
-module PGOCaml = Lwt_PGOCaml
+module PGOCaml = PGOCaml_generic.Make(Lwt_thread)
 open Lwt
 open Printf
 
@@ -19,7 +17,7 @@ let password = ref None
 let database = ref None
 let unix_domain_socket_dir = ref None
 
-let connect = Lwt_PGOCaml.connect
+let connect = PGOCaml.connect
                 ?host:!host
                 ?port:!port
                 ?user:!user
@@ -30,16 +28,16 @@ let connect = Lwt_PGOCaml.connect
 let (>>) f g = f >>= fun _ -> g
 
 let transaction_block db f =
-  Lwt_PGOCaml.begin_work db >>= fun _ ->
+  PGOCaml.begin_work db >>= fun _ ->
   try_lwt
     lwt r = f () in
-    Lwt_PGOCaml.commit db >>
+    PGOCaml.commit db >>
     Lwt.return r
   with e ->
-    Lwt_PGOCaml.rollback db >>
+    PGOCaml.rollback db >>
     Lwt.fail e
 
-let pool : (string, bool) Hashtbl.t Lwt_PGOCaml.t Lwt_pool.t =
+let pool : (string, bool) Hashtbl.t PGOCaml.t Lwt_pool.t =
   Lwt_pool.create 16 ~validate:PGOCaml.alive connect
 
 (* same as full_transaction_block from Eba_db *)
