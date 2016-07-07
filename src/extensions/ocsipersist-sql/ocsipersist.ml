@@ -75,7 +75,6 @@ let open_store store = full_transaction_block @@ fun db ->
   create_table db store >> Lwt.return store
 
 let make_persistent ~store ~name ~default = full_transaction_block @@ fun db ->
-  create_table db store >>
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" store in
   exec db query [name; Marshal.to_string default []] >>
   Lwt.return {store = store; name = name; value = default}
@@ -95,7 +94,7 @@ let set p v = full_transaction_block @@ fun db ->
 
 type 'value table = string
 
-let table_name = failwith "TODO"
+let table_name table = Lwt.return table
 
 let open_table table = full_transaction_block @@ fun db ->
   create_table db table >> Lwt.return table
@@ -109,14 +108,18 @@ let add table key value = full_transaction_block @@ fun db ->
   exec db query [key; Marshal.to_string value []] >>
   Lwt.return ()
 
-let replace_if_exists = failwith "TODO"
+let replace_if_exists table key value =
+  try_lwt
+    find table key >> add table key value
+  with Not_found -> Lwt.return ()
 
 let remove table key = full_transaction_block @@ fun db ->
-  (* let query = "DELETE "^table^" SET "^key^" = " ^ Marshal.to_string value [] in *)
-  (* Lwt_PGOCaml.prepare db ~query () *)
-  Lwt.return (failwith "muh")
+  let query = sprintf "DELETE FROM %s WHERE key = $1 " table in
+  exec db query [key] >> Lwt.return ()
 
-let length = failwith "TODO"
+let length table = full_transaction_block @@ fun db ->
+  let query = sprintf "SELECT count(*) FROM %s " table in
+  Lwt.map (unmarshal @. one) (exec db query [])
 
 let iter_step = failwith "TODO"
 
@@ -125,7 +128,6 @@ let iter_table = failwith "TODO"
 let fold_step = failwith "TODO"
 
 let fold_table = failwith "TODO"
-
 
 let iter_block = failwith "TODO"
 
