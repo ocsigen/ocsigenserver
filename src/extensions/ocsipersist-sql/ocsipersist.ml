@@ -10,8 +10,6 @@ module PGOCaml = Lwt_PGOCaml
 open Lwt
 open Printf
 
-type 'a t = string * 'a
-
 let host = ref None
 let port = ref None
 let user = ref None
@@ -67,19 +65,32 @@ let db_create table = with_db @@ fun db ->
 (* TODO: risk of SQL injections via the store name? *)
 type store = string
 
+type 'a t = {
+  store : string;
+  name  : string;
+  value : 'a
+}
+
 let open_store table = table
 
 let make_persistent ~store ~name ~default = with_db @@ fun db ->
   db_create store >>
-  failwith "TODO"
+  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" store in
+  exec db query [name; Marshal.to_string default []] >>
+  Lwt.return {store = store; name = name; value = default}
 
 let make_persistent_lazy ~store ~name ~default = failwith "TODO"
 
 let make_persistent_lazy_lwt ~store ~name ~default = failwith "TODO"
 
-let get = failwith "TODO"
+let get p = with_db @@ fun db ->
+  let query = sprintf "SELECT value FROM %s WHERE key = $1 " p.store in
+  Lwt.map (unmarshal @. one) (exec db query [p.name])
 
-let set = failwith "TODO"
+let set p v = with_db @@ fun db ->
+  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" p.store in
+  exec db query [p.name; Marshal.to_string v []] >>
+  Lwt.return ()
 
 type 'value table = string Lwt.t
 
