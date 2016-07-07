@@ -10,6 +10,8 @@ module PGOCaml = Lwt_PGOCaml
 open Lwt
 open Printf
 
+exception Ocsipersist_error
+
 let host = ref None
 let port = ref None
 let user = ref None
@@ -50,19 +52,22 @@ let exec db query params =
 
 let (@.) f g = fun x -> f (g x) (* function composition *)
 
+let key_value_of_row = function
+  | [Some key; Some value] -> (key, value)
+  | _ -> raise Ocsipersist_error
+
 (* get one value from the result of a query *)
 let one = function
-  | [key; Some value] :: _ -> value
+  | x::xs -> snd @@ key_value_of_row x
   | _ -> raise Not_found
 
 let unmarshal str = Marshal.from_string str 0
 
 let create_table db table =
-  let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BLOB,  PRIMARY KEY(key) ON CONFLICT REPLACE)" table in
-  exec db query [] >>
-  Lwt.return ()
+  let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BLOB, \
+                       PRIMARY KEY(key) ON CONFLICT REPLACE)" table
+  in exec db query [] >> Lwt.return ()
 
-(* TODO: risk of SQL injections via the store name? *)
 type store = string
 
 type 'a t = {
@@ -77,11 +82,22 @@ let open_store store = full_transaction_block @@ fun db ->
 let make_persistent ~store ~name ~default = full_transaction_block @@ fun db ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" store in
   exec db query [name; Marshal.to_string default []] >>
-  Lwt.return {store = store; name = name; value = default}
+  Lwt.return {store = store; name = name; value = failwith "phantom"}
 
-let make_persistent_lazy ~store ~name ~default = failwith "TODO"
+let make_persistent_lazy_lwt ~store ~name ~default = full_transaction_block @@ fun db ->
+  let query = sprintf "SELECT value FROM %s WHERE key = $1 " store in
+  lwt result = exec db query [name] in
+  lwt _ = begin match result with
+  | [] ->
+    let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" store in
+    lwt default = default () in
+    exec db query [name; Marshal.to_string default []] >> Lwt.return ()
+  | _ -> Lwt.return ()
+  end in Lwt.return {store = store; name = name; value = failwith "phantom"}
 
-let make_persistent_lazy_lwt ~store ~name ~default = failwith "TODO"
+let make_persistent_lazy ~store ~name ~default =
+  let default () = Lwt.wrap default in
+  make_persistent_lazy_lwt ~store ~name ~default
 
 let get p = full_transaction_block @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " p.store in
@@ -121,17 +137,25 @@ let length table = full_transaction_block @@ fun db ->
   let query = sprintf "SELECT count(*) FROM %s " table in
   Lwt.map (unmarshal @. one) (exec db query [])
 
-let iter_step = failwith "TODO"
+let iter_step f table = full_transaction_block @@ fun db ->
+  let query = sprintf "SELECT * FROM %s " table in
+  PGOCaml.prepare db ~query () >>
+  PGOCaml.cursor db ~params:[] @@
+    fun row -> let (key,value) = key_value_of_row row in f key (unmarshal value)
 
-let iter_table = failwith "TODO"
+let iter_table = iter_step
 
-let fold_step = failwith "TODO"
+let fold_step f table x =
+  let res = ref x in
+  let g key value =
+    lwt res' = f key value !res in
+    res := res';
+    Lwt.return ()
+  in iter_step g table >> Lwt.return !res
 
-let fold_table = failwith "TODO"
+let fold_table = fold_step
 
-let iter_block = failwith "TODO"
-
-(*exception Ocsipersist_error*)
+let iter_block = failwith "Ocsipersist.iter_block: not implemented"
 
 
 open Simplexmlparser

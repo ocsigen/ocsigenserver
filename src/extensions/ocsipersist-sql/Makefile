@@ -1,6 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := tyxml.parser macaque.syntax lwt.syntax
+PACKAGE  := tyxml.parser macaque.syntax lwt.syntax #TODO: I don't use macaque
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}
