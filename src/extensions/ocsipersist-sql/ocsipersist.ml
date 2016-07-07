@@ -42,12 +42,13 @@ let transaction_block db f =
 let pool : (string, bool) Hashtbl.t Lwt_PGOCaml.t Lwt_pool.t =
   Lwt_pool.create 16 ~validate:PGOCaml.alive connect
 
-let full_transaction_block f =
+(* same as full_transaction_block from Eba_db *)
+let with_db f =
   Lwt_pool.use pool (fun db -> transaction_block db (fun () -> f db))
 
-let exec dbh query params =
-  PGOCaml.prepare dbh ~query () >>
-  PGOCaml.execute dbh ~params:(List.map (fun x -> Some x) params) ()
+let exec db query params =
+  PGOCaml.prepare db ~query () >>
+  PGOCaml.execute db ~params:(List.map (fun x -> Some x) params) ()
 
 let (@.) f g = fun x -> f (g x) (* function composition *)
 
@@ -58,9 +59,9 @@ let one = function
 
 let unmarshal str = Marshal.from_string str 0
 
-let db_create table = full_transaction_block @@ fun dbh ->
+let db_create table = with_db @@ fun db ->
   let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BLOB,  PRIMARY KEY(key) ON CONFLICT REPLACE)" table in
-  exec dbh query [] >>
+  exec db query [] >>
   Lwt.return ()
 
 (* TODO: risk of SQL injections via the store name? *)
@@ -68,7 +69,7 @@ type store = string
 
 let open_store table = table
 
-let make_persistent ~store ~name ~default = full_transaction_block @@ fun dbh ->
+let make_persistent ~store ~name ~default = with_db @@ fun db ->
   db_create store >>
   failwith "TODO"
 
@@ -86,23 +87,23 @@ let table_name = failwith "TODO"
 
 let open_table name = Lwt.return name
 
-let find table key = full_transaction_block @@ fun dbh ->
+let find table key = with_db @@ fun db ->
   table >>= fun table ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " table in
-  Lwt.map (unmarshal @. one) (exec dbh query [key])
+  Lwt.map (unmarshal @. one) (exec db query [key])
 
-let add table key value = full_transaction_block @@ fun dbh ->
+let add table key value = with_db @@ fun db ->
   table >>= fun table ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" table in
-  exec dbh query [key; Marshal.to_string value []] >>
+  exec db query [key; Marshal.to_string value []] >>
   Lwt.return ()
 
 let replace_if_exists = failwith "TODO"
 
-let remove get_table key = full_transaction_block @@ fun dbh ->
+let remove get_table key = with_db @@ fun db ->
   lwt table = get_table in
   (* let query = "DELETE "^table^" SET "^key^" = " ^ Marshal.to_string value [] in *)
-  (* Lwt_PGOCaml.prepare dbh ~query () *)
+  (* Lwt_PGOCaml.prepare db ~query () *)
   Lwt.return (failwith "muh")
 
 let length = failwith "TODO"
