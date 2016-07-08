@@ -1,4 +1,4 @@
-(*TODO: Is this more postgresql than SQL?*)
+(*TODO: This is more postgresql than SQL*)
 let section = Lwt_log.Section.make "ocsipersist:sql"
 
 module Lwt_thread = struct
@@ -36,6 +36,7 @@ let transaction_block db f =
     PGOCaml.commit db >>
     Lwt.return r
   with e ->
+    print_endline (Printexc.to_string e);
     PGOCaml.rollback db >>
     Lwt.fail e
 
@@ -46,8 +47,6 @@ let full_transaction_block f = (* copied from Eba_db *)
   Lwt_pool.use pool (fun db -> transaction_block db (fun () -> f db))
 
 let exec db query params =
-  print_endline query;
-  List.iter print_endline params;
   PGOCaml.prepare db ~query () >>
   PGOCaml.execute db ~params:(List.map (fun x -> Some x) params) ()
 
@@ -59,13 +58,12 @@ let key_value_of_row = function
 
 (* get one value from the result of a query *)
 let one = function
-  | x::xs -> snd @@ key_value_of_row x
+  | [Some value]::xs -> value
   | _ -> raise Not_found
 
 let marshal value = PGOCaml.string_of_bytea @@ Marshal.to_string value []
 let unmarshal str = Marshal.from_string (PGOCaml.bytea_of_string str) 0
 
-(*TODO: BYTEA is Postgresql not SQL*)
 let create_table db table =
   let query = sprintf "CREATE TABLE IF NOT EXISTS %s \
                        (key TEXT, value BYTEA, PRIMARY KEY(key))" table
@@ -86,10 +84,6 @@ type 'a t = {
 let open_store store = full_transaction_block @@ fun db ->
   create_table db store >> Lwt.return store
 
-let make_persistent ~store ~name ~default = full_transaction_block @@ fun db ->
-  insert db store name default >>
-  Lwt.return {store = store; name = name}
-
 let make_persistent_lazy_lwt ~store ~name ~default = full_transaction_block @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " store in
   lwt result = exec db query [name] in
@@ -97,12 +91,16 @@ let make_persistent_lazy_lwt ~store ~name ~default = full_transaction_block @@ f
   | [] ->
     lwt default = default () in
     insert db store name default
-  | _ -> Lwt.return ()
-  end in Lwt.return {store = store; name = name}
+  | xs -> Lwt.return ()
+  end in
+  Lwt.return {store = store; name = name}
 
 let make_persistent_lazy ~store ~name ~default =
   let default () = Lwt.wrap default in
   make_persistent_lazy_lwt ~store ~name ~default
+
+let make_persistent ~store ~name ~default = 
+  make_persistent_lazy ~store ~name ~default:(fun () -> default)
 
 let get p = full_transaction_block @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " p.store in
