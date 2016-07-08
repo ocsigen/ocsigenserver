@@ -47,21 +47,22 @@ let full_transaction_block f = (* copied from Eba_db *)
 
 let exec db query params =
   PGOCaml.prepare db ~query () >>
-  PGOCaml.execute db ~params:(List.map (fun x -> Some x) params) ()
+  let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
+  PGOCaml.execute db ~params ()
 
 let (@.) f g = fun x -> f (g x) (* function composition *)
 
 let key_value_of_row = function
-  | [Some key; Some value] -> (key, value)
+  | [Some key; Some value] -> (PGOCaml.bytea_of_string key, PGOCaml.bytea_of_string value)
   | _ -> raise Ocsipersist_error
 
 (* get one value from the result of a query *)
 let one = function
-  | [Some value]::xs -> value
+  | [Some value]::xs -> PGOCaml.bytea_of_string value
   | _ -> raise Not_found
 
-let marshal value = PGOCaml.string_of_bytea @@ Marshal.to_string value []
-let unmarshal str = Marshal.from_string (PGOCaml.bytea_of_string str) 0
+let marshal value = Marshal.to_string value []
+let unmarshal str = Marshal.from_string str 0
 
 let create_table db table =
   let query = sprintf "CREATE TABLE IF NOT EXISTS %s \
@@ -139,7 +140,9 @@ let iter_step f table = full_transaction_block @@ fun db ->
   let query = sprintf "SELECT * FROM %s " table in
   PGOCaml.prepare db ~query () >>
   PGOCaml.cursor db ~params:[] @@
-    fun row -> let (key,value) = key_value_of_row row in f key (unmarshal value)
+    fun row -> let (key,value) = key_value_of_row row in f
+      (PGOCaml.bytea_of_string key)
+      (unmarshal @@ PGOCaml.bytea_of_string value)
 
 let iter_table = iter_step
 
