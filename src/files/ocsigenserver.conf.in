@@ -32,7 +32,7 @@
 
     <!--
     <findlib path="_LIBDIR_"/>
-    <extension findlib-package="ocsigenserver.ext.ocsipersist-sql">
+    <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
       <!-- the database-tag and its attributes are all optional -->
       <database
         host="localhost"

@@ -13,25 +13,25 @@ all: byte opt
 
 ###
 
-byte: ocsipersist-sql.cma
-opt:: ocsipersist-sql.cmxa
+byte: ocsipersist-pgsql.cma
+opt:: ocsipersist-pgsql.cmxa
 ifeq "$(NATDYNLINK)" "YES"
-opt:: ocsipersist-sql.cmxs
+opt:: ocsipersist-pgsql.cmxs
 endif
 
 PREDEP := ocsipersist.mli
 
-ocsipersist-sql.cma: ocsipersist.cmo
+ocsipersist-pgsql.cma: ocsipersist.cmo
 	$(OCAMLC) -a -o $@ $^
 	cp ocsipersist.cmi ..
 	cp $@ ..
 
-ocsipersist-sql.cmxa: ocsipersist.cmx
+ocsipersist-pgsql.cmxa: ocsipersist.cmx
 	$(OCAMLOPT) -a -o $@ $^
 	cp ocsipersist.cmi ..
 	cp $@ ${patsubst %.cmxa,%.a,$@} ..
 
-ocsipersist-sql.cmxs: ocsipersist-sql.cmxa
+ocsipersist-pgsql.cmxs: ocsipersist-pgsql.cmxa
 	$(OCAMLOPT) -shared -linkall -o $@ $^
 	cp $@ ..
 

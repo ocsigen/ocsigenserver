@@ -1,4 +1,3 @@
-(*TODO: This is more postgresql than SQL*)
 let section = Lwt_log.Section.make "ocsipersist:sql"
 
 module Lwt_thread = struct
@@ -99,7 +98,7 @@ let make_persistent_lazy ~store ~name ~default =
   let default () = Lwt.wrap default in
   make_persistent_lazy_lwt ~store ~name ~default
 
-let make_persistent ~store ~name ~default = 
+let make_persistent ~store ~name ~default =
   make_persistent_lazy ~store ~name ~default:(fun () -> default)
 
 let get p = full_transaction_block @@ fun db ->
