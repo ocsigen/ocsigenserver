@@ -428,8 +428,8 @@ check_library tyxml "See: http://ocsigen.org/tyxml/"
 
 # Check Sql
 case "$with_sql" in
- 1) if test_library macaque; then with_sql=1; else with_sql=0; fi;;
- 2) check_library macaque "See: https://github.com/ocsigen/macaque";;
+ 1) if test_library pgocaml; then with_sql=1; else with_sql=0; fi;;
+ 2) check_library pgocaml "https://github.com/darioteixeira/pgocaml";;
 esac
 
 # Check Sqlite3
