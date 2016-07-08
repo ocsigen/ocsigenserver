@@ -62,7 +62,8 @@ let one = function
   | x::xs -> snd @@ key_value_of_row x
   | _ -> raise Not_found
 
-let unmarshal str = Marshal.from_string str 0
+let marshal value = PGOCaml.string_of_bytea @@ Marshal.to_string value []
+let unmarshal str = Marshal.from_string (PGOCaml.bytea_of_string str) 0
 
 (*TODO: BYTEA is Postgresql not SQL*)
 let create_table db table =
@@ -73,7 +74,7 @@ let create_table db table =
 let insert db table key value =
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
                        ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
-  in exec db query [key; Marshal.to_string value []] >> Lwt.return ()
+  in exec db query [key; marshal value] >> Lwt.return ()
 
 type store = string
 
