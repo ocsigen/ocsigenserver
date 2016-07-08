@@ -1,3 +1,4 @@
+(*TODO: Is this more postgresql than SQL?*)
 let section = Lwt_log.Section.make "ocsipersist:sql"
 
 module Lwt_thread = struct
@@ -46,7 +47,7 @@ let full_transaction_block f = (* copied from Eba_db *)
 
 let exec db query params =
   print_endline query;
-  List.iter print_endline params
+  List.iter print_endline params;
   PGOCaml.prepare db ~query () >>
   PGOCaml.execute db ~params:(List.map (fun x -> Some x) params) ()
 
@@ -65,36 +66,38 @@ let unmarshal str = Marshal.from_string str 0
 
 (*TODO: BYTEA is Postgresql not SQL*)
 let create_table db table =
-  let query = sprintf "CREATE TABLE IF NOT EXISTS %s (key TEXT, value BYTEA, \
-                       PRIMARY KEY(key) ON CONFLICT REPLACE)" table
+  let query = sprintf "CREATE TABLE IF NOT EXISTS %s \
+                       (key TEXT, value BYTEA, PRIMARY KEY(key))" table
   in exec db query [] >> Lwt.return ()
+
+let insert db table key value =
+  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
+                       ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
+  in exec db query [key; Marshal.to_string value []] >> Lwt.return ()
 
 type store = string
 
 type 'a t = {
   store : string;
   name  : string;
-  value : 'a
 }
 
 let open_store store = full_transaction_block @@ fun db ->
   create_table db store >> Lwt.return store
 
 let make_persistent ~store ~name ~default = full_transaction_block @@ fun db ->
-  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" store in
-  exec db query [name; Marshal.to_string default []] >>
-  Lwt.return {store = store; name = name; value = failwith "phantom"}
+  insert db store name default >>
+  Lwt.return {store = store; name = name}
 
 let make_persistent_lazy_lwt ~store ~name ~default = full_transaction_block @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " store in
   lwt result = exec db query [name] in
   lwt _ = begin match result with
   | [] ->
-    let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" store in
     lwt default = default () in
-    exec db query [name; Marshal.to_string default []] >> Lwt.return ()
+    insert db store name default
   | _ -> Lwt.return ()
-  end in Lwt.return {store = store; name = name; value = failwith "phantom"}
+  end in Lwt.return {store = store; name = name}
 
 let make_persistent_lazy ~store ~name ~default =
   let default () = Lwt.wrap default in
@@ -105,9 +108,7 @@ let get p = full_transaction_block @@ fun db ->
   Lwt.map (unmarshal @. one) (exec db query [p.name])
 
 let set p v = full_transaction_block @@ fun db ->
-  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" p.store in
-  exec db query [p.name; Marshal.to_string v []] >>
-  Lwt.return ()
+  insert db p.store p.name v
 
 type 'value table = string
 
@@ -121,9 +122,7 @@ let find table key = full_transaction_block @@ fun db ->
   Lwt.map (unmarshal @. one) (exec db query [key])
 
 let add table key value = full_transaction_block @@ fun db ->
-  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )" table in
-  exec db query [key; Marshal.to_string value []] >>
-  Lwt.return ()
+  insert db table key value
 
 let replace_if_exists table key value =
   try_lwt
