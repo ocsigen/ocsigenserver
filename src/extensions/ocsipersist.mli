@@ -22,9 +22,9 @@
 (** Persistent data on hard disk. *)
 
 (**
-   There are currently two implementations of this module,
-   one using a DBM database, and the other using SQLITE.
-   Link the one your want with your program.
+   There are currently three implementations of this module,
+   one using a DBM database, on the PostgreSQL database,
+   and one using SQLITE. Link the one your want with your program.
 *)
 
 
