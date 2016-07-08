@@ -14,7 +14,7 @@ let host = ref None
 let port = ref None
 let user = ref None
 let password = ref None
-let database = ref None
+let database = ref (Some "ocsipersist")
 let unix_domain_socket_dir = ref None
 
 let connect () = PGOCaml.connect
