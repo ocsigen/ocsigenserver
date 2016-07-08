@@ -97,6 +97,7 @@ distclean: clean.local
 	${MAKE} -C ocsipersist-dbm distclean
 	${MAKE} -C ocsipersist-sqlite distclean
 	${MAKE} -C ocsipersist-pgsql distclean
+	-rm -f .depend
 
 ## Dependencies
 

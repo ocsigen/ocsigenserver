@@ -71,6 +71,7 @@ clean:
 	-rm -f ocsidbm ocsidbm.opt
 distclean: clean
 	-rm -f *~ \#* .\#*
+	-rm -f .depend
 
 ## Dependencies
 
