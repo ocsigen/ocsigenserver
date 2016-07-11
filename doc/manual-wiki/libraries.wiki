@@ -46,6 +46,7 @@ Note that the ocsipersist-database under the specified name (default:
         password="Guess what I need!"
         database="ocsipersist" <!-- this is the default value if not specified -->
         unix_domain_socket_dir="./udsd"
+        hashtbl_size="16" <!-- rule of thumb: 8 * number of persistent values / tables -->
       />
     </extension>
 }}}

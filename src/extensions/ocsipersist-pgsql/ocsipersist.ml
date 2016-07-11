@@ -16,31 +16,30 @@ let host = ref None
 let port = ref None
 let user = ref None
 let password = ref None
-let database = ref (Some "ocsipersist")
+let database = ref "ocsipersist"
 let unix_domain_socket_dir = ref None
+let hashtbl_size = ref 8
 
-let connect () = PGOCaml.connect
+let make_hashtbl () = Hashtbl.create !hashtbl_size
+
+let connect () =
+  lwt dbhandle = PGOCaml.connect
                    ?host:!host
                    ?port:!port
                    ?user:!user
                    ?password:!password
-                   ?database:!database
+                   ?database:(Some !database)
                    ?unix_domain_socket_dir:!unix_domain_socket_dir
-                   ()
+                   () in
+  PGOCaml.set_private_data dbhandle @@ make_hashtbl ();
+  Lwt.return dbhandle
 
 let (>>) f g = f >>= fun _ -> g
 
-let pool : (string, bool) Hashtbl.t PGOCaml.t Lwt_pool.t =
+let pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t =
   Lwt_pool.create 16 ~validate:PGOCaml.alive connect
 
 let use_pool f = Lwt_pool.use pool (fun db -> f db)
-
-let exec db query params =
-  PGOCaml.prepare db ~query () >>
-  let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
-  PGOCaml.execute db ~params ()
-
-let (@.) f g = fun x -> f (g x) (* function composition *)
 
 let key_value_of_row = function
   | [Some key; Some value] -> (PGOCaml.bytea_of_string key, PGOCaml.bytea_of_string value)
@@ -54,6 +53,33 @@ let one = function
 let marshal value = Marshal.to_string value []
 let unmarshal str = Marshal.from_string str 0
 
+let prepare db query =
+  let hashtbl = PGOCaml.private_data db in
+  (* Get a unique name for this query using an MD5 digest. *)
+  let name = Digest.to_hex (Digest.string query) in
+  (* Have we prepared this statement already?  If not, do so. *)
+  let is_prepared = Hashtbl.mem hashtbl name in
+  lwt () = if is_prepared then Lwt.return () else begin
+    PGOCaml.prepare db ~name ~query () >>
+    Lwt.return @@ Hashtbl.add hashtbl name ()
+  end in
+  Lwt.return name
+
+let exec db query params =
+  lwt name = prepare db query in
+  let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
+  PGOCaml.execute db ~name ~params ()
+
+let cursor db query params f =
+  lwt name = prepare db query in
+  let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
+  PGOCaml.cursor db ~name ~params @@
+    fun row -> let (key,value) = key_value_of_row row in f
+      (PGOCaml.bytea_of_string key)
+      (unmarshal @@ PGOCaml.bytea_of_string value)
+
+let (@.) f g = fun x -> f (g x) (* function composition *)
+
 let create_table db table =
   let query = sprintf "CREATE TABLE IF NOT EXISTS %s \
                        (key TEXT, value BYTEA, PRIMARY KEY(key))" table
@@ -63,6 +89,7 @@ let insert db table key value =
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
                        ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
   in exec db query [key; marshal value] >> Lwt.return ()
+
 
 type store = string
 
@@ -77,7 +104,7 @@ let open_store store = use_pool @@ fun db ->
 let make_persistent_lazy_lwt ~store ~name ~default = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " store in
   lwt result = exec db query [name] in
-  lwt _ = begin match result with
+  lwt () = begin match result with
   | [] ->
     lwt default = default () in
     insert db store name default
@@ -129,11 +156,7 @@ let length table = use_pool @@ fun db ->
 
 let iter_step f table = use_pool @@ fun db ->
   let query = sprintf "SELECT * FROM %s " table in
-  PGOCaml.prepare db ~query () >>
-  PGOCaml.cursor db ~params:[] @@
-    fun row -> let (key,value) = key_value_of_row row in f
-      (PGOCaml.bytea_of_string key)
-      (unmarshal @@ PGOCaml.bytea_of_string value)
+  cursor db query [] f
 
 let iter_table = iter_step
 
@@ -162,8 +185,13 @@ let parse_global_config = function
       end
     | ("user", u) -> user := Some u
     | ("password", pw) -> password := Some pw
-    | ("database", db) -> database := Some db
+    | ("database", db) -> database := db
     | ("unix_domain_socket_dir", udsd) -> unix_domain_socket_dir := Some udsd
+    | ("hashtbl_size", hts) -> begin
+        try hashtbl_size := int_of_string hts
+        with Failure _ -> raise @@ Ocsigen_extensions.Error_in_config_file
+                                     "hashtbl_size is not an integer"
+      end
     | _ -> raise @@ Ocsigen_extensions.Error_in_config_file
                       "Unexpected attribute for <database> in Ocsipersist config"
     in ignore @@ List.map parse_attr attrs; ()
