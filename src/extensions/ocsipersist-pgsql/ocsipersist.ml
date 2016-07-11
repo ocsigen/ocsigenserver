@@ -101,23 +101,21 @@ type 'a t = {
 let open_store store = use_pool @@ fun db ->
   create_table db store >> Lwt.return store
 
+let make_persistent ~store ~name ~default = use_pool @@ fun db ->
+  insert db store name default >> Lwt.return {store = store; name = name}
+
 let make_persistent_lazy_lwt ~store ~name ~default = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " store in
   lwt result = exec db query [name] in
-  lwt () = begin match result with
+  match result with
   | [] ->
     lwt default = default () in
-    insert db store name default
-  | xs -> Lwt.return ()
-  end in
-  Lwt.return {store = store; name = name}
+    make_persistent ~store ~name ~default
+  | xs -> Lwt.return {store = store; name = name}
 
 let make_persistent_lazy ~store ~name ~default =
   let default () = Lwt.wrap default in
   make_persistent_lazy_lwt ~store ~name ~default
-
-let make_persistent ~store ~name ~default =
-  make_persistent_lazy ~store ~name ~default:(fun () -> default)
 
 let get p = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " p.store in
