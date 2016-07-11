@@ -86,12 +86,6 @@ let create_table db table =
                        (key TEXT, value BYTEA, PRIMARY KEY(key))" table
   in exec db query [] >> Lwt.return ()
 
-let insert db table key value =
-  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
-                       ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
-  (*TODO: compatibility with < 9.5*)
-  in exec db query [key; marshal value] >> Lwt.return ()
-
 
 type store = string
 
@@ -103,17 +97,23 @@ type 'a t = {
 let open_store store = use_pool @@ fun db ->
   create_table db store >> Lwt.return store
 
-let make_persistent ~store ~name ~default = use_pool @@ fun db ->
-  insert db store name default >> Lwt.return {store = store; name = name}
+let make_persistent_worker ~store ~name ~default db =
+  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
+                       ON CONFLICT ( key ) DO NOTHING" store in
+  (*TODO: compatibility with < 9.5*)
+  exec db query [name; marshal default] >> Lwt.return {store; name}
+
+let make_persistent ~store ~name ~default =
+  use_pool @@ fun db -> make_persistent_worker ~store ~name ~default db
 
 let make_persistent_lazy_lwt ~store ~name ~default = use_pool @@ fun db ->
-  let query = sprintf "SELECT value FROM %s WHERE key = $1 " store in
+  let query = sprintf "SELECT 1 FROM %s WHERE key = $1 " store in
   lwt result = exec db query [name] in
   match result with
   | [] ->
     lwt default = default () in
-    make_persistent ~store ~name ~default
-  | xs -> Lwt.return {store = store; name = name}
+    make_persistent_worker ~store ~name ~default db
+  | _ -> Lwt.return {store = store; name = name}
 
 let make_persistent_lazy ~store ~name ~default =
   let default () = Lwt.wrap default in
@@ -139,7 +139,10 @@ let find table key = use_pool @@ fun db ->
   Lwt.map (unmarshal @. one) (exec db query [key])
 
 let add table key value = use_pool @@ fun db ->
-  insert db table key value
+  let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
+                       ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
+  (*TODO: compatibility with < 9.5*)
+  in exec db query [key; marshal value] >> Lwt.return ()
 
 let replace_if_exists table key value = use_pool @@ fun db ->
   let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 RETURNING 0" table in
