@@ -18,9 +18,9 @@ let user = ref None
 let password = ref None
 let database = ref "ocsipersist"
 let unix_domain_socket_dir = ref None
-let hashtbl_size = ref 8
+let size_conn_pool = ref 16
 
-let make_hashtbl () = Hashtbl.create !hashtbl_size
+let make_hashtbl () = Hashtbl.create 8
 
 let connect () =
   lwt dbhandle = PGOCaml.connect
@@ -36,10 +36,11 @@ let connect () =
 
 let (>>) f g = f >>= fun _ -> g
 
-let pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t =
-  Lwt_pool.create 16 ~validate:PGOCaml.alive connect
+let conn_pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t ref =
+  (* This connection pool will be overwritten by init_fun! *)
+  ref @@ Lwt_pool.create !size_conn_pool ~validate:PGOCaml.alive connect
 
-let use_pool f = Lwt_pool.use pool (fun db -> f db)
+let use_pool f = Lwt_pool.use !conn_pool @@ fun db -> f db
 
 let key_value_of_row = function
   | [Some key; Some value] -> (PGOCaml.bytea_of_string key, PGOCaml.bytea_of_string value)
@@ -188,10 +189,10 @@ let parse_global_config = function
     | ("password", pw) -> password := Some pw
     | ("database", db) -> database := db
     | ("unix_domain_socket_dir", udsd) -> unix_domain_socket_dir := Some udsd
-    | ("hashtbl_size", hts) -> begin
-        try hashtbl_size := int_of_string hts
+    | ("size_conn_pool", scp) -> begin
+        try size_conn_pool := int_of_string scp
         with Failure _ -> raise @@ Ocsigen_extensions.Error_in_config_file
-                                     "hashtbl_size is not an integer"
+                                     "size_conn_pool is not an integer"
       end
     | _ -> raise @@ Ocsigen_extensions.Error_in_config_file
                       "Unexpected attribute for <database> in Ocsipersist config"
@@ -200,7 +201,8 @@ let parse_global_config = function
                     "Unexpected content inside Ocsipersist config"
 
 
-let init_fun config = parse_global_config config
-
+let init_fun config =
+  parse_global_config config;
+  conn_pool := Lwt_pool.create !size_conn_pool ~validate:PGOCaml.alive connect
 
 let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
