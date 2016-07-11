@@ -1,3 +1,5 @@
+(** PostgreSQL (>= 9.5) backend for Ocsipersist. *)
+
 let section = Lwt_log.Section.make "ocsipersist:sql"
 
 module Lwt_thread = struct
@@ -95,7 +97,8 @@ let get p = use_pool @@ fun db ->
   Lwt.map (unmarshal @. one) (exec db query [p.name])
 
 let set p v = use_pool @@ fun db ->
-  insert db p.store p.name v
+  let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 " p.store
+  in exec db query [p.name; marshal v] >> Lwt.return ()
 
 type 'value table = string
 
