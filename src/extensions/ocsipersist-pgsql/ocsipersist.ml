@@ -88,6 +88,7 @@ let create_table db table =
 let insert db table key value =
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
                        ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
+  (*TODO: compatibility with < 9.5*)
   in exec db query [key; marshal value] >> Lwt.return ()
 
 
@@ -139,10 +140,12 @@ let find table key = use_pool @@ fun db ->
 let add table key value = use_pool @@ fun db ->
   insert db table key value
 
-let replace_if_exists table key value =
-  try_lwt
-    find table key >> add table key value
-  with Not_found -> Lwt.return ()
+let replace_if_exists table key value = use_pool @@ fun db ->
+  let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 RETURNING 0" table in
+  lwt result = exec db query [key; marshal value] in
+  match result with
+  | [] -> raise Not_found
+  | _ -> Lwt.return ()
 
 let remove table key = use_pool @@ fun db ->
   let query = sprintf "DELETE FROM %s WHERE key = $1 " table in
