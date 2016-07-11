@@ -100,7 +100,7 @@ let open_store store = use_pool @@ fun db ->
 let make_persistent_worker ~store ~name ~default db =
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
                        ON CONFLICT ( key ) DO NOTHING" store in
-  (*TODO: compatibility with < 9.5*)
+  (* NOTE: incompatible with < 9.5 *)
   exec db query [name; marshal default] >> Lwt.return {store; name}
 
 let make_persistent ~store ~name ~default =
@@ -141,7 +141,7 @@ let find table key = use_pool @@ fun db ->
 let add table key value = use_pool @@ fun db ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
                        ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
-  (*TODO: compatibility with < 9.5*)
+  (* NOTE: incompatible with < 9.5 *)
   in exec db query [key; marshal value] >> Lwt.return ()
 
 let replace_if_exists table key value = use_pool @@ fun db ->
