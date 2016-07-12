@@ -68,7 +68,7 @@ install.opt: install.META.opt install.files
 # BB If install is not run by root but OCSIGENUSER, OCSIGENGROUP is somebody
 # BB different, make files universally accessible, we cannot chown.
 INSTALL_CAN_PUT_PERMISSIONS=yes
-INSTALL_USER_GROUP=-o $(OCSIGENUSER) -g $(OCSIGENGROUP)
+INSTALL_USER_GROUP=-o $(OCSIGENUSER) -g "$(OCSIGENGROUP)"
 INSTALL_MOD_660=660
 INSTALL_MOD_644=644
 INSTALL_MOD_755=755
@@ -99,7 +99,7 @@ install.files:
 	[ -p $(TEMPROOT)$(COMMANDPIPE) ] || \
 	 { mkfifo -m ${INSTALL_MOD_660} $(TEMPROOT)$(COMMANDPIPE); \
 	   if [ "${INSTALL_CAN_PUT_PERMISSIONS}" = yes ]; \
-	     then $(CHOWN) -R $(OCSIGENUSER):$(OCSIGENGROUP) $(TEMPROOT)$(COMMANDPIPE); \
+	     then $(CHOWN) -R $(OCSIGENUSER):"$(OCSIGENGROUP)" $(TEMPROOT)$(COMMANDPIPE); \
 	   fi; }
 	 ## Configuration files
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
@@ -162,7 +162,7 @@ logrotate:
 	 cat src/files/logrotate.in \
 	     | sed s%LOGDIR%$(LOGDIR)%g \
 	     | sed s%USER%$(OCSIGENUSER)%g \
-	     | sed s%GROUP%$(OCSIGENGROUP)%g \
+	     | sed s%GROUP%"$(OCSIGENGROUP)"%g \
 	     | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	     > $(TEMPROOT)/etc/logrotate.d/$(PROJECTNAME)
 
