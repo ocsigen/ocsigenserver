@@ -78,6 +78,7 @@ set_defaults () {
     enable_debug=1
     enable_annot=1
     with_sqlite=1
+    with_pgsql=1
     with_camlzip=1
     with_dbm=1
     with_preempt=1
@@ -107,7 +108,7 @@ full_pwd=`pwd`
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
 eoptions="debug annot natdynlink"
-woptions="sqlite dbm camlzip preempt"
+woptions="pgsql sqlite dbm camlzip preempt"
 
 print_options () {
 	for opt in $eoptions; do
@@ -184,6 +185,7 @@ usage: ./configure [ options ]
   --enable-natdynlink,	--disable-natdynlink	Enable/disable nativecode dynamic linking
 
   --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
+  --with-pgsql,	--without-pgsql		Compile ocsipersist with PostgreSQL for persistent storage
   --with-dbm,		--without-dbm		Compile ocsipersist with DBM for persistent storage
   --with-camlzip,	--without-camlzip	Compile deflatemod extension, requires camlzip
 
@@ -424,6 +426,12 @@ check_library cryptokit "See: http://pauillac.inria.fr/~xleroy/software.html#cry
 
 check_library tyxml "See: http://ocsigen.org/tyxml/"
 
+# Check PostgreSQL
+case "$with_pgsql" in
+ 1) if test_library pgocaml; then with_pgsql=1; else with_pgsql=0; fi;;
+ 2) check_library pgocaml "https://github.com/darioteixeira/pgocaml";;
+esac
+
 # Check Sqlite3
 case "$with_sqlite" in
  1) if test_library sqlite3; then with_sqlite=1; else with_sqlite=0; fi;;
@@ -514,6 +522,11 @@ if [ $with_sqlite -gt 0 ] ; then
 else
 	with_sqlite="NO"
 fi
+if [ $with_pgsql -gt 0 ] ; then
+	with_pgsql="YES"
+else
+	with_pgsql="NO"
+fi
 if [ $with_camlzip -gt 0 ] ; then
 	with_camlzip="YES"
 else
@@ -568,6 +581,9 @@ CAMLZIPNAME:=$zipname
 
 # Do you want ocsipersist with sqlite? YES/NO
 OCSIPERSISTSQLITE:=$with_sqlite
+
+# Do you want ocsipersist with pgsql? YES/NO
+OCSIPERSISTPGSQL:=$with_pgsql
 
 # Do you want ocsipersist with dbm? YES/NO
 OCSIPERSISTDBM:=$with_dbm

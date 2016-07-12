@@ -22,9 +22,9 @@
 (** Persistent data on hard disk. *)
 
 (**
-   There are currently two implementations of this module,
-   one using a DBM database, and the other using SQLITE.
-   Link the one your want with your program.
+   There are currently three implementations of this module,
+   one using a DBM database, on the PostgreSQL database,
+   and one using SQLITE. Link the one your want with your program.
 *)
 
 
@@ -41,7 +41,7 @@ type 'a t
 type store
 
 (** Open a store (and create it if it does not exist)  *)
-val open_store : string -> store
+val open_store : string -> store Lwt.t
 
 val make_persistent :
   store:store -> name:string -> default:'a -> 'a t Lwt.t
@@ -77,7 +77,7 @@ type 'value table
 val table_name : 'value table -> string Lwt.t
 
 (** Open a table (and create it if it does not exist)  *)
-val open_table : string -> 'value table
+val open_table : string -> 'value table Lwt.t
 
 val find : 'value table -> string -> 'value Lwt.t
 (** [find table key] gives the value associated to [key].

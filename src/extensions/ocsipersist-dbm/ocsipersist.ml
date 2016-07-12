@@ -237,7 +237,7 @@ let db_length store =
 (** Type of persistent data *)
 type 'a t = store * string
 
-let open_store name : store = name
+let open_store name = Lwt.return name
 
 let make_persistent_lazy_lwt ~store ~name ~default =
   let pvname = (store, name) in
@@ -270,7 +270,7 @@ let set pvname v =
 (** Type of persistent tables *)
 type 'value table = string
 
-let open_table name = name
+let open_table name = Lwt.return name
 
 let table_name n = Lwt.return n
 

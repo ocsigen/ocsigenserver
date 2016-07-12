@@ -29,7 +29,7 @@ open Printf
 (** Data are divided into stores.
     Create one store for your project, where you will save all your data.
 *)
-type store = string Lwt.t
+type store = string
 
 exception Ocsipersist_error
 
@@ -225,12 +225,11 @@ let db_length table =
 (** Type of persistent data *)
 type 'a t = string * string
 
-let open_store name : store =
+let open_store name =
   let s = "store___"^name in
   db_create s
 
 let make_persistent_lazy_lwt ~store ~name ~default =
-  store >>= fun store ->
   let pvname = (store, name) in
   (catch
      (fun () -> db_get pvname >>= (fun _ -> return ()))
@@ -257,34 +256,29 @@ let set pvname v =
   db_replace pvname data
 
 (** Type of persistent tables *)
-type 'value table = string Lwt.t
+type 'value table = string
 
 (** name SHOULD NOT begin with "store___" *)
 let open_table name = db_create name
 
-let table_name table = table
+let table_name table = Lwt.return table
 
 let find table key =
-  table >>= fun table ->
   db_get (table, key) >>= fun v ->
   return (Marshal.from_string v 0)
 
 let add table key value =
-  table >>= fun table ->
   let data = Marshal.to_string value [] in
   db_replace (table, key) data
 
 let replace_if_exists table key value =
-  table >>= fun table ->
   let data = Marshal.to_string value [] in
   db_replace_if_exists (table, key) data
 
 let remove table key =
-  table >>= fun table ->
   db_remove (table, key)
 
 let iter_step f table =
-  table >>= fun table ->
   let rec aux rowid =
     db_iter_step table rowid >>=
     (function
@@ -295,7 +289,6 @@ let iter_step f table =
   aux Int64.zero
 
 let fold_step f table beg =
-  table >>= fun table ->
   let rec aux rowid beg =
     db_iter_step table rowid >>=
     (function
@@ -306,15 +299,14 @@ let fold_step f table beg =
   aux Int64.zero beg
 
 let iter_block f table =
-  table >>= fun table ->
   db_iter_block table f
+
 
 let iter_table = iter_step
 
 let fold_table = fold_step
 
 let length table =
-  table >>= fun table ->
   db_length table
 
 

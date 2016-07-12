@@ -148,7 +148,10 @@ Here is a simple example:
 </ocsigen>
 }}}
 
-Here is another example, for use as unprivileged user toto on port 8000:
+Here is another example, for use as unprivileged user toto on port 8000.
+We use the PostgreSQL (version >= 9.5) backend for ocsipersist. Note that the
+ocsipersist-database under the specified name (default: "ocsipersist") needs to
+exist. To create it run {{{psql}}} and execute {{{CREATE TABLE ocsipersist;}}}.
 
 {{{
 <ocsigen>
@@ -167,8 +170,14 @@ Here is another example, for use as unprivileged user toto on port 8000:
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
 
-    <extension findlib-package="ocsigenserver.ext.ocsipersist-sqlite"/>
-    <!-- sqlite3.cma will be loaded automatically using findlib -->
+    <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
+      <database <!-- optional, as each of the following attributes are -->
+        port="3000"
+        user="toto"
+        password="toto's secret"
+      />
+    </extension>
+    <!-- pa_pgsql.cma will be loaded automatically using findlib -->
 
     <extension findlib-package="ocsigenserver.ext.eliom"/>
     <!-- Eliom's dependencies will be loaded automatically using findlib -->
@@ -182,7 +191,7 @@ Here is another example, for use as unprivileged user toto on port 8000:
       <site path="tuto">
         <eliom module="/usr/local/lib/ocsigenserver/tutoeliom.cmo" />
         <static dir="/home/toto/var/www/ocsigenserver/tutorial" />
-	<!-- Module's path coul be relative but static dir must be absolute -->
+        <!-- Module's path coul be relative but static dir must be absolute -->
       </site>
 
     </host>

@@ -30,6 +30,21 @@
     </extension>
     -->
 
+    <!--
+    <findlib path="_LIBDIR_"/>
+    <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
+      <!-- the database-tag and its attributes are all optional -->
+      <database
+        host="localhost"
+        port="3000"
+        user="_OCSIGENUSER_"
+        password="pw"
+        database="db"
+        unix_domain_socket_dir="./udsd"
+      />
+    </extension>
+    -->
+
     <!-- You may want to use DBM instead of SQLite (if compiled). -->
     <!--
     <extension findlib-package="_EXTPACKAGENAME_.ocsipersist-dbm">

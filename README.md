@@ -23,6 +23,7 @@ Libraries:
  * tyxml             (need version 3)
  * ipaddr            (need version >= 2.1)
  * ocamlsqlite3      (tested with 2.0.2) OR
+ * pgocaml           (tested with 2.3) OR
  * dbm               (tested with 1.0)
 
 

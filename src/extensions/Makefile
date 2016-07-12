@@ -46,6 +46,14 @@ ifeq "$(NATDYNLINK)" "YES"
 opt:: ${FILES:.ml=.cmxs}
 endif
 
+### PostgreSQL ###
+
+ifeq "$(OCSIPERSISTPGSQL)" "YES"
+byte::
+	$(MAKE) -C ocsipersist-pgsql byte
+opt::
+	$(MAKE) -C ocsipersist-pgsql opt
+endif
 ### SQLite ###
 
 ifeq "$(OCSIPERSISTSQLITE)" "YES"
@@ -80,6 +88,7 @@ endif
 clean: clean.local
 	${MAKE} -C ocsipersist-dbm clean
 	${MAKE} -C ocsipersist-sqlite clean
+	${MAKE} -C ocsipersist-pgsql clean
 clean.local:
 	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
@@ -87,6 +96,8 @@ distclean: clean.local
 	-rm -f *~ \#* .\#*
 	${MAKE} -C ocsipersist-dbm distclean
 	${MAKE} -C ocsipersist-sqlite distclean
+	${MAKE} -C ocsipersist-pgsql distclean
+	-rm -f .depend
 
 ## Dependencies
 
@@ -94,6 +105,7 @@ depend: ${PREDEP}
 	$(OCAMLDEP) ${LIBS} *.mli *.ml > .depend
 	${MAKE} -C ocsipersist-dbm depend
 	${MAKE} -C ocsipersist-sqlite depend
+	${MAKE} -C ocsipersist-pgsql depend
 
 FORCE:
 -include .depend

@@ -1,8 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := lwt.preemptive  \
-	    tyxml.parser \
-	    sqlite3      \
+PACKAGE  := tyxml.parser pgocaml.syntax lwt.syntax
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}
@@ -15,25 +13,25 @@ all: byte opt
 
 ###
 
-byte: ocsipersist-sqlite.cma
-opt:: ocsipersist-sqlite.cmxa
+byte: ocsipersist-pgsql.cma
+opt:: ocsipersist-pgsql.cmxa
 ifeq "$(NATDYNLINK)" "YES"
-opt:: ocsipersist-sqlite.cmxs
+opt:: ocsipersist-pgsql.cmxs
 endif
 
 PREDEP := ocsipersist.mli
 
-ocsipersist-sqlite.cma: ocsipersist.cmo
+ocsipersist-pgsql.cma: ocsipersist.cmo
 	$(OCAMLC) -a -o $@ $^
 	cp ocsipersist.cmi ..
 	cp $@ ..
 
-ocsipersist-sqlite.cmxa: ocsipersist.cmx
+ocsipersist-pgsql.cmxa: ocsipersist.cmx
 	$(OCAMLOPT) -a -o $@ $^
 	cp ocsipersist.cmi ..
 	cp $@ ${patsubst %.cmxa,%.a,$@} ..
 
-ocsipersist-sqlite.cmxs: ocsipersist-sqlite.cmxa
+ocsipersist-pgsql.cmxs: ocsipersist-pgsql.cmxa
 	$(OCAMLOPT) -shared -linkall -o $@ $^
 	cp $@ ..
 
@@ -42,12 +40,14 @@ ocsipersist.mli:
 
 ##########
 
+SYNTAX_FLAGS=-syntax camlp4o
+
 %.cmi: %.mli
 	$(OCAMLC) ${LIBS} -c $<
 %.cmo: %.ml
-	$(OCAMLC) ${LIBS} -c $<
+	$(OCAMLC) ${LIBS} ${SYNTAX_FLAGS} -c $<
 %.cmx: %.ml
-	$(OCAMLOPT) ${LIBS} -c $<
+	$(OCAMLOPT) ${LIBS} ${SYNTAX_FLAGS} -c $<
 %.cmxs: %.cmxa
 	$(OCAMLOPT) -shared -linkall -o $@ $<
 

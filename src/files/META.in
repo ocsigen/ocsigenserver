@@ -151,6 +151,15 @@ package "ext" (
     archive(native) = "ocsipersist-sqlite.cmxa"
   )
 
+  package "ocsipersist-pgsql" (
+    exists_if = "ocsipersist-pgsql.cma,ocsipersist-pgsql.cmxa"
+    requires = "pgocaml"
+    version = "[distributed with Ocsigen server]"
+    description = "Persistent data storage with PostgreSQL"
+    archive(byte) = "ocsipersist-pgsql.cma"
+    archive(native) = "ocsipersist-pgsql.cmxa"
+  )
+
   package "ocsipersist-dbm" (
     exists_if = "ocsipersist-dbm.cma,ocsipersist-dbm.cmxa"
     version = "[distributed with Ocsigen server]"
