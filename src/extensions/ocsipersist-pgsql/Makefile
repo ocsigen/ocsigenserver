@@ -63,7 +63,7 @@ distclean: clean
 ## Dependencies
 
 depend: ${PREDEP}
-	$(OCAMLDEP) ${LIBS} *.mli *.ml > .depend
+	$(OCAMLDEP) ${LIBS} ${SYNTAX_FLAGS} *.mli *.ml > .depend
 
 FORCE:
 -include .depend
