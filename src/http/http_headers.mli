@@ -34,6 +34,7 @@ val accept_charset : name
 val accept_encoding : name
 val accept_language : name
 val accept_ranges : name
+val authorization : name
 val cache_control : name
 val connection : name
 val content_disposition : name
