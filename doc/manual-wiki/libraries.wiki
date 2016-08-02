@@ -13,9 +13,9 @@ configuration file before {{{ Eliom }}}).
 There are currently two implementations of {{{ Ocsipersist }}}:
 {{{ ocsipersist-dbm.cma }}} (uses the DBM database);
 {{{ ocsipersist-sqlite.cma }}} (uses the SQLite database
-and depends on {{{ sqlite3.cma }}});
+and depends on {{{ sqlite3.cma }}} from the OPAM package sqlite3);
 {{{ ocsipersist-pgsql.cma }}} (uses the PostgreSQL (version >= 9.5)
-database and depends on {{{ pa_pgsql.cma }}});
+database and depends on {{{ pa_pgsql.cma }}} from the OPAM package pgocaml);
 >>
 
 It is possible to customize the location of the database on the 
