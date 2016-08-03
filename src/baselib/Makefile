@@ -73,7 +73,7 @@ ocsigen_config.ml: ocsigen_config.ml.in ../../Makefile.config ../../Makefile.opt
 	| sed s%_STATICPAGESDIR_%$(STATICPAGESDIR)% \
 	| sed s%_UP_%$(UPLOADDIR)%g \
 	| sed s%_OCSIGENUSER_%$(OCSIGENUSER)%g \
-	| sed s%_OCSIGENGROUP_%$(OCSIGENGROUP)%g \
+	| sed s%_OCSIGENGROUP_%"$(OCSIGENGROUP)"%g \
 	| sed s%_PROJECTNAME_%$(PROJECTNAME)%g \
 	| sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	| sed s%_CONFIGDIR_%$(CONFIGDIR)% \
