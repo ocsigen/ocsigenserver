@@ -55,6 +55,7 @@ val if_unmodified_since : name
 val if_range : name
 val last_modified : name
 val location : name
+val pragma : name
 val server : name
 val set_cookie : name
 val status : name
