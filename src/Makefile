@@ -51,7 +51,7 @@ confs: ../$(PROJECTNAME).conf.sample ../local/etc/${PROJECTNAME}.conf
 	  | sed s%_LOGDIR_%$(LOGDIR)%g \
 	  | sed s%_DATADIR_%$(DATADIR)%g \
 	  | sed s%_OCSIGENUSER_%$(OCSIGENUSER)%g \
-	  | sed s%_OCSIGENGROUP_%$(OCSIGENGROUP)%g \
+	  | sed s%_OCSIGENGROUP_%"$(OCSIGENGROUP)"%g \
 	  | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	  | sed s%_MIMEFILE_%$(CONFIGDIR)/mime.types%g \
 	  | sed s%_METADIR_%$(LIBDIR)%g \

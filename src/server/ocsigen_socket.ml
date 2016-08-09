@@ -42,8 +42,10 @@ let make_sockets addr port =
     let ipv6_socket =
       try [make_ipv6_socket Unix.inet6_addr_any port]
       with Unix.Unix_error
-          ((Unix.EAFNOSUPPORT | Unix.EPROTONOSUPPORT),
-           _, _) -> []
+          ((Unix.EAFNOSUPPORT
+           | Unix.EPROTONOSUPPORT
+           | Unix.EADDRINUSE (* GH issue #104 *)
+           ), _, _) -> []
     in
     (make_ipv4_socket Unix.inet_addr_any port)::ipv6_socket
   | IPv4 addr ->
