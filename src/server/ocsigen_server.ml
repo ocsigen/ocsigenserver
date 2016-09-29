@@ -19,7 +19,6 @@
 *)
 
 open Lwt
-open Ocsigen_messages
 open Ocsigen_socket
 open Ocsigen_lib
 open Ocsigen_extensions
@@ -30,7 +29,6 @@ open Ocsigen_senders
 open Ocsigen_config
 open Ocsigen_parseconfig
 open Ocsigen_cookies
-open Lazy
 
 exception Ocsigen_unsupported_media
 exception Ssl_Exception
