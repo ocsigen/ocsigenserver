@@ -1065,7 +1065,7 @@ let reload_conf s =
 let reload ?file () =
 
   (* That function cannot be interrupted??? *)
-  Lwt_log.ign_warning ~section "Reloading config file" ;
+  Lwt_log.ign_notice ~section "Reloading config file" ;
 
   (try
      match parse_config ?file () with
@@ -1073,7 +1073,7 @@ let reload ?file () =
      | s::_ -> reload_conf s
    with e -> Lwt_log.ign_error ~section (fst (errmsg e)));
 
-  Lwt_log.ign_warning ~section "Config file reloaded"
+  Lwt_log.ign_notice ~section "Config file reloaded"
 
 
 let shutdown_server s l =
@@ -1085,7 +1085,7 @@ let shutdown_server s l =
         Some (float_of_string t)
       | _ -> failwith "syntax error in command"
     in
-    Lwt_log.ign_warning ~section "Shutting down";
+    Lwt_log.ign_notice ~section "Shutting down";
     List.iter
       (fun s -> Lwt_unix.abort s Socket_closed) !sockets;
     List.iter
@@ -1113,14 +1113,14 @@ let _ =
   let f s = function
     | ["reopen_logs"] ->
       Ocsigen_messages.open_files () >>= fun () ->
-      Lwt_log.ign_warning ~section "Log files reopened";
+      Lwt_log.ign_notice ~section "Log files reopened";
       Lwt.return ()
     | ["reload"] -> reload (); Lwt.return ()
     | ["reload"; file] -> reload ~file (); Lwt.return ()
     | "shutdown"::l -> shutdown_server s l; Lwt.return ()
     | ["gc"] ->
       Gc.compact ();
-      Lwt_log.ign_warning ~section "Heap compaction requested by user";
+      Lwt_log.ign_notice ~section "Heap compaction requested by user";
       Lwt.return ()
     | ["clearcache"] -> Ocsigen_cache.clear_all_caches ();
       Lwt.return ()
@@ -1236,7 +1236,7 @@ let start_server () =
             Unix.mkfifo commandpipe 0o660;
             Unix.chown commandpipe uid gid;
             ignore (Unix.umask umask);
-            Lwt_log.ign_warning ~section "Command pipe created";
+            Lwt_log.ign_notice ~section "Command pipe created";
           with e ->
             Lwt_log.ign_error ~section ~exn:e
               "Cannot create the command pipe"));
@@ -1311,7 +1311,7 @@ let start_server () =
 
       let rec f () =
         Lwt_chan.input_line pipe >>= fun s ->
-        Ocsigen_messages.warning ("Command received: "^s);
+        Lwt_log.ign_notice ~section ("Command received: "^s);
         (Lwt.catch
            (fun () ->
               let prefix, c =
@@ -1342,7 +1342,7 @@ let start_server () =
 
       Lwt.wakeup wait_end_init_awakener ();
 
-      Lwt_log.ign_warning ~section "Ocsigen has been launched \
+      Lwt_log.ign_notice ~section "Ocsigen has been launched \
                                     (initialisations ok)";
 
       fst (Lwt.wait ())
