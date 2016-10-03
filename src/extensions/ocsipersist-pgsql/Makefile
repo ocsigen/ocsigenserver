@@ -36,7 +36,7 @@ ocsipersist-pgsql.cmxs: ocsipersist-pgsql.cmxa
 	cp $@ ..
 
 ocsipersist.mli:
-	ln -s ../ocsipersist.mli .
+	ln -s -f ../ocsipersist.mli .
 
 ##########
 

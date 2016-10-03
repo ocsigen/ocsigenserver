@@ -39,7 +39,7 @@ ocsipersist-dbm.cmxs: ocsipersist-dbm.cmxa
 	cp $@ ..
 
 ocsipersist.mli:
-	ln -s ../ocsipersist.mli .
+	ln -s -f ../ocsipersist.mli .
 
 ###
 
