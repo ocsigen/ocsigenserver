@@ -231,13 +231,13 @@ let appreciate_server_pipeline inet_addr port =
         | Yes -> None
         | No t when Unix.time () -. t < purgatory_delay -> None
         | No t ->
-          Lwt_log.ign_warning_f ~section
+          Lwt_log.ign_notice_f ~section
             "Give to server %a:%d a new probing period for pipelining."
             (fun () -> Unix.string_of_inet_addr) inet_addr port;
           Some purgatory_time (* second chance *)
         | Probing n -> Some (n-1)
     with Not_found ->
-      Lwt_log.ign_warning_f ~section
+      Lwt_log.ign_notice_f ~section
         "Give to server %a:%d a first probing period for pipelining." (fun () -> Unix.string_of_inet_addr) inet_addr port;
       Some probing_time
   with
