@@ -1,6 +1,6 @@
 (** PostgreSQL (>= 9.5) backend for Ocsipersist. *)
 
-let section = Lwt_log.Section.make "ocsipersist:sql"
+let section = Lwt_log.Section.make "ocsipersist:pgsql"
 
 module Lwt_thread = struct
   include Lwt
@@ -79,9 +79,9 @@ let cursor db query params f =
       let (key,value) = key_value_of_row row in
       f (PGOCaml.bytea_of_string key)
         (unmarshal @@ PGOCaml.bytea_of_string value)
-    with e ->
-      Ocsigen_messages.errlog (Printexc.to_string e);
-      error := Some e;
+    with exn ->
+      Lwt_log.error ~exn ~section "exception while evaluating cursor argument";
+      error := Some exn;
       Lwt.return ()
   in match !error with
     | None -> Lwt.return ()
