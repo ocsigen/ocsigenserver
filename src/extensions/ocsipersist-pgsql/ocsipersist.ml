@@ -74,10 +74,18 @@ let exec db query params =
 let cursor db query params f =
   lwt name = prepare db query in
   let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
-  PGOCaml.cursor db ~name ~params @@
-    fun row -> let (key,value) = key_value_of_row row in f
-      (PGOCaml.bytea_of_string key)
-      (unmarshal @@ PGOCaml.bytea_of_string value)
+  let error = ref None in
+  lwt () = PGOCaml.cursor db ~name ~params @@ fun row -> try_lwt
+      let (key,value) = key_value_of_row row in
+      f (PGOCaml.bytea_of_string key)
+        (unmarshal @@ PGOCaml.bytea_of_string value)
+    with e ->
+      Ocsigen_messages.errlog (Printexc.to_string e);
+      error := Some e;
+      Lwt.return ()
+  in match !error with
+    | None -> Lwt.return ()
+    | Some e -> Lwt.fail e
 
 let (@.) f g = fun x -> f (g x) (* function composition *)
 
