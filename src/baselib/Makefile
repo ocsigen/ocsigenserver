@@ -10,8 +10,8 @@ PACKAGE  := \
 	tyxml \
 	lwt.syntax \
 	${LWT_PREEMPTIVE_PACKAGE} \
-	ipaddr \
-	${SERVER_SYNTAX} ## See ../../Makefile.options
+	ipaddr
+
 LIBS     := ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
@@ -131,14 +131,14 @@ polytables.cmxa: polytables.cmx
 ##########
 
 %.cmi: %.mli
-	$(OCAMLC) -syntax camlp4o ${LIBS} -c $<
+	$(OCAMLC) ${LIBS} -c $<
 ${INTF_NOP4:.mli=.cmi}: \
 %.cmi: %.mli
 	$(OCAMLC) ${LIBS} -c $<
 %.cmo: %.ml
-	$(OCAMLC) -syntax camlp4o ${LIBS} -c $<
+	$(OCAMLC) ${LIBS} -c $<
 %.cmx: %.ml
-	$(OCAMLOPT) -syntax camlp4o ${LIBS} -c $<
+	$(OCAMLOPT) ${LIBS} -c $<
 %.cmxs: %.cmxa
 	$(OCAMLOPT) -shared -linkall -o $@ $<
 
@@ -156,7 +156,7 @@ distclean: clean
 ## Dependencies
 
 depend: ${PREDEP}
-	$(OCAMLDEP) ${LIBS} -syntax camlp4o $(filter-out ${INTF_NOP4},$(wildcard *.mli)) *.ml > .depend
+	$(OCAMLDEP) ${LIBS} $(filter-out ${INTF_NOP4},$(wildcard *.mli)) *.ml > .depend
 	$(OCAMLDEP) ${LIBS} ${INTF_NOP4} >> .depend
 
 FORCE:

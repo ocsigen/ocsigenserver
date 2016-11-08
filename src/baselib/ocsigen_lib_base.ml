@@ -77,7 +77,7 @@ module Option = struct
     | Some v -> [v]
   module Lwt = struct
     let map f = function
-      | Some x -> lwt v = f x in Lwt.return (Some v)
+      | Some x -> f x >>= fun v -> Lwt.return (Some v)
       | None -> Lwt.return None
     let get f = function
       | Some x -> Lwt.return x
