@@ -142,32 +142,6 @@ package "ext" (
     archive(native) = "cgimod.cmx"
   )
 
-  package "ocsipersist-sqlite" (
-    exists_if = "ocsipersist-sqlite.cma,ocsipersist-sqlite.cmxa"
-    requires = "sqlite3"
-    version = "[distributed with Ocsigen server]"
-    description = "Persistent data storage with SQLite3"
-    archive(byte) = "ocsipersist-sqlite.cma"
-    archive(native) = "ocsipersist-sqlite.cmxa"
-  )
-
-  package "ocsipersist-pgsql" (
-    exists_if = "ocsipersist-pgsql.cma,ocsipersist-pgsql.cmxa"
-    requires = "pgocaml"
-    version = "[distributed with Ocsigen server]"
-    description = "Persistent data storage with PostgreSQL"
-    archive(byte) = "ocsipersist-pgsql.cma"
-    archive(native) = "ocsipersist-pgsql.cmxa"
-  )
-
-  package "ocsipersist-dbm" (
-    exists_if = "ocsipersist-dbm.cma,ocsipersist-dbm.cmxa"
-    version = "[distributed with Ocsigen server]"
-    description = "Persistent data storage with DBM"
-    archive(byte) = "ocsipersist-dbm.cma"
-    archive(native) = "ocsipersist-dbm.cmxa"
-  )
-
   package "deflatemod" (
     exists_if = "deflatemod.cmo,deflatemod.cmx"
     requires = "ocsigenserver,%%CAMLZIPNAME%%"

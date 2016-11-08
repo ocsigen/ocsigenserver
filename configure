@@ -184,9 +184,6 @@ usage: ./configure [ options ]
   --enable-annot,	--disable-annot		Enable/disable .cmt{,i} files generation
   --enable-natdynlink,	--disable-natdynlink	Enable/disable nativecode dynamic linking
 
-  --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
-  --with-pgsql,	--without-pgsql		Compile ocsipersist with PostgreSQL for persistent storage
-  --with-dbm,		--without-dbm		Compile ocsipersist with DBM for persistent storage
   --with-camlzip,	--without-camlzip	Compile deflatemod extension, requires camlzip
 
   --name=NAME		The name of the server binary and ocamlfind package.
@@ -579,15 +576,6 @@ CAMLZIP:=$with_camlzip
 # The name of camlzip package:
 CAMLZIPNAME:=$zipname
 
-# Do you want ocsipersist with sqlite? YES/NO
-OCSIPERSISTSQLITE:=$with_sqlite
-
-# Do you want ocsipersist with pgsql? YES/NO
-OCSIPERSISTPGSQL:=$with_pgsql
-
-# Do you want ocsipersist with dbm? YES/NO
-OCSIPERSISTDBM:=$with_dbm
-
 # Do you want preemptive threads ? YES/NO
 PREEMPTIVE:=$with_preempt
 
@@ -668,4 +656,3 @@ echo
 echo "   make install"
 echo "   make install.doc"
 echo
-
