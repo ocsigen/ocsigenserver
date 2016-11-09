@@ -2,7 +2,7 @@ include ../../Makefile.config
 
 all: byte opt
 
-PACKAGE  := ${SERVER_PACKAGE} ${SERVER_SYNTAX} ## See ../../Makefile.options
+PACKAGE  := ${SERVER_PACKAGE} ## See ../../Makefile.options
 LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}} -I .
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}

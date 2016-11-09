@@ -8,8 +8,7 @@ PACKAGE  :=		\
 	lwt.react	\
 	netstring	\
 	netstring-pcre	\
-	tyxml.parser	\
-	${SERVER_SYNTAX} ## See ../../Makefile.options
+	tyxml.parser
 
 LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG}

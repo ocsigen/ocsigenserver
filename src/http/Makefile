@@ -4,8 +4,7 @@ PACKAGE  := \
 	netstring \
 	netstring-pcre \
 	lwt.ssl \
-	tyxml \
-	${SERVER_SYNTAX} ## See ../../Makefile.options
+	tyxml
 
 LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG}
