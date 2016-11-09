@@ -27,9 +27,10 @@ depends: [
   "ocamlnet" {>= "4.0.2"}
   "pcre"
   "cryptokit"
-  "tyxml" {> "3.6.0"}
+  "tyxml" {>= "4.0.0"}
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
+  "camlp4"
 ]
 depopts: "camlzip"
 conflicts: [

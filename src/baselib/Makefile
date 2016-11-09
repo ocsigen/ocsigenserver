@@ -8,7 +8,6 @@ PACKAGE  := \
 	cryptokit \
 	findlib \
 	tyxml \
-	lwt.syntax \
 	${LWT_PREEMPTIVE_PACKAGE} \
 	ipaddr
 
