@@ -1,6 +1,6 @@
-opam pin add --no-action ssl https://github.com/vasilisp/ocaml-ssl.git#pin-friendly
 opam pin add --no-action ocsigenserver .
 opam install camlzip
+opam pin add tyxml --dev-repo
 opam install --deps-only ocsigenserver
 opam install --verbose ocsigenserver
 
