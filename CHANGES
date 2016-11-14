@@ -1,3 +1,10 @@
+==== 2.8.0 (2016-11-xx) ====
+
+ * PostgreSQL Ocsipersist backend
+ * Compatibility with TyXML 4.0.x
+ * Export OpenSSL options through configuration file
+ * Various small fixes and improvements
+
 ==== 2.7.0 (2016-05-12) ====
 
  * Fix content type selection for XML content
