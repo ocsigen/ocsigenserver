@@ -43,7 +43,7 @@ let print_cohttp_request fmt request =
   let open Cohttp.Request in
 
   Format.fprintf fmt "%s [%s/%s]:\n"
-    (Uri.to_string request.uri)
+    (Uri.to_string (Cohttp.Request.uri request))
     (Cohttp.Code.string_of_version request.version)
     (Cohttp.Code.string_of_method request.meth) ;
 
