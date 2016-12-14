@@ -59,7 +59,7 @@ PLUGINS_INTF := # extensions/ocsigen_comet.cmi       \
                 # extensions/authbasic.cmi           \
                 # extensions/ocsipersist.cmi         \
 
-PLUGINS_IMPL := # extensions/staticmod.cmo           \
+PLUGINS_IMPL := extensions/staticmod.cmo
                 # extensions/cgimod.cmo              \
                 # extensions/redirectmod.cmo         \
                 # extensions/revproxy.cmo            \

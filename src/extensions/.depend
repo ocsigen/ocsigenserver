@@ -84,11 +84,11 @@ rewritemod.cmo : ../server/ocsigen_request_info.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi
 rewritemod.cmx : ../server/ocsigen_request_info.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx
-staticmod.cmo : ../server/ocsigen_request_info.cmi \
+staticmod.cmo : \
     ../server/ocsigen_local_files.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
     ../server/ocsigen_extensions.cmi ../http/http_headers.cmi
-staticmod.cmx : ../server/ocsigen_request_info.cmx \
+staticmod.cmx : \
     ../server/ocsigen_local_files.cmx ../baselib/ocsigen_lib.cmx \
     ../http/ocsigen_http_frame.cmx ../http/ocsigen_http_com.cmx \
     ../server/ocsigen_extensions.cmx ../http/http_headers.cmx

@@ -22,8 +22,7 @@ all: byte opt
 
 ### Extensions ###
 
-FILES :=
-         # staticmod.ml           \
+FILES := staticmod.ml
          # cgimod.ml              \
          # redirectmod.ml         \
          # revproxy.ml            \

@@ -26,6 +26,11 @@ type result = {
   r_cookies  : Ocsigen_cookies.cookieset
 }
 
+val result_of_cohttp :
+  ?cookies : Ocsigen_cookies.cookieset ->
+  (Cohttp.Response.t * Cohttp_lwt_body.t) ->
+  result
+
 val incr_tries : request -> unit
 
 val tries : request -> int

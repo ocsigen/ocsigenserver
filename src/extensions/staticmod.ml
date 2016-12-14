@@ -19,8 +19,6 @@
  *)
 
 open Lwt.Infix
-open Ocsigen_lib
-open Ocsigen_extensions
 
 let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
 
@@ -74,7 +72,7 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
        Filename.concat d pathstring,
        (match usermode with
         | None -> Some d
-        | Some { localfiles_root = r } -> Some r
+        | Some { Ocsigen_extensions.localfiles_root = r } -> Some r
        ))
     | Regexp { source_regexp = source; dest = dest;
                http_status_filter = status_filter;
@@ -113,48 +111,75 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
 let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found (_, r) ->
     Lwt.return (Ocsigen_extensions.Ext_do_nothing)
-  | Ocsigen_extensions.Req_not_found (err, ri) ->
+  | Ocsigen_extensions.Req_not_found
+      (err, ({request_info} as request)) ->
     let try_block () =
       Lwt_log.ign_info ~section "Is it a static file?";
       let status_filter, page =
-        find_static_page ~request:ri ~usermode ~dir ~err
-          ~pathstring:(Url.string_of_url_path ~encode:false
-                         (Ocsigen_cohttp_server.path_of_request
-                            ri.request_info)) in
-      Ocsigen_local_files.content ri page
-      >>= fun answer ->
+        let pathstring =
+          Ocsigen_lib.Url.string_of_url_path
+            ~encode:false
+            (Ocsigen_cohttp_server.path_of_request request_info)
+        in
+        find_static_page ~request ~usermode ~dir ~err ~pathstring
+      in
+      let fname =
+        match page with
+        | Ocsigen_local_files.RFile fname ->
+          fname
+        | Ocsigen_local_files.RDir _ ->
+          failwith "FIXME: staticmod dirs not implemented"
+      in
+      Cohttp_lwt_unix.Server.respond_file ~fname () >>= fun answer ->
+      let ({ Ocsigen_cohttp_server.r_response } as answer) =
+        Ocsigen_cohttp_server.result_of_cohttp answer
+      in
       let answer =
-        if status_filter = false then
+        if not status_filter then
           answer
         else
-          (* The page is an error handler, we propagate
-             the original error code *)
-          (Ocsigen_http_frame.Result.update answer ~code:err ())
+          { answer with
+            r_response = {
+              r_response with
+              status = Cohttp.Code.status_of_code err
+            }
+          }
       in
-      let (<~) h (n, v) = Http_headers.replace n v h in
-      let answer = match cache with
-        | None -> answer
-        | Some 0 ->
-          (Ocsigen_http_frame.Result.update answer ~headers:
-             ((Ocsigen_http_frame.Result.headers answer)
-              <~ (Http_headers.cache_control, "no-cache")
-              <~ (Http_headers.expires, "0")) ())
+      let answer =
+        match cache with
+        | None ->
+          answer
         | Some duration ->
-          (Ocsigen_http_frame.Result.update answer ~headers:
-             ((Ocsigen_http_frame.Result.headers answer)
-              <~ (Http_headers.cache_control, "max-age="^ string_of_int duration)
-              <~ (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
+          let cache_control, expires =
+            if duration = 0 then
+              "no-cache", "0"
+            else
+              "max-age=" ^ string_of_int duration,
+              Ocsigen_http_com.gmtdate
+                (Unix.time () +. float_of_int duration)
+          in
+          let {Cohttp.Response.headers} = r_response in
+          let headers =
+            Cohttp.Header.(
+              replace
+                (replace headers "Cache-Control" cache_control)
+                "Expires" expires
+            )
+          in
+          { answer with r_response = { r_response with headers } }
       in
-      Lwt.return (Ext_found (fun () -> Lwt.return answer))
+      Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return answer))
     and catch_block = function
       | Ocsigen_local_files.Failed_403 ->
-        Lwt.return (Ext_next 403)
+        Lwt.return (Ocsigen_extensions.Ext_next 403)
       (* XXX We should try to leave an information about this error
          for later *)
       | Ocsigen_local_files.NotReadableDirectory ->
-        Lwt.return (Ext_next err)
-      | NoSuchUser | Not_concerned | Ocsigen_local_files.Failed_404 ->
-        Lwt.return (Ext_next err)
+        Lwt.return (Ocsigen_extensions.Ext_next err)
+      | Ocsigen_extensions.NoSuchUser
+      | Ocsigen_extensions.Not_concerned
+      | Ocsigen_local_files.Failed_404 ->
+        Lwt.return (Ocsigen_extensions.Ext_next err)
       | e ->
         Lwt.fail e
     in
@@ -179,7 +204,9 @@ type options = {
   opt_cache: int option;
 }
 
-let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
+let parse_config userconf _
+  : Ocsigen_extensions.parse_config_aux
+  = fun _ _ _ element ->
   let opt = ref
     {
       opt_dir = None;
@@ -259,10 +286,11 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
           !opt.opt_dest,
           !opt.opt_root_checks with
     | (None, None, None, _, _) ->
-      badconfig "Missing attribute dir, regexp, or code for <static>"
+      Ocsigen_extensions.badconfig
+        "Missing attribute dir, regexp, or code for <static>"
 
     | (Some d, None, None, None, None) ->
-      Dir (Url.remove_end_slash d)
+      Dir (Ocsigen_lib.Url.remove_end_slash d)
 
     | (None, Some r, code, Some t, rc) ->
       Regexp { source_regexp = r;
@@ -275,13 +303,15 @@ let parse_config userconf _ : parse_config_aux = fun _ _ _ element ->
       Regexp { dest = t; http_status_filter = code; root_checks = None;
                source_regexp = Netstring_pcre.regexp "^.*$" }
 
-    | _ -> badconfig "Wrong attributes for <static>"
+    | _ ->
+      Ocsigen_extensions.badconfig "Wrong attributes for <static>"
   in
   gen ~usermode:userconf ?cache:!opt.opt_cache kind
 
 (*****************************************************************************)
 (** extension registration *)
-let () = register_extension
+let () =
+  Ocsigen_extensions.register_extension
     ~name:"staticmod"
     ~fun_site:(fun _ -> parse_config None)
     ~user_fun_site:(fun path _ -> parse_config (Some path))

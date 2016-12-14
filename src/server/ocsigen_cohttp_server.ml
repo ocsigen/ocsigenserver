@@ -58,6 +58,11 @@ type result = {
   r_cookies  : Ocsigen_cookies.cookieset
 }
 
+let result_of_cohttp
+    ?(cookies = Ocsigen_cookies.empty_cookieset)
+    (r_response, r_body) =
+  { r_response ; r_body ; r_cookies = cookies }
+
 let path_of_request {r_request} =
   Cohttp.Request.uri r_request
   |> Uri.path
