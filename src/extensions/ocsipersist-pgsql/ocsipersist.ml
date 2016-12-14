@@ -17,7 +17,7 @@ module Lwt_thread = struct
   type in_channel = Lwt_io.input_channel
 end
 module PGOCaml = PGOCaml_generic.Make(Lwt_thread)
-open Lwt
+open Lwt.Infix
 open Printf
 
 exception Ocsipersist_error
@@ -316,4 +316,4 @@ let init_fun config =
   parse_global_config config;
   conn_pool := Lwt_pool.create !size_conn_pool ~validate:PGOCaml.alive connect
 
-let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
+let _ = Ocsigen_extensions.register ~name:"ocsipersist" ~init_fun ()

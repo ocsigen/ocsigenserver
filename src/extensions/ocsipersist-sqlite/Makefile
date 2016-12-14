@@ -2,8 +2,7 @@ include ../../../Makefile.config
 
 PACKAGE  := lwt lwt_log xml-light sqlite3
 
-LIBS     := -I ../../baselib -I ../../http -I ../../server \
-	    ${addprefix -package ,${PACKAGE}}
+LIBS     := -I ../../baselib -I ../../server ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc

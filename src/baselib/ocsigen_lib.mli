@@ -38,6 +38,7 @@ module String : module type of String_base
 module Ip_address : sig
   exception No_such_host
   val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr Lwt.t
+  val of_sockaddr : Unix.sockaddr -> Unix.inet_addr
 end
 
 module Filename : sig
@@ -75,9 +76,6 @@ module Url : sig
     string list * string option *
     (string * string) list Lazy.t
 
-  (** alias of (Ocamlnet) [Neturl.split_path] *)
-  val split_path : string -> string list
-
   (** [prefix_and_path_of_t url] splits [url] in a couple [(prefix, path)] where
       [prefix] is ["http(s)://host:port"] and [path] is the path as [string list]
 
@@ -87,4 +85,34 @@ module Url : sig
   val prefix_and_path_of_t :
     string ->
     string * string list
+end
+
+(**/**)
+
+(* This exists to facilitate transition away from Ocamlnet. Do not use
+   for new code! *)
+module Netstring_pcre : sig
+
+  val regexp : string -> Pcre.regexp
+
+  val matched_group : Pcre.substrings -> int -> string -> string
+
+  val matched_string : Pcre.substrings -> string -> string
+
+  val global_replace : Pcre.regexp -> string -> string -> string
+
+  val search_forward:
+    Pcre.regexp -> string -> int -> int * Pcre.substrings
+
+  val split : Pcre.regexp -> string -> string list
+
+  val string_match :
+    Pcre.regexp -> string -> int -> Pcre.substrings option
+end
+
+module Date : sig
+
+  (** Converts Unix GMT date to string *)
+  val to_string : float -> string
+
 end

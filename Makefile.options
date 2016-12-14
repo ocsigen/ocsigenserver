@@ -18,7 +18,7 @@ OPTDBG  += -p
 endif
 
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
-## but also to generate src/baselib/ocsigen_config.ml and src/files/META
+## but also to generate src/baselib/ocsigen_config_static.ml and src/files/META
 
 BASE_PACKAGE := lwt ipaddr bytes
 
@@ -27,17 +27,17 @@ SERVER_PACKAGE := lwt_ssl           \
 	          lwt.unix          \
                   lwt_log           \
                   ipaddr            \
-	          netstring         \
-	          netstring-pcre    \
                   findlib           \
 	          cryptokit         \
-		  tyxml             \
-	          xml-light         \
+                  pcre              \
+                  str               \
+                  xml-light         \
                   dynlink           \
+                  cohttp-lwt-unix   \
+                  hmap              \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \
-	       \"${PROJECTNAME}.commandline\";  \
                \"${PROJECTNAME}.polytables\";   \
                \"${PROJECTNAME}.cookies\";      \
                \"${PROJECTNAME}.baselib\";      \

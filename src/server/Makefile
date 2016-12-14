@@ -3,7 +3,7 @@ include ../../Makefile.config
 all: byte opt
 
 PACKAGE  := ${SERVER_PACKAGE} ## See ../../Makefile.options
-LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}} -I .
+LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
@@ -13,16 +13,11 @@ all: byte opt
 
 ### Common files ###
 
-FILES := ocsigen_socket.ml      \
-         ocsigen_request_info.ml \
-         ocsigen_command.ml     \
-         ocsigen_range.ml       \
-         ocsigen_extensions.ml  \
-         ocsigen_parseconfig.ml \
-         ocsigen_http_client.ml \
-         ocsigen_local_files.ml \
-         ocsigen_server.ml      \
-
+FILES := ocsigen_config.ml ocsigen_messages.ml ocsigen_command.ml	\
+         ocsigen_multipart.ml ocsigen_request.ml ocsigen_response.ml	\
+         ocsigen_cohttp.ml ocsigen_extensions.ml			\
+         ocsigen_parseconfig.ml ocsigen_local_files.ml			\
+         ocsigen_server.ml
 
 byte:: ${PROJECTNAME}.cma
 opt:: ${PROJECTNAME}.cmxa
@@ -37,14 +32,7 @@ ${PROJECTNAME}.cmxa: $(FILES:.ml=.cmx)
 byte:: ${PROJECTNAME}
 opt:: ${PROJECTNAME}.opt
 
-ifdef DONOTPARSECOMMANDLINE
-PARSECOMMANDLINE := ../baselib/donotparsecommandline.cma
-else
-PARSECOMMANDLINE := ../baselib/parsecommandline.cma
-endif
-
-SERVERLIBS := ${PARSECOMMANDLINE}       \
-              ../baselib/baselib.cma    \
+SERVERLIBS := ../baselib/baselib.cma    \
 	      ../baselib/polytables.cma \
 	      ../http/http.cma          \
 	      ${PROJECTNAME}.cma         \

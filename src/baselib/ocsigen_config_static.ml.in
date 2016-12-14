@@ -1,7 +1,7 @@
+(* Warning! ocsigen_config_static.ml is generated automatically from
+   ocsigen_config_static.ml.in! Do not modify it manually *)
 (* Ocsigen
- * http://www.ocsigen.org
- * ocsigen_range.ml Copyright (C) 2008
- * Vincent Balat
+ * Copyright (C) 2005 Vincent Balat
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,13 +16,22 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
-(** [compute_range] add in header of result a media-range *)
-val compute_range :
-  Ocsigen_request_info.request_info ->
-  Ocsigen_http_frame.result ->
-  Ocsigen_http_frame.result Lwt.t
-
-val get_range : Ocsigen_http_frame.t ->
-  ((int64 * int64) list * int64 option * Ocsigen_request_info.ifrange) option
+let version_number = "_VERSION_"
+let config_file = ref "_CONFIGDIR_/_PROJECTNAME_.conf"
+(* We could eventually use Sys.backend_type. *)
+let is_native = _ISNATIVE_
+let logdir = ref (Some "_LOGDIR_")
+let default_user = ref "_OCSIGENUSER_"
+let default_group = ref "_OCSIGENGROUP_"
+let mimefile = ref "_CONFIGDIR_/mime.types"
+let datadir = ref "_DATADIR_"
+let bindir = ref "_BINDIR_"
+let extdir = ref "_EXTDIR_"
+let command_pipe = ref "_COMMANDPIPE_"
+let builtin_packages =
+  List.fold_left
+    (fun a s -> Ocsigen_lib.String.Set.add s a)
+    Ocsigen_lib.String.Set.empty
+    [_DEPS_]
