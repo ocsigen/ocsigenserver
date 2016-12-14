@@ -16,33 +16,19 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
-(*****************************************************************************)
+ *)
 
-(** Writing extensions for Ocsigen                                           *)
-
-(* TODO
-
-   - awake must be called after each Ext_found or Ext_found_continue_with
-   or Ext_found_stop sent by an extension. It is perhaps called too often.
-
-*)
+(** Writing extensions for Ocsigen *)
 
 let section = Lwt_log.Section.make "ocsigen:ext"
 
-open Lwt
-open Ocsigen_lib
-open Ocsigen_cookies
+open Lwt.Infix
 
-include Ocsigen_request_info
+module Url = Ocsigen_lib.Url
+
 include Ocsigen_command
 
-module Ocsigen_request_info = Ocsigen_request_info
-
-exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+exception Ocsigen_http_error = Ocsigen_cohttp_server.Ocsigen_http_error
 exception Ocsigen_Looping_request
 
 
@@ -75,15 +61,6 @@ let rec equal_virtual_hosts (l1 : virtual_hosts) (l2 : virtual_hosts) =
   | [], _::_ | _::_, [] -> false
   | (s1, _, p1) :: q1, (s2, _, p2) :: q2 ->
     s1 = s2 && p1 = p2 && equal_virtual_hosts q1 q2
-
-(*****************************************************************************)
-
-type client = Ocsigen_http_com.connection
-
-let client_id = Ocsigen_http_com.connection_id
-let client_connection x = x
-let client_of_connection x = x
-
 
 (*****************************************************************************)
 
@@ -193,17 +170,22 @@ and follow_symlink =
 
 (* Requests *)
 type request = {
-  request_info: request_info;
+  request_info: Ocsigen_cohttp_server.request;
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory
-  of (Ocsigen_request_info.request_info -> Neturl.url)
+type result = Ocsigen_cohttp_server.result = {
+  r_response : Cohttp.Response.t ;
+  r_body     : Cohttp_lwt_body.t ;
+  r_cookies  : Ocsigen_cookies.cookieset
+}
+
+exception Ocsigen_Is_a_directory = Ocsigen_cohttp_server.Ocsigen_Is_a_directory
 
 type answer =
   | Ext_do_nothing
   (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_http_frame.result Lwt.t)
+  | Ext_found of (unit -> result Lwt.t)
   (** "OK stop! I will take the page.
       You can start the following request of the same pipelined connection.
       Here is the function to generate the page".
@@ -215,7 +197,7 @@ type answer =
       to another server before returning Ext_found, to ensure that all
       requests are done in same order).
   *)
-  | Ext_found_stop of (unit -> Ocsigen_http_frame.result Lwt.t)
+  | Ext_found_stop of (unit -> result Lwt.t)
   (** Found but do not try next extensions *)
   | Ext_next of int (** Page not found. Try next extension.
                         The integer is the HTTP error code.
@@ -268,10 +250,9 @@ type answer =
       the parsing function (of type [parse_fun]),
       that will return something of type [extension2].
   *)
-  | Ext_found_continue_with of
-      (unit -> (Ocsigen_http_frame.result * request) Lwt.t)
+  | Ext_found_continue_with of (unit -> (result * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of (Ocsigen_http_frame.result * request)
+  | Ext_found_continue_with' of (result * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it,
       but for output filters.
@@ -279,10 +260,9 @@ type answer =
 
 and request_state =
   | Req_not_found of (int * request)
-  | Req_found of (request * Ocsigen_http_frame.result)
+  | Req_found of (request * result)
 
 and extension2 =
-  (unit -> unit) ->
   Ocsigen_cookies.cookieset ->
   request_state ->
   (answer * Ocsigen_cookies.cookieset) Lwt.t
@@ -307,53 +287,82 @@ let (hosts : (virtual_hosts * config_info * extension2) list ref) =
 let set_hosts v = hosts := v
 let get_hosts () = !hosts
 
+let host_of_request {Ocsigen_cohttp_server.r_request} =
+  Uri.host (Cohttp.Request.uri r_request)
+
+let port_of_request {Ocsigen_cohttp_server.r_port} = r_port
+
+let ssl_of_request _ =
+  (* FIXME *)
+  false
+
+let query_of_request {Ocsigen_cohttp_server.r_request} =
+  Uri.verbatim_query (Cohttp.Request.uri r_request)
+
+let update_path
+    {
+      request_info = ({Ocsigen_cohttp_server.r_request} as request_info);
+      request_config
+    }
+    path =
+  let request_info =
+    let r_request =
+      let meth     = Cohttp.Request.meth r_request
+      and version  = Cohttp.Request.version r_request
+      and encoding = Cohttp.Request.encoding r_request
+      and headers  = Cohttp.Request.headers r_request
+      and uri      = Uri.with_path (Cohttp.Request.uri r_request) path in
+      Cohttp.Request.make ~meth ~version ~encoding ~headers uri
+    in
+    { request_info with Ocsigen_cohttp_server.r_request }
+  in
+  {request_info ; request_config}
 
 (* Default hostname is either the Host header or the hostname set in
    the configuration file. *)
-let get_hostname req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then req.request_config.default_hostname
-  else match Ocsigen_request_info.host req.request_info with
-    | None -> req.request_config.default_hostname
+let get_hostname {request_info ; request_config = {default_hostname}} =
+  if Ocsigen_config.get_usedefaulthostname () then
+    default_hostname
+  else
+    match host_of_request request_info with
+    | None -> default_hostname
     | Some host -> host
 
 (* Default port is either
    - the port the server is listening at
    - or the port in the Host header
    - or the default port set in the configuration file. *)
-let get_port req =
-  if Ocsigen_config.get_usedefaulthostname ()
-  then (if Ocsigen_request_info.ssl req.request_info
-        then req.request_config.default_httpsport
-        else req.request_config.default_httpport)
-  else match Ocsigen_request_info.port_from_host_field req.request_info with
-    | Some p -> p
-    | None ->
-      match Ocsigen_request_info.host req.request_info with
-      | Some _ -> if Ocsigen_request_info.ssl req.request_info then 443 else 80
-      | None -> Ocsigen_request_info.server_port req.request_info
-
+let get_port
+    {
+      request_info = ({Ocsigen_cohttp_server.r_port} as request_info);
+      request_config = {default_httpport ; default_httpsport}
+    } =
+  if Ocsigen_config.get_usedefaulthostname () then
+    if ssl_of_request request_info then
+      default_httpsport
+    else
+      default_httpport
+  else
+    r_port
 
 let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 
 let new_url_of_directory_request request ri =
   Lwt_log.ign_info ~section "Sending 301 Moved permanently";
   let port = get_port request in
-  let ssl = Ocsigen_request_info.ssl ri in
-  let new_url = Neturl.make_url
-      ~scheme:(if ssl then "https" else "http")
-      ~host:(get_hostname request)
-      ?port:(if (port = 80 && not ssl)
-             || (ssl && port = 443)
-             then None
-             else Some port)
-      ~path:(""::(Url.add_end_slash_if_missing
-                    (Ocsigen_request_info.full_path ri)))
-      ?query:(Ocsigen_request_info.get_params_string ri)
-      http_url_syntax
-  in new_url
-
-
+  let ssl = ssl_of_request ri in
+  Neturl.make_url
+    ~scheme:(if ssl then "https" else "http")
+    ~host:(get_hostname request)
+    ?port:(if (port = 80 && not ssl)
+           || (ssl && port = 443)
+           then None
+           else Some port)
+    ~path:("" ::
+           (Url.add_end_slash_if_missing
+              (Ocsigen_cohttp_server.path_of_request ri)))
+    ?query:(query_of_request ri)
+    http_url_syntax
 
 (*****************************************************************************)
 (* To give parameters to extensions: *)
@@ -384,42 +393,35 @@ let site_match request (site_path : string list) url =
 
 
 
-let add_to_res_cookies res cookies_to_set =
+let add_to_res_cookies ({r_cookies} as r) cookies_to_set =
   if cookies_to_set = Ocsigen_cookies.Cookies.empty then
-    res
-  else
-    (Ocsigen_http_frame.Result.update res
-       ~cookies:
-         (Ocsigen_cookies.add_cookies
-            (Ocsigen_http_frame.Result.cookies res) cookies_to_set) ())
+    r
+  else {
+    r with
+    r_cookies = Ocsigen_cookies.add_cookies r_cookies cookies_to_set
+  }
 
-let make_ext awake cookies_to_set req_state (genfun : extension) (genfun2 : extension2) =
+let make_ext cookies_to_set req_state (genfun : extension) (genfun2 : extension2) =
   genfun req_state
   >>= fun res ->
   let rec aux cookies_to_set = function
-    | Ext_do_nothing -> genfun2 awake cookies_to_set req_state
+    | Ext_do_nothing -> genfun2 cookies_to_set req_state
     | Ext_found r ->
-      awake ();
       r () >>= fun r' ->
       let ri = match req_state with
         | Req_found (ri, _) -> ri
         | Req_not_found (_, ri) -> ri
       in
       genfun2
-        id (* already awoken *)
         Ocsigen_cookies.Cookies.empty
         (Req_found (ri, add_to_res_cookies r' cookies_to_set))
     | Ext_found_continue_with r ->
-      awake ();
       r () >>= fun (r', req) ->
       genfun2
-        id (* already awoken *)
         Ocsigen_cookies.Cookies.empty
         (Req_found (req, add_to_res_cookies r' cookies_to_set))
     | Ext_found_continue_with' (r', req) ->
-      awake ();
       genfun2
-        id (* already awoken *)
         Ocsigen_cookies.Cookies.empty
         (Req_found (req, add_to_res_cookies r' cookies_to_set))
     | Ext_next e ->
@@ -427,10 +429,9 @@ let make_ext awake cookies_to_set req_state (genfun : extension) (genfun2 : exte
         | Req_found (ri, _) -> ri
         | Req_not_found (_, ri) -> ri
       in
-      genfun2 awake cookies_to_set (Req_not_found (e, ri))
+      genfun2 cookies_to_set (Req_not_found (e, ri))
     | Ext_continue_with (ri, cook, e) ->
       genfun2
-        awake
         (Ocsigen_cookies.add_cookies cook cookies_to_set)
         (Req_not_found (e, ri))
     | Ext_found_stop _
@@ -440,7 +441,7 @@ let make_ext awake cookies_to_set req_state (genfun : extension) (genfun2 : exte
     | Ext_retry_with _ as res ->
       Lwt.return (res, cookies_to_set)
     | Ext_sub_result sr ->
-      sr awake cookies_to_set req_state
+      sr cookies_to_set req_state
       >>= fun (res, cookies_to_set) ->
       aux cookies_to_set res
   in
@@ -488,7 +489,7 @@ let rec default_parse_config
              (Url.remove_dotdot (Neturl.split_path dir)))
       in
       let parse_config = make_parse_config path parse_host l in
-      let ext awake cookies_to_set =
+      let ext cookies_to_set =
         function
           | Req_found (ri, res) ->
               Lwt.return (Ext_found_continue_with' (res, ri), cookies_to_set)
@@ -501,29 +502,32 @@ let rec default_parse_config
                             Ocsigen_charset_mime.set_default_charset
                               oldri.request_config.charset_assoc charset } }
               in
-              match site_match oldri path (Ocsigen_request_info.full_path oldri.request_info) with
+              match
+                site_match oldri path
+                  (Ocsigen_cohttp_server.path_of_request oldri.request_info)
+              with
               | None ->
                 Lwt_log.ign_info_f ~section
                   "site \"%a\" does not match url \"%a\"."
                   (fun () path  -> Url.string_of_url_path ~encode:true path) path
-                  (fun () oldri -> Url.string_of_url_path ~encode:true
-                      (Ocsigen_request_info.full_path oldri.request_info)) oldri;
+                  (fun () oldri ->
+                     Url.string_of_url_path ~encode:true
+                       (Ocsigen_cohttp_server.path_of_request
+                          oldri.request_info)) oldri;
                 Lwt.return (Ext_next e, cookies_to_set)
               | Some sub_path ->
                 Lwt_log.ign_info_f ~section
                   "site found: url \"%a\" matches \"%a\"."
                   (fun () oldri -> Url.string_of_url_path ~encode:true
-                      (Ocsigen_request_info.full_path oldri.request_info)) oldri
+                      (Ocsigen_cohttp_server.path_of_request
+                         oldri.request_info))
+                  oldri
                   (fun () path -> Url.string_of_url_path ~encode:true path) path;
-                let ri = {oldri with
-                              request_info =
-                                (Ocsigen_request_info.update oldri.request_info
-                                    ~sub_path:sub_path
-                                    ~sub_path_string:
-                                    (Url.string_of_url_path
-                                      ~encode:true sub_path) ()) }
+                  let ri =
+                    update_path oldri
+                      (Url.string_of_url_path ~encode:true sub_path)
                   in
-                  parse_config awake cookies_to_set (Req_not_found (e, ri))
+                  parse_config cookies_to_set (Req_not_found (e, ri))
                   >>= function
                       (* After a site, we turn back to old ri *)
                     | (Ext_stop_site (cs, err), cookies_to_set)
@@ -531,7 +535,6 @@ let rec default_parse_config
                         Lwt.return
                           (Ext_continue_with (oldri, cs, err), cookies_to_set)
                     | (Ext_found_continue_with r, cookies_to_set) ->
-                        awake ();
                         r () >>= fun (r', req) ->
                         Lwt.return
                           (Ext_found_continue_with' (r', oldri), cookies_to_set)
@@ -560,7 +563,7 @@ and make_parse_config path parse_host l : extension2 =
   (* creates all site data, if any *)
   let rec parse_config : _ -> extension2 = function
     | [] ->
-      (fun (awake : unit -> unit) cookies_to_set -> function
+      (fun cookies_to_set -> function
          | Req_found (ri, res) ->
            Lwt.return (Ext_found_continue_with' (res, ri), cookies_to_set)
          | Req_not_found (e, ri) ->
@@ -575,8 +578,8 @@ and make_parse_config path parse_host l : extension2 =
       try
         let genfun = f parse_config xmltag in
         let genfun2 = parse_config ll in
-        fun awake cookies_to_set req_state ->
-          make_ext awake cookies_to_set req_state genfun genfun2
+        fun cookies_to_set req_state ->
+          make_ext cookies_to_set req_state genfun genfun2
       with
       | Bad_config_tag_for_extension t ->
         (* This case happens only if no extension has recognized the
@@ -686,10 +689,10 @@ let register_extension, parse_config_item, parse_user_site_item, get_beg_init, g
 
 
         (match begin_init with
-         | Some begin_init -> fun_beg := comp begin_init !fun_beg
+         | Some begin_init -> fun_beg := Ocsigen_lib.comp begin_init !fun_beg
          | None -> ());
         (match end_init with
-         | Some end_init -> fun_end := comp end_init !fun_end;
+         | Some end_init -> fun_end := Ocsigen_lib.comp end_init !fun_end;
          | None -> ());
         let curexnfun = !fun_exn in
         fun_exn := fun e -> try curexnfun e with e -> exn_handler e),
@@ -817,7 +820,9 @@ module Configuration = struct
     function
     | Simplexmlparser.PCData str ->
       let spec_pcdata =
-        Option.get (fun () -> ignore_blank_pcdata ~in_tag) spec_pcdata
+        Ocsigen_lib.Option.get
+          (fun () -> ignore_blank_pcdata ~in_tag)
+          spec_pcdata
       in
       spec_pcdata str
     | Simplexmlparser.Element (name, attributes, elements) ->
@@ -908,40 +913,23 @@ let string_of_host (h : virtual_hosts) =
     | Some p -> host ^ ":" ^ string_of_int p
   in List.fold_left (fun d arg -> d ^ aux1  arg ^" ") "" h
 
+let compute_result ?(previous_cookies = Ocsigen_cookies.Cookies.empty) ri =
 
+  let host = host_of_request ri
+  and port = port_of_request ri in
 
-let compute_result
-    ?(previous_cookies = Ocsigen_cookies.Cookies.empty)
-    ?(awake_next_request = false) ri =
-
-  let host = Ocsigen_request_info.host ri in
-  let port = Ocsigen_request_info.server_port ri in
-
-  let conn = client_connection (Ocsigen_request_info.client ri) in
-  let awake =
-    if awake_next_request
-    then
-      (let tobeawoken = ref true in
-       (* must be awoken once and only once *)
-       fun () ->
-         if !tobeawoken then begin
-           tobeawoken := false;
-           Ocsigen_http_com.wakeup_next_request conn
-         end)
-    else id
+  let string_of_host_option = function
+    | None -> "<no host>:"^(string_of_int port)
+    | Some h -> h^":"^(string_of_int port)
   in
 
   let rec do2 sites cookies_to_set ri =
-    Ocsigen_request_info.update_nb_tries ri (Ocsigen_request_info.nb_tries ri + 1);
-    if (Ocsigen_request_info.nb_tries ri) > Ocsigen_config.get_maxretries ()
-    then fail Ocsigen_Looping_request
+    Ocsigen_cohttp_server.incr_tries ri;
+    if Ocsigen_cohttp_server.tries ri > Ocsigen_config.get_maxretries () then
+      Lwt.fail Ocsigen_Looping_request
     else
-      let string_of_host_option = function
-        | None -> "<no host>:"^(string_of_int port)
-        | Some h -> h^":"^(string_of_int port)
-      in
       let rec aux_host ri prev_err cookies_to_set = function
-        | [] -> fail (Ocsigen_http_error (cookies_to_set, prev_err))
+        | [] -> Lwt.fail (Ocsigen_http_error (cookies_to_set, prev_err))
         | (h, conf_info, host_function)::l when
             host_match ~virtual_hosts:h ~host ~port ->
           Lwt_log.ign_info_f ~section
@@ -949,7 +937,6 @@ let compute_result
             (fun () -> string_of_host_option) host
             (fun () -> string_of_host) h;
           host_function
-            awake
             cookies_to_set
             (Req_not_found (prev_err, { request_info = ri;
                                         request_config = conf_info }))
@@ -957,18 +944,15 @@ let compute_result
           (match res_ext with
            | Ext_found r
            | Ext_found_stop r ->
-             awake ();
              r () >>= fun r' ->
              Lwt.return (add_to_res_cookies r' cookies_to_set)
            | Ext_do_nothing ->
              aux_host ri prev_err cookies_to_set l
            | Ext_found_continue_with r ->
-             awake ();
              r () >>= fun (r', _) ->
-             return (add_to_res_cookies r' cookies_to_set)
+             Lwt.return (add_to_res_cookies r' cookies_to_set)
            | Ext_found_continue_with' (r, _) ->
-             awake ();
-             return (add_to_res_cookies r cookies_to_set)
+             Lwt.return (add_to_res_cookies r cookies_to_set)
            | Ext_next e ->
              aux_host ri e cookies_to_set l
            (* try next site *)
@@ -977,7 +961,7 @@ let compute_result
              aux_host ri e (Ocsigen_cookies.add_cookies cook cookies_to_set) l
            (* try next site *)
            | Ext_stop_all (cook, e) ->
-             fail (Ocsigen_http_error (cookies_to_set, e))
+             Lwt.fail (Ocsigen_http_error (cookies_to_set, e))
            | Ext_continue_with (_, cook, e) ->
              aux_host ri e
                (Ocsigen_cookies.add_cookies cook cookies_to_set) l
@@ -998,15 +982,8 @@ let compute_result
           aux_host ri prev_err cookies_to_set l
       in aux_host ri 404 cookies_to_set sites
   in
-  Lwt.finalize
-    (fun () ->
-       do2 (get_hosts ()) previous_cookies ri
-    )
-    (fun () ->
-       awake ();
-       Lwt.return ()
-    )
 
+  do2 (get_hosts ()) previous_cookies ri
 
 (*****************************************************************************)
 
@@ -1041,14 +1018,6 @@ let get_number_of_connected,
       maxr := max;
       Lwt_mvar.take mvar)
   )
-
-
-
-let get_server_address ri =
-  let socket = Ocsigen_http_com.connection_fd (client_connection (Ocsigen_request_info.client ri)) in
-  match Lwt_ssl.getsockname socket with
-  | Unix.ADDR_UNIX _ -> failwith "unix domain socket have no ip"
-  | Unix.ADDR_INET (addr,port) -> addr,port
 
 
 (* user directories *)

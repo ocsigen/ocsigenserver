@@ -57,11 +57,11 @@ let handle_parsing_error req = function
 (* Answer returned by userconf when the url matches *)
 let subresult new_req user_parse_site conf previous_err req req_state =
   Ext_sub_result
-    (fun awake cookies_to_set rs ->
+    (fun cookies_to_set rs ->
        (* XXX why is rs above never used ?? *)
        Lwt.catch
          (fun () ->
-            user_parse_site conf awake cookies_to_set
+            user_parse_site conf cookies_to_set
               (Ocsigen_extensions.Req_not_found (previous_err, new_req))
             >>= fun (answer, cookies) ->
             (* If the request is not satisfied by userconf, the changes
@@ -71,7 +71,7 @@ let subresult new_req user_parse_site conf previous_err req req_state =
             let rec aux ((answer, cts) as r) = match answer with
               | Ext_sub_result sr ->
                 (* XXX Are these the good cookies ?? *)
-                sr awake cookies_to_set req_state
+                sr cookies_to_set req_state
                 >>= aux
               | Ext_continue_with (newreq, cookies, err) ->
                 Lwt.return

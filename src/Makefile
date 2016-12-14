@@ -3,18 +3,21 @@ include ../Makefile.config
 all: metas confs
 	${MAKE} -C baselib all
 	${MAKE} -C http all
+	${MAKE} -C migrate all
 	${MAKE} -C server all
 	${MAKE} -C extensions all
 
 byte: metas confs
 	${MAKE} -C baselib byte
 	${MAKE} -C http byte
+	${MAKE} -C migrate byte
 	${MAKE} -C server byte
 	${MAKE} -C extensions byte
 
 opt: metas confs
 	${MAKE} -C baselib opt
 	${MAKE} -C http opt
+	${MAKE} -C migrate opt
 	${MAKE} -C server opt
 	${MAKE} -C extensions opt
 
@@ -146,6 +149,7 @@ reinstall: uninstall install
 clean: clean.local
 	${MAKE} -C baselib clean
 	${MAKE} -C http clean
+	${MAKE} -C migrate clean
 	${MAKE} -C server clean
 	${MAKE} -C extensions clean
 
@@ -159,6 +163,7 @@ clean.local:
 distclean: clean.local
 	${MAKE} -C baselib distclean
 	${MAKE} -C http distclean
+	${MAKE} -C migrate distclean
 	${MAKE} -C server distclean
 	${MAKE} -C extensions distclean
 	-rm -f *~ \#* .\#*
@@ -171,5 +176,6 @@ distclean: clean.local
 depend:
 	${MAKE} -C baselib depend
 	${MAKE} -C http depend
+	${MAKE} -C migrate depend
 	${MAKE} -C server depend
 	${MAKE} -C extensions depend

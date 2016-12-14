@@ -18,9 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-type name = string * string
-let name s = (s, String.lowercase s)
-let name_to_string = fst
+type name = string
+let name : string -> name = String.lowercase
+let name_to_string (nm : name) : string = nm
 
 let accept = name "Accept"
 let accept_charset = name "Accept-Charset"
@@ -75,59 +75,58 @@ module NameHtbl =
   Hashtbl.Make
     (struct
       type t = name
-      let equal (_, n : _ * string) (_, n') = n = n'
-      let hash (_,n) = Hashtbl.hash n
+      let equal n n' = n = n'
+      let hash n = Hashtbl.hash n
     end)
 
 (****)
 
-module Map = Map.Make (struct
-    type t = name
-    let compare (_,n) (_,n') = compare n n'
-  end)
+type t = Cohttp.Header.t
 
-type t = string list Map.t
+let empty = Cohttp.Header.init ()
 
-let empty = Map.empty
-
-let find_all n h = List.rev (Map.find n h)
+let find_all name map =
+  let l = List.rev (Cohttp.Header.get_multi map name) in
+  if l = [] then raise Not_found;
+  l
 
 (*XXX We currently return the last header.
   Should we fail if there is more than one? *)
-let find n h =
-  match Map.find n h with
-    v :: _ -> v
-  | _      -> assert false
 
-let replace n v h = Map.add n [v] h
+let find name map = match Cohttp.Header.get_multi map name with
+  | value :: _ -> value
+  | _ -> raise Not_found
 
-let replace_opt n v h =
-  match v with
-    None   -> Map.remove n h
-  | Some v -> replace n v h
+let replace name value map = Cohttp.Header.replace map name value
+let replace_opt name value map = match value with
+  | None -> Cohttp.Header.remove map name
+  | Some value -> replace name value map
 
-let add n v h =
-  let vl = try find_all n h with Not_found -> [] in
-  Map.add n (v :: vl) h
+let add name value map = Cohttp.Header.add map name value
 
-let iter f h =
-  Map.iter
-    (fun n vl ->
-       match vl with
-         [v] -> f n v
-       | _   -> List.iter (fun v -> f n v) (List.rev vl))
-    h
+let iter func map =
+  Cohttp.Header.iter
+    (fun name values -> List.iter (func name) values)
+    map
 
-let fold f h acc =
-  Map.fold
-    (fun n vl acc -> f n (List.rev vl) acc)
-    h acc
+(* XXX:
+  * old fold: (name -> string list -> 'a -> 'a) -> t -> 'a -> 'a
+  * new fold: (string -> string -> 'a -> 'a) -> t -> 'a -> 'a *)
+let fold' func map acc = Cohttp.Header.fold func map acc
 
-let with_defaults h h' = Map.fold Map.add h h'
+let fold func map acc =
+  let ( |> ) a f = f a in
+  let garbage = Cohttp.Header.fold
+      (fun key value garbage ->
+         try List.assoc key garbage
+             |> fun rest ->
+           (key, value :: rest) :: (List.remove_assoc key garbage)
+         with Not_found -> (key, [ value ]) :: garbage)
+      map []
+  in List.fold_left (fun acc (key, values) -> func key values acc) acc garbage
 
+let with_defaults h h' = fold' add h h'
 
-
-(****)
 let (<<) h (n, v) = replace n v h
 
 let dyn_headers =

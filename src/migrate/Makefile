@@ -1,14 +1,7 @@
 include ../../Makefile.config
-PACKAGE  := \
-	bytes \
-	netstring \
-	netstring-pcre \
-	lwt.ssl \
-	tyxml \
-	cohttp
 
-LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG}
+LIBS     := -package bytes,lwt,cohttp,netstring,re.emacs -I ../baselib -I ../http
+OCAMLC   := $(OCAMLFIND) ocamlc${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
@@ -17,25 +10,17 @@ all: byte opt
 
 ### Common files ###
 
-FILES := multipart.ml            \
-	 http_headers.ml         \
-	 ocsigen_cookies.ml      \
-         ocsigen_http_frame.ml   \
-	 ocsigen_headers.ml      \
-	 http_lexer.ml	         \
-         framepp.ml              \
-	 ocsigen_http_com.ml     \
-	 ocsigen_charset_mime.ml \
-         ocsigen_senders.ml      \
+FILES := of_cohttp.ml \
+         to_cohttp.ml \
 
-PREDEP := http_lexer.ml   \
+PREDEP := \
 
-byte: http.cma
-opt: http.cmxa
+byte: migrate.cma
+opt: migrate.cmxa
 
-http.cma: $(FILES:.ml=.cmo)
+migrate.cma: $(FILES:.ml=.cmo)
 	${OCAMLC} -a -o $@ $^
-http.cmxa: $(FILES:.ml=.cmx)
+migrate.cmxa: $(FILES:.ml=.cmx)
 	${OCAMLOPT} -a -o $@ $^
 
 ##########
@@ -68,6 +53,7 @@ type: $(FILES:.ml=.gmli)
 
 %.gmli: %.ml
 	$(OCAMLC) ${LIBS} -i $< > $@
+
 
 FORCE:
 -include .depend

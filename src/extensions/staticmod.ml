@@ -16,21 +16,16 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
-(*****************************************************************************)
-(*****************************************************************************)
-(* Ocsigen module to load static pages                                       *)
-(*****************************************************************************)
-(*****************************************************************************)
+ *)
 
-open Lwt
+open Lwt.Infix
 open Ocsigen_lib
 open Ocsigen_extensions
 
 let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
+
 exception Not_concerned
 
-(*****************************************************************************)
 (* Structures describing the static pages a each virtual server *)
 
 (* A static site is either an entire directory served unconditionnaly,
@@ -39,6 +34,7 @@ exception Not_concerned
 type static_site_kind =
   | Dir of string (* Serves an entire directory *)
   | Regexp of regexp_site
+
 and regexp_site = {
   source_regexp: Netstring_pcre.regexp;
   dest: Ocsigen_extensions.ud_string;
@@ -46,9 +42,6 @@ and regexp_site = {
   root_checks: Ocsigen_extensions.ud_string option;
 }
 
-
-
-(*****************************************************************************)
 (* Finding files *)
 
 (* Does the http status code returned for the page match the given filter ? *)
@@ -58,7 +51,6 @@ let http_status_match status_filter status =
   | Some r ->
     Netstring_pcre.string_match r (string_of_int status) 0 <> None
 
-
 (* Checks that the path specified in a userconf is correct.
    Currently, we check that the path does not contain ".." *)
 let correct_user_local_file =
@@ -66,7 +58,6 @@ let correct_user_local_file =
   fun path ->
     try ignore(Netstring_pcre.search_forward regexp path 0); false
     with Not_found -> true
-
 
 (* Find the local file corresponding to [path] in the static site [dir],
    with [err] as the current http status (in case [dir] is a filter).
@@ -121,53 +112,53 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
 
 let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found (_, r) ->
-      Lwt.return (Ocsigen_extensions.Ext_do_nothing)
+    Lwt.return (Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_not_found (err, ri) ->
-      catch
-        (fun () ->
-           Lwt_log.ign_info ~section "Is it a static file?";
-           let status_filter, page =
-             find_static_page ~request:ri ~usermode ~dir ~err
-             ~pathstring:(Url.string_of_url_path ~encode:false
-                            (Ocsigen_request_info.sub_path ri.request_info)) in
-         Ocsigen_local_files.content ri page
-         >>= fun answer ->
-         let answer =
-           if status_filter = false then
-             answer
-           else
-             (* The page is an error handler, we propagate
-                the original error code *)
-             (Ocsigen_http_frame.Result.update answer ~code:err ())
-         in
-         let (<~) h (n, v) = Http_headers.replace n v h in
-         let answer = match cache with
-           | None -> answer
-           | Some 0 ->
-             (Ocsigen_http_frame.Result.update answer ~headers:
-                ((Ocsigen_http_frame.Result.headers answer)
-                 <~ (Http_headers.cache_control, "no-cache")
-                 <~ (Http_headers.expires, "0")) ())
-           | Some duration ->
-             (Ocsigen_http_frame.Result.update answer ~headers:
-                ((Ocsigen_http_frame.Result.headers answer)
-                 <~ (Http_headers.cache_control, "max-age="^ string_of_int duration)
-                 <~ (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
-         in
-         Lwt.return (Ext_found (fun () -> Lwt.return answer))
-      )
-
-      (function
-        | Ocsigen_local_files.Failed_403 -> return (Ext_next 403)
-        (* XXX We should try to leave an information about this
-           error for later *)
-        | Ocsigen_local_files.NotReadableDirectory ->
-          return (Ext_next err)
-        | NoSuchUser | Not_concerned
-        | Ocsigen_local_files.Failed_404 -> return (Ext_next err)
-        | e -> fail e
-      )
-
+    let try_block () =
+      Lwt_log.ign_info ~section "Is it a static file?";
+      let status_filter, page =
+        find_static_page ~request:ri ~usermode ~dir ~err
+          ~pathstring:(Url.string_of_url_path ~encode:false
+                         (Ocsigen_cohttp_server.path_of_request
+                            ri.request_info)) in
+      Ocsigen_local_files.content ri page
+      >>= fun answer ->
+      let answer =
+        if status_filter = false then
+          answer
+        else
+          (* The page is an error handler, we propagate
+             the original error code *)
+          (Ocsigen_http_frame.Result.update answer ~code:err ())
+      in
+      let (<~) h (n, v) = Http_headers.replace n v h in
+      let answer = match cache with
+        | None -> answer
+        | Some 0 ->
+          (Ocsigen_http_frame.Result.update answer ~headers:
+             ((Ocsigen_http_frame.Result.headers answer)
+              <~ (Http_headers.cache_control, "no-cache")
+              <~ (Http_headers.expires, "0")) ())
+        | Some duration ->
+          (Ocsigen_http_frame.Result.update answer ~headers:
+             ((Ocsigen_http_frame.Result.headers answer)
+              <~ (Http_headers.cache_control, "max-age="^ string_of_int duration)
+              <~ (Http_headers.expires, Ocsigen_http_com.gmtdate (Unix.time () +. float_of_int duration))) ())
+      in
+      Lwt.return (Ext_found (fun () -> Lwt.return answer))
+    and catch_block = function
+      | Ocsigen_local_files.Failed_403 ->
+        Lwt.return (Ext_next 403)
+      (* XXX We should try to leave an information about this error
+         for later *)
+      | Ocsigen_local_files.NotReadableDirectory ->
+        Lwt.return (Ext_next err)
+      | NoSuchUser | Not_concerned | Ocsigen_local_files.Failed_404 ->
+        Lwt.return (Ext_next err)
+      | e ->
+        Lwt.fail e
+    in
+    Lwt.catch try_block catch_block
 
 (*****************************************************************************)
 (** Parsing of config file *)

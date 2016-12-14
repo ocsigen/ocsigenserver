@@ -32,11 +32,6 @@ open Ocsigen_cookies
 
 include (module type of Ocsigen_command)
 
-module Ocsigen_request_info : (module type of Ocsigen_request_info
-                                with type request_info = Ocsigen_request_info.request_info
-                                 and type file_info = Ocsigen_request_info.file_info
-                                 and type ifrange = Ocsigen_request_info.ifrange)
-
 exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
@@ -130,40 +125,24 @@ and follow_symlink =
 
 (*****************************************************)
 
-
-type client = Ocsigen_http_com.connection
-(** A value of this type represents the client who did the request. *)
-
-val client_id : client -> int
-(** Returns the id number of the connection *)
-
-val client_connection : client -> Ocsigen_http_com.connection
-(** Returns the connection *)
-
-type ifrange = Ocsigen_request_info.ifrange =
-  | IR_No
-  | IR_Ifunmodsince of float
-  | IR_ifmatch of string
-type file_info = Ocsigen_request_info.file_info = {
-  tmp_filename: string;
-  filesize: int64;
-  raw_original_filename: string;
-  original_basename: string ;
-  file_content_type: ((string * string) * (string * string) list) option;
-}
-type request_info = Ocsigen_request_info.request_info
-and request = {
-  request_info: request_info;
+type request = {
+  request_info: Ocsigen_cohttp_server.request;
   request_config: config_info;
 }
 
 exception Ocsigen_Is_a_directory
-  of (Ocsigen_request_info.request_info -> Neturl.url)
+  of (Ocsigen_cohttp_server.request -> Neturl.url)
+
+type result = Ocsigen_cohttp_server.result = {
+  r_response : Cohttp.Response.t ;
+  r_body     : Cohttp_lwt_body.t ;
+  r_cookies  : Ocsigen_cookies.cookieset
+}
 
 type answer =
   | Ext_do_nothing
   (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_http_frame.result Lwt.t)
+  | Ext_found of (unit -> result Lwt.t)
   (** "OK stop! I will take the page.
       You can start the following request of the same pipelined connection.
       Here is the function to generate the page".
@@ -175,7 +154,7 @@ type answer =
       In that case, wait to be sure that the new request will not
       overtake this one.
   *)
-  | Ext_found_stop of (unit -> Ocsigen_http_frame.result Lwt.t)
+  | Ext_found_stop of (unit -> result Lwt.t)
   (** Found but do not try next extensions *)
   | Ext_next of int (** Page not found. Try next extension.
                         The integer is the HTTP error code.
@@ -230,9 +209,9 @@ type answer =
       that will return something of type [extension2].
   *)
   | Ext_found_continue_with of
-      (unit -> (Ocsigen_http_frame.result * request) Lwt.t)
+      (unit -> (result * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of (Ocsigen_http_frame.result * request)
+  | Ext_found_continue_with' of (result * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it,
       but for output filters.
@@ -240,10 +219,9 @@ type answer =
 
 and request_state =
   | Req_not_found of (int * request)
-  | Req_found of (request * Ocsigen_http_frame.result)
+  | Req_found of (request * result)
 
 and extension2 =
-  (unit -> unit) ->
   Ocsigen_cookies.cookieset ->
   request_state ->
   (answer * Ocsigen_cookies.cookieset) Lwt.t
@@ -446,19 +424,12 @@ val get_hostname : request -> string
     - or the default port set in the configuration file. *)
 val get_port : request -> int
 
-
 (** new_url_of_directory_request create a redirection and generating a new url
     for the client (depending on the server configuration and request)
     @param request configuration of the server
     @param ri request *)
-val new_url_of_directory_request : request -> request_info -> Neturl.url
-
-(** Parsing URLs.
-    This allows to modify the URL in the request_info.
-    (to be used for example with Ext_retry_with or Ext_continue_with)
-*)
-val ri_of_url : ?full_rewrite:bool -> string -> request_info -> request_info
-
+val new_url_of_directory_request :
+  request -> Ocsigen_cohttp_server.request -> Neturl.url
 
 (** {3 User directories} *)
 
@@ -504,8 +475,7 @@ val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
 *)
 val compute_result :
   ?previous_cookies:Ocsigen_cookies.cookieset ->
-  ?awake_next_request:bool ->
-  request_info -> Ocsigen_http_frame.result Lwt.t
+  Ocsigen_cohttp_server.request -> result Lwt.t
 
 (** Profiling *)
 val get_number_of_connected : unit -> int
@@ -525,10 +495,6 @@ val get_numberofreloads : unit -> int
 val get_init_exn_handler : unit -> exn -> string
 
 val set_config : Simplexmlparser.xml list -> unit
-
-val client_of_connection : Ocsigen_http_com.connection -> client
-
-val get_server_address : request_info -> Unix.inet_addr * int
 
 val sockets : Lwt_unix.file_descr list ref
 val sslsockets : Lwt_unix.file_descr list ref

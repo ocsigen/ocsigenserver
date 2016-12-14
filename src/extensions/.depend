@@ -72,16 +72,14 @@ redirectmod.cmo : ../server/ocsigen_request_info.cmi \
 redirectmod.cmx : ../server/ocsigen_request_info.cmx \
     ../baselib/ocsigen_lib.cmx ../http/ocsigen_http_frame.cmx \
     ../server/ocsigen_extensions.cmx
-revproxy.cmo : ../baselib/ocsigen_stream.cmi \
+revproxy.cmo : ../migrate/of_cohttp.cmi ../baselib/ocsigen_stream.cmi \
     ../server/ocsigen_request_info.cmi ../baselib/ocsigen_lib.cmi \
-    ../http/ocsigen_http_frame.cmi ../server/ocsigen_http_client.cmi \
-    ../http/ocsigen_headers.cmi ../server/ocsigen_extensions.cmi \
-    ../http/http_headers.cmi
-revproxy.cmx : ../baselib/ocsigen_stream.cmx \
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_headers.cmi \
+    ../server/ocsigen_extensions.cmi
+revproxy.cmx : ../migrate/of_cohttp.cmx ../baselib/ocsigen_stream.cmx \
     ../server/ocsigen_request_info.cmx ../baselib/ocsigen_lib.cmx \
-    ../http/ocsigen_http_frame.cmx ../server/ocsigen_http_client.cmx \
-    ../http/ocsigen_headers.cmx ../server/ocsigen_extensions.cmx \
-    ../http/http_headers.cmx
+    ../http/ocsigen_http_frame.cmx ../http/ocsigen_headers.cmx \
+    ../server/ocsigen_extensions.cmx
 rewritemod.cmo : ../server/ocsigen_request_info.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi
 rewritemod.cmx : ../server/ocsigen_request_info.cmx \

@@ -56,6 +56,10 @@ depends: [
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
   "camlp4"
+  "cohttp" {>= "0.17.0"}
+
+  # REMOVE AFTER DEBUGGING
+  "ppx_deriving"
 ]
 depopts: "camlzip"
 conflicts: [

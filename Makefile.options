@@ -41,6 +41,8 @@ SERVER_PACKAGE := lwt.ssl           \
 		  tyxml             \
 	          tyxml.parser      \
                   dynlink           \
+                  cohttp.lwt        \
+                  ppx_deriving.std
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \

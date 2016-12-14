@@ -25,7 +25,7 @@
    experimental Ocsigen_http_client module.
 
    TODO
-   - Change the policy for « trusted servers » for pipelining?
+   - Change the policy for trusted servers for pipelining?
    (see ocsigen_http_client.ml)
    - enhance pipelining
    - HTTP/1.0
@@ -43,6 +43,10 @@ open Ocsigen_lib
 open Lwt
 open Ocsigen_extensions
 open Simplexmlparser
+open Cohttp
+open Cohttp_lwt_unix
+
+module RI = Ocsigen_request_info
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 
@@ -134,7 +138,7 @@ let gen dir = function
            | None -> host
          in
 
-         let do_request =
+         let do_request () =
            let ri = ri.request_info in
            let address = Unix.string_of_inet_addr (fst (get_server_address ri)) in
            let forward =
@@ -148,6 +152,7 @@ let gen dir = function
              then "https"
              else "http"
            in
+(*
            let headers =
              Http_headers.replace
                Http_headers.x_forwarded_proto
@@ -187,12 +192,29 @@ let gen dir = function
                  ~host
                  ~inet_addr
                  ~uri ()
+*)
+
+           let (meth, version, headers, uri', body) =
+             Ocsigen_generate.to_cohttp_request ri in
+           let headers =
+             Cohttp.Header.add headers
+               "X-Forwarded-Proto"
+               (Cohttp.Code.string_of_version version) in
+           let headers =
+             Cohttp.Header.add headers
+               "X-Forwarded-For"
+               forward in
+           let headers = Cohttp.Header.remove headers "host" in
+           let uri = Printf.sprintf "%s://%s%s"
+               proto host uri in
+           Client.call ~headers ~body meth (Uri.of_string uri)
          in
          Lwt.return
            (Ext_found
               (fun () ->
                  do_request ()
 
+                 >|= Of_cohttp.of_response_and_body'
                  >>= fun http_frame ->
                  let headers =
                    http_frame

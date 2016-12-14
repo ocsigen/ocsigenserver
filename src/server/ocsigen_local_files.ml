@@ -222,7 +222,8 @@ let content ~request ~file =
     match file with
     | RDir dirname ->
       Ocsigen_senders.Directory_content.result_of_content
-        (dirname, Ocsigen_request_info.full_path request.request_info)
+        (dirname,
+         Ocsigen_cohttp_server.path_of_request request.request_info)
     | RFile filename ->
       Ocsigen_senders.File_content.result_of_content
         (filename,

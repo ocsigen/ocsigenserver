@@ -66,3 +66,8 @@ let string_of_socket_type = function
   | All -> Unix.string_of_inet_addr Unix.inet_addr_any
   | IPv4 u -> Unix.string_of_inet_addr u
   | IPv6 u -> Unix.string_of_inet_addr u
+
+let to_inet_addr = function
+  | All -> Unix.inet_addr_any
+  | IPv4 u -> u
+  | IPv6 u -> u

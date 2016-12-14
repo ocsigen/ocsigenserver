@@ -23,8 +23,7 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	server/ocsigen_parseconfig.cmi     \
 	server/ocsigen_http_client.cmi     \
 	server/ocsigen_local_files.cmi     \
-	server/ocsigen_server.cmi	   \
-	server/ocsigen_request_info.cmi
+	server/ocsigen_server.cmi
 
 INTF := ${INTF_BASE} baselib/ocsigen_getcommandline.cmi
 
@@ -55,24 +54,24 @@ endif
 
 PLUGINS_BIN  :=
 
-PLUGINS_INTF := extensions/ocsigen_comet.cmi       \
-                extensions/accesscontrol.cmi       \
-                extensions/authbasic.cmi           \
-                extensions/ocsipersist.cmi         \
+PLUGINS_INTF := # extensions/ocsigen_comet.cmi       \
+                # extensions/accesscontrol.cmi       \
+                # extensions/authbasic.cmi           \
+                # extensions/ocsipersist.cmi         \
 
-PLUGINS_IMPL := extensions/staticmod.cmo           \
-                extensions/cgimod.cmo              \
-                extensions/redirectmod.cmo         \
-                extensions/revproxy.cmo            \
-                extensions/extensiontemplate.cmo   \
-                extensions/accesscontrol.cmo       \
-                extensions/userconf.cmo            \
-                extensions/outputfilter.cmo        \
-                extensions/authbasic.cmo           \
-                extensions/rewritemod.cmo          \
-                extensions/extendconfiguration.cmo \
-                extensions/ocsigen_comet.cmo       \
-                extensions/cors.cmo                \
+PLUGINS_IMPL := # extensions/staticmod.cmo           \
+                # extensions/cgimod.cmo              \
+                # extensions/redirectmod.cmo         \
+                # extensions/revproxy.cmo            \
+                # extensions/extensiontemplate.cmo   \
+                # extensions/accesscontrol.cmo       \
+                # extensions/userconf.cmo            \
+                # extensions/outputfilter.cmo        \
+                # extensions/authbasic.cmo           \
+                # extensions/rewritemod.cmo          \
+                # extensions/extendconfiguration.cmo \
+                # extensions/ocsigen_comet.cmo       \
+                # extensions/cors.cmo                \
 
 ifeq "$(CAMLZIP)" "YES"
 PLUGINS_IMPL += extensions/deflatemod.cmo

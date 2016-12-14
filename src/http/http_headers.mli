@@ -79,7 +79,7 @@ val access_control_allow_headers : name
 
 (****)
 
-type t
+type t = Cohttp.Header.t
 
 val empty : t
 (** returns an empty set of HTTP headers *)
