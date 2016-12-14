@@ -1,11 +1,10 @@
 include ../../Makefile.config
 PACKAGE  := \
 	bytes \
-	netstring \
-	netstring-pcre \
 	lwt_ssl \
 	lwt_log \
-	tyxml
+	pcre \
+	cohttp
 
 LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
@@ -17,18 +16,9 @@ all: byte opt
 
 ### Common files ###
 
-FILES := multipart.ml            \
-	 http_headers.ml         \
-	 ocsigen_cookies.ml      \
-         ocsigen_http_frame.ml   \
-	 ocsigen_headers.ml      \
-	 http_lexer.ml	         \
-         framepp.ml              \
-	 ocsigen_http_com.ml     \
-	 ocsigen_charset_mime.ml \
-         ocsigen_senders.ml      \
+FILES := ocsigen_charset_mime.ml ocsigen_cookie_map.ml ocsigen_header.ml
 
-PREDEP := http_lexer.ml   \
+PREDEP :=
 
 byte: http.cma
 opt: http.cmxa

@@ -50,12 +50,12 @@ depends: [
   "lwt_ssl"
   "lwt_react"
   "lwt_log"
-  "ocamlnet" {>= "4.0.2"}
   "pcre"
   "cryptokit"
-  "tyxml" {>= "4.0.0"}
   "dbm" | "sqlite3" | "pgocaml"
   "ipaddr" {>= "2.1"}
+  "cohttp-lwt-unix"
+  "hmap"
   "xml-light"
   "conf-which"
 ]

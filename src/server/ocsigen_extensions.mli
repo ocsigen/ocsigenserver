@@ -16,28 +16,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
-(*****************************************************************************)
-(*****************************************************************************)
-(* Tables of services (global and session tables)                            *)
-(* Store and load dynamic pages                                              *)
-(*****************************************************************************)
-(*****************************************************************************)
+ *)
 
-(** Writing extensions for Ocsigen                                           *)
-
-open Lwt
-open Ocsigen_lib
-open Ocsigen_cookies
+(** Extensions interface for Ocsigen Server *)
 
 include (module type of Ocsigen_command)
 
-module Ocsigen_request_info : (module type of Ocsigen_request_info
-                                with type request_info = Ocsigen_request_info.request_info
-                                 and type file_info = Ocsigen_request_info.file_info
-                                 and type ifrange = Ocsigen_request_info.ifrange)
-
-exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+exception Ocsigen_http_error of
+    Ocsigen_cookie_map.t * Cohttp.Code.status
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
 exception Bad_config_tag_for_extension of string
@@ -48,7 +34,12 @@ exception Error_in_config_file of string
 (** Option incorrect in a userconf file *)
 exception Error_in_user_config_file of string
 
-
+type file_info = Ocsigen_multipart.file_info = {
+  tmp_filename : string ;
+  filesize : int64 ;
+  raw_original_filename : string ;
+  file_content_type : ((string * string) * (string * string) list) option
+}
 
 val badconfig : ('a, unit, string, 'b) format4 -> 'a
 (** Convenient function for raising Error_in_config_file exceptions with
@@ -61,7 +52,7 @@ val badconfig : ('a, unit, string, 'b) format4 -> 'a
     (which is a glob-like pattern that can contains [*]), a regexp
     parsing this pattern, and optionally a port.
 *)
-type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+type virtual_hosts = (string * Pcre.regexp * int option) list
 
 val hash_virtual_hosts : virtual_hosts -> int
 val equal_virtual_hosts : virtual_hosts -> virtual_hosts -> bool
@@ -78,17 +69,16 @@ type do_not_serve = {
   do_not_serve_extensions: string list;
 }
 
+val serve_everything : do_not_serve
 
 exception IncorrectRegexpes of do_not_serve
 
 (** Compile a do_not_serve structure into a regexp. Raises
     [IncorrectRegexpes] if the compilation fails. The result is
     memoized for subsequent calls with the same argument *)
-val do_not_serve_to_regexp: do_not_serve -> Netstring_pcre.regexp
+val do_not_serve_to_regexp: do_not_serve -> Pcre.regexp
 
 val join_do_not_serve : do_not_serve -> do_not_serve -> do_not_serve
-
-
 
 (** Configuration options, passed to (and modified by) extensions *)
 type config_info = {
@@ -102,18 +92,18 @@ type config_info = {
   charset_assoc : Ocsigen_charset_mime.charset_assoc;
 
   (** Default name to use as index file when a directory is requested.
-      Use [None] if no index should be tried. The various indexes
-      are tried in the given order. If no index is specified,
-      or the index does not exists, the content of the directory
-      might be listed, according to [list_directory_content] *)
+      Use [None] if no index should be tried. The various indexes are
+      tried in the given order. If no index is specified, or the index
+      does not exists, the content of the directory might be listed,
+      according to [list_directory_content] *)
   default_directory_index : string list;
 
-  (** Should the list of files in a directory be displayed
-      if there is no index in this directory ? *)
+  (** Should the list of files in a directory be displayed if there is
+      no index in this directory ? *)
   list_directory_content : bool;
 
-  (** Should symlinks be followed when accessign a local file? *)
-  follow_symlinks: follow_symlink;
+  (** Should symlinks be followed when accessing a local file? *)
+  follow_symlinks: [`No | `Owner_match | `Always];
 
   do_not_serve_404: do_not_serve;
   do_not_serve_403: do_not_serve;
@@ -121,132 +111,88 @@ type config_info = {
   uploaddir: string option;
   maxuploadfilesize: int64 option;
 }
-and follow_symlink =
-  | DoNotFollowSymlinks (** Never follow a symlink *)
-  | FollowSymlinksIfOwnerMatch (** Follow a symlink if the symlink and its
-                                   target have the same owner *)
-  | AlwaysFollowSymlinks (** Always follow symlinks *)
 
+val default_config_info : unit -> config_info
 
-(*****************************************************)
-
-
-type client = Ocsigen_http_com.connection
-(** A value of this type represents the client who did the request. *)
-
-val client_id : client -> int
-(** Returns the id number of the connection *)
-
-val client_connection : client -> Ocsigen_http_com.connection
-(** Returns the connection *)
-
-type ifrange = Ocsigen_request_info.ifrange =
-  | IR_No
-  | IR_Ifunmodsince of float
-  | IR_ifmatch of string
-type file_info = Ocsigen_request_info.file_info = {
-  tmp_filename: string;
-  filesize: int64;
-  raw_original_filename: string;
-  original_basename: string ;
-  file_content_type: ((string * string) * (string * string) list) option;
-}
-type request_info = Ocsigen_request_info.request_info
-and request = {
-  request_info: request_info;
+type request = {
+  request_info: Ocsigen_request.t;
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory
-  of (Ocsigen_request_info.request_info -> Neturl.url)
+exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
 
 type answer =
   | Ext_do_nothing
   (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_http_frame.result Lwt.t)
-  (** "OK stop! I will take the page.
-      You can start the following request of the same pipelined connection.
-      Here is the function to generate the page".
-      The extension must return Ext_found as soon as possible
-      when it is sure it is safe to start next request.
-      Usually as soon as you know that the result will be Ext_found.
-      But in some case, for example proxies, you don't want the request of
-      one connection to be handled in different order.
-      In that case, wait to be sure that the new request will not
-      overtake this one.
-  *)
-  | Ext_found_stop of (unit -> Ocsigen_http_frame.result Lwt.t)
+  | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
+  (** "OK stop! I will take the page.  You can start the following
+      request of the same pipelined connection.  Here is the function
+      to generate the page".  The extension must return Ext_found as
+      soon as possible when it is sure it is safe to start next
+      request.  Usually immediately. But in some case, for example
+      proxies, you don't want the request of one connection to be
+      handled in different order. (for example revproxy.ml starts its
+      requests to another server before returning Ext_found, to ensure
+      that all requests are done in same order). *)
+  | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
   (** Found but do not try next extensions *)
-  | Ext_next of int (** Page not found. Try next extension.
-                        The integer is the HTTP error code.
-                        It is usually 404, but may be for ex 403 (forbidden)
-                        if you want another extension to try after a 403.
-                        Same as Ext_continue_with but does not change
-                        the request.
-                    *)
-  | Ext_stop_site of (Ocsigen_cookies.cookieset * int)
-  (** Error. Do not try next extension, but
-      try next site.
-      The integer is the HTTP error code, usually 403.
-  *)
-  | Ext_stop_host of (Ocsigen_cookies.cookieset * int)
+  | Ext_next of Cohttp.Code.status
+  (** Page not found. Try next extension. The status is usually
+      `Not_found, but may be for example `Forbidden (403) if you want
+      to try another extension afterwards. Same as Ext_continue_with
+      but does not change the request. *)
+  | Ext_stop_site of (Ocsigen_cookie_map.t * Cohttp.Code.status)
+  (** Error. Do not try next extension, but try next site. *)
+  | Ext_stop_host of (Ocsigen_cookie_map.t * Cohttp.Code.status)
+  (** Error.
+      Do not try next extension,
+      do not try next site,
+      but try next host. *)
+  | Ext_stop_all of (Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Error. Do not try next extension,
       do not try next site,
-      but try next host.
-      The integer is the HTTP error code, usually 403.
-  *)
-  | Ext_stop_all of (Ocsigen_cookies.cookieset * int)
-  (** Error. Do not try next extension (even filters),
-      do not try next site,
-      do not try next host,
-      do not .
-      The integer is the HTTP error code, usually 403.
-  *)
-  | Ext_continue_with of (request * Ocsigen_cookies.cookieset * int)
+      do not try next host. *)
+  | Ext_continue_with of
+      (request * Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Used to modify the request before giving it to next extension.
-      The extension returns the request_info (possibly modified)
-      and a set of cookies if it wants to set or cookies
-      ([!Ocsigen_cookies.Cookies.empty] for no cookies).
-      You must add these cookies yourself in request_info if you
-      want them to be seen by subsequent extensions,
-      for example using {!Ocsigen_http_frame.compute_new_ri_cookies}.
-      The integer is usually equal to the error code received
-      from preceding extension (but you may want to modify it).
-  *)
-  | Ext_retry_with of request * Ocsigen_cookies.cookieset
-  (** Used to retry all the extensions with a new request_info.
-      The extension returns the request_info (possibly modified)
-      and a set of cookies if it wants to set or cookies
-      ([!Ocsigen_cookies.Cookies.empty] for no cookies).
-      You must add these cookies yourself in request_info if you
-      want them to be seen by subsequent extensions,
-      for example using {!Ocsigen_http_frame.compute_new_ri_cookies}.
-  *)
-  | Ext_sub_result of extension2
+      The extension returns the request (possibly modified) and a set
+      of cookies if it wants to set or cookies
+      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
+      these cookies yourself in request if you want them to be seen by
+      subsequent extensions, for example using
+      {!Ocsigen_http_frame.compute_new_ri_cookies}.  The status is
+      usually equal to the one received from preceding extension (but
+      you may want to modify it). *)
+  | Ext_retry_with of request * Ocsigen_cookie_map.t
+  (** Used to retry all the extensions with a new request.  The
+      extension returns the request (possibly modified) and a set of
+      cookies if it wants to set or cookies
+      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
+      these cookies yourself in request if you want them to be seen by
+      subsequent extensions, for example using
+      {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
+  | Ext_sub_result of extension_composite
   (** Used if your extension want to define option that may contain
-      other options from other extensions.
-      In that case, while parsing the configuration file, call
-      the parsing function (of type [parse_fun]),
-      that will return something of type [extension2].
-  *)
+      other options from other extensions.  In that case, while
+      parsing the configuration file, call the parsing function (of
+      type [parse_fun]), that will return something of type
+      [extension_composite]. *)
   | Ext_found_continue_with of
-      (unit -> (Ocsigen_http_frame.result * request) Lwt.t)
+      (unit -> (Ocsigen_response.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of (Ocsigen_http_frame.result * request)
+  | Ext_found_continue_with' of (Ocsigen_response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
-      the computation of the page. You should probably not use it,
-      but for output filters.
-  *)
+      the computation of the page. You should probably not use it, but
+      for output filters. *)
 
 and request_state =
-  | Req_not_found of (int * request)
-  | Req_found of (request * Ocsigen_http_frame.result)
+  | Req_not_found of (Cohttp.Code.status * request)
+  | Req_found of (request * Ocsigen_response.t)
 
-and extension2 =
-  (unit -> unit) ->
-  Ocsigen_cookies.cookieset ->
+and extension_composite =
+  Ocsigen_cookie_map.t ->
   request_state ->
-  (answer * Ocsigen_cookies.cookieset) Lwt.t
+  (answer * Ocsigen_cookie_map.t) Lwt.t
 
 type extension = request_state -> answer Lwt.t
 (** For each <site> tag in the configuration file,
@@ -262,7 +208,7 @@ type extension = request_state -> answer Lwt.t
     the extension may want to modify the result (filters).
 *)
 
-type parse_fun = Xml.xml list -> extension2
+type parse_fun = Xml.xml list -> extension_composite
 
 (** Type of the functions parsing the content of a <host> tag *)
 type parse_host
@@ -300,11 +246,12 @@ type userconf_info = {
     inside an userconf file. They take one more parameter, of type userconf_info
 *)
 type parse_config =
-  virtual_hosts -> config_info -> parse_config_aux
-and parse_config_user =
-  userconf_info -> parse_config
+  userconf_info option ->
+  virtual_hosts ->
+  config_info ->
+  parse_config_aux
 and parse_config_aux =
-    Url.path -> parse_host ->
+    Ocsigen_lib.Url.path -> parse_host ->
     (parse_fun -> Xml.xml ->
      extension
     )
@@ -315,18 +262,6 @@ and parse_config_aux =
     will be responsible for handling the options of the configuration
     files that are recognized by the extension, and potentially generating
     a page.
-    - a function [user_fun_site] of type [parse_user_config] which has the
-    same role as [fun_site], but inside userconf files. Specify nothing
-    if your extension is disallowed in userconf files. Otherwise, compared
-    to [fun_site], you can selectively disallow some options,
-    as [user_fun_site] must define only safe options (for example it is not
-    safe to allow such options to load a cmo specified by a user, or to
-    execute a program, as this program will be executed by ocsigen's user).
-    Note that [user_fun_site] will be called for every request, whereas the
-    [fun_site] is called only when starting or reloading the server.
-    - a function [begin_init] that will be called at the beginning
-    of the initialisation phase of each site, and each time the config file is
-    reloaded.
     - a function [end_init] that will be called at the end of the initialisation
     phase of each site
     - a function [init_fun] that will be called just before registering the
@@ -349,11 +284,9 @@ and parse_config_aux =
     to another server. It is false by default.
 
 *)
-val register_extension :
+val register :
   name:string ->
   ?fun_site:parse_config ->
-  ?user_fun_site:parse_config_user ->
-  ?begin_init:(unit -> unit) ->
   ?end_init:(unit -> unit) ->
   ?init_fun:(Xml.xml list -> unit) ->
   ?exn_handler:(exn -> string) ->
@@ -446,19 +379,11 @@ val get_hostname : request -> string
     - or the default port set in the configuration file. *)
 val get_port : request -> int
 
-
 (** new_url_of_directory_request create a redirection and generating a new url
     for the client (depending on the server configuration and request)
     @param request configuration of the server
     @param ri request *)
-val new_url_of_directory_request : request -> request_info -> Neturl.url
-
-(** Parsing URLs.
-    This allows to modify the URL in the request_info.
-    (to be used for example with Ext_retry_with or Ext_continue_with)
-*)
-val ri_of_url : ?full_rewrite:bool -> string -> request_info -> request_info
-
+val new_url_of_directory_request : request -> Ocsigen_request.t -> Uri.t
 
 (** {3 User directories} *)
 
@@ -471,7 +396,7 @@ type ud_string
 
 val parse_user_dir : string -> ud_string
 
-val replace_user_dir : Netstring_pcre.regexp -> ud_string -> string -> string
+val replace_user_dir : Pcre.regexp -> ud_string -> string -> string
 (** raises [Not_found] is the directory does not exist *)
 
 
@@ -480,42 +405,44 @@ val replace_user_dir : Netstring_pcre.regexp -> ud_string -> string -> string
 exception Not_concerned
 
 val find_redirection :
-  Netstring_pcre.regexp ->
+  Pcre.regexp ->
   bool ->
   string ->
-  bool ->
-  string option -> int -> string option -> string -> string -> string
-
+  Ocsigen_request.t ->
+  string
 
 (**/**)
-(**/**)
 
-val make_parse_config : Url.path -> parse_config_aux -> parse_fun
+val preprocess_site_path : Ocsigen_lib.Url.path -> Ocsigen_lib.Url.path
+
+val compose : extension list -> extension_composite
+
+val make_parse_config :
+  Ocsigen_lib.Url.path -> parse_config_aux -> parse_fun
 
 val parse_config_item : parse_config
-val parse_user_site_item : parse_config_user
 
-val set_hosts : (virtual_hosts * config_info * extension2) list -> unit
+val site_ext :
+  extension_composite ->
+  Ocsigen_charset_mime.charset option ->
+  Ocsigen_lib.Url.path ->
+  extension
 
-val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
+val set_hosts :
+  (virtual_hosts * config_info * extension_composite) list -> unit
 
-(** Compute the result to be sent to the client,
-    by trying all extensions according the configuration file.
-*)
+val get_hosts :
+  unit -> (virtual_hosts * config_info * extension_composite) list
+
+(** Compute the answer to be sent to the client, by trying all
+    extensions according the configuration file. *)
 val compute_result :
-  ?previous_cookies:Ocsigen_cookies.cookieset ->
-  ?awake_next_request:bool ->
-  request_info -> Ocsigen_http_frame.result Lwt.t
+  ?previous_cookies:Ocsigen_cookie_map.t ->
+  Ocsigen_request.t ->
+  Ocsigen_response.t Lwt.t
 
 (** Profiling *)
 val get_number_of_connected : unit -> int
-val get_number_of_connected : unit -> int
-
-
-(** Server internal functions: *)
-val incr_connected : int -> unit
-val decr_connected : unit -> unit Lwt.t
-val wait_fewer_connected : int -> unit Lwt.t
 
 val during_initialisation : unit -> bool
 val start_initialisation : unit -> unit
@@ -525,10 +452,3 @@ val get_numberofreloads : unit -> int
 val get_init_exn_handler : unit -> exn -> string
 
 val set_config : Xml.xml list -> unit
-
-val client_of_connection : Ocsigen_http_com.connection -> client
-
-val get_server_address : request_info -> Unix.inet_addr * int
-
-val sockets : Lwt_unix.file_descr list ref
-val sslsockets : Lwt_unix.file_descr list ref

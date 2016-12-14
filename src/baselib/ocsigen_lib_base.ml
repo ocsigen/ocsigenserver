@@ -446,6 +446,84 @@ module Url_base = struct
       Some (String.sub s (pos+1) (String.length s - 1 - pos))
     with Not_found -> s, None
 
+  let join_path = function [""] -> "/" | l -> String.concat "/" l
+
+  (* Taken from Ocamlnet 4.1.2 *)
+  let split_path s =
+    let l = String.length s in
+    let rec collect_words k =
+      let k' =
+        try
+	  String.index_from s k '/'
+        with
+	  Not_found -> l
+      in
+      let word = String.sub s k (k'-k) in
+      if k' >= l then
+        [word]
+      else
+        word :: collect_words (k'+1)
+    in
+    match collect_words 0 with
+    | [ "" ] -> []
+    | [ "";"" ] -> [ "" ]
+    | other -> other
+
+  (* Taken from Ocamlnet 4.1.2 *)
+  let norm_path l =
+
+    let rec remove_slash_slash l first =
+      match l with
+      | [ "" ] ->
+	[ "" ]
+      | [ ""; "" ] when first ->
+	[ "" ]
+      | "" :: l' when not first ->
+	remove_slash_slash l' false
+      | x :: l' ->
+	x :: remove_slash_slash l' false
+      | [] ->
+	[]
+    in
+
+    let rec remove_dot l first =
+      match l with
+      | ([ "." ] | ["."; ""]) ->
+	if first then [] else [ "" ]
+      |	"." :: x :: l' ->
+	remove_dot (x :: l') false
+      | x :: l' ->
+	x :: remove_dot l' false
+      | [] ->
+	[]
+    in
+
+    let rec remove_dot_dot_once l first =
+      match l with
+	x :: ".." :: [] when x <> "" && x <> ".." && not first ->
+	[ "" ]
+      |	x :: ".." :: l' when x <> "" && x <> ".." ->
+	l'
+      | x :: l' ->
+	x :: remove_dot_dot_once l' false
+      | [] ->
+	raise Not_found
+    in
+
+    let rec remove_dot_dot l =
+      try
+        let l' = remove_dot_dot_once l true in
+        remove_dot_dot l'
+      with
+	Not_found -> l
+    in
+
+    let l' = remove_dot_dot (remove_dot (remove_slash_slash l true) true) in
+    match l' with
+      [".."] -> [".."; ""]
+    | ["";""] -> [ "" ]
+    | _      -> l'
+
 end
 
 (************************************************************************)

@@ -1,6 +1,6 @@
 description = "Ocsigen server library"
 version = "dev"
-requires = "%%NAME%%.commandline,%%NAME%%.polytables,%%NAME%%.http,%%NAME%%.baselib"
+requires = "%%NAME%%.polytables,%%NAME%%.http,%%NAME%%.baselib"
 archive(byte) = "ocsigenserver.cma"
 archive(native) = "ocsigenserver.cmxa"
 
@@ -10,15 +10,6 @@ package "polytables" (
   description = "Polymorphic tables"
   archive(byte) = "polytables.cmo"
   archive(native) = "polytables.cmx"
-)
-
-package "commandline" (
-  description = "Read the commandline during server initialization"
-  version = "[distributed with Ocsigen server]"
-  archive(byte) = "parsecommandline.cma"
-  archive(native) = "parsecommandline.cmxa"
-  archive(byte,nocommandline) = "donotparsecommandline.cma"
-  archive(native,nocommandline) = "donotparsecommandline.cmxa"
 )
 
 package "baselib" (
@@ -37,7 +28,7 @@ package "baselib" (
 )
 
 package "http" (
-  requires = "%%NAME%%.baselib,lwt_ssl,tyxml"
+  requires = "%%NAME%%.baselib,lwt_ssl"
   version = "[distributed with Ocsigen server]"
   description = "HTTP library for Ocsigen server"
   archive(byte) = "http.cma"
@@ -46,7 +37,7 @@ package "http" (
 
 package "cookies" (
   version = "[distributed with Ocsigen server]"
-  archive(byte) = "ocsigen_cookies.cmo"
+  archive(byte) = "ocsigen_cookie_map.cmo"
 )
 
 package "ext" (
@@ -184,15 +175,6 @@ package "ext" (
     description = "Rewriting URLs"
     archive(byte) = "rewritemod.cmo"
     archive(native) = "rewritemod.cmx"
-  )
-
-  package "comet" (
-    exists_if = "ocsigen_comet.cmo,ocsigen_comet.cmx"
-    requires = "ocsigenserver,lwt_react"
-    version = "[distributed with Ocsigen server]"
-    description = "Comet server-to-client communication"
-    archive(byte) = "ocsigen_comet.cmo"
-    archive(native) = "ocsigen_comet.cmx"
   )
 
 )

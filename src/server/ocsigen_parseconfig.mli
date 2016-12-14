@@ -18,69 +18,36 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-(** Config file parsing.
-    See also module {! Ocsigen_extensions.​Configuration } *)
-
-(** Parse a size ("infinity" or using SI or binary units,
-    e.g. 10 10B 10o 10ko 10kB 10kiB 10MiB 10TB ...).
-    Raises [Failure "Ocsigen_parseconfig.parse_size"] in case of error.
-*)
-val parse_size : string -> int64 option
-
-(** [parse_size_tag tag s] parses a size (same syntax as [parse_size]).
-    In case of error, raises [Ocsigen_config.Config_file_error m] where [m]
-    is an error message explaining that a size was expected in tag [<tag>].
-*)
-val parse_size_tag : string -> string -> int64 option
-
-(** Parse a string (PCDATA) as XML content.
-    Raises [Failure "Ocsigen_parseconfig.parse_string"] in case of error.
-*)
-val parse_string : Xml.xml list -> string
-
-(** [parse_string_tag tag s] parses a string (same syntax as [parse_string]).
-    In case of error, raises [Ocsigen_config.Config_file_error m] where [m]
-    is an error message explaining that a string was expected in tag [<tag>].
-*)
-val parse_string_tag : string -> Xml.xml list -> string
-
-
-(** Parses the [hostfilter] field of the configuration file, which
-    is a disjunction of possible hostnames (that can themselves contain
-    wildcards) *)
-val parse_host_field: string option -> Ocsigen_extensions.virtual_hosts
+(** Config file parsing. See also module
+    {! Ocsigen_extensions.​Configuration } *)
 
 (**/**)
 
-val parser_config : Xml.xml -> Xml.xml list list
-val parse_server : bool -> Xml.xml list -> unit
+(** [parse_size_tag tag s] parses a size.
 
-type ssl_info = {
-  ssl_certificate : string option;
-  ssl_privatekey  : string option;
-  ssl_ciphers     : string option;
-  ssl_dhfile      : string option;
-  ssl_curve       : string option
-}
+    The size can be either "infinity" or use SI or binary units, e.g.,
+    10 10B 10o 10ko 10kB 10kiB 10MiB 10TB ... .
 
-(** First pass of parse XML file. Extracts this information:
+    In case of error, raises [Ocsigen_config.Config_file_error m]
+    where [m] is an error message explaining that a size was expected
+    in tag [<tag>]. *)
+val parse_size_tag : string -> string -> int64 option
+
+(** Extracts (and stores via Ocsigen_config) the following information:
     {ul
     {- user to execute OcsigenServer (ex: www-data) }
     {- group to execute OcsigenServer (ex: www-data) }
     {- SSL key, SSL certificate, SSL ciphers list,
        SSL DH file, SSL EC curve }
-    {- list of HTTP port to listen (ex: 80) }
-    {- list of HTTPS port to listen (ex: 443) }
-    {- minimum and maximum of threads }
+    {- list of HTTP port to listen on (ex: 80) }
+    {- list of HTTPS port to listen on (ex: 443) }
+    {- minimum and maximum number of threads }
     }
+    To be called early by [Ocsigen_server].
 *)
-val extract_info :
-  Xml.xml list ->
-  (string option * string option) *
-  (ssl_info option *
-   (Ocsigen_socket.socket_type * int) list *
-   (Ocsigen_socket.socket_type * int) list) *
-  (int * int)
+val first_pass : Xml.xml list -> unit
+
+val later_pass : Xml.xml list -> unit
 
 val parse_config :
   ?file:string ->
