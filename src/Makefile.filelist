@@ -54,12 +54,13 @@ endif
 
 PLUGINS_BIN  :=
 
-PLUGINS_INTF := # extensions/ocsigen_comet.cmi       \
+PLUGINS_INTF := extensions/authbasic.cmi
+                # extensions/ocsigen_comet.cmi       \
                 # extensions/accesscontrol.cmi       \
-                # extensions/authbasic.cmi           \
                 # extensions/ocsipersist.cmi         \
 
-PLUGINS_IMPL := extensions/staticmod.cmo
+PLUGINS_IMPL := extensions/staticmod.cmo \
+                extensions/authbasic.cmo
                 # extensions/cgimod.cmo              \
                 # extensions/redirectmod.cmo         \
                 # extensions/revproxy.cmo            \
@@ -67,7 +68,6 @@ PLUGINS_IMPL := extensions/staticmod.cmo
                 # extensions/accesscontrol.cmo       \
                 # extensions/userconf.cmo            \
                 # extensions/outputfilter.cmo        \
-                # extensions/authbasic.cmo           \
                 # extensions/rewritemod.cmo          \
                 # extensions/extendconfiguration.cmo \
                 # extensions/ocsigen_comet.cmo       \
