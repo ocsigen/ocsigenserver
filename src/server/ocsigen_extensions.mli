@@ -126,23 +126,17 @@ and follow_symlink =
 (*****************************************************)
 
 type request = {
-  request_info: Ocsigen_cohttp_server.request;
+  request_info: Ocsigen_cohttp_server.Request.t;
   request_config: config_info;
 }
 
 exception Ocsigen_Is_a_directory
-  of (Ocsigen_cohttp_server.request -> Neturl.url)
-
-type result = Ocsigen_cohttp_server.result = {
-  r_response : Cohttp.Response.t ;
-  r_body     : Cohttp_lwt_body.t ;
-  r_cookies  : Ocsigen_cookies.cookieset
-}
+  of (Ocsigen_cohttp_server.Request.t -> Neturl.url)
 
 type answer =
   | Ext_do_nothing
   (** I don't want to do anything *)
-  | Ext_found of (unit -> result Lwt.t)
+  | Ext_found of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
   (** "OK stop! I will take the page.
       You can start the following request of the same pipelined connection.
       Here is the function to generate the page".
@@ -154,7 +148,7 @@ type answer =
       In that case, wait to be sure that the new request will not
       overtake this one.
   *)
-  | Ext_found_stop of (unit -> result Lwt.t)
+  | Ext_found_stop of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
   (** Found but do not try next extensions *)
   | Ext_next of int (** Page not found. Try next extension.
                         The integer is the HTTP error code.
@@ -209,9 +203,9 @@ type answer =
       that will return something of type [extension2].
   *)
   | Ext_found_continue_with of
-      (unit -> (result * request) Lwt.t)
+      (unit -> (Ocsigen_cohttp_server.Answer.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of (result * request)
+  | Ext_found_continue_with' of (Ocsigen_cohttp_server.Answer.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it,
       but for output filters.
@@ -219,7 +213,7 @@ type answer =
 
 and request_state =
   | Req_not_found of (int * request)
-  | Req_found of (request * result)
+  | Req_found of (request * Ocsigen_cohttp_server.Answer.t)
 
 and extension2 =
   Ocsigen_cookies.cookieset ->
@@ -429,7 +423,7 @@ val get_port : request -> int
     @param request configuration of the server
     @param ri request *)
 val new_url_of_directory_request :
-  request -> Ocsigen_cohttp_server.request -> Neturl.url
+  request -> Ocsigen_cohttp_server.Request.t -> Neturl.url
 
 (** {3 User directories} *)
 
@@ -470,12 +464,12 @@ val set_hosts : (virtual_hosts * config_info * extension2) list -> unit
 
 val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
 
-(** Compute the result to be sent to the client,
-    by trying all extensions according the configuration file.
-*)
+(** Compute the answer to be sent to the client, by trying all
+    extensions according the configuration file. *)
 val compute_result :
   ?previous_cookies:Ocsigen_cookies.cookieset ->
-  Ocsigen_cohttp_server.request -> result Lwt.t
+  Ocsigen_cohttp_server.Request.t ->
+  Ocsigen_cohttp_server.Answer.t Lwt.t
 
 (** Profiling *)
 val get_number_of_connected : unit -> int

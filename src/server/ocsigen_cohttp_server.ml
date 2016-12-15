@@ -13,6 +13,85 @@ module Connection = struct
   exception Connection_closed
 end
 
+module Request = struct
+
+  type t = {
+    r_address       : Unix.inet_addr ;
+    r_port          : int ;
+    r_filenames     : string list ref ;
+    r_sockaddr      : Lwt_unix.sockaddr ;
+    r_request       : Cohttp.Request.t ;
+    r_body          : Cohttp_lwt_body.t ;
+    r_waiter        : unit Lwt.t ;
+    mutable r_tries : int
+  }
+
+  let host { r_request } =
+    Uri.host (Cohttp.Request.uri r_request)
+
+  let port { r_port } =
+    r_port
+
+  let query { r_request } =
+    Uri.verbatim_query (Cohttp.Request.uri r_request)
+
+  let path {r_request} =
+    Cohttp.Request.uri r_request
+    |> Uri.path
+    |> Ocsigen_lib.Url.split_path
+
+  let header {r_request} id =
+    let h = Cohttp.Request.headers r_request in
+    Cohttp.Header.get h id
+
+  let tries {r_tries} = r_tries
+
+  let incr_tries r = r.r_tries <- r.r_tries + 1
+
+end
+
+module Answer = struct
+
+  type t = {
+    a_response : Cohttp.Response.t ;
+    a_body     : Cohttp_lwt_body.t ;
+    a_cookies  : Ocsigen_cookies.cookieset
+  }
+
+  let of_cohttp
+      ?(cookies = Ocsigen_cookies.empty_cookieset)
+      (a_response, a_body) =
+    { a_response ; a_body ; a_cookies = cookies }
+
+  let to_cohttp { a_response ; a_body } = a_response, a_body
+
+  let set_status ({ a_response } as a) status =
+    { a with a_response = { a_response with status } }
+
+  let add_cookies ({ a_cookies } as a) cookies =
+    if cookies = Ocsigen_cookies.Cookies.empty then
+      a
+    else {
+      a with
+      a_cookies = Ocsigen_cookies.add_cookies a_cookies cookies
+    }
+
+  let replace_headers ({ a_response } as a) l =
+    let headers =
+      List.fold_left
+        (fun headers (id, content) ->
+           Cohttp.Header.replace headers id content)
+        (Cohttp.Response.headers a_response)
+        l
+    in
+    { a with a_response = { a_response with headers } }
+
+end
+
+type request = Request.t
+
+type answer = Answer.t
+
 (** print_cohttp_request Print request for debug
  * @param out_ch output for debug
  * @param request Cohttp request *)
@@ -40,37 +119,6 @@ let print_cohttp_request fmt request =
     request.headers
 
 let waiters = Hashtbl.create 256
-
-type request = {
-  r_address       : Unix.inet_addr ;
-  r_port          : int ;
-  r_filenames     : string list ref;
-  r_sockaddr      : Lwt_unix.sockaddr ;
-  r_request       : Cohttp.Request.t ;
-  r_body          : Cohttp_lwt_body.t ;
-  r_waiter        : unit Lwt.t ;
-  mutable r_tries : int
-}
-
-type result = {
-  r_response : Cohttp.Response.t ;
-  r_body     : Cohttp_lwt_body.t ;
-  r_cookies  : Ocsigen_cookies.cookieset
-}
-
-let result_of_cohttp
-    ?(cookies = Ocsigen_cookies.empty_cookieset)
-    (r_response, r_body) =
-  { r_response ; r_body ; r_cookies = cookies }
-
-let path_of_request {r_request} =
-  Cohttp.Request.uri r_request
-  |> Uri.path
-  |> Ocsigen_lib.Url.split_path
-
-let incr_tries r = r.r_tries <- r.r_tries + 1
-
-let tries {r_tries} = r_tries
 
 exception Ocsigen_Is_a_directory of (request -> Neturl.url)
 
@@ -152,20 +200,20 @@ let handler ~address ~port ~connector (flow, conn) request body =
 
   (* TODO: equivalent of Ocsigen_range *)
 
-  connector {
+  connector { Request.
     r_address   = address ;
     r_port      = port ;
     r_filenames = filenames ;
-    r_sockaddr  = sockaddr;
-    r_request   = request;
-    r_body      = body;
-    r_waiter    = waiter;
+    r_sockaddr  = sockaddr ;
+    r_request   = request ;
+    r_body      = body ;
+    r_waiter    = waiter ;
     r_tries     = 0
-  } >>= fun { r_response ; r_body } ->
+  } >>= fun { Answer.a_response ; a_body } ->
 
   (* TODO: handle cookies *)
 
-  Lwt.return (r_response, r_body)
+  Lwt.return (a_response, a_body)
 
 let conn_closed (flow, conn) =
   try let wakener = Hashtbl.find waiters conn in

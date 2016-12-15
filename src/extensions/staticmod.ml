@@ -71,8 +71,10 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
       (false,
        Filename.concat d pathstring,
        (match usermode with
-        | None -> Some d
-        | Some { Ocsigen_extensions.localfiles_root = r } -> Some r
+        | None ->
+          Some d
+        | Some { Ocsigen_extensions.localfiles_root } ->
+          Some localfiles_root
        ))
     | Regexp { source_regexp = source; dest = dest;
                http_status_filter = status_filter;
@@ -86,7 +88,7 @@ let find_static_page ~request ~usermode ~dir ~err ~pathstring =
           Ocsigen_extensions.replace_user_dir source dest pathstring
       and root_checks =
         (match rc, usermode with
-         | None, Some { localfiles_root = r } ->
+         | None, Some { Ocsigen_extensions.localfiles_root = r } ->
            Some r
          | Some _, Some _ ->
            raise (Ocsigen_extensions.Error_in_user_config_file
@@ -112,14 +114,14 @@ let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found (_, r) ->
     Lwt.return (Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_not_found
-      (err, ({request_info} as request)) ->
+      (err, ({ Ocsigen_extensions.request_info } as request)) ->
     let try_block () =
       Lwt_log.ign_info ~section "Is it a static file?";
       let status_filter, page =
         let pathstring =
           Ocsigen_lib.Url.string_of_url_path
             ~encode:false
-            (Ocsigen_cohttp_server.path_of_request request_info)
+            (Ocsigen_cohttp_server.Request.path request_info)
         in
         find_static_page ~request ~usermode ~dir ~err ~pathstring
       in
@@ -131,19 +133,13 @@ let gen ~usermode ?cache dir = function
           failwith "FIXME: staticmod dirs not implemented"
       in
       Cohttp_lwt_unix.Server.respond_file ~fname () >>= fun answer ->
-      let ({ Ocsigen_cohttp_server.r_response } as answer) =
-        Ocsigen_cohttp_server.result_of_cohttp answer
-      in
+      let answer = Ocsigen_cohttp_server.Answer.of_cohttp answer in
       let answer =
         if not status_filter then
           answer
         else
-          { answer with
-            r_response = {
-              r_response with
-              status = Cohttp.Code.status_of_code err
-            }
-          }
+          Ocsigen_cohttp_server.Answer.set_status answer
+            (Cohttp.Code.status_of_code err)
       in
       let answer =
         match cache with
@@ -158,15 +154,10 @@ let gen ~usermode ?cache dir = function
               Ocsigen_http_com.gmtdate
                 (Unix.time () +. float_of_int duration)
           in
-          let {Cohttp.Response.headers} = r_response in
-          let headers =
-            Cohttp.Header.(
-              replace
-                (replace headers "Cache-Control" cache_control)
-                "Expires" expires
-            )
-          in
-          { answer with r_response = { r_response with headers } }
+          Ocsigen_cohttp_server.Answer.replace_headers answer [
+            "Cache-Control" , cache_control ;
+            "Expires"       , expires       ;
+          ]
       in
       Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return answer))
     and catch_block = function
@@ -192,8 +183,8 @@ let gen ~usermode ?cache dir = function
 let rewrite_local_path userconf path =
   match userconf with
   | None -> path
-  | Some { Ocsigen_extensions.localfiles_root = root } ->
-    root ^ "/" ^ path
+  | Some { Ocsigen_extensions.localfiles_root } ->
+    localfiles_root ^ "/" ^ path
 
 type options = {
   opt_dir: string option;

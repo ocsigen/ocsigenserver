@@ -223,7 +223,7 @@ let content ~request ~file =
     | RDir dirname ->
       Ocsigen_senders.Directory_content.result_of_content
         (dirname,
-         Ocsigen_cohttp_server.path_of_request request.request_info)
+         Ocsigen_cohttp_server.Request.path request.request_info)
     | RFile filename ->
       Ocsigen_senders.File_content.result_of_content
         (filename,
