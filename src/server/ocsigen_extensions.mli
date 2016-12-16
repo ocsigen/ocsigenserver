@@ -448,9 +448,8 @@ val find_redirection :
   Netstring_pcre.regexp ->
   bool ->
   string ->
-  bool ->
-  string option -> int -> string option -> string -> string -> string
-
+  Ocsigen_cohttp_server.Request.t ->
+  string
 
 (**/**)
 (**/**)

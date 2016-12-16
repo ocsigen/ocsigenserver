@@ -66,12 +66,8 @@ outputfilter.cmo : ../http/ocsigen_http_frame.cmi \
 outputfilter.cmx : ../http/ocsigen_http_frame.cmx \
     ../http/ocsigen_headers.cmx ../server/ocsigen_extensions.cmx \
     ../http/http_headers.cmx
-redirectmod.cmo : ../server/ocsigen_request_info.cmi \
-    ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
-    ../server/ocsigen_extensions.cmi
-redirectmod.cmx : ../server/ocsigen_request_info.cmx \
-    ../baselib/ocsigen_lib.cmx ../http/ocsigen_http_frame.cmx \
-    ../server/ocsigen_extensions.cmx
+redirectmod.cmo : ../baselib/ocsigen_lib.cmi ../server/ocsigen_extensions.cmi
+redirectmod.cmx : ../baselib/ocsigen_lib.cmx ../server/ocsigen_extensions.cmx
 revproxy.cmo : ../migrate/of_cohttp.cmi ../baselib/ocsigen_stream.cmi \
     ../server/ocsigen_request_info.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_headers.cmi \

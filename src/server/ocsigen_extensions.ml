@@ -284,10 +284,6 @@ let (hosts : (virtual_hosts * config_info * extension2) list ref) =
 let set_hosts v = hosts := v
 let get_hosts () = !hosts
 
-let ssl_of_request _ =
-  (* FIXME *)
-  false
-
 let update_path
     {
       request_info =
@@ -329,7 +325,7 @@ let get_port
       request_config = { default_httpport ; default_httpsport }
     } =
   if Ocsigen_config.get_usedefaulthostname () then
-    if ssl_of_request request_info then
+    if S.Request.ssl request_info then
       default_httpsport
     else
       default_httpport
@@ -341,7 +337,7 @@ let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 let new_url_of_directory_request request ri =
   Lwt_log.ign_info ~section "Sending 301 Moved permanently";
   let port = get_port request in
-  let ssl = ssl_of_request ri in
+  let ssl = S.Request.ssl ri in
   Neturl.make_url
     ~scheme:(if ssl then "https" else "http")
     ~host:(get_hostname request)
@@ -531,9 +527,9 @@ let rec default_parse_config
       in
       (function
         | Req_found (ri, r) ->
-            Lwt.return (Ext_found_continue_with' (r, ri))
+          Lwt.return (Ext_found_continue_with' (r, ri))
         | Req_not_found (err, ri) ->
-            Lwt.return (Ext_sub_result ext))
+          Lwt.return (Ext_sub_result ext))
   | Simplexmlparser.Element (tag,_,_) ->
     raise (Bad_config_tag_for_extension tag)
   | _ -> raise (Ocsigen_config.Config_file_error
@@ -551,10 +547,9 @@ and make_parse_config path parse_host l : extension2 =
            Lwt.return
              (Ext_continue_with
                 (ri, Ocsigen_cookies.Cookies.empty, e), cookies_to_set))
-    (* was Lwt.return (Ext_next e, cookies_to_set))
-       but to use make_parse_site with userconf,
-       we need to know current ri after parsing the sub-configuration.
-    *)
+    (* was Lwt.return (Ext_next e, cookies_to_set)), but to use
+       make_parse_site with userconf, we need to know current ri after
+       parsing the sub-configuration. *)
     | xmltag::ll ->
       try
         let genfun = f parse_config xmltag in
@@ -1035,43 +1030,41 @@ let replace_user_dir regexp dest pathstring =
         Lwt_log.ign_info_f ~section "No such user %s" u;
         raise NoSuchUser
 
-
-(*****************************************************************************)
-(* Finding redirections *)
-
 exception Not_concerned
 
-let find_redirection regexp full_url dest
-    https host port
-    get_params_string
-    sub_path_string
-    full_path_string
-  =
-  if full_url
-  then
-    match host with
-      | None -> raise Not_concerned
-      | Some host ->
-          let path =
-            match get_params_string with
-              | None -> full_path_string
-              | Some g -> full_path_string ^ "?" ^ g
-          in
-          let path =
-            Url.make_absolute_url https host port ("/"^path)
-          in
-          (match Netstring_pcre.string_match regexp path 0 with
-             | None -> raise Not_concerned
-             | Some _ -> (* Matching regexp found! *)
-                 Netstring_pcre.global_replace regexp dest path
-          )
+let (>|!) v f =
+  match v with
+  | None ->
+    raise Not_concerned
+  | Some v ->
+    f v
+
+let find_redirection regexp full_url dest r =
+  if full_url then
+    S.Request.host r >|! fun host ->
+    let path =
+      let full_path = S.Request.path_string r in
+      match S.Request.query r with
+      | None -> full_path
+      | Some g -> full_path ^ "?" ^ g
+    in
+    let path =
+      Url.make_absolute_url
+        (S.Request.ssl r)
+        host
+        (S.Request.port r)
+        ("/" ^ path)
+    in
+    Netstring_pcre.string_match regexp path 0 >|! fun _ ->
+    (* Matching regexp found! *)
+    Netstring_pcre.global_replace regexp dest path
   else
     let path =
-      match get_params_string with
-      | None -> sub_path_string
-      | Some g -> sub_path_string ^ "?" ^ g
+      let sub_path = S.Request.sub_path_string r in
+      match S.Request.query r with
+      | None -> sub_path
+      | Some g -> sub_path ^ "?" ^ g
     in
-    match Netstring_pcre.string_match regexp path 0 with
-    | None -> raise Not_concerned
-    | Some _ -> (* Matching regexp found! *)
-        Netstring_pcre.global_replace regexp dest path
+    Netstring_pcre.string_match regexp path 0 >|! fun _ ->
+    (* Matching regexp found! *)
+    Netstring_pcre.global_replace regexp dest path

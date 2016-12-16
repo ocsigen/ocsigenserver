@@ -26,19 +26,33 @@ module Request = struct
     mutable r_tries : int
   }
 
-  let host { r_request } =
+  let address {r_address} =
+    r_address
+
+  let host {r_request} =
     Uri.host (Cohttp.Request.uri r_request)
 
-  let port { r_port } =
+  let port {r_port} =
     r_port
 
-  let query { r_request } =
+  let ssl _ =
+    (* FIXME *)
+    false
+
+  let query {r_request} =
     Uri.verbatim_query (Cohttp.Request.uri r_request)
 
-  let path {r_request} =
-    Cohttp.Request.uri r_request
-    |> Uri.path
-    |> Ocsigen_lib.Url.split_path
+  let path_string {r_request} =
+    Uri.path (Cohttp.Request.uri r_request)
+
+  let path r =
+    Ocsigen_lib.Url.split_path (path_string r)
+
+  (* FIXME *)
+  let sub_path_string = path_string
+
+  (* FIXME *)
+  let sub_path = path
 
   let header {r_request} id =
     let h = Cohttp.Request.headers r_request in
@@ -57,6 +71,12 @@ module Answer = struct
     a_body     : Cohttp_lwt_body.t ;
     a_cookies  : Ocsigen_cookies.cookieset
   }
+
+  let make
+      ?(cookies = Ocsigen_cookies.empty_cookieset)
+      ?(body = Cohttp_lwt_body.empty)
+      ~response () =
+    { a_response = response ; a_body = body ; a_cookies = cookies }
 
   let of_cohttp
       ?(cookies = Ocsigen_cookies.empty_cookieset)
@@ -136,10 +156,14 @@ let handler ~address ~port ~connector (flow, conn) request body =
       Unix.ADDR_INET (Ipaddr_unix.to_inet_addr ip, port)
     | `Unix_domain_socket path ->
       Unix.ADDR_UNIX path
-    | `TLS (_, edn) -> getsockname edn
-    | `Unknown err -> raise (Failure ("resolution failed: " ^ err))
-    | `Vchan_direct _ -> raise (Failure "VChan not supported")
-    | `Vchan_domain_socket _ -> raise (Failure "VChan not supported")
+    | `TLS (_, edn) ->
+      getsockname edn
+    | `Unknown err ->
+      raise (Failure ("resolution failed: " ^ err))
+    | `Vchan_direct _ ->
+      raise (Failure "VChan not supported")
+    | `Vchan_domain_socket _ ->
+      raise (Failure "VChan not supported")
   in
 
   let sockaddr = getsockname edn in

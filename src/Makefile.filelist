@@ -60,9 +60,9 @@ PLUGINS_INTF := extensions/authbasic.cmi
                 # extensions/ocsipersist.cmi         \
 
 PLUGINS_IMPL := extensions/staticmod.cmo \
-                extensions/authbasic.cmo
+                extensions/authbasic.cmo \
+                extensions/redirectmod.cmo
                 # extensions/cgimod.cmo              \
-                # extensions/redirectmod.cmo         \
                 # extensions/revproxy.cmo            \
                 # extensions/extensiontemplate.cmo   \
                 # extensions/accesscontrol.cmo       \

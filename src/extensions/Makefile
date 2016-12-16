@@ -22,9 +22,8 @@ all: byte opt
 
 ### Extensions ###
 
-FILES := staticmod.ml authbasic.ml
+FILES := staticmod.ml authbasic.ml redirectmod.ml
          # cgimod.ml              \
-         # redirectmod.ml         \
          # revproxy.ml            \
          # extensiontemplate.ml   \
          # accesscontrol.ml       \
