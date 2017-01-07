@@ -225,31 +225,75 @@ module Url = struct
         (not encoded by browsers). Here is a patch that does not encode '~': *)
   module MyUrl = struct
 
-    let hex_digits =
-      [| '0'; '1'; '2'; '3'; '4'; '5'; '6'; '7';
-         '8'; '9'; 'A'; 'B'; 'C'; 'D'; 'E'; 'F' |]
+    let percent_encode =
+      let lengths =
+        let l = Array.make 256 3 in
+        String.iter (fun c -> l.(Char.code c) <- 1)
+          (* Unreserved Characters (section 2.3 of RFC 3986) *)
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
+        l
+      in
+      fun s ->
+        let l = String.length s in
+        let l' = ref 0 in
+        for i = 0 to l - 1 do
+          l' := !l' + lengths.(Char.code s.[i])
+        done;
+        if l = !l' then
+          String.copy s
+        else
+          let s' = Bytes.create !l' in
+          let j = ref 0 in
+          let hex = "0123456789ABCDEF" in
+          for i = 0 to l - 1 do
+            let c = s.[i] in
+            let n = Char.code s.[i] in
+            let d = lengths.(n) in
+            if d = 1 then
+              Bytes.set s' !j c
+            else begin
+              Bytes.set s' !j '%';
+              Bytes.set s' (!j + 1) hex.[n lsr 4];
+              Bytes.set s' (!j + 2) hex.[n land 0xf]
+            end;
+            j := !j + d
+          done;
+          Bytes.unsafe_to_string s'
 
-    let to_hex2 k =
-      (* Converts k to a 2-digit hex string *)
-      let s = Bytes.create 2 in
-      Bytes.set s 0 hex_digits.( (k lsr 4) land 15 );
-      Bytes.set s 1 hex_digits.( k land 15 );
-      s
-
-    let url_encoding_re =
-      Netstring_pcre.regexp "[^A-Za-z0-9~_.!*\\-]"
+    let encode_plus =
+      let lengths =
+        let l = Array.make 256 3 in
+        String.iter (fun c -> l.(Char.code c) <- 1)
+          (* Unchanged characters + space (HTML spec) *)
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.* ";
+        l
+      in
+      fun s ->
+        let l = String.length s in
+        let l' = ref 0 in
+        for i = 0 to l - 1 do
+          l' := !l' + lengths.(Char.code s.[i])
+        done;
+        let s' = Bytes.create !l' in
+        let j = ref 0 in
+        let hex = "0123456789ABCDEF" in
+        for i = 0 to l - 1 do
+          let c = s.[i] in
+          let n = Char.code s.[i] in
+          let d = lengths.(n) in
+          if d = 1 then
+            Bytes.set s' !j (if c =  ' ' then '+' else c)
+          else begin
+            Bytes.set s' !j '%';
+            Bytes.set s' (!j + 1) hex.[n lsr 4];
+            Bytes.set s' (!j + 2) hex.[n land 0xf]
+          end;
+          j := !j + d
+        done;
+        Bytes.unsafe_to_string s'
 
     let encode ?(plus = true) s =
-      Netstring_pcre.global_substitute
-        url_encoding_re
-        (fun r _ ->
-           match Netstring_pcre.matched_string r s with
-           | " " when plus -> "+"
-           | x ->
-             let k = Char.code(x.[0]) in
-             "%" ^ to_hex2 k
-        )
-        s
+      if plus then encode_plus s else percent_encode s
 
   end
 
