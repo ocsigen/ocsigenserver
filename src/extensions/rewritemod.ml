@@ -16,102 +16,77 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (* Rewrite URLs in the configuration file *)
 
 (* IMPORTANT WARNING
+
    It is really basic for now:
     - rewrites only subpaths (and doees not change get parameters)
     - changes only ri_sub_path and ri_sub_path_string
    not ri_full_path, nor ri_full_path_string, nor ri_url_string, nor ri_url
-   This is probably NOT what we want ...
-*)
 
-
-
-(* To compile it:
-   ocamlfind ocamlc  -thread -package netstring-pcre,ocsigen -c extensiontemplate.ml
-
-   Then load it dynamically from Ocsigen's config file:
-   <extension module=".../rewritemod.cmo"/>
-
-*)
-
-open Lwt
-open Ocsigen_extensions
-open Simplexmlparser
+   This is probably NOT what we want... *)
 
 let section = Lwt_log.Section.make "ocsigen:ext:rewritemod"
 
 exception Not_concerned
 
-
-(*****************************************************************************)
-(* The table of rewrites for each virtual server                             *)
-type assockind =
-  | Regexp of Netstring_pcre.regexp * string * bool
-
-
-
-(*****************************************************************************)
-(* Finding rewrites *)
+(* The table of rewrites for each virtual server *)
+type assockind = Regexp of Netstring_pcre.regexp * string * bool
 
 let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
   (match Netstring_pcre.string_match regexp suburl 0 with
-   | None -> raise Not_concerned
+   | None ->
+     raise Not_concerned
    | Some _ -> (* Matching regexp found! *)
-     Netstring_pcre.global_replace regexp dest suburl), fullrewrite
+     Netstring_pcre.global_replace regexp dest suburl),
+  fullrewrite
 
-
-
-
-
-
-(*****************************************************************************)
-(** The function that will generate the pages from the request. *)
+(* The function that will generate the pages from the request *)
 let gen regexp continue = function
   | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, ri) ->
-    catch
-      (* Is it a rewrite? *)
-      (fun () ->
-         Lwt_log.ign_info ~section "Is it a rewrite?";
-         let redir, fullrewrite =
-           let ri = ri.request_info in
-           find_rewrite regexp
-             (match Ocsigen_request_info.get_params_string ri with
-              | None -> Ocsigen_request_info.sub_path_string ri
-              | Some g -> (Ocsigen_request_info.sub_path_string ri) ^ "?" ^ g)
-         in
-         Lwt_log.ign_info_f ~section "YES! rewrite to: %s" redir;
-         if continue
-         then
-           return
-             (Ext_continue_with
-                ({ ri with request_info =
-                             Ocsigen_extensions.ri_of_url
-                               ~full_rewrite:fullrewrite
-                               redir ri.request_info },
-                 Ocsigen_cookies.Cookies.empty,
-                 err)
-             )
-         else
-           return
-             (Ext_retry_with
-                ({ ri with request_info =
-                             Ocsigen_extensions.ri_of_url
-                               ~full_rewrite:fullrewrite
-                               redir ri.request_info },
-                 Ocsigen_cookies.Cookies.empty)
-             )
-      )
-      (function
-        | Not_concerned -> return (Ext_next err)
-        | e -> fail e)
-
-(*****************************************************************************)
+    let try_block () =
+      Lwt_log.ign_info ~section "Is it a rewrite?";
+      let redir, full_rewrite =
+        let ri = ri.Ocsigen_extensions.request_info in
+        find_rewrite regexp
+          (match Ocsigen_cohttp_server.Request.query ri with
+           | None ->
+             Ocsigen_cohttp_server.Request.sub_path_string ri
+           | Some g ->
+             Ocsigen_cohttp_server.Request.sub_path_string ri
+             ^ "?" ^ g)
+      in
+      Lwt_log.ign_info_f ~section "YES! rewrite to: %s" redir;
+      if continue then
+        Lwt.return @@ Ocsigen_extensions.Ext_continue_with
+          ({ ri with
+             Ocsigen_extensions.request_info =
+               Ocsigen_extensions.ri_of_url
+                 ~full_rewrite
+                 redir
+                 ri.Ocsigen_extensions.request_info },
+           Ocsigen_cookies.Cookies.empty,
+           err)
+      else
+        Lwt.return @@ Ocsigen_extensions.Ext_retry_with
+          ({ ri with
+             Ocsigen_extensions.request_info =
+               Ocsigen_extensions.ri_of_url
+                 ~full_rewrite
+                 redir ri.Ocsigen_extensions.request_info },
+           Ocsigen_cookies.Cookies.empty)
+    and catch_block = function
+      | Ocsigen_extensions.Not_concerned ->
+        Lwt.return (Ocsigen_extensions.Ext_next err)
+      | e ->
+        Lwt.fail e
+    in
+    Lwt.catch try_block catch_block
 
 let parse_config element =
   let regexp = ref "" in
@@ -122,41 +97,45 @@ let parse_config element =
     Configuration.process_element
       ~in_tag:"host"
       ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
-      ~elements:[Configuration.element
-                   ~name:"rewrite"
-                   ~attributes:[Configuration.attribute
-                                  ~name:"regexp"
-                                  ~obligatory:true
-                                  (fun s -> regexp := s);
-                                Configuration.attribute
-                                  ~name:"url"
-                                  (fun s -> dest := Some s);
-                                Configuration.attribute
-                                  ~name:"dest"
-                                  (fun s -> dest := Some s);
-                                Configuration.attribute
-                                  ~name:"fullrewrite"
-                                  (fun s -> fullrewrite := (s = "fullrewrite"
-                                                            || s = "true"));
-                                Configuration.attribute
-                                  ~name:"continue"
-                                  (fun s -> continue := (s = "continue"
-                                                         || s = "true"));
-                               ]
-                   ()]
+      ~elements:[
+        Configuration.element
+          ~name:"rewrite"
+          ~attributes:[
+            Configuration.attribute
+              ~name:"regexp"
+              ~obligatory:true
+              (fun s -> regexp := s);
+            Configuration.attribute
+              ~name:"url"
+              (fun s -> dest := Some s);
+            Configuration.attribute
+              ~name:"dest"
+              (fun s -> dest := Some s);
+            Configuration.attribute
+              ~name:"fullrewrite"
+              (fun s -> fullrewrite := (s = "fullrewrite" || s = "true"));
+            Configuration.attribute
+              ~name:"continue"
+              (fun s -> continue := (s = "continue" || s = "true"));
+          ]
+          ()]
       element
   );
   match !dest with
-  | None -> raise (Error_in_config_file "url attribute expected for <rewrite>")
+  | None ->
+    raise
+      (Ocsigen_extensions.Error_in_config_file
+         "url attribute expected for <rewrite>")
   | Some dest ->
-    gen (Regexp ((Netstring_pcre.regexp ("^"^ !regexp^"$")),
-                 dest, !fullrewrite))
+    gen
+      (Regexp
+         ((Netstring_pcre.regexp ("^" ^ !regexp ^ "$")),
+          dest, !fullrewrite))
       !continue
 
-
-(*****************************************************************************)
 (** Registration of the extension *)
-let () = register_extension
+let () =
+  Ocsigen_extensions.register_extension
     ~name:"rewritemod"
     ~fun_site:(fun _ _ _ _ _ -> parse_config)
     ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)

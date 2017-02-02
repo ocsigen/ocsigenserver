@@ -482,3 +482,5 @@ val set_config : Simplexmlparser.xml list -> unit
 
 val sockets : Lwt_unix.file_descr list ref
 val sslsockets : Lwt_unix.file_descr list ref
+
+val ri_of_url : full_rewrite:'a -> 'b -> 'c -> 'c

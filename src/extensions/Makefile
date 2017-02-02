@@ -23,12 +23,11 @@ all: byte opt
 ### Extensions ###
 
 FILES := accesscontrol.ml authbasic.ml cors.ml outputfilter.ml \
-	 staticmod.ml redirectmod.ml
+	 redirectmod.ml rewritemod.ml staticmod.ml
          # cgimod.ml              \
          # revproxy.ml            \
          # extensiontemplate.ml   \
          # userconf.ml            \
-         # rewritemod.ml          \
          # extendconfiguration.ml \
          # ocsigen_comet.ml       \
 

@@ -1071,3 +1071,7 @@ let find_redirection regexp full_url dest r =
     Netstring_pcre.string_match regexp path 0 >|! fun _ ->
     (* Matching regexp found! *)
     Netstring_pcre.global_replace regexp dest path
+
+(* FIXME COHTTP TRANSITION DUMMY *)
+let ri_of_url ~full_rewrite _ request_info =
+  request_info
