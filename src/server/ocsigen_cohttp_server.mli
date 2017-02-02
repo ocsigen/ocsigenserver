@@ -104,7 +104,19 @@ module Answer : sig
 
   val add_cookies : t -> Ocsigen_cookies.cookieset -> t
 
+  val header : t -> Http_headers.name -> string option
+
+  val header_multi : t -> Http_headers.name -> string list
+
+  val add_header : t -> Http_headers.name -> string -> t
+
+  val add_header_multi : t -> Http_headers.name -> string list -> t
+
+  val replace_header : t -> Http_headers.name -> string -> t
+
   val replace_headers : t -> (Http_headers.name * string) list -> t
+
+  val remove_header : t -> Http_headers.name -> t
 
 end
 

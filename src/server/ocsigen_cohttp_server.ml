@@ -157,7 +157,55 @@ module Answer = struct
       a_cookies = Ocsigen_cookies.add_cookies a_cookies cookies
     }
 
-  let replace_headers ({ a_response } as a) l =
+  let header {a_response} id =
+    let h = Cohttp.Response.headers a_response in
+    Cohttp.Header.get h (Http_headers.name_to_string id)
+
+  let header_multi {a_response} id =
+    let h = Cohttp.Response.headers a_response in
+    Cohttp.Header.get_multi h (Http_headers.name_to_string id)
+
+  let add_header
+      ({a_response = ({headers} as a_response)} as a)
+      id v = {
+    a with
+    a_response = {
+      a_response with
+      headers =
+        Cohttp.Header.add headers (Http_headers.name_to_string id) v
+    }
+  }
+
+  let add_header_multi
+      ({a_response = ({headers} as a_response)} as a)
+      id l =
+    let id = Http_headers.name_to_string id in
+    let headers =
+      List.fold_left
+        (fun headers -> Cohttp.Header.add headers id)
+        headers
+        l
+    in
+    { a with a_response = { a_response with headers } }
+
+  let remove_header ({a_response} as a) id =
+    let headers = Cohttp.Response.headers a_response
+    and id = Http_headers.name_to_string id in
+    let headers = Cohttp.Header.remove headers id in
+    { a with a_response = { a_response with headers } }
+
+  let replace_header
+      ({a_response = ({headers} as a_response)} as a)
+      id v = {
+    a with
+    a_response = {
+      a_response with
+      headers =
+        Cohttp.Header.replace headers (Http_headers.name_to_string id) v
+    }
+  }
+
+  let replace_headers ({a_response} as a) l =
     let headers =
       List.fold_left
         (fun headers (id, content) ->
