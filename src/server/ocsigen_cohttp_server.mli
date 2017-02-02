@@ -1,5 +1,6 @@
 exception Ocsigen_unsupported_media
-exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+exception Ocsigen_http_error of
+    Ocsigen_cookies.cookieset * Cohttp.Code.status
 
 module Connection : sig
   exception Lost_connection of exn
@@ -12,23 +13,42 @@ end
 module Request : sig
 
   type t = {
-    r_address       : Unix.inet_addr ;
-    r_port          : int ;
-    r_filenames     : string list ref;
-    r_sockaddr      : Lwt_unix.sockaddr ;
-    r_request       : Cohttp.Request.t ;
-    r_body          : Cohttp_lwt_body.t ;
-    r_waiter        : unit Lwt.t ;
+    r_address : Unix.inet_addr ;
+    r_port : int ;
+    r_filenames : string list ref ;
+    r_sockaddr : Lwt_unix.sockaddr ;
+    r_remote_ip : string Lazy.t ;
+    r_remote_ip_parsed : Ipaddr.t Lazy.t ;
+    r_forward_ip : string list ;
+    r_request : Cohttp.Request.t ;
+    r_body : Cohttp_lwt_body.t ;
+    r_waiter : unit Lwt.t ;
     mutable r_tries : int
   }
+
+  val make :
+    ?forward_ip : string list ->
+    address : Unix.inet_addr ->
+    port : int ->
+    filenames : string list ref ->
+    sockaddr : Lwt_unix.sockaddr ->
+    request : Cohttp.Request.t ->
+    body : Cohttp_lwt_body.t ->
+    waiter : unit Lwt.t ->
+    unit ->
+    t
 
   val address : t -> Unix.inet_addr
 
   val host : t -> string option
 
+  val meth : t -> Cohttp.Code.meth
+
   val port : t -> int
 
   val ssl : t -> bool
+
+  val version : t -> Cohttp.Code.version
 
   val query : t -> string option
 
@@ -42,9 +62,17 @@ module Request : sig
 
   val header : t -> string -> string option
 
+  val header_multi : t -> string -> string list
+
+  val remote_ip : t -> string
+
+  val remote_ip_parsed : t -> Ipaddr.t
+
   val tries : t -> int
 
   val incr_tries : t -> unit
+
+  val set_ssl : t -> bool -> t
 
 end
 
@@ -70,7 +98,9 @@ module Answer : sig
 
   val to_cohttp : t -> Cohttp.Response.t * Cohttp_lwt_body.t
 
-  val set_status : t -> Cohttp.Code.status_code -> t
+  val status : t -> Cohttp.Code.status
+
+  val set_status : t -> Cohttp.Code.status -> t
 
   val add_cookies : t -> Ocsigen_cookies.cookieset -> t
 

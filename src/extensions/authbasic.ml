@@ -74,8 +74,8 @@ let gen ~realm ~auth rs =
     Lwt_log.ign_info ~section
       "AUTH: invalid Authorization header";
     Lwt.fail
-      (Ocsigen_extensions.Ocsigen_http_error
-         (Ocsigen_cookies.Cookies.empty, 400))
+      (Ocsigen_cohttp_server.Ocsigen_http_error
+         (Ocsigen_cookies.Cookies.empty, `Bad_request))
 
   in
 

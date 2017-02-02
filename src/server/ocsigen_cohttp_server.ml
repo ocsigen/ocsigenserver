@@ -3,7 +3,8 @@ open Lwt.Infix
 let section = Lwt_log.Section.make "ocsigen:cohttp"
 
 exception Ocsigen_unsupported_media
-exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+exception Ocsigen_http_error of
+    Ocsigen_cookies.cookieset * Cohttp.Code.status
 
 module Connection = struct
   exception Lost_connection of exn
@@ -16,15 +17,45 @@ end
 module Request = struct
 
   type t = {
-    r_address       : Unix.inet_addr ;
-    r_port          : int ;
-    r_filenames     : string list ref ;
-    r_sockaddr      : Lwt_unix.sockaddr ;
-    r_request       : Cohttp.Request.t ;
-    r_body          : Cohttp_lwt_body.t ;
-    r_waiter        : unit Lwt.t ;
+    r_address : Unix.inet_addr ;
+    r_port : int ;
+    r_filenames : string list ref ;
+    r_sockaddr : Lwt_unix.sockaddr ;
+    r_remote_ip : string Lazy.t ;
+    r_remote_ip_parsed : Ipaddr.t Lazy.t ;
+    r_forward_ip : string list ;
+    r_request : Cohttp.Request.t ;
+    r_body : Cohttp_lwt_body.t ;
+    r_waiter : unit Lwt.t ;
     mutable r_tries : int
   }
+
+  let make
+      ?(forward_ip = [])
+      ~address ~port ~filenames ~sockaddr ~request ~body ~waiter ()
+    =
+    let r_remote_ip =
+      lazy
+        (Unix.string_of_inet_addr
+           (Ocsigen_socket.ip_of_sockaddr sockaddr))
+    in
+    let r_remote_ip_parsed =
+      lazy (Ipaddr.of_string_exn (Lazy.force r_remote_ip))
+    in
+    {
+      r_address = address ;
+      r_port = port ;
+      r_filenames = filenames ;
+      r_sockaddr = sockaddr ;
+      r_remote_ip ;
+      r_remote_ip_parsed ;
+      r_forward_ip = forward_ip ;
+      r_request = request ;
+      r_body = body ;
+      r_waiter = waiter ;
+      r_tries = 0
+    }
+
 
   let address {r_address} =
     r_address
@@ -32,12 +63,18 @@ module Request = struct
   let host {r_request} =
     Uri.host (Cohttp.Request.uri r_request)
 
+  let meth {r_request} =
+    Cohttp.Request.meth r_request
+
   let port {r_port} =
     r_port
 
   let ssl _ =
     (* FIXME *)
     false
+
+  let version {r_request} =
+    Cohttp.Request.version r_request
 
   let query {r_request} =
     Uri.verbatim_query (Cohttp.Request.uri r_request)
@@ -58,9 +95,29 @@ module Request = struct
     let h = Cohttp.Request.headers r_request in
     Cohttp.Header.get h id
 
+  let header_multi {r_request} id =
+    let h = Cohttp.Request.headers r_request in
+    Cohttp.Header.get_multi h id
+
+  (* let remote_address {r_sockaddr} = *)
+  (*   Ocsigen_socket.ip_of_sockaddr r_sockaddr *)
+
+  (* let remote_ip r = *)
+  (*   Unix.string_of_inet_addr (remote_address r) *)
+
+  (* let remote_ip_parsed r = *)
+  (*   Ipaddr.of_string_exn (remote_ip r) *)
+
+  let remote_ip {r_remote_ip} = Lazy.force r_remote_ip
+
+  let remote_ip_parsed {r_remote_ip_parsed} = Lazy.force r_remote_ip_parsed
+
   let tries {r_tries} = r_tries
 
   let incr_tries r = r.r_tries <- r.r_tries + 1
+
+  (* FIXME *)
+  let set_ssl r _ = r
 
 end
 
@@ -86,7 +143,11 @@ module Answer = struct
   let to_cohttp { a_response ; a_body } = a_response, a_body
 
   let set_status ({ a_response } as a) status =
-    { a with a_response = { a_response with status } }
+    { a with
+      a_response = {
+        a_response with status = (status :> Cohttp.Code.status_code)
+      }
+    }
 
   let add_cookies ({ a_cookies } as a) cookies =
     if cookies = Ocsigen_cookies.Cookies.empty then
@@ -105,6 +166,13 @@ module Answer = struct
         l
     in
     { a with a_response = { a_response with headers } }
+
+  let status { a_response = { Cohttp.Response.status } } =
+    match status with
+    | `Code _ ->
+      failwith "FIXME: Cohttp.Code.status_code -> status"
+    | #Cohttp.Code.status as a ->
+      a
 
 end
 
@@ -181,35 +249,36 @@ let handler ~address ~port ~connector (flow, conn) request body =
         in
         Some headers, code
       | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
-        None, 500
+        None, `Internal_server_error
       | Unix.Unix_error (Unix.EACCES, _, _) ->
-        None, 403
-      | Ocsigen_http_frame.Http_error.Http_exception (code, _, headers) ->
-        headers, code
+        None, `Forbidden
+      (* FIXME Cohttp transition
+         | Ocsigen_http_frame.Http_error.Http_exception
+             (code, _, headers) ->
+           headers, code *)
       | Ocsigen_lib.Ocsigen_Bad_Request ->
-        None, 400
+        None, `Bad_request
       | Ocsigen_unsupported_media ->
-        None, 415
+        None, `Unsupported_media_type
       | Neturl.Malformed_URL ->
-        None, 400
+        None, `Bad_request
       | Ocsigen_lib.Ocsigen_Request_too_long ->
-        None, 413
+        None, `Request_entity_too_large
       | exn ->
         Lwt_log.ign_error ~section ~exn "Error while handling request." ;
-        None, 500
+        None, `Internal_server_error
     in
 
-    Lwt_log.ign_warning_f ~section "Returning error code %i." ret_code ;
+    Lwt_log.ign_warning_f ~section "Returning error code %i."
+      (Cohttp.Code.code_of_status (ret_code :> Cohttp.Code.status_code));
 
     let body =
       match ret_code with
-      | 404 -> "Not Found"
+      | `Not_found -> "Not Found"
       | _ -> Printexc.to_string exn in
 
     Cohttp_lwt_unix.Server.respond_error
-      ?headers
-      ~status:(Cohttp.Code.status_of_code ret_code)
-      ~body ()
+      ?headers ~status:(ret_code :> Cohttp.Code.status_code) ~body ()
   in
 
   if !filenames <> [] then
@@ -224,16 +293,10 @@ let handler ~address ~port ~connector (flow, conn) request body =
 
   (* TODO: equivalent of Ocsigen_range *)
 
-  connector { Request.
-    r_address   = address ;
-    r_port      = port ;
-    r_filenames = filenames ;
-    r_sockaddr  = sockaddr ;
-    r_request   = request ;
-    r_body      = body ;
-    r_waiter    = waiter ;
-    r_tries     = 0
-  } >>= fun { Answer.a_response ; a_body } ->
+  connector
+    (Request.make
+       ~address ~port ~filenames ~sockaddr ~request ~body ~waiter ())
+  >>= fun { Answer.a_response ; a_body } ->
 
   (* TODO: handle cookies *)
 

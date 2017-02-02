@@ -17,18 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
-(*****************************************************************************)
-(*****************************************************************************)
-(* Ocsigen extension for rewriteing URLs                                     *)
-(* in the configuration file                                                 *)
-(*****************************************************************************)
-(*****************************************************************************)
+
+(* Rewrite URLs in the configuration file *)
 
 (* IMPORTANT WARNING
    It is really basic for now:
-    - rewrites only subpaths (and do not change get parameters)
-    - changes only ri_sub_path and ri_sub_path_tring
-   not ri_full_path and ri_full_path_string and ri_url_string and ri_url
+    - rewrites only subpaths (and doees not change get parameters)
+    - changes only ri_sub_path and ri_sub_path_string
+   not ri_full_path, nor ri_full_path_string, nor ri_url_string, nor ri_url
    This is probably NOT what we want ...
 *)
 

@@ -47,7 +47,10 @@ let http_status_match status_filter status =
   match status_filter with
   | None -> true
   | Some r ->
-    Netstring_pcre.string_match r (string_of_int status) 0 <> None
+    Netstring_pcre.string_match r
+      (string_of_int
+         Cohttp.Code.(code_of_status (status :> status_code))) 0
+    <> None
 
 (* Checks that the path specified in a userconf is correct.
    Currently, we check that the path does not contain ".." *)
@@ -65,7 +68,7 @@ let correct_user_local_file =
    If the parameter [usermode] is true, we check that the path
    is valid.
 *)
-let find_static_page ~request ~usermode ~dir ~err ~pathstring =
+let find_static_page ~request ~usermode ~dir ~(err : Cohttp.Code.status) ~pathstring =
   let status_filter, filename, root = match dir with
     | Dir d ->
       (false,
@@ -138,8 +141,7 @@ let gen ~usermode ?cache dir = function
         if not status_filter then
           answer
         else
-          Ocsigen_cohttp_server.Answer.set_status answer
-            (Cohttp.Code.status_of_code err)
+          Ocsigen_cohttp_server.Answer.set_status answer err
       in
       let answer =
         match cache with
@@ -162,7 +164,7 @@ let gen ~usermode ?cache dir = function
       Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return answer))
     and catch_block = function
       | Ocsigen_local_files.Failed_403 ->
-        Lwt.return (Ocsigen_extensions.Ext_next 403)
+        Lwt.return (Ocsigen_extensions.Ext_next `Forbidden)
       (* XXX We should try to leave an information about this error
          for later *)
       | Ocsigen_local_files.NotReadableDirectory ->

@@ -175,101 +175,85 @@ type request = {
   request_config : config_info;
 }
 
-type result = S.Answer.t
-
 exception Ocsigen_Is_a_directory = S.Ocsigen_Is_a_directory
 
 type answer =
   | Ext_do_nothing
   (** I don't want to do anything *)
-  | Ext_found of (unit -> result Lwt.t)
-  (** "OK stop! I will take the page.
-      You can start the following request of the same pipelined connection.
-      Here is the function to generate the page".
-      The extension must return Ext_found as soon as possible
-      when it is sure it is safe to start next request.
-      Usually immediately. But in some case, for example proxies,
-      you don't want the request of one connection to be handled in
-      different order. (for example revproxy.ml starts its requests
-      to another server before returning Ext_found, to ensure that all
-      requests are done in same order).
-  *)
-  | Ext_found_stop of (unit -> result Lwt.t)
+  | Ext_found of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
+  (** "OK stop! I will take the page.  You can start the following
+      request of the same pipelined connection.  Here is the function
+      to generate the page".  The extension must return Ext_found as
+      soon as possible when it is sure it is safe to start next
+      request.  Usually immediately. But in some case, for example
+      proxies, you don't want the request of one connection to be
+      handled in different order. (for example revproxy.ml starts its
+      requests to another server before returning Ext_found, to ensure
+      that all requests are done in same order). *)
+  | Ext_found_stop of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
   (** Found but do not try next extensions *)
-  | Ext_next of int (** Page not found. Try next extension.
-                        The integer is the HTTP error code.
-                        It is usally 404, but may be for ex 403 (forbidden)
-                        if you want another extension to try after a 403.
-                        Same as Ext_continue_with but does not change
-                        the request.
-                    *)
-  | Ext_stop_site of (Ocsigen_cookies.cookieset * int)
-  (** Error. Do not try next extension, but
-      try next site.
-      The integer is the HTTP error code, usally 403.
-  *)
-  | Ext_stop_host of (Ocsigen_cookies.cookieset * int)
+  | Ext_next of Cohttp.Code.status
+  (** Page not found. Try next extension. The status is usually
+      `Not_found, but may be for example `Forbidden (403) if you want
+      to try another extension afterwards. Same as Ext_continue_with
+      but does not change the request. *)
+  | Ext_stop_site of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  (** Error. Do not try next extension, but try next site. *)
+  | Ext_stop_host of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  (** Error.
+      Do not try next extension,
+      do not try next site,
+      but try next host. *)
+  | Ext_stop_all of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
   (** Error. Do not try next extension,
       do not try next site,
-      but try next host.
-      The integer is the HTTP error code, usally 403.
-  *)
-  | Ext_stop_all of (Ocsigen_cookies.cookieset * int)
-  (** Error. Do not try next extension,
-      do not try next site,
-      do not try next host.
-      The integer is the HTTP error code, usally 403.
-  *)
-  | Ext_continue_with of (request * Ocsigen_cookies.cookieset * int)
+      do not try next host. *)
+  | Ext_continue_with of
+      (request * Ocsigen_cookies.cookieset * Cohttp.Code.status)
   (** Used to modify the request before giving it to next extension.
-      The extension returns the request (possibly modified)
-      and a set of cookies if it wants to set or cookies
-      ({!Ocsigen_cookies.Cookies.empty} for no cookies).
-      You must add these cookies yourself in request if you
-      want them to be seen by subsequent extensions,
-      for example using {!Ocsigen_http_frame.compute_new_ri_cookies}.
-      The integer is usually equal to the error code received
-      from preceding extension (but you may want to modify it).
-  *)
+      The extension returns the request (possibly modified) and a set
+      of cookies if it wants to set or cookies
+      ({!Ocsigen_cookies.Cookies.empty} for no cookies).  You must add
+      these cookies yourself in request if you want them to be seen by
+      subsequent extensions, for example using
+      {!Ocsigen_http_frame.compute_new_ri_cookies}.  The status is
+      usually equal to the one received from preceding extension (but
+      you may want to modify it). *)
   | Ext_retry_with of request * Ocsigen_cookies.cookieset
-  (** Used to retry all the extensions with a new request.
-      The extension returns the request (possibly modified)
-      and a set of cookies if it wants to set or cookies
-      ({!Ocsigen_cookies.Cookies.empty} for no cookies).
-      You must add these cookies yourself in request if you
-      want them to be seen by subsequent extensions,
-      for example using {!Ocsigen_http_frame.compute_new_ri_cookies}.
-  *)
+  (** Used to retry all the extensions with a new request.  The
+      extension returns the request (possibly modified) and a set of
+      cookies if it wants to set or cookies
+      ({!Ocsigen_cookies.Cookies.empty} for no cookies).  You must add
+      these cookies yourself in request if you want them to be seen by
+      subsequent extensions, for example using
+      {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
   | Ext_sub_result of extension2
   (** Used if your extension want to define option that may contain
-      other options from other extensions.
-      In that case, while parsing the configuration file, call
-      the parsing function (of type [parse_fun]),
-      that will return something of type [extension2].
-  *)
-  | Ext_found_continue_with of (unit -> (result * request) Lwt.t)
+      other options from other extensions.  In that case, while
+      parsing the configuration file, call the parsing function (of
+      type [parse_fun]), that will return something of type
+      [extension2]. *)
+  | Ext_found_continue_with of
+      (unit -> (Ocsigen_cohttp_server.Answer.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of (result * request)
+  | Ext_found_continue_with' of
+      (Ocsigen_cohttp_server.Answer.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
-      the computation of the page. You should probably not use it,
-      but for output filters.
-  *)
+      the computation of the page. You should probably not use it, but
+      for output filters. *)
 
 and request_state =
-  | Req_not_found of (int * request)
-  | Req_found of (request * result)
+  | Req_not_found of (Cohttp.Code.status * request)
+  | Req_found of (request * Ocsigen_cohttp_server.Answer.t)
 
 and extension2 =
   Ocsigen_cookies.cookieset ->
   request_state ->
   (answer * Ocsigen_cookies.cookieset) Lwt.t
 
-
 type extension = request_state -> answer Lwt.t
 
-
 type parse_fun = Simplexmlparser.xml list -> extension2
-
 
 type parse_host =
     Parse_host of
@@ -285,12 +269,10 @@ let set_hosts v = hosts := v
 let get_hosts () = !hosts
 
 let update_path
-    {
-      request_info =
+    { request_info =
         ({ S.Request.r_request }
          as request_info);
-      request_config
-    }
+      request_config }
     path =
   let request_info =
     let r_request =
@@ -303,7 +285,24 @@ let update_path
     in
     { request_info with S.Request.r_request }
   in
-  {request_info ; request_config}
+  { request_info ; request_config }
+
+let update_ips ?forward_ip { request_info ; request_config } s =
+  let r_forward_ip =
+    match forward_ip with
+    | Some forward_ip ->
+      forward_ip
+    | None ->
+      request_info.r_forward_ip
+  in
+  { request_info =
+      { request_info with
+        r_remote_ip = lazy s ;
+        r_remote_ip_parsed = lazy (Ipaddr.of_string_exn s) ;
+        r_forward_ip
+      } ;
+    request_config
+  }
 
 (* Default hostname is either the Host header or the hostname set in
    the configuration file. *)
@@ -904,7 +903,11 @@ let compute_result ?(previous_cookies = Ocsigen_cookies.Cookies.empty) ri =
     if S.Request.tries ri > Ocsigen_config.get_maxretries () then
       Lwt.fail Ocsigen_Looping_request
     else
-      let rec aux_host ri prev_err cookies_to_set = function
+      let rec aux_host
+          ri
+          (prev_err : Cohttp.Code.status)
+          cookies_to_set =
+        function
         | [] -> Lwt.fail (Ocsigen_http_error (cookies_to_set, prev_err))
         | (h, conf_info, host_function)::l when
             host_match ~virtual_hosts:h ~host ~port ->
@@ -956,7 +959,7 @@ let compute_result ?(previous_cookies = Ocsigen_cookies.Cookies.empty) ri =
             (fun () -> string_of_host_option) host
             (fun () -> string_of_host) h;
           aux_host ri prev_err cookies_to_set l
-      in aux_host ri 404 cookies_to_set sites
+      in aux_host ri `Not_found cookies_to_set sites
   in
 
   do2 (get_hosts ()) previous_cookies ri
