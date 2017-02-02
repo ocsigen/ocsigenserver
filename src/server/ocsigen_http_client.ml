@@ -292,7 +292,9 @@ let handle_connection_error fd exn = match exn with
     >>= fun () ->  Lwt.fail
       (Ocsigen_http_frame.Http_error.Http_exception
          (504, Some "Distant server closed connection", None))
-  | e -> Lwt_unix.close fd >>= fun () ->  Lwt.fail e
+  | e ->
+    Lwt.catch (fun () -> Lwt_unix.close fd) (fun _ -> Lwt.return ())
+    >>= fun () ->  Lwt.fail e
 
 
 let raw_request
@@ -560,7 +562,13 @@ let raw_request
           Lwt_log.ign_info ~section ~exn
             "exception while trying to keep free connection";
           !ref_thr_conn >>= fun conn ->
-          Lwt_ssl.close (Ocsigen_http_com.connection_fd conn)
+          (* We can arrive here when there the server has closed the
+             connection. In this case, we have already closed the
+             connection as well, and we should ignore the error
+             when attempting to close it again below. *)
+          Lwt.catch
+            (fun () -> Lwt_ssl.close (Ocsigen_http_com.connection_fd conn))
+            (fun _ -> Lwt.return ())
       in
       if do_keep_alive then begin
         match key_new_waiter with
