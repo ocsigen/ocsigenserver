@@ -28,10 +28,10 @@ cgimod.cmx : ../baselib/ocsigen_stream.cmx ../http/ocsigen_senders.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
     ../baselib/ocsigen_config.cmx ../http/http_headers.cmx \
     ../http/framepp.cmx
-cors.cmo : ../server/ocsigen_request_info.cmi ../baselib/ocsigen_lib.cmi \
+cors.cmo : ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../server/ocsigen_extensions.cmi \
     ../http/http_headers.cmi ../http/framepp.cmi
-cors.cmx : ../server/ocsigen_request_info.cmx ../baselib/ocsigen_lib.cmx \
+cors.cmx : ../baselib/ocsigen_lib.cmx \
     ../http/ocsigen_http_frame.cmx ../server/ocsigen_extensions.cmx \
     ../http/http_headers.cmx ../http/framepp.cmx
 deflatemod.cmo : ../baselib/ocsigen_stream.cmi \

@@ -96,12 +96,13 @@ let rec parse_condition = function
   | Element ("header", ["name", name; "regexp", reg], []) ->
     let regexp =
       try
-        Netstring_pcre.regexp ("^"^reg^"$")
+        Netstring_pcre.regexp ("^" ^ reg ^ "$")
       with Failure _ ->
         Ocsigen_extensions.badconfig
           "Bad regular expression [%s] in <header> condition"
           reg
     in
+
     (fun ri ->
        let r =
          List.exists
@@ -110,7 +111,8 @@ let rec parse_condition = function
               if r then
                 Lwt_log.ign_info_f "HEADER: header %s matches %S" name reg;
               r)
-           (Ocsigen_cohttp_server.Request.header_multi ri name)
+           (Ocsigen_cohttp_server.Request.header_multi ri
+              (Http_headers.name name))
        in
        if not r
        then Lwt_log.ign_info_f "HEADER: header %s does not match %S" name reg;
@@ -328,7 +330,8 @@ let parse_config parse_fun = function
       let request =
         let header =
           Ocsigen_cohttp_server.Request.header
-            request_info "X-Forwarded-For"
+            request_info
+            Http_headers.x_forwarded_for
         in
         match header with
         | Some header ->
@@ -391,7 +394,7 @@ let parse_config parse_fun = function
         let header =
           Ocsigen_cohttp_server.Request.header
             request_info
-            "X-Forwarded-Proto"
+            Http_headers.x_forwarded_proto
         in
         match header with
         | Some header ->

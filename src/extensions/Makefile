@@ -22,7 +22,7 @@ all: byte opt
 
 ### Extensions ###
 
-FILES := staticmod.ml authbasic.ml redirectmod.ml accesscontrol.ml
+FILES := accesscontrol.ml authbasic.ml cors.ml staticmod.ml redirectmod.ml
          # cgimod.ml              \
          # revproxy.ml            \
          # extensiontemplate.ml   \
@@ -32,7 +32,6 @@ FILES := staticmod.ml authbasic.ml redirectmod.ml accesscontrol.ml
          # rewritemod.ml          \
          # extendconfiguration.ml \
          # ocsigen_comet.ml       \
-         # cors.ml                \
 
 ifeq "$(CAMLZIP)" "YES"
 FILES += deflatemod.ml

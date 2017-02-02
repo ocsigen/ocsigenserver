@@ -157,8 +157,8 @@ let gen ~usermode ?cache dir = function
                 (Unix.time () +. float_of_int duration)
           in
           Ocsigen_cohttp_server.Answer.replace_headers answer [
-            "Cache-Control" , cache_control ;
-            "Expires"       , expires       ;
+            Http_headers.cache_control , cache_control ;
+            Http_headers.expires       , expires       ;
           ]
       in
       Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return answer))

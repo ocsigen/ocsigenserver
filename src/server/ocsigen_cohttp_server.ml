@@ -93,11 +93,11 @@ module Request = struct
 
   let header {r_request} id =
     let h = Cohttp.Request.headers r_request in
-    Cohttp.Header.get h id
+    Cohttp.Header.get h (Http_headers.name_to_string id)
 
   let header_multi {r_request} id =
     let h = Cohttp.Request.headers r_request in
-    Cohttp.Header.get_multi h id
+    Cohttp.Header.get_multi h (Http_headers.name_to_string id)
 
   (* let remote_address {r_sockaddr} = *)
   (*   Ocsigen_socket.ip_of_sockaddr r_sockaddr *)
@@ -161,7 +161,9 @@ module Answer = struct
     let headers =
       List.fold_left
         (fun headers (id, content) ->
-           Cohttp.Header.replace headers id content)
+           Cohttp.Header.replace headers
+             (Http_headers.name_to_string id)
+             content)
         (Cohttp.Response.headers a_response)
         l
     in

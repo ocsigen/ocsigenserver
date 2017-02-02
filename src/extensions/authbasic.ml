@@ -96,7 +96,7 @@ let gen ~realm ~auth rs =
     (match
        Ocsigen_cohttp_server.Request.header
          ri.Ocsigen_extensions.request_info
-         "Authorization"
+         Http_headers.authorization
      with
      | Some s ->
        validate ~err s

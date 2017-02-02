@@ -60,9 +60,9 @@ module Request : sig
 
   val sub_path_string : t -> string
 
-  val header : t -> string -> string option
+  val header : t -> Http_headers.name -> string option
 
-  val header_multi : t -> string -> string list
+  val header_multi : t -> Http_headers.name -> string list
 
   val remote_ip : t -> string
 
@@ -104,7 +104,7 @@ module Answer : sig
 
   val add_cookies : t -> Ocsigen_cookies.cookieset -> t
 
-  val replace_headers : t -> (string * string) list -> t
+  val replace_headers : t -> (Http_headers.name * string) list -> t
 
 end
 
