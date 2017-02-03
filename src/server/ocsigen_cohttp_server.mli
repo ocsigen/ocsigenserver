@@ -12,22 +12,11 @@ end
 
 module Request : sig
 
-  type t = {
-    r_address : Unix.inet_addr ;
-    r_port : int ;
-    r_filenames : string list ref ;
-    r_sockaddr : Lwt_unix.sockaddr ;
-    r_remote_ip : string Lazy.t ;
-    r_remote_ip_parsed : Ipaddr.t Lazy.t ;
-    r_forward_ip : string list ;
-    r_request : Cohttp.Request.t ;
-    r_body : Cohttp_lwt_body.t ;
-    r_waiter : unit Lwt.t ;
-    mutable r_tries : int
-  }
+  type t
 
   val make :
     ?forward_ip : string list ->
+    ?sub_path : string ->
     address : Unix.inet_addr ->
     port : int ->
     filenames : string list ref ->
@@ -37,6 +26,16 @@ module Request : sig
     waiter : unit Lwt.t ->
     unit ->
     t
+
+  val update :
+    ?forward_ip : string list ->
+    ?remote_ip : string ->
+    ?ssl : bool ->
+    ?request : Cohttp.Request.t ->
+    t ->
+    t
+
+  val request : t -> Cohttp.Request.t
 
   val address : t -> Unix.inet_addr
 
@@ -68,11 +67,11 @@ module Request : sig
 
   val remote_ip_parsed : t -> Ipaddr.t
 
+  val forward_ip : t -> string list
+
   val tries : t -> int
 
   val incr_tries : t -> unit
-
-  val set_ssl : t -> bool -> t
 
 end
 

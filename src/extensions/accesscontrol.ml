@@ -357,10 +357,14 @@ let parse_config parse_fun = function
                    "Bad syntax for argument of tag allow-forward-for"
              in
              if equal_ip || not need_equal_ip then
-               Ocsigen_extensions.update_ips
-                 ~forward_ip:proxies
-                 request
-                 original_ip
+               { request
+                 with
+                   Ocsigen_extensions.request_info =
+                     Ocsigen_cohttp_server.Request.update
+                       ~forward_ip:proxies
+                       ~remote_ip:original_ip
+                       request_info
+               }
              else (* the announced ip of the proxy is not its real ip *)
                (Lwt_log.ign_warning_f ~section
                   "X-Forwarded-For: host ip (%s) \
@@ -400,9 +404,9 @@ let parse_config parse_fun = function
         | Some header ->
           (match String.lowercase header with
            | "http" ->
-             Ocsigen_cohttp_server.Request.set_ssl request_info false
+             Ocsigen_cohttp_server.Request.update ~ssl:false request_info
            | "https" ->
-             Ocsigen_cohttp_server.Request.set_ssl request_info true
+             Ocsigen_cohttp_server.Request.update ~ssl:true request_info
            | _ ->
              Lwt_log.ign_info_f ~section
                "Malformed X-Forwarded-Proto field: %s" header;

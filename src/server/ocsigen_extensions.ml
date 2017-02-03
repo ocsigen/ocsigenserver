@@ -269,40 +269,21 @@ let set_hosts v = hosts := v
 let get_hosts () = !hosts
 
 let update_path
-    { request_info =
-        ({ S.Request.r_request }
-         as request_info);
-      request_config }
+    { request_info ; request_config }
     path =
+  let r = Ocsigen_cohttp_server.Request.request request_info in
   let request_info =
-    let r_request =
-      let meth     = Cohttp.Request.meth r_request
-      and version  = Cohttp.Request.version r_request
-      and encoding = Cohttp.Request.encoding r_request
-      and headers  = Cohttp.Request.headers r_request
-      and uri      = Uri.with_path (Cohttp.Request.uri r_request) path in
+    let request =
+      let meth     = Cohttp.Request.meth r
+      and version  = Cohttp.Request.version r
+      and encoding = Cohttp.Request.encoding r
+      and headers  = Cohttp.Request.headers r
+      and uri      = Uri.with_path (Cohttp.Request.uri r) path in
       Cohttp.Request.make ~meth ~version ~encoding ~headers uri
     in
-    { request_info with S.Request.r_request }
+    Ocsigen_cohttp_server.Request.update ~request request_info
   in
   { request_info ; request_config }
-
-let update_ips ?forward_ip { request_info ; request_config } s =
-  let r_forward_ip =
-    match forward_ip with
-    | Some forward_ip ->
-      forward_ip
-    | None ->
-      request_info.r_forward_ip
-  in
-  { request_info =
-      { request_info with
-        r_remote_ip = lazy s ;
-        r_remote_ip_parsed = lazy (Ipaddr.of_string_exn s) ;
-        r_forward_ip
-      } ;
-    request_config
-  }
 
 (* Default hostname is either the Host header or the hostname set in
    the configuration file. *)

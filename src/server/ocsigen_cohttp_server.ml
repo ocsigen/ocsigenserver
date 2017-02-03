@@ -26,14 +26,14 @@ module Request = struct
     r_forward_ip : string list ;
     r_request : Cohttp.Request.t ;
     r_body : Cohttp_lwt_body.t ;
+    r_sub_path : string option ;
     r_waiter : unit Lwt.t ;
     mutable r_tries : int
   }
 
   let make
-      ?(forward_ip = [])
-      ~address ~port ~filenames ~sockaddr ~request ~body ~waiter ()
-    =
+      ?(forward_ip = []) ?sub_path
+      ~address ~port ~filenames ~sockaddr ~request ~body ~waiter () =
     let r_remote_ip =
       lazy
         (Unix.string_of_inet_addr
@@ -52,10 +52,43 @@ module Request = struct
       r_forward_ip = forward_ip ;
       r_request = request ;
       r_body = body ;
+      r_sub_path = sub_path ;
       r_waiter = waiter ;
       r_tries = 0
     }
 
+  let update
+      ?forward_ip ?remote_ip ?ssl ?request
+      ({
+        r_request ;
+        r_forward_ip ;
+        r_remote_ip ;
+        r_remote_ip_parsed
+      } as r) =
+    (* FIXME : ssl *)
+    let r_request =
+      match request with
+      | Some request ->
+        request
+      | None ->
+        r_request
+    and r_forward_ip =
+      match forward_ip with
+      | Some forward_ip ->
+        forward_ip
+      | None ->
+        r_forward_ip
+    and r_remote_ip, r_remote_ip_parsed =
+      match remote_ip with
+      | Some remote_ip ->
+        lazy remote_ip, lazy (Ipaddr.of_string_exn remote_ip)
+      | None ->
+        r_remote_ip, r_remote_ip_parsed
+    in
+    { r with r_request ; r_forward_ip ; r_remote_ip ; r_remote_ip_parsed }
+
+  let request {r_request} =
+    r_request
 
   let address {r_address} =
     r_address
@@ -85,11 +118,14 @@ module Request = struct
   let path r =
     Ocsigen_lib.Url.split_path (path_string r)
 
-  (* FIXME *)
-  let sub_path_string = path_string
+  let sub_path_string = function
+    | {r_sub_path = Some r_sub_path} ->
+      r_sub_path
+    | r ->
+      path_string r
 
-  (* FIXME *)
-  let sub_path = path
+  let sub_path r =
+    Ocsigen_lib.Url.split_path (sub_path_string r)
 
   let header {r_request} id =
     let h = Cohttp.Request.headers r_request in
@@ -99,25 +135,15 @@ module Request = struct
     let h = Cohttp.Request.headers r_request in
     Cohttp.Header.get_multi h (Http_headers.name_to_string id)
 
-  (* let remote_address {r_sockaddr} = *)
-  (*   Ocsigen_socket.ip_of_sockaddr r_sockaddr *)
-
-  (* let remote_ip r = *)
-  (*   Unix.string_of_inet_addr (remote_address r) *)
-
-  (* let remote_ip_parsed r = *)
-  (*   Ipaddr.of_string_exn (remote_ip r) *)
-
   let remote_ip {r_remote_ip} = Lazy.force r_remote_ip
 
   let remote_ip_parsed {r_remote_ip_parsed} = Lazy.force r_remote_ip_parsed
 
+  let forward_ip {r_forward_ip} = r_forward_ip
+
   let tries {r_tries} = r_tries
 
   let incr_tries r = r.r_tries <- r.r_tries + 1
-
-  (* FIXME *)
-  let set_ssl r _ = r
 
 end
 

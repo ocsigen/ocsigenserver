@@ -445,12 +445,6 @@ val set_hosts : (virtual_hosts * config_info * extension2) list -> unit
 
 val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
 
-val update_ips :
-  ?forward_ip : string list ->
-  request ->
-  string ->
-  request
-
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
 val compute_result :
