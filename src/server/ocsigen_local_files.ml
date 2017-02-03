@@ -16,16 +16,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
-open Ocsigen_extensions
 
-(* Displaying of a local file or directory. Currently used in
-   staticmod and eliom_predefmod*)
+(* Display of a local file or directory. Currently used in staticmod
+   and eliom_predefmod *)
 
 let section = Lwt_log.Section.make "ocsigen:local-file"
 exception Failed_403
 exception Failed_404
 exception NotReadableDirectory
-
 
 (* Policies for following symlinks *)
 type symlink_policy =
@@ -90,9 +88,12 @@ let check_symlinks ~no_check_for ~filename policy =
       check_symlinks_parent_directories filename no_check_for policy
   in
   match policy with
-  | AlwaysFollowSymlinks -> true
-  | DoNotFollowSymlinks -> aux never_follow_symlinks
-  | FollowSymlinksIfOwnerMatch -> aux follow_symlinks_if_owner_match
+  | Ocsigen_extensions.AlwaysFollowSymlinks ->
+    true
+  | Ocsigen_extensions.DoNotFollowSymlinks ->
+    aux never_follow_symlinks
+  | Ocsigen_extensions.FollowSymlinksIfOwnerMatch ->
+    aux follow_symlinks_if_owner_match
 
 let check_dotdot =
   let regexp = Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
@@ -111,11 +112,11 @@ let can_send filename request =
     Netstring_pcre.string_match (Ocsigen_extensions.do_not_serve_to_regexp arg)
       filename 0 <> None
   in
-  if matches request.do_not_serve_403 then (
+  if matches request.Ocsigen_extensions.do_not_serve_403 then (
     Lwt_log.ign_info ~section "this file is forbidden";
     raise Failed_403)
   else
-    if matches request.do_not_serve_404 then (
+    if matches request.Ocsigen_extensions.do_not_serve_404 then (
       Lwt_log.ign_info ~section "this file must be hidden";
       raise Failed_404)
 
@@ -143,7 +144,10 @@ type resolved =
    - otherwise returns [filename]
 *)
 (* See also module Files in eliom.ml *)
-let resolve ?no_check_for ~request ~filename () =
+let resolve
+    ?no_check_for
+    ~request:({Ocsigen_extensions.request_config} as request)
+    ~filename () =
   (* We only accept absolute filenames in daemon mode,
      as we do not really know what is the current directory *)
   let filename =
@@ -170,10 +174,10 @@ let resolve ?no_check_for ~request ~filename () =
           let rec find_index = function
             | [] ->
                 (* No suitable index, we try to list the directory *)
-                if request.request_config.list_directory_content then (
+                if request_config.Ocsigen_extensions.list_directory_content then (
                   Lwt_log.ign_info ~section "Displaying directory content";
-                  (filename, stat))
-                else (
+                  (filename, stat)
+                ) else (
                   (* No suitable index *)
                   Lwt_log.ign_info ~section "No index and no listing";
                   raise NotReadableDirectory)
@@ -184,7 +188,9 @@ let resolve ?no_check_for ~request ~filename () =
                   (index, Unix.LargeFile.stat index)
                 with
                   | Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q
-          in find_index request.request_config.default_directory_index
+          in
+          find_index
+            request_config.Ocsigen_extensions.default_directory_index
 
       else (filename, stat)
     in
@@ -193,9 +199,9 @@ let resolve ?no_check_for ~request ~filename () =
       (Lwt_log.ign_info_f ~section "Filenames cannot contain .. as in \"%s\"." filename;
        raise Failed_403)
     else if check_symlinks ~filename ~no_check_for
-        request.request_config.follow_symlinks
+        request_config.Ocsigen_extensions.follow_symlinks
     then (
-      can_send filename request.request_config;
+      can_send filename request_config;
       (* If the previous function did not fail, we are authorized to
          send this file *)
         Lwt_log.ign_info_f ~section "Returning \"%s\"." filename;
@@ -217,19 +223,19 @@ let resolve ?no_check_for ~request ~filename () =
 
 
 (* Given a local file or directory, we retrieve its content *)
-let content ~request ~file =
+let content
+    ~request:{ Ocsigen_extensions.request_config =
+                 { Ocsigen_extensions.charset_assoc ; mime_assoc } ;
+               request_info
+             }
+    ~file =
   try
     match file with
     | RDir dirname ->
       Ocsigen_senders.Directory_content.result_of_content
-        (dirname,
-         Ocsigen_cohttp_server.Request.path request.request_info)
+        (dirname, Ocsigen_cohttp_server.Request.path request_info)
     | RFile filename ->
       Ocsigen_senders.File_content.result_of_content
-        (filename,
-         request.request_config.charset_assoc,
-         request.request_config.mime_assoc
-        )
-
+        (filename, charset_assoc, mime_assoc)
   with
   | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403

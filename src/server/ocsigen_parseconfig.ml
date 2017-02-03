@@ -21,9 +21,7 @@
 (******************************************************************)
 (** Config file parsing *)
 
-open Ocsigen_lib
 open Ocsigen_socket
-
 open Simplexmlparser
 open Ocsigen_config
 
@@ -31,7 +29,7 @@ let section = Lwt_log.Section.make "ocsigen:config"
 
 let blah_of_string f tag s =
   try
-    f (String.remove_spaces s 0 ((String.length s) -1))
+    f (Ocsigen_lib.String.remove_spaces s 0 ((String.length s) -1))
   with Failure _ -> raise (Ocsigen_config.Config_file_error
                              ("While parsing <"^tag^"> - "^s^
                               " is not a valid value."))
@@ -77,7 +75,7 @@ let parse_size =
   let tebi = Int64.mul mebi mebi in
   fun s ->
     let l = String.length s in
-    let s = String.remove_spaces s 0 (l-1) in
+    let s = Ocsigen_lib.String.remove_spaces s 0 (l-1) in
     let v l =
       try
         Int64.of_string (String.sub s 0 l)

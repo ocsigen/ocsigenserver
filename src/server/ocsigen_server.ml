@@ -18,17 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Lwt
-open Ocsigen_messages
-open Ocsigen_socket
-open Ocsigen_lib
-open Ocsigen_extensions
-open Ocsigen_http_frame
-open Ocsigen_headers
-open Ocsigen_config
-open Ocsigen_parseconfig
-open Ocsigen_cookies
-open Lazy
+open Lwt.Infix
 
 let () = Random.self_init ()
 
@@ -51,12 +41,15 @@ let _ =
 let warn sockaddr s =
   Lwt_log.ign_warning_f ~section "While talking to %a:%s"
     (fun () sockaddr ->
-       Unix.string_of_inet_addr (ip_of_sockaddr sockaddr)) sockaddr s
+       Unix.string_of_inet_addr (Ocsigen_socket.ip_of_sockaddr sockaddr))
+    sockaddr s
+
 let dbg sockaddr s =
   Lwt_log.ign_info_f ~section "While talking to %a:%s"
     (fun () sockaddr ->
-       Unix.string_of_inet_addr (ip_of_sockaddr sockaddr)) sockaddr s
-
+       Unix.string_of_inet_addr
+         (Ocsigen_socket.ip_of_sockaddr sockaddr))
+    sockaddr s
 
 let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 
@@ -99,7 +92,7 @@ let reload_conf s =
   try
     Ocsigen_extensions.start_initialisation ();
 
-    parse_server true s;
+    Ocsigen_parseconfig.parse_server true s;
 
     Ocsigen_extensions.end_initialisation ();
   with e ->
@@ -112,13 +105,13 @@ let reload ?file () =
   (* That function cannot be interrupted??? *)
   Lwt_log.ign_warning ~section "Reloading config file" ;
   (try
-     match parse_config ?file () with
+     match Ocsigen_parseconfig.parse_config ?file () with
      | [] -> ()
      | s::_ -> reload_conf s
-   with e -> errlog (fst (errmsg e)));
+   with e -> Ocsigen_messages.errlog (fst (errmsg e)));
 
   (try
-     match parse_config ?file () with
+     match Ocsigen_parseconfig.parse_config ?file () with
      | [] -> ()
      | s::_ -> reload_conf s
    with e -> Lwt_log.ign_error ~section (fst (errmsg e)));
@@ -153,7 +146,7 @@ let start_server () = try
        code) loaded from now on will be executed directly. *)
     Ocsigen_loader.set_init_on_load true;
 
-    let config_servers = parse_config () in
+    let config_servers = Ocsigen_parseconfig.parse_config () in
 
     let number_of_servers = List.length config_servers in
 
@@ -242,7 +235,7 @@ let start_server () = try
         | Some group ->
           try (Unix.getgrnam group).Unix.gr_gid
           with Not_found as e ->
-            errlog ("Error: Wrong group");
+            Ocsigen_messages.errlog ("Error: Wrong group");
             raise e
       in
 
@@ -251,12 +244,12 @@ let start_server () = try
         | Some user ->
           try (Unix.getpwnam user).Unix.pw_uid
           with Not_found as e ->
-            errlog ("Error: Wrong user");
+            Ocsigen_messages.errlog ("Error: Wrong user");
             raise e
       in
 
       (* A pipe to communicate with the server *)
-      let commandpipe = get_command_pipe () in
+      let commandpipe = Ocsigen_config.get_command_pipe () in
       begin
         try
           ignore (Unix.stat commandpipe);
@@ -297,7 +290,8 @@ let start_server () = try
       if maxthreads < minthreads
       then
         raise
-          (Config_file_error "maxthreads should be greater than minthreads");
+          (Ocsigen_config.Config_file_error
+             "maxthreads should be greater than minthreads");
 
       ignore (Ocsigen_config.init_preempt
                 minthreads
@@ -310,7 +304,7 @@ let start_server () = try
 
       Ocsigen_extensions.start_initialisation ();
 
-      parse_server false s;
+      Ocsigen_parseconfig.parse_server false s;
 
       Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
       (* As libraries are reloaded each time the config file is read,
@@ -345,11 +339,11 @@ let start_server () = try
         (Lwt.catch
            (fun () ->
               let prefix, c =
-                match String.split ~multisep:true ' ' s with
+                match Ocsigen_lib.String.split ~multisep:true ' ' s with
                 | [] -> raise Ocsigen_command.Unknown_command
                 | a::l ->
                   try
-                    let aa, ab = String.sep ':' a in
+                    let aa, ab = Ocsigen_lib.String.sep ':' a in
                     (Some aa, (ab::l))
                   with Not_found -> None, (a::l)
               in
@@ -450,9 +444,11 @@ let start_server () = try
     let rec launch = function
       | [] -> ()
       | [h] ->
-        let user_info, sslinfo, threadinfo = extract_info h in
+        let user_info, sslinfo, threadinfo =
+          Ocsigen_parseconfig.extract_info h
+        in
         (* set_passwd_if_needed sslinfo; *)
-        if (get_daemon ())
+        if Ocsigen_config.get_daemon ()
         then
           let pid = Unix.fork () in
           if pid = 0
@@ -474,4 +470,4 @@ let start_server () = try
 
   with e ->
     let msg, errno = errmsg e in
-    errlog msg; exit errno
+    Ocsigen_messages.errlog msg; exit errno

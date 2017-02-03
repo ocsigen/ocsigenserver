@@ -1,7 +1,4 @@
-open Lwt
-open Ocsigen_lib
-open Cohttp
-open Cohttp_lwt_unix
+open Lwt.Infix
 
 let target https host ?port uri =
   let scheme = if https then "https" else "http" in

@@ -1,5 +1,3 @@
-open Ocsigen_lib
-
 type socket_type =
   | All
   | IPv4 of Unix.inet_addr

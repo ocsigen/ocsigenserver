@@ -24,11 +24,7 @@
 (*****************************************************************************)
 (*****************************************************************************)
 
-(** Writing extensions for Ocsigen                                           *)
-
-open Lwt
-open Ocsigen_lib
-open Ocsigen_cookies
+(** Extensions interface for Ocsigen Server *)
 
 include (module type of Ocsigen_command)
 
@@ -261,7 +257,7 @@ type parse_config =
 and parse_config_user =
   userconf_info -> parse_config
 and parse_config_aux =
-    Url.path -> parse_host ->
+    Ocsigen_lib.Url.path -> parse_host ->
     (parse_fun -> Simplexmlparser.xml ->
      extension
     )
@@ -439,7 +435,8 @@ val find_redirection :
 (**/**)
 (**/**)
 
-val make_parse_config : Url.path -> parse_config_aux -> parse_fun
+val make_parse_config :
+  Ocsigen_lib.Url.path -> parse_config_aux -> parse_fun
 
 val parse_config_item : parse_config
 val parse_user_site_item : parse_config_user
