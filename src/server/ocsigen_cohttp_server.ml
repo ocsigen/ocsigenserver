@@ -31,6 +31,9 @@ module Request = struct
     mutable r_tries : int
   }
 
+  (* FIXME: old ocsigenserver used to store original_full_path. Do we
+     really need that? *)
+
   let make
       ?(forward_ip = []) ?sub_path
       ~address ~port ~filenames ~sockaddr ~request ~body ~waiter () =
@@ -86,6 +89,16 @@ module Request = struct
         r_remote_ip, r_remote_ip_parsed
     in
     { r with r_request ; r_forward_ip ; r_remote_ip ; r_remote_ip_parsed }
+
+  let update_url ?(full_rewrite = false) url ({r_request} as r) =
+    let r_request =
+      let meth = Cohttp.Request.meth r_request
+      and version = Cohttp.Request.version r_request
+      and encoding = Cohttp.Request.encoding r_request
+      and headers = Cohttp.Request.headers r_request in
+      Cohttp.Request.make ~meth ~version ~encoding ~headers url
+    and r_sub_path = None in
+    { r with r_request ; r_sub_path }
 
   let request {r_request} =
     r_request

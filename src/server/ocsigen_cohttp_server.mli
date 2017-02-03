@@ -35,6 +35,12 @@ module Request : sig
     t ->
     t
 
+  val update_url :
+    ?full_rewrite : bool ->
+    Uri.t ->
+    t ->
+    t
+
   val request : t -> Cohttp.Request.t
 
   val address : t -> Unix.inet_addr

@@ -66,19 +66,21 @@ let gen regexp continue = function
         Lwt.return @@ Ocsigen_extensions.Ext_continue_with
           ({ ri with
              Ocsigen_extensions.request_info =
-               Ocsigen_extensions.ri_of_url
+               Ocsigen_cohttp_server.Request.update_url
                  ~full_rewrite
-                 redir
-                 ri.Ocsigen_extensions.request_info },
+                 (Uri.of_string redir)
+                 ri.Ocsigen_extensions.request_info
+           },
            Ocsigen_cookies.Cookies.empty,
            err)
       else
         Lwt.return @@ Ocsigen_extensions.Ext_retry_with
           ({ ri with
              Ocsigen_extensions.request_info =
-               Ocsigen_extensions.ri_of_url
+               Ocsigen_cohttp_server.Request.update_url
                  ~full_rewrite
-                 redir ri.Ocsigen_extensions.request_info },
+                 (Uri.of_string redir)
+                 ri.Ocsigen_extensions.request_info },
            Ocsigen_cookies.Cookies.empty)
     and catch_block = function
       | Ocsigen_extensions.Not_concerned ->
