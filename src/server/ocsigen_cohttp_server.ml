@@ -381,15 +381,29 @@ let handler ~address ~port ~connector (flow, conn) request body =
       !filenames;
 
   (* TODO: equivalent of Ocsigen_range *)
-
-  connector
-    (Request.make
-       ~address ~port ~filenames ~sockaddr ~request ~body ~waiter ())
-  >>= fun { Answer.a_response ; a_body } ->
-
   (* TODO: handle cookies *)
 
-  Lwt.return (a_response, a_body)
+  let request =
+    Request.make
+      ~address ~port ~filenames ~sockaddr ~request ~body ~waiter
+      ()
+
+  in
+
+  Lwt.catch
+    (fun () ->
+       connector request >>= fun { Answer.a_response ; a_body } ->
+       Lwt.return (a_response, a_body))
+    (function
+      | Ocsigen_Is_a_directory fun_request ->
+        Cohttp_lwt_unix.Server.respond_redirect
+          ~uri:
+            (fun_request request
+             |> Neturl.string_of_url
+             |> Uri.of_string)
+          ()
+      | exn ->
+        handle_error exn)
 
 let conn_closed (flow, conn) =
   try let wakener = Hashtbl.find waiters conn in
