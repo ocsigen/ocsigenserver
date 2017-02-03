@@ -26,7 +26,6 @@ FILES := accesscontrol.ml authbasic.ml cors.ml outputfilter.ml \
 	 redirectmod.ml rewritemod.ml staticmod.ml
          # cgimod.ml              \
          # revproxy.ml            \
-         # extensiontemplate.ml   \
          # userconf.ml            \
          # extendconfiguration.ml \
          # ocsigen_comet.ml       \

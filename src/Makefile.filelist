@@ -64,7 +64,6 @@ PLUGINS_IMPL := extensions/staticmod.cmo \
                 extensions/redirectmod.cmo
                 # extensions/cgimod.cmo              \
                 # extensions/revproxy.cmo            \
-                # extensions/extensiontemplate.cmo   \
                 # extensions/accesscontrol.cmo       \
                 # extensions/userconf.cmo            \
                 # extensions/outputfilter.cmo        \

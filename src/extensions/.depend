@@ -48,10 +48,6 @@ extendconfiguration.cmo : ../server/ocsigen_parseconfig.cmi \
 extendconfiguration.cmx : ../server/ocsigen_parseconfig.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
     ../baselib/ocsigen_config.cmx ../http/ocsigen_charset_mime.cmx
-extensiontemplate.cmo : ../http/ocsigen_senders.cmi \
-    ../server/ocsigen_extensions.cmi
-extensiontemplate.cmx : ../http/ocsigen_senders.cmx \
-    ../server/ocsigen_extensions.cmx
 ocsigen_comet.cmo : ../baselib/ocsigen_stream.cmi \
     ../server/ocsigen_request_info.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../server/ocsigen_extensions.cmi \
