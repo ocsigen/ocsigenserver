@@ -54,23 +54,15 @@ endif
 
 PLUGINS_BIN  :=
 
-PLUGINS_INTF := extensions/authbasic.cmi
+PLUGINS_INTF := extensions/authbasic.cmi extensions/accesscontrol.cmi
                 # extensions/ocsigen_comet.cmi       \
                 # extensions/accesscontrol.cmi       \
                 # extensions/ocsipersist.cmi         \
 
-PLUGINS_IMPL := extensions/staticmod.cmo \
-                extensions/authbasic.cmo \
-                extensions/redirectmod.cmo
-                # extensions/cgimod.cmo              \
-                # extensions/revproxy.cmo            \
-                # extensions/accesscontrol.cmo       \
-                # extensions/userconf.cmo            \
-                # extensions/outputfilter.cmo        \
-                # extensions/rewritemod.cmo          \
-                # extensions/extendconfiguration.cmo \
-                # extensions/ocsigen_comet.cmo       \
-                # extensions/cors.cmo                \
+PLUGINS_IMPL := extensions/accesscontrol.cmo extensions/authbasic.cmo	\
+             extensions/cors.cmo extensions/outputfilter.cmo		\
+             extensions/redirectmod.cmo extensions/rewritemod.cmo	\
+             extensions/staticmod.cmo
 
 ifeq "$(CAMLZIP)" "YES"
 PLUGINS_IMPL += extensions/deflatemod.cmo
