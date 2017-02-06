@@ -26,11 +26,9 @@ open Lwt.Infix
 
 module Url = Ocsigen_lib.Url
 
-module S = Ocsigen_cohttp_server
-
 include Ocsigen_command
 
-exception Ocsigen_http_error = S.Ocsigen_http_error
+exception Ocsigen_http_error = Ocsigen_cohttp.Ocsigen_http_error
 exception Ocsigen_Looping_request
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
@@ -171,16 +169,16 @@ and follow_symlink =
 
 (* Requests *)
 type request = {
-  request_info   : S.Request.t;
+  request_info   : Ocsigen_request.t;
   request_config : config_info;
 }
 
-exception Ocsigen_Is_a_directory = S.Ocsigen_Is_a_directory
+exception Ocsigen_Is_a_directory = Ocsigen_cohttp.Ocsigen_Is_a_directory
 
 type answer =
   | Ext_do_nothing
   (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
+  | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
   (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
@@ -190,7 +188,7 @@ type answer =
       handled in different order. (for example revproxy.ml starts its
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
-  | Ext_found_stop of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
+  | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
   (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
   (** Page not found. Try next extension. The status is usually
@@ -234,17 +232,16 @@ type answer =
       type [parse_fun]), that will return something of type
       [extension2]. *)
   | Ext_found_continue_with of
-      (unit -> (Ocsigen_cohttp_server.Answer.t * request) Lwt.t)
+      (unit -> (Ocsigen_response.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of
-      (Ocsigen_cohttp_server.Answer.t * request)
+  | Ext_found_continue_with' of (Ocsigen_response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it, but
       for output filters. *)
 
 and request_state =
   | Req_not_found of (Cohttp.Code.status * request)
-  | Req_found of (request * Ocsigen_cohttp_server.Answer.t)
+  | Req_found of (request * Ocsigen_response.t)
 
 and extension2 =
   Ocsigen_cookies.cookieset ->
@@ -271,7 +268,7 @@ let get_hosts () = !hosts
 let update_path
     { request_info ; request_config }
     path =
-  let r = Ocsigen_cohttp_server.Request.request request_info in
+  let r = Ocsigen_request.request request_info in
   let request_info =
     let request =
       let meth     = Cohttp.Request.meth r
@@ -281,7 +278,7 @@ let update_path
       and uri      = Uri.with_path (Cohttp.Request.uri r) path in
       Cohttp.Request.make ~meth ~version ~encoding ~headers uri
     in
-    Ocsigen_cohttp_server.Request.update ~request request_info
+    Ocsigen_request.update ~request request_info
   in
   { request_info ; request_config }
 
@@ -291,7 +288,7 @@ let get_hostname {request_info ; request_config = {default_hostname}} =
   if Ocsigen_config.get_usedefaulthostname () then
     default_hostname
   else
-    match S.Request.host request_info with
+    match Ocsigen_request.host request_info with
     | None -> default_hostname
     | Some host -> host
 
@@ -305,19 +302,19 @@ let get_port
       request_config = { default_httpport ; default_httpsport }
     } =
   if Ocsigen_config.get_usedefaulthostname () then
-    if S.Request.ssl request_info then
+    if Ocsigen_request.ssl request_info then
       default_httpsport
     else
       default_httpport
   else
-    Ocsigen_cohttp_server.Request.port request_info
+    Ocsigen_request.port request_info
 
 let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
 
 let new_url_of_directory_request request ri =
   Lwt_log.ign_info ~section "Sending 301 Moved permanently";
   let port = get_port request in
-  let ssl = S.Request.ssl ri in
+  let ssl = Ocsigen_request.ssl ri in
   Neturl.make_url
     ~scheme:(if ssl then "https" else "http")
     ~host:(get_hostname request)
@@ -327,8 +324,8 @@ let new_url_of_directory_request request ri =
            else Some port)
     ~path:("" ::
            (Url.add_end_slash_if_missing
-              (S.Request.path ri)))
-    ?query:(S.Request.query ri)
+              (Ocsigen_request.path ri)))
+    ?query:(Ocsigen_request.query ri)
     http_url_syntax
 
 (*****************************************************************************)
@@ -370,16 +367,16 @@ let make_ext cookies_to_set req_state (genfun : extension) (genfun2 : extension2
       in
       genfun2
         Ocsigen_cookies.Cookies.empty
-        (Req_found (ri, S.Answer.add_cookies r' cookies_to_set))
+        (Req_found (ri, Ocsigen_response.add_cookies r' cookies_to_set))
     | Ext_found_continue_with r ->
       r () >>= fun (r', req) ->
       genfun2
         Ocsigen_cookies.Cookies.empty
-        (Req_found (req, S.Answer.add_cookies r' cookies_to_set))
+        (Req_found (req, Ocsigen_response.add_cookies r' cookies_to_set))
     | Ext_found_continue_with' (r', req) ->
       genfun2
         Ocsigen_cookies.Cookies.empty
-        (Req_found (req, S.Answer.add_cookies r' cookies_to_set))
+        (Req_found (req, Ocsigen_response.add_cookies r' cookies_to_set))
     | Ext_next e ->
       let ri = match req_state with
         | Req_found (ri, _) -> ri
@@ -460,7 +457,7 @@ let rec default_parse_config
               in
               match
                 site_match oldri path
-                  (S.Request.path oldri.request_info)
+                  (Ocsigen_request.path oldri.request_info)
               with
               | None ->
                 Lwt_log.ign_info_f ~section
@@ -469,7 +466,7 @@ let rec default_parse_config
                      Url.string_of_url_path ~encode:true path) path
                   (fun () oldri ->
                      Url.string_of_url_path ~encode:true
-                       (S.Request.path oldri.request_info))
+                       (Ocsigen_request.path oldri.request_info))
                   oldri;
                 Lwt.return (Ext_next e, cookies_to_set)
               | Some sub_path ->
@@ -477,7 +474,7 @@ let rec default_parse_config
                   "site found: url \"%a\" matches \"%a\"."
                   (fun () oldri ->
                      Url.string_of_url_path ~encode:true
-                       (S.Request.path oldri.request_info))
+                       (Ocsigen_request.path oldri.request_info))
                   oldri
                   (fun () path -> Url.string_of_url_path ~encode:true path) path;
                   let ri =
@@ -871,8 +868,8 @@ let string_of_host (h : virtual_hosts) =
 
 let compute_result ?(previous_cookies = Ocsigen_cookies.Cookies.empty) ri =
 
-  let host = S.Request.host ri
-  and port = S.Request.port ri in
+  let host = Ocsigen_request.host ri
+  and port = Ocsigen_request.port ri in
 
   let string_of_host_option = function
     | None -> "<no host>:"^(string_of_int port)
@@ -880,8 +877,8 @@ let compute_result ?(previous_cookies = Ocsigen_cookies.Cookies.empty) ri =
   in
 
   let rec do2 sites cookies_to_set ri =
-    S.Request.incr_tries ri;
-    if S.Request.tries ri > Ocsigen_config.get_maxretries () then
+    Ocsigen_request.incr_tries ri;
+    if Ocsigen_request.tries ri > Ocsigen_config.get_maxretries () then
       Lwt.fail Ocsigen_Looping_request
     else
       let rec aux_host
@@ -905,14 +902,14 @@ let compute_result ?(previous_cookies = Ocsigen_cookies.Cookies.empty) ri =
            | Ext_found r
            | Ext_found_stop r ->
              r () >>= fun r' ->
-             Lwt.return (S.Answer.add_cookies r' cookies_to_set)
+             Lwt.return (Ocsigen_response.add_cookies r' cookies_to_set)
            | Ext_do_nothing ->
              aux_host ri prev_err cookies_to_set l
            | Ext_found_continue_with r ->
              r () >>= fun (r', _) ->
-             Lwt.return (S.Answer.add_cookies r' cookies_to_set)
+             Lwt.return (Ocsigen_response.add_cookies r' cookies_to_set)
            | Ext_found_continue_with' (r, _) ->
-             Lwt.return (S.Answer.add_cookies r cookies_to_set)
+             Lwt.return (Ocsigen_response.add_cookies r cookies_to_set)
            | Ext_next e ->
              aux_host ri e cookies_to_set l
            (* try next site *)
@@ -1025,18 +1022,18 @@ let (>|!) v f =
 
 let find_redirection regexp full_url dest r =
   if full_url then
-    S.Request.host r >|! fun host ->
+    Ocsigen_request.host r >|! fun host ->
     let path =
-      let full_path = S.Request.path_string r in
-      match S.Request.query r with
+      let full_path = Ocsigen_request.path_string r in
+      match Ocsigen_request.query r with
       | None -> full_path
       | Some g -> full_path ^ "?" ^ g
     in
     let path =
       Url.make_absolute_url
-        (S.Request.ssl r)
+        (Ocsigen_request.ssl r)
         host
-        (S.Request.port r)
+        (Ocsigen_request.port r)
         ("/" ^ path)
     in
     Netstring_pcre.string_match regexp path 0 >|! fun _ ->
@@ -1044,8 +1041,8 @@ let find_redirection regexp full_url dest r =
     Netstring_pcre.global_replace regexp dest path
   else
     let path =
-      let sub_path = S.Request.sub_path_string r in
-      match S.Request.query r with
+      let sub_path = Ocsigen_request.sub_path_string r in
+      match Ocsigen_request.query r with
       | None -> sub_path
       | Some g -> sub_path ^ "?" ^ g
     in

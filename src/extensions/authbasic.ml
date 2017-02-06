@@ -67,14 +67,14 @@ let gen ~realm ~auth rs =
         Http_headers.empty
     in
     Lwt_log.ign_info ~section "AUTH: invalid credentials!";
-    Lwt.fail (Ocsigen_cohttp_server.Ext_http_error
+    Lwt.fail (Ocsigen_cohttp.Ext_http_error
                 (`Unauthorized, None, Some h))
 
   and invalid_header () =
     Lwt_log.ign_info ~section
       "AUTH: invalid Authorization header";
     Lwt.fail
-      (Ocsigen_cohttp_server.Ocsigen_http_error
+      (Ocsigen_cohttp.Ocsigen_http_error
          (Ocsigen_cookies.Cookies.empty, `Bad_request))
 
   in
@@ -94,7 +94,7 @@ let gen ~realm ~auth rs =
   match rs with
   | Ocsigen_extensions.Req_not_found (err, ri) ->
     (match
-       Ocsigen_cohttp_server.Request.header
+       Ocsigen_request.header
          ri.Ocsigen_extensions.request_info
          Http_headers.authorization
      with

@@ -136,7 +136,7 @@ let gen ~usermode ?cache dir = function
         let pathstring =
           Ocsigen_lib.Url.string_of_url_path
             ~encode:false
-            (Ocsigen_cohttp_server.Request.path request_info)
+            (Ocsigen_request.path request_info)
         in
         find_static_page ~request ~usermode ~dir ~err ~pathstring
       in
@@ -148,12 +148,12 @@ let gen ~usermode ?cache dir = function
           failwith "FIXME: staticmod dirs not implemented"
       in
       Cohttp_lwt_unix.Server.respond_file ~fname () >>= fun answer ->
-      let answer = Ocsigen_cohttp_server.Answer.of_cohttp answer in
+      let answer = Ocsigen_response.of_cohttp answer in
       let answer =
         if not status_filter then
           answer
         else
-          Ocsigen_cohttp_server.Answer.set_status answer err
+          Ocsigen_response.set_status answer err
       in
       let answer =
         match cache with
@@ -167,7 +167,7 @@ let gen ~usermode ?cache dir = function
               "max-age=" ^ string_of_int duration,
               gmt_date (Unix.time () +. float_of_int duration)
           in
-          Ocsigen_cohttp_server.Answer.replace_headers answer [
+          Ocsigen_response.replace_headers answer [
             Http_headers.cache_control , cache_control ;
             Http_headers.expires       , expires       ;
           ]

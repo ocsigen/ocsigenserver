@@ -43,17 +43,17 @@ let rec parse_condition = function
     (fun ri ->
        let r =
          Ipaddr.Prefix.mem
-           (Ocsigen_cohttp_server.Request.remote_ip_parsed ri)
+           (Ocsigen_request.remote_ip_parsed ri)
            prefix
        in
        if r then
          Lwt_log.ign_info_f ~section
            "IP: %a matches %s"
-           (fun () -> Ocsigen_cohttp_server.Request.remote_ip) ri s
+           (fun () -> Ocsigen_request.remote_ip) ri s
        else
          Lwt_log.ign_info_f ~section
            "IP: %a does not match %s"
-           (fun () -> Ocsigen_cohttp_server.Request.remote_ip) ri s;
+           (fun () -> Ocsigen_request.remote_ip) ri s;
        r)
   | Element ("ip" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
@@ -67,7 +67,7 @@ let rec parse_condition = function
           "Bad port [%s] in <port> condition" s
     in
     (fun ri ->
-       let r = Ocsigen_cohttp_server.Request.port ri = port in
+       let r = Ocsigen_request.port ri = port in
        if r then
          Lwt_log.ign_info_f ~section
            "PORT: %d accepted" port
@@ -75,7 +75,7 @@ let rec parse_condition = function
          Lwt_log.ign_info_f ~section
            "PORT: %a not accepted (%d expected)"
            (fun () ri ->
-              string_of_int (Ocsigen_cohttp_server.Request.port ri))
+              string_of_int (Ocsigen_request.port ri))
            ri port;
        r)
   | Element ("port" as s, _, _) ->
@@ -83,7 +83,7 @@ let rec parse_condition = function
 
   | Element ("ssl", [], []) ->
     (fun ri ->
-       let r = Ocsigen_cohttp_server.Request.ssl ri in
+       let r = Ocsigen_request.ssl ri in
        if r then
          Lwt_log.ign_info ~section "SSL: accepted"
        else
@@ -110,7 +110,7 @@ let rec parse_condition = function
               if r then
                 Lwt_log.ign_info_f "HEADER: header %s matches %S" name reg;
               r)
-           (Ocsigen_cohttp_server.Request.header_multi ri
+           (Ocsigen_request.header_multi ri
               (Http_headers.name name))
        in
        if not r
@@ -121,7 +121,7 @@ let rec parse_condition = function
 
   | Element ("method", ["value", s], []) -> fun ri ->
     let m  = Cohttp.Code.method_of_string s
-    and m' = Ocsigen_cohttp_server.Request.meth ri in
+    and m' = Ocsigen_request.meth ri in
     let s' = Cohttp.Code.string_of_method m' in
     let r = m = m' in
     if r then
@@ -135,7 +135,7 @@ let rec parse_condition = function
 
   | Element ("protocol", ["value", s], []) -> fun ri ->
     let v  = Cohttp.Code.version_of_string s
-    and v' = Ocsigen_cohttp_server.Request.version ri in
+    and v' = Ocsigen_request.version ri in
     let s' = Cohttp.Code.string_of_version v' in
     let r = v = v' in
     if r then
@@ -156,7 +156,7 @@ let rec parse_condition = function
           "Bad regular expression [%s] in <path> condition" s
     in
     fun ri ->
-      let sps = Ocsigen_cohttp_server.Request.sub_path_string ri in
+      let sps = Ocsigen_request.sub_path_string ri in
       let r = Netstring_pcre.string_match regexp sps 0 <> None in
       if r then
         Lwt_log.ign_info_f ~section "PATH: \"%s\" matches %S" sps s
@@ -328,7 +328,7 @@ let parse_config parse_fun = function
       Lwt_log.ign_info ~section "Allowed proxy";
       let request =
         let header =
-          Ocsigen_cohttp_server.Request.header
+          Ocsigen_request.header
             request_info
             Http_headers.x_forwarded_for
         in
@@ -340,7 +340,7 @@ let parse_config parse_fun = function
              let proxy_ip = Ipaddr.of_string_exn last_proxy in
              let equal_ip =
                proxy_ip =
-               Ocsigen_cohttp_server.Request.remote_ip_parsed request_info
+               Ocsigen_request.remote_ip_parsed request_info
              in
              let need_equal_ip =
                match param with
@@ -359,7 +359,7 @@ let parse_config parse_fun = function
                { request
                  with
                    Ocsigen_extensions.request_info =
-                     Ocsigen_cohttp_server.Request.update
+                     Ocsigen_request.update
                        ~forward_ip:proxies
                        ~remote_ip:original_ip
                        request_info
@@ -368,7 +368,7 @@ let parse_config parse_fun = function
                (Lwt_log.ign_warning_f ~section
                   "X-Forwarded-For: host ip (%s) \
                    does not match the header (%s)"
-                  (Ocsigen_cohttp_server.Request.remote_ip request_info)
+                  (Ocsigen_request.remote_ip request_info)
                   header;
                 request)
            | _ ->
@@ -386,7 +386,7 @@ let parse_config parse_fun = function
     in
     (function
       | Ocsigen_extensions.Req_found (request, resp) ->
-        apply request (Ocsigen_cohttp_server.Answer.status resp)
+        apply request (Ocsigen_response.status resp)
       | Ocsigen_extensions.Req_not_found (code, request) ->
         apply request code)
 
@@ -395,7 +395,7 @@ let parse_config parse_fun = function
       Lwt_log.ign_info ~section "Allowed proxy for ssl";
       let request_info =
         let header =
-          Ocsigen_cohttp_server.Request.header
+          Ocsigen_request.header
             request_info
             Http_headers.x_forwarded_proto
         in
@@ -403,9 +403,9 @@ let parse_config parse_fun = function
         | Some header ->
           (match String.lowercase header with
            | "http" ->
-             Ocsigen_cohttp_server.Request.update ~ssl:false request_info
+             Ocsigen_request.update ~ssl:false request_info
            | "https" ->
-             Ocsigen_cohttp_server.Request.update ~ssl:true request_info
+             Ocsigen_request.update ~ssl:true request_info
            | _ ->
              Lwt_log.ign_info_f ~section
                "Malformed X-Forwarded-Proto field: %s" header;
@@ -421,7 +421,7 @@ let parse_config parse_fun = function
     in
     (function
       | Ocsigen_extensions.Req_found (request, resp) ->
-        apply request (Ocsigen_cohttp_server.Answer.status resp)
+        apply request (Ocsigen_response.status resp)
       | Ocsigen_extensions.Req_not_found (code, request) -> apply request code)
   | Element (t, _, _) ->
     raise (Ocsigen_extensions.Bad_config_tag_for_extension t)

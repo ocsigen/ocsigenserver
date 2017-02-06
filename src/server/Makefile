@@ -15,7 +15,9 @@ all: byte opt
 
 FILES := ocsigen_socket.ml      \
          ocsigen_command.ml     \
-         ocsigen_cohttp_server.ml \
+         ocsigen_request.ml \
+         ocsigen_response.ml \
+         ocsigen_cohttp.ml \
          ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
          ocsigen_local_files.ml \

@@ -58,7 +58,7 @@ let attempt_redir dir err ri () =
       and status = if temp then `Found else `Moved_permanently in
       Cohttp.Response.make ~status ~headers ()
     in
-    Lwt.return (Ocsigen_cohttp_server.Answer.make ~response ()))
+    Lwt.return (Ocsigen_response.make ~response ()))
 
 (** The function that will generate the pages from the request *)
 let gen dir = function

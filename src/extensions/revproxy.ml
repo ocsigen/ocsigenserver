@@ -98,7 +98,7 @@ let gen dir = function
          let host =
            match
              if dir.keephost then
-               Ocsigen_cohttp_server.Request.host request_info
+               Ocsigen_request.host request_info
              else
                None
            with
@@ -109,16 +109,16 @@ let gen dir = function
          let do_request () =
            let address =
              Unix.string_of_inet_addr
-               (Ocsigen_cohttp_server.Request.address request_info)
+               (Ocsigen_request.address request_info)
            in
            let forward =
              String.concat ", "
-               (Ocsigen_cohttp_server.Request.remote_ip request_info
-                :: Ocsigen_cohttp_server.Request.forward_ip request_info
+               (Ocsigen_request.remote_ip request_info
+                :: Ocsigen_request.forward_ip request_info
                 @  [address])
            in
            let proto =
-             if Ocsigen_cohttp_server.Request.ssl request_info then
+             if Ocsigen_request.ssl request_info then
                "https"
              else
                "http"
@@ -126,10 +126,10 @@ let gen dir = function
            let headers =
              let h =
                Cohttp.Request.headers
-                 (Ocsigen_cohttp_server.Request.request request_info)
+                 (Ocsigen_request.request request_info)
              in
              let h =
-               Ocsigen_cohttp_server.Request.version request_info
+               Ocsigen_request.version request_info
                |> Cohttp.Code.string_of_version
                |> Cohttp.Header.add h Http_headers.(name_to_string
                                                       x_forwarded_proto)
@@ -141,13 +141,12 @@ let gen dir = function
              in
              Cohttp.Header.remove h Http_headers.(name_to_string host)
            and uri = Printf.sprintf "%s://%s%s" proto host uri
-           and body = Ocsigen_cohttp_server.Request.body request_info
-           and meth = Ocsigen_cohttp_server.Request.meth request_info in
+           and body = Ocsigen_request.body request_info
+           and meth = Ocsigen_request.meth request_info in
            Client.call ~headers ~body meth (Uri.of_string uri)
          in
-         Lwt.return @@ Ext_found (fun () ->
-           do_request () >|=
-           Ocsigen_cohttp_server.Answer.of_cohttp))
+         Lwt.return @@
+         Ext_found (fun () -> do_request () >|= Ocsigen_response.of_cohttp))
       (function
         | Not_concerned -> Lwt.return (Ext_next err)
         | e -> Lwt.fail e)

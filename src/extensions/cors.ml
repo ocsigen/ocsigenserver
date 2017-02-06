@@ -25,7 +25,7 @@ let section = Lwt_log.Section.make "ocsigen:ext:cors"
 (*** MAIN FUNCTION ***)
 
 let default_frame () =
-  Ocsigen_cohttp_server.Answer.make
+  Ocsigen_response.make
     ~response:(Cohttp.Response.make ~status:`OK ())
     ()
 
@@ -41,7 +41,7 @@ exception Refused
 
 let add_headers config r response =
 
-  match Ocsigen_cohttp_server.Request.header r Http_headers.origin with
+  match Ocsigen_request.header r Http_headers.origin with
 
   | None ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
@@ -61,7 +61,7 @@ let add_headers config r response =
 
     let l =
       match
-        Ocsigen_cohttp_server.Request.header r
+        Ocsigen_request.header r
           Http_headers.access_control_request_method
       with
       | Some request_method ->
@@ -86,7 +86,7 @@ let add_headers config r response =
 
     let l =
       match
-        Ocsigen_cohttp_server.Request.header r
+        Ocsigen_request.header r
           Http_headers.access_control_request_headers
       with
       | Some request_headers ->
@@ -117,13 +117,13 @@ let add_headers config r response =
     Lwt.return
       (Ocsigen_extensions.Ext_found
          (fun () -> Lwt.return @@
-           Ocsigen_cohttp_server.Answer.replace_headers response l))
+           Ocsigen_response.replace_headers response l))
 
 let main config = function
 
   | Ocsigen_extensions.Req_not_found
       (_, {Ocsigen_extensions.request_info}) ->
-    (match Ocsigen_cohttp_server.Request.meth request_info with
+    (match Ocsigen_request.meth request_info with
      | `OPTIONS ->
        (Lwt_log.ign_info ~section "OPTIONS request";
         try

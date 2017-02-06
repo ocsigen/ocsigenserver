@@ -126,9 +126,11 @@ let _ =
       Lwt.return ()
     | ["reload"] -> reload (); Lwt.return ()
     | ["reload"; file] -> reload ~file (); Lwt.return ()
-    | ["shutdown"] -> Ocsigen_cohttp_server.shutdown_server None; Lwt.return ()
+    | ["shutdown"] ->
+      Ocsigen_cohttp.shutdown None;
+      Lwt.return ()
     | ["shutdown"; f] ->
-      Ocsigen_cohttp_server.shutdown_server (Some (float_of_string f));
+      Ocsigen_cohttp.shutdown (Some (float_of_string f));
       Lwt.return ()
     | ["gc"] ->
       Gc.compact ();
@@ -364,40 +366,13 @@ let start_server () = try
         Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
       );
 
-      (* Lwt.wakeup wait_end_init_awakener (); *)
-       (*
-       let config = {
-         Server.callback =
-           Ocsigen_cohttp_server.service_cohttp
-             ~address
-             ~port
-             ~extensions_connector;
-         Server.conn_closed = (fun _ _ () -> ())
-       } in
-
-       let process = [ Server.create ~address ~port config ] in
-       let process = match ssl with
-         | Some (address, port) ->
-           let config = {
-             Server.callback =
-               Ocsigen_brouette.service_cohttp
-                 ~address
-                 ~port
-                 ~extensions_connector;
-             Server.conn_closed = (fun _ _ () -> ())
-
-           } in Server.create ~address ~port config :: process
-         | None -> process
-       in Lwt.join process
-       *)
-
       Lwt.join
-        ((List.map (fun (address, port) -> Ocsigen_cohttp_server.service
+        ((List.map (fun (address, port) -> Ocsigen_cohttp.service
                        ~address
                        ~port
                        ~connector:extensions_connector ()) connection)
          @
-         (List.map (fun (address, port, (crt, key)) -> Ocsigen_cohttp_server.service
+         (List.map (fun (address, port, (crt, key)) -> Ocsigen_cohttp.service
                        ~ssl:(crt, key, Some (ask_for_passwd [(address, port)]))
                        ~address
                        ~port

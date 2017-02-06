@@ -120,17 +120,17 @@ and follow_symlink =
 (*****************************************************)
 
 type request = {
-  request_info: Ocsigen_cohttp_server.Request.t;
+  request_info: Ocsigen_request.t;
   request_config: config_info;
 }
 
 exception Ocsigen_Is_a_directory
-  of (Ocsigen_cohttp_server.Request.t -> Neturl.url)
+  of (Ocsigen_request.t -> Neturl.url)
 
 type answer =
   | Ext_do_nothing
   (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
+  | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
   (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
@@ -140,7 +140,7 @@ type answer =
       handled in different order. (for example revproxy.ml starts its
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
-  | Ext_found_stop of (unit -> Ocsigen_cohttp_server.Answer.t Lwt.t)
+  | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
   (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
   (** Page not found. Try next extension. The status is usually
@@ -184,17 +184,17 @@ type answer =
       type [parse_fun]), that will return something of type
       [extension2]. *)
   | Ext_found_continue_with of
-      (unit -> (Ocsigen_cohttp_server.Answer.t * request) Lwt.t)
+      (unit -> (Ocsigen_response.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
   | Ext_found_continue_with' of
-      (Ocsigen_cohttp_server.Answer.t * request)
+      (Ocsigen_response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it, but
       for output filters. *)
 
 and request_state =
   | Req_not_found of (Cohttp.Code.status * request)
-  | Req_found of (request * Ocsigen_cohttp_server.Answer.t)
+  | Req_found of (request * Ocsigen_response.t)
 
 and extension2 =
   Ocsigen_cookies.cookieset ->
@@ -404,7 +404,7 @@ val get_port : request -> int
     @param request configuration of the server
     @param ri request *)
 val new_url_of_directory_request :
-  request -> Ocsigen_cohttp_server.Request.t -> Neturl.url
+  request -> Ocsigen_request.t -> Neturl.url
 
 (** {3 User directories} *)
 
@@ -429,7 +429,7 @@ val find_redirection :
   Netstring_pcre.regexp ->
   bool ->
   string ->
-  Ocsigen_cohttp_server.Request.t ->
+  Ocsigen_request.t ->
   string
 
 (**/**)
@@ -449,8 +449,8 @@ val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
     extensions according the configuration file. *)
 val compute_result :
   ?previous_cookies:Ocsigen_cookies.cookieset ->
-  Ocsigen_cohttp_server.Request.t ->
-  Ocsigen_cohttp_server.Answer.t Lwt.t
+  Ocsigen_request.t ->
+  Ocsigen_response.t Lwt.t
 
 (** Profiling *)
 val get_number_of_connected : unit -> int

@@ -54,11 +54,11 @@ let gen regexp continue = function
       let redir, full_rewrite =
         let ri = ri.Ocsigen_extensions.request_info in
         find_rewrite regexp
-          (match Ocsigen_cohttp_server.Request.query ri with
+          (match Ocsigen_request.query ri with
            | None ->
-             Ocsigen_cohttp_server.Request.sub_path_string ri
+             Ocsigen_request.sub_path_string ri
            | Some g ->
-             Ocsigen_cohttp_server.Request.sub_path_string ri
+             Ocsigen_request.sub_path_string ri
              ^ "?" ^ g)
       in
       Lwt_log.ign_info_f ~section "YES! rewrite to: %s" redir;
@@ -66,7 +66,7 @@ let gen regexp continue = function
         Lwt.return @@ Ocsigen_extensions.Ext_continue_with
           ({ ri with
              Ocsigen_extensions.request_info =
-               Ocsigen_cohttp_server.Request.update_url
+               Ocsigen_request.update_url
                  ~full_rewrite
                  (Uri.of_string redir)
                  ri.Ocsigen_extensions.request_info
@@ -77,7 +77,7 @@ let gen regexp continue = function
         Lwt.return @@ Ocsigen_extensions.Ext_retry_with
           ({ ri with
              Ocsigen_extensions.request_info =
-               Ocsigen_cohttp_server.Request.update_url
+               Ocsigen_request.update_url
                  ~full_rewrite
                  (Uri.of_string redir)
                  ri.Ocsigen_extensions.request_info },
