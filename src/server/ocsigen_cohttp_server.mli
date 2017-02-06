@@ -43,6 +43,13 @@ module Request : sig
 
   val request : t -> Cohttp.Request.t
 
+  val body : t -> Cohttp_lwt_body.t
+
+  val map_cohttp_request :
+    f : (Cohttp.Request.t -> Cohttp.Request.t) ->
+    t ->
+    t
+
   val address : t -> Unix.inet_addr
 
   val host : t -> string option

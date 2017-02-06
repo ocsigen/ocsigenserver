@@ -103,6 +103,12 @@ module Request = struct
   let request {r_request} =
     r_request
 
+  let body {r_body} =
+    r_body
+
+  let map_cohttp_request ~f ({r_request} as r) =
+    {r with r_request = f r_request}
+
   let address {r_address} =
     r_address
 
