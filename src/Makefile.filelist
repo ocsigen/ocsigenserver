@@ -12,7 +12,6 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
         \
 	http/http_headers.cmi	           \
 	http/ocsigen_http_frame.cmi	   \
-	http/ocsigen_headers.cmi	   \
 	http/framepp.cmi		   \
 	http/ocsigen_http_com.cmi	   \
 	http/ocsigen_charset_mime.cmi      \

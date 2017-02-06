@@ -21,7 +21,6 @@ FILES := multipart.ml            \
 	 http_headers.ml         \
 	 ocsigen_cookies.ml      \
          ocsigen_http_frame.ml   \
-	 ocsigen_headers.ml      \
 	 http_lexer.ml	         \
          framepp.ml              \
 	 ocsigen_http_com.ml     \
