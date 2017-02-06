@@ -11,13 +11,13 @@ ocsigen_local_files.cmi : ../http/ocsigen_http_frame.cmi \
 ocsigen_parseconfig.cmi : ocsigen_socket.cmi ocsigen_extensions.cmi
 ocsigen_server.cmi :
 ocsigen_socket.cmi :
-ocsigen_cohttp_server.cmo : ../migrate/to_cohttp.cmi \
+ocsigen_cohttp_server.cmo : \
     ../baselib/ocsigen_stream.cmi ocsigen_socket.cmi \
     ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_cookies.cmi \
     ../baselib/ocsigen_config.cmi ocsigen_cohttp_server.cmi
-ocsigen_cohttp_server.cmx : ../migrate/to_cohttp.cmx \
+ocsigen_cohttp_server.cmx : \
     ../baselib/ocsigen_stream.cmx ocsigen_socket.cmx \
     ../baselib/ocsigen_lib.cmx \
     ../http/ocsigen_http_frame.cmx \

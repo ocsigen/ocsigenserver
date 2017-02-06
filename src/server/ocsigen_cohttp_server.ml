@@ -305,6 +305,41 @@ let waiters = Hashtbl.create 256
 
 exception Ocsigen_Is_a_directory of (request -> Neturl.url)
 
+module Cookie = struct
+
+  let serialize_cookie_raw path exp name c secure =
+    Format.sprintf "%s=%s; path=/%s%s%s"
+      name c
+      (Ocsigen_lib.Url.string_of_url_path ~encode:true path)
+      (if secure then "; secure" else "")
+      (match exp with
+       | Some s ->
+         "; expires=" ^
+         Netdate.format
+           "%a, %d-%b-%Y %H:%M:%S GMT"
+           (Netdate.create s)
+       | None ->
+         "")
+
+  let serialize_cookies path table headers =
+    Ocsigen_cookies.CookiesTable.fold
+      (fun name c h ->
+         let exp, v, secure = match c with
+           | Ocsigen_cookies.OUnset -> (Some 0., "", false)
+           | Ocsigen_cookies.OSet (t, v, secure) -> (t, v, secure)
+         in
+         Http_headers.add
+           Http_headers.set_cookie
+           (serialize_cookie_raw path exp name v secure)
+           h)
+      table
+      headers
+
+  let serialize cookies headers =
+    Ocsigen_cookies.Cookies.fold serialize_cookies cookies headers
+
+end
+
 let handler ~address ~port ~connector (flow, conn) request body =
 
   Lwt_log.ign_info_f ~section
@@ -340,7 +375,7 @@ let handler ~address ~port ~connector (flow, conn) request body =
     let headers, ret_code = match exn with
       | Ocsigen_http_error (cookies_to_set, code) ->
         let headers =
-          To_cohttp.Cookie.serialize cookies_to_set (Cohttp.Header.init ())
+          Cookie.serialize cookies_to_set (Cohttp.Header.init ())
         in
         Some headers, code
       | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->

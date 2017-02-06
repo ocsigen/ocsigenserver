@@ -11,7 +11,7 @@ PACKAGE  :=		\
 	tyxml.parser    \
 	cohttp.lwt
 
-LIBS     := -I ../baselib -I ../http -I ../migrate -I ../server \
+LIBS     := -I ../baselib -I ../http -I ../server \
             ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}

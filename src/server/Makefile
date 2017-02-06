@@ -3,8 +3,7 @@ include ../../Makefile.config
 all: byte opt
 
 PACKAGE  := ${SERVER_PACKAGE} ## See ../../Makefile.options
-LIBS     := -I ../baselib -I ../http -I ../migrate \
-            ${addprefix -package ,${PACKAGE}}
+LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
@@ -47,7 +46,6 @@ SERVERLIBS := ${PARSECOMMANDLINE}       \
               ../baselib/baselib.cma    \
 	      ../baselib/polytables.cma \
 	      ../http/http.cma          \
-              ../migrate/migrate.cma    \
 	      ${PROJECTNAME}.cma         \
 
 SERVEROBJS := server_main.cmo
