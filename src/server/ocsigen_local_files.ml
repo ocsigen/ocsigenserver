@@ -220,22 +220,3 @@ let resolve
   (* We can get an EACCESS here, if are missing some rights on a directory *)
   | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403
   | Unix.Unix_error (Unix.ENOENT,_,_) -> raise Failed_404
-
-
-(* Given a local file or directory, we retrieve its content *)
-let content
-    ~request:{ Ocsigen_extensions.request_config =
-                 { Ocsigen_extensions.charset_assoc ; mime_assoc } ;
-               request_info
-             }
-    ~file =
-  try
-    match file with
-    | RDir dirname ->
-      Ocsigen_senders.Directory_content.result_of_content
-        (dirname, Ocsigen_cohttp_server.Request.path request_info)
-    | RFile filename ->
-      Ocsigen_senders.File_content.result_of_content
-        (filename, charset_assoc, mime_assoc)
-  with
-  | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403

@@ -16,10 +16,7 @@ Ocsigen_config
 Ocsigen_extensions
 Ocsigen_local_files
 Ocsigen_headers
-Ocsigen_senders
-Ocsigen_http_frame
 Ocsigen_http_client
-Ocsigen_http_com
 Ocsigen_stream
 Ocsigen_comet
 Authbasic

@@ -6,6 +6,9 @@ exception Ocsigen_unsupported_media
 exception Ocsigen_http_error of
     Ocsigen_cookies.cookieset * Cohttp.Code.status
 
+exception Ext_http_error of
+    Cohttp.Code.status * string option * Http_headers.t option
+
 module Connection = struct
   exception Lost_connection of exn
   exception Aborted
@@ -382,10 +385,8 @@ let handler ~address ~port ~connector (flow, conn) request body =
         None, `Internal_server_error
       | Unix.Unix_error (Unix.EACCES, _, _) ->
         None, `Forbidden
-      (* FIXME Cohttp transition
-         | Ocsigen_http_frame.Http_error.Http_exception
-             (code, _, headers) ->
-           headers, code *)
+      | Ext_http_error (code, _, headers) ->
+        headers, code
       | Ocsigen_lib.Ocsigen_Bad_Request ->
         None, `Bad_request
       | Ocsigen_unsupported_media ->

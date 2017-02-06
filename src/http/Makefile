@@ -17,17 +17,11 @@ all: byte opt
 
 ### Common files ###
 
-FILES := multipart.ml            \
-	 http_headers.ml         \
+FILES := http_headers.ml         \
 	 ocsigen_cookies.ml      \
-         ocsigen_http_frame.ml   \
-	 http_lexer.ml	         \
-         framepp.ml              \
-	 ocsigen_http_com.ml     \
-	 ocsigen_charset_mime.ml \
-         ocsigen_senders.ml      \
+	 ocsigen_charset_mime.ml
 
-PREDEP := http_lexer.ml   \
+PREDEP :=
 
 byte: http.cma
 opt: http.cmxa

@@ -2,6 +2,12 @@ exception Ocsigen_unsupported_media
 exception Ocsigen_http_error of
     Ocsigen_cookies.cookieset * Cohttp.Code.status
 
+(** Exception raised by exceptions to describe an HTTP error. It is
+    possible to pass the code of the error, an optional comment, and
+    optionally some headers. *)
+exception Ext_http_error of
+    Cohttp.Code.status * string option * Cohttp.Header.t option
+
 module Connection : sig
   exception Lost_connection of exn
   exception Aborted

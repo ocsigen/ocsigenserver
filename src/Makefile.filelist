@@ -11,11 +11,7 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
         baselib/polytables.cmi	           \
         \
 	http/http_headers.cmi	           \
-	http/ocsigen_http_frame.cmi	   \
-	http/framepp.cmi		   \
-	http/ocsigen_http_com.cmi	   \
 	http/ocsigen_charset_mime.cmi      \
-	http/ocsigen_senders.cmi	   \
         http/ocsigen_cookies.cmi           \
 	\
 	server/ocsigen_extensions.cmi      \

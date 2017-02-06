@@ -30,7 +30,7 @@ let default_frame () =
     ()
 
 type config = {
-  allowed_method : Ocsigen_http_frame.Http_header.http_method list option;
+  allowed_method : Cohttp.Code.meth list option;
   (* None means: all method are accepted *)
   allowed_credentials : bool;
   max_age : int option;
@@ -67,10 +67,11 @@ let add_headers config r response =
       | Some request_method ->
         let allowed_method =
           match config.allowed_method with
-          | None -> true
+          | None ->
+            true
           | Some l ->
             try
-              List.mem (Framepp.method_of_string request_method) l
+              List.mem (Cohttp.Code.method_of_string request_method) l
             with _ ->
               false
         in
@@ -176,7 +177,7 @@ let parse_config _ _ parse_fun config_elem =
               ~name:"methods"
               (fun s ->
                  let s = Netstring_pcre.split comma_space_regexp s in
-                 let s = Some (List.map Framepp.method_of_string s) in
+                 let s = Some (List.map Cohttp.Code.method_of_string s) in
                  config := { !config with allowed_method = s });
           ]
           ()]

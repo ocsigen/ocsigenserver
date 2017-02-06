@@ -52,7 +52,6 @@ let attempt_redir dir err ri () =
     "YES! %s redirection to: %s"
     (if temp then "Temporary " else "Permanent ")
     redir;
-  let empty_result = Ocsigen_http_frame.Result.empty () in
   Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
     let response =
       let headers = Cohttp.Header.(init_with "Location" redir)

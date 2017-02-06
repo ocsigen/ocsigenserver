@@ -67,8 +67,8 @@ let gen ~realm ~auth rs =
         Http_headers.empty
     in
     Lwt_log.ign_info ~section "AUTH: invalid credentials!";
-    Lwt.fail
-      (Ocsigen_http_frame.Http_error.Http_exception (401, None, Some h))
+    Lwt.fail (Ocsigen_cohttp_server.Ext_http_error
+                (`Unauthorized, None, Some h))
 
   and invalid_header () =
     Lwt_log.ign_info ~section
