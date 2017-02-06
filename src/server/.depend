@@ -37,10 +37,10 @@ ocsigen_extensions.cmx : \
     ../baselib/ocsigen_config.cmx ocsigen_command.cmx \
     ocsigen_cohttp_server.cmx ../http/ocsigen_charset_mime.cmx \
     ocsigen_extensions.cmi
-ocsigen_http_client.cmo : ../migrate/to_cohttp.cmi ../migrate/of_cohttp.cmi \
+ocsigen_http_client.cmo : \
     ../baselib/ocsigen_lib.cmi ../http/http_headers.cmi \
     ocsigen_http_client.cmi
-ocsigen_http_client.cmx : ../migrate/to_cohttp.cmx ../migrate/of_cohttp.cmx \
+ocsigen_http_client.cmx : \
     ../baselib/ocsigen_lib.cmx ../http/http_headers.cmx \
     ocsigen_http_client.cmi
 ocsigen_local_files.cmo : ../http/ocsigen_senders.cmi \

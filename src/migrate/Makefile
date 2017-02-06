@@ -10,8 +10,7 @@ all: byte opt
 
 ### Common files ###
 
-FILES := of_cohttp.ml \
-         to_cohttp.ml \
+FILES := to_cohttp.ml
 
 PREDEP := \
 
