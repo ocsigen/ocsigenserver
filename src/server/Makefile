@@ -18,7 +18,6 @@ FILES := ocsigen_socket.ml      \
          ocsigen_cohttp_server.ml \
          ocsigen_extensions.ml  \
          ocsigen_parseconfig.ml \
-         ocsigen_http_client.ml \
          ocsigen_local_files.ml \
          ocsigen_server.ml      \
 

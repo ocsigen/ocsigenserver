@@ -16,7 +16,6 @@ Ocsigen_config
 Ocsigen_extensions
 Ocsigen_local_files
 Ocsigen_headers
-Ocsigen_http_client
 Ocsigen_stream
 Ocsigen_comet
 Authbasic

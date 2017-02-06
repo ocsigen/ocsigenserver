@@ -20,20 +20,7 @@
 
 (** Reverse proxy for Ocsigen
 
-    The reverse proxy is still experimental because it relies on the
-    experimental Ocsigen_http_client module.
-
-    TODO
-    - Change the policy for trusted servers for pipelining?
-     (see ocsigen_http_client.ml)
-    - enhance pipelining
-    - HTTP/1.0
-    - ...
-
-    Enable returning for example (Ext_next 404) to allow other
-    extensions to take the request?  There is a problem if the body
-    contains data (POST request) ...  this data has been sent and is
-    lost ... *)
+    The reverse proxy is still experimental. *)
 
 open Lwt.Infix
 open Ocsigen_extensions

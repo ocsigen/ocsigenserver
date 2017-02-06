@@ -16,7 +16,6 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	\
 	server/ocsigen_extensions.cmi      \
 	server/ocsigen_parseconfig.cmi     \
-	server/ocsigen_http_client.cmi     \
 	server/ocsigen_local_files.cmi     \
 	server/ocsigen_server.cmi
 

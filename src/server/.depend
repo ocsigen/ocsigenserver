@@ -3,7 +3,6 @@ ocsigen_command.cmi :
 ocsigen_extensions.cmi : ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_cookies.cmi \
     ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi
-ocsigen_http_client.cmi : ../http/http_headers.cmi
 ocsigen_local_files.cmi : ocsigen_extensions.cmi
 ocsigen_parseconfig.cmi : ocsigen_socket.cmi ocsigen_extensions.cmi
 ocsigen_server.cmi :
@@ -32,12 +31,6 @@ ocsigen_extensions.cmx : \
     ../baselib/ocsigen_config.cmx ocsigen_command.cmx \
     ocsigen_cohttp_server.cmx ../http/ocsigen_charset_mime.cmx \
     ocsigen_extensions.cmi
-ocsigen_http_client.cmo : \
-    ../baselib/ocsigen_lib.cmi ../http/http_headers.cmi \
-    ocsigen_http_client.cmi
-ocsigen_http_client.cmx : \
-    ../baselib/ocsigen_lib.cmx ../http/http_headers.cmx \
-    ocsigen_http_client.cmi
 ocsigen_local_files.cmo : ocsigen_extensions.cmi \
     ../baselib/ocsigen_config.cmi ocsigen_local_files.cmi
 ocsigen_local_files.cmx : ocsigen_extensions.cmx \
