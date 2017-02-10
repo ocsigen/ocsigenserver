@@ -5,10 +5,30 @@ type t = {
 }
 
 let make
-    ?(cookies = Ocsigen_cookies.empty_cookieset)
     ?(body = Cohttp_lwt_body.empty)
+    ?(cookies = Ocsigen_cookies.empty_cookieset)
     ~response () =
   { a_response = response ; a_body = body ; a_cookies = cookies }
+
+let update
+    ?response
+    ?body
+    ?cookies
+    { a_response ; a_body ; a_cookies } =
+  let a_response =
+    match response with
+    | Some response -> response
+    | None          -> a_response
+  and a_body =
+    match body with
+    | Some body -> body
+    | None      -> a_body
+  and a_cookies =
+    match cookies with
+    | Some cookies -> cookies
+    | None         -> a_cookies
+  in
+  { a_response ; a_body ; a_cookies }
 
 let of_cohttp
     ?(cookies = Ocsigen_cookies.empty_cookieset)
@@ -16,6 +36,8 @@ let of_cohttp
   { a_response ; a_body ; a_cookies = cookies }
 
 let to_cohttp { a_response ; a_body } = a_response, a_body
+
+let cookies {a_cookies} = a_cookies
 
 let set_status ({ a_response } as a) status =
   { a with

@@ -274,26 +274,26 @@ let field field content_disp =
   in
   Netstring_pcre.matched_group res 1 content_disp
 
-let parse_content_type = function
-  | None ->
+let parse_content_type s =
+  match Ocsigen_lib.String.split ';' s with
+  | [] ->
     None
-  | Some s ->
-    match Ocsigen_lib.String.split ';' s with
-    | [] -> None
-    | a :: l ->
-      try
-        let typ, subtype = Ocsigen_lib.String.sep '/' a in
-        let params =
-          try
-            List.map (Ocsigen_lib.String.sep '=') l
-          with Not_found ->
-            []
-        in
-        (*VVV If syntax error, we return no parameter at all *)
-        Some ((typ, subtype), params)
-      (*VVV If syntax error in type, we return None *)
-      with Not_found ->
-        None
+  | a :: l ->
+    try
+      let typ, subtype = Ocsigen_lib.String.sep '/' a in
+      let params =
+        try
+          List.map (Ocsigen_lib.String.sep '=') l
+        with Not_found ->
+          []
+      in
+      (*VVV If syntax error, we return no parameter at all *)
+      Some ((typ, subtype), params)
+    (*VVV If syntax error in type, we return None *)
+    with Not_found ->
+      None
+
+type content_type = (string * string) * (string * string) list
 
 type file_info = {
   tmp_filename : string ;
@@ -302,7 +302,9 @@ type file_info = {
   file_content_type : ((string * string) * (string * string) list) option
 }
 
-let post_params_form_urlencoded body_gen _ =
+type post_data = (string * string) list * (string * file_info) list
+
+let post_params_form_urlencoded body_gen _ _ =
   Lwt.catch
     (fun () ->
        let body = Ocsigen_stream.get body_gen in
@@ -318,8 +320,7 @@ let post_params_form_urlencoded body_gen _ =
         Lwt.fail Ocsigen_lib.Input_is_too_large
       | e -> Lwt.fail e)
 
-let post_params_multipart_form_data body_gen ctparams
-    (upload_dir, max_size) =
+let post_params_multipart_form_data body_gen ctparams upload_dir max_size =
   (* Same question here, should this stream be consumed after an
      error? *)
   let body = Ocsigen_stream.get body_gen
@@ -347,7 +348,7 @@ let post_params_multipart_form_data body_gen ctparams
     let content_type =
       try
         let ct = List.assoc "content-type" hs in
-        parse_content_type (Some ct)
+        parse_content_type ct
       with _ ->
         None
     in
@@ -403,7 +404,9 @@ let post_params_multipart_form_data body_gen ctparams
   Ocsigen_stream.consume body_gen >>= fun () ->
   Lwt.return (!params, !files)
 
-let post_params ?content_type body_gen =
+let post_params
+    ?content_type
+    body_gen =
   let (ct, cst), ctparams =
     match content_type with
     (* RFC 2616, sect. 7.2.1: if the media type remains unknown, the

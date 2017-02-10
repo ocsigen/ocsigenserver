@@ -20,8 +20,9 @@ ocsigen_extensions.cmx : ocsigen_response.cmx ocsigen_request.cmx \
     ../baselib/ocsigen_config.cmx ocsigen_command.cmx ocsigen_cohttp.cmx \
     ../http/ocsigen_charset_mime.cmx ocsigen_extensions.cmi
 ocsigen_extensions.cmi : ocsigen_response.cmi ocsigen_request.cmi \
-    ../baselib/ocsigen_lib.cmi ../http/ocsigen_cookies.cmi \
-    ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi
+    ocsigen_multipart.cmi ../baselib/ocsigen_lib.cmi \
+    ../http/ocsigen_cookies.cmi ocsigen_command.cmi \
+    ../http/ocsigen_charset_mime.cmi
 ocsigen_local_files.cmo : ocsigen_extensions.cmi \
     ../baselib/ocsigen_config.cmi ocsigen_local_files.cmi
 ocsigen_local_files.cmx : ocsigen_extensions.cmx \
@@ -43,11 +44,13 @@ ocsigen_parseconfig.cmx : ocsigen_socket.cmx ../baselib/ocsigen_loader.cmx \
     ../baselib/ocsigen_config.cmx ../http/ocsigen_charset_mime.cmx \
     ocsigen_parseconfig.cmi
 ocsigen_parseconfig.cmi : ocsigen_socket.cmi ocsigen_extensions.cmi
-ocsigen_request.cmo : ocsigen_socket.cmi ../baselib/ocsigen_lib.cmi \
-    ../http/http_headers.cmi ocsigen_request.cmi
-ocsigen_request.cmx : ocsigen_socket.cmx ../baselib/ocsigen_lib.cmx \
-    ../http/http_headers.cmx ocsigen_request.cmi
-ocsigen_request.cmi : ../http/http_headers.cmi
+ocsigen_request.cmo : ../baselib/polytables.cmi \
+    ../baselib/ocsigen_stream.cmi ocsigen_socket.cmi ocsigen_multipart.cmi \
+    ../baselib/ocsigen_lib.cmi ../http/http_headers.cmi ocsigen_request.cmi
+ocsigen_request.cmx : ../baselib/polytables.cmx \
+    ../baselib/ocsigen_stream.cmx ocsigen_socket.cmx ocsigen_multipart.cmx \
+    ../baselib/ocsigen_lib.cmx ../http/http_headers.cmx ocsigen_request.cmi
+ocsigen_request.cmi : ../baselib/polytables.cmi ../http/http_headers.cmi
 ocsigen_response.cmo : ../http/ocsigen_cookies.cmi ../http/http_headers.cmi \
     ocsigen_response.cmi
 ocsigen_response.cmx : ../http/ocsigen_cookies.cmx ../http/http_headers.cmx \

@@ -7,16 +7,20 @@ val scan_multipart_body_from_stream:
   string Ocsigen_stream.stream ->
   unit Lwt.t
 
+type content_type = (string * string) * (string * string) list
+
 type file_info = {
   tmp_filename : string ;
   filesize : int64 ;
   raw_original_filename : string ;
-  file_content_type : ((string * string) * (string * string) list) option
+  file_content_type : content_type option
 }
 
+type post_data = (string * string) list * (string * file_info) list
+
 val post_params :
-  ?content_type : ((string * string) * (string * string) list) ->
+  ?content_type : content_type ->
   string Ocsigen_stream.t ->
-  (string option *
-   Int64.t option ->
-   ((string * string) list * (string * file_info) list) Lwt.t)  option
+  (string option -> Int64.t option -> post_data Lwt.t) option
+
+val parse_content_type : string -> content_type option

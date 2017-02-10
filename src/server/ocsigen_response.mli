@@ -5,10 +5,17 @@ type t = {
 }
 
 val make :
-  ?cookies : Ocsigen_cookies.cookieset ->
   ?body : Cohttp_lwt_body.t ->
+  ?cookies : Ocsigen_cookies.cookieset ->
   response : Cohttp.Response.t ->
   unit ->
+  t
+
+val update :
+  ?response : Cohttp.Response.t ->
+  ?body : Cohttp_lwt_body.t ->
+  ?cookies : Ocsigen_cookies.cookieset ->
+  t ->
   t
 
 val of_cohttp :
@@ -19,6 +26,8 @@ val of_cohttp :
 val to_cohttp : t -> Cohttp.Response.t * Cohttp_lwt_body.t
 
 val status : t -> Cohttp.Code.status
+
+val cookies : t -> Ocsigen_cookies.cookieset
 
 val set_status : t -> Cohttp.Code.status -> t
 
