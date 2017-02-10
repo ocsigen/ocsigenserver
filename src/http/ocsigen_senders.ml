@@ -502,7 +502,7 @@ struct
       (* puts dynamic headers *)
       let (<<) h (n, v) = Http_headers.replace n v h in
       headers
-      << (Http_headers.cache_control, "no-cache")
+      << (Http_headers.cache_control, "no-cache, no-store, must-revalidate")
       << (Http_headers.expires, "0")
     in
     let str_code = string_of_int error_code in
