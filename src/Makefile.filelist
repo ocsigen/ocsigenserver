@@ -14,6 +14,8 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	http/ocsigen_charset_mime.cmi      \
         http/ocsigen_cookies.cmi           \
 	\
+        server/ocsigen_request.cmi         \
+        server/ocsigen_response.cmi        \
 	server/ocsigen_extensions.cmi      \
 	server/ocsigen_parseconfig.cmi     \
 	server/ocsigen_local_files.cmi     \
@@ -48,10 +50,9 @@ endif
 
 PLUGINS_BIN  :=
 
-PLUGINS_INTF := extensions/authbasic.cmi extensions/accesscontrol.cmi
-                # extensions/ocsigen_comet.cmi       \
-                # extensions/accesscontrol.cmi       \
-                # extensions/ocsipersist.cmi         \
+PLUGINS_INTF := extensions/authbasic.cmi extensions/accesscontrol.cmi \
+                extensions/ocsipersist.cmi
+                # extensions/ocsigen_comet.cmi
 
 PLUGINS_IMPL := extensions/accesscontrol.cmo extensions/authbasic.cmo	\
              extensions/cors.cmo extensions/outputfilter.cmo		\

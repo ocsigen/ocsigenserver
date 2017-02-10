@@ -10,15 +10,15 @@ ocsigen_command.cmo : ../baselib/ocsigen_messages.cmi ocsigen_command.cmi
 ocsigen_command.cmx : ../baselib/ocsigen_messages.cmx ocsigen_command.cmi
 ocsigen_command.cmi :
 ocsigen_extensions.cmo : ocsigen_response.cmi ocsigen_request.cmi \
-    ../baselib/ocsigen_loader.cmi ../baselib/ocsigen_lib.cmi \
-    ../http/ocsigen_cookies.cmi ../baselib/ocsigen_config.cmi \
-    ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi \
-    ocsigen_extensions.cmi
+    ocsigen_multipart.cmi ../baselib/ocsigen_loader.cmi \
+    ../baselib/ocsigen_lib.cmi ../http/ocsigen_cookies.cmi \
+    ../baselib/ocsigen_config.cmi ocsigen_command.cmi ocsigen_cohttp.cmi \
+    ../http/ocsigen_charset_mime.cmi ocsigen_extensions.cmi
 ocsigen_extensions.cmx : ocsigen_response.cmx ocsigen_request.cmx \
-    ../baselib/ocsigen_loader.cmx ../baselib/ocsigen_lib.cmx \
-    ../http/ocsigen_cookies.cmx ../baselib/ocsigen_config.cmx \
-    ocsigen_command.cmx ../http/ocsigen_charset_mime.cmx \
-    ocsigen_extensions.cmi
+    ocsigen_multipart.cmx ../baselib/ocsigen_loader.cmx \
+    ../baselib/ocsigen_lib.cmx ../http/ocsigen_cookies.cmx \
+    ../baselib/ocsigen_config.cmx ocsigen_command.cmx ocsigen_cohttp.cmx \
+    ../http/ocsigen_charset_mime.cmx ocsigen_extensions.cmi
 ocsigen_extensions.cmi : ocsigen_response.cmi ocsigen_request.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_cookies.cmi \
     ocsigen_command.cmi ../http/ocsigen_charset_mime.cmi
@@ -27,6 +27,13 @@ ocsigen_local_files.cmo : ocsigen_extensions.cmi \
 ocsigen_local_files.cmx : ocsigen_extensions.cmx \
     ../baselib/ocsigen_config.cmx ocsigen_local_files.cmi
 ocsigen_local_files.cmi : ocsigen_extensions.cmi
+ocsigen_multipart.cmo : ../baselib/ocsigen_stream.cmi \
+    ../baselib/ocsigen_lib.cmi ../baselib/ocsigen_config.cmi \
+    ocsigen_multipart.cmi
+ocsigen_multipart.cmx : ../baselib/ocsigen_stream.cmx \
+    ../baselib/ocsigen_lib.cmx ../baselib/ocsigen_config.cmx \
+    ocsigen_multipart.cmi
+ocsigen_multipart.cmi : ../baselib/ocsigen_stream.cmi
 ocsigen_parseconfig.cmo : ocsigen_socket.cmi ../baselib/ocsigen_loader.cmi \
     ../baselib/ocsigen_lib.cmi ocsigen_extensions.cmi \
     ../baselib/ocsigen_config.cmi ../http/ocsigen_charset_mime.cmi \
@@ -50,13 +57,13 @@ ocsigen_server.cmo : ocsigen_socket.cmi ocsigen_parseconfig.cmi \
     ../baselib/ocsigen_messages.cmi ../baselib/ocsigen_loader.cmi \
     ../baselib/ocsigen_lib.cmi ocsigen_extensions.cmi \
     ../baselib/ocsigen_config.cmi ../baselib/ocsigen_commandline.cmo \
-    ocsigen_command.cmi ../baselib/ocsigen_cache.cmi \
+    ocsigen_command.cmi ocsigen_cohttp.cmi ../baselib/ocsigen_cache.cmi \
     ../baselib/dynlink_wrapper.cmo ocsigen_server.cmi
 ocsigen_server.cmx : ocsigen_socket.cmx ocsigen_parseconfig.cmx \
     ../baselib/ocsigen_messages.cmx ../baselib/ocsigen_loader.cmx \
     ../baselib/ocsigen_lib.cmx ocsigen_extensions.cmx \
     ../baselib/ocsigen_config.cmx ../baselib/ocsigen_commandline.cmx \
-    ocsigen_command.cmx ../baselib/ocsigen_cache.cmx \
+    ocsigen_command.cmx ocsigen_cohttp.cmx ../baselib/ocsigen_cache.cmx \
     ../baselib/dynlink_wrapper.cmx ocsigen_server.cmi
 ocsigen_server.cmi :
 ocsigen_socket.cmo : ../baselib/ocsigen_lib_base.cmi ocsigen_socket.cmi
