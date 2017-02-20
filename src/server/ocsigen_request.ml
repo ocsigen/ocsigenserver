@@ -165,7 +165,12 @@ let path_string {r_request} =
   Uri.path (Cohttp.Request.uri r_request)
 
 let path r =
-  Ocsigen_lib.Url.split_path (path_string r)
+  (* CHECKME *)
+  match Ocsigen_lib.Url.split_path (path_string r) with
+  | "" :: path ->
+    path
+  | path ->
+    path
 
 let sub_path_string = function
   | {r_sub_path = Some r_sub_path} ->
@@ -174,7 +179,11 @@ let sub_path_string = function
     path_string r
 
 let sub_path r =
-  Ocsigen_lib.Url.split_path (sub_path_string r)
+  match Ocsigen_lib.Url.split_path (sub_path_string r) with
+  | "" :: path ->
+    path
+  | path ->
+    path
 
 let original_full_path_string = function
   | {r_original_full_path = Some r_original_full_path} ->
