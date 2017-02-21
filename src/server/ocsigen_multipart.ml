@@ -404,18 +404,8 @@ let post_params_multipart_form_data body_gen ctparams upload_dir max_size =
   Ocsigen_stream.consume body_gen >>= fun () ->
   Lwt.return (!params, !files)
 
-let post_params
-    ?content_type
-    body_gen =
-  let (ct, cst), ctparams =
-    match content_type with
-    (* RFC 2616, sect. 7.2.1: if the media type remains unknown, the
-       recipient SHOULD treat it as type "application/octet-stream" *)
-    | None ->
-      ("application", "octet-stream"), []
-    | Some content_type ->
-      content_type
-  in
+let post_params ~content_type body_gen =
+  let (ct, cst), ctparams = content_type in
   match String.lowercase ct, String.lowercase cst with
   | "application", "x-www-form-urlencoded" ->
     Some (post_params_form_urlencoded body_gen)

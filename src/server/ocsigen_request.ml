@@ -1,9 +1,9 @@
 open Lwt.Infix
 
-let post_data_of_body b =
+let post_data_of_body ~content_type b =
   Cohttp_lwt_body.to_stream b
   |> Ocsigen_stream.of_lwt_stream
-  |> Ocsigen_multipart.post_params
+  |> Ocsigen_multipart.post_params ~content_type
 
 type content_type = Ocsigen_multipart.content_type
 
@@ -220,15 +220,28 @@ let cookies r =
   | None ->
     Ocsigen_cookies.CookiesTable.empty
 
+let content_type r =
+  match header r Http_headers.content_type with
+  | Some content_type ->
+    Ocsigen_multipart.parse_content_type content_type
+  | None ->
+    None
+
 let force_post_data ({r_post_data ; r_body} as r) s i =
   match r_post_data with
   | Some r_post_data ->
     r_post_data
   | None ->
     let v =
-      match post_data_of_body r_body with
-      | Some f ->
-        Some (f s i)
+      match content_type r with
+      | Some content_type ->
+        (match
+           post_data_of_body ~content_type r_body
+         with
+         | Some f ->
+           Some (f s i)
+         | None ->
+           None)
       | None ->
         None
     in
@@ -254,13 +267,6 @@ let remote_ip {r_remote_ip} = Lazy.force r_remote_ip
 let remote_ip_parsed {r_remote_ip_parsed} = Lazy.force r_remote_ip_parsed
 
 let forward_ip {r_forward_ip} = r_forward_ip
-
-let content_type r =
-  match header r Http_headers.content_type with
-  | Some content_type ->
-    Ocsigen_multipart.parse_content_type content_type
-  | None ->
-    None
 
 let request_cache {r_request_cache} = r_request_cache
 

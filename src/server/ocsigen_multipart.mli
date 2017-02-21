@@ -19,7 +19,7 @@ type file_info = {
 type post_data = (string * string) list * (string * file_info) list
 
 val post_params :
-  ?content_type : content_type ->
+  content_type : content_type ->
   string Ocsigen_stream.t ->
   (string option -> Int64.t option -> post_data Lwt.t) option
 
