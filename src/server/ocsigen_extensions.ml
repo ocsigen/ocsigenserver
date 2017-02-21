@@ -40,7 +40,12 @@ exception Error_in_config_file of string
 (** Option incorrect in a userconf file *)
 exception Error_in_user_config_file of string
 
-type file_info = Ocsigen_multipart.file_info
+type file_info = Ocsigen_multipart.file_info = {
+  tmp_filename : string ;
+  filesize : int64 ;
+  raw_original_filename : string ;
+  file_content_type : ((string * string) * (string * string) list) option
+}
 
 let badconfig fmt = Printf.ksprintf (fun s -> raise (Error_in_config_file s)) fmt
 

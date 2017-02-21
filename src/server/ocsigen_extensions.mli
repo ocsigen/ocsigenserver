@@ -37,7 +37,12 @@ exception Error_in_config_file of string
 (** Option incorrect in a userconf file *)
 exception Error_in_user_config_file of string
 
-type file_info = Ocsigen_multipart.file_info
+type file_info = Ocsigen_multipart.file_info = {
+  tmp_filename : string ;
+  filesize : int64 ;
+  raw_original_filename : string ;
+  file_content_type : ((string * string) * (string * string) list) option
+}
 
 val badconfig : ('a, unit, string, 'b) format4 -> 'a
 (** Convenient function for raising Error_in_config_file exceptions with
