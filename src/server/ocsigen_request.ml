@@ -213,10 +213,22 @@ let add_header r id v =
   in
   map_cohttp_request r ~f
 
+let parse_cookies s =
+  let splitted = Ocsigen_lib.String.split ';' s in
+  try
+    List.fold_left
+      (fun beg a ->
+         let (n, v) = Ocsigen_lib.String.sep '=' a in
+         Ocsigen_cookies.CookiesTable.add n v beg)
+      Ocsigen_cookies.CookiesTable.empty
+      splitted
+  with _ ->
+    Ocsigen_cookies.CookiesTable.empty
+
 let cookies r =
   match header r Http_headers.cookie with
   | Some cookies ->
-    Ocsigen_cookies.parse_cookies cookies
+    parse_cookies cookies
   | None ->
     Ocsigen_cookies.CookiesTable.empty
 

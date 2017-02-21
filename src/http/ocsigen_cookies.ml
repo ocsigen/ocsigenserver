@@ -65,15 +65,3 @@ let add_cookies newcookies oldcookies =
     )
     newcookies
     oldcookies
-
-let parse_cookies s =
-  let splitted = Ocsigen_lib.String.split ';' s in
-  try
-    List.fold_left
-      (fun beg a ->
-         let (n, v) = Ocsigen_lib.String.sep '=' a in
-         CookiesTable.add n v beg)
-      CookiesTable.empty
-      splitted
-  with _ ->
-    CookiesTable.empty

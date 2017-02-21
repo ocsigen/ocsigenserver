@@ -63,5 +63,3 @@ val add_cookies :
   cookie CookiesTable.t Cookies.t ->
   cookie CookiesTable.t Cookies.t ->
   cookie CookiesTable.t Cookies.t
-
-val parse_cookies : string -> string CookiesTable.t
