@@ -16,6 +16,7 @@ val make :
   ?sub_path : string ->
   ?original_full_path : string ->
   ?request_cache : Polytables.t ->
+  ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
   address : Unix.inet_addr ->
   port : int ->
   filenames : string list ref ->
@@ -31,7 +32,8 @@ val update :
   ?remote_ip : string ->
   ?ssl : bool ->
   ?request : Cohttp.Request.t ->
-  ?post_data : Ocsigen_multipart.post_data option ->
+  ?post_data_override : Ocsigen_multipart.post_data option ->
+  ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
   t ->
   t
 

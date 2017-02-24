@@ -26,10 +26,11 @@ type t = {
   r_forward_ip : string list ;
   r_request : Cohttp.Request.t ;
   r_body : Cohttp_lwt_body.t ;
-  mutable r_post_data : Ocsigen_multipart.post_data Lwt.t option option ;
+  mutable r_post_data_override : Ocsigen_multipart.post_data Lwt.t option option ;
   r_original_full_path : string option ;
   r_sub_path : string option ;
   r_waiter : unit Lwt.t ;
+  r_cookies_override : string Ocsigen_cookies.CookiesTable.t option ;
   mutable r_request_cache : Polytables.t ;
   mutable r_tries : int
 }
@@ -37,6 +38,7 @@ type t = {
 let make
     ?(forward_ip = []) ?sub_path ?original_full_path
     ?(request_cache = Polytables.create ())
+    ?cookies_override
     ~address ~port ~filenames ~sockaddr ~request ~body ~waiter () =
   let r_remote_ip =
     lazy
@@ -55,22 +57,24 @@ let make
     r_forward_ip = forward_ip ;
     r_request = request ;
     r_body = body ;
-    r_post_data = None ;
+    r_post_data_override = None ;
     r_sub_path = sub_path ;
     r_original_full_path = original_full_path ;
     r_waiter = waiter ;
+    r_cookies_override = cookies_override ;
     r_request_cache = request_cache ;
     r_tries = 0
   }
 
 let update
-    ?forward_ip ?remote_ip ?ssl ?request ?post_data
+    ?forward_ip ?remote_ip ?ssl ?request ?post_data_override ?cookies_override
     ({
       r_request ;
       r_forward_ip ;
       r_remote_ip ;
       r_remote_ip_parsed ;
-      r_post_data
+      r_cookies_override ;
+      r_post_data_override
     } as r) =
   (* FIXME : ssl *)
   let r_request =
@@ -91,21 +95,28 @@ let update
       lazy remote_ip, lazy (Ipaddr.of_string_exn remote_ip)
     | None ->
       r_remote_ip, r_remote_ip_parsed
-  and r_post_data =
-    match post_data with
-    | Some (Some post_data) ->
-      Some (Some (Lwt.return post_data))
+  and r_post_data_override =
+    match post_data_override with
+    | Some (Some post_data_override) ->
+      Some (Some (Lwt.return post_data_override))
     | Some None ->
       Some None
     | None ->
-      r_post_data
+      r_post_data_override
+  and r_cookies_override =
+    match cookies_override with
+    | Some _ ->
+      cookies_override
+    | None ->
+      r_cookies_override
   in {
     r with
     r_request ;
     r_forward_ip ;
     r_remote_ip ;
     r_remote_ip_parsed ;
-    r_post_data
+    r_post_data_override ;
+    r_cookies_override
   }
 
 let uri {r_request} = Cohttp.Request.uri r_request
@@ -225,12 +236,15 @@ let parse_cookies s =
   with _ ->
     Ocsigen_cookies.CookiesTable.empty
 
-let cookies r =
-  match header r Http_headers.cookie with
-  | Some cookies ->
-    parse_cookies cookies
-  | None ->
-    Ocsigen_cookies.CookiesTable.empty
+let cookies = function
+  | {r_cookies_override = Some cookies} ->
+    cookies
+  | r ->
+    match header r Http_headers.cookie with
+    | Some cookies ->
+      parse_cookies cookies
+    | None ->
+      Ocsigen_cookies.CookiesTable.empty
 
 let content_type r =
   match header r Http_headers.content_type with
@@ -239,10 +253,10 @@ let content_type r =
   | None ->
     None
 
-let force_post_data ({r_post_data ; r_body} as r) s i =
-  match r_post_data with
-  | Some r_post_data ->
-    r_post_data
+let force_post_data ({r_post_data_override ; r_body} as r) s i =
+  match r_post_data_override with
+  | Some r_post_data_override ->
+    r_post_data_override
   | None ->
     let v =
       match content_type r with
@@ -257,7 +271,7 @@ let force_post_data ({r_post_data ; r_body} as r) s i =
       | None ->
         None
     in
-    r.r_post_data <- Some v;
+    r.r_post_data_override <- Some v;
     v
 
 let post_params r s i =
