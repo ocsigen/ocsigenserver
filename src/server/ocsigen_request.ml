@@ -29,10 +29,10 @@ type t = {
   mutable r_post_data_override : Ocsigen_multipart.post_data Lwt.t option option ;
   r_original_full_path : string option ;
   r_sub_path : string option ;
-  r_waiter : unit Lwt.t ;
   r_cookies_override : string Ocsigen_cookies.CookiesTable.t option ;
   mutable r_request_cache : Polytables.t ;
-  mutable r_tries : int
+  mutable r_tries : int ;
+  r_connection_closed : unit Lwt.t * unit Lwt.u
 }
 
 let make
@@ -47,7 +47,8 @@ let make
   in
   let r_remote_ip_parsed =
     lazy (Ipaddr.of_string_exn (Lazy.force r_remote_ip))
-  in {
+  and r_connection_closed = Lwt.wait () in
+  {
     r_address = address ;
     r_port = port ;
     r_filenames = filenames ;
@@ -60,10 +61,10 @@ let make
     r_post_data_override = None ;
     r_sub_path = sub_path ;
     r_original_full_path = original_full_path ;
-    r_waiter = waiter ;
     r_cookies_override = cookies_override ;
     r_request_cache = request_cache ;
-    r_tries = 0
+    r_tries = 0 ;
+    r_connection_closed
   }
 
 let update
@@ -299,3 +300,7 @@ let request_cache {r_request_cache} = r_request_cache
 let tries {r_tries} = r_tries
 
 let incr_tries r = r.r_tries <- r.r_tries + 1
+
+let connection_closed {r_connection_closed = (wait, _)} = wait
+
+let wakeup {r_connection_closed = (_, wakeup)} = Lwt.wakeup wakeup ()

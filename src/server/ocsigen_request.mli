@@ -117,3 +117,7 @@ val request_cache : t -> Polytables.t
 val tries : t -> int
 
 val incr_tries : t -> unit
+
+val connection_closed : t -> unit Lwt.t
+
+val wakeup : t -> unit
