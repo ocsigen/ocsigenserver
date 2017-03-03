@@ -66,9 +66,9 @@ let gen regexp continue = function
         Lwt.return @@ Ocsigen_extensions.Ext_continue_with
           ({ ri with
              Ocsigen_extensions.request_info =
-               Ocsigen_request.update_url
+               Ocsigen_request.update
                  ~full_rewrite
-                 (Uri.of_string redir)
+                 ~uri:(Uri.of_string redir)
                  ri.Ocsigen_extensions.request_info
            },
            Ocsigen_cookies.Cookies.empty,
@@ -77,9 +77,9 @@ let gen regexp continue = function
         Lwt.return @@ Ocsigen_extensions.Ext_retry_with
           ({ ri with
              Ocsigen_extensions.request_info =
-               Ocsigen_request.update_url
+               Ocsigen_request.update
                  ~full_rewrite
-                 (Uri.of_string redir)
+                 ~uri:(Uri.of_string redir)
                  ri.Ocsigen_extensions.request_info },
            Ocsigen_cookies.Cookies.empty)
     and catch_block = function

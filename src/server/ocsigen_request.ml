@@ -14,7 +14,7 @@ type file_info = Ocsigen_multipart.file_info = {
   file_content_type : content_type option
 }
 
-type post_data = (string * string) list * (string * file_info) list
+type post_data = Ocsigen_multipart.post_data
 
 type t = {
   r_address : Unix.inet_addr ;
@@ -26,7 +26,8 @@ type t = {
   r_forward_ip : string list ;
   r_request : Cohttp.Request.t ;
   r_body : Cohttp_lwt_body.t ;
-  mutable r_post_data_override : Ocsigen_multipart.post_data Lwt.t option option ;
+  r_get_params_override : (string * string list) list option ;
+  mutable r_post_data_override : post_data Lwt.t option option ;
   r_original_full_path : string option ;
   r_sub_path : string option ;
   r_cookies_override : string Ocsigen_cookies.CookiesTable.t option ;
@@ -58,6 +59,7 @@ let make
     r_forward_ip = forward_ip ;
     r_request = request ;
     r_body = body ;
+    r_get_params_override = None ;
     r_post_data_override = None ;
     r_sub_path = sub_path ;
     r_original_full_path = original_full_path ;
@@ -67,15 +69,36 @@ let make
     r_connection_closed
   }
 
+let update_uri_components ~full_rewrite ~request uri =
+  let request =
+    let meth = Cohttp.Request.meth request
+    and version = Cohttp.Request.version request
+    and encoding = Cohttp.Request.encoding request
+    and headers = Cohttp.Request.headers request in
+    Cohttp.Request.make ~meth ~version ~encoding ~headers uri
+  in
+  let original_full_path =
+    if full_rewrite then
+      Some (Uri.path (Cohttp.Request.uri request))
+    else
+      None
+  in
+  request, original_full_path
+
 let update
-    ?forward_ip ?remote_ip ?ssl ?request ?post_data_override ?cookies_override
+    ?forward_ip ?remote_ip ?ssl ?request
+    ?get_params_override ?post_data_override ?cookies_override
+    ?(full_rewrite = false) ?uri
     ({
       r_request ;
       r_forward_ip ;
       r_remote_ip ;
       r_remote_ip_parsed ;
+      r_get_params_override ;
       r_cookies_override ;
-      r_post_data_override
+      r_post_data_override ;
+      r_sub_path ;
+      r_original_full_path
     } as r) =
   (* FIXME : ssl *)
   let r_request =
@@ -110,37 +133,38 @@ let update
       cookies_override
     | None ->
       r_cookies_override
-  in {
+  and r_get_params_override =
+    match get_params_override with
+    | Some _ ->
+      get_params_override
+    | None ->
+      r_get_params_override
+  in
+  let r_request, r_original_full_path =
+    match uri with
+    | Some uri ->
+      update_uri_components ~full_rewrite ~request:r_request uri
+    | None ->
+      r_request, r_original_full_path
+  in
+  {
     r with
     r_request ;
     r_forward_ip ;
     r_remote_ip ;
     r_remote_ip_parsed ;
+    r_get_params_override ;
     r_post_data_override ;
-    r_cookies_override
+    r_cookies_override ;
+    r_sub_path ;
+    r_original_full_path
   }
 
 let uri {r_request} = Cohttp.Request.uri r_request
 
-let update_url ?(full_rewrite = false) url ({r_request} as r) =
-  let r_request =
-    let meth = Cohttp.Request.meth r_request
-    and version = Cohttp.Request.version r_request
-    and encoding = Cohttp.Request.encoding r_request
-    and headers = Cohttp.Request.headers r_request in
-    Cohttp.Request.make ~meth ~version ~encoding ~headers url
-  in
-  let r_sub_path = None
-  and r_original_full_path =
-    if full_rewrite then
-      Some (Uri.path (Cohttp.Request.uri r_request))
-    else
-      None
-  in
-  { r with r_request ; r_sub_path ; r_original_full_path }
-
 let request {r_request} =
   r_request
+
 
 let body {r_body} =
   r_body
@@ -170,8 +194,12 @@ let version {r_request} =
 let query {r_request} =
   Uri.verbatim_query (Cohttp.Request.uri r_request)
 
-let get_params {r_request} =
-  Uri.query (Cohttp.Request.uri r_request)
+let get_params { r_request ; r_get_params_override } =
+  match r_get_params_override with
+  | Some r_get_params_override ->
+    r_get_params_override
+  | None ->
+    Uri.query (Cohttp.Request.uri r_request)
 
 let path_string {r_request} =
   Uri.path (Cohttp.Request.uri r_request)

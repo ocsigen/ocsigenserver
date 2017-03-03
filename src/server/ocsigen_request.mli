@@ -32,18 +32,15 @@ val update :
   ?remote_ip : string ->
   ?ssl : bool ->
   ?request : Cohttp.Request.t ->
-  ?post_data_override : Ocsigen_multipart.post_data option ->
+  ?get_params_override : (string * string list) list ->
+  ?post_data_override : post_data option ->
   ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
+  ?full_rewrite : bool ->
+  ?uri : Uri.t ->
   t ->
   t
 
 val uri : t -> Uri.t
-
-val update_url :
-  ?full_rewrite : bool ->
-  Uri.t ->
-  t ->
-  t
 
 val request : t -> Cohttp.Request.t
 
