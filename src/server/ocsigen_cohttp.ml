@@ -71,6 +71,38 @@ module Cookie = struct
 
 end
 
+(* FIXME: secure *)
+let make_cookies_header path exp name c secure =
+  Format.sprintf "%s=%s%s%s" name c
+    (*VVV encode = true? *)
+    ("; path=/" ^ Ocsigen_lib.Url.string_of_url_path ~encode:true path)
+    (* (if secure && slot.sl_ssl then "; secure" else "")^ *)
+    "" ^
+  (match exp with
+   | Some s ->
+     "; expires=" ^
+     Netdate.format
+       "%a, %d-%b-%Y %H:%M:%S GMT"
+       (Netdate.create s)
+   | None   -> "")
+
+let make_cookies_headers path t hds =
+  Ocsigen_cookies.CookiesTable.fold
+    (fun name c h ->
+       let exp, v, secure =
+         match c with
+         | Ocsigen_cookies.OUnset ->
+           Some 0., "", false
+         | Ocsigen_cookies.OSet (t, v, secure) ->
+           t, v, secure
+       in
+       Cohttp.Header.add h
+         Http_headers.(name_to_string set_cookie)
+         (make_cookies_header path exp name v secure)
+    )
+    t
+    hds
+
 let handler ~address ~port ~connector (flow, conn) request body =
 
   Lwt_log.ign_info_f ~section
@@ -148,7 +180,6 @@ let handler ~address ~port ~connector (flow, conn) request body =
       !filenames;
 
   (* TODO: equivalent of Ocsigen_range *)
-  (* TODO: handle cookies *)
 
   let request =
     Ocsigen_request.make
@@ -159,8 +190,21 @@ let handler ~address ~port ~connector (flow, conn) request body =
 
   Lwt.catch
     (fun () ->
-       connector request >>= fun { Ocsigen_response.a_response ; a_body } ->
+       connector request >>= fun { Ocsigen_response.a_response ;
+                                   a_cookies ;
+                                   a_body } ->
+
+       let a_response =
+         let headers =
+           Ocsigen_cookies.Cookies.fold
+             make_cookies_headers
+             a_cookies
+             (Cohttp.Response.headers a_response)
+         in
+         { a_response with Cohttp.Response.headers }
+       in
        Lwt.return (a_response, a_body))
+
     (function
       | Ocsigen_Is_a_directory fun_request ->
         Cohttp_lwt_unix.Server.respond_redirect
