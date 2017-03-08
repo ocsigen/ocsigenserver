@@ -9,12 +9,10 @@ accesscontrol.cmx : ../server/ocsigen_response.cmx \
 accesscontrol.cmi :
 authbasic.cmo : ../server/ocsigen_request.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi \
-    ../server/ocsigen_cohttp.cmi ../http/http_headers.cmi \
-    authbasic.cmi
+    ../server/ocsigen_cohttp.cmi ../http/http_headers.cmi authbasic.cmi
 authbasic.cmx : ../server/ocsigen_request.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
-    ../server/ocsigen_cohttp.cmx ../http/http_headers.cmx \
-    authbasic.cmi
+    ../server/ocsigen_cohttp.cmx ../http/http_headers.cmx authbasic.cmi
 authbasic.cmi :
 cgimod.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi \
@@ -36,6 +34,11 @@ extendconfiguration.cmo : ../server/ocsigen_parseconfig.cmi \
 extendconfiguration.cmx : ../server/ocsigen_parseconfig.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
     ../baselib/ocsigen_config.cmx ../http/ocsigen_charset_mime.cmx
+handler.cmo : ../server/ocsigen_response.cmi ../server/ocsigen_request.cmi \
+    ../server/ocsigen_extensions.cmi handler.cmi
+handler.cmx : ../server/ocsigen_response.cmx ../server/ocsigen_request.cmx \
+    ../server/ocsigen_extensions.cmx handler.cmi
+handler.cmi :
 ocsigen_comet.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
     ../server/ocsigen_extensions.cmi ../baselib/ocsigen_config.cmi \
     ocsigen_comet.cmi

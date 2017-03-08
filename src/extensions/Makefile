@@ -22,7 +22,7 @@ all: byte opt
 
 ### Extensions ###
 
-FILES := accesscontrol.ml authbasic.ml cors.ml outputfilter.ml \
+FILES := accesscontrol.ml authbasic.ml cors.ml handler.ml outputfilter.ml \
 	 redirectmod.ml revproxy.ml rewritemod.ml staticmod.ml
          # cgimod.ml              \
          # userconf.ml            \
