@@ -27,7 +27,7 @@ type t = {
   r_request : Cohttp.Request.t ;
   r_body : Cohttp_lwt_body.t ;
   r_get_params_override : (string * string list) list option ;
-  mutable r_post_data_override : post_data Lwt.t option option ;
+  r_post_data_override : post_data Lwt.t option option ref ;
   r_original_full_path : string option ;
   r_sub_path : string option ;
   r_cookies_override : string Ocsigen_cookies.CookiesTable.t option ;
@@ -60,7 +60,7 @@ let make
     r_request = request ;
     r_body = body ;
     r_get_params_override = None ;
-    r_post_data_override = None ;
+    r_post_data_override = ref None ;
     r_sub_path = sub_path ;
     r_original_full_path = original_full_path ;
     r_cookies_override = cookies_override ;
@@ -122,9 +122,9 @@ let update
   and r_post_data_override =
     match post_data_override with
     | Some (Some post_data_override) ->
-      Some (Some (Lwt.return post_data_override))
+      ref (Some (Some (Lwt.return post_data_override)))
     | Some None ->
-      Some None
+      ref (Some None)
     | None ->
       r_post_data_override
   and r_cookies_override =
@@ -283,7 +283,7 @@ let content_type r =
     None
 
 let force_post_data ({r_post_data_override ; r_body} as r) s i =
-  match r_post_data_override with
+  match !r_post_data_override with
   | Some r_post_data_override ->
     r_post_data_override
   | None ->
@@ -300,7 +300,7 @@ let force_post_data ({r_post_data_override ; r_body} as r) s i =
       | None ->
         None
     in
-    r.r_post_data_override <- Some v;
+    r.r_post_data_override := Some v;
     v
 
 let post_params r s i =
