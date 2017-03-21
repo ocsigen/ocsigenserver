@@ -38,7 +38,7 @@ handler.cmo : ../server/ocsigen_response.cmi ../server/ocsigen_request.cmi \
     ../server/ocsigen_extensions.cmi handler.cmi
 handler.cmx : ../server/ocsigen_response.cmx ../server/ocsigen_request.cmx \
     ../server/ocsigen_extensions.cmx handler.cmi
-handler.cmi :
+handler.cmi : ../server/ocsigen_response.cmi
 ocsigen_comet.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
     ../server/ocsigen_extensions.cmi ../baselib/ocsigen_config.cmi \
     ocsigen_comet.cmi
