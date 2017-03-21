@@ -41,7 +41,7 @@ exception Refused
 
 let add_headers config r response =
 
-  match Ocsigen_request.header r Http_headers.origin with
+  match Ocsigen_request.header r Ocsigen_header.Name.origin with
 
   | None ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
@@ -50,11 +50,11 @@ let add_headers config r response =
 
     Lwt_log.ign_info_f ~section "request with origin: %s" origin;
 
-    let l = [Http_headers.origin, origin] in
+    let l = [Ocsigen_header.Name.origin, origin] in
 
     let l =
       if config.allowed_credentials then
-        (Http_headers.access_control_allow_credentials, "true") :: l
+        (Ocsigen_header.Name.access_control_allow_credentials, "true") :: l
       else
         l
     in
@@ -62,7 +62,7 @@ let add_headers config r response =
     let l =
       match
         Ocsigen_request.header r
-          Http_headers.access_control_request_method
+          Ocsigen_header.Name.access_control_request_method
       with
       | Some request_method ->
         let allowed_method =
@@ -76,7 +76,9 @@ let add_headers config r response =
               false
         in
         if allowed_method then
-          (Http_headers.access_control_allow_methods, request_method) :: l
+          (Ocsigen_header.Name.access_control_allow_methods,
+           request_method)
+          :: l
         else
           (Lwt_log.ign_info ~section "Method refused";
            raise Refused)
@@ -87,10 +89,11 @@ let add_headers config r response =
     let l =
       match
         Ocsigen_request.header r
-          Http_headers.access_control_request_headers
+          Ocsigen_header.Name.access_control_request_headers
       with
       | Some request_headers ->
-        (Http_headers.access_control_request_headers, request_headers) :: l
+        (Ocsigen_header.Name.access_control_request_headers,
+         request_headers) :: l
       | None ->
         l
     in
@@ -98,7 +101,8 @@ let add_headers config r response =
     let l =
       match config.max_age with
       | Some max_age ->
-        (Http_headers.access_control_max_age, string_of_int max_age) :: l
+        (Ocsigen_header.Name.access_control_max_age,
+         string_of_int max_age) :: l
       | None ->
         l
     in
@@ -108,7 +112,7 @@ let add_headers config r response =
       | [] ->
         l
       | exposed_headers ->
-        (Http_headers.access_control_expose_headers,
+        (Ocsigen_header.Name.access_control_expose_headers,
          String.concat ", " exposed_headers) ::
         l
 

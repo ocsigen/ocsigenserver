@@ -79,11 +79,11 @@ val original_full_path : t -> string list
 
 val original_full_path_string : t -> string
 
-val header : t -> Http_headers.name -> string option
+val header : t -> Ocsigen_header.Name.t -> string option
 
-val header_multi : t -> Http_headers.name -> string list
+val header_multi : t -> Ocsigen_header.Name.t -> string list
 
-val add_header : t -> Http_headers.name -> string -> t
+val add_header : t -> Ocsigen_header.Name.t -> string -> t
 
 val cookies : t -> string Ocsigen_cookies.CookiesTable.t
 

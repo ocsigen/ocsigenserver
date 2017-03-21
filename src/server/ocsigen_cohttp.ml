@@ -6,7 +6,7 @@ exception Ocsigen_http_error of
     Ocsigen_cookies.cookieset * Cohttp.Code.status
 
 exception Ext_http_error of
-    Cohttp.Code.status * string option * Http_headers.t option
+    Cohttp.Code.status * string option * Cohttp.Header.t option
 
 (** print_request Print request for debug
     @param out_ch output for debug
@@ -59,10 +59,9 @@ module Cookie = struct
            | Ocsigen_cookies.OUnset -> (Some 0., "", false)
            | Ocsigen_cookies.OSet (t, v, secure) -> (t, v, secure)
          in
-         Http_headers.add
-           Http_headers.set_cookie
-           (serialize_cookie_raw path exp name v secure)
-           h)
+         Cohttp.Header.add h
+           Ocsigen_header.Name.(to_string set_cookie)
+           (serialize_cookie_raw path exp name v secure))
       table
       headers
 
@@ -97,7 +96,7 @@ let make_cookies_headers path t hds =
            t, v, secure
        in
        Cohttp.Header.add h
-         Http_headers.(name_to_string set_cookie)
+         Ocsigen_header.Name.(to_string set_cookie)
          (make_cookies_header path exp name v secure)
     )
     t

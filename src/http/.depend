@@ -1,6 +1,3 @@
-http_headers.cmo : http_headers.cmi
-http_headers.cmx : http_headers.cmi
-http_headers.cmi :
 ocsigen_charset_mime.cmo : ../baselib/ocsigen_lib.cmi \
     ../baselib/ocsigen_config.cmi ocsigen_charset_mime.cmi
 ocsigen_charset_mime.cmx : ../baselib/ocsigen_lib.cmx \
@@ -9,3 +6,6 @@ ocsigen_charset_mime.cmi :
 ocsigen_cookies.cmo : ocsigen_cookies.cmi
 ocsigen_cookies.cmx : ocsigen_cookies.cmi
 ocsigen_cookies.cmi : ../baselib/ocsigen_lib.cmi
+ocsigen_header.cmo : ../baselib/ocsigen_lib.cmi ocsigen_header.cmi
+ocsigen_header.cmx : ../baselib/ocsigen_lib.cmx ocsigen_header.cmi
+ocsigen_header.cmi :

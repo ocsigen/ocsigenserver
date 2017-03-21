@@ -10,9 +10,9 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	baselib/ocsigen_loader.cmi	   \
         baselib/polytables.cmi	           \
         \
-	http/http_headers.cmi	           \
 	http/ocsigen_charset_mime.cmi      \
         http/ocsigen_cookies.cmi           \
+	http/ocsigen_header.cmi            \
 	\
         server/ocsigen_request.cmi         \
         server/ocsigen_response.cmi        \

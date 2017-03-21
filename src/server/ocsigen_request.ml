@@ -236,17 +236,17 @@ let original_full_path r =
 
 let header {r_request} id =
   let h = Cohttp.Request.headers r_request in
-  Cohttp.Header.get h (Http_headers.name_to_string id)
+  Cohttp.Header.get h (Ocsigen_header.Name.to_string id)
 
 let header_multi {r_request} id =
   let h = Cohttp.Request.headers r_request in
-  Cohttp.Header.get_multi h (Http_headers.name_to_string id)
+  Cohttp.Header.get_multi h (Ocsigen_header.Name.to_string id)
 
 let add_header r id v =
   let f ({Cohttp.Request.headers} as r) =
     let headers =
       Cohttp.Header.add headers
-        (Http_headers.name_to_string id)
+        (Ocsigen_header.Name.to_string id)
         v
     in
     { r with Cohttp.Request.headers }
@@ -269,14 +269,14 @@ let cookies = function
   | {r_cookies_override = Some cookies} ->
     cookies
   | r ->
-    match header r Http_headers.cookie with
+    match header r Ocsigen_header.Name.cookie with
     | Some cookies ->
       parse_cookies cookies
     | None ->
       Ocsigen_cookies.CookiesTable.empty
 
 let content_type r =
-  match header r Http_headers.content_type with
+  match header r Ocsigen_header.Name.content_type with
   | Some content_type ->
     Ocsigen_multipart.parse_content_type content_type
   | None ->

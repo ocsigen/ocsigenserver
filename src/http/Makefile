@@ -17,9 +17,7 @@ all: byte opt
 
 ### Common files ###
 
-FILES := http_headers.ml         \
-	 ocsigen_cookies.ml      \
-	 ocsigen_charset_mime.ml
+FILES := ocsigen_cookies.ml ocsigen_charset_mime.ml ocsigen_header.ml
 
 PREDEP :=
 

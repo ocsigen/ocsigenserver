@@ -61,10 +61,9 @@ let gen ~realm ~auth rs =
 
   let reject () =
     let h =
-      Http_headers.add
-        (Http_headers.name "WWW-Authenticate")
+      Cohttp.Header.init_with
+        "WWW-Authenticate"
         (Printf.sprintf "Basic realm=\"%s\"" realm)
-        Http_headers.empty
     in
     Lwt_log.ign_info ~section "AUTH: invalid credentials!";
     Lwt.fail (Ocsigen_cohttp.Ext_http_error
@@ -96,7 +95,7 @@ let gen ~realm ~auth rs =
     (match
        Ocsigen_request.header
          ri.Ocsigen_extensions.request_info
-         Http_headers.authorization
+         Ocsigen_header.Name.authorization
      with
      | Some s ->
        validate ~err s

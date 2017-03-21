@@ -111,7 +111,7 @@ let rec parse_condition = function
                 Lwt_log.ign_info_f "HEADER: header %s matches %S" name reg;
               r)
            (Ocsigen_request.header_multi ri
-              (Http_headers.name name))
+              (Ocsigen_header.Name.of_string name))
        in
        if not r
        then Lwt_log.ign_info_f "HEADER: header %s does not match %S" name reg;
@@ -330,7 +330,7 @@ let parse_config parse_fun = function
         let header =
           Ocsigen_request.header
             request_info
-            Http_headers.x_forwarded_for
+            Ocsigen_header.Name.x_forwarded_for
         in
         match header with
         | Some header ->
@@ -397,7 +397,7 @@ let parse_config parse_fun = function
         let header =
           Ocsigen_request.header
             request_info
-            Http_headers.x_forwarded_proto
+            Ocsigen_header.Name.x_forwarded_proto
         in
         match header with
         | Some header ->

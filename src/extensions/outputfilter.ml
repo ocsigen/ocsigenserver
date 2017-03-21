@@ -21,8 +21,10 @@
 (* This module enables rewritting the server output *)
 
 type outputfilter =
-  | Rewrite_header of (Http_headers.name * Netstring_pcre.regexp * string)
-  | Add_header of (Http_headers.name * string * bool option)
+  | Rewrite_header of
+      (Ocsigen_header.Name.t * Netstring_pcre.regexp * string)
+  | Add_header of
+      (Ocsigen_header.Name.t * string * bool option)
 
 let gen filter = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
@@ -123,9 +125,9 @@ let parse_config config_elem =
           "Wrong attributes for <outputfilter/>: attributes regexp and \
            replace can't be set simultaneously"
       | (Some h, Some r, Some d, None) ->
-        gen (Rewrite_header (Http_headers.name h, r, d))
+        gen (Rewrite_header (Ocsigen_header.Name.of_string h, r, d))
       | (Some h, None, Some d, rep) ->
-        gen (Add_header (Http_headers.name h, d, rep))
+        gen (Add_header (Ocsigen_header.Name.of_string h, d, rep))
       | _ ->
         Ocsigen_extensions.badconfig
           "Wrong attributes for <outputfilter header=... dest=... \

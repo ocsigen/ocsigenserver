@@ -56,11 +56,11 @@ let add_cookies ({ a_cookies } as a) cookies =
 
 let header {a_response} id =
   let h = Cohttp.Response.headers a_response in
-  Cohttp.Header.get h (Http_headers.name_to_string id)
+  Cohttp.Header.get h (Ocsigen_header.Name.to_string id)
 
 let header_multi {a_response} id =
   let h = Cohttp.Response.headers a_response in
-  Cohttp.Header.get_multi h (Http_headers.name_to_string id)
+  Cohttp.Header.get_multi h (Ocsigen_header.Name.to_string id)
 
 let add_header
     ({a_response = ({headers} as a_response)} as a)
@@ -69,14 +69,14 @@ let add_header
   a_response = {
     a_response with
     headers =
-      Cohttp.Header.add headers (Http_headers.name_to_string id) v
+      Cohttp.Header.add headers (Ocsigen_header.Name.to_string id) v
   }
 }
 
 let add_header_multi
     ({a_response = ({headers} as a_response)} as a)
     id l =
-  let id = Http_headers.name_to_string id in
+  let id = Ocsigen_header.Name.to_string id in
   let headers =
     List.fold_left
       (fun headers -> Cohttp.Header.add headers id)
@@ -87,7 +87,7 @@ let add_header_multi
 
 let remove_header ({a_response} as a) id =
   let headers = Cohttp.Response.headers a_response
-  and id = Http_headers.name_to_string id in
+  and id = Ocsigen_header.Name.to_string id in
   let headers = Cohttp.Header.remove headers id in
   { a with a_response = { a_response with headers } }
 
@@ -98,7 +98,7 @@ let replace_header
   a_response = {
     a_response with
     headers =
-      Cohttp.Header.replace headers (Http_headers.name_to_string id) v
+      Cohttp.Header.replace headers (Ocsigen_header.Name.to_string id) v
   }
 }
 
@@ -107,7 +107,7 @@ let replace_headers ({a_response} as a) l =
     List.fold_left
       (fun headers (id, content) ->
          Cohttp.Header.replace headers
-           (Http_headers.name_to_string id)
+           (Ocsigen_header.Name.to_string id)
            content)
       (Cohttp.Response.headers a_response)
       l

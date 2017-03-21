@@ -168,8 +168,8 @@ let gen ~usermode ?cache dir = function
               gmt_date (Unix.time () +. float_of_int duration)
           in
           Ocsigen_response.replace_headers answer [
-            Http_headers.cache_control , cache_control ;
-            Http_headers.expires       , expires       ;
+            Ocsigen_header.Name.cache_control , cache_control ;
+            Ocsigen_header.Name.expires       , expires       ;
           ]
       in
       Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return answer))

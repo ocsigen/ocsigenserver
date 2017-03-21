@@ -131,15 +131,15 @@ let gen dir = function
              let h =
                Ocsigen_request.version request_info
                |> Cohttp.Code.string_of_version
-               |> Cohttp.Header.add h Http_headers.(name_to_string
-                                                      x_forwarded_proto)
+               |> Cohttp.Header.add h
+                    Ocsigen_header.Name.(to_string x_forwarded_proto)
              in
              let h =
                Cohttp.Header.add h
-                 Http_headers.(name_to_string x_forwarded_for)
+                 Ocsigen_header.Name.(to_string x_forwarded_for)
                  forward
              in
-             Cohttp.Header.remove h Http_headers.(name_to_string host)
+             Cohttp.Header.remove h Ocsigen_header.Name.(to_string host)
            and uri = Printf.sprintf "%s://%s%s" proto host uri
            and body = Ocsigen_request.body request_info
            and meth = Ocsigen_request.meth request_info in
