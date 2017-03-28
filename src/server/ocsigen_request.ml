@@ -69,24 +69,41 @@ let make
     r_connection_closed
   }
 
-let update_uri_components ~full_rewrite ~request uri =
+let path_string {r_request} =
+  Uri.path (Cohttp.Request.uri r_request)
+
+let path r =
+  (* CHECKME *)
+  match Ocsigen_lib.Url.split_path (path_string r) with
+  | "" :: path ->
+    path
+  | path ->
+    path
+
+let update_uri_components
+    ~full_rewrite
+    r_request
+    r_original_full_path
+    uri =
   let request =
-    let meth = Cohttp.Request.meth request
-    and version = Cohttp.Request.version request
-    and encoding = Cohttp.Request.encoding request
-    and headers = Cohttp.Request.headers request in
+    let meth = Cohttp.Request.meth r_request
+    and version = Cohttp.Request.version r_request
+    and encoding = Cohttp.Request.encoding r_request
+    and headers = Cohttp.Request.headers r_request in
     Cohttp.Request.make ~meth ~version ~encoding ~headers uri
-  in
-  let original_full_path =
-    if full_rewrite then
-      Some (Uri.path (Cohttp.Request.uri request))
-    else
+  and original_full_path =
+    match full_rewrite, r_original_full_path with
+    | true, _ ->
       None
+    | false, Some _ ->
+      r_original_full_path
+    | false, _ ->
+      Some (Uri.path (Cohttp.Request.uri r_request))
   in
   request, original_full_path
 
 let update
-    ?forward_ip ?remote_ip ?ssl ?request
+    ?forward_ip ?remote_ip ?ssl ?sub_path ?request
     ?get_params_override ?post_data_override ?cookies_override
     ?(full_rewrite = false) ?uri
     ({
@@ -139,11 +156,17 @@ let update
       get_params_override
     | None ->
       r_get_params_override
+  and r_sub_path =
+    match sub_path with
+    | Some _ ->
+      sub_path
+    | None ->
+      r_sub_path
   in
   let r_request, r_original_full_path =
     match uri with
     | Some uri ->
-      update_uri_components ~full_rewrite ~request:r_request uri
+      update_uri_components ~full_rewrite r_request r_original_full_path uri
     | None ->
       r_request, r_original_full_path
   in
@@ -164,7 +187,6 @@ let uri {r_request} = Cohttp.Request.uri r_request
 
 let request {r_request} =
   r_request
-
 
 let body {r_body} =
   r_body
@@ -200,17 +222,6 @@ let get_params { r_request ; r_get_params_override } =
     r_get_params_override
   | None ->
     Uri.query (Cohttp.Request.uri r_request)
-
-let path_string {r_request} =
-  Uri.path (Cohttp.Request.uri r_request)
-
-let path r =
-  (* CHECKME *)
-  match Ocsigen_lib.Url.split_path (path_string r) with
-  | "" :: path ->
-    path
-  | path ->
-    path
 
 let sub_path_string = function
   | {r_sub_path = Some r_sub_path} ->

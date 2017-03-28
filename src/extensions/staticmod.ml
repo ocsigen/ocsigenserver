@@ -136,7 +136,7 @@ let gen ~usermode ?cache dir = function
         let pathstring =
           Ocsigen_lib.Url.string_of_url_path
             ~encode:false
-            (Ocsigen_request.path request_info)
+            (Ocsigen_request.sub_path request_info)
         in
         find_static_page ~request ~usermode ~dir ~err ~pathstring
       in

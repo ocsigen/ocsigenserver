@@ -31,6 +31,7 @@ val update :
   ?forward_ip : string list ->
   ?remote_ip : string ->
   ?ssl : bool ->
+  ?sub_path : string ->
   ?request : Cohttp.Request.t ->
   ?get_params_override : (string * string list) list ->
   ?post_data_override : post_data option ->

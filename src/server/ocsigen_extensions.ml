@@ -271,23 +271,6 @@ let (hosts : (virtual_hosts * config_info * extension2) list ref) =
 let set_hosts v = hosts := v
 let get_hosts () = !hosts
 
-let update_path
-    { request_info ; request_config }
-    path =
-  let r = Ocsigen_request.request request_info in
-  let request_info =
-    let request =
-      let meth     = Cohttp.Request.meth r
-      and version  = Cohttp.Request.version r
-      and encoding = Cohttp.Request.encoding r
-      and headers  = Cohttp.Request.headers r
-      and uri      = Uri.with_path (Cohttp.Request.uri r) path in
-      Cohttp.Request.make ~meth ~version ~encoding ~headers uri
-    in
-    Ocsigen_request.update ~request request_info
-  in
-  { request_info ; request_config }
-
 (* Default hostname is either the Host header or the hostname set in
    the configuration file. *)
 let get_hostname {request_info ; request_config = {default_hostname}} =
@@ -483,10 +466,13 @@ let rec default_parse_config
                        (Ocsigen_request.path oldri.request_info))
                   oldri
                   (fun () path -> Url.string_of_url_path ~encode:true path) path;
-                  let ri =
-                    update_path oldri
-                      (Url.string_of_url_path ~encode:true sub_path)
-                  in
+                let ri =
+                  {oldri with
+                   request_info =
+                     Ocsigen_request.update oldri.request_info
+                       ~sub_path:
+                         (Url.string_of_url_path ~encode:true sub_path)
+                  } in
                   parse_config cookies_to_set (Req_not_found (e, ri))
                   >>= function
                       (* After a site, we turn back to old ri *)
