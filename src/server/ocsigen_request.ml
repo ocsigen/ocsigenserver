@@ -63,7 +63,10 @@ type t = {
   r_remote_ip_parsed : Ipaddr.t Lazy.t ;
   r_forward_ip : string list ;
   r_uri : uri ;
-  r_request : Cohttp.Request.t Lazy.t ;
+  r_meth : Cohttp.Code.meth ;
+  r_encoding : Cohttp.Transfer.encoding ;
+  r_version : Cohttp.Code.version ;
+  r_headers : Cohttp.Header.t ;
   r_body : Cohttp_lwt_body.t ;
   r_post_data_override : post_data Lwt.t option option ref ;
   r_original_full_path : string option ;
@@ -96,7 +99,10 @@ let make
     r_remote_ip_parsed ;
     r_forward_ip = forward_ip ;
     r_uri = make_uri (Cohttp.Request.uri request) ;
-    r_request = lazy request ;
+    r_encoding = Cohttp.Request.encoding request ;
+    r_meth = Cohttp.Request.meth request ;
+    r_version = Cohttp.Request.version request ;
+    r_headers = Cohttp.Request.headers request ;
     r_body = body ;
     r_post_data_override = ref None ;
     r_sub_path = sub_path ;
@@ -131,8 +137,8 @@ let update
     ?cookies_override
     ?(full_rewrite = false) ?uri
     ({
-      r_uri ;
-      r_request ;
+      r_uri = {u_uri} as r_uri;
+      r_meth ;
       r_forward_ip ;
       r_remote_ip ;
       r_remote_ip_parsed ;
@@ -174,88 +180,79 @@ let update
       sub_path
     | None ->
       r_sub_path
-  in
-  let r_request, r_original_full_path, r_uri =
+  and r_meth =
+    match meth with
+    | Some meth ->
+      meth
+    | None ->
+      r_meth
+  and r_original_full_path, r_uri =
     match uri with
     | Some uri ->
-      lazy (update_cohttp_uri (Lazy.force r_request) uri),
       (match full_rewrite, r_original_full_path with
        | true, _ ->
          None
        | false, Some _ ->
          r_original_full_path
        | false, _ ->
-         Some (Uri.path (Cohttp.Request.uri (Lazy.force r_request)))),
+         Some (Uri.path (Lazy.force u_uri))),
       make_uri uri
     | None ->
-      r_request, r_original_full_path, r_uri
+      r_original_full_path, r_uri
   in
-  let r_request, r_uri =
-    match get_params_flat, meth with
-    | Some l, _ ->
+  let r_uri =
+    match get_params_flat with
+    | Some l ->
       let u_get_params = lazy (unflatten_get_params l) in
       let u_uri = lazy (
         Uri.with_query
           (Lazy.force r_uri.u_uri)
           (Lazy.force u_get_params)
       ) in
-      lazy (
-        update_cohttp_uri ?meth
-          (Lazy.force r_request)
-          (Lazy.force u_uri)
-      ),
       { r_uri with
         u_uri ;
         u_get_params ;
         u_get_params_flat = lazy l
       }
-    | None, Some meth ->
-      lazy {(Lazy.force r_request) with Cohttp.Request.meth = meth},
+    | None ->
       r_uri
-    | None, None ->
-      r_request, r_uri
   in {
     r with
     r_uri ;
-    r_request ;
+    r_meth ;
     r_forward_ip ;
     r_remote_ip ;
     r_remote_ip_parsed ;
     r_post_data_override ;
     r_cookies_override ;
     r_sub_path ;
-    r_original_full_path
+    r_original_full_path ;
   }
 
-let uri {r_uri = {u_uri}} = Lazy.force u_uri
+let uri {r_uri = {u_uri}} =
+  Lazy.force u_uri
 
-let request {r_request} =
-  Lazy.force r_request
+let request ({ r_meth ; r_encoding ; r_version ; r_headers } as r) =
+  Cohttp.Request.make
+    ~meth:r_meth ~encoding:r_encoding ~version:r_version ~headers:r_headers
+    (uri r)
 
-let body {r_body} =
-  r_body
+let body {r_body} = r_body
 
-let map_cohttp_request ~f ({r_request} as r) =
-  {r with r_request = lazy (f (Lazy.force r_request))}
-
-let address {r_address} =
-  r_address
+let address {r_address} = r_address
 
 let host {r_uri = {u_uri}} =
   Uri.host (Lazy.force u_uri)
 
-let meth {r_request} =
-  Cohttp.Request.meth (Lazy.force r_request)
+let meth {r_meth} = r_meth
 
-let port {r_port} =
-  r_port
+let port {r_port} = r_port
 
 let ssl _ =
   (* FIXME *)
   false
 
-let version {r_request} =
-  Cohttp.Request.version (Lazy.force r_request)
+let version {r_version} = r_version
 
 let query {r_uri = {u_uri}} =
   Uri.verbatim_query (Lazy.force u_uri)
@@ -288,24 +285,19 @@ let original_full_path_string = function
 let original_full_path r =
   Ocsigen_lib.Url.split_path (original_full_path_string r)
 
-let header {r_request} id =
-  let h = Cohttp.Request.headers (Lazy.force r_request) in
-  Cohttp.Header.get h (Ocsigen_header.Name.to_string id)
+let header {r_headers} id =
+  Cohttp.Header.get r_headers (Ocsigen_header.Name.to_string id)
 
-let header_multi {r_request} id =
-  let h = Cohttp.Request.headers (Lazy.force r_request) in
-  Cohttp.Header.get_multi h (Ocsigen_header.Name.to_string id)
+let header_multi {r_headers} id =
+  Cohttp.Header.get_multi r_headers (Ocsigen_header.Name.to_string id)
 
-let add_header r id v =
-  let f ({Cohttp.Request.headers} as r) =
-    let headers =
-      Cohttp.Header.add headers
+let add_header ({r_headers} as r) id v =
+  { r with
+    r_headers =
+      Cohttp.Header.add r_headers
         (Ocsigen_header.Name.to_string id)
         v
-    in
-    { r with Cohttp.Request.headers }
-  in
-  map_cohttp_request r ~f
+  }
 
 let parse_cookies s =
   let splitted = Ocsigen_lib.String.split ';' s in
