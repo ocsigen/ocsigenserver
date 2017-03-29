@@ -16,6 +16,44 @@ type file_info = Ocsigen_multipart.file_info = {
 
 type post_data = Ocsigen_multipart.post_data
 
+(* Wrapper around Uri providing our derived fields.
+
+   Is the laziness too fine-grained? *)
+type uri = {
+  u_uri : Uri.t Lazy.t ;
+  u_get_params : (string * string list) list Lazy.t ;
+  u_get_params_flat : (string * string) list Lazy.t ;
+  u_path_string : string Lazy.t ;
+  u_path : string list Lazy.t ;
+}
+
+let unflatten_get_params l =
+  let module M = Ocsigen_lib.String.Table in
+  M.bindings
+    (List.fold_left
+       (fun acc (id, v) ->
+          M.add id (try v :: M.find id acc with Not_found -> [v]) acc)
+       M.empty
+       l)
+
+let flatten_get_params l =
+  List.concat (List.map (fun (s, l) -> List.map (fun v -> s, v) l) l)
+
+let make_uri u =
+  let u_uri = lazy u
+  and u_get_params = lazy (Uri.query u)
+  and u_path_string = lazy (Uri.path u) in
+  let u_path = lazy (
+    match Ocsigen_lib.Url.split_path (Lazy.force u_path_string) with
+    | "" :: path ->
+      path
+    | path ->
+      path
+  ) and u_get_params_flat = lazy (
+    flatten_get_params (Lazy.force u_get_params)
+  ) in
+  { u_uri ; u_get_params ; u_get_params_flat ; u_path ; u_path_string }
+
 type t = {
   r_address : Unix.inet_addr ;
   r_port : int ;
@@ -24,9 +62,9 @@ type t = {
   r_remote_ip : string Lazy.t ;
   r_remote_ip_parsed : Ipaddr.t Lazy.t ;
   r_forward_ip : string list ;
-  r_request : Cohttp.Request.t ;
+  r_uri : uri ;
+  r_request : Cohttp.Request.t Lazy.t ;
   r_body : Cohttp_lwt_body.t ;
-  r_get_params_override : (string * string list) list option ;
   r_post_data_override : post_data Lwt.t option option ref ;
   r_original_full_path : string option ;
   r_sub_path : string option ;
@@ -57,9 +95,9 @@ let make
     r_remote_ip ;
     r_remote_ip_parsed ;
     r_forward_ip = forward_ip ;
-    r_request = request ;
+    r_uri = make_uri (Cohttp.Request.uri request) ;
+    r_request = lazy request ;
     r_body = body ;
-    r_get_params_override = None ;
     r_post_data_override = ref None ;
     r_sub_path = sub_path ;
     r_original_full_path = original_full_path ;
@@ -69,62 +107,42 @@ let make
     r_connection_closed
   }
 
-let path_string {r_request} =
-  Uri.path (Cohttp.Request.uri r_request)
+let path_string {r_uri = {u_path_string}} =
+  Lazy.force u_path_string
 
-let path r =
-  (* CHECKME *)
-  match Ocsigen_lib.Url.split_path (path_string r) with
-  | "" :: path ->
-    path
-  | path ->
-    path
+let path {r_uri = {u_path}} =
+  Lazy.force u_path
 
-let update_uri_components
-    ~full_rewrite
-    r_request
-    r_original_full_path
-    uri =
-  let request =
-    let meth = Cohttp.Request.meth r_request
-    and version = Cohttp.Request.version r_request
-    and encoding = Cohttp.Request.encoding r_request
-    and headers = Cohttp.Request.headers r_request in
-    Cohttp.Request.make ~meth ~version ~encoding ~headers uri
-  and original_full_path =
-    match full_rewrite, r_original_full_path with
-    | true, _ ->
-      None
-    | false, Some _ ->
-      r_original_full_path
-    | false, _ ->
-      Some (Uri.path (Cohttp.Request.uri r_request))
-  in
-  request, original_full_path
+let update_cohttp_uri ?meth r u =
+  let meth =
+    match meth with
+    | Some meth -> meth
+    | None -> Cohttp.Request.meth r
+  and version = Cohttp.Request.version r
+  and encoding = Cohttp.Request.encoding r
+  and headers = Cohttp.Request.headers r in
+  Cohttp.Request.make ~meth ~version ~encoding ~headers u
 
 let update
-    ?forward_ip ?remote_ip ?ssl ?sub_path ?request
-    ?get_params_override ?post_data_override ?cookies_override
+    ?forward_ip ?remote_ip ?ssl ?sub_path
+    ?meth
+    ?get_params_flat
+    ?post_data_override
+    ?cookies_override
     ?(full_rewrite = false) ?uri
     ({
+      r_uri ;
       r_request ;
       r_forward_ip ;
       r_remote_ip ;
       r_remote_ip_parsed ;
-      r_get_params_override ;
       r_cookies_override ;
       r_post_data_override ;
       r_sub_path ;
       r_original_full_path
     } as r) =
   (* FIXME : ssl *)
-  let r_request =
-    match request with
-    | Some request ->
-      request
-    | None ->
-      r_request
-  and r_forward_ip =
+  let r_forward_ip =
     match forward_ip with
     | Some forward_ip ->
       forward_ip
@@ -150,12 +168,6 @@ let update
       cookies_override
     | None ->
       r_cookies_override
-  and r_get_params_override =
-    match get_params_override with
-    | Some _ ->
-      get_params_override
-    | None ->
-      r_get_params_override
   and r_sub_path =
     match sub_path with
     | Some _ ->
@@ -163,45 +175,77 @@ let update
     | None ->
       r_sub_path
   in
-  let r_request, r_original_full_path =
+  let r_request, r_original_full_path, r_uri =
     match uri with
     | Some uri ->
-      update_uri_components ~full_rewrite r_request r_original_full_path uri
+      lazy (update_cohttp_uri (Lazy.force r_request) uri),
+      (match full_rewrite, r_original_full_path with
+       | true, _ ->
+         None
+       | false, Some _ ->
+         r_original_full_path
+       | false, _ ->
+         Some (Uri.path (Cohttp.Request.uri (Lazy.force r_request)))),
+      make_uri uri
     | None ->
-      r_request, r_original_full_path
+      r_request, r_original_full_path, r_uri
   in
-  {
+  let r_request, r_uri =
+    match get_params_flat, meth with
+    | Some l, _ ->
+      let u_get_params = lazy (unflatten_get_params l) in
+      let u_uri = lazy (
+        Uri.with_query
+          (Lazy.force r_uri.u_uri)
+          (Lazy.force u_get_params)
+      ) in
+      lazy (
+        update_cohttp_uri ?meth
+          (Lazy.force r_request)
+          (Lazy.force u_uri)
+      ),
+      { r_uri with
+        u_uri ;
+        u_get_params ;
+        u_get_params_flat = lazy l
+      }
+    | None, Some meth ->
+      lazy {(Lazy.force r_request) with Cohttp.Request.meth = meth},
+      r_uri
+    | None, None ->
+      r_request, r_uri
+  in {
     r with
+    r_uri ;
     r_request ;
     r_forward_ip ;
     r_remote_ip ;
     r_remote_ip_parsed ;
-    r_get_params_override ;
     r_post_data_override ;
     r_cookies_override ;
     r_sub_path ;
     r_original_full_path
   }
 
-let uri {r_request} = Cohttp.Request.uri r_request
+let uri {r_uri = {u_uri}} = Lazy.force u_uri
 
 let request {r_request} =
-  r_request
+  Lazy.force r_request
 
 let body {r_body} =
   r_body
 
 let map_cohttp_request ~f ({r_request} as r) =
-  {r with r_request = f r_request}
+  {r with r_request = lazy (f (Lazy.force r_request))}
 
 let address {r_address} =
   r_address
 
-let host {r_request} =
-  Uri.host (Cohttp.Request.uri r_request)
+let host {r_uri = {u_uri}} =
+  Uri.host (Lazy.force u_uri)
 
 let meth {r_request} =
-  Cohttp.Request.meth r_request
+  Cohttp.Request.meth (Lazy.force r_request)
 
 let port {r_port} =
   r_port
@@ -211,17 +255,16 @@ let ssl _ =
   false
 
 let version {r_request} =
-  Cohttp.Request.version r_request
+  Cohttp.Request.version (Lazy.force r_request)
 
-let query {r_request} =
-  Uri.verbatim_query (Cohttp.Request.uri r_request)
+let query {r_uri = {u_uri}} =
+  Uri.verbatim_query (Lazy.force u_uri)
 
-let get_params { r_request ; r_get_params_override } =
-  match r_get_params_override with
-  | Some r_get_params_override ->
-    r_get_params_override
-  | None ->
-    Uri.query (Cohttp.Request.uri r_request)
+let get_params {r_uri = { u_get_params }} =
+  Lazy.force u_get_params
+
+let get_params_flat {r_uri = { u_get_params_flat }} =
+  Lazy.force u_get_params_flat
 
 let sub_path_string = function
   | {r_sub_path = Some r_sub_path} ->
@@ -246,11 +289,11 @@ let original_full_path r =
   Ocsigen_lib.Url.split_path (original_full_path_string r)
 
 let header {r_request} id =
-  let h = Cohttp.Request.headers r_request in
+  let h = Cohttp.Request.headers (Lazy.force r_request) in
   Cohttp.Header.get h (Ocsigen_header.Name.to_string id)
 
 let header_multi {r_request} id =
-  let h = Cohttp.Request.headers r_request in
+  let h = Cohttp.Request.headers (Lazy.force r_request) in
   Cohttp.Header.get_multi h (Ocsigen_header.Name.to_string id)
 
 let add_header r id v =

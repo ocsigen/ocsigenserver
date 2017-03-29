@@ -32,8 +32,8 @@ val update :
   ?remote_ip : string ->
   ?ssl : bool ->
   ?sub_path : string ->
-  ?request : Cohttp.Request.t ->
-  ?get_params_override : (string * string list) list ->
+  ?meth : Cohttp.Code.meth ->
+  ?get_params_flat : (string * string) list ->
   ?post_data_override : post_data option ->
   ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
   ?full_rewrite : bool ->
@@ -43,14 +43,7 @@ val update :
 
 val uri : t -> Uri.t
 
-val request : t -> Cohttp.Request.t
-
 val body : t -> Cohttp_lwt_body.t
-
-val map_cohttp_request :
-  f : (Cohttp.Request.t -> Cohttp.Request.t) ->
-  t ->
-  t
 
 val address : t -> Unix.inet_addr
 
@@ -67,6 +60,8 @@ val version : t -> Cohttp.Code.version
 val query : t -> string option
 
 val get_params : t -> (string * string list) list
+
+val get_params_flat : t -> (string * string) list
 
 val path : t -> string list
 
@@ -119,3 +114,7 @@ val incr_tries : t -> unit
 val connection_closed : t -> unit Lwt.t
 
 val wakeup : t -> unit
+
+(**/**)
+
+val request : t -> Cohttp.Request.t
