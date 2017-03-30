@@ -142,14 +142,6 @@ package "ext" (
     archive(native) = "cgimod.cmx"
   )
 
-  package "handler" (
-    exists_if = "handler.cmo,handler.cmx"
-    version = "[distributed with Ocsigen server]"
-    description = "Handler registry"
-    archive(byte) = "handler.cmo"
-    archive(native) = "handler.cmx"
-  )
-
   package "ocsipersist-sqlite" (
     exists_if = "ocsipersist-sqlite.cma,ocsipersist-sqlite.cmxa"
     requires = "sqlite3"
