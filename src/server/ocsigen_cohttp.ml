@@ -126,7 +126,7 @@ let handler ~address ~port ~connector (flow, conn) request body =
   in
 
   let sockaddr = getsockname edn in
-  let (waiter, wakener) = Lwt.wait () in
+  let (connection_closed, wakener) = Lwt.wait () in
   Hashtbl.add waiters conn wakener;
 
   let handle_error exn =
@@ -182,28 +182,24 @@ let handler ~address ~port ~connector (flow, conn) request body =
 
   let request =
     Ocsigen_request.make
-      ~address ~port ~filenames ~sockaddr ~request ~body ~waiter
-      ()
-
+      ~address ~port ~filenames ~sockaddr ~body ~connection_closed request
   in
 
   Lwt.catch
     (fun () ->
-       connector request >>= fun { Ocsigen_response.a_response ;
-                                   a_cookies ;
-                                   a_body } ->
-
-       let a_response =
+       connector request >>= fun response ->
+       let response, body = Ocsigen_response.to_cohttp response
+       and cookies = Ocsigen_response.cookies response in
+       let response =
          let headers =
            Ocsigen_cookies.Cookies.fold
              make_cookies_headers
-             a_cookies
-             (Cohttp.Response.headers a_response)
+             cookies
+             (Cohttp.Response.headers response)
          in
-         { a_response with Cohttp.Response.headers }
+         { response with Cohttp.Response.headers }
        in
-       Lwt.return (a_response, a_body))
-
+       Lwt.return (response, body))
     (function
       | Ocsigen_Is_a_directory fun_request ->
         Cohttp_lwt_unix.Server.respond_redirect

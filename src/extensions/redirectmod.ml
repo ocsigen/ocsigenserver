@@ -53,12 +53,11 @@ let attempt_redir dir err ri () =
     (if temp then "Temporary " else "Permanent ")
     redir;
   Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
-    let response =
-      let headers = Cohttp.Header.(init_with "Location" redir)
-      and status = if temp then `Found else `Moved_permanently in
-      Cohttp.Response.make ~status ~headers ()
-    in
-    Lwt.return (Ocsigen_response.make ~response ()))
+    Lwt.return @@
+    Ocsigen_response.make @@
+    let headers = Cohttp.Header.(init_with "Location" redir)
+    and status = if temp then `Found else `Moved_permanently in
+    Cohttp.Response.make ~status ~headers ())
 
 (** The function that will generate the pages from the request *)
 let gen dir = function

@@ -25,9 +25,7 @@ let section = Lwt_log.Section.make "ocsigen:ext:cors"
 (*** MAIN FUNCTION ***)
 
 let default_frame () =
-  Ocsigen_response.make
-    ~response:(Cohttp.Response.make ~status:`OK ())
-    ()
+  Ocsigen_response.make (Cohttp.Response.make ~status:`OK ())
 
 type config = {
   allowed_method : Cohttp.Code.meth list option;

@@ -126,7 +126,7 @@ let gen dir = function
            let headers =
              let h =
                Cohttp.Request.headers
-                 (Ocsigen_request.request request_info)
+                 (Ocsigen_request.to_cohttp request_info)
              in
              let h =
                Ocsigen_request.version request_info

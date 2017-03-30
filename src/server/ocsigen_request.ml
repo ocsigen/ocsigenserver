@@ -16,6 +16,11 @@ type file_info = Ocsigen_multipart.file_info = {
 
 type post_data = Ocsigen_multipart.post_data
 
+type body = [
+  | `Unparsed of Cohttp_lwt_body.t
+  | `Parsed of post_data Lwt.t option
+]
+
 (* Wrapper around Uri providing our derived fields.
 
    Is the laziness too fine-grained? *)
@@ -67,21 +72,21 @@ type t = {
   r_encoding : Cohttp.Transfer.encoding ;
   r_version : Cohttp.Code.version ;
   r_headers : Cohttp.Header.t ;
-  r_body : Cohttp_lwt_body.t ;
-  r_post_data_override : post_data Lwt.t option option ref ;
+  r_body : body ref ;
   r_original_full_path : string option ;
   r_sub_path : string option ;
   r_cookies_override : string Ocsigen_cookies.CookiesTable.t option ;
   mutable r_request_cache : Polytables.t ;
   mutable r_tries : int ;
-  r_connection_closed : unit Lwt.t * unit Lwt.u
+  r_connection_closed : unit Lwt.t
 }
 
 let make
     ?(forward_ip = []) ?sub_path ?original_full_path
     ?(request_cache = Polytables.create ())
     ?cookies_override
-    ~address ~port ~filenames ~sockaddr ~request ~body ~waiter () =
+    ~address ~port ~filenames ~sockaddr ~body ~connection_closed
+    request =
   let r_remote_ip =
     lazy
       (Unix.string_of_inet_addr
@@ -89,7 +94,7 @@ let make
   in
   let r_remote_ip_parsed =
     lazy (Ipaddr.of_string_exn (Lazy.force r_remote_ip))
-  and r_connection_closed = Lwt.wait () in
+  in
   {
     r_address = address ;
     r_port = port ;
@@ -103,14 +108,13 @@ let make
     r_meth = Cohttp.Request.meth request ;
     r_version = Cohttp.Request.version request ;
     r_headers = Cohttp.Request.headers request ;
-    r_body = body ;
-    r_post_data_override = ref None ;
+    r_body = ref (`Unparsed body);
     r_sub_path = sub_path ;
     r_original_full_path = original_full_path ;
     r_cookies_override = cookies_override ;
     r_request_cache = request_cache ;
     r_tries = 0 ;
-    r_connection_closed
+    r_connection_closed = connection_closed
   }
 
 let path_string {r_uri = {u_path_string}} =
@@ -119,21 +123,11 @@ let path_string {r_uri = {u_path_string}} =
 let path {r_uri = {u_path}} =
   Lazy.force u_path
 
-let update_cohttp_uri ?meth r u =
-  let meth =
-    match meth with
-    | Some meth -> meth
-    | None -> Cohttp.Request.meth r
-  and version = Cohttp.Request.version r
-  and encoding = Cohttp.Request.encoding r
-  and headers = Cohttp.Request.headers r in
-  Cohttp.Request.make ~meth ~version ~encoding ~headers u
-
 let update
     ?forward_ip ?remote_ip ?ssl ?sub_path
     ?meth
     ?get_params_flat
-    ?post_data_override
+    ?post_data
     ?cookies_override
     ?(full_rewrite = false) ?uri
     ({
@@ -143,7 +137,7 @@ let update
       r_remote_ip ;
       r_remote_ip_parsed ;
       r_cookies_override ;
-      r_post_data_override ;
+      r_body ;
       r_sub_path ;
       r_original_full_path
     } as r) =
@@ -160,14 +154,14 @@ let update
       lazy remote_ip, lazy (Ipaddr.of_string_exn remote_ip)
     | None ->
       r_remote_ip, r_remote_ip_parsed
-  and r_post_data_override =
-    match post_data_override with
-    | Some (Some post_data_override) ->
-      ref (Some (Some (Lwt.return post_data_override)))
+  and r_body =
+    match post_data with
+    | Some (Some post_data) ->
+      ref (`Parsed (Some (Lwt.return post_data)))
     | Some None ->
-      ref (Some None)
+      ref (`Parsed None)
     | None ->
-      r_post_data_override
+      r_body
   and r_cookies_override =
     match cookies_override with
     | Some _ ->
@@ -223,7 +217,7 @@ let update
     r_forward_ip ;
     r_remote_ip ;
     r_remote_ip_parsed ;
-    r_post_data_override ;
+    r_body ;
     r_cookies_override ;
     r_sub_path ;
     r_original_full_path ;
@@ -232,12 +226,16 @@ let update
 let uri {r_uri = {u_uri}} =
   Lazy.force u_uri
 
-let request ({ r_meth ; r_encoding ; r_version ; r_headers } as r) =
+let to_cohttp ({ r_meth ; r_encoding ; r_version ; r_headers } as r) =
   Cohttp.Request.make
     ~meth:r_meth ~encoding:r_encoding ~version:r_version ~headers:r_headers
     (uri r)
 
-let body {r_body} = r_body
+let body = function
+  | {r_body = {contents = `Unparsed body}} ->
+    body
+  | _ ->
+    failwith "Ocsigen_request.body: body has already been parsed"
 
 let address {r_address} = r_address
 
@@ -328,16 +326,16 @@ let content_type r =
   | None ->
     None
 
-let force_post_data ({r_post_data_override ; r_body} as r) s i =
-  match !r_post_data_override with
-  | Some r_post_data_override ->
-    r_post_data_override
-  | None ->
+let force_post_data ({r_body} as r) s i =
+  match !r_body with
+  | `Parsed post_data ->
+    post_data
+  | `Unparsed body ->
     let v =
       match content_type r with
       | Some content_type ->
         (match
-           post_data_of_body ~content_type r_body
+           post_data_of_body ~content_type body
          with
          | Some f ->
            Some (f s i)
@@ -346,7 +344,7 @@ let force_post_data ({r_post_data_override ; r_body} as r) s i =
       | None ->
         None
     in
-    r.r_post_data_override := Some v;
+    r.r_body := `Parsed v;
     v
 
 let post_params r s i =
@@ -375,6 +373,4 @@ let tries {r_tries} = r_tries
 
 let incr_tries r = r.r_tries <- r.r_tries + 1
 
-let connection_closed {r_connection_closed = (wait, _)} = wait
-
-let wakeup {r_connection_closed = (_, wakeup)} = Lwt.wakeup wakeup ()
+let connection_closed {r_connection_closed} = r_connection_closed

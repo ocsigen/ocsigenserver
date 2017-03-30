@@ -7,8 +7,8 @@ type t = {
 let make
     ?(body = Cohttp_lwt_body.empty)
     ?(cookies = Ocsigen_cookies.empty_cookieset)
-    ~response () =
-  { a_response = response ; a_body = body ; a_cookies = cookies }
+    a_response =
+  { a_response ; a_body = body ; a_cookies = cookies }
 
 let update
     ?response
@@ -37,7 +37,12 @@ let of_cohttp
 
 let to_cohttp { a_response ; a_body } = a_response, a_body
 
-let cookies {a_cookies} = a_cookies
+let status { a_response = { Cohttp.Response.status } } =
+  match status with
+  | `Code _ ->
+    failwith "FIXME: Cohttp.Code.status_code -> status"
+  | #Cohttp.Code.status as a ->
+    a
 
 let set_status ({ a_response } as a) status =
   { a with
@@ -45,6 +50,8 @@ let set_status ({ a_response } as a) status =
       a_response with status = (status :> Cohttp.Code.status_code)
     }
   }
+
+let cookies {a_cookies} = a_cookies
 
 let add_cookies ({ a_cookies } as a) cookies =
   if cookies = Ocsigen_cookies.Cookies.empty then
@@ -85,12 +92,6 @@ let add_header_multi
   in
   { a with a_response = { a_response with headers } }
 
-let remove_header ({a_response} as a) id =
-  let headers = Cohttp.Response.headers a_response
-  and id = Ocsigen_header.Name.to_string id in
-  let headers = Cohttp.Header.remove headers id in
-  { a with a_response = { a_response with headers } }
-
 let replace_header
     ({a_response = ({headers} as a_response)} as a)
     id v = {
@@ -114,9 +115,8 @@ let replace_headers ({a_response} as a) l =
   in
   { a with a_response = { a_response with headers } }
 
-let status { a_response = { Cohttp.Response.status } } =
-  match status with
-  | `Code _ ->
-    failwith "FIXME: Cohttp.Code.status_code -> status"
-  | #Cohttp.Code.status as a ->
-    a
+let remove_header ({a_response} as a) id =
+  let headers = Cohttp.Response.headers a_response
+  and id = Ocsigen_header.Name.to_string id in
+  let headers = Cohttp.Header.remove headers id in
+  { a with a_response = { a_response with headers } }

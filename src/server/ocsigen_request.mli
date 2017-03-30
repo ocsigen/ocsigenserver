@@ -21,10 +21,9 @@ val make :
   port : int ->
   filenames : string list ref ->
   sockaddr : Lwt_unix.sockaddr ->
-  request : Cohttp.Request.t ->
   body : Cohttp_lwt_body.t ->
-  waiter : unit Lwt.t ->
-  unit ->
+  connection_closed : unit Lwt.t ->
+  Cohttp.Request.t ->
   t
 
 val update :
@@ -34,12 +33,14 @@ val update :
   ?sub_path : string ->
   ?meth : Cohttp.Code.meth ->
   ?get_params_flat : (string * string) list ->
-  ?post_data_override : post_data option ->
+  ?post_data : post_data option ->
   ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
   ?full_rewrite : bool ->
   ?uri : Uri.t ->
   t ->
   t
+
+val to_cohttp : t -> Cohttp.Request.t
 
 val uri : t -> Uri.t
 
@@ -83,8 +84,6 @@ val add_header : t -> Ocsigen_header.Name.t -> string -> t
 
 val cookies : t -> string Ocsigen_cookies.CookiesTable.t
 
-(* FIXME: strange API for files, post_params *)
-
 val files :
   t ->
   string option ->
@@ -112,9 +111,3 @@ val tries : t -> int
 val incr_tries : t -> unit
 
 val connection_closed : t -> unit Lwt.t
-
-val wakeup : t -> unit
-
-(**/**)
-
-val request : t -> Cohttp.Request.t
