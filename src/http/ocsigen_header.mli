@@ -86,6 +86,12 @@ module Accept : sig
 
 end
 
+module Accept_language : sig
+
+  val parse : string list -> (string * float option) list
+
+end
+
 module Content_type : sig
 
   val choose : Accept.t -> string -> string list -> string

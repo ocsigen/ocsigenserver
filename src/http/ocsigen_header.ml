@@ -132,6 +132,30 @@ module Accept = struct
 
 end
 
+
+module Accept_language = struct
+
+  let parse_quality s =
+    try
+      let a, b = Ocsigen_lib.String.sep ';' s in
+      let q, qv = Ocsigen_lib.String.sep '=' b in
+      if q = "q" then
+        a, Some (float_of_string qv)
+      else
+        failwith "Parse error"
+    with _ ->
+      s, None
+
+  let parse s =
+    try
+      List.map (Ocsigen_lib.String.split ',') s
+      |> List.flatten
+      |> List.map parse_quality
+    with _ ->
+      []
+
+end
+
 module Content_type = struct
 
   let choose accept default alt =
