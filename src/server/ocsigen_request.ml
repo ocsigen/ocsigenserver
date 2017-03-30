@@ -62,6 +62,7 @@ let make_uri u =
 type t = {
   r_address : Unix.inet_addr ;
   r_port : int ;
+  r_ssl : bool ;
   r_filenames : string list ref ;
   r_sockaddr : Lwt_unix.sockaddr ;
   r_remote_ip : string Lazy.t ;
@@ -85,7 +86,7 @@ let make
     ?(forward_ip = []) ?sub_path ?original_full_path
     ?(request_cache = Polytables.create ())
     ?cookies_override
-    ~address ~port ~filenames ~sockaddr ~body ~connection_closed
+    ~address ~port ~ssl ~filenames ~sockaddr ~body ~connection_closed
     request =
   let r_remote_ip =
     lazy
@@ -98,6 +99,7 @@ let make
   {
     r_address = address ;
     r_port = port ;
+    r_ssl = ssl ;
     r_filenames = filenames ;
     r_sockaddr = sockaddr ;
     r_remote_ip ;
@@ -124,13 +126,14 @@ let path {r_uri = {u_path}} =
   Lazy.force u_path
 
 let update
-    ?forward_ip ?remote_ip ?ssl ?sub_path
+    ?ssl ?forward_ip ?remote_ip ?sub_path
     ?meth
     ?get_params_flat
     ?post_data
     ?cookies_override
     ?(full_rewrite = false) ?uri
     ({
+      r_ssl ;
       r_uri = {u_uri} as r_uri;
       r_meth ;
       r_forward_ip ;
@@ -141,8 +144,13 @@ let update
       r_sub_path ;
       r_original_full_path
     } as r) =
-  (* FIXME : ssl *)
-  let r_forward_ip =
+  let r_ssl =
+    match ssl with
+    | Some ssl ->
+      ssl
+    | None ->
+      r_ssl
+  and r_forward_ip =
     match forward_ip with
     | Some forward_ip ->
       forward_ip
@@ -154,6 +162,12 @@ let update
       lazy remote_ip, lazy (Ipaddr.of_string_exn remote_ip)
     | None ->
       r_remote_ip, r_remote_ip_parsed
+  and r_sub_path =
+    match sub_path with
+    | Some _ ->
+      sub_path
+    | None ->
+      r_sub_path
   and r_body =
     match post_data with
     | Some (Some post_data) ->
@@ -168,12 +182,6 @@ let update
       cookies_override
     | None ->
       r_cookies_override
-  and r_sub_path =
-    match sub_path with
-    | Some _ ->
-      sub_path
-    | None ->
-      r_sub_path
   and r_meth =
     match meth with
     | Some meth ->
@@ -212,6 +220,7 @@ let update
       r_uri
   in {
     r with
+    r_ssl ;
     r_uri ;
     r_meth ;
     r_forward_ip ;
@@ -246,9 +255,7 @@ let meth {r_meth} = r_meth
 
 let port {r_port} = r_port
 
-let ssl _ =
-  (* FIXME *)
-  false
+let ssl {r_ssl} = r_ssl
 
 let version {r_version} = r_version
 

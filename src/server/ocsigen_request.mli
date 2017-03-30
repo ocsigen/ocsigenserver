@@ -19,6 +19,7 @@ val make :
   ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
   address : Unix.inet_addr ->
   port : int ->
+  ssl : bool ->
   filenames : string list ref ->
   sockaddr : Lwt_unix.sockaddr ->
   body : Cohttp_lwt_body.t ->
@@ -27,9 +28,9 @@ val make :
   t
 
 val update :
+  ?ssl : bool ->
   ?forward_ip : string list ->
   ?remote_ip : string ->
-  ?ssl : bool ->
   ?sub_path : string ->
   ?meth : Cohttp.Code.meth ->
   ?get_params_flat : (string * string) list ->

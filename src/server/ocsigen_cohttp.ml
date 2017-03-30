@@ -102,7 +102,7 @@ let make_cookies_headers path t hds =
     t
     hds
 
-let handler ~address ~port ~connector (flow, conn) request body =
+let handler ~ssl ~address ~port ~connector (flow, conn) request body =
 
   Lwt_log.ign_info_f ~section
     "Receiving the request: %s"
@@ -182,7 +182,8 @@ let handler ~address ~port ~connector (flow, conn) request body =
 
   let request =
     Ocsigen_request.make
-      ~address ~port ~filenames ~sockaddr ~body ~connection_closed request
+      ~address ~port ~ssl
+      ~filenames ~sockaddr ~body ~connection_closed request
   in
 
   Lwt.catch
@@ -231,7 +232,8 @@ let number_of_client () = 0
 let get_number_of_connected = number_of_client
 
 let service ?ssl ~address ~port ~connector () =
-  let tls_server_key = match ssl with
+  let tls_server_key =
+    match ssl with
     | Some (crt, key, Some password) ->
       `TLS (`Crt_file_path crt,
             `Key_file_path key,
@@ -249,8 +251,9 @@ let service ?ssl ~address ~port ~connector () =
   Lwt.return (Cohttp_lwt_unix_net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
   (* We catch the INET_ADDR of the server *)
   let callback =
-    let address = Ocsigen_socket.to_inet_addr address in
-    handler ~address  ~port ~connector
+    let address = Ocsigen_socket.to_inet_addr address
+    and ssl = match ssl with Some _ -> true | None -> false in
+    handler ~ssl ~address ~port ~connector
   in
   let config = Cohttp_lwt_unix.Server.make ~conn_closed ~callback () in
   let mode =
@@ -259,6 +262,6 @@ let service ?ssl ~address ~port ~connector () =
     | `TLS (crt, key, pass) ->
       `OpenSSL (crt, key, pass, `Port port)
   in
-  Cohttp_lwt_unix.Server.create ~stop ~ctx ~mode  config
+  Cohttp_lwt_unix.Server.create ~stop ~ctx ~mode config
   >>= fun () ->
   Lwt.return (Lwt.wakeup stop_wakener ())
