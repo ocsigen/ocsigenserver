@@ -105,8 +105,9 @@ let make_cookies_headers path t hds =
 let handler ~ssl ~address ~port ~connector (flow, conn) request body =
 
   Lwt_log.ign_info_f ~section
-    "Receiving the request: %s"
-    (Format.asprintf "%a" print_request request);
+    "Receiving the request: %s\nConnection ID: %s"
+    (Format.asprintf "%a" print_request request)
+    (Cohttp.Connection.to_string conn);
 
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
@@ -214,8 +215,12 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
 
 let conn_closed (flow, conn) =
   try
+    Lwt_log.ign_info_f ~section
+      "Connection closed:\n%s"
+      (Cohttp.Connection.to_string conn);
     let wakener = Hashtbl.find waiters conn in
-    Lwt.wakeup wakener (); Hashtbl.remove waiters conn
+    Lwt.wakeup wakener ();
+    Hashtbl.remove waiters conn
   with Not_found -> ()
 
 let stop, stop_wakener = Lwt.wait ()
