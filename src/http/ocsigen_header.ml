@@ -85,22 +85,39 @@ module Name = struct
 
 end
 
+let parse_star a =
+  if a = "*" then
+    None
+  else
+    Some a
+
+let parse_quality f s =
+  try
+    let a, b = Ocsigen_lib.String.sep ';' s in
+    let q, qv = Ocsigen_lib.String.sep '=' b in
+    if q = "q" then
+      f a, Some (float_of_string qv)
+    else
+      failwith "Parse error"
+  with _ ->
+    f s, None
+
+module Mime_type = struct
+
+  type t = string option * string option
+
+  let parse a =
+    let b, c = Ocsigen_lib.String.sep '/' a in
+    parse_star b, parse_star c
+
+end
+
 module Accept = struct
 
   type t =
-    ((string option * string option) *
+    (Mime_type.t *
      float option *
      (string * string) list) list
-
-  let parse_star a =
-    if a = "*" then
-      None
-    else
-      Some a
-
-  let parse_mime_type a =
-    let b, c = Ocsigen_lib.String.sep '/' a in
-    parse_star b, parse_star c
 
   let parse_extensions parse_name s =
     try
@@ -119,7 +136,7 @@ module Accept = struct
 
   let parse s =
     try
-      let l = parse_list_with_extensions parse_mime_type s in
+      let l = parse_list_with_extensions Mime_type.parse s in
       let change_quality (a, l) =
         try
           let q, ll = Ocsigen_lib.List.assoc_remove "q" l in
@@ -132,25 +149,29 @@ module Accept = struct
 
 end
 
+module Accept_encoding = struct
 
-module Accept_language = struct
-
-  let parse_quality s =
-    try
-      let a, b = Ocsigen_lib.String.sep ';' s in
-      let q, qv = Ocsigen_lib.String.sep '=' b in
-      if q = "q" then
-        a, Some (float_of_string qv)
-      else
-        failwith "Parse error"
-    with _ ->
-      s, None
+  type t = (string option * float option) list
 
   let parse s =
     try
       List.map (Ocsigen_lib.String.split ',') s
       |> List.flatten
-      |> List.map parse_quality
+      |> List.map (parse_quality parse_star)
+    with _ ->
+      []
+
+end
+
+module Accept_language = struct
+
+  type t = (string * float option) list
+
+  let parse s =
+    try
+      List.map (Ocsigen_lib.String.split ',') s
+      |> List.flatten
+      |> List.map (parse_quality (fun x -> x))
     with _ ->
       []
 

@@ -16,43 +16,36 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
-(*****************************************************************************)
-(*****************************************************************************)
-(* This module allows to compress output sent by the server                  *)
-(*****************************************************************************)
-(*****************************************************************************)
+ *)
 
-open Ocsigen_lib
-open Lwt
-open Ocsigen_extensions
-open Simplexmlparser
-open Ocsigen_headers
+(* Compress output sent by the server *)
+
+open Lwt.Infix
 
 let section = Lwt_log.Section.make "ocsigen:ext:deflate"
 
 (* Content-type *)
-type filter = Type of string option * string option | Extension of string
-type compress_choice = All_but of filter list |
-                       Compress_only of filter list
+type filter =
+  | Type of string option * string option
+  | Extension of string
+
+type compress_choice =
+  | All_but of filter list
+  | Compress_only of filter list
 
 let should_compress (t, t') url choice_list =
   let check = function
-    |Type (None, None) -> true
-    |Type (None, Some x') -> x' = t'
-    |Type (Some x, None) -> x = t
-    |Type (Some x, Some x') -> x = t && x' = t'
-    |Extension suff -> Filename.check_suffix url suff
+    | Type (None, None) -> true
+    | Type (None, Some x') -> x' = t'
+    | Type (Some x, None) -> x = t
+    | Type (Some x, Some x') -> x = t && x' = t'
+    | Extension suff -> Filename.check_suffix url suff
   in
   match choice_list with
-  |Compress_only l -> List.exists check l
-  |All_but l -> List.for_all (fun c -> not (check c)) l
+  | Compress_only l -> List.exists check l
+  | All_but l -> List.for_all (fun c -> not (check c)) l
 
-(* Pas de filtre global pour l'instant
-   let choice_list = ref (All_but [])
-*)
-
-(** Compression *)
+(* Compression *)
 
 let buffer_size = ref 8192
 
@@ -67,7 +60,6 @@ let () =
   Bytes.set gzip_header 1 @@ Char.chr 0x8B;
   Bytes.set gzip_header 2 @@ Char.chr 8;
   Bytes.set gzip_header 9 @@ Char.chr 0xFF
-
 
 (* inspired by an auxiliary function from camlzip, by Xavier Leroy *)
 type output_buffer =
@@ -176,11 +168,11 @@ let compress deflate stream =
   let finalize status =
     Ocsigen_stream.finalize stream status >>= fun e ->
     (try
-      Zlib.deflate_end zstream
-    with
-      (* ignore errors, deflate_end cleans everything anyway *)
-      Zlib.Error _ -> ());
-    return (Lwt_log.ign_info ~section "Zlib stream closed") in
+       Zlib.deflate_end zstream
+     with
+     (* ignore errors, deflate_end cleans everything anyway *)
+       Zlib.Error _ -> ());
+    Lwt.return (Lwt_log.ign_info ~section "Zlib stream closed") in
   let oz =
     { stream = zstream ;
       buf = Bytes.create !buffer_size;
@@ -248,64 +240,92 @@ let select_encoding accept_header =
   in
   aux accept
 
-exception No_compress
-
 (* deflate = true -> mode deflate
- * deflate = false -> mode gzip *)
+   deflate = false -> mode gzip *)
 let stream_filter contentencoding url deflate choice res =
-  return (Ext_found (fun () ->
-      try (
-        match Ocsigen_http_frame.Result.content_type res with
-        | None -> raise No_compress (* il faudrait défaut ? *)
-        | Some contenttype ->
-          match Ocsigen_headers.parse_mime_type contenttype with
-          | None, _ | _, None -> raise No_compress (* should never happen? *)
-          | (Some a, Some b)
-            when should_compress (a, b) url choice ->
-            return
-              (Ocsigen_http_frame.Result.update res
-                 ~content_length:None
-                 ~etag:
-                   (match Ocsigen_http_frame.Result.etag res with
-                    | Some e ->
-                      Some ((if deflate then "Ddeflatemod" else "Gdeflatemod")^e)
-                    | None -> None)
-                 ~stream:
-                   (compress deflate (fst (Ocsigen_http_frame.Result.stream res)), None)
-                 ~headers:
-                   (Http_headers.replace
-                      Http_headers.content_encoding
-                      contentencoding (Ocsigen_http_frame.Result.headers res)) ())
-          | _ -> raise No_compress)
-      with Not_found | No_compress -> return res))
+  Lwt.return (Ocsigen_extensions.Ext_found (fun () ->
+    try (
+      match
+        Ocsigen_response.header res
+          Ocsigen_header.Name.content_type
+      with
+      | None ->
+        Lwt.return res
+      | Some contenttype ->
+        match Ocsigen_header.Mime_type.parse contenttype with
+        | None, _ | _, None ->
+          Lwt.return res
+        | Some a, Some b when should_compress (a, b) url choice ->
+          let response, body = Ocsigen_response.to_cohttp res in
+          let response =
+            let headers = Cohttp.Response.headers response in
+            let headers =
+              let name = Ocsigen_header.Name.(to_string etag) in
+              match Cohttp.Header.get headers name with
+              | Some e ->
+                Cohttp.Header.replace headers name
+                  ((if deflate then "Ddeflatemod" else "Gdeflatemod") ^ e)
+              | None ->
+                Cohttp.Header.remove headers name
+            in
+            let headers =
+              Cohttp.Header.replace headers
+                Ocsigen_header.Name.(to_string content_encoding)
+                contentencoding
+            in
+            {response with Cohttp.Response.headers}
+          and body =
+            Cohttp_lwt_body.to_stream body
+            |> Ocsigen_stream.of_lwt_stream
+            |> compress deflate
+            |> Ocsigen_stream.to_lwt_stream
+            |> Cohttp_lwt_body.of_stream
+          in
+          Lwt.return (Ocsigen_response.update res ~body ~response)
+        | _ ->
+          Lwt.return res)
+    with Not_found ->
+      Lwt.return res))
 
 let filter choice_list = function
-  | Req_not_found (code,_) -> return (Ext_next code)
-  | Req_found ({ request_info = ri }, res) ->
-    match select_encoding (Lazy.force(Ocsigen_request_info.accept_encoding ri)) with
+  | Ocsigen_extensions.Req_not_found (code,_) ->
+    Lwt.return (Ocsigen_extensions.Ext_next code)
+  | Ocsigen_extensions.Req_found
+      ({ Ocsigen_extensions.request_info = ri }, res) ->
+    match
+      Ocsigen_request.header_multi ri Ocsigen_header.Name.accept_encoding
+      |> Ocsigen_header.Accept_encoding.parse
+        |> select_encoding
+    with
     | Deflate ->
-      stream_filter "deflate" (Ocsigen_request_info.sub_path_string ri) true choice_list res
+      stream_filter "deflate"
+        (Ocsigen_request.sub_path_string ri) true choice_list res
     | Gzip ->
-      stream_filter "gzip" (Ocsigen_request_info.sub_path_string ri)  false choice_list res
-    | Id | Star -> return (Ext_found (fun () -> return res))
+      stream_filter "gzip"
+        (Ocsigen_request.sub_path_string ri)  false choice_list res
+    | Id | Star ->
+      Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return res))
     | Not_acceptable ->
-      return (Ext_stop_all (Ocsigen_http_frame.Result.cookies res,406))
+      Lwt.return
+        (Ocsigen_extensions.Ext_stop_all
+           (Ocsigen_response.cookies res, `Not_acceptable))
 
 
 (*****************************************************************************)
 
 let rec parse_global_config = function
   | [] -> ()
-  | (Element ("compress", [("level", l)], []))::ll ->
+  | (Simplexmlparser.Element ("compress", [("level", l)], []))::ll ->
     let l = try int_of_string l
-      with Failure _ -> raise (Error_in_config_file
+      with Failure _ -> raise (Ocsigen_extensions.Error_in_config_file
                                  "Compress level should be an integer between 0 and 9") in
     compress_level := if (l <= 9 && l >= 0) then l else 6 ;
     parse_global_config ll
-  | (Element ("buffer", [("size", s)], []))::ll ->
+  | (Simplexmlparser.Element ("buffer", [("size", s)], []))::ll ->
     let s = (try int_of_string s
-             with Failure _ -> raise (Error_in_config_file
-                                        "Buffer size should be a positive integer")) in
+             with Failure _ ->
+               raise (Ocsigen_extensions.Error_in_config_file
+                        "Buffer size should be a positive integer")) in
     buffer_size := if s > 0 then s else 8192 ;
     parse_global_config ll
   (* TODO: Pas de filtre global pour l'instant
@@ -321,7 +341,7 @@ let rec parse_global_config = function
        "Attribute \"compress\" should be \"allbut\" or \"only\""));
        parse_global_config ll
   *)
-  | _ -> raise (Error_in_config_file
+  | _ -> raise (Ocsigen_extensions.Error_in_config_file
                   "Unexpected content inside deflatemod config")
 
 (*****************************************************************************)
@@ -352,7 +372,7 @@ let parse_config config_elem =
             Configuration.element
               ~name:"type"
               ~pcdata:(fun s ->
-                let (a, b) = Ocsigen_headers.parse_mime_type s in
+                let (a, b) = Ocsigen_header.Mime_type.parse s in
                 pages := Type (a, b) :: !pages) ();
             Configuration.element
               ~name:"extension"
@@ -365,7 +385,7 @@ let parse_config config_elem =
   );
   match !pages with
   | [] ->
-    badconfig
+    Ocsigen_extensions.badconfig
       "Unexpected element inside contenttype (should be <type> or <extension>)"
   | l ->
     let mode = match !mode with
@@ -375,7 +395,8 @@ let parse_config config_elem =
 
 (*****************************************************************************)
 (** Registration of the extension *)
-let () = Ocsigen_extensions.register_extension
+let () =
+  Ocsigen_extensions.register_extension
     ~name:"deflatemod"
     ~fun_site:(fun _ _ _ _ _ -> parse_config)
     ~init_fun:parse_global_config

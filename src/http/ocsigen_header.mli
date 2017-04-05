@@ -75,10 +75,18 @@ module Name : sig
 
 end
 
+module Mime_type : sig
+
+  type t = string option * string option
+
+  val parse : string -> t
+
+end
+
 module Accept : sig
 
   type t =
-    ((string option * string option)
+    (Mime_type.t
      * float option
      * (string * string) list) list
 
@@ -86,9 +94,19 @@ module Accept : sig
 
 end
 
+module Accept_encoding : sig
+
+  type t = (string option * float option) list
+
+  val parse : string list -> t
+
+end
+
 module Accept_language : sig
 
-  val parse : string list -> (string * float option) list
+  type t = (string * float option) list
+
+  val parse : string list -> t
 
 end
 
