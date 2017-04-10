@@ -34,8 +34,7 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
     (Typed_xml : Xml_sigs.Typed_xml with module Xml := Xml)
 = struct
 
-  module Htmlprinter =
-    Xml_print.Make_typed(Xml)(Typed_xml)(Ocsigen_stream.StringStream)
+  module Htmlprinter = Xml_print.Make_typed_fmt(Xml)(Typed_xml)
 
   type t = Typed_xml.doc
   type options = Http_headers.accept Lazy.t
@@ -65,7 +64,9 @@ module Make_XML_Content(Xml : Xml_sigs.Iterable)
         Typed_xml.Info.alternative_content_types
         Typed_xml.Info.content_type in
     let encode x = fst (Xml_print.Utf8.normalize_html x) in
-    let x = Htmlprinter.print ~encode ~advert c in
+    let x =
+      Ocsigen_stream.of_string
+        (Format.asprintf "%a" (Htmlprinter.pp ~encode ~advert ()) c) in
     let default_result = Result.default () in
     Lwt.return
       (Result.update default_result
