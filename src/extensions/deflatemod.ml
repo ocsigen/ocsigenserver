@@ -266,14 +266,17 @@ let stream_filter contentencoding url deflate choice res =
                 Cohttp.Header.replace headers name
                   ((if deflate then "Ddeflatemod" else "Gdeflatemod") ^ e)
               | None ->
-                Cohttp.Header.remove headers name
+                headers
             in
             let headers =
               Cohttp.Header.replace headers
                 Ocsigen_header.Name.(to_string content_encoding)
                 contentencoding
             in
-            {response with Cohttp.Response.headers}
+            { response with
+              Cohttp.Response.headers ;
+              Cohttp.Response.encoding = Cohttp.Transfer.Chunked
+            }
           and body =
             Cohttp_lwt_body.to_stream body
             |> Ocsigen_stream.of_lwt_stream
