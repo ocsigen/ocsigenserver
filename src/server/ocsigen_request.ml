@@ -44,17 +44,18 @@ let unflatten_get_params l =
 let flatten_get_params l =
   List.concat (List.map (fun (s, l) -> List.map (fun v -> s, v) l) l)
 
+let remove_trailing_slash_string s =
+  if String.length s > 0 && String.get s 0 = '/' then
+    String.sub s 1 (String.length s - 1)
+  else
+    s
+
 let make_uri u =
   let u_uri = lazy u
   and u_get_params = lazy (Uri.query u)
-  and u_path_string = lazy (Uri.path u) in
-  let u_path = lazy (
-    match Ocsigen_lib.Url.split_path (Lazy.force u_path_string) with
-    | "" :: path ->
-      path
-    | path ->
-      path
-  ) and u_get_params_flat = lazy (
+  and u_path_string = lazy (remove_trailing_slash_string (Uri.path u)) in
+  let u_path = lazy (Ocsigen_lib.Url.split_path (Lazy.force u_path_string))
+  and u_get_params_flat = lazy (
     flatten_get_params (Lazy.force u_get_params)
   ) in
   { u_uri ; u_get_params ; u_get_params_flat ; u_path ; u_path_string }
@@ -268,18 +269,16 @@ let get_params {r_uri = { u_get_params }} =
 let get_params_flat {r_uri = { u_get_params_flat }} =
   Lazy.force u_get_params_flat
 
-let sub_path_string = function
-  | {r_sub_path = Some r_sub_path} ->
-    r_sub_path
-  | r ->
-    path_string r
+let sub_path_string req =
+  remove_trailing_slash_string
+    (match req with
+     | {r_sub_path = Some r_sub_path} ->
+       r_sub_path
+     | r ->
+       path_string r)
 
 let sub_path r =
-  match Ocsigen_lib.Url.split_path (sub_path_string r) with
-  | "" :: path ->
-    path
-  | path ->
-    path
+  Ocsigen_lib.Url.split_path (sub_path_string r)
 
 let original_full_path_string = function
   | {r_original_full_path = Some r_original_full_path} ->
