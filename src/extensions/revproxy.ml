@@ -65,15 +65,17 @@ let gen dir = function
              try fi false
              with Ocsigen_extensions.Not_concerned -> fi true
          in
-         let (https, host, port, uri) =
+         let (https, host, port, path) =
            try
+             (* FIXME: we do not seem to handle GET
+                parameters. Why? *)
              match Ocsigen_lib.Url.parse dest with
-             | (Some https, Some host, port, uri, _, _, _) ->
+             | (Some https, Some host, port, path, _, _, _) ->
                let port = match port with
                  | None -> if https then 443 else 80
                  | Some p -> p
                in
-               (https, host, port, uri)
+               (https, host, port, path)
              | _ ->
                raise (Ocsigen_extensions.Error_in_config_file
                         ("Revproxy : error in destination URL "^dest))
@@ -83,10 +85,10 @@ let gen dir = function
                       ("Revproxy : error in destination URL "^dest^" - "^
                        Printexc.to_string e))
          in
-         let uri = "/"^uri in
+
          Lwt_log.ign_info_f ~section
-           "YES! Redirection to http%s://%s:%d%s"
-           (if https then "s" else "") host port uri;
+           "YES! Redirection to http%s://%s:%d/%s"
+           (if https then "s" else "") host port path;
 
          Ocsigen_lib.Ip_address.get_inet_addr host >>= fun inet_addr ->
 
@@ -95,34 +97,7 @@ let gen dir = function
             We are sure that the request won't be taken in disorder,
             so we return. *)
 
-         let host =
-           match
-             if dir.keephost then
-               Ocsigen_request.host request_info
-             else
-               None
-           with
-           | Some h -> h
-           | None -> host
-         in
-
          let do_request () =
-           let address =
-             Unix.string_of_inet_addr
-               (Ocsigen_request.address request_info)
-           in
-           let forward =
-             String.concat ", "
-               (Ocsigen_request.remote_ip request_info
-                :: Ocsigen_request.forward_ip request_info
-                @  [address])
-           in
-           let proto =
-             if Ocsigen_request.ssl request_info then
-               "https"
-             else
-               "http"
-           in
            let headers =
              let h =
                Cohttp.Request.headers
@@ -135,15 +110,41 @@ let gen dir = function
                     Ocsigen_header.Name.(to_string x_forwarded_proto)
              in
              let h =
+               let forward =
+                 let address =
+                   Unix.string_of_inet_addr
+                     (Ocsigen_request.address request_info)
+                 in
+                 String.concat ", "
+                   (Ocsigen_request.remote_ip request_info
+                    :: Ocsigen_request.forward_ip request_info
+                    @  [address])
+               in
                Cohttp.Header.add h
                  Ocsigen_header.Name.(to_string x_forwarded_for)
                  forward
              in
              Cohttp.Header.remove h Ocsigen_header.Name.(to_string host)
-           and uri = Printf.sprintf "%s://%s%s" proto host uri
+           and uri =
+             let scheme =
+               if Ocsigen_request.ssl request_info then
+                 "https"
+               else
+                 "http"
+             and host =
+               match
+                 if dir.keephost then
+                   Ocsigen_request.host request_info
+                 else
+                   None
+               with
+               | Some host -> host
+               | None -> host
+             in
+             Uri.make ~scheme ~host ~port ~path ()
            and body = Ocsigen_request.body request_info
            and meth = Ocsigen_request.meth request_info in
-           Client.call ~headers ~body meth (Uri.of_string uri)
+           Client.call ~headers ~body meth uri
          in
          Lwt.return @@
          Ext_found (fun () -> do_request () >|= Ocsigen_response.of_cohttp))
