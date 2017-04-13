@@ -13,6 +13,7 @@ exception Ext_http_error of
     @param request Cohttp request *)
 
 let print_request fmt request =
+
   let print_list print_data out_ch lst =
     let rec aux = function
       | [] -> ()
@@ -28,8 +29,10 @@ let print_request fmt request =
 
   Cohttp.Header.iter
     (fun key values ->
-       Format.fprintf fmt "\t%s = %a\n" key
-         (print_list Format.pp_print_string) values)
+       (print_list
+          (fun fmt value -> Format.fprintf fmt "\t%s = %s\n" key value)
+          fmt
+          values))
     request.headers
 
 let waiters = Hashtbl.create 256
