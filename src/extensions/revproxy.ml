@@ -106,7 +106,7 @@ let gen dir = function
              let h =
                Ocsigen_request.version request_info
                |> Cohttp.Code.string_of_version
-               |> Cohttp.Header.add h
+               |> Cohttp.Header.replace h
                     Ocsigen_header.Name.(to_string x_forwarded_proto)
              in
              let h =
@@ -120,7 +120,7 @@ let gen dir = function
                     :: Ocsigen_request.forward_ip request_info
                     @  [address])
                in
-               Cohttp.Header.add h
+               Cohttp.Header.replace h
                  Ocsigen_header.Name.(to_string x_forwarded_for)
                  forward
              in
