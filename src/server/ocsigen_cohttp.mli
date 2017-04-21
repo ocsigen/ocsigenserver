@@ -8,7 +8,7 @@ exception Ext_http_error of
     Cohttp.Code.status * string option * Cohttp.Header.t option
 
 (** compute a redirection if path links to a directory *)
-exception Ocsigen_Is_a_directory of (Ocsigen_request.t -> Neturl.url)
+exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
 
 (** accessor to get number of client (used by eliom monitoring) *)
 val number_of_client : unit -> int

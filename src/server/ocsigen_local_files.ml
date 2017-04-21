@@ -106,7 +106,10 @@ let check_dotdot =
 
 let can_send filename request =
   let filename =
-    Neturl.join_path (Neturl.norm_path (Neturl.split_path filename)) in
+    Ocsigen_lib.Url.split_path filename
+    |> Neturl.norm_path
+    |> Ocsigen_lib.Url.join_path
+  in
   Lwt_log.ign_info_f ~section "checking if file %s can be sent" filename;
   let matches arg =
     Netstring_pcre.string_match (Ocsigen_extensions.do_not_serve_to_regexp arg)
@@ -166,8 +169,9 @@ let resolve
              its name as there is no final slash. We signal this fact to
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
           Lwt_log.ign_info_f ~section "LocalFiles: %s is a directory" filename;
-          raise (Ocsigen_extensions.Ocsigen_Is_a_directory
-                   (Ocsigen_extensions.new_url_of_directory_request request))
+          raise
+            (Ocsigen_extensions.Ocsigen_is_dir
+               (Ocsigen_extensions.new_url_of_directory_request request))
         end
 
         else

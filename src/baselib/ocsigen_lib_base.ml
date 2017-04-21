@@ -439,6 +439,29 @@ module Url_base = struct
       Some (String.sub s (pos+1) (String.length s - 1 - pos))
     with Not_found -> s, None
 
+  let join_path = function [""] -> "/" | l -> String.concat "/" l
+
+  (* Taken from Ocamlnet 4.1.2 *)
+  let split_path s =
+    let l = String.length s in
+    let rec collect_words k =
+      let k' =
+        try
+	  String.index_from s k '/'
+        with
+	  Not_found -> l
+      in
+      let word = String.sub s k (k'-k) in
+      if k' >= l then
+        [word]
+      else
+        word :: collect_words (k'+1)
+    in
+    match collect_words 0 with
+    | [ "" ] -> []
+    | [ "";"" ] -> [ "" ]
+    | other -> other
+
 end
 
 (************************************************************************)

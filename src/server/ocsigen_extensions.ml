@@ -179,7 +179,7 @@ type request = {
   request_config : config_info;
 }
 
-exception Ocsigen_Is_a_directory = Ocsigen_cohttp.Ocsigen_Is_a_directory
+exception Ocsigen_is_dir = Ocsigen_cohttp.Ocsigen_is_dir
 
 type answer =
   | Ext_do_nothing
@@ -298,24 +298,22 @@ let get_port
   else
     Ocsigen_request.port request_info
 
-let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
-
 let new_url_of_directory_request request ri =
   Lwt_log.ign_info ~section "Sending 301 Moved permanently";
-  let port = get_port request in
-  let ssl = Ocsigen_request.ssl ri in
-  Neturl.make_url
+  let port = get_port request
+  and ssl = Ocsigen_request.ssl ri in
+  Uri.make
     ~scheme:(if ssl then "https" else "http")
     ~host:(get_hostname request)
-    ?port:(if (port = 80 && not ssl)
-           || (ssl && port = 443)
-           then None
-           else Some port)
-    ~path:("" ::
-           (Url.add_end_slash_if_missing
-              (Ocsigen_request.path ri)))
-    ?query:(Ocsigen_request.query ri)
-    http_url_syntax
+    ?port:(
+      if (port = 80 && not ssl) || (ssl && port = 443) then
+        None
+      else
+        Some port
+    )
+    ~path:(Ocsigen_request.path_string ri)
+    ~query:(Ocsigen_request.get_params ri)
+    ()
 
 (*****************************************************************************)
 (* To give parameters to extensions: *)
@@ -333,8 +331,7 @@ let site_match request (site_path : string list) url =
   let rec aux site_path url =
     match site_path, url with
     | [], [] ->
-      raise (Ocsigen_Is_a_directory
-               (new_url_of_directory_request request))
+      raise (Ocsigen_is_dir (new_url_of_directory_request request))
     | [], p -> Some p
     | a::l, aa::ll when a = aa -> aux l ll
     | _ -> None
@@ -428,7 +425,7 @@ let rec default_parse_config
         prevpath@
         Url.remove_slash_at_end
           (Url.remove_slash_at_beginning
-             (Url.remove_dotdot (Neturl.split_path dir)))
+             (Url.remove_dotdot (Ocsigen_lib.Url.split_path dir)))
       in
       let parse_config = make_parse_config path parse_host l in
       let ext cookies_to_set =

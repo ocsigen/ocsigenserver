@@ -77,7 +77,7 @@ let gen dir = function
              | _ ->
                raise (Ocsigen_extensions.Error_in_config_file
                         ("Revproxy : error in destination URL "^dest))
-           (*VVV catch only Neturl exceptions! *)
+           (*VVV catch only URL-related exceptions? *)
            with e ->
              raise (Ocsigen_extensions.Error_in_config_file
                       ("Revproxy : error in destination URL "^dest^" - "^

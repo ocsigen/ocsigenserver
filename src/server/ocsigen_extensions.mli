@@ -129,8 +129,7 @@ type request = {
   request_config: config_info;
 }
 
-exception Ocsigen_Is_a_directory
-  of (Ocsigen_request.t -> Neturl.url)
+exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
 
 type answer =
   | Ext_do_nothing
@@ -408,8 +407,7 @@ val get_port : request -> int
     for the client (depending on the server configuration and request)
     @param request configuration of the server
     @param ri request *)
-val new_url_of_directory_request :
-  request -> Ocsigen_request.t -> Neturl.url
+val new_url_of_directory_request : request -> Ocsigen_request.t -> Uri.t
 
 (** {3 User directories} *)
 

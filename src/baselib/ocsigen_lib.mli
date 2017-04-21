@@ -75,7 +75,4 @@ module Url : sig
     string list * string option *
     (string * string) list Lazy.t
 
-  (** alias of (Ocamlnet) [Neturl.split_path] *)
-  val split_path : string -> string list
-
 end

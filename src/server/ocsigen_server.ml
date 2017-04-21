@@ -51,8 +51,6 @@ let dbg sockaddr s =
          (Ocsigen_socket.ip_of_sockaddr sockaddr))
     sockaddr s
 
-let http_url_syntax = Hashtbl.find Neturl.common_url_syntax "http"
-
 let try_bind' f g h = Lwt.try_bind f h g
 
 (* fatal errors messages *)

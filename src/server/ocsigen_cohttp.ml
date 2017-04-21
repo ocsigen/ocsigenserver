@@ -37,7 +37,7 @@ let print_request fmt request =
 
 let waiters = Hashtbl.create 256
 
-exception Ocsigen_Is_a_directory of (Ocsigen_request.t -> Neturl.url)
+exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
 
 module Cookie = struct
 
@@ -145,8 +145,6 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
         headers, code
       | Ocsigen_lib.Ocsigen_Bad_Request ->
         None, `Bad_request
-      | Neturl.Malformed_URL ->
-        None, `Bad_request
       | Ocsigen_lib.Ocsigen_Request_too_long ->
         None, `Request_entity_too_large
       | exn ->
@@ -200,13 +198,9 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
        in
        Lwt.return (response, body))
     (function
-      | Ocsigen_Is_a_directory fun_request ->
-        Cohttp_lwt_unix.Server.respond_redirect
-          ~uri:
-            (fun_request request
-             |> Neturl.string_of_url
-             |> Uri.of_string)
-          ()
+      | Ocsigen_is_dir fun_request ->
+        Cohttp_lwt_unix.Server.respond_redirect ()
+          ~uri:(fun_request request)
       | exn ->
         handle_error exn)
 

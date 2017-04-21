@@ -244,7 +244,7 @@ module Url = struct
         end
       in
 
-      let path = List.map (Netencoding.Url.decode ~plus:false) (Neturl.split_path pathstring) in
+      let path = List.map (Netencoding.Url.decode ~plus:false) (split_path pathstring) in
       let path = remove_dotdot path (* and remove "//" *)
       (* here we remove .. from paths, as it is dangerous.
          But in some very particular cases, we may want them?
@@ -256,7 +256,5 @@ module Url = struct
       in
 
       (https, host, port, uri_string, path, query, get_params)
-
-  let split_path = Neturl.split_path
 
 end
