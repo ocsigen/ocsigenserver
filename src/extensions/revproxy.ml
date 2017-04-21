@@ -23,10 +23,7 @@
     The reverse proxy is still experimental. *)
 
 open Lwt.Infix
-open Ocsigen_extensions
 open Simplexmlparser
-open Cohttp
-open Cohttp_lwt_unix
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 
@@ -45,7 +42,8 @@ type redir = {
 let gen dir = function
   | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found (err, {request_info}) ->
+  | Ocsigen_extensions.Req_not_found
+      (err, {Ocsigen_extensions.request_info}) ->
     Lwt.catch
       (* Is it a redirection? *)
       (fun () ->
@@ -144,12 +142,14 @@ let gen dir = function
              Uri.make ~scheme ~host ~port ~path ()
            and body = Ocsigen_request.body request_info
            and meth = Ocsigen_request.meth request_info in
-           Client.call ~headers ~body meth uri
+           Cohttp_lwt_unix.Client.call ~headers ~body meth uri
          in
          Lwt.return @@
-         Ext_found (fun () -> do_request () >|= Ocsigen_response.of_cohttp))
+         Ocsigen_extensions.Ext_found
+           (fun () -> do_request () >|= Ocsigen_response.of_cohttp))
       (function
-        | Not_concerned -> Lwt.return (Ext_next err)
+        | Ocsigen_extensions.Not_concerned ->
+          Lwt.return (Ocsigen_extensions.Ext_next err)
         | e -> Lwt.fail e)
 
 let parse_config config_elem =
@@ -198,9 +198,11 @@ let parse_config config_elem =
   );
   match !regexp, !full_url, !dest, !pipeline, !keephost with
   | (None, _, _, _, _) ->
-    badconfig "Missing attribute 'regexp' for <revproxy>"
+    Ocsigen_extensions.badconfig
+      "Missing attribute 'regexp' for <revproxy>"
   | (_, _, None, _, _) ->
-    badconfig "Missing attribute 'dest' for <revproxy>"
+    Ocsigen_extensions.badconfig
+      "Missing attribute 'dest' for <revproxy>"
   | (Some regexp, full_url, Some dest, pipeline, keephost) ->
     gen {
       regexp = Netstring_pcre.regexp ("^" ^ regexp  ^ "$");
@@ -210,7 +212,8 @@ let parse_config config_elem =
       keephost;
     }
 
-let () = register_extension
+let () =
+  Ocsigen_extensions.register_extension
     ~name:"revproxy"
     ~fun_site:(fun _ _ _ _ _ -> parse_config)
     ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
