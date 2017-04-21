@@ -48,10 +48,7 @@ module Cookie = struct
       (if secure then "; secure" else "")
       (match exp with
        | Some s ->
-         "; expires=" ^
-         Netdate.format
-           "%a, %d-%b-%Y %H:%M:%S GMT"
-           (Netdate.create s)
+         "; expires=" ^ (Ocsigen_lib.Date.to_string s)
        | None ->
          "")
 
@@ -82,10 +79,7 @@ let make_cookies_header path exp name c secure =
     "" ^
   (match exp with
    | Some s ->
-     "; expires=" ^
-     Netdate.format
-       "%a, %d-%b-%Y %H:%M:%S GMT"
-       (Netdate.create s)
+     "; expires=" ^ Ocsigen_lib.Date.to_string s
    | None   -> "")
 
 let make_cookies_headers path t hds =

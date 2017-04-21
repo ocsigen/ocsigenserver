@@ -464,3 +464,43 @@ end
 (*****************************************************************************)
 
 let debug = prerr_endline
+
+module Date = struct
+
+  let name_of_day = function
+    | 0 -> "Sun"
+    | 1 -> "Mon"
+    | 2 -> "Tue"
+    | 3 -> "Wed"
+    | 4 -> "Thu"
+    | 5 -> "Fri"
+    | 6 -> "Sat"
+    | _ -> failwith "name_of_day"
+
+  let name_of_month = function
+    | 0  -> "Jan"
+    | 1  -> "Feb"
+    | 2  -> "Mar"
+    | 3  -> "Apr"
+    | 4  -> "May"
+    | 5  -> "Jun"
+    | 6  -> "Jul"
+    | 7  -> "Aug"
+    | 8  -> "Sep"
+    | 9  -> "Oct"
+    | 10 -> "Nov"
+    | 11 -> "Dec"
+    | _  -> failwith "name_of_month"
+
+  let to_string d =
+    let {
+      Unix.tm_wday ;
+      tm_mday ; tm_mon ; tm_year ;
+      tm_hour ; tm_min ; tm_sec
+    } = Unix.gmtime d in
+    Printf.sprintf "%s, %02d %s %d %2d:%2d:%2d GMT"
+      (name_of_day tm_wday)
+      tm_mday (name_of_month tm_mon) (tm_year + 1900)
+      tm_hour tm_min tm_sec
+
+end

@@ -112,19 +112,6 @@ let find_static_page ~request ~usermode ~dir ~(err : Cohttp.Code.status) ~pathst
     raise (Ocsigen_extensions.Error_in_user_config_file
              "Staticmod: cannot use '..' in user paths")
 
-(* FIXME Cohttp transition: this used to be in Ocsigen_http_com; find
-   a better place? *)
-let gmt_date d =
-  let x = Netdate.mk_mail_date ~zone:0 d in try
-    (*XXX !!!*)
-    let ind_plus =  Bytes.index x '+' in
-    Bytes.set x ind_plus 'G';
-    Bytes.set x (ind_plus + 1) 'M';
-    Bytes.set x (ind_plus + 2) 'T';
-    String.sub x 0 (ind_plus + 3)
-  with Invalid_argument _ | Not_found ->
-    Lwt_log.ign_debug ~section "no +"; x
-
 let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found (_, r) ->
     Lwt.return (Ocsigen_extensions.Ext_do_nothing)
@@ -165,7 +152,8 @@ let gen ~usermode ?cache dir = function
               "no-cache", "0"
             else
               "max-age=" ^ string_of_int duration,
-              gmt_date (Unix.time () +. float_of_int duration)
+              Ocsigen_lib.Date.to_string
+                (Unix.time () +. float_of_int duration)
           in
           Ocsigen_response.replace_headers answer [
             Ocsigen_header.Name.cache_control , cache_control ;

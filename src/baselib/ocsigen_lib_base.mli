@@ -198,3 +198,10 @@ module Printexc : sig
 end
 
 val debug : string -> unit
+
+module Date : sig
+
+  (** Converts Unix GMT date to string *)
+  val to_string : float -> string
+
+end
