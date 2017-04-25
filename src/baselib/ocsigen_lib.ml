@@ -303,6 +303,32 @@ module Url = struct
       (* ' ' are not encoded to '+' in paths *)
     else String.concat "/" l (* BYXXX : check illicit characters *)
 
+  let url_split_re = Str.regexp "[&=]";;
+
+  (* taken from Ocamlnet 4.1.2 *)
+  let dest_url_encoded_parameters parstr =
+    let rec parse_after_amp tl =
+      match tl with
+      | Str.Text name :: Str.Delim "=" :: Str.Text value :: tl' ->
+	(decode name, decode value) :: parse_next tl'
+      | Str.Text name :: Str.Delim "=" :: Str.Delim "&" :: tl' ->
+	(decode name, "") :: parse_after_amp tl'
+      | Str.Text name :: Str.Delim "=" :: [] ->
+	[decode name, ""]
+      | _ ->
+	failwith "dest_url_encoded_parameters"
+    and parse_next tl =
+      match tl with
+      | [] -> []
+      | Str.Delim "&" :: tl' ->
+	parse_after_amp tl'
+      | _ ->
+	failwith "dest_url_encoded_parameters"
+    in
+    let toklist = Str.full_split url_split_re parstr in
+    match toklist with
+    | [] -> []
+    | _ -> parse_after_amp toklist
 
   let parse =
 
@@ -363,7 +389,7 @@ module Url = struct
         lazy begin
           let params_string = match query with None -> "" | Some s -> s in
           try
-            Netencoding.Url.dest_url_encoded_parameters params_string
+            dest_url_encoded_parameters params_string
           with Failure _ -> raise Ocsigen_Bad_Request
         end
       in

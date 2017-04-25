@@ -110,7 +110,7 @@ let check_dotdot =
 let can_send filename request =
   let filename =
     Ocsigen_lib.Url.split_path filename
-    |> Neturl.norm_path
+    |> Ocsigen_lib.Url.norm_path
     |> Ocsigen_lib.Url.join_path
   in
   Lwt_log.ign_info_f ~section "checking if file %s can be sent" filename;

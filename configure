@@ -414,13 +414,6 @@ check_library lwt.react "Missing support for 'react' in lwt."
 check_library lwt.ssl   "Missing support for 'ssl' in lwt."
 check_library lwt.preemptive "Missing support for 'preemptive' in lwt."
 
-check_library netstring \
-    "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
-check_library netstring-pcre \
-    "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
-check_library netsys \
-    "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
-
 check_library pcre "See: http://ocaml.info/home/ocaml_sources.html"
 check_library cryptokit "See: http://pauillac.inria.fr/~xleroy/software.html#cryptokit"
 
@@ -668,4 +661,3 @@ echo
 echo "   make install"
 echo "   make install.doc"
 echo
-

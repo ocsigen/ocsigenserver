@@ -31,7 +31,7 @@ exception Bad_answer_from_http_server
 
 (** The table of redirections for each virtual server *)
 type redir = {
-  regexp : Netstring_pcre.regexp ;
+  regexp : Pcre.regexp ;
   full_url : Ocsigen_lib.yesnomaybe ;
   dest : string ;
   pipeline : bool ;
@@ -205,7 +205,7 @@ let parse_config config_elem =
       "Missing attribute 'dest' for <revproxy>"
   | (Some regexp, full_url, Some dest, pipeline, keephost) ->
     gen {
-      regexp = Netstring_pcre.regexp ("^" ^ regexp  ^ "$");
+      regexp = Ocsigen_lib.Netstring_pcre.regexp ("^" ^ regexp  ^ "$");
       full_url;
       dest;
       pipeline;

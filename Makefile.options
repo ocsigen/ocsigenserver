@@ -34,10 +34,10 @@ SERVER_PACKAGE := lwt.ssl           \
 		  bytes			\
 	          ${LWT_PREEMPTIVE_PACKAGE} \
                   ipaddr            \
-	          netstring         \
-	          netstring-pcre    \
                   findlib           \
 	          cryptokit         \
+                  pcre              \
+                  str               \
 		  tyxml             \
 	          tyxml.parser      \
                   dynlink           \

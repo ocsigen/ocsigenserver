@@ -189,7 +189,10 @@ module Url_base : sig
 
   val join_path : path -> string
 
+  (**/**)
   val split_path : string -> path
+
+  val norm_path : path -> path
 
 end
 

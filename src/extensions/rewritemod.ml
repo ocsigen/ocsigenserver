@@ -34,14 +34,14 @@ let section = Lwt_log.Section.make "ocsigen:ext:rewritemod"
 exception Not_concerned
 
 (* The table of rewrites for each virtual server *)
-type assockind = Regexp of Netstring_pcre.regexp * string * bool
+type assockind = Regexp of Pcre.regexp * string * bool
 
 let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
-  (match Netstring_pcre.string_match regexp suburl 0 with
+  (match Ocsigen_lib.Netstring_pcre.string_match regexp suburl 0 with
    | None ->
      raise Not_concerned
    | Some _ -> (* Matching regexp found! *)
-     Netstring_pcre.global_replace regexp dest suburl),
+     Ocsigen_lib.Netstring_pcre.global_replace regexp dest suburl),
   fullrewrite
 
 (* The function that will generate the pages from the request *)
@@ -131,7 +131,7 @@ let parse_config element =
   | Some dest ->
     gen
       (Regexp
-         ((Netstring_pcre.regexp ("^" ^ !regexp ^ "$")),
+         ((Ocsigen_lib.Netstring_pcre.regexp ("^" ^ !regexp ^ "$")),
           dest, !fullrewrite))
       !continue
 

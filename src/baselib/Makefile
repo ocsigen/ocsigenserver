@@ -3,10 +3,9 @@ include ../../Makefile.config
 PACKAGE  := \
 	bytes \
 	lwt.unix \
-	netstring \
-	netstring-pcre \
 	cryptokit \
 	findlib \
+	pcre \
 	tyxml \
 	${LWT_PREEMPTIVE_PACKAGE} \
 	ipaddr

@@ -462,6 +462,61 @@ module Url_base = struct
     | [ "";"" ] -> [ "" ]
     | other -> other
 
+  (* Taken from Ocamlnet 4.1.2 *)
+  let norm_path l =
+
+    let rec remove_slash_slash l first =
+      match l with
+      | [ "" ] ->
+	[ "" ]
+      | [ ""; "" ] when first ->
+	[ "" ]
+      | "" :: l' when not first ->
+	remove_slash_slash l' false
+      | x :: l' ->
+	x :: remove_slash_slash l' false
+      | [] ->
+	[]
+    in
+
+    let rec remove_dot l first =
+      match l with
+      | ([ "." ] | ["."; ""]) ->
+	if first then [] else [ "" ]
+      |	"." :: x :: l' ->
+	remove_dot (x :: l') false
+      | x :: l' ->
+	x :: remove_dot l' false
+      | [] ->
+	[]
+    in
+
+    let rec remove_dot_dot_once l first =
+      match l with
+	x :: ".." :: [] when x <> "" && x <> ".." && not first ->
+	[ "" ]
+      |	x :: ".." :: l' when x <> "" && x <> ".." ->
+	l'
+      | x :: l' ->
+	x :: remove_dot_dot_once l' false
+      | [] ->
+	raise Not_found
+    in
+
+    let rec remove_dot_dot l =
+      try
+        let l' = remove_dot_dot_once l true in
+        remove_dot_dot l'
+      with
+	Not_found -> l
+    in
+
+    let l' = remove_dot_dot (remove_dot (remove_slash_slash l true) true) in
+    match l' with
+      [".."] -> [".."; ""]
+    | ["";""] -> [ "" ]
+    | _      -> l'
+
 end
 
 (************************************************************************)

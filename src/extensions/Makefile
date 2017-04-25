@@ -6,8 +6,7 @@ PACKAGE  :=		\
 	ipaddr		\
 	lwt.ssl		\
 	lwt.react	\
-	netstring	\
-	netstring-pcre	\
+	pcre		\
 	tyxml.parser    \
 	cohttp.lwt
 
