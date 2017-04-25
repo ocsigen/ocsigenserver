@@ -66,7 +66,7 @@ let check_regexp_list =
   try Hashtbl.find hashtbl r
   with Not_found ->
   try
-    ignore (Netstring_pcre.regexp r);
+    ignore (Ocsigen_lib.Netstring_pcre.regexp r);
     Hashtbl.add hashtbl r ()
   with _ -> raise (Bad_regexp r)
 
@@ -117,7 +117,7 @@ let parse_config usermode _ _ _ = function
       | Simplexmlparser.Element
           ("regexp", ["regexp", regexp; "value", charset], []) :: q ->
         (try
-           let r = Netstring_pcre.regexp regexp in
+           let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
            aux
              (Ocsigen_charset_mime.update_charset_regexp
                 charset_assoc r charset)
@@ -155,7 +155,7 @@ let parse_config usermode _ _ _ = function
       | Simplexmlparser.Element
           ("regexp", ["regexp", regexp; "value", mime], []) :: q ->
         (try
-           let r = Netstring_pcre.regexp regexp in
+           let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
            aux (Ocsigen_charset_mime.update_mime_regexp mime_assoc r mime) q
          with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
       | _ :: q -> bad_config "invalid subtag in option mime"

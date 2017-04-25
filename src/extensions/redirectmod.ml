@@ -24,7 +24,7 @@ let section = Lwt_log.Section.make "ocsigen:ext:redirectmod"
 
 (* The table of redirections for each virtual server *)
 type assockind = Regexp of
-    Netstring_pcre.regexp *
+    Pcre.regexp *
     string *
     Ocsigen_lib.yesnomaybe * (* full url *)
     bool (* temporary *)
@@ -113,7 +113,8 @@ let parse_config config_elem =
   | None ->
     Ocsigen_extensions.badconfig "Missing attribute regexp for <redirect>"
   | Some regexp ->
-    gen (Regexp (Netstring_pcre.regexp regexp, !dest, !mode, !temporary))
+    gen (Regexp (Ocsigen_lib.Netstring_pcre.regexp regexp,
+                 !dest, !mode, !temporary))
 
 let () =
   Ocsigen_extensions.register_extension

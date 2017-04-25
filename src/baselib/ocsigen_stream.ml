@@ -183,7 +183,7 @@ let rec skip s k = match s with
     let len = String.length s in
     let len64 = Int64.of_int len in
     if Int64.compare k len64 <= 0
-    then 
+    then
       let k = Int64.to_int k in
       Lwt.return (Cont (String.sub s k (len - k), f))
     else (enlarge_stream (Cont ("", f)) >>=
@@ -193,7 +193,7 @@ let substream delim s =
   let ldelim = String.length delim in
   if ldelim = 0 then Lwt.fail (Stream_error "Empty delimiter")
   else
-    let rdelim = Netstring_pcre.regexp_string delim in
+    let rdelim = Pcre.(regexp (quote delim)) in
     let rec aux =
       function
       | Finished _ -> Lwt.fail Stream_too_small
@@ -202,7 +202,7 @@ let substream delim s =
         if len < ldelim
         then enlarge_stream stre >>= aux
         else try
-            let p,_ = Netstring_pcre.search_forward rdelim s 0 in
+            let p,_ = Ocsigen_lib.Netstring_pcre.search_forward rdelim s 0 in
             cont (String.sub s 0 p)
               (fun () ->
                  empty
@@ -211,7 +211,7 @@ let substream delim s =
           with Not_found ->
             let pos = (len + 1 - ldelim) in
             cont (String.sub s 0 pos)
-              (fun () -> 
+              (fun () ->
                  next f >>= function
                  | Finished _ -> Lwt.fail Stream_too_small
                  | Cont (s', f') ->

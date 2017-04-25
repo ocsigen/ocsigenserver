@@ -163,7 +163,7 @@ let add_ocamlpath p =
 (* Using Findlib to locate files *)
 
 let findfiles =
-  let cmx = Netstring_pcre.regexp_case_fold "\\.cmx($| |a)" in
+  let cmx = Pcre.regexp ~flags:[`MULTILINE; `CASELESS] "\\.cmx($| |a)" in
   fun package ->
     try
       let preds = [(if Ocsigen_config.is_native then "native" else "byte"); "plugin"; "mt"] in
@@ -179,7 +179,10 @@ let findfiles =
             try
               let raw = Findlib.package_property preds a "archive" in
               (* Replacing .cmx/.cmxa by .cmxs *)
-              let raw = Netstring_pcre.global_replace cmx ".cmxs " raw in
+              let raw =
+                Ocsigen_lib.Netstring_pcre.global_replace
+                  cmx ".cmxs " raw
+              in
               List.filter ((<>) "") (String.split ~multisep:true ' ' raw)
             with
             | Not_found -> []

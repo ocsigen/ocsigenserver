@@ -96,12 +96,15 @@ let check_symlinks ~no_check_for ~filename policy =
     aux follow_symlinks_if_owner_match
 
 let check_dotdot =
-  let regexp = Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
+  let regexp = Ocsigen_lib.Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
   fun ~filename ->
     (* We always reject .. in filenames.
        In URLs, .. have already been removed by the server,
        but the filename may come from somewhere else than URLs ... *)
-    try ignore (Netstring_pcre.search_forward regexp filename 0); false
+    try
+      ignore
+        (Ocsigen_lib.Netstring_pcre.search_forward regexp filename 0);
+      false
     with Not_found -> true
 
 let can_send filename request =
@@ -112,8 +115,10 @@ let can_send filename request =
   in
   Lwt_log.ign_info_f ~section "checking if file %s can be sent" filename;
   let matches arg =
-    Netstring_pcre.string_match (Ocsigen_extensions.do_not_serve_to_regexp arg)
-      filename 0 <> None
+    Ocsigen_lib.Netstring_pcre.string_match
+      (Ocsigen_extensions.do_not_serve_to_regexp arg)
+      filename 0 <>
+    None
   in
   if matches request.Ocsigen_extensions.do_not_serve_403 then (
     Lwt_log.ign_info ~section "this file is forbidden";

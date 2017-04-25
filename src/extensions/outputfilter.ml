@@ -22,7 +22,7 @@
 
 type outputfilter =
   | Rewrite_header of
-      (Ocsigen_header.Name.t * Netstring_pcre.regexp * string)
+      (Ocsigen_header.Name.t * Pcre.regexp * string)
   | Add_header of
       (Ocsigen_header.Name.t * string * bool option)
 
@@ -36,7 +36,7 @@ let gen filter = function
         (try
            let l =
              List.map
-               (Netstring_pcre.global_replace regexp dest)
+               (Ocsigen_lib.Netstring_pcre.global_replace regexp dest)
                (Ocsigen_response.header_multi res header)
            and a = Ocsigen_response.remove_header res header in
            Ocsigen_response.add_header_multi a header l
@@ -81,7 +81,9 @@ let parse_config config_elem =
               (fun s -> header := Some s);
             Configuration.attribute
               ~name:"regexp"
-              (fun s -> regexp := Some (Netstring_pcre.regexp s));
+              (fun s ->
+                 regexp :=
+                   Some (Ocsigen_lib.Netstring_pcre.regexp s));
             Configuration.attribute
               ~name:"dest"
               (fun s -> dest := Some s);

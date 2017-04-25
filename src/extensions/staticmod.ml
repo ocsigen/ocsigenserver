@@ -34,9 +34,9 @@ type static_site_kind =
   | Regexp of regexp_site
 
 and regexp_site = {
-  source_regexp: Netstring_pcre.regexp;
+  source_regexp: Pcre.regexp;
   dest: Ocsigen_extensions.ud_string;
-  http_status_filter: Netstring_pcre.regexp option;
+  http_status_filter: Pcre.regexp option;
   root_checks: Ocsigen_extensions.ud_string option;
 }
 
@@ -47,7 +47,7 @@ let http_status_match status_filter status =
   match status_filter with
   | None -> true
   | Some r ->
-    Netstring_pcre.string_match r
+    Ocsigen_lib.Netstring_pcre.string_match r
       (string_of_int
          Cohttp.Code.(code_of_status (status :> status_code))) 0
     <> None
@@ -55,9 +55,9 @@ let http_status_match status_filter status =
 (* Checks that the path specified in a userconf is correct.
    Currently, we check that the path does not contain ".." *)
 let correct_user_local_file =
-  let regexp = Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
+  let regexp = Ocsigen_lib.Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
   fun path ->
-    try ignore(Netstring_pcre.search_forward regexp path 0); false
+    try ignore(Ocsigen_lib.Netstring_pcre.search_forward regexp path 0); false
     with Not_found -> true
 
 (* Find the local file corresponding to [path] in the static site [dir],
@@ -85,7 +85,7 @@ let find_static_page ~request ~usermode ~dir ~(err : Cohttp.Code.status) ~pathst
       when http_status_match status_filter err ->
       let status_filter = status_filter <> None
       and file =
-        match Netstring_pcre.string_match source pathstring 0 with
+        match Ocsigen_lib.Netstring_pcre.string_match source pathstring 0 with
         | None -> raise Not_concerned
         | Some _ ->
           Ocsigen_extensions.replace_user_dir source dest pathstring
@@ -189,8 +189,8 @@ let rewrite_local_path userconf path =
 
 type options = {
   opt_dir: string option;
-  opt_regexp: Netstring_pcre.regexp option;
-  opt_code: Netstring_pcre.regexp option;
+  opt_regexp: Pcre.regexp option;
+  opt_code: Pcre.regexp option;
   opt_dest: Ocsigen_extensions.ud_string option;
   opt_root_checks: Ocsigen_extensions.ud_string option;
   opt_cache: int option;
@@ -226,7 +226,7 @@ let parse_config userconf _
               ~name:"regexp"
               (fun s ->
                  let s =
-                   try Netstring_pcre.regexp ("^"^s^"$")
+                   try Ocsigen_lib.Netstring_pcre.regexp ("^"^s^"$")
                    with Pcre.Error (Pcre.BadPattern _) ->
                      badconfig
                        "Bad regexp \"%s\" in <static regexp=\"...\" />" s
@@ -235,7 +235,7 @@ let parse_config userconf _
             Configuration.attribute
               ~name:"code"
               (fun s ->
-                 let c = try Netstring_pcre.regexp ("^" ^ s ^"$")
+                 let c = try Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^"$")
                    with Pcre.Error (Pcre.BadPattern _) ->
                      badconfig
                        "Bad regexp \"%s\" in <static code=\"...\" />" s
@@ -293,7 +293,7 @@ let parse_config userconf _
 
     | (None, None, (Some _ as code), Some t, None) ->
       Regexp { dest = t; http_status_filter = code; root_checks = None;
-               source_regexp = Netstring_pcre.regexp "^.*$" }
+               source_regexp = Ocsigen_lib.Netstring_pcre.regexp "^.*$" }
 
     | _ ->
       Ocsigen_extensions.badconfig "Wrong attributes for <static>"

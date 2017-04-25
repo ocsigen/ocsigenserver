@@ -51,7 +51,7 @@ let badconfig fmt = Printf.ksprintf (fun s -> raise (Error_in_config_file s)) fm
 
 (*****************************************************************************)
 (* virtual hosts: *)
-type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+type virtual_hosts = (string * Pcre.regexp * int option) list
 
 (* We cannot use generic comparison, as regexpes are abstract values that
    cannot be compared or hashed. However the string essentially contains
@@ -100,8 +100,8 @@ let do_not_serve_to_regexp d =
       wrap d.do_not_serve_regexps
     in
     let paren_quote l =
-      String.concat "|" (List.map (fun s -> Printf.sprintf "(%s)"
-                                      (Netstring_pcre.quote s)) l)
+      String.concat "|"
+        (List.map (fun s -> Printf.sprintf "(%s)" (Pcre.quote s)) l)
     and paren l =
       String.concat "|" (List.map (fun s -> Printf.sprintf "(%s)"  s) l)
     in
@@ -123,7 +123,7 @@ let do_not_serve_to_regexp d =
     in
     (try
        Lwt_log.ign_info_f ~section "Compiling exclusion regexp %s" regexp;
-       let r = Netstring_pcre.regexp regexp in
+       let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
        Hashtbl.add hash_consed_do_not_serve d r;
        r
      with _ -> raise (IncorrectRegexpes d)
@@ -837,7 +837,7 @@ let host_match ~(virtual_hosts : virtual_hosts) ~host ~port =
      we take the first one, even if it doesn't match!  *)
   | Some host ->
     let host_match regexp =
-      (Netstring_pcre.string_match regexp host 0 <> None)
+      (Ocsigen_lib.Netstring_pcre.string_match regexp host 0 <> None)
     in
     let rec aux = function
       | [] -> false
@@ -972,14 +972,15 @@ exception NoSuchUser
 
 type ud_string = Nodir of string | Withdir of string * string * string
 
-let user_dir_regexp = Netstring_pcre.regexp "(.*)\\$u\\(([^\\)]*)\\)(.*)"
+let user_dir_regexp =
+  Ocsigen_lib.Netstring_pcre.regexp "(.*)\\$u\\(([^\\)]*)\\)(.*)"
 
 let parse_user_dir s =
-  match Netstring_pcre.full_split user_dir_regexp s with
-  | [ Netstring_pcre.Delim _;
-      Netstring_pcre.Group (1, s1);
-      Netstring_pcre.Group (2, u);
-      Netstring_pcre.Group (3, s2)] ->
+  match Pcre.full_split ~rex:user_dir_regexp ~max:(-1) s with
+  | [ Pcre.Delim _;
+      Pcre.Group (1, s1);
+      Pcre.Group (2, u);
+      Pcre.Group (3, s2)] ->
     Withdir (s1, u, s2)
   | _ -> Nodir s
 
@@ -987,18 +988,27 @@ let parse_user_dir s =
 let replace_user_dir regexp dest pathstring =
   match dest with
   | Nodir dest ->
-    Netstring_pcre.global_replace regexp dest pathstring
+    Ocsigen_lib.Netstring_pcre.global_replace regexp dest pathstring
   | Withdir (s1, u, s2) ->
-      try
-        let s1 = Netstring_pcre.global_replace regexp s1 pathstring in
-        let u = Netstring_pcre.global_replace regexp u pathstring in
-        let s2 = Netstring_pcre.global_replace regexp s2 pathstring in
-        let userdir = (Unix.getpwnam u).Unix.pw_dir in
-        Lwt_log.ign_info_f ~section "User %s" u;
-        s1^userdir^s2
-      with Not_found ->
-        Lwt_log.ign_info_f ~section "No such user %s" u;
-        raise NoSuchUser
+    try
+      let s1 =
+        Ocsigen_lib.Netstring_pcre.global_replace
+          regexp s1 pathstring
+      in
+      let u =
+        Ocsigen_lib.Netstring_pcre.global_replace
+          regexp u pathstring
+      in
+      let s2 =
+        Ocsigen_lib.Netstring_pcre.global_replace
+          regexp s2 pathstring
+      in
+      let userdir = (Unix.getpwnam u).Unix.pw_dir in
+      Lwt_log.ign_info_f ~section "User %s" u;
+      s1^userdir^s2
+    with Not_found ->
+      Lwt_log.ign_info_f ~section "No such user %s" u;
+      raise NoSuchUser
 
 exception Not_concerned
 
@@ -1025,9 +1035,9 @@ let find_redirection regexp full_url dest r =
         (Ocsigen_request.port r)
         ("/" ^ path)
     in
-    Netstring_pcre.string_match regexp path 0 >|! fun _ ->
+    Ocsigen_lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->
     (* Matching regexp found! *)
-    Netstring_pcre.global_replace regexp dest path
+    Ocsigen_lib.Netstring_pcre.global_replace regexp dest path
   else
     let path =
       let sub_path = Ocsigen_request.sub_path_string r in
@@ -1035,6 +1045,6 @@ let find_redirection regexp full_url dest r =
       | None -> sub_path
       | Some g -> sub_path ^ "?" ^ g
     in
-    Netstring_pcre.string_match regexp path 0 >|! fun _ ->
+    Ocsigen_lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->
     (* Matching regexp found! *)
-    Netstring_pcre.global_replace regexp dest path
+    Ocsigen_lib.Netstring_pcre.global_replace regexp dest path

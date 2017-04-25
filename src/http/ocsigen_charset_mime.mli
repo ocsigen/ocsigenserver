@@ -51,7 +51,7 @@ val set_default_charset : charset_assoc -> charset -> charset_assoc
 val update_charset_ext : charset_assoc -> extension -> charset -> charset_assoc
 val update_charset_file : charset_assoc -> filename -> charset -> charset_assoc
 val update_charset_regexp :
-  charset_assoc -> Netstring_pcre.regexp -> charset -> charset_assoc
+  charset_assoc -> Pcre.regexp -> charset -> charset_assoc
 
 
 
@@ -82,11 +82,4 @@ val set_default_mime : mime_assoc -> mime_type -> mime_assoc
 val update_mime_ext : mime_assoc -> extension -> mime_type -> mime_assoc
 val update_mime_file : mime_assoc -> filename -> mime_type -> mime_assoc
 val update_mime_regexp :
-  mime_assoc -> Netstring_pcre.regexp -> mime_type -> mime_assoc
-
-
-
-
-
-
-
+  mime_assoc -> Pcre.regexp -> mime_type -> mime_assoc

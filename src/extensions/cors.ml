@@ -143,7 +143,7 @@ let main config = function
 (* Register extension *)
 
 let comma_space_regexp =
-  Netstring_pcre.regexp "[[:blank:]\n]*,[[:blank:]\n]*"
+  Ocsigen_lib.Netstring_pcre.regexp "[[:blank:]\n]*,[[:blank:]\n]*"
 
 let parse_config _ _ parse_fun config_elem =
   let config = ref {
@@ -173,12 +173,18 @@ let parse_config _ _ parse_fun config_elem =
             Configuration.attribute
               ~name:"exposed_headers"
               (fun s ->
-                 let s = Netstring_pcre.split comma_space_regexp s in
+                 let s =
+                   Ocsigen_lib.Netstring_pcre.split
+                     comma_space_regexp s
+                 in
                  config := { !config with exposed_headers = s });
             Configuration.attribute
               ~name:"methods"
               (fun s ->
-                 let s = Netstring_pcre.split comma_space_regexp s in
+                 let s =
+                   Ocsigen_lib.Netstring_pcre.split
+                     comma_space_regexp s
+                 in
                  let s = Some (List.map Cohttp.Code.method_of_string s) in
                  config := { !config with allowed_method = s });
           ]

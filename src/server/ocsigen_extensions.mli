@@ -55,7 +55,7 @@ val badconfig : ('a, unit, string, 'b) format4 -> 'a
     (which is a glob-like pattern that can contains [*]), a regexp
     parsing this pattern, and optionnaly a port.
 *)
-type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+type virtual_hosts = (string * Pcre.regexp * int option) list
 
 val hash_virtual_hosts : virtual_hosts -> int
 val equal_virtual_hosts : virtual_hosts -> virtual_hosts -> bool
@@ -78,7 +78,7 @@ exception IncorrectRegexpes of do_not_serve
 (** Compile a do_not_serve structure into a regexp. Raises
     [IncorrectRegexpes] if the compilation fails. The result is
     memoized for subsequent calls with the same argument *)
-val do_not_serve_to_regexp: do_not_serve -> Netstring_pcre.regexp
+val do_not_serve_to_regexp: do_not_serve -> Pcre.regexp
 
 val join_do_not_serve : do_not_serve -> do_not_serve -> do_not_serve
 
@@ -420,7 +420,7 @@ type ud_string
 
 val parse_user_dir : string -> ud_string
 
-val replace_user_dir : Netstring_pcre.regexp -> ud_string -> string -> string
+val replace_user_dir : Pcre.regexp -> ud_string -> string -> string
 (** raises [Not_found] is the directory does not exist *)
 
 
@@ -429,7 +429,7 @@ val replace_user_dir : Netstring_pcre.regexp -> ud_string -> string -> string
 exception Not_concerned
 
 val find_redirection :
-  Netstring_pcre.regexp ->
+  Pcre.regexp ->
   bool ->
   string ->
   Ocsigen_request.t ->

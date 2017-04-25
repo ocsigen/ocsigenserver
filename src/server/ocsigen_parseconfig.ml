@@ -25,6 +25,8 @@ open Ocsigen_socket
 open Simplexmlparser
 open Ocsigen_config
 
+module Netstring_pcre = Ocsigen_lib.Netstring_pcre
+
 let section = Lwt_log.Section.make "ocsigen:config"
 
 let blah_of_string f tag s =
@@ -252,19 +254,19 @@ let parse_host_field =
                  raise (Config_file_error "bad port number")
              in
              let split_host = function
-               | Netstring_str.Delim _ -> ".*"
-               | Netstring_str.Text t -> Netstring_pcre.quote t
+               | Str.Delim _ -> ".*"
+               | Str.Text t -> Pcre.quote t
              in
              (host,
               Netstring_pcre.regexp
                 (String.concat ""
                    ((List.map split_host
-                       (Netstring_str.full_split
-                          (Netstring_str.regexp "[*]+") host))@["$"])),
+                       (Str.full_split
+                          (Str.regexp "[*]+") host))@["$"])),
               port)
            in
            List.map parse_one_host
-             (Netstring_str.split (Netstring_str.regexp "[ \t]+") s)
+             (Str.split (Str.regexp "[ \t]+") s)
        in
        Hashtbl.add h hostfilter r;
        (r : Ocsigen_extensions.virtual_hosts)

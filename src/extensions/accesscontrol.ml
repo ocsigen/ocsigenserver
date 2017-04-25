@@ -334,7 +334,10 @@ let parse_config parse_fun = function
         in
         match header with
         | Some header ->
-          (match Netstring_pcre.split comma_space_regexp header with
+          (match
+             Ocsigen_lib.Netstring_pcre.split
+               comma_space_regexp header
+           with
            | original_ip :: proxies ->
              let last_proxy = List.last proxies in
              let proxy_ip = Ipaddr.of_string_exn last_proxy in

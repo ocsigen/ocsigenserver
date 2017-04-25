@@ -103,7 +103,7 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) =
        ({Ocsigen_extensions.request_info ;
          request_config} as req)) as req_state ->
     let path = (Ocsigen_request.sub_path_string request_info) in
-    match Netstring_pcre.string_match regexp path 0 with
+    match Ocsigen_lib.Netstring_pcre.string_match regexp path 0 with
     | None -> Lwt.return (Ocsigen_extensions.Ext_next previous_err)
     | Some _ ->
       try
@@ -111,8 +111,10 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) =
         let conf0 = Ocsigen_extensions.replace_user_dir regexp conf path in
         let uri =
           Uri.of_string
-            (Netstring_pcre.global_replace regexp url path)
-        and prefix = Netstring_pcre.global_replace regexp prefix path
+            (Ocsigen_lib.Netstring_pcre.global_replace regexp url path)
+        and prefix =
+          Ocsigen_lib.Netstring_pcre.global_replace
+            regexp prefix path
         and userconf_options = {
           Ocsigen_extensions.localfiles_root =
             Ocsigen_extensions.replace_user_dir regexp localpath path }
@@ -159,7 +161,7 @@ let parse_config hostpattern _ path _ _ config_elem =
               ~name:"regexp"
               ~obligatory:true
               (fun s ->
-                 let s = Netstring_pcre.regexp ("^" ^ s ^ "$") in
+                 let s = Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$") in
                  regexp := Some s);
             Configuration.attribute
               ~name:"conf"

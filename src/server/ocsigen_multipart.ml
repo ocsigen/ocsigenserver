@@ -5,13 +5,15 @@
 (*VVV Check wether we should support int64 for large files? *)
 
 open Lwt.Infix
-module S = Netstring_pcre
+module S = Ocsigen_lib.Netstring_pcre
 
 let section = Lwt_log.Section.make "ocsigen:server:multipart"
 
 exception Multipart_error of string
 
 exception Ocsigen_upload_forbidden
+
+let match_end result = snd (Pcre.get_substring_ofs result 0)
 
 let cr_or_lf_re = S.regexp "[\013\n]"
 
@@ -42,7 +44,7 @@ let scan_header
   let rec parse_header i l =
     match S.string_match header_re parstr i with
     | Some r ->
-      let i' = S.match_end r in
+      let i' = match_end r in
       if i' > end_pos then raise (Multipart_error "Mimestring.scan_header");
       let name =
         if downcase then
@@ -62,7 +64,7 @@ let scan_header
       (* The header must end with an empty line *)
       (match S.string_match empty_line_re parstr i with
        | Some r' ->
-         List.rev l, S.match_end r'
+         List.rev l, match_end r'
        | None ->
          raise (Multipart_error "Mimestring.scan_header"))
   in
@@ -77,11 +79,11 @@ let read_header ?downcase ?unfold ?strip s =
             line right at the beginning *)
          match S.string_match empty_line_re b 0 with
          | Some r ->
-           Lwt.return (s, (S.match_end r))
+           Lwt.return (s, match_end r)
          | None ->
            (* Search for an empty line *)
            Lwt.return
-             (s, (S.match_end (snd (S.search_forward end_of_header_re b 0))))
+             (s, match_end (snd (S.search_forward end_of_header_re b 0)))
       )
       (function
         | Not_found ->
@@ -117,7 +119,7 @@ let search_end_of_line s k =
   Lwt.catch
     (fun () ->
        search_window s lf_re k >>= fun (s, x) ->
-       Lwt.return (s, (S.match_end x)))
+       Lwt.return (s, match_end x))
     (function
       | Not_found ->
         Lwt.fail
@@ -130,9 +132,9 @@ let search_first_boundary ~boundary s =
   (* Search boundary per regexp; return the position of the
      character immediately following the boundary (on the same
      line), or raise Not_found. *)
-  let re = S.regexp ("\n--" ^ S.quote boundary) in
+  let re = S.regexp ("\n--" ^ Pcre.quote boundary) in
   search_window s re 0 >>= fun (s, x) ->
-  Lwt.return (s, (S.match_end x))
+  Lwt.return (s, match_end x)
 
 let check_beginning_is_boundary ~boundary s =
   let del = "--" ^ boundary in
@@ -269,10 +271,10 @@ let counter =
 
 let field field content_disp =
   let (_, res) =
-    Netstring_pcre.search_forward
-      (Netstring_pcre.regexp (field^"=.([^\"]*).;?")) content_disp 0
+    S.search_forward
+      (S.regexp (field^"=.([^\"]*).;?")) content_disp 0
   in
-  Netstring_pcre.matched_group res 1 content_disp
+  S.matched_group res 1 content_disp
 
 let parse_content_type s =
   match Ocsigen_lib.String.split ';' s with
@@ -314,7 +316,12 @@ let post_params_form_urlencoded body_gen _ _ =
          (Ocsigen_config.get_maxrequestbodysizeinmemory ())
          body >>= fun r ->
        let r = Ocsigen_lib.Url.fixup_url_string r in
-       Lwt.return ((Netencoding.Url.dest_url_encoded_parameters r), []))
+       let l =
+         Uri.query_of_encoded r
+         |> List.map (fun (s, l) -> List.map (fun v -> s, v) l)
+         |> List.concat
+       in
+       Lwt.return (l, []))
     (function
       | Ocsigen_stream.String_too_large ->
         Lwt.fail Ocsigen_lib.Input_is_too_large

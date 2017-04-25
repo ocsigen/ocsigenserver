@@ -76,3 +76,27 @@ module Url : sig
     (string * string) list Lazy.t
 
 end
+
+(**/**)
+
+(* This exists to facilitate transition away from Ocamlnet. Do not use
+   for new code! *)
+module Netstring_pcre : sig
+
+  val regexp : string -> Pcre.regexp
+
+  val matched_group : Pcre.substrings -> int -> string -> string
+
+  val matched_string : Pcre.substrings -> string -> string
+
+  val global_replace : Pcre.regexp -> string -> string -> string
+
+  val search_forward:
+    Pcre.regexp -> string -> int -> int * Pcre.substrings
+
+  val split : Pcre.regexp -> string -> string list
+
+  val string_match :
+    Pcre.regexp -> string -> int -> Pcre.substrings option
+
+end
