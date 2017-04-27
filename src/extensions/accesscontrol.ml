@@ -418,7 +418,7 @@ let parse_config parse_fun = function
       in
       Lwt.return
         (Ocsigen_extensions.Ext_continue_with
-           ( { request with request_info },
+           ( { request with Ocsigen_extensions.request_info },
              Ocsigen_cookies.Cookies.empty,
              code ))
     in

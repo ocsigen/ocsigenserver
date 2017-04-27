@@ -38,11 +38,11 @@ let attempt_redir dir err ri () =
         regexp full dest ri
     in
     match full with
-    | Yes ->
+    | Ocsigen_lib.Yes ->
       find true
-    | No ->
+    | Ocsigen_lib.No ->
       find false
-    | Maybe ->
+    | Ocsigen_lib.Maybe ->
       try
         find false
       with Ocsigen_extensions.Not_concerned ->
@@ -63,7 +63,8 @@ let attempt_redir dir err ri () =
 let gen dir = function
   | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found (err, {request_info}) ->
+  | Ocsigen_extensions.Req_not_found
+      (err, {Ocsigen_extensions.request_info}) ->
     Lwt.catch (attempt_redir dir err request_info) @@ function
     | Ocsigen_extensions.Not_concerned ->
       Lwt.return (Ocsigen_extensions.Ext_next err)
@@ -87,17 +88,17 @@ let parse_config config_elem =
               ~name:"regexp"
               (fun s ->
                  pattern := Some ("^" ^ s ^ "$");
-                 mode := Maybe);
+                 mode := Ocsigen_lib.Maybe);
             Configuration.attribute
               ~name:"fullurl"
               (fun s ->
                  pattern := Some ("^" ^ s ^ "$");
-                 mode := Yes);
+                 mode := Ocsigen_lib.Yes);
             Configuration.attribute
               ~name:"suburl"
               (fun s ->
                  pattern := Some ("^" ^ s ^ "$");
-                 mode := No);
+                 mode := Ocsigen_lib.No);
             Configuration.attribute
               ~name:"dest"
               ~obligatory:true

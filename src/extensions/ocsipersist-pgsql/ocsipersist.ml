@@ -79,7 +79,8 @@ let cursor db query params f =
       let (key,value) = key_value_of_row row in
       f key (unmarshal value)
     with exn ->
-      Lwt_log.error ~exn ~section "exception while evaluating cursor argument";
+      Lwt_log.ign_error ~exn ~section
+        "exception while evaluating cursor argument";
       error := Some exn;
       Lwt.return ()
   in match !error with

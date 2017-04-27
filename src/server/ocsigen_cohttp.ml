@@ -24,8 +24,8 @@ let print_request fmt request =
 
   Format.fprintf fmt "%s [%s/%s]:\n"
     (Uri.to_string (Cohttp.Request.uri request))
-    (Cohttp.Code.string_of_version request.version)
-    (Cohttp.Code.string_of_method request.meth) ;
+    Cohttp.(Code.string_of_version (Request.version request))
+    Cohttp.(Code.string_of_method (Request.meth request));
 
   Cohttp.Header.iter
     (fun key values ->
@@ -33,7 +33,7 @@ let print_request fmt request =
           (fun fmt value -> Format.fprintf fmt "\t%s = %s\n" key value)
           fmt
           values))
-    request.headers
+    (Cohttp.Request.headers request)
 
 let waiters = Hashtbl.create 256
 

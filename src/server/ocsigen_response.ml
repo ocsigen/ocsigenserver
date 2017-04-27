@@ -47,7 +47,8 @@ let status { a_response = { Cohttp.Response.status } } =
 let set_status ({ a_response } as a) status =
   { a with
     a_response = {
-      a_response with status = (status :> Cohttp.Code.status_code)
+      a_response with
+      Cohttp.Response.status = (status :> Cohttp.Code.status_code)
     }
   }
 
@@ -70,18 +71,18 @@ let header_multi {a_response} id =
   Cohttp.Header.get_multi h (Ocsigen_header.Name.to_string id)
 
 let add_header
-    ({a_response = ({headers} as a_response)} as a)
+    ({a_response = ({Cohttp.Response.headers} as a_response)} as a)
     id v = {
   a with
   a_response = {
     a_response with
-    headers =
+    Cohttp.Response.headers =
       Cohttp.Header.add headers (Ocsigen_header.Name.to_string id) v
   }
 }
 
 let add_header_multi
-    ({a_response = ({headers} as a_response)} as a)
+    ({a_response = ({Cohttp.Response.headers} as a_response)} as a)
     id l =
   let id = Ocsigen_header.Name.to_string id in
   let headers =
@@ -90,15 +91,15 @@ let add_header_multi
       headers
       l
   in
-  { a with a_response = { a_response with headers } }
+  { a with a_response = { a_response with Cohttp.Response.headers } }
 
 let replace_header
-    ({a_response = ({headers} as a_response)} as a)
+    ({a_response = ({Cohttp.Response.headers} as a_response)} as a)
     id v = {
   a with
   a_response = {
     a_response with
-    headers =
+    Cohttp.Response.headers =
       Cohttp.Header.replace headers (Ocsigen_header.Name.to_string id) v
   }
 }
@@ -113,10 +114,10 @@ let replace_headers ({a_response} as a) l =
       (Cohttp.Response.headers a_response)
       l
   in
-  { a with a_response = { a_response with headers } }
+  { a with a_response = { a_response with Cohttp.Response.headers } }
 
 let remove_header ({a_response} as a) id =
   let headers = Cohttp.Response.headers a_response
   and id = Ocsigen_header.Name.to_string id in
   let headers = Cohttp.Header.remove headers id in
-  { a with a_response = { a_response with headers } }
+  { a with a_response = { a_response with Cohttp.Response.headers } }

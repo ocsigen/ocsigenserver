@@ -136,7 +136,8 @@ let main config = function
      | _ ->
        Lwt.return Ocsigen_extensions.Ext_do_nothing)
 
-  | Ocsigen_extensions.Req_found ({request_info}, response) ->
+  | Ocsigen_extensions.Req_found
+      ({Ocsigen_extensions.request_info}, response) ->
     Lwt_log.ign_info ~section "answered request";
     add_headers config request_info response
 
