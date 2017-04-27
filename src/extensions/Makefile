@@ -5,7 +5,6 @@ PACKAGE  :=		\
 	lwt.unix	\
 	ipaddr		\
 	lwt.ssl		\
-	lwt.react	\
 	pcre		\
 	tyxml.parser    \
 	cohttp.lwt

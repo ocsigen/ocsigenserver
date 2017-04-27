@@ -186,13 +186,4 @@ package "ext" (
     archive(native) = "rewritemod.cmx"
   )
 
-  package "comet" (
-    exists_if = "ocsigen_comet.cmo,ocsigen_comet.cmx"
-    requires = "ocsigenserver,lwt.react"
-    version = "[distributed with Ocsigen server]"
-    description = "Comet server-to-client communication"
-    archive(byte) = "ocsigen_comet.cmo"
-    archive(native) = "ocsigen_comet.cmx"
-  )
-
 )
