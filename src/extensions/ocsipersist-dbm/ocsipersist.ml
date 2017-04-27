@@ -151,12 +151,12 @@ let init_fun config =
        Lwt_log.ign_warning ~section "Initializing ...");
   let indescr = get_indescr 2 in
   if delay_loading then (
-    inch  := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
-    outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
+    inch  := (indescr >>= fun r -> return (Lwt_io.(of_fd ~mode:input) r));
+    outch := (indescr >>= fun r -> return (Lwt_io.(of_fd ~mode:output) r));
   ) else (
     let r = Lwt_main.run indescr in
-    inch  := return (Lwt_chan.in_channel_of_descr r);
-    outch := return (Lwt_chan.out_channel_of_descr r);
+    inch  := return (Lwt_io.(of_fd ~mode:input) r);
+    outch := return (Lwt_io.(of_fd ~mode:output) r);
     Lwt_log.ign_warning ~section "...Initialization complete";
   )
 
@@ -171,9 +171,9 @@ let send =
        !inch >>= fun inch ->
        !outch >>= fun outch ->
        previous :=
-         (Lwt_chan.output_value outch v >>= fun () ->
-          Lwt_chan.flush outch >>= fun () ->
-          Lwt_chan.input_value inch);
+         (Lwt_io.write_value outch v >>= fun () ->
+          Lwt_io.flush outch >>= fun () ->
+          Lwt_io.read_value inch);
        !previous)
 
 let db_get (store, name) =

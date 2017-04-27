@@ -328,13 +328,14 @@ let start_server () = try
 
       Ocsigen_extensions.end_initialisation ();
 
-      let pipe = Lwt_chan.in_channel_of_descr
-          (Lwt_unix.of_unix_file_descr
-             (Unix.openfile commandpipe
-                [Unix.O_RDWR; Unix.O_NONBLOCK; Unix.O_APPEND] 0o660)) in
+      let pipe =
+        Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
+        |> Lwt_unix.of_unix_file_descr
+        |> Lwt_io.(of_fd ~mode:input)
+      in
 
       let rec f () =
-        Lwt_chan.input_line pipe >>= fun s ->
+        Lwt_io.read_line pipe >>= fun s ->
         Ocsigen_messages.warning ("Command received: "^s);
         (Lwt.catch
            (fun () ->

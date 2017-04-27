@@ -198,8 +198,8 @@ let _ = Unix.setsid ()
 (** Communication functions: *)
 
 let send outch v =
-  Lwt_chan.output_value outch v >>=
-  (fun () -> Lwt_chan.flush outch)
+  Lwt_io.write_value outch v >>=
+  (fun () -> Lwt_io.flush outch)
 
 let execute outch =
   let handle_errors f = try f () with e -> send outch (Error e) in
@@ -241,7 +241,7 @@ let execute outch =
 let nb_clients = ref 0
 
 let rec listen_client inch outch =
-  Lwt_chan.input_value inch >>=
+  Lwt_io.read_value inch >>=
   (fun v -> execute outch v) >>=
   (fun () -> listen_client inch outch)
 
@@ -260,8 +260,8 @@ let rec loop socket =
      ignore (
        b := true;
        nb_clients := !nb_clients + 1;
-       let inch = Lwt_chan.in_channel_of_descr indescr in
-       let outch = Lwt_chan.out_channel_of_descr indescr in
+       let inch = Lwt_io.(of_fd ~mode:input) indescr in
+       let outch = Lwt_io.(of_fd ~mode:output) indescr in
        catch
          (fun () -> listen_client inch outch >>= finish)
          finish);
@@ -341,4 +341,3 @@ let _ = Lwt_main.run
       in ignore (f ())
 
 *)
-
