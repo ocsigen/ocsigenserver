@@ -22,6 +22,7 @@ src/extensions/ocsipersist-dbm/ocsidbm
 src/extensions/ocsipersist-dbm/ocsidbm.opt
 src/extensions/ocsipersist-dbm/ocsipersist.mli
 src/extensions/ocsipersist-sqlite/ocsipersist.mli
+src/extensions/ocsipersist-pgsql/ocsipersist.mli
 src/files/META
 src/files/META.ocsigenserver
 src/extensions/files/META
