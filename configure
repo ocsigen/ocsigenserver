@@ -405,6 +405,8 @@ check_ocamlversion
 
 check_binary ocamlfind "See: http://projects.camlcity.org/projects/findlib.html"
 
+check_library cohttp "See: https://github.com/mirage/ocaml-cohttp"
+check_library cohttp.lwt "Missing support for 'lwt' in cohttp."
 check_library react "See: http://erratique.ch/software/react"
 check_library ssl "See: http://sourceforge.net/projects/savonet/files/ocaml-ssl"
 
