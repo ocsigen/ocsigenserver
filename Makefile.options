@@ -38,8 +38,7 @@ SERVER_PACKAGE := lwt.ssl           \
 	          cryptokit         \
                   pcre              \
                   str               \
-		  tyxml             \
-	          tyxml.parser      \
+                  xml-light         \
                   dynlink           \
                   cohttp.lwt        \
                   ppx_deriving.std

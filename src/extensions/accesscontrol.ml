@@ -22,7 +22,7 @@
 
 open Ocsigen_lib
 
-open Simplexmlparser
+open Xml
 
 let section = Lwt_log.Section.make "ocsigen:ext:access-control"
 

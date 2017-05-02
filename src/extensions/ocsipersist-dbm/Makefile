@@ -1,9 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := ${LWT_PREEMPTIVE_PACKAGE} \
-	    lwt.unix     \
-	    tyxml.parser \
-	    dbm          \
+PACKAGE  := dbm ${LWT_PREEMPTIVE_PACKAGE} lwt.unix xml-light
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}

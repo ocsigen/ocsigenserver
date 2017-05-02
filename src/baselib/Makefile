@@ -6,7 +6,6 @@ PACKAGE  := \
 	cryptokit \
 	findlib \
 	pcre \
-	tyxml \
 	${LWT_PREEMPTIVE_PACKAGE} \
 	ipaddr
 

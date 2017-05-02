@@ -23,7 +23,7 @@
     The reverse proxy is still experimental. *)
 
 open Lwt.Infix
-open Simplexmlparser
+open Xml
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 

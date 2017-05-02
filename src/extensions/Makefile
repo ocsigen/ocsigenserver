@@ -6,7 +6,7 @@ PACKAGE  :=		\
 	ipaddr		\
 	lwt.ssl		\
 	pcre		\
-	tyxml.parser    \
+	xml-light 	\
 	cohttp.lwt
 
 LIBS     := -I ../baselib -I ../http -I ../server \

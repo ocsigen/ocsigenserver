@@ -36,11 +36,10 @@ exception Ocsipersist_error
 
 (*****************************************************************************)
 
-open Simplexmlparser
 (** getting the directory from config file *)
 let rec parse_global_config = function
   | [] -> None
-  | (Element ("database", [("file", s)], []))::[] -> Some s
+  | (Xml.Element ("database", [("file", s)], []))::[] -> Some s
   | _ -> raise (Ocsigen_extensions.Error_in_config_file
                   ("Unexpected content inside Ocsipersist config"))
 

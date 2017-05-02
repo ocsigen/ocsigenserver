@@ -318,13 +318,13 @@ let filter choice_list = function
 
 let rec parse_global_config = function
   | [] -> ()
-  | (Simplexmlparser.Element ("compress", [("level", l)], []))::ll ->
+  | (Xml.Element ("compress", [("level", l)], []))::ll ->
     let l = try int_of_string l
       with Failure _ -> raise (Ocsigen_extensions.Error_in_config_file
                                  "Compress level should be an integer between 0 and 9") in
     compress_level := if (l <= 9 && l >= 0) then l else 6 ;
     parse_global_config ll
-  | (Simplexmlparser.Element ("buffer", [("size", s)], []))::ll ->
+  | (Xml.Element ("buffer", [("size", s)], []))::ll ->
     let s = (try int_of_string s
              with Failure _ ->
                raise (Ocsigen_extensions.Error_in_config_file

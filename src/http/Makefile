@@ -3,7 +3,6 @@ PACKAGE  := \
 	bytes \
 	lwt.ssl \
 	pcre \
-	tyxml \
 	cohttp
 
 LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}

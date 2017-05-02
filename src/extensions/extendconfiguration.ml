@@ -47,11 +47,11 @@ let gather_do_not_serve_files tag =
         do_not_serve_files = files;
         do_not_serve_extensions = extensions
       }
-    | Simplexmlparser.Element ("regexp", ["regexp", f], []) :: q ->
+    | Xml.Element ("regexp", ["regexp", f], []) :: q ->
       aux (f :: regexps, files, extensions) q
-    | Simplexmlparser.Element ("file", ["file", f], []) :: q ->
+    | Xml.Element ("file", ["file", f], []) :: q ->
       aux (regexps, f :: files, extensions) q
-    | Simplexmlparser.Element ("extension", ["ext", f], []) :: q ->
+    | Xml.Element ("extension", ["ext", f], []) :: q ->
       aux (regexps, files, f :: extensions) q
 
     | _ :: q -> bad_config ("invalid options in tag " ^ tag)
@@ -71,15 +71,15 @@ let check_regexp_list =
   with _ -> raise (Bad_regexp r)
 
 let parse_config usermode _ _ _ = function
-  | Simplexmlparser.Element ("listdirs", ["value", "true"], []) ->
+  | Xml.Element ("listdirs", ["value", "true"], []) ->
     gen @@ fun config ->
     { config with Ocsigen_extensions.list_directory_content = true }
-  | Simplexmlparser.Element ("listdirs", ["value", "false"], []) ->
+  | Xml.Element ("listdirs", ["value", "false"], []) ->
     gen @@ fun config ->
     { config with Ocsigen_extensions.list_directory_content = false }
-  | Simplexmlparser.Element ("listdirs" as s, _, _) ->
+  | Xml.Element ("listdirs" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Simplexmlparser.Element ("followsymlinks", ["value", s], []) ->
+  | Xml.Element ("followsymlinks", ["value", s], []) ->
     let v = match s with
       | "never" ->
         Ocsigen_extensions.DoNotFollowSymlinks
@@ -98,23 +98,23 @@ let parse_config usermode _ _ _ = function
     in
     gen @@ fun config ->
     { config with Ocsigen_extensions.follow_symlinks = v }
-  | Simplexmlparser.Element ("followsymlinks" as s, _, _) ->
+  | Xml.Element ("followsymlinks" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Simplexmlparser.Element ("charset", attrs, exts) ->
+  | Xml.Element ("charset", attrs, exts) ->
     let rec aux charset_assoc = function
       | [] -> charset_assoc
-      | Simplexmlparser.Element
+      | Xml.Element
           ("extension", ["ext", extension; "value", charset], []) :: q ->
         aux
           (Ocsigen_charset_mime.update_charset_ext
              charset_assoc extension charset) q
-      | Simplexmlparser.Element
+      | Xml.Element
           ("file", ["file", file; "value", charset], []) :: q ->
         aux
           (Ocsigen_charset_mime.update_charset_file
              charset_assoc file charset)
           q
-      | Simplexmlparser.Element
+      | Xml.Element
           ("regexp", ["regexp", regexp; "value", charset], []) :: q ->
         (try
            let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
@@ -141,18 +141,18 @@ let parse_config usermode _ _ _ = function
       { config with
         Ocsigen_extensions.charset_assoc =
           aux config.Ocsigen_extensions.charset_assoc exts })
-  | Simplexmlparser.Element ("contenttype", attrs, exts) ->
+  | Xml.Element ("contenttype", attrs, exts) ->
     let rec aux mime_assoc = function
       | [] -> mime_assoc
-      | Simplexmlparser.Element
+      | Xml.Element
           ("extension", ["ext", extension; "value", mime], []) :: q ->
         aux
           (Ocsigen_charset_mime.update_mime_ext mime_assoc extension mime)
           q
-      | Simplexmlparser.Element
+      | Xml.Element
           ("file", ["file", file; "value", mime], []) :: q ->
         aux (Ocsigen_charset_mime.update_mime_file mime_assoc file mime) q
-      | Simplexmlparser.Element
+      | Xml.Element
           ("regexp", ["regexp", regexp; "value", mime], []) :: q ->
         (try
            let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
@@ -174,11 +174,11 @@ let parse_config usermode _ _ _ = function
       { config with
         Ocsigen_extensions.mime_assoc =
           aux config.Ocsigen_extensions.mime_assoc exts })
-  | Simplexmlparser.Element ("defaultindex", [], l) ->
+  | Xml.Element ("defaultindex", [], l) ->
     let rec aux indexes = function
       | [] -> List.rev indexes
-      | Simplexmlparser.Element
-          ("index", [], [Simplexmlparser.PCData f]) :: q ->
+      | Xml.Element
+          ("index", [], [Xml.PCData f]) :: q ->
         aux (f :: indexes) q
       | _ :: q -> bad_config "subtags must be of the form \
                               <index>...</index> \
@@ -187,9 +187,9 @@ let parse_config usermode _ _ _ = function
     gen (fun config ->
       { config with
         Ocsigen_extensions.default_directory_index = aux [] l })
-  | Simplexmlparser.Element ("defaultindex" as s, _, _) ->
+  | Xml.Element ("defaultindex" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Simplexmlparser.Element ("hidefile", [], l) ->
+  | Xml.Element ("hidefile", [], l) ->
     let do_not_serve = gather_do_not_serve_files "hidefile" l in
     (try
        check_regexp_list
@@ -202,9 +202,9 @@ let parse_config usermode _ _ _ = function
                config.Ocsigen_extensions.do_not_serve_404 })
      with Bad_regexp r ->
        Ocsigen_extensions.badconfig "Invalid regexp %s in %s" r "hidefile")
-  | Simplexmlparser.Element ("hidefile" as s, _, _) ->
+  | Xml.Element ("hidefile" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Simplexmlparser.Element ("forbidfile", [], l) ->
+  | Xml.Element ("forbidfile", [], l) ->
     let do_not_serve = gather_do_not_serve_files "forbidfile" l in
     (try
        check_regexp_list
@@ -217,18 +217,18 @@ let parse_config usermode _ _ _ = function
          })
      with Bad_regexp r ->
        Ocsigen_extensions.badconfig "Invalid regexp %s in %s" r "forbidfile")
-  | Simplexmlparser.Element ("forbidfile" as s, _, _) ->
+  | Xml.Element ("forbidfile" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Simplexmlparser.Element
-      ("uploaddir", [], [Simplexmlparser.PCData s]) ->
+  | Xml.Element
+      ("uploaddir", [], [Xml.PCData s]) ->
     gen @@ if s = "" then
       fun config -> { config with Ocsigen_extensions.uploaddir = None }
     else
       fun config -> { config with Ocsigen_extensions.uploaddir = Some s }
-  | Simplexmlparser.Element ("uploaddir" as s, _, _) ->
+  | Xml.Element ("uploaddir" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Simplexmlparser.Element
-      ("maxuploadfilesize" as tag, [], [Simplexmlparser.PCData s]) ->
+  | Xml.Element
+      ("maxuploadfilesize" as tag, [], [Xml.PCData s]) ->
     let s =
       try Ocsigen_parseconfig.parse_size_tag "uploaddir" s
       with Ocsigen_config.Config_file_error _ ->
@@ -236,9 +236,9 @@ let parse_config usermode _ _ _ = function
     in
     gen @@ fun config ->
     { config with Ocsigen_extensions.maxuploadfilesize = s }
-  | Simplexmlparser.Element ("maxuploadfilesize" as s, _, _) ->
+  | Xml.Element ("maxuploadfilesize" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Simplexmlparser.Element (t, _, _) ->
+  | Xml.Element (t, _, _) ->
     raise (Ocsigen_extensions.Bad_config_tag_for_extension t)
   | _ ->
     raise (Ocsigen_extensions.Error_in_config_file

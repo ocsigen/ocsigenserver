@@ -7,7 +7,6 @@ PKG cryptokit
 PKG netstring
 PKG netstring-pcre
 PKG ipaddr
-PKG tyxml tyxml.parser
 PKG camlzip
 PKG dynlink
 PKG cohttp conduit.lwt-unix

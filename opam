@@ -51,10 +51,9 @@ depends: [
   "lwt" {>= "2.5.0" & < "3.0.0"}
   "pcre"
   "cryptokit"
-  "tyxml" {>= "4.0.0"}
+  "xml-light"
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
-  "camlp4"
   "cohttp" {>= "0.17.0"}
 
   # REMOVE AFTER DEBUGGING
