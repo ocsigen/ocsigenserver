@@ -21,7 +21,6 @@
 (******************************************************************)
 (** Config file parsing *)
 
-open Ocsigen_socket
 open Xml
 open Ocsigen_config
 
@@ -605,16 +604,24 @@ let parse_port =
     let do_match r = Netstring_pcre.string_match r s 0 in
     let get x i = Netstring_pcre.matched_group x i s in
     match do_match all_ipv6 with
-    | Some r -> IPv6 (Unix.inet6_addr_any), int_of_string "port" (get r 1)
+    | Some r ->
+      Ocsigen_socket.IPv6 (Unix.inet6_addr_any),
+      int_of_string "port" (get r 1)
     | None -> match do_match all_ipv4 with
-      | Some r -> IPv4 (Unix.inet_addr_any), int_of_string "port" (get r 1)
+      | Some r ->
+        Ocsigen_socket.IPv4 (Unix.inet_addr_any),
+        int_of_string "port" (get r 1)
       | None -> match do_match single_ipv6 with
-        | Some r -> IPv6 (Unix.inet_addr_of_string (get r 1)),
-                    int_of_string "port" (get r 2)
+        | Some r ->
+          Ocsigen_socket.IPv6 (Unix.inet_addr_of_string (get r 1)),
+          int_of_string "port" (get r 2)
         | None -> match do_match single_ipv4 with
-          | Some r -> IPv4 (Unix.inet_addr_of_string (get r 1)),
-                      int_of_string "port" (get r 2)
-          | None -> All, int_of_string "port" s
+          | Some r ->
+            Ocsigen_socket.IPv4 (Unix.inet_addr_of_string (get r 1)),
+            int_of_string "port" (get r 2)
+          | None ->
+            Ocsigen_socket.All,
+            int_of_string "port" s
 
 let parse_facility = function
   | "auth" -> `Auth

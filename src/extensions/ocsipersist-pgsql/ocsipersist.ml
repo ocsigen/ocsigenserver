@@ -17,7 +17,7 @@ module Lwt_thread = struct
   type out_channel = Lwt_io.output_channel
 end
 module PGOCaml = PGOCaml_generic.Make(Lwt_thread)
-open Lwt
+open Lwt.Infix
 open Printf
 
 exception Ocsipersist_error
