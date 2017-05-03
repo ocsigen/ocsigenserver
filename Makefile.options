@@ -22,7 +22,7 @@ ifeq "$(PREEMPTIVE)" "YES"
 endif
 
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
-## but also to generate src/baselib/ocsigen_config.ml and src/files/META
+## but also to generate src/baselib/ocsigen_config_static.ml and src/files/META
 
 ifeq "$(PREEMPTIVE)" "YES"
 LWT_PREEMPTIVE_PACKAGE:=lwt.preemptive

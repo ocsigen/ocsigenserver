@@ -23,9 +23,9 @@ ocsigen_extensions.cmi : ocsigen_response.cmi ocsigen_request.cmi \
     ocsigen_multipart.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_cookies.cmi ocsigen_command.cmi \
     ../http/ocsigen_charset_mime.cmi
-ocsigen_local_files.cmo : ocsigen_extensions.cmi \
+ocsigen_local_files.cmo : ../baselib/ocsigen_lib.cmi ocsigen_extensions.cmi \
     ../baselib/ocsigen_config.cmi ocsigen_local_files.cmi
-ocsigen_local_files.cmx : ocsigen_extensions.cmx \
+ocsigen_local_files.cmx : ../baselib/ocsigen_lib.cmx ocsigen_extensions.cmx \
     ../baselib/ocsigen_config.cmx ocsigen_local_files.cmi
 ocsigen_local_files.cmi : ocsigen_extensions.cmi
 ocsigen_multipart.cmo : ../baselib/ocsigen_stream.cmi \

@@ -22,6 +22,7 @@ all: byte opt
 FILES := ocsigen_lib_base.ml       \
 	 ocsigen_lib.ml            \
 	 ocsigen_cache.ml          \
+         ocsigen_config_static.ml  \
          ocsigen_config.ml         \
 	 ocsigen_commandline.ml    \
 	 ocsigen_messages.ml       \
@@ -31,7 +32,7 @@ FILES := ocsigen_lib_base.ml       \
 
 INTF_NOP4 := ocsigen_lib_base.mli ocsigen_lib.mli
 
-PREDEP := ocsigen_config.ml dynlink_wrapper.ml
+PREDEP := ocsigen_config_static.ml dynlink_wrapper.ml
 
 byte:: baselib.cma
 opt:: baselib.cmxa
@@ -59,10 +60,10 @@ endif
 
 VERSION := $(shell head -n 1 ../../VERSION)
 
-ocsigen_config.ml: ocsigen_config.ml.in ../../Makefile.config ../../Makefile.options ../../VERSION
-	cat ocsigen_config.ml.in \
-	| sed s%0000000000000000%${VERSION}% \
-	| sed s%_WARNING_%"Warning: this file has been generated from ocsigen_config.ml.in - DO NOT MODIFY MANUALLY!"% \
+ocsigen_config_static.ml: ocsigen_config_static.ml.in ../../Makefile.config ../../Makefile.options ../../VERSION
+	cat ocsigen_config_static.ml.in \
+	| sed s%_VERSION_%${VERSION}% \
+	| sed s%_WARNING_%"Warning: this file has been generated from ocsigen_config_static.ml.in - DO NOT MODIFY MANUALLY!"% \
 	| sed s%_LOGDIR_%$(LOGDIR)% \
 	| sed s%_DATADIR_%$(DATADIR)%g \
 	| sed s%_BINDIR_%$(BINDIR)%g \
@@ -77,7 +78,7 @@ ocsigen_config.ml: ocsigen_config.ml.in ../../Makefile.config ../../Makefile.opt
 	| sed s%_PREEMTIMPLEM_%$(PREEMTIMPLEM)% \
 	| sed s%_ISNATIVE_%$(NATIVECODE_RUNTIME_DETECT)%g \
 	| sed "s%_DEPS_%$(INITPACKAGE)%g" \
-	> ocsigen_config.ml
+	> ocsigen_config_static.ml
 
 ## Dynlink_wrapper ##
 

@@ -38,7 +38,6 @@ val set_mimefile : string -> unit
 val set_verbose : unit -> unit
 val set_silent : unit -> unit
 val set_daemon : unit -> unit
-val set_veryverbose : unit -> unit
 val set_minthreads : int -> unit
 val set_maxthreads : int -> unit
 val set_max_number_of_threads_queued : int -> unit
@@ -75,7 +74,6 @@ val get_mimefile : unit -> string
 val get_verbose : unit -> bool
 val get_silent : unit -> bool
 val get_daemon : unit -> bool
-val get_veryverbose : unit -> bool
 val get_default_user : unit -> string
 val get_default_group : unit -> string
 val get_minthreads : unit -> int

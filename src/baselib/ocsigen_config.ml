@@ -1,7 +1,5 @@
-(* Warning! ocsigen_config.ml is generated automatically from ocsigen_config.ml.in!
-   Do not modify it manually *)
 (* Ocsigen
- * Copyright (C) 2005 Vincent Balat
+ * Copyright (C) 2005-2017 Vincent Balat
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,25 +16,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-open Ocsigen_lib
+include Ocsigen_config_static
 
 exception Config_file_error of string
 
 (* General config *)
-let config_file = ref "_CONFIGDIR_/_PROJECTNAME_.conf"
 let verbose = ref false
 let silent = ref false
 let daemon = ref false
-let veryverbose = ref false
-let version_number = (**)"0000000000000000"(**)
-let pidfile = ref None
+let pidfile = ref (None : string option)
 let server_name = "Ocsigen"
 let full_server_name = server_name^"/"^version_number
-let is_native = _ISNATIVE_
 let native_ext = if is_native then ".opt" else ""
-
-let builtin_packages =
-  List.fold_left (fun a s -> String.Set.add s a) String.Set.empty [_DEPS_]
 
 module Fake_preempt =
 struct
@@ -45,32 +36,22 @@ struct
   let init : int -> int -> (string -> unit) -> unit = fun _ _ _ -> ()
 end
 
-(* Server config: *)
+(* Server config *)
 let (uploaddir : string option ref) = ref None
-let logdir = ref (Some ("_LOGDIR_"))
-let syslog_facility = ref None
-let default_user = ref "_OCSIGENUSER_"
-let default_group = ref "_OCSIGENGROUP_"
+let syslog_facility = ref (None : Lwt_log.syslog_facility option)
 let minthreads = ref 10
 let maxthreads = ref 30
 let max_number_of_connections = ref 350
-let mimefile = ref "_CONFIGDIR_/mime.types"
 let silent_client_timeout = ref 30 (* without speaking during sending frame *)
 let silent_server_timeout = ref 30 (* without speaking during sending frame *)
-(*let keepalive_timeout = ref 30
-let keepopen_timeout = ref 300 (* for ocsigen as client *) *)
 let netbuffersize = ref 8192
 let filebuffersize = ref 8192
 let maxrequestbodysize = ref (Some (Int64.of_int 8000000))
 let maxrequestbodysizeinmemory = ref 8192
 let maxuploadfilesize = ref (Some (Int64.of_int 2000000))
 let defaultcharset = ref (None : string option)
-let datadir = ref "_DATADIR_"
-let bindir = ref "_BINDIR_"
-let extdir = ref "_EXTDIR_"
 let user = ref (Some !default_user)
 let group = ref (Some !default_group)
-let command_pipe = ref "_COMMANDPIPE_"
 let debugmode = ref false
 let disablepartialrequests = ref false
 let usedefaulthostname = ref false
@@ -89,15 +70,9 @@ let set_mimefile s = mimefile := s
 let set_verbose () = verbose := true
 let set_silent () = silent := true
 let set_daemon () = set_silent (); daemon := true
-let set_veryverbose () =
-  verbose := true;
-  veryverbose := true;
-  Lwt_log.add_rule "*" Lwt_log.Debug
 
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i
-let set_max_number_of_threads_queued =
-  _PREEMTIMPLEM_.set_max_number_of_threads_queued
 let set_max_number_of_connections i = max_number_of_connections := i
 let set_client_timeout i = silent_client_timeout := i
 let set_server_timeout i = silent_server_timeout := i
@@ -137,18 +112,13 @@ let get_mimefile () = !mimefile
 let get_verbose () = !verbose
 let get_silent () = !silent
 let get_daemon () = !daemon
-let get_veryverbose () = !veryverbose
 let get_default_user () = !default_user
 let get_default_group () = !default_group
 let get_minthreads () = !minthreads
 let get_maxthreads () = !maxthreads
-let get_max_number_of_threads_queued =
-  _PREEMTIMPLEM_.get_max_number_of_threads_queued
 let get_max_number_of_connections () = !max_number_of_connections
 let get_client_timeout () = !silent_client_timeout
 let get_server_timeout () = !silent_server_timeout
-(*let get_keepalive_timeout () = !keepalive_timeout
-let get_keepopen_timeout () = !keepopen_timeout *)
 let get_netbuffersize () = !netbuffersize
 let get_filebuffersize () = !filebuffersize
 let get_maxuploadfilesize () = !maxuploadfilesize
@@ -174,6 +144,3 @@ let display_version () =
   print_string version_number;
   print_newline ();
   exit 0
-
-let init_preempt =
-  _PREEMTIMPLEM_.init

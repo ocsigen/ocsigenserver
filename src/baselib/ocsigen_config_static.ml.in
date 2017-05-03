@@ -1,0 +1,42 @@
+(* Warning! ocsigen_config_static.ml is generated automatically from
+   ocsigen_config_static.ml.in! Do not modify it manually *)
+(* Ocsigen
+ * Copyright (C) 2005 Vincent Balat
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, with linking exception;
+ * either version 2.1 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *)
+
+let version_number = "_VERSION_"
+let config_file = ref "_CONFIGDIR_/_PROJECTNAME_.conf"
+let is_native = _ISNATIVE_
+let logdir = ref (Some "_LOGDIR_")
+let default_user = ref "_OCSIGENUSER_"
+let default_group = ref "_OCSIGENGROUP_"
+let mimefile = ref "_CONFIGDIR_/mime.types"
+let datadir = ref "_DATADIR_"
+let bindir = ref "_BINDIR_"
+let extdir = ref "_EXTDIR_"
+let command_pipe = ref "_COMMANDPIPE_"
+let set_max_number_of_threads_queued =
+  _PREEMTIMPLEM_.set_max_number_of_threads_queued
+let get_max_number_of_threads_queued =
+  _PREEMTIMPLEM_.get_max_number_of_threads_queued
+let builtin_packages =
+  List.fold_left
+    (fun a s -> Ocsigen_lib.String.Set.add s a)
+    Ocsigen_lib.String.Set.empty
+    [_DEPS_]
+let init_preempt =
+  _PREEMTIMPLEM_.init

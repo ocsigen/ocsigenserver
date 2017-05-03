@@ -25,16 +25,9 @@ following options:
   -v, --verbose
          Verbose mode.
 
-  -V ,  --veryverbose
-         Very verbose mode (debug).
-
   --version
          Show version of program.
 }}}
 
 One initialization script should be provided by your distribution for
 launching the server automatically each time you launch the computer.
-
-
-
-

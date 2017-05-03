@@ -4,7 +4,7 @@ NATBIN := server/${PROJECTNAME}.opt
 INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	baselib/ocsigen_lib_base.cmi	   \
 	baselib/ocsigen_lib.cmi	   \
-	baselib/ocsigen_config.cmi	   \
+	baselib/ocsigen_config.cmi  \
 	baselib/ocsigen_messages.cmi       \
 	baselib/ocsigen_stream.cmi	   \
 	baselib/ocsigen_loader.cmi	   \
@@ -25,6 +25,8 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
 INTF := ${INTF_BASE} baselib/ocsigen_getcommandline.cmi
 
 IMPL := baselib/ocsigen_lib_base.cmo	   \
+        baselib/ocsigen_config_static.cmo  \
+        baselib/ocsigen_config.cmo  \
         baselib/baselib.cma		   \
 	baselib/parsecommandline.cma       \
 	baselib/donotparsecommandline.cma  \

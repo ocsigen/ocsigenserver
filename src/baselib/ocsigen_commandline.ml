@@ -18,7 +18,7 @@
 
 open Ocsigen_config
 
-let cmdline : unit = 
+let cmdline : unit =
   try
     Arg.parse_argv Ocsigen_getcommandline.commandline
       [("-c", Arg.String set_configfile,
@@ -31,8 +31,6 @@ let cmdline : unit =
        ("--pidfile", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
        ("-v", Arg.Unit set_verbose, "Verbose mode");
        ("--verbose", Arg.Unit set_verbose, "Verbose mode");
-       ("-V", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
-       ("--veryverbose", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
        ("-d", Arg.Unit set_daemon, "Daemon mode (detach the process)");
        ("--daemon", Arg.Unit set_daemon, "Daemon mode (detach the process) (This is the default when there are more than 1 process)");
        ("--version", Arg.Unit display_version, "Display version number and exit")
