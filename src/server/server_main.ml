@@ -1,2 +1,1 @@
-let () =
-  Ocsigen_server.start_server ()
+let () = Ocsigen_server.start (Ocsigen_parseconfig.parse_config ())

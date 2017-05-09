@@ -144,13 +144,13 @@ let _ =
   in
   Ocsigen_command.register_command_function f
 
-let start_server () = try
+let start config_servers =
+
+  try
 
     (* initialization functions for modules (Ocsigen extensions or application
        code) loaded from now on will be executed directly. *)
     Ocsigen_loader.set_init_on_load true;
-
-    let config_servers = Ocsigen_parseconfig.parse_config () in
 
     let number_of_servers = List.length config_servers in
 

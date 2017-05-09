@@ -18,11 +18,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-(** Reload the configuration of the server.
-    The optional parameter [?file] may be use to read the configuration
-    from another file.
-*)
-val reload: ?file:string -> unit -> unit
+(** Reload the configuration of the server. The optional parameter
+    [?file] may be used to read the configuration from another
+    file. *)
+val reload : ?file:string -> unit -> unit
 
-(** Start the server (does not return) *)
-val start_server: unit -> unit
+(** Start the server. Never returns. *)
+val start : Xml.xml list list -> unit
