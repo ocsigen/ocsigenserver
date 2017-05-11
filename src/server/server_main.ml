@@ -1,1 +1,4 @@
-let () = Ocsigen_server.start (Ocsigen_parseconfig.parse_config ())
+let () =
+  Ocsigen_server.start
+    ~config:(Ocsigen_parseconfig.parse_config ())
+    ()

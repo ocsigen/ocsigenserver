@@ -38,14 +38,6 @@ let blah_of_string f tag s =
 let int_of_string = blah_of_string int_of_string
 let float_of_string = blah_of_string float_of_string
 
-type ssl_info = {
-  ssl_certificate : string option;
-  ssl_privatekey  : string option;
-  ssl_ciphers     : string option;
-  ssl_dhfile      : string option;
-  ssl_curve       : string option
-}
-
 (*****************************************************************************)
 let default_default_hostname =
   let hostname = Unix.gethostname () in
@@ -211,7 +203,6 @@ let parse_ext file =
 let preloadfile config () = Ocsigen_extensions.set_config config
 let postloadfile () = Ocsigen_extensions.set_config []
 
-
 (* Checking hostnames.  We make only make looze efforts.
    See RFC 921 and 952 for further details *)
 let correct_hostname =
@@ -295,7 +286,7 @@ let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
 (* Config file is parsed twice.
    This is the second parsing (site loading)
 *)
-let parse_server isreloading c =
+let later_pass c =
   let rec parse_server_aux = function
       | [] -> []
       | (Element ("port", atts, p))::ll ->
@@ -320,10 +311,8 @@ let parse_server isreloading c =
           set_datadir (parse_string_tag st p);
           parse_server_aux ll
       | (Element ("minthreads" as st, [], p))::ll ->
-          set_minthreads (int_of_string st (parse_string_tag st p));
           parse_server_aux ll
       | (Element ("maxthreads" as st, [], p))::ll ->
-          set_maxthreads (int_of_string st (parse_string_tag st p));
           parse_server_aux ll
       | (Element ("maxdetachedcomputationsqueued" as st, [], p))::ll ->
           set_max_number_of_threads_queued (int_of_string st (parse_string_tag st p));
@@ -605,22 +594,22 @@ let parse_port =
     let get x i = Netstring_pcre.matched_group x i s in
     match do_match all_ipv6 with
     | Some r ->
-      Ocsigen_socket.IPv6 (Unix.inet6_addr_any),
+      `IPv6 (Unix.inet6_addr_any),
       int_of_string "port" (get r 1)
     | None -> match do_match all_ipv4 with
       | Some r ->
-        Ocsigen_socket.IPv4 (Unix.inet_addr_any),
+        `IPv4 (Unix.inet_addr_any),
         int_of_string "port" (get r 1)
       | None -> match do_match single_ipv6 with
         | Some r ->
-          Ocsigen_socket.IPv6 (Unix.inet_addr_of_string (get r 1)),
+          `IPv6 (Unix.inet_addr_of_string (get r 1)),
           int_of_string "port" (get r 2)
         | None -> match do_match single_ipv4 with
           | Some r ->
-            Ocsigen_socket.IPv4 (Unix.inet_addr_of_string (get r 1)),
+            `IPv4 (Unix.inet_addr_of_string (get r 1)),
             int_of_string "port" (get r 2)
           | None ->
-            Ocsigen_socket.All,
+            `All,
             int_of_string "port" s
 
 let parse_facility = function
@@ -656,6 +645,7 @@ let config_error_for_some s = function
   | _ -> raise (Config_file_error s)
 
 let make_ssl_info ~certificate ~privatekey ~ciphers ~dhfile ~curve = {
+  Ocsigen_config.
   ssl_certificate = certificate;
   ssl_privatekey  = privatekey;
   ssl_ciphers     = ciphers;
@@ -692,39 +682,41 @@ let rec parse_ssl l ~certificate ~privatekey ~ciphers ~dhfile ~curve =
   | _ ->
     raise (Config_file_error ("Unexpected content inside <ssl>"))
 
-let extract_info c =
-  let rec aux user group ssl ports sslports minthreads maxthreads = function
-      [] -> ((user, group), (ssl, ports,sslports), (minthreads, maxthreads))
+let first_pass c =
+  let rec aux user group ssl ports sslports = function
+      [] -> ((user, group), (ssl, ports, sslports))
     | (Element ("logdir" as st, [], p))::ll ->
       set_logdir (parse_string_tag st p);
-      aux user group ssl ports sslports minthreads maxthreads ll
+      aux user group ssl ports sslports ll
     | (Element ("syslog" as st, [], p))::ll ->
       let str = String.lowercase (parse_string_tag st p) in
       set_syslog_facility (Some (parse_facility str));
-      aux user group ssl ports sslports minthreads maxthreads ll
+      aux user group ssl ports sslports ll
     | (Element ("port" as st, atts, p))::ll ->
       (match atts with
          []
        | [("protocol", "HTTP")] ->
-         let po = try
+         let po =
+           try
              parse_port (parse_string_tag st p)
            with Failure _ ->
              raise (Config_file_error "Wrong value for <port> tag")
-         in aux user group ssl (po::ports) sslports minthreads maxthreads ll
+         in
+         aux user group ssl (po::ports) sslports ll
        | [("protocol", "HTTPS")] ->
          let po = try
              parse_port (parse_string_tag st p)
            with Failure _ ->
              raise (Config_file_error "Wrong value for <port> tag")
          in
-         aux user group ssl ports (po::sslports) minthreads maxthreads ll
+         aux user group ssl ports (po::sslports) ll
        | _ -> raise (Config_file_error "Wrong attribute for <port>"))
     | (Element ("minthreads" as st, [], p))::ll ->
-      aux user group ssl ports sslports
-        (Some (int_of_string st (parse_string_tag st p))) maxthreads ll
+      set_minthreads (int_of_string st (parse_string_tag st p));
+      aux user group ssl ports sslports ll
     | (Element ("maxthreads" as st, [], p))::ll ->
-      aux user group ssl ports sslports minthreads
-        (Some (int_of_string st (parse_string_tag st p))) ll
+      set_maxthreads (int_of_string st (parse_string_tag st p));
+      aux user group ssl ports sslports ll
     | (Element ("ssl", [], p))::ll ->
       (match ssl with
          None ->
@@ -736,7 +728,7 @@ let extract_info c =
            and curve = None in
            parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve p
          in
-         aux user group ssl ports sslports minthreads maxthreads ll
+         aux user group ssl ports sslports ll
        | _ ->
          raise
            (Config_file_error
@@ -744,26 +736,26 @@ let extract_info c =
     | (Element ("user" as st, [], p))::ll ->
       (match user with
          None ->
-         aux (Some (parse_string_tag st p)) group ssl ports sslports
-           minthreads maxthreads ll
+         aux (Some (parse_string_tag st p)) group ssl ports sslports ll
        | _ -> raise (Config_file_error
                        "Only one <user> tag for each server allowed"))
     | (Element ("group" as st, [], p))::ll ->
       (match group with
          None ->
-         aux user (Some (parse_string_tag st p)) ssl ports sslports
-           minthreads maxthreads ll
+         aux user (Some (parse_string_tag st p)) ssl ports sslports ll
        | _ -> raise (Config_file_error
                        "Only one <group> tag for each server allowed"))
     | (Element ("commandpipe" as st, [], p))::ll ->
       set_command_pipe (parse_string_tag st p);
-      aux user group ssl ports sslports minthreads maxthreads ll
+      aux user group ssl ports sslports ll
     | (Element (tag, _, _))::ll ->
-      aux user group ssl ports sslports minthreads maxthreads ll
+      aux user group ssl ports sslports ll
     | _ ->
       raise (Config_file_error "Syntax error")
   in
-  let (user, group), si, (mint, maxt) = aux None None None [] [] None None c in
+  let (user, group), (si, ports, ssl_ports) =
+    aux None None None [] [] c
+  in
   let user = match user with
       None -> None (* Some (get_default_user ()) *)
     | Some s -> if s = "" then None else Some s
@@ -772,15 +764,12 @@ let extract_info c =
       None -> None (* Some (get_default_group ()) *)
     | Some s -> if s = "" then None else Some s
   in
-  let mint = match mint with
-    | Some t -> t
-    | None -> get_minthreads ()
-  in
-  let maxt = match maxt with
-    | Some t -> t
-    | None -> get_maxthreads ()
-  in
-  ((user, group), si, (mint, maxt))
+  Ocsigen_config.set_user user;
+  Ocsigen_config.set_group group;
+  Ocsigen_config.set_ssl_info si;
+  Ocsigen_config.set_ports ports;
+  Ocsigen_config.set_ssl_ports ssl_ports;
+  ()
 
 let parse_config ?file () =
   let file =
@@ -789,5 +778,3 @@ let parse_config ?file () =
     | Some f -> f
   in
   parser_config (Xml.parse_file file)
-
-(******************************************************************)

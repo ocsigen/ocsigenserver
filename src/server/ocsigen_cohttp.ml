@@ -242,12 +242,12 @@ let service ?ssl ~address ~port ~connector () =
   in
   (* We create a specific context for Conduit and Cohttp. *)
   Conduit_lwt_unix.init
-    ~src:(Ocsigen_socket.string_of_socket_type address)
+    ~src:(Ocsigen_config.Socket_type.to_string address)
     ~tls_server_key () >>= fun conduit_ctx ->
   Lwt.return (Cohttp_lwt_unix_net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
   (* We catch the INET_ADDR of the server *)
   let callback =
-    let address = Ocsigen_socket.to_inet_addr address
+    let address = Ocsigen_config.Socket_type.to_inet_addr address
     and ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in

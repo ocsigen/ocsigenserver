@@ -20,6 +20,36 @@ include Ocsigen_config_static
 
 exception Config_file_error of string
 
+type ssl_info = {
+  ssl_certificate : string option ;
+  ssl_privatekey  : string option ;
+  ssl_ciphers     : string option ;
+  ssl_dhfile      : string option ;
+  ssl_curve       : string option
+}
+
+module Socket_type = struct
+
+  type t = [
+    | `All
+    | `IPv4 of Unix.inet_addr
+    | `IPv6 of Unix.inet_addr
+  ]
+
+  let to_string = function
+    | `All -> Unix.string_of_inet_addr Unix.inet_addr_any
+    | `IPv4 u -> Unix.string_of_inet_addr u
+    | `IPv6 u -> Unix.string_of_inet_addr u
+
+  let to_inet_addr = function
+    | `All -> Unix.inet_addr_any
+    | `IPv4 u -> u
+    | `IPv6 u -> u
+
+end
+
+type socket_type = Socket_type.t
+
 (* General config *)
 let verbose = ref false
 let silent = ref false
@@ -56,10 +86,11 @@ let debugmode = ref false
 let disablepartialrequests = ref false
 let usedefaulthostname = ref false
 let respectpipeline = ref false
-let default_port = ref 80
-let default_sslport = ref 443
 let maxretries = ref 10
 let shutdowntimeout = ref (Some 10.)
+let ssl_info = ref None
+let ports = ref []
+let ssl_ports = ref []
 
 let set_uploaddir u = uploaddir := u
 let set_logdir s = logdir := Some s
@@ -94,10 +125,11 @@ let set_debugmode s = debugmode := s
 let set_disablepartialrequests s = disablepartialrequests := s
 let set_usedefaulthostname s = usedefaulthostname := s
 let set_respect_pipeline () = respectpipeline := true
-let set_default_port p = default_port := p
-let set_default_sslport p = default_sslport := p
 let set_maxretries i = maxretries := i
 let set_shutdown_timeout s = shutdowntimeout := s
+let set_ssl_info i = ssl_info := i
+let set_ports l = ports := l
+let set_ssl_ports l = ssl_ports := l
 
 let get_uploaddir () = !uploaddir
 let get_logdir () =
@@ -135,10 +167,25 @@ let get_debugmode () = !debugmode
 let get_disablepartialrequests () = !disablepartialrequests
 let get_usedefaulthostname () = !usedefaulthostname
 let get_respect_pipeline () = !respectpipeline
-let get_default_port () = !default_port
-let get_default_sslport () = !default_sslport
 let get_maxretries () = !maxretries
 let get_shutdown_timeout () = !shutdowntimeout
+let get_ssl_info () = !ssl_info
+let get_ports () = !ports
+let get_ssl_ports () = !ssl_ports
+
+let get_default_port () =
+  match !ports with
+  | (_, p) :: _ ->
+    p
+  | [] ->
+    80
+
+let get_default_sslport () =
+  match !ssl_ports with
+  | (_, p) :: _ ->
+    p
+  | [] ->
+    443
 
 let display_version () =
   print_string version_number;

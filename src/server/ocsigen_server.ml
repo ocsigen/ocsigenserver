@@ -94,7 +94,7 @@ let reload_conf s =
   try
     Ocsigen_extensions.start_initialisation ();
 
-    Ocsigen_parseconfig.parse_server true s;
+    Ocsigen_parseconfig.later_pass s;
 
     Ocsigen_extensions.end_initialisation ();
   with e ->
@@ -144,7 +144,7 @@ let _ =
   in
   Ocsigen_command.register_command_function f
 
-let start config_servers =
+let start ?config () =
 
   try
 
@@ -152,10 +152,11 @@ let start config_servers =
        code) loaded from now on will be executed directly. *)
     Ocsigen_loader.set_init_on_load true;
 
-    let number_of_servers = List.length config_servers in
-
-    if number_of_servers > 1
-    then Lwt_log.ign_warning ~section "Multiple servers not supported anymore";
+    (match config with
+     | Some (_ :: _ :: _) ->
+       Lwt_log.ign_warning ~section "Multiple servers not supported anymore"
+     | _ ->
+       ());
 
     let ask_for_passwd sslports _ =
       print_string "Please enter the password for the HTTPS server listening \
@@ -181,56 +182,47 @@ let start config_servers =
 
     let extensions_connector = Ocsigen_extensions.compute_result in
 
-    let run (user, group) (ssl, ports, sslports) (minthreads, maxthreads) s =
+    let run s =
+
+      let user = Ocsigen_config.get_user ()
+      and group = Ocsigen_config.get_group () in
 
       Ocsigen_messages.open_files ~user ~group () >>= fun () ->
 
-      (*let wait_end_init, wait_end_init_awakener = wait () in *)
-      (* Listening on all ports: *)
-      (*
-         sockets := List.fold_left
-           (fun a i -> (listen false i wait_end_init extensions_connector)@a) [] ports;
-         sslsockets := List.fold_left
-           (fun a i -> (listen true i wait_end_init extensions_connector)@a) [] sslports;
-      *)
+      let ports = Ocsigen_config.get_ports ()
+      and ssl_ports = Ocsigen_config.get_ssl_ports () in
 
-      let connection = match ports with
-        | [] -> [(Ocsigen_socket.All, 80)]
+      let connection =
+        match ports with
+        | [] -> [`All, 80]
         | l -> l
       in
 
       let ssl_connection =
-        let ssl = match ssl with
+        let ssl =
+          match Ocsigen_config.get_ssl_info () with
           | None
           | Some {
-              Ocsigen_parseconfig.ssl_certificate = None ;
-              Ocsigen_parseconfig.ssl_privatekey = None
+              Ocsigen_config.ssl_certificate = None ;
+              Ocsigen_config.ssl_privatekey = None
             } ->
             None
           | Some {
-              Ocsigen_parseconfig.ssl_certificate = Some crt ;
-              Ocsigen_parseconfig.ssl_privatekey = Some key
+              Ocsigen_config.ssl_certificate = Some crt ;
+              Ocsigen_config.ssl_privatekey = Some key
           } ->
             Some (crt, key)
-          | Some { Ocsigen_parseconfig.ssl_privatekey = None } ->
+          | Some { Ocsigen_config.ssl_privatekey = None } ->
             raise (Ocsigen_config.Config_file_error "SSL key is missing")
-          | Some { Ocsigen_parseconfig.ssl_certificate = None } ->
+          | Some { Ocsigen_config.ssl_certificate = None } ->
             raise (Ocsigen_config.Config_file_error "SSL certificate is missing")
-        in match sslports, ssl with
-        | [], Some (crt, key) -> [(Ocsigen_socket.All, 443, (crt, key))]
+        in
+        match ssl_ports, ssl with
+        | [], Some (crt, key) -> [`All, 443, (crt, key)]
         | l, Some (crt, key) ->
           List.map (fun (a, p) -> (a, p, (crt, key))) l
         | _ -> []
       in
-
-      begin match ports with
-        | (_, p)::_ -> Ocsigen_config.set_default_port p
-        | _ -> ()
-      end;
-      begin match sslports with
-        | (_, p)::_ -> Ocsigen_config.set_default_sslport p
-        | _ -> ()
-      end;
 
       let current_uid = Unix.getuid () in
 
@@ -282,25 +274,17 @@ let start config_servers =
           raise e
       end;
 
-      Ocsigen_config.set_user user;
-      Ocsigen_config.set_group group;
-
-      (* Je suis fou :
-         let rec f () =
-           print_endline "-";
-           Lwt_unix.yield () >>= f
-           in f (); *)
-
-      if maxthreads < minthreads
-      then
+      let minthreads = Ocsigen_config.get_minthreads ()
+      and maxthreads = Ocsigen_config.get_maxthreads () in
+      if minthreads > maxthreads then
         raise
           (Ocsigen_config.Config_file_error
              "maxthreads should be greater than minthreads");
 
-      ignore (Ocsigen_config.init_preempt
-                minthreads
-                maxthreads
-                (fun s -> Lwt_log.ign_error ~section s));
+      ignore
+        (Ocsigen_config.init_preempt
+           minthreads maxthreads
+           (fun s -> Lwt_log.ign_error ~section s));
 
       (* Now I can load the modules *)
       Dynlink_wrapper.init ();
@@ -308,7 +292,7 @@ let start config_servers =
 
       Ocsigen_extensions.start_initialisation ();
 
-      Ocsigen_parseconfig.parse_server false s;
+      Ocsigen_lib.Option.iter Ocsigen_parseconfig.later_pass s;
 
       Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
       (* As libraries are reloaded each time the config file is read,
@@ -419,32 +403,35 @@ let start config_servers =
         Unix.close f
     in
 
-    let rec launch = function
-      | [] -> ()
-      | [h] ->
-        let user_info, sslinfo, threadinfo =
-          Ocsigen_parseconfig.extract_info h
-        in
-        (* set_passwd_if_needed sslinfo; *)
-        if Ocsigen_config.get_daemon ()
-        then
-          let pid = Unix.fork () in
-          if pid = 0
-          then
-            Lwt_main.run (run user_info sslinfo threadinfo h)
-          else begin
-            Ocsigen_messages.console
-              (fun () -> "Process "^(string_of_int pid)^" detached");
-            write_pid pid
-          end
+    let launch h =
+      Ocsigen_lib.Option.iter Ocsigen_parseconfig.first_pass h;
+      (* set_passwd_if_needed sslinfo; *)
+      if Ocsigen_config.get_daemon () then
+        let pid = Unix.fork () in
+        if pid = 0 then
+          Lwt_main.run (run h)
         else begin
-          write_pid (Unix.getpid ());
-          Lwt_main.run (run user_info sslinfo threadinfo h)
+          Ocsigen_messages.console
+            (fun () -> "Process " ^ string_of_int pid ^ " detached");
+          write_pid pid
         end
-      | _ -> () (* Multiple servers not supported any more *)
+      else begin
+        write_pid (Unix.getpid ());
+        Lwt_main.run (run h)
+      end
+    in
+
+    let launch = function
+      | Some [] -> ()
+      | Some [h] ->
+        launch (Some h)
+      | None ->
+        launch None
+      | Some (_ :: _ :: _) ->
+        () (* Multiple servers not supported any more *)
 
     in
-    launch config_servers
+    launch config
 
   with e ->
     let msg, errno = errmsg e in

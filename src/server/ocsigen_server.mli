@@ -21,7 +21,7 @@
 (** Reload the configuration of the server. The optional parameter
     [?file] may be used to read the configuration from another
     file. *)
-val reload : ?file:string -> unit -> unit
+val reload : ?file : string -> unit -> unit
 
 (** Start the server. Never returns. *)
-val start : Xml.xml list list -> unit
+val start : ?config : Xml.xml list list -> unit -> unit
