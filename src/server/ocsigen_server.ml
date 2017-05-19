@@ -41,14 +41,15 @@ let _ =
 let warn sockaddr s =
   Lwt_log.ign_warning_f ~section "While talking to %a:%s"
     (fun () sockaddr ->
-       Unix.string_of_inet_addr (Ocsigen_socket.ip_of_sockaddr sockaddr))
+       Unix.string_of_inet_addr
+         (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
     sockaddr s
 
 let dbg sockaddr s =
   Lwt_log.ign_info_f ~section "While talking to %a:%s"
     (fun () sockaddr ->
        Unix.string_of_inet_addr
-         (Ocsigen_socket.ip_of_sockaddr sockaddr))
+         (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
     sockaddr s
 
 let try_bind' f g h = Lwt.try_bind f h g

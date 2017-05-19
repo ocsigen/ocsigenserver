@@ -92,7 +92,7 @@ let make
   let r_remote_ip =
     lazy
       (Unix.string_of_inet_addr
-         (Ocsigen_socket.ip_of_sockaddr sockaddr))
+         (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
   in
   let r_remote_ip_parsed =
     lazy (Ipaddr.of_string_exn (Lazy.force r_remote_ip))

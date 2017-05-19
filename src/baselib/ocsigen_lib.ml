@@ -36,6 +36,12 @@ module Ip_address = struct
       (Lwt_unix.getaddrinfo host "" options)
       aux
 
+  let of_sockaddr = function
+    | Unix.ADDR_INET (ip, port) ->
+      ip
+    | _ ->
+      raise (Ocsigen_Internal_Error "ip of unix socket")
+
 end
 
 (*****************************************************************************)

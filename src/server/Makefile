@@ -13,8 +13,7 @@ all: byte opt
 
 ### Common files ###
 
-FILES := ocsigen_socket.ml      \
-         ocsigen_command.ml     \
+FILES := ocsigen_command.ml     \
 	 ocsigen_multipart.ml	\
          ocsigen_request.ml	\
          ocsigen_response.ml	\
