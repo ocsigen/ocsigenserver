@@ -4,7 +4,7 @@ PACKAGE  :=		\
 	bytes		\
 	lwt.unix	\
 	ipaddr		\
-	lwt.ssl		\
+	lwt_ssl		\
 	pcre		\
 	xml-light 	\
 	cohttp.lwt

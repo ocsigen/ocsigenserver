@@ -412,7 +412,7 @@ check_library ssl "See: http://sourceforge.net/projects/savonet/files/ocaml-ssl"
 
 check_library lwt "See: http://ocsigen.org/lwt"
 check_library lwt.unix  "Missing support for 'unix' in lwt."
-check_library lwt.ssl   "Missing support for 'ssl' in lwt."
+check_library lwt_ssl   "See: http://ocsigen.org/lwt"
 check_library lwt.preemptive "Missing support for 'preemptive' in lwt."
 
 check_library pcre "See: http://ocaml.info/home/ocaml_sources.html"

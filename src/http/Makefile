@@ -1,7 +1,7 @@
 include ../../Makefile.config
 PACKAGE  := \
 	bytes \
-	lwt.ssl \
+	lwt_ssl \
 	pcre \
 	cohttp
 

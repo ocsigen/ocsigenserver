@@ -30,7 +30,7 @@ endif
 
 BASE_PACKAGE := lwt ipaddr bytes
 
-SERVER_PACKAGE := lwt.ssl           \
+SERVER_PACKAGE := lwt_ssl           \
 		  bytes			\
 	          ${LWT_PREEMPTIVE_PACKAGE} \
                   ipaddr            \
