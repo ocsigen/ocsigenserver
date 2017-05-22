@@ -305,6 +305,5 @@ let parse_config userconf _
 let () =
   Ocsigen_extensions.register_extension
     ~name:"staticmod"
-    ~fun_site:(fun _ -> parse_config None)
-    ~user_fun_site:(fun path _ -> parse_config (Some path))
+    ~fun_site:(fun path _ -> parse_config path)
     ()

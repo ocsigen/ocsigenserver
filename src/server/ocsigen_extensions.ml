@@ -393,6 +393,7 @@ let fun_end = ref (fun () -> ())
 let fun_exn = ref (fun exn -> (raise exn : string))
 
 let rec default_parse_config
+    userconf_info
     (host : virtual_hosts)
     config_info
     prevpath
@@ -554,34 +555,27 @@ type userconf_info = {
   localfiles_root : string;
 }
 
-type parse_config = virtual_hosts -> config_info -> parse_config_aux
-and parse_config_user = userconf_info -> parse_config
+type parse_config =
+  userconf_info option ->
+  virtual_hosts ->
+  config_info ->
+  parse_config_aux
 and parse_config_aux =
     Url.path -> parse_host ->
     (parse_fun -> Xml.xml ->
      extension
     )
 
-
-
-let user_extension_void_fun_site : parse_config_user =
-  fun _ _ _ _ _ _ -> function
-    | Xml.Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-    | _ -> raise (Error_in_config_file "Unexpected data in config file")
-
-let extension_void_fun_site : parse_config = fun _ _ _ _ _ -> function
+let extension_void_fun_site : parse_config = fun _ _ _ _ _ _ -> function
   | Xml.Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ -> raise (Error_in_config_file "Unexpected data in config file")
 
-
-let register_extension, parse_config_item, parse_user_site_item, get_beg_init, get_end_init, get_init_exn_handler =
+let register_extension, parse_config_item, get_beg_init, get_end_init, get_init_exn_handler =
   let ref_fun_site = ref default_parse_config in
-  let ref_user_fun_site = ref (fun (_ : userconf_info) -> default_parse_config) in
 
   ((* ********* register_extension ********* *)
     (fun
       ?fun_site
-      ?user_fun_site
       ?begin_init
       ?end_init
       ?(exn_handler=raise)
@@ -596,28 +590,9 @@ let register_extension, parse_config_item, parse_user_site_item, get_beg_init, g
          | Some fun_site ->
            let old_fun_site = !ref_fun_site in
            ref_fun_site :=
-             (fun host conf_info ->
-                let oldf = old_fun_site host conf_info in
-                let newf = fun_site host conf_info in
-                fun path parse_host ->
-                  let oldf = oldf path parse_host in
-                  let newf = newf path parse_host in
-                  fun parse_config config_tag ->
-                    try
-                      oldf parse_config config_tag
-                    with
-                    | Bad_config_tag_for_extension c ->
-                      newf parse_config config_tag
-             ));
-
-        (match user_fun_site with
-         | None -> ()
-         | Some user_fun_site ->
-           let old_fun_site = !ref_user_fun_site in
-           ref_user_fun_site :=
              (fun path host conf_info ->
                 let oldf = old_fun_site path host conf_info in
-                let newf = user_fun_site path host conf_info in
+                let newf =     fun_site path host conf_info in
                 fun path parse_host ->
                   let oldf = oldf path parse_host in
                   let newf = newf path parse_host in
@@ -628,8 +603,6 @@ let register_extension, parse_config_item, parse_user_site_item, get_beg_init, g
                     | Bad_config_tag_for_extension c ->
                       newf parse_config config_tag
              ));
-
-
         (match begin_init with
          | Some begin_init -> fun_beg := Ocsigen_lib.comp begin_init !fun_beg
          | None -> ());
@@ -639,12 +612,7 @@ let register_extension, parse_config_item, parse_user_site_item, get_beg_init, g
         let curexnfun = !fun_exn in
         fun_exn := fun e -> try curexnfun e with e -> exn_handler e),
 
-
-    (* ********* parse_config_item ********* *)
     (fun host conf -> !ref_fun_site host conf),
-
-    (* ********* parse_user_site_item ********* *)
-    (fun host conf -> !ref_user_fun_site host conf),
 
     (* ********* get_beg_init ********* *)
     (fun () -> !fun_beg),
@@ -664,7 +632,6 @@ let default_parse_extension ext_name = function
 let register_extension
     ~name
     ?fun_site
-    ?user_fun_site
     ?begin_init
     ?end_init
     ?init_fun
@@ -676,7 +643,7 @@ let register_extension
        (match init_fun with
         | None -> default_parse_extension name (get_config ())
         | Some f -> f (get_config ()));
-       register_extension ?fun_site ?user_fun_site ?begin_init ?end_init
+       register_extension ?fun_site ?begin_init ?end_init
          ?exn_handler ?respect_pipeline ())
 
 module Configuration = struct

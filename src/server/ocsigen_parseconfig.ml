@@ -536,9 +536,9 @@ let later_pass c =
             maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize ();
           }
           in
-          let parse_host = Ocsigen_extensions.parse_config_item host conf in
+          let parse_host _ = Ocsigen_extensions.parse_config_item None host conf in
           let parse_config =
-            Ocsigen_extensions.make_parse_config [] parse_host
+            Ocsigen_extensions.make_parse_config [] (parse_host None)
           in
           (* default site for host *)
           (host, conf, parse_config l)::(parse_server_aux ll)

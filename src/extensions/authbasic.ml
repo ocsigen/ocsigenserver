@@ -137,6 +137,5 @@ let parse_config element =
 let () =
   Ocsigen_extensions.register_extension
     ~name:"authbasic"
-    ~fun_site:(fun _ _ _ _ _ -> parse_config)
-    ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
+    ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()

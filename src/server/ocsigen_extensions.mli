@@ -257,9 +257,10 @@ type userconf_info = {
     inside an userconf file. They take one more parameter, of type userconf_info
 *)
 type parse_config =
-  virtual_hosts -> config_info -> parse_config_aux
-and parse_config_user =
-  userconf_info -> parse_config
+  userconf_info option ->
+  virtual_hosts ->
+  config_info ->
+  parse_config_aux
 and parse_config_aux =
     Ocsigen_lib.Url.path -> parse_host ->
     (parse_fun -> Xml.xml ->
@@ -309,7 +310,6 @@ and parse_config_aux =
 val register_extension :
   name:string ->
   ?fun_site:parse_config ->
-  ?user_fun_site:parse_config_user ->
   ?begin_init:(unit -> unit) ->
   ?end_init:(unit -> unit) ->
   ?init_fun:(Xml.xml list -> unit) ->
@@ -442,7 +442,6 @@ val make_parse_config :
   Ocsigen_lib.Url.path -> parse_config_aux -> parse_fun
 
 val parse_config_item : parse_config
-val parse_user_site_item : parse_config_user
 
 val set_hosts : (virtual_hosts * config_info * extension2) list -> unit
 

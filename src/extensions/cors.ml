@@ -194,12 +194,8 @@ let parse_config _ _ parse_fun config_elem =
   );
   main !config
 
-let site_creator (_ : Ocsigen_extensions.virtual_hosts) _ = parse_config
-let user_site_creator (_ : Ocsigen_extensions.userconf_info) = site_creator
-
 let () =
   Ocsigen_extensions.register_extension
     ~name:"CORS"
-    ~fun_site:site_creator
-    ~user_fun_site:user_site_creator
+    ~fun_site:(fun _ _ _ -> parse_config)
     ()

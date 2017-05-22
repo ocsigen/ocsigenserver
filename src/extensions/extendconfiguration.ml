@@ -20,6 +20,8 @@
 
 open Lwt.Infix
 
+let name = "extendconfiguration"
+
 let bad_config s = raise (Ocsigen_extensions.Error_in_config_file s)
 
 let gen configfun = function
@@ -70,7 +72,7 @@ let check_regexp_list =
     Hashtbl.add hashtbl r ()
   with _ -> raise (Bad_regexp r)
 
-let parse_config usermode _ _ _ = function
+let fun_site usermode _ _ _ _ _ = function
   | Xml.Element ("listdirs", ["value", "true"], []) ->
     gen @@ fun config ->
     { config with Ocsigen_extensions.list_directory_content = true }
@@ -84,13 +86,14 @@ let parse_config usermode _ _ _ = function
       | "never" ->
         Ocsigen_extensions.DoNotFollowSymlinks
       | "always" ->
-        if not usermode then
-          Ocsigen_extensions.AlwaysFollowSymlinks
-        else
-          raise
-            (Ocsigen_extensions.Error_in_user_config_file
-               "Cannot specify value 'always' for option \
-                'followsymlinks' in userconf files")
+        (match usermode with
+         | None ->
+           Ocsigen_extensions.AlwaysFollowSymlinks
+         | Some _ ->
+           raise
+             (Ocsigen_extensions.Error_in_user_config_file
+                "Cannot specify value 'always' for option \
+                 'followsymlinks' in userconf files"))
       | "ownermatch" ->
         Ocsigen_extensions.FollowSymlinksIfOwnerMatch
       | _ ->
@@ -244,9 +247,4 @@ let parse_config usermode _ _ _ = function
     raise (Ocsigen_extensions.Error_in_config_file
              "Unexpected data in config file")
 
-let () =
-  Ocsigen_extensions.register_extension
-    ~name:"extendconfiguration"
-    ~fun_site:(fun _ _ -> parse_config false)
-    ~user_fun_site:(fun path _ _ -> parse_config true)
-    ()
+let () = Ocsigen_extensions.register_extension ~name ~fun_site ()

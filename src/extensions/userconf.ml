@@ -124,8 +124,8 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) =
             Ocsigen_extensions.replace_user_dir regexp localpath path }
         and conf = conf_to_xml conf0 in
         let user_parse_host =
-          Ocsigen_extensions.parse_user_site_item
-            userconf_options hostpattern request_config in
+          Ocsigen_extensions.parse_config_item
+            (Some userconf_options) hostpattern request_config in
         (* Inside userconf, we create a new virtual site starting
            after [prefix], and use a request modified accordingly*)
         let user_parse_site =
@@ -147,7 +147,7 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) =
       | e ->
         handle_parsing_error req e
 
-let parse_config hostpattern _ path _ _ config_elem =
+let parse_config _ hostpattern _ path _ _ config_elem =
   let regexp = ref None in
   let conf = ref None in
   let url = ref None in
