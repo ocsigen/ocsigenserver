@@ -273,18 +273,6 @@ and parse_config_aux =
     will be responsible for handling the options of the configuration
     files that are recognized by the extension, and potentially generating
     a page.
-    - a function [user_fun_site] of type [parse_user_config] which has the
-    same role as [fun_site], but inside userconf files. Specify nothing
-    if your extension is disallowed in userconf files. Otherwise, compared
-    to [fun_site], you can selectively disallow some options,
-    as [user_fun_site] must define only safe options (for example it is not
-    safe to allow such options to load a cmo specified by a user, or to
-    execute a program, as this program will be executed by ocsigen's user).
-    Note that [user_fun_site] will be called for every request, whereas the
-    [fun_site] is called only when starting or reloading the server.
-    - a function [begin_init] that will be called at the beginning
-    of the initialisation phase of each site, and each time the config file is
-    reloaded.
     - a function [end_init] that will be called at the end of the initialisation
     phase of each site
     - a function [init_fun] that will be called just before registering the
@@ -307,10 +295,9 @@ and parse_config_aux =
     to another server. It is false by default.
 
 *)
-val register_extension :
+val register :
   name:string ->
   ?fun_site:parse_config ->
-  ?begin_init:(unit -> unit) ->
   ?end_init:(unit -> unit) ->
   ?init_fun:(Xml.xml list -> unit) ->
   ?exn_handler:(exn -> string) ->

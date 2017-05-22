@@ -213,7 +213,7 @@ let parse_config config_elem =
     }
 
 let () =
-  Ocsigen_extensions.register_extension
+  Ocsigen_extensions.register
     ~name:"revproxy"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ~respect_pipeline:true (* We ask ocsigen to respect pipeline order

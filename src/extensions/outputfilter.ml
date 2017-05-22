@@ -138,7 +138,7 @@ let parse_config config_elem =
   | Some code -> gen_code code
 
 let () =
-  Ocsigen_extensions.register_extension
+  Ocsigen_extensions.register
     ~name:"outputfilter"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()

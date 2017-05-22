@@ -357,4 +357,4 @@ let length table =
 (* Because of Dbm implementation, the result may be less thann the expected
    result in some case (with a version of ocsipersist based on Dbm) *)
 
-let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
+let _ = Ocsigen_extensions.register ~name:"ocsipersist" ~init_fun ()

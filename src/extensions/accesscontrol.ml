@@ -433,7 +433,7 @@ let parse_config parse_fun = function
 
 (* Registration of the extension *)
 let () =
-  Ocsigen_extensions.register_extension
+  Ocsigen_extensions.register
     ~name:"accesscontrol"
     ~fun_site:(fun _ _ _ _ _ -> parse_config)
     ()

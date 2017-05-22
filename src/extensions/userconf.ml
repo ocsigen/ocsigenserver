@@ -199,7 +199,7 @@ let parse_config _ hostpattern _ path _ _ config_elem =
   gen hostpattern path info
 
 let () =
-  Ocsigen_extensions.register_extension
+  Ocsigen_extensions.register
     ~name:"userconf"
     ~fun_site:parse_config
     ()

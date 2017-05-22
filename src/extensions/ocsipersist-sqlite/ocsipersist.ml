@@ -328,7 +328,4 @@ let init config =
     raise e
 
 
-let _ = Ocsigen_extensions.register_extension
-    ~name:"ocsipersist"
-    ~init_fun:init
-    ()
+let _ = Ocsigen_extensions.register ~name:"ocsipersist" ~init_fun:init ()

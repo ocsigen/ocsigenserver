@@ -224,4 +224,4 @@ let init_fun config =
   parse_global_config config;
   conn_pool := Lwt_pool.create !size_conn_pool ~validate:PGOCaml.alive connect
 
-let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
+let _ = Ocsigen_extensions.register ~name:"ocsipersist" ~init_fun ()

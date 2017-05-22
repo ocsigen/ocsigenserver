@@ -247,4 +247,4 @@ let fun_site usermode _ _ _ _ _ = function
     raise (Ocsigen_extensions.Error_in_config_file
              "Unexpected data in config file")
 
-let () = Ocsigen_extensions.register_extension ~name ~fun_site ()
+let () = Ocsigen_extensions.register ~name ~fun_site ()

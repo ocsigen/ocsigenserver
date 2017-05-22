@@ -118,7 +118,7 @@ let parse_config config_elem =
                  !dest, !mode, !temporary))
 
 let () =
-  Ocsigen_extensions.register_extension
+  Ocsigen_extensions.register
     ~name:"redirectmod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()

@@ -386,9 +386,6 @@ let make_ext cookies_to_set req_state (genfun : extension) (genfun2 : extension2
   in
   aux cookies_to_set res
 
-
-(*****************************************************************************)
-let fun_beg = ref (fun () -> ())
 let fun_end = ref (fun () -> ())
 let fun_exn = ref (fun exn -> (raise exn : string))
 
@@ -537,7 +534,6 @@ and make_parse_config path parse_host l : extension2 =
           (try !fun_exn e
            with e -> Printexc.to_string e)
   in
-  !fun_beg ();
   let r =
     try
       parse_config l
@@ -570,69 +566,53 @@ let extension_void_fun_site : parse_config = fun _ _ _ _ _ _ -> function
   | Xml.Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
   | _ -> raise (Error_in_config_file "Unexpected data in config file")
 
-let register_extension, parse_config_item, get_beg_init, get_end_init, get_init_exn_handler =
+let register, parse_config_item, get_init_exn_handler =
   let ref_fun_site = ref default_parse_config in
 
-  ((* ********* register_extension ********* *)
-    (fun
-      ?fun_site
-      ?begin_init
-      ?end_init
-      ?(exn_handler=raise)
-      ?(respect_pipeline=false)
-      ()
-      ->
+  (fun
+    ?fun_site
+    ?end_init
+    ?(exn_handler=raise)
+    ?(respect_pipeline=false)
+    () ->
+    if respect_pipeline then Ocsigen_config.set_respect_pipeline ();
+    (match fun_site with
+     | None -> ()
+     | Some fun_site ->
+       let old_fun_site = !ref_fun_site in
+       ref_fun_site :=
+         (fun path host conf_info ->
+            let oldf = old_fun_site path host conf_info in
+            let newf =     fun_site path host conf_info in
+            fun path parse_host ->
+              let oldf = oldf path parse_host in
+              let newf = newf path parse_host in
+              fun parse_config config_tag ->
+                try
+                  oldf parse_config config_tag
+                with
+                | Bad_config_tag_for_extension c ->
+                  newf parse_config config_tag
+         ));
+    (match end_init with
+     | Some end_init -> fun_end := Ocsigen_lib.comp end_init !fun_end;
+     | None -> ());
+    let curexnfun = !fun_exn in
+    fun_exn := fun e -> try curexnfun e with e -> exn_handler e),
 
-        if respect_pipeline then Ocsigen_config.set_respect_pipeline ();
+  (fun host conf -> !ref_fun_site host conf),
 
-        (match fun_site with
-         | None -> ()
-         | Some fun_site ->
-           let old_fun_site = !ref_fun_site in
-           ref_fun_site :=
-             (fun path host conf_info ->
-                let oldf = old_fun_site path host conf_info in
-                let newf =     fun_site path host conf_info in
-                fun path parse_host ->
-                  let oldf = oldf path parse_host in
-                  let newf = newf path parse_host in
-                  fun parse_config config_tag ->
-                    try
-                      oldf parse_config config_tag
-                    with
-                    | Bad_config_tag_for_extension c ->
-                      newf parse_config config_tag
-             ));
-        (match begin_init with
-         | Some begin_init -> fun_beg := Ocsigen_lib.comp begin_init !fun_beg
-         | None -> ());
-        (match end_init with
-         | Some end_init -> fun_end := Ocsigen_lib.comp end_init !fun_end;
-         | None -> ());
-        let curexnfun = !fun_exn in
-        fun_exn := fun e -> try curexnfun e with e -> exn_handler e),
-
-    (fun host conf -> !ref_fun_site host conf),
-
-    (* ********* get_beg_init ********* *)
-    (fun () -> !fun_beg),
-
-    (* ********* get_end_init ********* *)
-    (fun () -> !fun_end),
-
-    (* ********* get_init_exn_handler ********* *)
-    (fun () -> !fun_exn)
-  )
+  (* ********* get_init_exn_handler ********* *)
+  (fun () -> !fun_exn)
 
 let default_parse_extension ext_name = function
   | [] -> ()
   | _ -> raise (Error_in_config_file
                   (Printf.sprintf "Unexpected content found in configuration of extension %s: %s does not accept options" ext_name ext_name))
 
-let register_extension
+let register
     ~name
     ?fun_site
-    ?begin_init
     ?end_init
     ?init_fun
     ?exn_handler
@@ -643,8 +623,7 @@ let register_extension
        (match init_fun with
         | None -> default_parse_extension name (get_config ())
         | Some f -> f (get_config ()));
-       register_extension ?fun_site ?begin_init ?end_init
-         ?exn_handler ?respect_pipeline ())
+       register ?fun_site ?end_init ?exn_handler ?respect_pipeline ())
 
 module Configuration = struct
 

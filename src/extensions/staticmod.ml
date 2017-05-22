@@ -303,7 +303,7 @@ let parse_config userconf _
 (*****************************************************************************)
 (** extension registration *)
 let () =
-  Ocsigen_extensions.register_extension
+  Ocsigen_extensions.register
     ~name:"staticmod"
     ~fun_site:(fun path _ -> parse_config path)
     ()

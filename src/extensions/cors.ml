@@ -195,7 +195,7 @@ let parse_config _ _ parse_fun config_elem =
   main !config
 
 let () =
-  Ocsigen_extensions.register_extension
+  Ocsigen_extensions.register
     ~name:"CORS"
     ~fun_site:(fun _ _ _ -> parse_config)
     ()
