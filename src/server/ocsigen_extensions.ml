@@ -18,7 +18,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-(** Writing extensions for Ocsigen *)
+let we_have_xml_config, set_we_have_xml_config =
+  let r = ref false in
+  (fun () -> !r),
+  (fun () -> r := true)
 
 let section = Lwt_log.Section.make "ocsigen:ext"
 
@@ -77,6 +80,12 @@ type do_not_serve = {
   do_not_serve_extensions: string list;
 }
 
+let serve_everything = {
+  do_not_serve_regexps = [];
+  do_not_serve_files = [];
+  do_not_serve_extensions = []
+}
+
 (* BY TODO : Use unbalanced trees instead *)
 let join_do_not_serve d1 d2 = {
   do_not_serve_regexps = d1.do_not_serve_regexps @ d2.do_not_serve_regexps;
@@ -129,12 +138,6 @@ let do_not_serve_to_regexp d =
      with _ -> raise (IncorrectRegexpes d)
     )
 
-
-(*****************************************************************************)
-
-(* Main server configuration *)
-
-
 type config_info = {
   default_hostname: string;
   default_httpport: int;
@@ -157,7 +160,7 @@ type config_info = {
   list_directory_content : bool;
 
   (** Should symlinks be followed when accessign a local file? *)
-  follow_symlinks: follow_symlink;
+  follow_symlinks: [`No | `Owner_match | `Always];
 
   do_not_serve_404: do_not_serve;
   do_not_serve_403: do_not_serve;
@@ -165,13 +168,29 @@ type config_info = {
   uploaddir: string option;
   maxuploadfilesize: int64 option;
 }
-and follow_symlink =
-  | DoNotFollowSymlinks (** Never follow a symlink *)
-  | FollowSymlinksIfOwnerMatch (** Follow a symlink if the symlink and its
-                                   target have the same owner *)
-  | AlwaysFollowSymlinks (** Always follow symlinks *)
 
-
+let default_config_info () =
+  let do_not_serve_404 = {
+    do_not_serve_regexps = [];
+    do_not_serve_files = [];
+    do_not_serve_extensions = [];
+  } in {
+    default_hostname = Unix.gethostname ();
+    default_httpport = Ocsigen_config.get_default_port ();
+    default_httpsport = Ocsigen_config.get_default_sslport ();
+    default_protocol_is_https = false;
+    mime_assoc = Ocsigen_charset_mime.default_mime_assoc ();
+    charset_assoc =
+      Ocsigen_charset_mime.empty_charset_assoc
+        ?default:(Ocsigen_config.get_default_charset ()) ();
+    default_directory_index = ["index.html"];
+    list_directory_content = false;
+    follow_symlinks = `Owner_match;
+    do_not_serve_404 ;
+    do_not_serve_403 = do_not_serve_404 ;
+    uploaddir = Ocsigen_config.get_uploaddir ();
+    maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize ();
+  }
 
 (* Requests *)
 type request = {
@@ -265,8 +284,6 @@ type parse_host =
 
 let (hosts : (virtual_hosts * config_info * extension2) list ref) =
   ref []
-
-
 
 let set_hosts v = hosts := v
 let get_hosts () = !hosts
@@ -624,6 +641,19 @@ let register
         | None -> default_parse_extension name (get_config ())
         | Some f -> f (get_config ()));
        register ?fun_site ?end_init ?exn_handler ?respect_pipeline ())
+
+let register_without_xml_config
+    ?(config_info = default_config_info ())
+    ?(host_regexp = ".*")
+    ?port
+    f =
+  if not (we_have_xml_config ()) then
+    let virtual_hosts =
+      (* TODO : dedup virtual_hosts ? *)
+      [host_regexp,
+       Ocsigen_lib.Netstring_pcre.regexp host_regexp, port]
+    in
+    set_hosts ((virtual_hosts, config_info, f) :: get_hosts ())
 
 module Configuration = struct
 

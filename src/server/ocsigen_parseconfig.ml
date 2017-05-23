@@ -38,7 +38,6 @@ let blah_of_string f tag s =
 let int_of_string = blah_of_string int_of_string
 let float_of_string = blah_of_string float_of_string
 
-(*****************************************************************************)
 let default_default_hostname =
   let hostname = Unix.gethostname () in
   try
@@ -55,7 +54,6 @@ let default_default_hostname =
        in config file." hostname;
     (*VVV Is it the right behaviour? *)
     hostname
-(*****************************************************************************)
 
 let parse_size =
   let kilo = Int64.of_int 1000 in
@@ -140,7 +138,6 @@ let parse_size =
              else o l
          else o l)
 
-
 let parse_size_tag tag s =
   try
     parse_size s
@@ -149,20 +146,9 @@ let parse_size_tag tag s =
       (Ocsigen_config.Config_file_error
          ("While parsing <"^tag^"> - "^s^" is not a valid size."))
 
-
-
-
-
-
-(* My xml parser is not really adapted to this.
-   It is the parser for the syntax extension.
-   But it works.
-*)
-
-
 let rec parse_string = function
   | [] -> ""
-  | (PCData s)::l -> s^(parse_string l)
+  | PCData s :: l -> s ^ parse_string l
   | _ -> failwith "ocsigen_parseconfig.parse_string"
 
 let parse_string_tag tag s =
@@ -172,7 +158,6 @@ let parse_string_tag tag s =
     raise
       (Ocsigen_config.Config_file_error
          ("While parsing <"^tag^"> - String expected."))
-
 
 let rec parser_config =
   let rec parse_servers n = function
@@ -195,10 +180,8 @@ let rec parser_config =
       parse_servers [] l
     | _ -> raise (Config_file_error "<ocsigen> tag expected")
 
-
 let parse_ext file =
   parser_config (Xml.parse_file file)
-
 
 let preloadfile config () = Ocsigen_extensions.set_config config
 let postloadfile () = Ocsigen_extensions.set_config []
@@ -258,29 +241,31 @@ let parse_host_field =
        (r : Ocsigen_extensions.virtual_hosts)
   )
 
-
-(* Extract a default hostname from the "host" field if no default is provided *)
-let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
-    match defaulthostname with
-      | Some d -> d
-      | None ->
-          (* We look for a hostname without wildcard (second case) *)
-          (* Something more clever could be envisioned *)
-          let rec aux = function
-            | [] -> default_default_hostname
-            | (t, _, (Some 80 | None)) :: _ when String.contains t '*' = false ->
-                t
-            | _ :: q -> aux q
-          in
-          let host = aux host in
-          Lwt_log.ign_warning_f ~section
-            "While parsing config file, tag <host>: No defaulthostname, \
-             assuming it is \"%s\"" host;
-          if correct_hostname host then
-             host
-          else
-            raise (Ocsigen_config.Config_file_error
-                     ("Incorrect hostname " ^ host))
+(* Extract a default hostname from the "host" field if no default is
+   provided *)
+let get_defaulthostname ~defaulthostname ~host =
+  match defaulthostname with
+  | Some d -> d
+  | None ->
+    (* We look for a hostname without wildcard (second case).
+       Something more clever could be envisioned *)
+    let rec aux = function
+      | [] ->
+        default_default_hostname
+      | (t, _, (Some 80 | None)) :: _
+        when (not (String.contains t '*')) ->
+        t
+      | _ :: q -> aux q
+    in
+    let host = aux host in
+    Lwt_log.ign_warning_f ~section
+      "While parsing config file, tag <host>: No defaulthostname, \
+       assuming it is \"%s\"" host;
+    if correct_hostname host then
+      host
+    else
+      raise (Ocsigen_config.Config_file_error
+               ("Incorrect hostname " ^ host))
 
 let later_pass_host_attr
     (name, charset,
@@ -379,9 +364,7 @@ let later_pass_host attrs l =
     match defaulthttpport with
     | None -> Ocsigen_config.get_default_port ()
     | Some p -> int_of_string "host" p
-  and defaulthostname =
-    get_defaulthostname
-      ~defaulthostname ~defaulthttpport ~host
+  and defaulthostname = get_defaulthostname ~defaulthostname ~host
   and defaulthttpsport =
     match defaulthttpsport with
     | None -> Ocsigen_config.get_default_sslport ()
@@ -402,7 +385,7 @@ let later_pass_host attrs l =
         ~default:charset ();
     default_directory_index = ["index.html"];
     list_directory_content = false;
-    follow_symlinks = Ocsigen_extensions.FollowSymlinksIfOwnerMatch;
+    follow_symlinks = `Owner_match;
     do_not_serve_404 = serve_everything;
     do_not_serve_403 = serve_everything;
     uploaddir = Ocsigen_config.get_uploaddir ();

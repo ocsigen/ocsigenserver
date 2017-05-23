@@ -81,26 +81,28 @@ let fun_site usermode _ _ _ _ _ = function
     { config with Ocsigen_extensions.list_directory_content = false }
   | Xml.Element ("listdirs" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Xml.Element ("followsymlinks", ["value", s], []) ->
-    let v = match s with
+  | Xml.Element ("followsymlinks", ["value", follow_symlinks], []) ->
+    let follow_symlinks =
+      match follow_symlinks with
       | "never" ->
-        Ocsigen_extensions.DoNotFollowSymlinks
+        `No
       | "always" ->
         (match usermode with
          | None ->
-           Ocsigen_extensions.AlwaysFollowSymlinks
+           `Always
          | Some _ ->
            raise
              (Ocsigen_extensions.Error_in_user_config_file
                 "Cannot specify value 'always' for option \
                  'followsymlinks' in userconf files"))
       | "ownermatch" ->
-        Ocsigen_extensions.FollowSymlinksIfOwnerMatch
+        `Owner_match
       | _ ->
-        bad_config ("Wrong value \""^s^"\" for option \"followsymlinks\"")
+        bad_config ("Wrong value \"" ^ follow_symlinks ^
+                    "\" for option \"followsymlinks\"")
     in
     gen @@ fun config ->
-    { config with Ocsigen_extensions.follow_symlinks = v }
+    { config with Ocsigen_extensions.follow_symlinks }
   | Xml.Element ("followsymlinks" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("charset", attrs, exts) ->

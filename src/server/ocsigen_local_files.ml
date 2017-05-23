@@ -88,11 +88,11 @@ let check_symlinks ~no_check_for ~filename policy =
       check_symlinks_parent_directories filename no_check_for policy
   in
   match policy with
-  | Ocsigen_extensions.AlwaysFollowSymlinks ->
+  | `Always ->
     true
-  | Ocsigen_extensions.DoNotFollowSymlinks ->
+  | `No ->
     aux never_follow_symlinks
-  | Ocsigen_extensions.FollowSymlinksIfOwnerMatch ->
+  | `Owner_match ->
     aux follow_symlinks_if_owner_match
 
 let check_dotdot =

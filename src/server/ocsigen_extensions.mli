@@ -16,13 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
-(*****************************************************************************)
-(*****************************************************************************)
-(* Tables of services (global and session tables)                            *)
-(* Store and load dynamic pages                                              *)
-(*****************************************************************************)
-(*****************************************************************************)
+ *)
 
 (** Extensions interface for Ocsigen Server *)
 
@@ -72,6 +66,7 @@ type do_not_serve = {
   do_not_serve_extensions: string list;
 }
 
+val serve_everything : do_not_serve
 
 exception IncorrectRegexpes of do_not_serve
 
@@ -81,8 +76,6 @@ exception IncorrectRegexpes of do_not_serve
 val do_not_serve_to_regexp: do_not_serve -> Pcre.regexp
 
 val join_do_not_serve : do_not_serve -> do_not_serve -> do_not_serve
-
-
 
 (** Configuration options, passed to (and modified by) extensions *)
 type config_info = {
@@ -96,18 +89,18 @@ type config_info = {
   charset_assoc : Ocsigen_charset_mime.charset_assoc;
 
   (** Default name to use as index file when a directory is requested.
-      Use [None] if no index should be tried. The various indexes
-      are tried in the given order. If no index is specified,
-      or the index does not exists, the content of the directory
-      might be listed, according to [list_directory_content] *)
+      Use [None] if no index should be tried. The various indexes are
+      tried in the given order. If no index is specified, or the index
+      does not exists, the content of the directory might be listed,
+      according to [list_directory_content] *)
   default_directory_index : string list;
 
-  (** Should the list of files in a directory be displayed
-      if there is no index in this directory ? *)
+  (** Should the list of files in a directory be displayed if there is
+      no index in this directory ? *)
   list_directory_content : bool;
 
-  (** Should symlinks be followed when accessign a local file? *)
-  follow_symlinks: follow_symlink;
+  (** Should symlinks be followed when accessing a local file? *)
+  follow_symlinks: [`No | `Owner_match | `Always];
 
   do_not_serve_404: do_not_serve;
   do_not_serve_403: do_not_serve;
@@ -115,14 +108,8 @@ type config_info = {
   uploaddir: string option;
   maxuploadfilesize: int64 option;
 }
-and follow_symlink =
-  | DoNotFollowSymlinks (** Never follow a symlink *)
-  | FollowSymlinksIfOwnerMatch (** Follow a symlink if the symlink and its
-                                   target have the same owner *)
-  | AlwaysFollowSymlinks (** Always follow symlinks *)
 
-
-(*****************************************************)
+val default_config_info : unit -> config_info
 
 type request = {
   request_info: Ocsigen_request.t;
@@ -462,3 +449,12 @@ val set_config : Xml.xml list -> unit
 
 val sockets : Lwt_unix.file_descr list ref
 val sslsockets : Lwt_unix.file_descr list ref
+
+val set_we_have_xml_config : unit -> unit
+
+val register_without_xml_config :
+  ?config_info:config_info ->
+  ?host_regexp:string ->
+  ?port:int ->
+  extension2 ->
+  unit

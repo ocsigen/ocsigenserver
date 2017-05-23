@@ -20,6 +20,8 @@
 
 open Lwt.Infix
 
+let name = "staticmod"
+
 let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
 
 exception Not_concerned
@@ -300,10 +302,14 @@ let parse_config userconf _
   in
   gen ~usermode:userconf ?cache:!opt.opt_cache kind
 
-(*****************************************************************************)
-(** extension registration *)
 let () =
   Ocsigen_extensions.register
-    ~name:"staticmod"
+    ~name
     ~fun_site:(fun path _ -> parse_config path)
     ()
+
+let () =
+  Ocsigen_extensions.register_without_xml_config
+    (fun cookies r ->
+       gen ~usermode:None (Dir "/home/vasilis/static") r >|= fun response ->
+       response, cookies)
