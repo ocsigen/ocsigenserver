@@ -75,5 +75,7 @@ ocsigen_server.cmx : ocsigen_parseconfig.cmx ../baselib/ocsigen_messages.cmx \
     ../baselib/ocsigen_cache.cmx ../baselib/dynlink_wrapper.cmx \
     ocsigen_server.cmi
 ocsigen_server.cmi :
-server_main.cmo : ocsigen_server.cmi ocsigen_parseconfig.cmi
-server_main.cmx : ocsigen_server.cmx ocsigen_parseconfig.cmx
+server_main.cmo : ocsigen_server.cmi ocsigen_parseconfig.cmi \
+    ocsigen_extensions.cmi
+server_main.cmx : ocsigen_server.cmx ocsigen_parseconfig.cmx \
+    ocsigen_extensions.cmx

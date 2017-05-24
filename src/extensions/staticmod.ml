@@ -198,6 +198,31 @@ type options = {
   opt_cache: int option;
 }
 
+let kind dir regexp code dest root_checks =
+  match
+    dir, regexp, code, dest, root_checks
+  with
+  | (None, None, None, _, _) ->
+    Ocsigen_extensions.badconfig
+      "Missing attribute dir, regexp, or code for <static>"
+
+  | (Some d, None, None, None, None) ->
+    Dir (Ocsigen_lib.Url.remove_end_slash d)
+
+  | (None, Some r, code, Some t, rc) ->
+    Regexp { source_regexp = r;
+             dest = t;
+             http_status_filter = code;
+             root_checks = rc;
+           }
+
+  | (None, None, (Some _ as code), Some t, None) ->
+    Regexp { dest = t; http_status_filter = code; root_checks = None;
+             source_regexp = Ocsigen_lib.Netstring_pcre.regexp "^.*$" }
+
+  | _ ->
+    Ocsigen_extensions.badconfig "Wrong attributes for <static>"
+
 let parse_config userconf _
   : Ocsigen_extensions.parse_config_aux
   = fun _ _ _ element ->
@@ -273,34 +298,10 @@ let parse_config userconf _
       ]
     element
   );
-  let kind =
-    match !opt.opt_dir,
-          !opt.opt_regexp,
-          !opt.opt_code,
-          !opt.opt_dest,
-          !opt.opt_root_checks with
-    | (None, None, None, _, _) ->
-      Ocsigen_extensions.badconfig
-        "Missing attribute dir, regexp, or code for <static>"
-
-    | (Some d, None, None, None, None) ->
-      Dir (Ocsigen_lib.Url.remove_end_slash d)
-
-    | (None, Some r, code, Some t, rc) ->
-      Regexp { source_regexp = r;
-               dest = t;
-               http_status_filter = code;
-               root_checks = rc;
-             }
-
-    | (None, None, (Some _ as code), Some t, None) ->
-      Regexp { dest = t; http_status_filter = code; root_checks = None;
-               source_regexp = Ocsigen_lib.Netstring_pcre.regexp "^.*$" }
-
-    | _ ->
-      Ocsigen_extensions.badconfig "Wrong attributes for <static>"
-  in
-  gen ~usermode:userconf ?cache:!opt.opt_cache kind
+  gen ~usermode:userconf ?cache:!opt.opt_cache @@
+  kind
+    !opt.opt_dir !opt.opt_regexp !opt.opt_code
+    !opt.opt_dest !opt.opt_root_checks
 
 let () =
   Ocsigen_extensions.register
@@ -308,8 +309,20 @@ let () =
     ~fun_site:(fun path _ -> parse_config path)
     ()
 
-let () =
-  Ocsigen_extensions.register_without_xml_config
-    (fun cookies r ->
-       gen ~usermode:None (Dir "/home/vasilis/static") r >|= fun response ->
+(* TODO: fix names and types, preprocess as we do for XML *)
+let dir = Ocsigen_extensions.Virtual_host.Config.key ()
+let regexp = Ocsigen_extensions.Virtual_host.Config.key ()
+let opt_code = Ocsigen_extensions.Virtual_host.Config.key ()
+let opt_dest = Ocsigen_extensions.Virtual_host.Config.key ()
+let opt_root_checks = Ocsigen_extensions.Virtual_host.Config.key ()
+
+let register vh =
+  Ocsigen_extensions.Virtual_host.register vh
+    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} cookies r ->
+       let kind =
+         kind
+           (accessor dir) (accessor regexp)
+           (accessor opt_code) (accessor opt_dest) (accessor opt_root_checks)
+       in
+       gen ~usermode:None kind r >|= fun response ->
        response, cookies)

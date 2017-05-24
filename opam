@@ -55,6 +55,7 @@ depends: [
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
   "cohttp" {>= "0.17.0"}
+  "hmap"
 
   # REMOVE AFTER DEBUGGING
   "ppx_deriving"

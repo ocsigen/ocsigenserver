@@ -642,6 +642,83 @@ let register
         | Some f -> f (get_config ()));
        register ?fun_site ?end_init ?exn_handler ?respect_pipeline ())
 
+module Virtual_host = struct
+
+  type 'a config_key = 'a Hmap.key
+
+  type accessor = { accessor : 'a . 'a Hmap.key -> 'a option }
+
+  type t = {
+    vh_list : virtual_hosts ;
+    vh_config_info : config_info ;
+    mutable vh_config_map : Hmap.t ;
+    mutable vh_fun_l : (accessor -> extension2) list ;
+  }
+
+  let l = ref []
+
+  let default_re_string = ".*"
+
+  let default_re = Ocsigen_lib.Netstring_pcre.regexp default_re_string
+
+  let create
+    ?(config_info = default_config_info ())
+    ?host_regexp
+    ?port () =
+    let vh_list =
+      match host_regexp with
+      | Some host_regexp when host_regexp = default_re_string ->
+        [default_re_string, default_re, port]
+      | None ->
+        [default_re_string, default_re, port]
+      | Some host_regexp ->
+        [host_regexp, Ocsigen_lib.Netstring_pcre.regexp host_regexp, port]
+    in
+    let vh = {
+      vh_list ;
+      vh_config_info = config_info ;
+      vh_config_map = Hmap.empty ;
+      vh_fun_l = []
+    } in
+    l := vh :: !l;
+    vh
+
+  let dump () =
+    let f { vh_list ; vh_config_info ; vh_config_map ; vh_fun_l } =
+      vh_list,
+      vh_config_info,
+      List.nth vh_fun_l 0 {accessor = fun k -> Hmap.find k vh_config_map}
+    and l =
+      List.filter
+        (function {vh_fun_l = _ :: _} -> true | _ -> false)
+        !l
+    in
+    set_hosts (List.map f l)
+
+  module Config = struct
+
+    type nonrec accessor = accessor =
+      { accessor : 'a . 'a Hmap.key -> 'a option }
+
+    type 'a key = 'a config_key
+
+    let key () = Hmap.Key.create ()
+
+    let do_ ({vh_config_map} as vh) f =
+      vh.vh_config_map <- f vh_config_map
+
+    let find {vh_config_map} k = Hmap.find k vh_config_map
+
+    let set vh k v = do_ vh (Hmap.add k v)
+
+    let unset vh k = do_ vh (Hmap.rem k)
+
+  end
+
+  let register ({vh_fun_l} as vh) f = vh.vh_fun_l <- f :: vh_fun_l
+
+end
+
 let register_without_xml_config
     ?(config_info = default_config_info ())
     ?(host_regexp = ".*")

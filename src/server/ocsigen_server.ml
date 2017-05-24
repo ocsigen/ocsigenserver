@@ -293,7 +293,11 @@ let start ?config () =
 
       Ocsigen_extensions.start_initialisation ();
 
-      Ocsigen_lib.Option.iter Ocsigen_parseconfig.later_pass s;
+      (match s with
+       | Some s ->
+         Ocsigen_parseconfig.later_pass s
+       | None ->
+         Ocsigen_extensions.Virtual_host.dump ());
 
       Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
       (* As libraries are reloaded each time the config file is read,

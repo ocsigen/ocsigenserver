@@ -61,10 +61,11 @@ rewritemod.cmx : ../server/ocsigen_request.cmx ../baselib/ocsigen_lib.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx
 staticmod.cmo : ../server/ocsigen_response.cmi ../server/ocsigen_request.cmi \
     ../server/ocsigen_local_files.cmi ../baselib/ocsigen_lib.cmi \
-    ../http/ocsigen_header.cmi ../server/ocsigen_extensions.cmi
+    ../http/ocsigen_header.cmi ../server/ocsigen_extensions.cmi staticmod.cmi
 staticmod.cmx : ../server/ocsigen_response.cmx ../server/ocsigen_request.cmx \
     ../server/ocsigen_local_files.cmx ../baselib/ocsigen_lib.cmx \
-    ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx
+    ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx staticmod.cmi
+staticmod.cmi : ../server/ocsigen_extensions.cmi
 userconf.cmo : ../server/ocsigen_request.cmi ../baselib/ocsigen_lib.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi
 userconf.cmx : ../server/ocsigen_request.cmx ../baselib/ocsigen_lib.cmx \

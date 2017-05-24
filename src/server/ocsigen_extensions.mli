@@ -452,6 +452,40 @@ val sslsockets : Lwt_unix.file_descr list ref
 
 val set_we_have_xml_config : unit -> unit
 
+module Virtual_host : sig
+
+  type t
+
+  module Config : sig
+
+    type 'a key
+
+    val key : unit -> 'a key
+
+    val find : t -> 'a key -> 'a option
+
+    val set : t -> 'a key -> 'a -> unit
+
+    val unset : t -> 'a key -> unit
+
+    type accessor = { accessor : 'a . 'a key -> 'a option }
+
+  end
+
+  val create :
+    ?config_info:config_info ->
+    ?host_regexp:string ->
+    ?port:int ->
+    unit -> t
+
+  val register : t -> (Config.accessor -> extension2) -> unit
+
+  (**/**)
+
+  val dump : unit -> unit
+
+end
+
 val register_without_xml_config :
   ?config_info:config_info ->
   ?host_regexp:string ->
