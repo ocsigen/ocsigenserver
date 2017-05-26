@@ -542,6 +542,12 @@ let site_ext ext_of_children charset path : extension = function
   | Req_not_found (err, ri) ->
     Lwt.return (Ext_sub_result (site_ext ext_of_children charset path))
 
+let preprocess_site_path p = Url.(
+  remove_dotdot p
+  |> remove_slash_at_beginning
+  |> remove_slash_at_end
+)
+
 (* Implements only <site> parsing. Uses parse_host to recursively
    parse children of <site>. *)
 let default_parse_config
@@ -553,14 +559,7 @@ let default_parse_config
     (parse_fun : parse_fun) = function
   | Xml.Element ("site", atts, l) ->
     let charset, dir = parse_site_attrs (None, None) atts in
-    let path =
-      prevpath @
-      Url.(
-        split_path dir
-        |> remove_dotdot
-        |> remove_slash_at_beginning
-        |> remove_slash_at_end)
-    in
+    let path = prevpath @ preprocess_site_path (Url.split_path dir) in
     let ext_of_children = make_parse_config path parse_host l in
     site_ext ext_of_children charset path
   | Xml.Element (tag,_,_) ->
@@ -645,11 +644,57 @@ let register
         | Some f -> f (get_config ()));
        register ?fun_site ?end_init ?exn_handler ?respect_pipeline ())
 
+type accessor =
+  { accessor : 'a . 'a Hmap.key -> 'a option }
+
+let compose_with_config m l =
+  compose (List.map (fun f -> f {accessor = fun k -> Hmap.find k m}) l)
+
+module type Hmap_wrapped = sig
+  type t
+  val get : t -> Hmap.t
+  val do_ : t -> (Hmap.t -> Hmap.t) -> unit
+end
+
+module type Config_nested = sig
+
+  type parent_t
+
+  type 'a key
+
+  val key : unit -> 'a key
+
+  val find : parent_t -> 'a key -> 'a option
+
+  val set : parent_t -> 'a key -> 'a -> unit
+
+  val unset : parent_t -> 'a key -> unit
+
+  type accessor = { accessor : 'a . 'a key -> 'a option }
+
+end
+
+module Make_config_nested (W : Hmap_wrapped) = struct
+
+  type nonrec accessor
+    = accessor
+    = { accessor : 'a . 'a Hmap.key -> 'a option }
+
+  type 'a key = 'a Hmap.key
+
+  let key () = Hmap.Key.create ()
+
+  let find w k = Hmap.find k (W.get w)
+
+  let set w k v = W.do_ w (Hmap.add k v)
+
+  let unset w k = W.do_ w (Hmap.rem k)
+
+end
+
 module Virtual_host = struct
 
   type 'a config_key = 'a Hmap.key
-
-  type accessor = { accessor : 'a . 'a Hmap.key -> 'a option }
 
   type t = {
     vh_list : virtual_hosts ;
@@ -690,10 +735,7 @@ module Virtual_host = struct
     let f { vh_list ; vh_config_info ; vh_config_map ; vh_fun_l } =
       vh_list,
       vh_config_info,
-      compose
-        (List.map
-           (fun f -> f {accessor = fun k -> Hmap.find k vh_config_map})
-           vh_fun_l)
+      compose_with_config vh_config_map vh_fun_l
     and l =
       List.filter
         (function {vh_fun_l = _ :: _} -> true | _ -> false)
@@ -701,27 +743,49 @@ module Virtual_host = struct
     in
     set_hosts (List.map f l)
 
-  module Config = struct
-
-    type nonrec accessor = accessor =
-      { accessor : 'a . 'a Hmap.key -> 'a option }
-
-    type 'a key = 'a config_key
-
-    let key () = Hmap.Key.create ()
-
-    let do_ ({vh_config_map} as vh) f =
-      vh.vh_config_map <- f vh_config_map
-
-    let find {vh_config_map} k = Hmap.find k vh_config_map
-
-    let set vh k v = do_ vh (Hmap.add k v)
-
-    let unset vh k = do_ vh (Hmap.rem k)
-
-  end
+  module Config =
+    Make_config_nested (struct
+      type nonrec t = t
+      let get {vh_config_map} = vh_config_map
+      let do_ ({vh_config_map} as vh) f =
+        vh.vh_config_map <- f vh_config_map
+    end)
 
   let register ({vh_fun_l} as vh) f = vh.vh_fun_l <- f :: vh_fun_l
+
+end
+
+module Site = struct
+
+  type t = {
+    s_dir : string list ;
+    s_charset : Ocsigen_charset_mime.charset option ;
+    mutable s_config_map : Hmap.t ;
+    mutable s_fun_l : (accessor -> extension) list ;
+  }
+
+  let create s_dir s_charset = {
+    s_dir = preprocess_site_path s_dir ;
+    s_charset ;
+    s_config_map = Hmap.empty ;
+    s_fun_l = []
+  }
+
+  module Config =
+    Make_config_nested (struct
+      type nonrec t = t
+      let get {s_config_map} = s_config_map
+      let do_ ({s_config_map} as s) f =
+        s.s_config_map <- f s_config_map
+    end)
+
+  let register ({s_fun_l} as s) f = s.s_fun_l <- f :: s_fun_l
+
+  let to_extension
+      ~parent_path
+      {s_dir ; s_charset ; s_fun_l ; s_config_map} =
+    let ext_of_children = compose_with_config s_config_map s_fun_l in
+    site_ext ext_of_children s_charset (parent_path @ s_dir)
 
 end
 
