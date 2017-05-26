@@ -318,11 +318,10 @@ let opt_root_checks = Ocsigen_extensions.Virtual_host.Config.key ()
 
 let register vh =
   Ocsigen_extensions.Virtual_host.register vh
-    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} cookies r ->
+    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} r ->
        let kind =
          kind
            (accessor dir) (accessor regexp)
            (accessor opt_code) (accessor opt_dest) (accessor opt_root_checks)
        in
-       gen ~usermode:None kind r >|= fun response ->
-       response, cookies)
+       gen ~usermode:None kind r)

@@ -168,12 +168,12 @@ type answer =
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
-  | Ext_sub_result of extension2
+  | Ext_sub_result of extension_composite
   (** Used if your extension want to define option that may contain
       other options from other extensions.  In that case, while
       parsing the configuration file, call the parsing function (of
       type [parse_fun]), that will return something of type
-      [extension2]. *)
+      [extension_composite]. *)
   | Ext_found_continue_with of
       (unit -> (Ocsigen_response.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
@@ -187,7 +187,7 @@ and request_state =
   | Req_not_found of (Cohttp.Code.status * request)
   | Req_found of (request * Ocsigen_response.t)
 
-and extension2 =
+and extension_composite =
   Ocsigen_cookies.cookieset ->
   request_state ->
   (answer * Ocsigen_cookies.cookieset) Lwt.t
@@ -206,7 +206,7 @@ type extension = request_state -> answer Lwt.t
     the extension may want to modify the result (filters).
 *)
 
-type parse_fun = Xml.xml list -> extension2
+type parse_fun = Xml.xml list -> extension_composite
 
 (** Type of the functions parsing the content of a <host> tag *)
 type parse_host
@@ -417,9 +417,11 @@ val make_parse_config :
 
 val parse_config_item : parse_config
 
-val set_hosts : (virtual_hosts * config_info * extension2) list -> unit
+val set_hosts :
+  (virtual_hosts * config_info * extension_composite) list -> unit
 
-val get_hosts : unit -> (virtual_hosts * config_info * extension2) list
+val get_hosts :
+  unit -> (virtual_hosts * config_info * extension_composite) list
 
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
@@ -478,17 +480,10 @@ module Virtual_host : sig
     ?port:int ->
     unit -> t
 
-  val register : t -> (Config.accessor -> extension2) -> unit
+  val register : t -> (Config.accessor -> extension) -> unit
 
   (**/**)
 
   val dump : unit -> unit
 
 end
-
-val register_without_xml_config :
-  ?config_info:config_info ->
-  ?host_regexp:string ->
-  ?port:int ->
-  extension2 ->
-  unit
