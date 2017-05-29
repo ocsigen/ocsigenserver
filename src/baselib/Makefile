@@ -7,6 +7,7 @@ PACKAGE  := \
 	findlib \
 	pcre \
 	${LWT_PREEMPTIVE_PACKAGE} \
+	hmap \
 	ipaddr
 
 LIBS     := ${addprefix -package ,${PACKAGE}}

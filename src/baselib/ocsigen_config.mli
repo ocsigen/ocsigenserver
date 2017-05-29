@@ -148,3 +148,17 @@ val get_uploaddir : unit -> string option
 (* Same thing for upload size *)
 val set_maxuploadfilesize : int64 option -> unit
 val get_maxuploadfilesize : unit -> int64 option
+
+module Custom : sig
+
+  type 'a key
+
+  val key : ?preprocess:('a -> 'a) -> unit -> 'a key
+
+  val find : 'a key -> 'a option
+
+  val set : 'a key -> 'a -> unit
+
+  val unset : 'a key -> unit
+
+end

@@ -191,3 +191,28 @@ let display_version () =
   print_string version_number;
   print_newline ();
   exit 0
+
+module Custom = struct
+
+  let m = ref Hmap.empty
+
+  (* TODO : two type variables? *)
+  type 'a key = ('a -> 'a) option * 'a Hmap.key
+
+  let key ?preprocess () = preprocess, Hmap.Key.create ()
+
+  let find (_, k) = Hmap.find k !m
+
+  let set (f, k) v =
+    let v =
+      match f with
+      | Some f ->
+        f v
+      | None ->
+        v
+    in
+    m := Hmap.add k v !m
+
+  let unset (_, k) = m := Hmap.rem k !m
+
+end
