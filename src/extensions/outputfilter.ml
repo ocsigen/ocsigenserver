@@ -20,11 +20,10 @@
 
 (* This module enables rewritting the server output *)
 
-type outputfilter =
-  | Rewrite_header of
-      (Ocsigen_header.Name.t * Pcre.regexp * string)
-  | Add_header of
-      (Ocsigen_header.Name.t * string * bool option)
+type header_filter = [
+  | `Rewrite of (Ocsigen_header.Name.t * Pcre.regexp * string)
+  | `Add of (Ocsigen_header.Name.t * string * bool option)
+]
 
 let gen filter = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
@@ -32,7 +31,7 @@ let gen filter = function
   | Ocsigen_extensions.Req_found (ri, res) ->
     Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
       Lwt.return @@ match filter with
-      | Rewrite_header (header, regexp, dest) ->
+      | `Rewrite (header, regexp, dest) ->
         (try
            let l =
              List.map
@@ -42,7 +41,7 @@ let gen filter = function
            Ocsigen_response.add_header_multi a header l
          with Not_found ->
            res)
-      | Add_header (header, dest, replace) ->
+      | `Add (header, dest, replace) ->
         match replace with
         | None ->
           (match Ocsigen_response.header res header with
@@ -127,9 +126,9 @@ let parse_config config_elem =
           "Wrong attributes for <outputfilter/>: attributes regexp and \
            replace can't be set simultaneously"
       | (Some h, Some r, Some d, None) ->
-        gen (Rewrite_header (Ocsigen_header.Name.of_string h, r, d))
+        gen (`Rewrite (Ocsigen_header.Name.of_string h, r, d))
       | (Some h, None, Some d, rep) ->
-        gen (Add_header (Ocsigen_header.Name.of_string h, d, rep))
+        gen (`Add (Ocsigen_header.Name.of_string h, d, rep))
       | _ ->
         Ocsigen_extensions.badconfig
           "Wrong attributes for <outputfilter header=... dest=... \
@@ -142,3 +141,16 @@ let () =
     ~name:"outputfilter"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
+
+let mode = Ocsigen_extensions.Virtual_host.Config.key ()
+
+let register vh =
+  Ocsigen_extensions.Virtual_host.register vh
+    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} ->
+       match accessor mode with
+       | Some (`Code c)  ->
+         gen_code c
+       | Some (#header_filter as f) ->
+         gen f
+       | None ->
+         failwith "Outputfilter.mode not set")

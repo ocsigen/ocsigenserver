@@ -55,7 +55,7 @@ PLUGINS_BIN  :=
 
 PLUGINS_INTF := extensions/authbasic.cmi extensions/accesscontrol.cmi \
                 extensions/ocsipersist.cmi extensions/staticmod.cmi \
-                extensions/deflatemod.cmi
+                extensions/deflatemod.cmi extensions/outputfilter.cmi
 
 PLUGINS_IMPL := extensions/accesscontrol.cmo extensions/authbasic.cmo	\
              extensions/cors.cmo extensions/outputfilter.cmo		\

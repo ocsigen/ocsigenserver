@@ -13,7 +13,7 @@ authbasic.cmo : ../server/ocsigen_request.cmi ../http/ocsigen_header.cmi \
 authbasic.cmx : ../server/ocsigen_request.cmx ../http/ocsigen_header.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
     ../server/ocsigen_cohttp.cmx authbasic.cmi
-authbasic.cmi :
+authbasic.cmi : ../server/ocsigen_extensions.cmi
 cgimod.cmo : ../baselib/ocsigen_stream.cmi ../baselib/ocsigen_lib.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi \
     ../baselib/ocsigen_config.cmi
@@ -28,12 +28,14 @@ cors.cmx : ../server/ocsigen_response.cmx ../server/ocsigen_request.cmx \
     ../server/ocsigen_extensions.cmx
 deflatemod.cmo : ../baselib/ocsigen_stream.cmi \
     ../server/ocsigen_response.cmi ../server/ocsigen_request.cmi \
-    ../http/ocsigen_header.cmi ../server/ocsigen_extensions.cmi \
-    ../baselib/ocsigen_config.cmi deflatemod.cmi
+    ../baselib/ocsigen_lib.cmi ../http/ocsigen_header.cmi \
+    ../server/ocsigen_extensions.cmi ../baselib/ocsigen_config.cmi \
+    deflatemod.cmi
 deflatemod.cmx : ../baselib/ocsigen_stream.cmx \
     ../server/ocsigen_response.cmx ../server/ocsigen_request.cmx \
-    ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx \
-    ../baselib/ocsigen_config.cmx deflatemod.cmi
+    ../baselib/ocsigen_lib.cmx ../http/ocsigen_header.cmx \
+    ../server/ocsigen_extensions.cmx ../baselib/ocsigen_config.cmx \
+    deflatemod.cmi
 deflatemod.cmi : ../server/ocsigen_extensions.cmi \
     ../baselib/ocsigen_config.cmi
 extendconfiguration.cmo : ../server/ocsigen_parseconfig.cmi \
@@ -46,9 +48,13 @@ extendconfiguration.cmx : ../server/ocsigen_parseconfig.cmx \
     ../http/ocsigen_charset_mime.cmx
 ocsipersist.cmi :
 outputfilter.cmo : ../server/ocsigen_response.cmi ../baselib/ocsigen_lib.cmi \
-    ../http/ocsigen_header.cmi ../server/ocsigen_extensions.cmi
+    ../http/ocsigen_header.cmi ../server/ocsigen_extensions.cmi \
+    outputfilter.cmi
 outputfilter.cmx : ../server/ocsigen_response.cmx ../baselib/ocsigen_lib.cmx \
-    ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx
+    ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx \
+    outputfilter.cmi
+outputfilter.cmi : ../http/ocsigen_header.cmi \
+    ../server/ocsigen_extensions.cmi
 redirectmod.cmo : ../server/ocsigen_response.cmi ../baselib/ocsigen_lib.cmi \
     ../server/ocsigen_extensions.cmi
 redirectmod.cmx : ../server/ocsigen_response.cmx ../baselib/ocsigen_lib.cmx \
