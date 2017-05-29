@@ -37,6 +37,10 @@ type 'a t =
     mutable in_use : bool;
     mutable finalizer : outcome -> unit Lwt.t }
 
+let net_buffer_size = ref 8192
+
+let set_net_buffer_size i = net_buffer_size := i
+
 let empty follow =
   match follow with
     None    -> Lwt.return (Finished None)
@@ -116,28 +120,11 @@ let string_of_stream m s =
   in
   aux 0 s >|= Buffer.contents
 
-(*
-(*XXX Quadratic!!! *)
-let string_of_streams =
-  let rec aux l = function
-    | Finished None -> return ""
-    | Finished (Some s) -> next s >>= fun r -> aux l r
-    | Cont (s, f) ->
-        let l2 = l+String.length s in
-        if l2 > Ocsigen_config.get_netbuffersize ()
-        then Lwt.fail String_too_large
-        else
-          next f >>= fun r ->
-          aux l2 r >>= fun r ->
-          return (s^r)
-  in aux 0
-*)
-
 let enlarge_stream = function
   | Finished a -> Lwt.fail Stream_too_small
   | Cont (s, f) ->
     let long = String.length s in
-    let max = Ocsigen_config.get_netbuffersize () in
+    let max = !net_buffer_size in
     if long >= max
     then Lwt.fail Input_is_too_large
     else

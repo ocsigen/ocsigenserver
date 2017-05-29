@@ -70,7 +70,6 @@ val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
 (* val set_keepalive_timeout : int -> unit
    val set_keepopen_timeout : int -> unit *)
-val set_netbuffersize : int -> unit
 val set_filebuffersize : int -> unit
 val set_maxrequestbodysize : int64 option -> unit
 val set_maxrequestbodysizeinmemory : int -> unit
@@ -109,7 +108,6 @@ val get_client_timeout : unit -> int
 val get_server_timeout : unit -> int
 (*val get_keepalive_timeout : unit -> int
   val get_keepopen_timeout : unit -> int*)
-val get_netbuffersize : unit -> int
 val get_filebuffersize : unit -> int
 val get_maxrequestbodysize : unit -> int64 option
 val get_maxrequestbodysizeinmemory : unit -> int

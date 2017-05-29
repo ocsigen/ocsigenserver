@@ -24,8 +24,6 @@ FILES := ocsigen_lib_base.ml       \
 	 ocsigen_lib.ml            \
 	 ocsigen_cache.ml          \
          ocsigen_config_static.ml  \
-         ocsigen_config.ml         \
-	 ocsigen_messages.ml       \
 	 dynlink_wrapper.ml        \
          ocsigen_loader.ml         \
 	 ocsigen_stream.ml         \

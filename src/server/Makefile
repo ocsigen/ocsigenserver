@@ -13,14 +13,10 @@ all: byte opt
 
 ### Common files ###
 
-FILES := ocsigen_command.ml     \
-	 ocsigen_multipart.ml	\
-         ocsigen_request.ml	\
-         ocsigen_response.ml	\
-         ocsigen_cohttp.ml	\
-         ocsigen_extensions.ml	\
-         ocsigen_parseconfig.ml	\
-         ocsigen_local_files.ml	\
+FILES := ocsigen_config.ml ocsigen_messages.ml ocsigen_command.ml	\
+         ocsigen_multipart.ml ocsigen_request.ml ocsigen_response.ml	\
+         ocsigen_cohttp.ml ocsigen_extensions.ml			\
+         ocsigen_parseconfig.ml ocsigen_local_files.ml			\
          ocsigen_server.ml
 
 byte:: ${PROJECTNAME}.cma

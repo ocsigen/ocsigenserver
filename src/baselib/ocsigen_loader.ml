@@ -30,7 +30,7 @@ let section = Lwt_log.Section.make "ocsigen:dynlink"
 (* Translate .cmo/.cma extensions to .cmxs in native mode, and .cmxs
    to .cmo (.cma if the file exists) in bytecode mode. *)
 let translate =
-  if Ocsigen_config.is_native then
+  if Ocsigen_config_static.is_native then
     fun filename ->
       if Filename.check_suffix filename ".cmo" ||
          Filename.check_suffix filename ".cma" then
@@ -166,10 +166,17 @@ let findfiles =
   let cmx = Pcre.regexp ~flags:[`MULTILINE; `CASELESS] "\\.cmx($| |a)" in
   fun package ->
     try
-      let preds = [(if Ocsigen_config.is_native then "native" else "byte"); "plugin"; "mt"] in
-      let deps = Findlib.package_deep_ancestors preds [package] in
-      let deps = List.filter
-        (fun a -> not (String.Set.mem a Ocsigen_config.builtin_packages)) deps in
+      let preds = [
+        (if Ocsigen_config_static.is_native then "native" else "byte");
+        "plugin";
+        "mt"
+      ] in
+      let deps =
+        List.filter
+          (fun a -> not @@
+            String.Set.mem a Ocsigen_config_static.builtin_packages)
+          (Findlib.package_deep_ancestors preds [package])
+      in
       Lwt_log.ign_info_f ~section
         "Dependencies of %s: %s" package (String.concat ", " deps);
       let rec aux = function

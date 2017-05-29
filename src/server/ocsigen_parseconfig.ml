@@ -499,7 +499,8 @@ and later_pass = function
     set_server_timeout (int_of_string st (parse_string_tag st p));
     later_pass ll
   | Element ("netbuffersize" as st, [], p) :: ll ->
-    set_netbuffersize (int_of_string st (parse_string_tag st p));
+    Ocsigen_stream.set_net_buffer_size
+      (int_of_string st (parse_string_tag st p));
     later_pass ll
   | Element ("filebuffersize" as st, [], p) :: ll ->
     set_filebuffersize (int_of_string st (parse_string_tag st p));

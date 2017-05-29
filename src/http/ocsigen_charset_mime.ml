@@ -165,7 +165,7 @@ let default_mime_assoc () =
   let parsed = ref None in
   match !parsed with
     | None ->
-        let file = Ocsigen_config.get_mimefile () in
+        let file = !Ocsigen_config_static.mimefile in
         Lwt_log.ign_info_f ~section "Loading mime types in '%s'" file;
         let map = parse_mime_types file in
         parsed := Some map;

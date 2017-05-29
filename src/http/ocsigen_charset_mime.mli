@@ -64,7 +64,7 @@ val default_mime_type : mime_type
 type mime_assoc
 
 (** Default values, obtained by reading the file specified by
-    [Ocsigen_config.get_mimefile] *)
+    [Ocsigen_config_static.get_mimefile] *)
 val default_mime_assoc : unit -> mime_assoc
 
 

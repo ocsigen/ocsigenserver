@@ -7,25 +7,19 @@ dynlink_wrapper.nonatdynlink.cmx :
 ocsigen_cache.cmo : ocsigen_cache.cmi
 ocsigen_cache.cmx : ocsigen_cache.cmi
 ocsigen_cache.cmi :
-ocsigen_config.cmo : ocsigen_config_static.cmo ocsigen_config.cmi
-ocsigen_config.cmx : ocsigen_config_static.cmx ocsigen_config.cmi
-ocsigen_config.cmi : ocsigen_lib.cmi
 ocsigen_config_static.cmo : ocsigen_lib.cmi
 ocsigen_config_static.cmx : ocsigen_lib.cmx
 ocsigen_lib.cmo : ocsigen_lib_base.cmi ocsigen_lib.cmi
 ocsigen_lib.cmx : ocsigen_lib_base.cmx ocsigen_lib.cmi
 ocsigen_lib_base.cmo : ocsigen_lib_base.cmi
 ocsigen_lib_base.cmx : ocsigen_lib_base.cmi
-ocsigen_loader.cmo : ocsigen_lib.cmi ocsigen_config.cmi dynlink_wrapper.cmo \
-    ocsigen_loader.cmi
-ocsigen_loader.cmx : ocsigen_lib.cmx ocsigen_config.cmx dynlink_wrapper.cmx \
-    ocsigen_loader.cmi
+ocsigen_loader.cmo : ocsigen_lib.cmi ocsigen_config_static.cmo \
+    dynlink_wrapper.cmo ocsigen_loader.cmi
+ocsigen_loader.cmx : ocsigen_lib.cmx ocsigen_config_static.cmx \
+    dynlink_wrapper.cmx ocsigen_loader.cmi
 ocsigen_loader.cmi :
-ocsigen_messages.cmo : ocsigen_config.cmi ocsigen_messages.cmi
-ocsigen_messages.cmx : ocsigen_config.cmx ocsigen_messages.cmi
-ocsigen_messages.cmi :
-ocsigen_stream.cmo : ocsigen_lib.cmi ocsigen_config.cmi ocsigen_stream.cmi
-ocsigen_stream.cmx : ocsigen_lib.cmx ocsigen_config.cmx ocsigen_stream.cmi
+ocsigen_stream.cmo : ocsigen_lib.cmi ocsigen_stream.cmi
+ocsigen_stream.cmx : ocsigen_lib.cmx ocsigen_stream.cmi
 ocsigen_stream.cmi :
 polytables.cmo : polytables.cmi
 polytables.cmx : polytables.cmi

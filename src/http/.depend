@@ -1,7 +1,7 @@
 ocsigen_charset_mime.cmo : ../baselib/ocsigen_lib.cmi \
-    ../baselib/ocsigen_config.cmi ocsigen_charset_mime.cmi
+    ../baselib/ocsigen_config_static.cmo ocsigen_charset_mime.cmi
 ocsigen_charset_mime.cmx : ../baselib/ocsigen_lib.cmx \
-    ../baselib/ocsigen_config.cmx ocsigen_charset_mime.cmi
+    ../baselib/ocsigen_config_static.cmx ocsigen_charset_mime.cmi
 ocsigen_charset_mime.cmi :
 ocsigen_cookies.cmo : ocsigen_cookies.cmi
 ocsigen_cookies.cmx : ocsigen_cookies.cmi
