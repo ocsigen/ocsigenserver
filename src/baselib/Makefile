@@ -25,7 +25,6 @@ FILES := ocsigen_lib_base.ml       \
 	 ocsigen_cache.ml          \
          ocsigen_config_static.ml  \
          ocsigen_config.ml         \
-	 ocsigen_commandline.ml    \
 	 ocsigen_messages.ml       \
 	 dynlink_wrapper.ml        \
          ocsigen_loader.ml         \
@@ -93,26 +92,6 @@ dynlink_wrapper.ml:
 dynlink_wrapper.cmo dynlink_wrapper.cmx: dynlink_wrapper.nonatdynlink.ml
 endif
 
-### Command line ###
-
-byte:: parsecommandline.cma donotparsecommandline.cma
-opt:: parsecommandline.cmxa donotparsecommandline.cmxa
-ifeq "$(NATDYNLINK)" "YES"
-opt:: parsecommandline.cmxs donotparsecommandline.cmxs
-endif
-
-parsecommandline.cma: commandline/ocsigen_getcommandline.cmo
-	$(OCAMLC) -a -o $@ $^
-
-donotparsecommandline.cma: nocommandline/ocsigen_getcommandline.cmo
-	$(OCAMLC) -a -o $@ $^
-
-parsecommandline.cmxa: commandline/ocsigen_getcommandline.cmx
-	$(OCAMLOPT) -a -o $@ $^
-
-donotparsecommandline.cmxa: nocommandline/ocsigen_getcommandline.cmx
-	$(OCAMLOPT) -a -o $@ $^
-
 ### Polytables ###
 
 byte:: polytables.cma
@@ -146,8 +125,6 @@ ${INTF_NOP4:.mli=.cmi}: \
 clean:
 	-rm -f *.cm* *.o *.a *.annot
 	-rm -f ${PREDEP}
-	-cd commandline; rm -f *.cm* *.annot *.o
-	-cd nocommandline; rm -f *.cm* *.annot *.o
 
 distclean: clean
 	-rm -f *~ \#* .\#*

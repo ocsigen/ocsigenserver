@@ -64,18 +64,16 @@ ocsigen_response.cmi : ../http/ocsigen_header.cmi \
     ../http/ocsigen_cookies.cmi
 ocsigen_server.cmo : ocsigen_parseconfig.cmi ../baselib/ocsigen_messages.cmi \
     ../baselib/ocsigen_loader.cmi ../baselib/ocsigen_lib.cmi \
-    ocsigen_extensions.cmi ../baselib/ocsigen_config.cmi \
-    ../baselib/ocsigen_commandline.cmo ocsigen_command.cmi ocsigen_cohttp.cmi \
-    ../baselib/ocsigen_cache.cmi ../baselib/dynlink_wrapper.cmo \
-    ocsigen_server.cmi
+    ocsigen_extensions.cmi ../baselib/ocsigen_config.cmi ocsigen_command.cmi \
+    ocsigen_cohttp.cmi ../baselib/ocsigen_cache.cmi \
+    ../baselib/dynlink_wrapper.cmo ocsigen_server.cmi
 ocsigen_server.cmx : ocsigen_parseconfig.cmx ../baselib/ocsigen_messages.cmx \
     ../baselib/ocsigen_loader.cmx ../baselib/ocsigen_lib.cmx \
-    ocsigen_extensions.cmx ../baselib/ocsigen_config.cmx \
-    ../baselib/ocsigen_commandline.cmx ocsigen_command.cmx ocsigen_cohttp.cmx \
-    ../baselib/ocsigen_cache.cmx ../baselib/dynlink_wrapper.cmx \
-    ocsigen_server.cmi
+    ocsigen_extensions.cmx ../baselib/ocsigen_config.cmx ocsigen_command.cmx \
+    ocsigen_cohttp.cmx ../baselib/ocsigen_cache.cmx \
+    ../baselib/dynlink_wrapper.cmx ocsigen_server.cmi
 ocsigen_server.cmi :
 server_main.cmo : ocsigen_server.cmi ocsigen_parseconfig.cmi \
-    ocsigen_extensions.cmi
+    ocsigen_extensions.cmi ../baselib/ocsigen_config.cmi
 server_main.cmx : ocsigen_server.cmx ocsigen_parseconfig.cmx \
-    ocsigen_extensions.cmx
+    ocsigen_extensions.cmx ../baselib/ocsigen_config.cmx

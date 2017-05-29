@@ -1,6 +1,6 @@
 description = "Ocsigen server library"
 version = "dev"
-requires = "%%NAME%%.commandline,%%NAME%%.polytables,%%NAME%%.http,%%NAME%%.baselib"
+requires = "%%NAME%%.polytables,%%NAME%%.http,%%NAME%%.baselib"
 archive(byte) = "ocsigenserver.cma"
 archive(native) = "ocsigenserver.cmxa"
 
@@ -10,15 +10,6 @@ package "polytables" (
   description = "Polymorphic tables"
   archive(byte) = "polytables.cmo"
   archive(native) = "polytables.cmx"
-)
-
-package "commandline" (
-  description = "Read the commandline during server initialization"
-  version = "[distributed with Ocsigen server]"
-  archive(byte) = "parsecommandline.cma"
-  archive(native) = "parsecommandline.cmxa"
-  archive(byte,nocommandline) = "donotparsecommandline.cma"
-  archive(native,nocommandline) = "donotparsecommandline.cmxa"
 )
 
 package "baselib" (

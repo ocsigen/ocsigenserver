@@ -22,14 +22,12 @@ INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	server/ocsigen_local_files.cmi     \
 	server/ocsigen_server.cmi
 
-INTF := ${INTF_BASE} baselib/ocsigen_getcommandline.cmi
+INTF := ${INTF_BASE}
 
 IMPL := baselib/ocsigen_lib_base.cmo	   \
         baselib/ocsigen_config_static.cmo  \
         baselib/ocsigen_config.cmo  \
         baselib/baselib.cma		   \
-	baselib/parsecommandline.cma       \
-	baselib/donotparsecommandline.cma  \
         baselib/polytables.cmo	           \
 	\
         http/ocsigen_cookies.cmo           \
@@ -46,9 +44,7 @@ NATIMPL := $(patsubst %.cmo,%.cmx, $(filter %.cmo,${IMPL})) \
 	   $(patsubst %.cma,%.a,   $(filter %.cma,${IMPL})) \
 
 ifeq "$(NATDYNLINK)" "YES"
-NATIMPL += baselib/parsecommandline.cmxs      \
-           baselib/donotparsecommandline.cmxs \
-           baselib/polytables.cmxs
+NATIMPL += baselib/polytables.cmxs
 endif
 
 PLUGINS_BIN  :=

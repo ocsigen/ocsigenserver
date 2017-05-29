@@ -36,14 +36,7 @@ ${PROJECTNAME}.cmxa: $(FILES:.ml=.cmx)
 byte:: ${PROJECTNAME}
 opt:: ${PROJECTNAME}.opt
 
-ifdef DONOTPARSECOMMANDLINE
-PARSECOMMANDLINE := ../baselib/donotparsecommandline.cma
-else
-PARSECOMMANDLINE := ../baselib/parsecommandline.cma
-endif
-
-SERVERLIBS := ${PARSECOMMANDLINE}       \
-              ../baselib/baselib.cma    \
+SERVERLIBS := ../baselib/baselib.cma    \
 	      ../baselib/polytables.cma \
 	      ../http/http.cma          \
 	      ${PROJECTNAME}.cma         \
