@@ -28,10 +28,14 @@ cors.cmx : ../server/ocsigen_response.cmx ../server/ocsigen_request.cmx \
     ../server/ocsigen_extensions.cmx
 deflatemod.cmo : ../baselib/ocsigen_stream.cmi \
     ../server/ocsigen_response.cmi ../server/ocsigen_request.cmi \
-    ../http/ocsigen_header.cmi ../server/ocsigen_extensions.cmi
+    ../http/ocsigen_header.cmi ../server/ocsigen_extensions.cmi \
+    ../baselib/ocsigen_config.cmi deflatemod.cmi
 deflatemod.cmx : ../baselib/ocsigen_stream.cmx \
     ../server/ocsigen_response.cmx ../server/ocsigen_request.cmx \
-    ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx
+    ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx \
+    ../baselib/ocsigen_config.cmx deflatemod.cmi
+deflatemod.cmi : ../server/ocsigen_extensions.cmi \
+    ../baselib/ocsigen_config.cmi
 extendconfiguration.cmo : ../server/ocsigen_parseconfig.cmi \
     ../baselib/ocsigen_lib.cmi ../server/ocsigen_extensions.cmi \
     ../http/ocsigen_cookies.cmi ../baselib/ocsigen_config.cmi \

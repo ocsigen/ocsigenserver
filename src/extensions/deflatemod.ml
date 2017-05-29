@@ -25,32 +25,35 @@ open Lwt.Infix
 let section = Lwt_log.Section.make "ocsigen:ext:deflate"
 
 (* Content-type *)
-type filter =
-  | Type of string option * string option
-  | Extension of string
+type filter = [
+  | `Type of string option * string option
+  | `Extension of string
+]
 
-type compress_choice =
-  | All_but of filter list
-  | Compress_only of filter list
+type mode = [
+  | `All_but of filter list
+  | `Only of filter list
+]
 
 let should_compress (t, t') url choice_list =
   let check = function
-    | Type (None, None) -> true
-    | Type (None, Some x') -> x' = t'
-    | Type (Some x, None) -> x = t
-    | Type (Some x, Some x') -> x = t && x' = t'
-    | Extension suff -> Filename.check_suffix url suff
+    | `Type (None, None) -> true
+    | `Type (None, Some x') -> x' = t'
+    | `Type (Some x, None) -> x = t
+    | `Type (Some x, Some x') -> x = t && x' = t'
+    | `Extension suff -> Filename.check_suffix url suff
   in
   match choice_list with
-  | Compress_only l -> List.exists check l
-  | All_but l -> List.for_all (fun c -> not (check c)) l
+  | `Only l -> List.exists check l
+  | `All_but l -> List.for_all (fun c -> not (check c)) l
 
-(* Compression *)
+let compress_level =
+  let preprocess i = if i >= 0 && i <= 9 then i else 6 in
+  Ocsigen_config.Custom.key ~preprocess ()
 
-let buffer_size = ref 8192
-
-(*  0 = no compression ; 1 = best speed ; 9 = best compression *)
-let compress_level = ref 6
+let buffer_size =
+  let preprocess s = if s > 0 then s else 8192 in
+  Ocsigen_config.Custom.key ~preprocess ()
 
 (* Minimal header, by X. Leroy *)
 let gzip_header_length = 10
@@ -164,7 +167,12 @@ and next_cont oz stream =
 
 (* deflate param : true = deflate ; false = gzip (no header in this case) *)
 let compress deflate stream =
-  let zstream = Zlib.deflate_init !compress_level deflate in
+  let zstream =
+    Zlib.deflate_init
+      (Ocsigen_lib.Option.get' 6
+         (Ocsigen_config.Custom.find compress_level))
+      deflate
+  in
   let finalize status =
     Ocsigen_stream.finalize stream status >>= fun e ->
     (try
@@ -174,10 +182,14 @@ let compress deflate stream =
        Zlib.Error _ -> ());
     Lwt.return (Lwt_log.ign_info ~section "Zlib stream closed") in
   let oz =
+    let buffer_size =
+      Ocsigen_lib.Option.get' 8192
+        (Ocsigen_config.Custom.find buffer_size)
+    in
     { stream = zstream ;
-      buf = Bytes.create !buffer_size;
+      buf = Bytes.create buffer_size ;
       pos = 0;
-      avail = !buffer_size;
+      avail = buffer_size ;
       size = 0l; crc = 0l; add_trailer = not deflate
     } in
   let new_stream () = next_cont oz (Ocsigen_stream.get stream) in
@@ -188,11 +200,7 @@ let compress deflate stream =
     Ocsigen_stream.make
       ~finalize (fun () -> Ocsigen_stream.cont gzip_header new_stream)
 
-
-(*****************************************************************************)
-(** The filter function *)
 (* We implement Content-Encoding, not Transfer-Encoding *)
-
 type encoding = Deflate | Gzip | Id | Star | Not_acceptable
 
 let qvalue = function Some x -> x |None -> 1.0
@@ -313,44 +321,34 @@ let filter choice_list = function
         (Ocsigen_extensions.Ext_stop_all
            (Ocsigen_response.cookies res, `Not_acceptable))
 
-
-(*****************************************************************************)
-
 let rec parse_global_config = function
   | [] -> ()
-  | (Xml.Element ("compress", [("level", l)], []))::ll ->
-    let l = try int_of_string l
-      with Failure _ -> raise (Ocsigen_extensions.Error_in_config_file
-                                 "Compress level should be an integer between 0 and 9") in
-    compress_level := if (l <= 9 && l >= 0) then l else 6 ;
+  | Xml.Element ("compress", ["level", i], []) :: ll ->
+    let i =
+      try
+        int_of_string i
+      with Failure _ ->
+        raise (Ocsigen_extensions.Error_in_config_file
+                 "Compress level should be an integer between 0 and 9")
+    in
+    Ocsigen_config.Custom.set compress_level i;
     parse_global_config ll
-  | (Xml.Element ("buffer", [("size", s)], []))::ll ->
-    let s = (try int_of_string s
-             with Failure _ ->
-               raise (Ocsigen_extensions.Error_in_config_file
-                        "Buffer size should be a positive integer")) in
-    buffer_size := if s > 0 then s else 8192 ;
+  | Xml.Element ("buffer", ["size", s], []) :: ll ->
+    let s =
+      try
+        int_of_string s
+      with Failure _ ->
+        raise (Ocsigen_extensions.Error_in_config_file
+                 "Buffer size should be a positive integer")
+    in
+    Ocsigen_config.Custom.set buffer_size s;
     parse_global_config ll
-  (* TODO: Pas de filtre global pour l'instant
-   * le nom de balise contenttype est mauvais, au passage
-     | (Element ("contenttype", [("compress", b)], choices))::ll ->
-       let l = (try parse_filter choices
-               with Not_found -> raise (Error_in_config_file
-                    "Can't parse mime-type content")) in
-       (match b with
-       |"only" -> choice_list := Compress_only l
-       |"allbut" -> choice_list := All_but l
-       | _ ->  raise (Error_in_config_file
-       "Attribute \"compress\" should be \"allbut\" or \"only\""));
-       parse_global_config ll
-  *)
-  | _ -> raise (Ocsigen_extensions.Error_in_config_file
-                  "Unexpected content inside deflatemod config")
-
-(*****************************************************************************)
+  | _ ->
+    raise (Ocsigen_extensions.Error_in_config_file
+             "Unexpected content inside deflatemod config")
 
 let parse_config config_elem =
-  let mode = ref (Compress_only []) in
+  let mode = ref `Only in
   let pages = ref [] in
   Ocsigen_extensions.(
     Configuration.process_element
@@ -364,8 +362,8 @@ let parse_config config_elem =
               ~name:"compress"
               ~obligatory:true
               (function
-                | "only" -> mode := Compress_only []
-                | "allbut" -> mode := All_but []
+                | "only" -> mode := `Only
+                | "allbut" -> mode := `All_but
                 | _ ->
                   badconfig
                     "Attribute 'compress' should be 'allbut' or 'only'"
@@ -376,11 +374,11 @@ let parse_config config_elem =
               ~name:"type"
               ~pcdata:(fun s ->
                 let (a, b) = Ocsigen_header.Mime_type.parse s in
-                pages := Type (a, b) :: !pages) ();
+                pages := `Type (a, b) :: !pages) ();
             Configuration.element
               ~name:"extension"
               ~pcdata:(fun s ->
-                pages := Extension s :: !pages) ();
+                pages := `Extension s :: !pages) ();
 
           ]
           ()]
@@ -389,18 +387,25 @@ let parse_config config_elem =
   match !pages with
   | [] ->
     Ocsigen_extensions.badconfig
-      "Unexpected element inside contenttype (should be <type> or <extension>)"
+      "Unexpected element inside contenttype \
+       (should be <type> or <extension>)"
   | l ->
-    let mode = match !mode with
-      | Compress_only __ -> Compress_only l
-      | All_but _ -> All_but l
-    in filter mode
+    filter (match !mode with `Only -> `Only l | `All_but -> `All_but l)
 
-(*****************************************************************************)
-(** Registration of the extension *)
 let () =
   Ocsigen_extensions.register
     ~name:"deflatemod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ~init_fun:parse_global_config
     ()
+
+let mode = Ocsigen_extensions.Virtual_host.Config.key ()
+
+let register vh =
+  Ocsigen_extensions.Virtual_host.register vh
+    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} ->
+       match accessor mode with
+       | Some mode ->
+         filter mode
+       | None ->
+         failwith "Deflatemod.mode not set")
