@@ -9,6 +9,6 @@ type filter = [
 
 val mode :
   [`All_but of filter list | `Only of filter list]
-    Ocsigen_extensions.Virtual_host.Config.key
+    Ocsigen_server.Vhost.Config.key
 
-val register : Ocsigen_extensions.Virtual_host.t -> unit
+val register : Ocsigen_server.Vhost.t -> unit

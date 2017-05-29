@@ -410,12 +410,21 @@ val find_redirection :
   string
 
 (**/**)
-(**/**)
+
+val preprocess_site_path : Ocsigen_lib.Url.path -> Ocsigen_lib.Url.path
+
+val compose : extension list -> extension_composite
 
 val make_parse_config :
   Ocsigen_lib.Url.path -> parse_config_aux -> parse_fun
 
 val parse_config_item : parse_config
+
+val site_ext :
+  extension_composite ->
+  Ocsigen_charset_mime.charset option ->
+  Ocsigen_lib.Url.path ->
+  extension
 
 val set_hosts :
   (virtual_hosts * config_info * extension_composite) list -> unit
@@ -453,57 +462,3 @@ val sockets : Lwt_unix.file_descr list ref
 val sslsockets : Lwt_unix.file_descr list ref
 
 val set_we_have_xml_config : unit -> unit
-
-module type Config_nested = sig
-
-  type parent_t
-
-  type 'a key
-
-  val key : unit -> 'a key
-
-  val find : parent_t -> 'a key -> 'a option
-
-  val set : parent_t -> 'a key -> 'a -> unit
-
-  val unset : parent_t -> 'a key -> unit
-
-  type accessor = { accessor : 'a . 'a key -> 'a option }
-
-end
-
-module Virtual_host : sig
-
-  type t
-
-  val create :
-    ?config_info:config_info ->
-    ?host_regexp:string ->
-    ?port:int ->
-    unit -> t
-
-  module Config : Config_nested with type parent_t := t
-
-  val register : t -> (Config.accessor -> extension) -> unit
-
-  (**/**)
-
-  val dump : unit -> unit
-
-end
-
-module Site : sig
-
-  type t
-
-  val create : string list -> Ocsigen_charset_mime.charset option -> t
-
-  module Config : Config_nested
-    with type parent_t := t
-     and type 'a key = 'a Virtual_host.Config.key
-
-  val register : t -> (Config.accessor -> extension) -> unit
-
-  val to_extension : parent_path:string list -> t -> extension
-
-end

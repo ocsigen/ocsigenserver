@@ -399,11 +399,11 @@ let () =
     ~init_fun:parse_global_config
     ()
 
-let mode = Ocsigen_extensions.Virtual_host.Config.key ()
+let mode = Ocsigen_server.Vhost.Config.key ()
 
 let register vh =
-  Ocsigen_extensions.Virtual_host.register vh
-    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} ->
+  Ocsigen_server.Vhost.register vh
+    (fun {Ocsigen_server.Vhost.Config.accessor} ->
        match accessor mode with
        | Some mode ->
          filter mode

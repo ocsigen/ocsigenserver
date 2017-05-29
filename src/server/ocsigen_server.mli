@@ -25,3 +25,62 @@ val reload : ?file : string -> unit -> unit
 
 (** Start the server. Never returns. *)
 val start : ?config : Xml.xml list list -> unit -> unit
+
+module type Config_nested = sig
+
+  type parent_t
+
+  type 'a key
+
+  val key : unit -> 'a key
+
+  val find : parent_t -> 'a key -> 'a option
+
+  val set : parent_t -> 'a key -> 'a -> unit
+
+  val unset : parent_t -> 'a key -> unit
+
+  type accessor = { accessor : 'a . 'a key -> 'a option }
+
+end
+
+module Vhost : sig
+
+  type t
+
+  val create :
+    ?config_info:Ocsigen_extensions.config_info ->
+    ?host_regexp:string ->
+    ?port:int ->
+    unit -> t
+
+  module Config : Config_nested with type parent_t := t
+
+  val register :
+    t ->
+    (Config.accessor -> Ocsigen_extensions.extension) ->
+    unit
+
+end
+
+module Site : sig
+
+  type t
+
+  val create : string list -> Ocsigen_charset_mime.charset option -> t
+
+  module Config : Config_nested
+    with type parent_t := t
+     and type 'a key = 'a Vhost.Config.key
+
+  val register :
+    t ->
+    (Config.accessor -> Ocsigen_extensions.extension) ->
+    unit
+
+  val to_extension :
+    parent_path:string list ->
+    t ->
+    Ocsigen_extensions.extension
+
+end

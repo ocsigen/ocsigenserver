@@ -310,15 +310,15 @@ let () =
     ()
 
 (* TODO: fix names and types, preprocess as we do for XML *)
-let dir = Ocsigen_extensions.Virtual_host.Config.key ()
-let regexp = Ocsigen_extensions.Virtual_host.Config.key ()
-let opt_code = Ocsigen_extensions.Virtual_host.Config.key ()
-let opt_dest = Ocsigen_extensions.Virtual_host.Config.key ()
-let opt_root_checks = Ocsigen_extensions.Virtual_host.Config.key ()
+let dir = Ocsigen_server.Vhost.Config.key ()
+let regexp = Ocsigen_server.Vhost.Config.key ()
+let opt_code = Ocsigen_server.Vhost.Config.key ()
+let opt_dest = Ocsigen_server.Vhost.Config.key ()
+let opt_root_checks = Ocsigen_server.Vhost.Config.key ()
 
 let register vh =
-  Ocsigen_extensions.Virtual_host.register vh
-    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} r ->
+  Ocsigen_server.Vhost.register vh
+    (fun {Ocsigen_server.Vhost.Config.accessor} r ->
        let kind =
          kind
            (accessor dir) (accessor regexp)
