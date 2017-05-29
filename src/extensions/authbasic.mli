@@ -20,6 +20,8 @@
 
 (** Module [Authbasic]: Basic HTTP Authentication. *)
 
+type auth = string -> string -> bool Lwt.t
+
 (** This module implements Basic HTTP Authentication as described in
     {{:http://www.ietf.org/rfc/rfc2617.txt}RFC 2617}.  It can be used
     to add an authentication layer to sites with no built-in
@@ -32,11 +34,12 @@
     very naive one (authentication with a single user/password, given
     in the configuration file) is provided. *)
 
-
-val register_basic_authentication_method :
-  (Xml.xml -> string -> string -> bool Lwt.t) -> unit
+val register_basic_authentication_method : (Xml.xml -> auth) -> unit
 (** This function registers an authentication plugin: it adds a new
     parser to the list of available authentication schemes.
+
+    This is only applied if you are running the server with an XML
+    configuration file. Use the realm, auth variables otherwise.
 
     A parser takes as argument an XML tree (corresponding to the
     first son of an <authbasic> element in the configuration
@@ -53,9 +56,15 @@ val register_basic_authentication_method :
     from the point of view of plugin developers and is totally
     transparent to the plugin. *)
 
+val realm : string Ocsigen_extensions.Virtual_host.Config.key
 
-val get_basic_authentication_method :
-  Xml.xml -> string -> string -> bool Lwt.t
+val auth : auth Ocsigen_extensions.Virtual_host.Config.key
+
+val register : Ocsigen_extensions.Virtual_host.t -> unit
+
+(**/**)
+
+val get_basic_authentication_method : Xml.xml -> auth
 (** This function combines all the parsers registered with
     [register_basic_authentication_method]. It might be useful for
     other extensions. Not for the casual user. *)

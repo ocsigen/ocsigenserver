@@ -22,7 +22,7 @@ open Lwt.Infix
 
 let section = Lwt_log.Section.make "ocsigen:ext:access-control"
 
-(* Management of basic authentication methods *)
+type auth = string -> string -> bool Lwt.t
 
 exception Bad_config_tag_for_auth of string
 
@@ -139,3 +139,16 @@ let () =
     ~name:"authbasic"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
+
+let realm = Ocsigen_extensions.Virtual_host.Config.key ()
+
+let auth = Ocsigen_extensions.Virtual_host.Config.key ()
+
+let register vh =
+  Ocsigen_extensions.Virtual_host.register vh
+    (fun {Ocsigen_extensions.Virtual_host.Config.accessor} ->
+       match accessor realm, accessor auth with
+       | Some realm, Some auth ->
+         gen ~realm ~auth
+       | _, _ ->
+         failwith "Authbasic realm and/or auth not set")
