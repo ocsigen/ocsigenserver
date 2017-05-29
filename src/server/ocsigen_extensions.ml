@@ -18,11 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-let we_have_xml_config, set_we_have_xml_config =
-  let r = ref false in
-  (fun () -> !r),
-  (fun () -> r := true)
-
 let section = Lwt_log.Section.make "ocsigen:ext"
 
 open Lwt.Infix

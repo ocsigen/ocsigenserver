@@ -460,5 +460,3 @@ val set_config : Xml.xml list -> unit
 
 val sockets : Lwt_unix.file_descr list ref
 val sslsockets : Lwt_unix.file_descr list ref
-
-val set_we_have_xml_config : unit -> unit
