@@ -56,10 +56,13 @@ outputfilter.cmx : ../server/ocsigen_server.cmx \
     ../http/ocsigen_header.cmx ../server/ocsigen_extensions.cmx \
     outputfilter.cmi
 outputfilter.cmi : ../server/ocsigen_server.cmi ../http/ocsigen_header.cmi
-redirectmod.cmo : ../server/ocsigen_response.cmi ../baselib/ocsigen_lib.cmi \
-    ../server/ocsigen_extensions.cmi
-redirectmod.cmx : ../server/ocsigen_response.cmx ../baselib/ocsigen_lib.cmx \
-    ../server/ocsigen_extensions.cmx
+redirectmod.cmo : ../server/ocsigen_server.cmi \
+    ../server/ocsigen_response.cmi ../server/ocsigen_extensions.cmi \
+    redirectmod.cmi
+redirectmod.cmx : ../server/ocsigen_server.cmx \
+    ../server/ocsigen_response.cmx ../server/ocsigen_extensions.cmx \
+    redirectmod.cmi
+redirectmod.cmi : ../server/ocsigen_server.cmi
 revproxy.cmo : ../server/ocsigen_response.cmi ../server/ocsigen_request.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_header.cmi \
     ../server/ocsigen_extensions.cmi

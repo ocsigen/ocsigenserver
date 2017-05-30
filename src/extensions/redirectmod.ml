@@ -23,26 +23,35 @@
 let section = Lwt_log.Section.make "ocsigen:ext:redirectmod"
 
 (* The table of redirections for each virtual server *)
-type assockind = Regexp of
-    Pcre.regexp *
-    string *
-    Ocsigen_lib.yesnomaybe * (* full url *)
-    bool (* temporary *)
+type redirection = {
+  r_regexp : Pcre.regexp ;
+  r_dest : string ;
+  r_full : [`Yes | `No | `Maybe] ;
+  r_temp : bool
+}
 
-let attempt_redir dir err ri () =
+let create_redirection
+    ?(full = `Yes)
+    ?(temporary = false)
+    ~regexp r_dest =
+  let r_regexp = Pcre.regexp ("^" ^ regexp ^ "$") in
+  { r_regexp ; r_dest ; r_full = full ; r_temp = temporary }
+
+let attempt_redir
+    { r_regexp ; r_dest ; r_full ; r_temp }
+    err ri () =
   Lwt_log.ign_info ~section "Is it a redirection?";
-  let Regexp (regexp, dest, full, temp) = dir in
   let redir =
     let find full =
       Ocsigen_extensions.find_redirection
-        regexp full dest ri
+        r_regexp full r_dest ri
     in
-    match full with
-    | Ocsigen_lib.Yes ->
+    match r_full with
+    | `Yes ->
       find true
-    | Ocsigen_lib.No ->
+    | `No ->
       find false
-    | Ocsigen_lib.Maybe ->
+    | `Maybe ->
       try
         find false
       with Ocsigen_extensions.Not_concerned ->
@@ -50,13 +59,13 @@ let attempt_redir dir err ri () =
   in
   Lwt_log.ign_info_f ~section
     "YES! %s redirection to: %s"
-    (if temp then "Temporary " else "Permanent ")
+    (if r_temp then "Temporary " else "Permanent ")
     redir;
   Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
     Lwt.return @@
     Ocsigen_response.make @@
     let headers = Cohttp.Header.(init_with "Location" redir)
-    and status = if temp then `Found else `Moved_permanently in
+    and status = if r_temp then `Found else `Moved_permanently in
     Cohttp.Response.make ~status ~headers ())
 
 (** The function that will generate the pages from the request *)
@@ -72,9 +81,9 @@ let gen dir = function
       Lwt.fail e
 
 let parse_config config_elem =
-  let pattern = ref None
+  let regexp = ref None
   and dest = ref ""
-  and mode = ref Ocsigen_lib.Yes
+  and mode = ref `Yes
   and temporary = ref false in
   Ocsigen_extensions.(
     Configuration.process_element
@@ -87,18 +96,18 @@ let parse_config config_elem =
             Configuration.attribute
               ~name:"regexp"
               (fun s ->
-                 pattern := Some ("^" ^ s ^ "$");
-                 mode := Ocsigen_lib.Maybe);
+                 regexp := Some ("^" ^ s ^ "$");
+                 mode := `Maybe);
             Configuration.attribute
               ~name:"fullurl"
               (fun s ->
-                 pattern := Some ("^" ^ s ^ "$");
-                 mode := Ocsigen_lib.Yes);
+                 regexp := Some s;
+                 mode := `Yes);
             Configuration.attribute
               ~name:"suburl"
               (fun s ->
-                 pattern := Some ("^" ^ s ^ "$");
-                 mode := Ocsigen_lib.No);
+                 regexp := Some s;
+                 mode := `No);
             Configuration.attribute
               ~name:"dest"
               ~obligatory:true
@@ -110,15 +119,25 @@ let parse_config config_elem =
           ()]
       config_elem
   );
-  match !pattern with
+  match !regexp with
   | None ->
     Ocsigen_extensions.badconfig "Missing attribute regexp for <redirect>"
   | Some regexp ->
-    gen (Regexp (Ocsigen_lib.Netstring_pcre.regexp regexp,
-                 !dest, !mode, !temporary))
+    gen (create_redirection ~full:!mode ~regexp ~temporary:!temporary !dest)
 
 let () =
   Ocsigen_extensions.register
     ~name:"redirectmod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
+
+let redirection = Ocsigen_server.Vhost.Config.key ()
+
+let register vh =
+  Ocsigen_server.Vhost.register vh
+    (fun {Ocsigen_server.Vhost.Config.accessor} ->
+       match accessor redirection with
+       | Some redirection ->
+         gen redirection
+       | None ->
+         failwith "Redirectmod.redirection not set")

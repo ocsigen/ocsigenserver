@@ -321,7 +321,7 @@ let root_checks = Ocsigen_server.Vhost.Config.key ()
 
 let register vh =
   Ocsigen_server.Vhost.register vh
-    (fun {Ocsigen_server.Vhost.Config.accessor} r ->
+    (fun {Ocsigen_server.Vhost.Config.accessor} ->
        let kind =
          kind
            (accessor dir)
@@ -330,4 +330,4 @@ let register vh =
            (accessor dest)
            (accessor root_checks)
        in
-       gen ~usermode:None kind r)
+       gen ~usermode:None kind)
