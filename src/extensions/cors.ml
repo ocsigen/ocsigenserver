@@ -28,9 +28,9 @@ let default_frame () =
   Ocsigen_response.make (Cohttp.Response.make ~status:`OK ())
 
 type config = {
-  allowed_method : Cohttp.Code.meth list option;
+  methods : Cohttp.Code.meth list option;
   (* None means: all method are accepted *)
-  allowed_credentials : bool;
+  credentials : bool;
   max_age : int option;
   exposed_headers : string list
 }
@@ -51,7 +51,7 @@ let add_headers config r response =
     let l = [Ocsigen_header.Name.origin, origin] in
 
     let l =
-      if config.allowed_credentials then
+      if config.credentials then
         (Ocsigen_header.Name.access_control_allow_credentials, "true") :: l
       else
         l
@@ -63,8 +63,8 @@ let add_headers config r response =
           Ocsigen_header.Name.access_control_request_method
       with
       | Some request_method ->
-        let allowed_method =
-          match config.allowed_method with
+        let methods =
+          match config.methods with
           | None ->
             true
           | Some l ->
@@ -73,7 +73,7 @@ let add_headers config r response =
             with _ ->
               false
         in
-        if allowed_method then
+        if methods then
           (Ocsigen_header.Name.access_control_allow_methods,
            request_method)
           :: l
@@ -148,8 +148,8 @@ let comma_space_regexp =
 
 let parse_config _ _ parse_fun config_elem =
   let config = ref {
-    allowed_method = None;
-    allowed_credentials = false;
+    methods = None;
+    credentials = false;
     max_age = None;
     exposed_headers = []
   } in
@@ -165,7 +165,7 @@ let parse_config _ _ parse_fun config_elem =
               ~name:"credentials"
               (fun s ->
                  let s = bool_of_string s in
-                 config := { !config with allowed_credentials = s });
+                 config := { !config with credentials = s });
             Configuration.attribute
               ~name:"max_age"
               (fun s ->
@@ -187,7 +187,7 @@ let parse_config _ _ parse_fun config_elem =
                      comma_space_regexp s
                  in
                  let s = Some (List.map Cohttp.Code.method_of_string s) in
-                 config := { !config with allowed_method = s });
+                 config := { !config with methods = s });
           ]
           ()]
       config_elem
@@ -199,3 +199,19 @@ let () =
     ~name:"CORS"
     ~fun_site:(fun _ _ _ -> parse_config)
     ()
+
+let credentials = Ocsigen_server.Vhost.Config.key ()
+let max_age = Ocsigen_server.Vhost.Config.key ()
+let exposed_headers = Ocsigen_server.Vhost.Config.key ()
+let methods = Ocsigen_server.Vhost.Config.key ()
+
+let register vh =
+  Ocsigen_server.Vhost.register vh
+    (fun {Ocsigen_server.Vhost.Config.accessor} ->
+       let methods = accessor methods
+       and credentials = Ocsigen_lib.Option.get' false (accessor credentials)
+       and max_age = accessor max_age
+       and exposed_headers =
+         Ocsigen_lib.Option.get' [] (accessor exposed_headers)
+       in
+       main {credentials ; methods ; max_age ; exposed_headers})

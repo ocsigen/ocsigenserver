@@ -48,9 +48,10 @@ endif
 
 PLUGINS_BIN  :=
 
-PLUGINS_INTF := extensions/authbasic.cmi extensions/accesscontrol.cmi \
-                extensions/ocsipersist.cmi extensions/staticmod.cmi \
-                extensions/deflatemod.cmi extensions/outputfilter.cmi
+PLUGINS_INTF := extensions/accesscontrol.cmi extensions/authbasic.cmi	\
+                extensions/cors.cmi extensions/deflatemod.cmi		\
+                extensions/ocsipersist.cmi				\
+                extensions/outputfilter.cmi extensions/staticmod.cmi
 
 PLUGINS_IMPL := extensions/accesscontrol.cmo extensions/authbasic.cmo	\
              extensions/cors.cmo extensions/outputfilter.cmo		\
