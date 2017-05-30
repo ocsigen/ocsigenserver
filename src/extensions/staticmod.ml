@@ -310,18 +310,24 @@ let () =
     ()
 
 (* TODO: fix names and types, preprocess as we do for XML *)
+
+let preprocess s = "^" ^ s ^ "$"
+
 let dir = Ocsigen_server.Vhost.Config.key ()
-let regexp = Ocsigen_server.Vhost.Config.key ()
-let opt_code = Ocsigen_server.Vhost.Config.key ()
-let opt_dest = Ocsigen_server.Vhost.Config.key ()
-let opt_root_checks = Ocsigen_server.Vhost.Config.key ()
+let regexp = Ocsigen_server.Vhost.Config.key ~preprocess ()
+let code = Ocsigen_server.Vhost.Config.key ~preprocess ()
+let dest = Ocsigen_server.Vhost.Config.key ()
+let root_checks = Ocsigen_server.Vhost.Config.key ()
 
 let register vh =
   Ocsigen_server.Vhost.register vh
     (fun {Ocsigen_server.Vhost.Config.accessor} r ->
        let kind =
          kind
-           (accessor dir) (accessor regexp)
-           (accessor opt_code) (accessor opt_dest) (accessor opt_root_checks)
+           (accessor dir)
+           (Ocsigen_lib.Option.map Pcre.regexp (accessor regexp))
+           (Ocsigen_lib.Option.map Pcre.regexp (accessor code))
+           (accessor dest)
+           (accessor root_checks)
        in
        gen ~usermode:None kind r)

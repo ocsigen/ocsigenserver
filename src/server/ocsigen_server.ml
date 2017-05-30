@@ -142,11 +142,11 @@ let _ =
   Ocsigen_command.register_command_function f
 
 type accessor =
-  { accessor : 'a . 'a Hmap.key -> 'a option }
+  { accessor : 'a . (('a -> 'a) option * 'a Hmap.key) -> 'a option }
 
 let compose_with_config m l =
   Ocsigen_extensions.compose
-    (List.map (fun f -> f {accessor = fun k -> Hmap.find k m}) l)
+    (List.map (fun f -> f {accessor = fun (_, k) -> Hmap.find k m}) l)
 
 module type Hmap_wrapped = sig
   type t
@@ -160,7 +160,7 @@ module type Config_nested = sig
 
   type 'a key
 
-  val key : unit -> 'a key
+  val key : ?preprocess:('a -> 'a) -> unit -> 'a key
 
   val find : parent_t -> 'a key -> 'a option
 
@@ -168,25 +168,34 @@ module type Config_nested = sig
 
   val unset : parent_t -> 'a key -> unit
 
-  type accessor = { accessor : 'a . 'a key -> 'a option }
+  type accessor =
+    { accessor : 'a . 'a key -> 'a option }
 
 end
 
 module Make_config_nested (W : Hmap_wrapped) = struct
 
+  type 'a key = ('a -> 'a) option * 'a Hmap.key
+
   type nonrec accessor
     = accessor
-    = { accessor : 'a . 'a Hmap.key -> 'a option }
+    = { accessor : 'a . 'a key -> 'a option }
 
-  type 'a key = 'a Hmap.key
+  let key ?preprocess () = preprocess, Hmap.Key.create ()
 
-  let key () = Hmap.Key.create ()
+  let find w (_, k) = Hmap.find k (W.get w)
 
-  let find w k = Hmap.find k (W.get w)
+  let set w (f, k) v =
+    let v =
+      match f with
+      | Some f ->
+        f v
+      | None ->
+        v
+    in
+    W.do_ w (Hmap.add k v)
 
-  let set w k v = W.do_ w (Hmap.add k v)
-
-  let unset w k = W.do_ w (Hmap.rem k)
+  let unset w (_, k) = W.do_ w (Hmap.rem k)
 
 end
 

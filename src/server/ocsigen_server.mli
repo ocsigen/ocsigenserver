@@ -32,7 +32,7 @@ module type Config_nested = sig
 
   type 'a key
 
-  val key : unit -> 'a key
+  val key : ?preprocess:('a -> 'a) -> unit -> 'a key
 
   val find : parent_t -> 'a key -> 'a option
 
