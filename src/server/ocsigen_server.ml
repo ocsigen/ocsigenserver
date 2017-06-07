@@ -409,26 +409,24 @@ let start ?config () =
            minthreads maxthreads
            (fun s -> Lwt_log.ign_error ~section s));
 
-      (* Now I can load the modules *)
-      Dynlink_wrapper.init ();
-      Dynlink_wrapper.allow_unsafe_modules true;
-
-      Ocsigen_extensions.start_initialisation ();
-
       (match s with
        | Some s ->
-         Ocsigen_parseconfig.later_pass s
+         (* Now I can load the modules *)
+         Dynlink_wrapper.init ();
+         Dynlink_wrapper.allow_unsafe_modules true;
+         Ocsigen_extensions.start_initialisation ();
+         Ocsigen_parseconfig.later_pass s;
+         (* As libraries are reloaded each time the config file is
+            read, we do not allow to register extensions in
+            libraries. Seems it does not work :-/ *)
+         Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"]
        | None ->
-         Site.dump ());
-
-      Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
-      (* As libraries are reloaded each time the config file is read,
-         we do not allow to register extensions in libraries *)
-      (* seems it does not work :-/ *)
-      (* Closing stderr, stdout stdin if silent *)
+         (Ocsigen_extensions.start_initialisation ();
+          Site.dump ()));
 
       if (Ocsigen_config.get_silent ())
       then begin
+        (* Close stderr, stdout stdin if silent *)
         (* redirect stdout and stderr to /dev/null *)
         let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
         Unix.dup2 devnull Unix.stdout;
