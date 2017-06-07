@@ -131,11 +131,11 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let redirection = Ocsigen_server.Vhost.Config.key ()
+let redirection = Ocsigen_server.Site.Config.key ()
 
 let register vh =
-  Ocsigen_server.Vhost.register vh
-    (fun {Ocsigen_server.Vhost.Config.accessor} ->
+  Ocsigen_server.Site.register vh
+    (fun _ _ _ {Ocsigen_server.Site.Config.accessor} ->
        match accessor redirection with
        | Some redirection ->
          gen redirection

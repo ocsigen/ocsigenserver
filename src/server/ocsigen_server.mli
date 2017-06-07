@@ -44,13 +44,14 @@ module type Config_nested = sig
 
 end
 
-module Vhost : sig
+module Site : sig
 
   type t
 
   val create :
     ?config_info:Ocsigen_extensions.config_info ->
     ?host_regexp:string ->
+    ?path:Ocsigen_lib.Url.path ->
     ?port:int ->
     unit -> t
 
@@ -58,29 +59,11 @@ module Vhost : sig
 
   val register :
     t ->
-    (Config.accessor -> Ocsigen_extensions.extension) ->
+    (Ocsigen_extensions.virtual_hosts ->
+     Ocsigen_extensions.config_info ->
+     Ocsigen_lib.Url.path ->
+     Config.accessor ->
+     Ocsigen_extensions.extension) ->
     unit
-
-end
-
-module Site : sig
-
-  type t
-
-  val create : string list -> Ocsigen_charset_mime.charset option -> t
-
-  module Config : Config_nested
-    with type parent_t := t
-     and type 'a key = 'a Vhost.Config.key
-
-  val register :
-    t ->
-    (Config.accessor -> Ocsigen_extensions.extension) ->
-    unit
-
-  val to_extension :
-    parent_path:string list ->
-    t ->
-    Ocsigen_extensions.extension
 
 end

@@ -56,11 +56,11 @@ val register_basic_authentication_method : (Xml.xml -> auth) -> unit
     from the point of view of plugin developers and is totally
     transparent to the plugin. *)
 
-val realm : string Ocsigen_server.Vhost.Config.key
+val realm : string Ocsigen_server.Site.Config.key
 
-val auth : auth Ocsigen_server.Vhost.Config.key
+val auth : auth Ocsigen_server.Site.Config.key
 
-val register : Ocsigen_server.Vhost.t -> unit
+val register : Ocsigen_server.Site.t -> unit
 
 (**/**)
 

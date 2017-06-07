@@ -199,15 +199,16 @@ module Make_config_nested (W : Hmap_wrapped) = struct
 
 end
 
-module Vhost = struct
+module Site = struct
 
   type 'a config_key = 'a Hmap.key
 
   type t = {
-    vh_list : Ocsigen_extensions.virtual_hosts ;
-    vh_config_info : Ocsigen_extensions.config_info ;
-    mutable vh_config_map : Hmap.t ;
-    mutable vh_fun_l : (accessor -> Ocsigen_extensions.extension) list ;
+    s_list : Ocsigen_extensions.virtual_hosts ;
+    s_config_info : Ocsigen_extensions.config_info ;
+    s_path : Ocsigen_lib.Url.path ;
+    mutable s_config_map : Hmap.t ;
+    mutable s_fun_l : (accessor -> Ocsigen_extensions.extension) list ;
   }
 
   let l = ref []
@@ -219,8 +220,9 @@ module Vhost = struct
   let create
     ?(config_info = Ocsigen_extensions.default_config_info ())
     ?host_regexp
+    ?(path = [])
     ?port () =
-    let vh_list =
+    let s_list =
       match host_regexp with
       | Some host_regexp when host_regexp = default_re_string ->
         [default_re_string, default_re, port]
@@ -230,22 +232,23 @@ module Vhost = struct
         [host_regexp, Ocsigen_lib.Netstring_pcre.regexp host_regexp, port]
     in
     let vh = {
-      vh_list ;
-      vh_config_info = config_info ;
-      vh_config_map = Hmap.empty ;
-      vh_fun_l = []
+      s_list ;
+      s_path = path ;
+      s_config_info = config_info ;
+      s_config_map = Hmap.empty ;
+      s_fun_l = []
     } in
     l := vh :: !l;
     vh
 
   let dump () =
-    let f { vh_list ; vh_config_info ; vh_config_map ; vh_fun_l } =
-      vh_list,
-      vh_config_info,
-      compose_with_config vh_config_map vh_fun_l
+    let f { s_list ; s_config_info ; s_config_map ; s_fun_l } =
+      s_list,
+      s_config_info,
+      compose_with_config s_config_map s_fun_l
     and l =
       List.filter
-        (function {vh_fun_l = _ :: _} -> true | _ -> false)
+        (function {s_fun_l = _ :: _} -> true | _ -> false)
         (List.rev !l)
     in
     Ocsigen_extensions.set_hosts (List.map f l)
@@ -253,48 +256,14 @@ module Vhost = struct
   module Config =
     Make_config_nested (struct
       type nonrec t = t
-      let get {vh_config_map} = vh_config_map
-      let do_ ({vh_config_map} as vh) f =
-        vh.vh_config_map <- f vh_config_map
-    end)
-
-  let register ({vh_fun_l} as vh) f = vh.vh_fun_l <- f :: vh_fun_l
-
-end
-
-module Site = struct
-
-  type t = {
-    s_dir : string list ;
-    s_charset : Ocsigen_charset_mime.charset option ;
-    mutable s_config_map : Hmap.t ;
-    mutable s_fun_l : (accessor -> Ocsigen_extensions.extension) list ;
-  }
-
-  let create s_dir s_charset = {
-    s_dir = Ocsigen_extensions.preprocess_site_path s_dir ;
-    s_charset ;
-    s_config_map = Hmap.empty ;
-    s_fun_l = []
-  }
-
-  module Config =
-    Make_config_nested (struct
-      type nonrec t = t
       let get {s_config_map} = s_config_map
-      let do_ ({s_config_map} as s) f =
-        s.s_config_map <- f s_config_map
+      let do_ ({s_config_map} as vh) f =
+        vh.s_config_map <- f s_config_map
     end)
 
-  let register ({s_fun_l} as s) f = s.s_fun_l <- f :: s_fun_l
-
-  let to_extension
-      ~parent_path
-      {s_dir ; s_charset ; s_fun_l ; s_config_map} =
-    let ext_of_children = compose_with_config s_config_map s_fun_l in
-    Ocsigen_extensions.site_ext
-      ext_of_children s_charset
-      (parent_path @ s_dir)
+  let register
+      ({s_list ; s_config_info ; s_path ; s_fun_l } as vh) f =
+    vh.s_fun_l <- f s_list s_config_info s_path :: s_fun_l
 
 end
 
@@ -450,7 +419,7 @@ let start ?config () =
        | Some s ->
          Ocsigen_parseconfig.later_pass s
        | None ->
-         Vhost.dump ());
+         Site.dump ());
 
       Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"];
       (* As libraries are reloaded each time the config file is read,

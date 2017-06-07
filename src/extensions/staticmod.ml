@@ -313,15 +313,15 @@ let () =
 
 let preprocess s = "^" ^ s ^ "$"
 
-let dir = Ocsigen_server.Vhost.Config.key ()
-let regexp = Ocsigen_server.Vhost.Config.key ~preprocess ()
-let code = Ocsigen_server.Vhost.Config.key ~preprocess ()
-let dest = Ocsigen_server.Vhost.Config.key ()
-let root_checks = Ocsigen_server.Vhost.Config.key ()
+let dir = Ocsigen_server.Site.Config.key ()
+let regexp = Ocsigen_server.Site.Config.key ~preprocess ()
+let code = Ocsigen_server.Site.Config.key ~preprocess ()
+let dest = Ocsigen_server.Site.Config.key ()
+let root_checks = Ocsigen_server.Site.Config.key ()
 
 let register vh =
-  Ocsigen_server.Vhost.register vh
-    (fun {Ocsigen_server.Vhost.Config.accessor} ->
+  Ocsigen_server.Site.register vh
+    (fun _ _ _ {Ocsigen_server.Site.Config.accessor} ->
        let kind =
          kind
            (accessor dir)

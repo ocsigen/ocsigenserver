@@ -140,13 +140,13 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let realm = Ocsigen_server.Vhost.Config.key ()
+let realm = Ocsigen_server.Site.Config.key ()
 
-let auth = Ocsigen_server.Vhost.Config.key ()
+let auth = Ocsigen_server.Site.Config.key ()
 
 let register vh =
-  Ocsigen_server.Vhost.register vh
-    (fun {Ocsigen_server.Vhost.Config.accessor} ->
+  Ocsigen_server.Site.register vh
+    (fun _ _ _ {Ocsigen_server.Site.Config.accessor} ->
        match accessor realm, accessor auth with
        | Some realm, Some auth ->
          gen ~realm ~auth

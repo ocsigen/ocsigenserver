@@ -7,6 +7,6 @@ val create_redirection :
   string ->
   redirection
 
-val redirection : redirection Ocsigen_server.Vhost.Config.key
+val redirection : redirection Ocsigen_server.Site.Config.key
 
-val register : Ocsigen_server.Vhost.t -> unit
+val register : Ocsigen_server.Site.t -> unit
