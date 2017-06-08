@@ -144,9 +144,9 @@ let () =
 
 let mode = Ocsigen_server.Site.Config.key ()
 
-let register vh =
-  Ocsigen_server.Site.register vh
-    (fun _ _ _ {Ocsigen_server.Site.Config.accessor} ->
+let extension =
+  Ocsigen_server.Site.create_extension
+    (fun {Ocsigen_server.Site.Config.accessor} ->
        match accessor mode with
        | Some (`Code c)  ->
          gen_code c

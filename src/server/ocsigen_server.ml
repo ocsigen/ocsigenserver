@@ -156,17 +156,17 @@ end
 
 module type Config_nested = sig
 
-  type parent_t
+  type t
 
   type 'a key
 
   val key : ?preprocess:('a -> 'a) -> unit -> 'a key
 
-  val find : parent_t -> 'a key -> 'a option
+  val find : t -> 'a key -> 'a option
 
-  val set : parent_t -> 'a key -> 'a -> unit
+  val set : t -> 'a key -> 'a -> unit
 
-  val unset : parent_t -> 'a key -> unit
+  val unset : t -> 'a key -> unit
 
   type accessor =
     { accessor : 'a . 'a key -> 'a option }
@@ -203,12 +203,33 @@ module Site = struct
 
   type 'a config_key = 'a Hmap.key
 
+  type extension_simple = accessor -> Ocsigen_extensions.extension
+
+  type extension =
+    [ `Simple of extension_simple
+    | `Intrusive of
+        Ocsigen_extensions.virtual_hosts ->
+        Ocsigen_extensions.config_info ->
+        Ocsigen_lib.Url.path ->
+        extension_simple
+    ]
+
+  let registered_extensions = ref []
+
+  let create_extension f =
+    let v = `Simple f in
+    registered_extensions := v :: !registered_extensions; v
+
+  let create_extension_intrusive f =
+    let v = `Intrusive f in
+    registered_extensions := v :: !registered_extensions; v
+
   type t = {
     s_list : Ocsigen_extensions.virtual_hosts ;
     s_config_info : Ocsigen_extensions.config_info ;
     s_path : Ocsigen_lib.Url.path ;
     mutable s_config_map : Hmap.t ;
-    mutable s_fun_l : (accessor -> Ocsigen_extensions.extension) list ;
+    mutable s_fun_l : extension_simple list ;
   }
 
   let l = ref []
@@ -217,11 +238,20 @@ module Site = struct
 
   let default_re = Ocsigen_lib.Netstring_pcre.regexp default_re_string
 
+  let register ({s_list ; s_config_info ; s_path ; s_fun_l } as vh) =
+    function
+    | `Simple f ->
+      vh.s_fun_l <- f :: s_fun_l
+    | `Intrusive f ->
+      vh.s_fun_l <- f s_list s_config_info s_path :: s_fun_l
+
   let create
     ?(config_info = Ocsigen_extensions.default_config_info ())
     ?host_regexp
     ?(path = [])
-    ?port () =
+    ?port
+    ?(auto_load_extensions = false)
+    () =
     let s_list =
       match host_regexp with
       | Some host_regexp when host_regexp = default_re_string ->
@@ -231,15 +261,17 @@ module Site = struct
       | Some host_regexp ->
         [host_regexp, Ocsigen_lib.Netstring_pcre.regexp host_regexp, port]
     in
-    let vh = {
+    let s = {
       s_list ;
       s_path = path ;
       s_config_info = config_info ;
       s_config_map = Hmap.empty ;
       s_fun_l = []
     } in
-    l := vh :: !l;
-    vh
+    l := s :: !l;
+    if auto_load_extensions then
+      List.iter (register s) (List.rev !registered_extensions);
+    s
 
   let dump () =
     let f { s_list ; s_config_info ; s_config_map ; s_fun_l } =
@@ -260,10 +292,6 @@ module Site = struct
       let do_ ({s_config_map} as vh) f =
         vh.s_config_map <- f s_config_map
     end)
-
-  let register
-      ({s_list ; s_config_info ; s_path ; s_fun_l } as vh) f =
-    vh.s_fun_l <- f s_list s_config_info s_path :: s_fun_l
 
 end
 

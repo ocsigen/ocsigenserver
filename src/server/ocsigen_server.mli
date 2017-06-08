@@ -28,17 +28,17 @@ val start : ?config : Xml.xml list list -> unit -> unit
 
 module type Config_nested = sig
 
-  type parent_t
+  type t
 
   type 'a key
 
   val key : ?preprocess:('a -> 'a) -> unit -> 'a key
 
-  val find : parent_t -> 'a key -> 'a option
+  val find : t -> 'a key -> 'a option
 
-  val set : parent_t -> 'a key -> 'a -> unit
+  val set : t -> 'a key -> 'a -> unit
 
-  val unset : parent_t -> 'a key -> unit
+  val unset : t -> 'a key -> unit
 
   type accessor = { accessor : 'a . 'a key -> 'a option }
 
@@ -53,17 +53,29 @@ module Site : sig
     ?host_regexp:string ->
     ?path:Ocsigen_lib.Url.path ->
     ?port:int ->
+    ?auto_load_extensions:bool ->
     unit -> t
 
-  module Config : Config_nested with type parent_t := t
+  module Config : Config_nested with type t := t
+
+  type extension
+
+  val create_extension :
+    (Config.accessor -> Ocsigen_extensions.extension) -> extension
 
   val register :
-    t ->
+    t -> extension -> unit
+
+  (**/**)
+
+  (** Lower-level interface for creating extensions that gives the
+      extension more info. To be avoided. Currently used by Eliom. *)
+  val create_extension_intrusive :
     (Ocsigen_extensions.virtual_hosts ->
      Ocsigen_extensions.config_info ->
      Ocsigen_lib.Url.path ->
      Config.accessor ->
      Ocsigen_extensions.extension) ->
-    unit
+    extension
 
 end

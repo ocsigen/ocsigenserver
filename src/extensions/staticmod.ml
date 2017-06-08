@@ -319,9 +319,9 @@ let code = Ocsigen_server.Site.Config.key ~preprocess ()
 let dest = Ocsigen_server.Site.Config.key ()
 let root_checks = Ocsigen_server.Site.Config.key ()
 
-let register vh =
-  Ocsigen_server.Site.register vh
-    (fun _ _ _ {Ocsigen_server.Site.Config.accessor} ->
+let extension =
+  Ocsigen_server.Site.create_extension
+    (fun {Ocsigen_server.Site.Config.accessor} ->
        let kind =
          kind
            (accessor dir)

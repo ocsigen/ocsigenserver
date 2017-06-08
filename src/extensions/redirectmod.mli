@@ -9,4 +9,4 @@ val create_redirection :
 
 val redirection : redirection Ocsigen_server.Site.Config.key
 
-val register : Ocsigen_server.Site.t -> unit
+val extension : Ocsigen_server.Site.extension

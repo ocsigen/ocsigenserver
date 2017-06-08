@@ -4,4 +4,4 @@ val mode :
   | `Code of Cohttp.Code.status
   ] Ocsigen_server.Site.Config.key
 
-val register : Ocsigen_server.Site.t -> unit
+val extension : Ocsigen_server.Site.extension

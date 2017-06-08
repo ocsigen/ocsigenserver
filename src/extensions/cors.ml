@@ -205,9 +205,9 @@ let max_age = Ocsigen_server.Site.Config.key ()
 let exposed_headers = Ocsigen_server.Site.Config.key ()
 let methods = Ocsigen_server.Site.Config.key ()
 
-let register vh =
-  Ocsigen_server.Site.register vh
-    (fun _ _ _ {Ocsigen_server.Site.Config.accessor} ->
+let extension =
+  Ocsigen_server.Site.create_extension
+    (fun {Ocsigen_server.Site.Config.accessor} ->
        let methods = accessor methods
        and credentials = Ocsigen_lib.Option.get' false (accessor credentials)
        and max_age = accessor max_age
