@@ -144,10 +144,6 @@ let _ =
 type accessor =
   { accessor : 'a . (('a -> 'a) option * 'a Hmap.key) -> 'a option }
 
-let compose_with_config m l =
-  Ocsigen_extensions.compose
-    (List.map (fun f -> f {accessor = fun (_, k) -> Hmap.find k m}) l)
-
 module type Hmap_wrapped = sig
   type t
   val get : t -> Hmap.t
@@ -211,8 +207,7 @@ module Site = struct
         Ocsigen_extensions.virtual_hosts ->
         Ocsigen_extensions.config_info ->
         Ocsigen_lib.Url.path ->
-        extension_simple
-    ]
+        extension_simple ]
 
   let registered_extensions = ref []
 
@@ -225,11 +220,14 @@ module Site = struct
     registered_extensions := v :: !registered_extensions; v
 
   type t = {
-    s_list : Ocsigen_extensions.virtual_hosts ;
+    s_id :
+      [ `Host of Ocsigen_extensions.virtual_hosts
+      | `Attach of (t * Ocsigen_lib.Url.path) ];
     s_config_info : Ocsigen_extensions.config_info ;
-    s_path : Ocsigen_lib.Url.path ;
+    s_charset : Ocsigen_charset_mime.charset option ;
     mutable s_config_map : Hmap.t ;
-    mutable s_fun_l : extension_simple list ;
+    mutable s_children_l :
+      [ `Extension of extension_simple | `Child of t ] list ;
   }
 
   let l = ref []
@@ -238,52 +236,78 @@ module Site = struct
 
   let default_re = Ocsigen_lib.Netstring_pcre.regexp default_re_string
 
-  let register ({s_list ; s_config_info ; s_path ; s_fun_l } as vh) =
+  let rec path_and_hosts {s_id} =
+    match s_id with
+    | `Host hosts ->
+      [], hosts
+    | `Attach (s, path') ->
+      let path, hosts = path_and_hosts s in
+      path @ path', hosts
+
+  let register ({ s_config_info ; s_children_l } as s) =
     function
     | `Simple f ->
-      vh.s_fun_l <- f :: s_fun_l
+      s.s_children_l <- `Extension f :: s_children_l
     | `Intrusive f ->
-      vh.s_fun_l <- f s_list s_config_info s_path :: s_fun_l
+      let path, hosts = path_and_hosts s in
+      s.s_children_l <-
+        `Extension (f hosts s_config_info path) :: s_children_l
 
   let create
     ?(config_info = Ocsigen_extensions.default_config_info ())
-    ?host_regexp
-    ?(path = [])
-    ?port
+    ?(id = `Host (default_re_string, None))
+    ?charset
     ?(auto_load_extensions = false)
     () =
-    let s_list =
-      match host_regexp with
-      | Some host_regexp when host_regexp = default_re_string ->
-        [default_re_string, default_re, port]
-      | None ->
-        [default_re_string, default_re, port]
-      | Some host_regexp ->
-        [host_regexp, Ocsigen_lib.Netstring_pcre.regexp host_regexp, port]
+    let s_id =
+      match id with
+      | `Host (host_regexp, port) when host_regexp = default_re_string ->
+        `Host
+          [default_re_string, default_re, port]
+      | `Host (host_regexp, port) ->
+        `Host
+          [host_regexp, Ocsigen_lib.Netstring_pcre.regexp host_regexp, port]
+      | `Attach (parent, path) ->
+        `Attach (parent, Ocsigen_extensions.preprocess_site_path path)
     in
     let s = {
-      s_list ;
-      s_path = path ;
+      s_id ;
+      s_charset = charset ;
       s_config_info = config_info ;
       s_config_map = Hmap.empty ;
-      s_fun_l = []
+      s_children_l = []
     } in
-    l := s :: !l;
+    (match s_id with
+     | `Host _ ->
+       l := s :: !l;
+     | `Attach (parent, _) ->
+       parent.s_children_l <- `Child s :: parent.s_children_l);
     if auto_load_extensions then
       List.iter (register s) (List.rev !registered_extensions);
     s
 
-  let dump () =
-    let f { s_list ; s_config_info ; s_config_map ; s_fun_l } =
-      s_list,
-      s_config_info,
-      compose_with_config s_config_map s_fun_l
-    and l =
-      List.filter
-        (function {s_fun_l = _ :: _} -> true | _ -> false)
-        (List.rev !l)
+  let rec dump_host
+      path
+      { s_config_info ; s_config_map ; s_children_l ; s_id } =
+    let f = function
+      | `Extension f ->
+        f {accessor = fun (_, k) -> Hmap.find k s_config_map}
+      | `Child ({s_charset ; s_id = `Attach (_, path')} as s) ->
+        let path = path @ path' in
+        Ocsigen_extensions.site_ext (dump_host path s) s_charset path
+      | `Child _ ->
+        failwith "Ocsigen_server.dump_host"
     in
-    Ocsigen_extensions.set_hosts (List.map f l)
+    Ocsigen_extensions.compose (List.map f s_children_l)
+
+  let dump () =
+    let f acc = function
+      | { s_config_info ; s_id = `Host l ; s_children_l = _ :: _ } as s ->
+        (l, s_config_info, dump_host [] s) :: acc
+      | _ ->
+        acc
+    in
+    Ocsigen_extensions.set_hosts (List.fold_left f [] !l)
 
   module Config =
     Make_config_nested (struct

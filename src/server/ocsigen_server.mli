@@ -50,9 +50,10 @@ module Site : sig
 
   val create :
     ?config_info:Ocsigen_extensions.config_info ->
-    ?host_regexp:string ->
-    ?path:Ocsigen_lib.Url.path ->
-    ?port:int ->
+    ?id:
+      [ `Attach of t * Ocsigen_lib.Url.path
+      | `Host of string * int option ] ->
+    ?charset:Ocsigen_charset_mime.charset ->
     ?auto_load_extensions:bool ->
     unit -> t
 
