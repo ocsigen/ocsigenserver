@@ -310,20 +310,20 @@ let get_port
 
 let new_url_of_directory_request request ri =
   Lwt_log.ign_info ~section "Sending 301 Moved permanently";
-  let port = get_port request
-  and ssl = Ocsigen_request.ssl ri in
-  Uri.make
-    ~scheme:(if ssl then "https" else "http")
-    ~host:(get_hostname request)
-    ?port:(
-      if (port = 80 && not ssl) || (ssl && port = 443) then
-        None
-      else
-        Some port
-    )
-    ~path:(Ocsigen_request.path_string ri)
-    ~query:(Ocsigen_request.get_params ri)
-    ()
+  let ssl = Ocsigen_request.ssl ri in
+  let scheme = if ssl then "https" else "http"
+  and host = get_hostname request
+  and port =
+    let port = get_port request in
+    if port = if ssl then 443 else 80 then
+      None
+    else
+      Some port
+  and path =
+    let path = Ocsigen_request.path_string ri in
+    if path.[String.length path - 1] = '/' then path else path ^ "/"
+  and query = Ocsigen_request.get_params ri in
+  Uri.make ~scheme ~host ?port ~path ~query ()
 
 (* To give parameters to extensions: *)
 let dynlinkconfig = ref ([] : Xml.xml list)
