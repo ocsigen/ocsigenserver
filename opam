@@ -49,6 +49,7 @@ depends: [
   "react"
   "ssl"
   "lwt" {>= "3.0.0"}
+  "lwt_ssl"
   "pcre"
   "cryptokit"
   "xml-light"
