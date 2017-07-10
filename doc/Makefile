@@ -4,7 +4,7 @@ include ../src/Makefile.filelist
 OCAMLDOC := ${OCAMLFIND} ocamldoc
 ODOC_WIKI := odoc_wiki.cma
 
-LIBS := -package lwt,tyxml,ssl,netstring,netstring-pcre,ipaddr \
+LIBS := -package lwt,lwt_ssl,tyxml,ssl,netstring,netstring-pcre,ipaddr \
         ${addprefix -I ../src/, baselib http server extensions }
 
 doc: api-html/index.html
@@ -29,4 +29,3 @@ uninstall:
 clean:
 	-rm -f api-html/* api-wiki/*
 	-rm -f *~ \#* .\#*
-

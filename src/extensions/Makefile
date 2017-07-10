@@ -4,8 +4,8 @@ PACKAGE  :=		\
 	bytes		\
 	lwt.unix	\
 	ipaddr		\
-	lwt.ssl		\
-	lwt.react	\
+	lwt_ssl		\
+	lwt_react	\
 	netstring	\
 	netstring-pcre	\
 	tyxml.parser

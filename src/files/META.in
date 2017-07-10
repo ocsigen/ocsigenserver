@@ -37,7 +37,7 @@ package "baselib" (
 )
 
 package "http" (
-  requires = "%%NAME%%.baselib,lwt.ssl,tyxml"
+  requires = "%%NAME%%.baselib,lwt_ssl,tyxml"
   version = "[distributed with Ocsigen server]"
   description = "HTTP library for Ocsigen server"
   archive(byte) = "http.cma"
