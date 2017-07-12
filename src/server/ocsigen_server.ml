@@ -72,6 +72,9 @@ let errmsg = function
       line begin_char end_char
       (Xml.error_msg s),
     51
+  | Ocsigen_loader.Dynlink_error (s, (Dynlink.Error err)) ->
+    (("Fatal - While loading "^s^": "^(Dynlink.error_message err)),
+     52)
   | Ocsigen_loader.Dynlink_error (s, exn) ->
     (("Fatal - While loading "^s^": "^(Printexc.to_string exn)),
      52)
