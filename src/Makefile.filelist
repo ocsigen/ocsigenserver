@@ -4,41 +4,36 @@ NATBIN := server/${PROJECTNAME}.opt
 INTF_BASE := baselib/ocsigen_cache.cmi	   \
 	baselib/ocsigen_lib_base.cmi	   \
 	baselib/ocsigen_lib.cmi	   \
-	baselib/ocsigen_config.cmi	   \
-	baselib/ocsigen_messages.cmi       \
 	baselib/ocsigen_stream.cmi	   \
 	baselib/ocsigen_loader.cmi	   \
         baselib/polytables.cmi	           \
         \
-	http/http_headers.cmi	           \
-	http/ocsigen_http_frame.cmi	   \
-	http/ocsigen_headers.cmi	   \
-	http/framepp.cmi		   \
-	http/ocsigen_http_com.cmi	   \
 	http/ocsigen_charset_mime.cmi      \
-	http/ocsigen_senders.cmi	   \
         http/ocsigen_cookies.cmi           \
+	http/ocsigen_header.cmi            \
 	\
+        server/ocsigen_config.cmi          \
+        server/ocsigen_request.cmi         \
+        server/ocsigen_response.cmi        \
+	server/ocsigen_messages.cmi        \
+        server/ocsigen_multipart.cmi       \
 	server/ocsigen_extensions.cmi      \
 	server/ocsigen_parseconfig.cmi     \
-	server/ocsigen_http_client.cmi     \
 	server/ocsigen_local_files.cmi     \
-	server/ocsigen_server.cmi	   \
-	server/ocsigen_request_info.cmi
+	server/ocsigen_server.cmi
 
-INTF := ${INTF_BASE} baselib/ocsigen_getcommandline.cmi
+INTF := ${INTF_BASE}
 
 IMPL := baselib/ocsigen_lib_base.cmo	   \
+        baselib/ocsigen_config_static.cmo  \
         baselib/baselib.cma		   \
-	baselib/parsecommandline.cma       \
-	baselib/donotparsecommandline.cma  \
         baselib/polytables.cmo	           \
 	\
         http/ocsigen_cookies.cmo           \
         http/http.cma	                   \
 	\
 	server/${PROJECTNAME}.cma          \
-	server/server_main.cmo             \
+	server/server_main.cmo
 
 INTF_CMX := $(patsubst %.cmi,%.cmx,${INTF_BASE})
 
@@ -48,34 +43,25 @@ NATIMPL := $(patsubst %.cmo,%.cmx, $(filter %.cmo,${IMPL})) \
 	   $(patsubst %.cma,%.a,   $(filter %.cma,${IMPL})) \
 
 ifeq "$(NATDYNLINK)" "YES"
-NATIMPL += baselib/parsecommandline.cmxs      \
-           baselib/donotparsecommandline.cmxs \
-           baselib/polytables.cmxs
+NATIMPL += baselib/polytables.cmxs
 endif
 
 PLUGINS_BIN  :=
 
-PLUGINS_INTF := extensions/ocsigen_comet.cmi       \
-                extensions/accesscontrol.cmi       \
-                extensions/authbasic.cmi           \
-                extensions/ocsipersist.cmi         \
+PLUGINS_INTF := extensions/accesscontrol.cmi extensions/authbasic.cmi	\
+                extensions/cors.cmi extensions/ocsipersist.cmi		\
+                extensions/outputfilter.cmi				\
+                extensions/redirectmod.cmi extensions/staticmod.cmi
 
-PLUGINS_IMPL := extensions/staticmod.cmo           \
-                extensions/cgimod.cmo              \
-                extensions/redirectmod.cmo         \
-                extensions/revproxy.cmo            \
-                extensions/extensiontemplate.cmo   \
-                extensions/accesscontrol.cmo       \
-                extensions/userconf.cmo            \
-                extensions/outputfilter.cmo        \
-                extensions/authbasic.cmo           \
-                extensions/rewritemod.cmo          \
-                extensions/extendconfiguration.cmo \
-                extensions/ocsigen_comet.cmo       \
-                extensions/cors.cmo                \
+PLUGINS_IMPL := extensions/accesscontrol.cmo extensions/authbasic.cmo	\
+             extensions/cors.cmo extensions/extendconfiguration.cmo	\
+             extensions/outputfilter.cmo extensions/redirectmod.cmo	\
+             extensions/revproxy.cmo extensions/rewritemod.cmo		\
+             extensions/staticmod.cmo
 
 ifeq "$(CAMLZIP)" "YES"
 PLUGINS_IMPL += extensions/deflatemod.cmo
+PLUGINS_INTF += extensions/deflatemod.cmi
 endif
 
 ifeq "$(OCSIPERSISTSQLITE)" "YES"

@@ -31,7 +31,7 @@ let section = Lwt_log.Section.make "ocsigen:mimetype"
 type 'a assoc_item =
   | Extension of extension * 'a
   | File of filename * 'a
-  | Regexp of Netstring_pcre.regexp * 'a
+  | Regexp of Pcre.regexp * 'a
   | Map of 'a MapString.t
 
 type 'a assoc = {
@@ -165,7 +165,7 @@ let default_mime_assoc () =
   let parsed = ref None in
   match !parsed with
     | None ->
-        let file = Ocsigen_config.get_mimefile () in
+        let file = !Ocsigen_config_static.mimefile in
         Lwt_log.ign_info_f ~section "Loading mime types in '%s'" file;
         let map = parse_mime_types file in
         parsed := Some map;

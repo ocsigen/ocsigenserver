@@ -22,7 +22,7 @@ ifeq "$(PREEMPTIVE)" "YES"
 endif
 
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
-## but also to generate src/baselib/ocsigen_config.ml and src/files/META
+## but also to generate src/baselib/ocsigen_config_static.ml and src/files/META
 
 ifeq "$(PREEMPTIVE)" "YES"
 LWT_PREEMPTIVE_PACKAGE:=lwt.preemptive
@@ -30,21 +30,22 @@ endif
 
 BASE_PACKAGE := lwt ipaddr bytes
 
-SERVER_PACKAGE := lwt.ssl           \
+SERVER_PACKAGE := lwt_ssl           \
 		  bytes			\
 	          ${LWT_PREEMPTIVE_PACKAGE} \
                   ipaddr            \
-	          netstring         \
-	          netstring-pcre    \
                   findlib           \
 	          cryptokit         \
-		  tyxml             \
-	          tyxml.parser      \
+                  pcre              \
+                  str               \
+                  xml-light         \
                   dynlink           \
+                  cohttp.lwt        \
+                  hmap              \
+                  ppx_deriving.std
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \
-	       \"${PROJECTNAME}.commandline\";  \
                \"${PROJECTNAME}.polytables\";   \
                \"${PROJECTNAME}.cookies\";      \
                \"${PROJECTNAME}.baselib\";      \

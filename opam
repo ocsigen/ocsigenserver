@@ -48,14 +48,18 @@ depends: [
   "base-threads"
   "react"
   "ssl"
-  "lwt" {>= "2.5.0" & < "3.0.0"}
-  "ocamlnet" {>= "4.0.2"}
+  "lwt" {>= "3.0.0"}
+  "lwt_ssl"
   "pcre"
   "cryptokit"
-  "tyxml" {>= "4.0.0"}
+  "xml-light"
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
-  "camlp4"
+  "cohttp-lwt-unix"
+  "hmap"
+
+  # REMOVE AFTER DEBUGGING
+  "ppx_deriving"
 ]
 depopts: "camlzip"
 conflicts: [

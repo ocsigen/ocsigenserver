@@ -4,10 +4,20 @@ let section = Lwt_log.Section.make "ocsipersist:pgsql"
 
 module Lwt_thread = struct
   include Lwt
-  include Lwt_chan
+  let close_in = Lwt_io.close
+  let really_input = Lwt_io.read_into_exactly
+  let input_binary_int = Lwt_io.BE.read_int
+  let input_char = Lwt_io.read_char
+  let output_string = Lwt_io.write
+  let output_binary_int = Lwt_io.BE.write_int
+  let output_char = Lwt_io.write_char
+  let flush = Lwt_io.flush
+  let open_connection a = Lwt_io.open_connection a
+  type in_channel = Lwt_io.input_channel
+  type out_channel = Lwt_io.output_channel
 end
 module PGOCaml = PGOCaml_generic.Make(Lwt_thread)
-open Lwt
+open Lwt.Infix
 open Printf
 
 exception Ocsipersist_error
@@ -79,7 +89,8 @@ let cursor db query params f =
       let (key,value) = key_value_of_row row in
       f key (unmarshal value)
     with exn ->
-      Lwt_log.error ~exn ~section "exception while evaluating cursor argument";
+      Lwt_log.ign_error ~exn ~section
+        "exception while evaluating cursor argument";
       error := Some exn;
       Lwt.return ()
   in match !error with
@@ -184,11 +195,9 @@ let fold_table = fold_step
 
 let iter_block a b = failwith "Ocsipersist.iter_block: not implemented"
 
-
-open Simplexmlparser
 let parse_global_config = function
   | [] -> ()
-  | [Element ("database", attrs, [])] -> let parse_attr = function
+  | [Xml.Element ("database", attrs, [])] -> let parse_attr = function
     | ("host", h) -> host := Some h
     | ("port", p) -> begin
         try port := Some (int_of_string p)
@@ -215,4 +224,4 @@ let init_fun config =
   parse_global_config config;
   conn_pool := Lwt_pool.create !size_conn_pool ~validate:PGOCaml.alive connect
 
-let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
+let _ = Ocsigen_extensions.register ~name:"ocsipersist" ~init_fun ()

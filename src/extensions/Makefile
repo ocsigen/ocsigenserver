@@ -4,13 +4,13 @@ PACKAGE  :=		\
 	bytes		\
 	lwt.unix	\
 	ipaddr		\
-	lwt.ssl		\
-	lwt.react	\
-	netstring	\
-	netstring-pcre	\
-	tyxml.parser
+	lwt_ssl		\
+	pcre		\
+	xml-light 	\
+	cohttp.lwt
 
-LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
+LIBS     := -I ../baselib -I ../http -I ../server \
+            ${addprefix -package ,${PACKAGE}}
 OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG}
 OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
@@ -20,19 +20,9 @@ all: byte opt
 
 ### Extensions ###
 
-FILES := staticmod.ml           \
-	 cgimod.ml              \
-	 redirectmod.ml         \
-	 revproxy.ml            \
-	 extensiontemplate.ml   \
-         accesscontrol.ml       \
-         userconf.ml            \
-	 outputfilter.ml        \
-	 authbasic.ml           \
-	 rewritemod.ml          \
-	 extendconfiguration.ml \
-         ocsigen_comet.ml       \
-         cors.ml                \
+FILES := accesscontrol.ml authbasic.ml cors.ml extendconfiguration.ml \
+	 outputfilter.ml redirectmod.ml revproxy.ml \
+	 rewritemod.ml staticmod.ml userconf.ml
 
 ifeq "$(CAMLZIP)" "YES"
 FILES += deflatemod.ml

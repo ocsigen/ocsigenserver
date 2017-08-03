@@ -187,6 +187,13 @@ module Url_base : sig
   (** [split_fragment str] splits [str] at first '#' *)
   val split_fragment : string -> string * string option
 
+  val join_path : path -> string
+
+  (**/**)
+  val split_path : string -> path
+
+  val norm_path : path -> path
+
 end
 
 module Printexc : sig
@@ -198,3 +205,10 @@ module Printexc : sig
 end
 
 val debug : string -> unit
+
+module Date : sig
+
+  (** Converts Unix GMT date to string *)
+  val to_string : float -> string
+
+end

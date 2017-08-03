@@ -405,30 +405,24 @@ check_ocamlversion
 
 check_binary ocamlfind "See: http://projects.camlcity.org/projects/findlib.html"
 
+check_library cohttp "See: https://github.com/mirage/ocaml-cohttp"
+check_library cohttp.lwt "Missing support for 'lwt' in cohttp."
 check_library react "See: http://erratique.ch/software/react"
 check_library ssl "See: http://sourceforge.net/projects/savonet/files/ocaml-ssl"
 
 check_library lwt "See: http://ocsigen.org/lwt"
 check_library lwt.unix  "Missing support for 'unix' in lwt."
-check_library lwt.react "Missing support for 'react' in lwt."
-check_library lwt.ssl   "Missing support for 'ssl' in lwt."
+check_library lwt_ssl   "See: http://ocsigen.org/lwt"
 check_library lwt.preemptive "Missing support for 'preemptive' in lwt."
-
-check_library netstring \
-    "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
-check_library netstring-pcre \
-    "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
-check_library netsys \
-    "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
 
 check_library pcre "See: http://ocaml.info/home/ocaml_sources.html"
 check_library cryptokit "See: http://pauillac.inria.fr/~xleroy/software.html#cryptokit"
 
-check_library tyxml "See: http://ocsigen.org/tyxml/"
+check_library xml-light "See: https://github.com/ncannasse/xml-light"
 
 # Check PostgreSQL
 case "$with_pgsql" in
- 1) if test_library pgocaml; then with_pgsql=1; else with_pgsql=0; fi;;
+ 1) if test_library pgocaml && test_library pgocaml.syntax; then with_pgsql=1; else with_pgsql=0; fi;;
  2) check_library pgocaml "https://github.com/darioteixeira/pgocaml";;
 esac
 
@@ -668,4 +662,3 @@ echo
 echo "   make install"
 echo "   make install.doc"
 echo
-

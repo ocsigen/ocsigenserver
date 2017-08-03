@@ -97,7 +97,7 @@ val stream_want : string step -> int -> string step Lwt.t
 (** Returns the value of the current buffer *)
 val current_buffer : string step -> string
 
-(** Skips data. Raises [Stream_too_small (Some size)] 
+(** Skips data. Raises [Stream_too_small (Some size)]
     if the stream is too small, where [size] is the size of the stream. *)
 val skip : string step -> int64 -> string step Lwt.t
 
@@ -121,7 +121,7 @@ val of_lwt_stream : 'a Lwt_stream.t -> 'a t
 (** Convert an {!Ocsigen_stream.t} into a {!Lwt_stream.t}.
     @param is_empty function to skip empty chunk.
 *)
-val to_lwt_stream : 'a t -> 'a Lwt_stream.t
+val to_lwt_stream : ?is_empty:('a -> bool) -> 'a t -> 'a Lwt_stream.t
 
 module StringStream : sig
 
@@ -141,3 +141,9 @@ module StringStream : sig
   val concat: m -> m -> m
 
 end
+
+(**/**)
+
+(* Small hack that will allow us to move [Ocsigen_config] out of
+   baselib. Not super-pretty. *)
+val set_net_buffer_size : int -> unit

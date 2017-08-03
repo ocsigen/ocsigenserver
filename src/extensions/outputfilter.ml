@@ -16,84 +16,50 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
-(*****************************************************************************)
-(*****************************************************************************)
-(* This module allows to rewrite the output sent by the server               *)
-(*****************************************************************************)
-(*****************************************************************************)
+ *)
 
-open Lwt
-open Ocsigen_extensions
-open Ocsigen_headers
+(* This module enables rewritting the server output *)
 
-type outputfilter =
-  | Rewrite_header of (Http_headers.name * Netstring_pcre.regexp * string)
-  | Add_header of (Http_headers.name * string * bool option)
+type header_filter = [
+  | `Rewrite of (Ocsigen_header.Name.t * Pcre.regexp * string)
+  | `Add of (Ocsigen_header.Name.t * string * bool option)
+]
 
 let gen filter = function
-  | Req_not_found (code,_) -> return (Ext_next code)
-  | Req_found (ri, res) ->
-    let new_headers =
-      match filter with
-      | Rewrite_header (header, regexp, dest) ->
-        begin
-          try
-            let header_values =
-              Http_headers.find_all header
-                (Ocsigen_http_frame.Result.headers res)
-            in
-            let h =
-              Http_headers.replace_opt header None
-                (Ocsigen_http_frame.Result.headers res)
-            in
-            List.fold_left
-              (fun h value ->
-                 Http_headers.add
-                   header
-                   (Netstring_pcre.global_replace regexp dest value)
-                   h
-              )
-              h
-              header_values
-          with
-          | Not_found -> Ocsigen_http_frame.Result.headers res
-        end
-      | Add_header (header, dest, replace) ->
-        begin
-          match replace with
-          | None ->
-            begin
-              try
-                ignore (Http_headers.find header (Ocsigen_http_frame.Result.headers res));
-                (Ocsigen_http_frame.Result.headers res)
-              with
-              | Not_found ->
-                Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
-            end
-          | Some false ->
-            Http_headers.add header dest (Ocsigen_http_frame.Result.headers res)
-          | Some true ->
-            Http_headers.replace header dest (Ocsigen_http_frame.Result.headers res)
-        end
-    in
-    Lwt.return
-      (Ocsigen_extensions.Ext_found
-         (fun () ->
-            Lwt.return
-              (Ocsigen_http_frame.Result.update res ~headers:new_headers ())))
+  | Ocsigen_extensions.Req_not_found (code, _) ->
+    Lwt.return (Ocsigen_extensions.Ext_next code)
+  | Ocsigen_extensions.Req_found (ri, res) ->
+    Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
+      Lwt.return @@ match filter with
+      | `Rewrite (header, regexp, dest) ->
+        (try
+           let l =
+             List.map
+               (Ocsigen_lib.Netstring_pcre.global_replace regexp dest)
+               (Ocsigen_response.header_multi res header)
+           and a = Ocsigen_response.remove_header res header in
+           Ocsigen_response.add_header_multi a header l
+         with Not_found ->
+           res)
+      | `Add (header, dest, replace) ->
+        match replace with
+        | None ->
+          (match Ocsigen_response.header res header with
+           | Some _ ->
+             res
+           | None ->
+             Ocsigen_response.add_header res header dest)
+        | Some false ->
+          Ocsigen_response.add_header res header dest
+        | Some true ->
+          Ocsigen_response.replace_header res header dest)
 
 let gen_code code = function
-  | Req_not_found (code,_) -> return (Ext_next code)
-  | Req_found (ri, res) ->
-    Lwt.return
-      (Ocsigen_extensions.Ext_found
-         (fun () ->
-            Lwt.return (Ocsigen_http_frame.Result.update res ~code ())))
-
-
-
-(*****************************************************************************)
+  | Ocsigen_extensions.Req_not_found (code, _) ->
+    Lwt.return (Ocsigen_extensions.Ext_next code)
+  | Ocsigen_extensions.Req_found (ri, res) ->
+    Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
+      Lwt.return (Ocsigen_response.set_status res code))
 
 let parse_config config_elem =
   let header = ref None in
@@ -114,7 +80,9 @@ let parse_config config_elem =
               (fun s -> header := Some s);
             Configuration.attribute
               ~name:"regexp"
-              (fun s -> regexp := Some (Netstring_pcre.regexp s));
+              (fun s ->
+                 regexp :=
+                   Some (Ocsigen_lib.Netstring_pcre.regexp s));
             Configuration.attribute
               ~name:"dest"
               (fun s -> dest := Some s);
@@ -135,7 +103,14 @@ let parse_config config_elem =
           ~attributes:[
             Configuration.attribute ~name:"code"
               (fun s ->
-                 try code := Some (int_of_string s)
+                 try
+                   match
+                     Cohttp.Code.status_of_code (int_of_string s)
+                   with
+                   | #Cohttp.Code.status as status ->
+                     code := Some status
+                   | `Code _ ->
+                     failwith "Invalid code"
                  with Failure _ ->
                    badconfig "Invalid code attribute in <sethttpcode>"
               );
@@ -147,24 +122,35 @@ let parse_config config_elem =
   | None ->
     begin match !header, !regexp, !dest, !replace with
       | (_, Some _, _, Some _) ->
-       badconfig
-         "Wrong attributes for <outputfilter/>: attributes regexp and \
-          replace can't be set simultaneously"
-     | (Some h, Some r, Some d, None) ->
-       gen (Rewrite_header (Http_headers.name h, r, d))
-     | (Some h, None, Some d, rep) ->
-       gen (Add_header (Http_headers.name h, d, rep))
-     | _ ->
-       badconfig
-         "Wrong attributes for <outputfilter header=... dest=... \
-          (regexp=... / replace=...)/>"
+        Ocsigen_extensions.badconfig
+          "Wrong attributes for <outputfilter/>: attributes regexp and \
+           replace can't be set simultaneously"
+      | (Some h, Some r, Some d, None) ->
+        gen (`Rewrite (Ocsigen_header.Name.of_string h, r, d))
+      | (Some h, None, Some d, rep) ->
+        gen (`Add (Ocsigen_header.Name.of_string h, d, rep))
+      | _ ->
+        Ocsigen_extensions.badconfig
+          "Wrong attributes for <outputfilter header=... dest=... \
+           (regexp=... / replace=...)/>"
     end
   | Some code -> gen_code code
 
-(*****************************************************************************)
-(** Registration of the extension *)
-let () = register_extension
+let () =
+  Ocsigen_extensions.register
     ~name:"outputfilter"
-    ~fun_site:(fun _ _ _ _ _ -> parse_config)
-    ~user_fun_site:(fun _ _ _ _ _ _ -> parse_config)
+    ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
+
+let mode = Ocsigen_server.Site.Config.key ()
+
+let extension =
+  Ocsigen_server.Site.create_extension
+    (fun {Ocsigen_server.Site.Config.accessor} ->
+       match accessor mode with
+       | Some (`Code c)  ->
+         gen_code c
+       | Some (#header_filter as f) ->
+         gen f
+       | None ->
+         failwith "Outputfilter.mode not set")

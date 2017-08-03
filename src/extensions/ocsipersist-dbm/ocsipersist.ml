@@ -23,7 +23,7 @@
 (** Module Ocsipersist: persistent data *)
 
 open Ocsidbmtypes
-open Lwt
+open Lwt.Infix
 
 let section = Lwt_log.Section.make "ocsipersist:dbm"
 (** Data are divided into stores.
@@ -38,26 +38,25 @@ let socketname = "socket"
 (*****************************************************************************)
 (** Internal functions: storage directory *)
 
-open Simplexmlparser
 (** getting the directory from config file *)
 let rec parse_global_config (store, ocsidbm, delayloading as d) = function
   | [] -> d
-  | Element ("delayloading", [("val", ("true" | "1"))], []) :: ll ->
+  | Xml.Element ("delayloading", [("val", ("true" | "1"))], []) :: ll ->
     parse_global_config (store, ocsidbm, true) ll
 
-  | Element ("store", [("dir", s)], []) :: ll ->
+  | Xml.Element ("store", [("dir", s)], []) :: ll ->
     if store = None then
       parse_global_config ((Some s), ocsidbm, delayloading) ll
     else
       Ocsigen_extensions.badconfig "Ocsipersist: Duplicate <store> tag"
 
-  | Element ("ocsidbm", [("name", s)], []) :: ll ->
+  | Xml.Element ("ocsidbm", [("name", s)], []) :: ll ->
     if ocsidbm = None then
       parse_global_config (store, (Some s), delayloading) ll
     else
       Ocsigen_extensions.badconfig "Ocsipersist: Duplicate <ocsidbm> tag"
 
-  | (Element (s,_,_))::ll -> Ocsigen_extensions.badconfig "Bad tag %s" s
+  | (Xml.Element (s,_,_))::ll -> Ocsigen_extensions.badconfig "Bad tag %s" s
 
   | _ -> Ocsigen_extensions.badconfig
            "Unexpected content inside Ocsipersist config"
@@ -73,11 +72,11 @@ let (directory, ocsidbm) =
 external sys_exit : int -> 'a = "caml_sys_exit"
 
 let rec try_connect sname =
-  catch
+  Lwt.catch
     (fun () ->
        let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
        Lwt_unix.connect socket (Unix.ADDR_UNIX sname) >>= fun () ->
-       return socket)
+       Lwt.return socket)
     (fun _ ->
        Lwt_log.ign_warning_f ~section
          "Launching a new Ocsidbm process: %s on directory %s." !ocsidbm !directory;
@@ -109,10 +108,10 @@ let rec try_connect sname =
           (fun () ->
             let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
             Lwt_unix.connect socket (Unix.ADDR_UNIX sname) >>= fun () ->
-            return socket)))
+            Lwt.return socket)))
 
 let rec get_indescr i =
-  (catch
+  (Lwt.catch
      (fun () -> try_connect (!directory^"/"^socketname))
      (fun e ->
        if i = 0
@@ -127,7 +126,7 @@ let rec get_indescr i =
             | Unix.Unix_error (a,b,c) ->
               Printf.sprintf "%a in %s(%s)" (fun () -> Unix.error_message) a b c
             | _ -> Printexc.to_string e);
-         fail e
+         Lwt.fail e
        end
        else (Lwt_unix.sleep 2.1) >>= (fun () -> get_indescr (i-1))))
 
@@ -151,82 +150,82 @@ let init_fun config =
        Lwt_log.ign_warning ~section "Initializing ...");
   let indescr = get_indescr 2 in
   if delay_loading then (
-    inch  := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
-    outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
+    inch  := (indescr >>= fun r -> Lwt.return (Lwt_io.(of_fd ~mode:input) r));
+    outch := (indescr >>= fun r -> Lwt.return (Lwt_io.(of_fd ~mode:output) r));
   ) else (
     let r = Lwt_main.run indescr in
-    inch  := return (Lwt_chan.in_channel_of_descr r);
-    outch := return (Lwt_chan.out_channel_of_descr r);
+    inch  := Lwt.return (Lwt_io.(of_fd ~mode:input) r);
+    outch := Lwt.return (Lwt_io.(of_fd ~mode:output) r);
     Lwt_log.ign_warning ~section "...Initialization complete";
   )
 
 
 let send =
-  let previous = ref (return Ok) in
+  let previous = ref (Lwt.return Ok) in
   fun v ->
-    catch
+    Lwt.catch
       (fun () -> !previous)
-      (fun _ -> return Ok) >>=
+      (fun _ -> Lwt.return Ok) >>=
     (fun _ ->
        !inch >>= fun inch ->
        !outch >>= fun outch ->
        previous :=
-         (Lwt_chan.output_value outch v >>= fun () ->
-          Lwt_chan.flush outch >>= fun () ->
-          Lwt_chan.input_value inch);
+         (Lwt_io.write_value outch v >>= fun () ->
+          Lwt_io.flush outch >>= fun () ->
+          Lwt_io.read_value inch);
        !previous)
 
 let db_get (store, name) =
   send (Get (store, name)) >>=
   (function
-    | Value v -> return v
-    | Dbm_not_found -> fail Not_found
-    | Error e -> fail e
-    | _ -> fail Ocsipersist_error)
+    | Value v -> Lwt.return v
+    | Dbm_not_found -> Lwt.fail Not_found
+    | Error e -> Lwt.fail e
+    | _ -> Lwt.fail Ocsipersist_error)
 
 let db_remove (store, name) =
   send (Remove (store, name)) >>=
   (function
-    | Ok -> return ()
-    | Error e -> fail e
-    | _ -> fail Ocsipersist_error)
+    | Ok -> Lwt.return ()
+    | Error e -> Lwt.fail e
+    | _ -> Lwt.fail Ocsipersist_error)
 
 let db_replace (store, name) value =
   send (Replace (store, name, value)) >>=
   (function
-    | Ok -> return ()
-    | Error e -> fail e
-    | _ -> fail Ocsipersist_error)
+    | Ok -> Lwt.return ()
+    | Error e -> Lwt.fail e
+    | _ -> Lwt.fail Ocsipersist_error)
 
 let db_replace_if_exists (store, name) value =
   send (Replace_if_exists (store, name, value)) >>=
   (function
-    | Ok -> return ()
-    | Dbm_not_found -> fail Not_found
-    | Error e -> fail e
-    | _ -> fail Ocsipersist_error)
+    | Ok -> Lwt.return ()
+    | Dbm_not_found -> Lwt.fail Not_found
+    | Error e -> Lwt.fail e
+    | _ -> Lwt.fail Ocsipersist_error)
 
 let db_firstkey store =
   send (Firstkey store) >>=
   (function
-    | Key k -> return (Some k)
-    | Error e -> fail e
-    | _ -> return None)
+    | Key k -> Lwt.return (Some k)
+    | Error e -> Lwt.fail e
+    | _ -> Lwt.return None)
 
 let db_nextkey store =
   send (Nextkey store) >>=
   (function
-    | Key k -> return (Some k)
-    | Error e -> fail e
-    | _ -> return None)
+    | Key k -> Lwt.return (Some k)
+    | Error e -> Lwt.fail e
+    | _ -> Lwt.return None)
 
 let db_length store =
   send (Length store) >>=
   (function
-    | Value v -> return (Marshal.from_string v 0)
-    | Dbm_not_found -> return 0
-    | Error e -> fail e
-    | _ -> fail Ocsipersist_error)
+    | Value v -> Lwt.return (Marshal.from_string v 0)
+    | Dbm_not_found -> Lwt.return 0
+    | Error e -> Lwt.fail e
+    | _ -> Lwt.fail Ocsipersist_error)
 
 
 
@@ -241,14 +240,14 @@ let open_store name = Lwt.return name
 
 let make_persistent_lazy_lwt ~store ~name ~default =
   let pvname = (store, name) in
-  (catch
-     (fun () -> db_get pvname >>= (fun _ -> return ()))
+  (Lwt.catch
+     (fun () -> db_get pvname >>= (fun _ -> Lwt.return ()))
      (function
        | Not_found ->
          default () >>= fun def ->
          db_replace pvname (Marshal.to_string def [])
-       | e -> fail e)) >>=
-  (fun () -> return pvname)
+       | e -> Lwt.fail e)) >>=
+  (fun () -> Lwt.return pvname)
 
 let make_persistent_lazy ~store ~name ~default =
   let default () = Lwt.wrap default in
@@ -259,7 +258,7 @@ let make_persistent ~store ~name ~default =
 
 let get (pvname : 'a t) : 'a =
   db_get pvname >>=
-  (fun r -> return (Marshal.from_string r 0))
+  (fun r -> Lwt.return (Marshal.from_string r 0))
 
 let set pvname v =
   let data = Marshal.to_string v [] in
@@ -276,7 +275,7 @@ let table_name n = Lwt.return n
 
 let find table key =
   db_get (table, key) >>=
-  (fun v -> return (Marshal.from_string v 0))
+  (fun v -> Lwt.return (Marshal.from_string v 0))
 
 let add table key value =
   let data = Marshal.to_string value [] in
@@ -293,7 +292,7 @@ let iter_table f table =
   let rec aux nextkey =
     nextkey table >>=
     (function
-      | None -> return ()
+      | None -> Lwt.return ()
       | Some k -> find table k >>= f k >>= (fun () -> aux db_nextkey))
   in
   aux db_firstkey
@@ -304,7 +303,7 @@ let fold_table f table beg =
   let rec aux nextkey beg =
     nextkey table >>=
     (function
-      | None -> return beg
+      | None -> Lwt.return beg
       | Some k -> find table k >>= fun r ->
         f k r beg >>= (fun res -> aux db_nextkey res))
   in
@@ -332,7 +331,7 @@ let iter_block a b = failwith "iter_block not implemented for DBM. Please use Oc
        let nextkey next nextl =
          Lwt_unix.write indescr next 0 nextl >>=
          (fun l2 -> if l2 <> nextl
-         then fail Ocsipersist_error
+         then Lwt.fail Ocsipersist_error
          else (Lwt_unix.input_line inch >>=
                fun answ -> return (Marshal.from_string answ 0)))
        in
@@ -341,15 +340,15 @@ let iter_block a b = failwith "iter_block not implemented for DBM. Please use Oc
          (function
            | End -> return ()
            | Key k -> find table k >>= f k
-           | Error e -> fail e
-           | _ -> fail Ocsipersist_error) >>=
+           | Error e -> Lwt.fail e
+           | _ -> Lwt.fail Ocsipersist_error) >>=
          (fun () -> aux next nextl)
        in
        catch
          (fun () ->
            aux first firstl >>=
            (fun () -> Unix.close socket; return ()))
-         (fun e -> Unix.close socket; fail e))))
+         (fun e -> Unix.close socket; Lwt.fail e))))
 
 *)
 
@@ -358,4 +357,4 @@ let length table =
 (* Because of Dbm implementation, the result may be less thann the expected
    result in some case (with a version of ocsipersist based on Dbm) *)
 
-let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()
+let _ = Ocsigen_extensions.register ~name:"ocsipersist" ~init_fun ()

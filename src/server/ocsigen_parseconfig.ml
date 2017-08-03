@@ -21,17 +21,16 @@
 (******************************************************************)
 (** Config file parsing *)
 
-open Ocsigen_lib
-open Ocsigen_socket
-
-open Simplexmlparser
+open Xml
 open Ocsigen_config
+
+module Netstring_pcre = Ocsigen_lib.Netstring_pcre
 
 let section = Lwt_log.Section.make "ocsigen:config"
 
 let blah_of_string f tag s =
   try
-    f (String.remove_spaces s 0 ((String.length s) -1))
+    f (Ocsigen_lib.String.remove_spaces s 0 ((String.length s) -1))
   with Failure _ -> raise (Ocsigen_config.Config_file_error
                              ("While parsing <"^tag^"> - "^s^
                               " is not a valid value."))
@@ -39,15 +38,6 @@ let blah_of_string f tag s =
 let int_of_string = blah_of_string int_of_string
 let float_of_string = blah_of_string float_of_string
 
-type ssl_info = {
-  ssl_certificate : string option;
-  ssl_privatekey  : string option;
-  ssl_ciphers     : string option;
-  ssl_dhfile      : string option;
-  ssl_curve       : string option
-}
-
-(*****************************************************************************)
 let default_default_hostname =
   let hostname = Unix.gethostname () in
   try
@@ -64,7 +54,6 @@ let default_default_hostname =
        in config file." hostname;
     (*VVV Is it the right behaviour? *)
     hostname
-(*****************************************************************************)
 
 let parse_size =
   let kilo = Int64.of_int 1000 in
@@ -77,7 +66,7 @@ let parse_size =
   let tebi = Int64.mul mebi mebi in
   fun s ->
     let l = String.length s in
-    let s = String.remove_spaces s 0 (l-1) in
+    let s = Ocsigen_lib.String.remove_spaces s 0 (l-1) in
     let v l =
       try
         Int64.of_string (String.sub s 0 l)
@@ -149,7 +138,6 @@ let parse_size =
              else o l
          else o l)
 
-
 let parse_size_tag tag s =
   try
     parse_size s
@@ -158,20 +146,9 @@ let parse_size_tag tag s =
       (Ocsigen_config.Config_file_error
          ("While parsing <"^tag^"> - "^s^" is not a valid size."))
 
-
-
-
-
-
-(* My xml parser is not really adapted to this.
-   It is the parser for the syntax extension.
-   But it works.
-*)
-
-
 let rec parse_string = function
   | [] -> ""
-  | (PCData s)::l -> s^(parse_string l)
+  | PCData s :: l -> s ^ parse_string l
   | _ -> failwith "ocsigen_parseconfig.parse_string"
 
 let parse_string_tag tag s =
@@ -182,12 +159,8 @@ let parse_string_tag tag s =
       (Ocsigen_config.Config_file_error
          ("While parsing <"^tag^"> - String expected."))
 
-
 let rec parser_config =
-  let rec verify_empty = function
-    | [] -> ()
-    | _ -> raise (Config_file_error "Don't know what to do with trailing data")
-  in let rec parse_servers n = function
+  let rec parse_servers n = function
     | [] -> (match n with
         | [] -> raise (Config_file_error ("<server> tag expected"))
         | _ -> n)
@@ -203,19 +176,15 @@ let rec parser_config =
         (* nouveau at the end *)
     | _ -> raise (Config_file_error ("syntax error inside <ocsigen>"))
   in function
-    | (Element ("ocsigen", [], l))::ll ->
-      verify_empty ll;
+    | Element ("ocsigen", [], l) ->
       parse_servers [] l
     | _ -> raise (Config_file_error "<ocsigen> tag expected")
 
-
 let parse_ext file =
-  parser_config (Simplexmlparser.xmlparser_file file)
-
+  parser_config (Xml.parse_file file)
 
 let preloadfile config () = Ocsigen_extensions.set_config config
 let postloadfile () = Ocsigen_extensions.set_config []
-
 
 (* Checking hostnames.  We make only make looze efforts.
    See RFC 921 and 952 for further details *)
@@ -254,350 +223,338 @@ let parse_host_field =
                  raise (Config_file_error "bad port number")
              in
              let split_host = function
-               | Netstring_str.Delim _ -> ".*"
-               | Netstring_str.Text t -> Netstring_pcre.quote t
+               | Str.Delim _ -> ".*"
+               | Str.Text t -> Pcre.quote t
              in
              (host,
               Netstring_pcre.regexp
                 (String.concat ""
                    ((List.map split_host
-                       (Netstring_str.full_split
-                          (Netstring_str.regexp "[*]+") host))@["$"])),
+                       (Str.full_split
+                          (Str.regexp "[*]+") host))@["$"])),
               port)
            in
            List.map parse_one_host
-             (Netstring_str.split (Netstring_str.regexp "[ \t]+") s)
+             (Str.split (Str.regexp "[ \t]+") s)
        in
        Hashtbl.add h hostfilter r;
        (r : Ocsigen_extensions.virtual_hosts)
   )
 
+(* Extract a default hostname from the "host" field if no default is
+   provided *)
+let get_defaulthostname ~defaulthostname ~host =
+  match defaulthostname with
+  | Some d -> d
+  | None ->
+    (* We look for a hostname without wildcard (second case).
+       Something more clever could be envisioned *)
+    let rec aux = function
+      | [] ->
+        default_default_hostname
+      | (t, _, (Some 80 | None)) :: _
+        when (not (String.contains t '*')) ->
+        t
+      | _ :: q -> aux q
+    in
+    let host = aux host in
+    Lwt_log.ign_warning_f ~section
+      "While parsing config file, tag <host>: No defaulthostname, \
+       assuming it is \"%s\"" host;
+    if correct_hostname host then
+      host
+    else
+      raise (Ocsigen_config.Config_file_error
+               ("Incorrect hostname " ^ host))
 
-(* Extract a default hostname from the "host" field if no default is provided *)
-let get_defaulthostname ~defaulthostname ~defaulthttpport ~host =
-    match defaulthostname with
-      | Some d -> d
-      | None ->
-          (* We look for a hostname without wildcard (second case) *)
-          (* Something more clever could be envisioned *)
-          let rec aux = function
-            | [] -> default_default_hostname
-            | (t, _, (Some 80 | None)) :: _ when String.contains t '*' = false ->
-                t
-            | _ :: q -> aux q
-          in
-          let host = aux host in
-          Lwt_log.ign_warning_f ~section
-            "While parsing config file, tag <host>: No defaulthostname, \
-             assuming it is \"%s\"" host;
-          if correct_hostname host then
-             host
-          else
-            raise (Ocsigen_config.Config_file_error
-                     ("Incorrect hostname " ^ host))
+let later_pass_host_attr
+    (name, charset,
+     defaulthostname, defaulthttpport, defaulthttpsport,
+     ishttps) =
+  function
+  | "hostfilter", s ->
+    (match name with
+     | None ->
+       Some s, charset,
+       defaulthostname,
+       defaulthttpport,
+       defaulthttpsport,
+       ishttps
+     | _ ->
+       raise (Ocsigen_config.Config_file_error
+                ("Duplicate attribute name in <host>")))
+  | "charset", s ->
+    (match charset with
+     | None ->
+       name, Some s,
+       defaulthostname,
+       defaulthttpport,
+       defaulthttpsport,
+       ishttps
+     | _ ->
+       raise (Ocsigen_config.Config_file_error
+                ("Duplicate attribute charset in <host>")))
+  | "defaulthostname", s ->
+    (match defaulthostname with
+     | None ->
+       if correct_hostname s then
+         name, charset,
+         Some s,
+         defaulthttpport,
+         defaulthttpsport,
+         ishttps
+       else
+         raise (Ocsigen_config.Config_file_error
+                  ("Incorrect hostname " ^ s))
+     | _ ->
+       raise (Ocsigen_config.Config_file_error
+                "Duplicate attribute defaulthostname in <host>"))
+  | "defaulthttpport", s ->
+    (match defaulthttpport with
+     | None ->
+       name, charset,
+       defaulthostname,
+       Some s,
+       defaulthttpsport,
+       ishttps
+     | _ ->
+       raise (Ocsigen_config.Config_file_error
+                ("Duplicate attribute defaulthttpport in <host>")))
+  | "defaulthttpsport", s ->
+    (match defaulthttpsport with
+     | None ->
+       name, charset,
+       defaulthostname,
+       defaulthttpport,
+       Some s,
+       ishttps
+     | _ ->
+       raise (Ocsigen_config.Config_file_error
+                ("Duplicate attribute defaulthttpsport in <host>")))
+  | "defaultprotocol", s ->
+    (match ishttps with
+     | None ->
+       name, charset,
+       defaulthostname,
+       defaulthttpport,
+       defaulthttpsport,
+       Some s
+     | _ ->
+       raise (Ocsigen_config.Config_file_error
+                ("Duplicate attribute defaultprotocol in <host>")))
+  | attr, _ ->
+    raise (Ocsigen_config.Config_file_error
+             ("Wrong attribute for <host>: " ^ attr))
 
+let later_pass_host attrs l =
+  let host, charset, defaulthostname, defaulthttpport,
+      defaulthttpsport, defaultprotocol =
+    List.fold_left
+      later_pass_host_attr
+      (None, None, None, None, None, None)
+      (List.rev attrs)
+  in
+  let host = parse_host_field host in
+  let charset =
+    match charset, Ocsigen_config.get_default_charset () with
+    | Some charset, _
+    | None, Some charset -> charset
+    | None, None -> "utf-8"
+  and defaulthttpport =
+    match defaulthttpport with
+    | None -> Ocsigen_config.get_default_port ()
+    | Some p -> int_of_string "host" p
+  and defaulthostname = get_defaulthostname ~defaulthostname ~host
+  and defaulthttpsport =
+    match defaulthttpsport with
+    | None -> Ocsigen_config.get_default_sslport ()
+    | Some p -> int_of_string "host" p
+  and serve_everything = {
+    Ocsigen_extensions.do_not_serve_regexps = [];
+    do_not_serve_files = [];
+    do_not_serve_extensions = [];
+  } in
+  let conf = {
+    Ocsigen_extensions.default_hostname = defaulthostname;
+    default_httpport = defaulthttpport;
+    default_httpsport = defaulthttpsport;
+    default_protocol_is_https = defaultprotocol = Some "https";
+    mime_assoc = Ocsigen_charset_mime.default_mime_assoc ();
+    charset_assoc =
+      Ocsigen_charset_mime.empty_charset_assoc
+        ~default:charset ();
+    default_directory_index = ["index.html"];
+    list_directory_content = false;
+    follow_symlinks = `Owner_match;
+    do_not_serve_404 = serve_everything;
+    do_not_serve_403 = serve_everything;
+    uploaddir = Ocsigen_config.get_uploaddir ();
+    maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize ();
+  } in
+  let parse_config =
+    Ocsigen_extensions.make_parse_config []
+      (Ocsigen_extensions.parse_config_item None host conf)
+  in
+  (* default site for host *)
+  host, conf, parse_config l
 
-(* Config file is parsed twice.
-   This is the second parsing (site loading)
-*)
-let parse_server isreloading c =
-  let rec parse_server_aux = function
-      | [] -> []
-      | (Element ("port", atts, p))::ll ->
-          parse_server_aux ll
-      | (Element ("charset" as st, atts, p))::ll ->
-          set_default_charset (Some (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("logdir", [], p))::ll ->
-          parse_server_aux ll
-      | (Element ("syslog", [], p))::ll ->
-          parse_server_aux ll
-      | (Element ("ssl", [], p))::ll ->
-          parse_server_aux ll
-      | (Element ("user", [], p))::ll ->
-          parse_server_aux ll
-      | (Element ("group", [], p))::ll ->
-          parse_server_aux ll
-      | (Element ("uploaddir" as st, [], p))::ll ->
-          set_uploaddir (Some (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("datadir" as st, [], p))::ll ->
-          set_datadir (parse_string_tag st p);
-          parse_server_aux ll
-      | (Element ("minthreads" as st, [], p))::ll ->
-          set_minthreads (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("maxthreads" as st, [], p))::ll ->
-          set_maxthreads (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("maxdetachedcomputationsqueued" as st, [], p))::ll ->
-          set_max_number_of_threads_queued (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("maxconnected" as st, [], p))::ll ->
-          set_max_number_of_connections (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("mimefile" as st, [], p))::ll ->
-          Ocsigen_config.set_mimefile (parse_string_tag st p);
-          parse_server_aux ll
-      | (Element ("maxretries" as st, [], p))::ll ->
-          set_maxretries (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("timeout" as st, [], p))::ll
-(*VVV timeout: backward compatibility with <= 0.99.4 *)
-      | (Element ("clienttimeout" as st, [], p))::ll ->
-          set_client_timeout (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("servertimeout" as st, [], p))::ll ->
-          set_server_timeout (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-(*VVV For now we use silentservertimeout and silentclienttimeout also
-  for keep alive :-(
-      | (Element ("keepalivetimeout" as st, [], p))::ll ->
-          set_keepalive_timeout (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("keepopentimeout" as st, [], p))::ll ->
-          set_keepopen_timeout (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-*)
-      | (Element ("netbuffersize" as st, [], p))::ll ->
-          set_netbuffersize (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("filebuffersize" as st, [], p))::ll ->
-          set_filebuffersize (int_of_string st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("maxrequestbodysize" as st, [], p))::ll ->
-          set_maxrequestbodysize (parse_size_tag st (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("maxuploadfilesize" as st, [], p))::ll ->
-          set_maxuploadfilesize (parse_size_tag st
-                                   (parse_string_tag st p));
-          parse_server_aux ll
-      | (Element ("commandpipe" as st, [], p))::ll ->
-          set_command_pipe (parse_string_tag st p);
-          parse_server_aux ll
-      | (Element ("shutdowntimeout" as st, [], p))::ll ->
-          let p = parse_string_tag st p in
-          let t =
-            if p = "notimeout"
-            then None
-            else Some (float_of_string st p)
-          in
-          set_shutdown_timeout t;
-          parse_server_aux ll
-      | (Element ("debugmode", [], []))::ll ->
-          set_debugmode true;
-          parse_server_aux ll
-      | (Element ("usedefaulthostname", [], []))::ll ->
-          set_usedefaulthostname true;
-          parse_server_aux ll
-      | (Element ("disablepartialrequests", [], []))::ll ->
-          set_disablepartialrequests true;
-          parse_server_aux ll
-      | (Element ("respectpipeline", [], []))::ll ->
-          set_respect_pipeline ();
-          parse_server_aux ll
-      | (Element ("findlib", ["path",p], []))::ll ->
-          Ocsigen_loader.add_ocamlpath p;
-          parse_server_aux ll
-      | (Element ("require", atts, l))::ll
-      | (Element ("extension", atts, l))::ll ->
-          (* We do not reload extensions *)
-          let modules = match atts with
-            | [] ->
-                raise
-                  (Config_file_error "missing module, name or findlib-package attribute in <extension>")
-            | [("name", s)] -> `Name s
-            | [("module", s)] -> `Files [s]
-            | [("findlib-package", s)] -> `Files (Ocsigen_loader.findfiles s)
-            | _ ->
-                raise (Config_file_error "Wrong attribute for <extension>")
-          in begin
-            match modules with
-              | `Files modules ->
-                  Ocsigen_loader.loadfiles
-                    (preloadfile l) postloadfile false modules;
-              | `Name name ->
-                  Ocsigen_loader.init_module
-                    (preloadfile l) postloadfile false name
-          end;
-          parse_server_aux ll
-      | (Element ("library", atts, l))::ll ->
-          let modules = match atts with
-            | [] ->
-                raise
-                  (Config_file_error "missing module or findlib-package attribute in <library>")
-            | [("name", s)] -> `Name s
-            | [("module", s)] -> `Files [s]
-            | [("findlib-package", s)] -> `Files (Ocsigen_loader.findfiles s)
-            | _ -> raise (Config_file_error "Wrong attribute for <library>")
-          in begin
-            match modules with
-              | `Files modules ->
-                  Ocsigen_loader.loadfiles (preloadfile l) postloadfile true modules;
-              | `Name name ->
-                  Ocsigen_loader.init_module (preloadfile l) postloadfile true name
-          end;
-          parse_server_aux ll
-      | (Element ("host", atts, l))::ll ->
-          let rec parse_attrs ((name,
-                                charset,
-                                defaulthostname,
-                                defaulthttpport,
-                                defaulthttpsport,
-                                ishttps) as r) = function
-            | [] -> r
-            | ("hostfilter", s)::suite ->
-                (match name with
-                | None -> parse_attrs ((Some s), charset,
-                                       defaulthostname,
-                                       defaulthttpport,
-                                       defaulthttpsport,
-                                       ishttps) suite
-                | _ -> raise (Ocsigen_config.Config_file_error
-                                ("Duplicate attribute name in <host>")))
-            | ("charset", s)::suite ->
-                (match charset with
-                | None -> parse_attrs (name, Some s,
-                                       defaulthostname,
-                                       defaulthttpport,
-                                       defaulthttpsport,
-                                       ishttps) suite
-                | _ -> raise (Ocsigen_config.Config_file_error
-                                ("Duplicate attribute charset in <host>")))
-            | ("defaulthostname", s)::suite ->
-                (match defaulthostname with
-                | None ->
-                    if correct_hostname s then
-                      parse_attrs (name, charset,
-                                   (Some s),
-                                   defaulthttpport,
-                                   defaulthttpsport,
-                                   ishttps) suite
-                    else
-                      raise (Ocsigen_config.Config_file_error
-                               ("Incorrect hostname " ^ s))
-                | _ -> raise (Ocsigen_config.Config_file_error
-                                ("Duplicate attribute defaulthostname in <host>")))
-            | ("defaulthttpport", s)::suite ->
-                (match defaulthttpport with
-                | None -> parse_attrs (name, charset,
-                                       defaulthostname,
-                                       (Some s),
-                                       defaulthttpsport,
-                                       ishttps) suite
-                | _ -> raise (Ocsigen_config.Config_file_error
-                                ("Duplicate attribute defaulthttpport in <host>")))
-            | ("defaulthttpsport", s)::suite ->
-                (match defaulthttpsport with
-                | None -> parse_attrs (name, charset,
-                                       defaulthostname,
-                                       defaulthttpport,
-                                       Some s,
-                                       ishttps) suite
-                | _ -> raise (Ocsigen_config.Config_file_error
-                                ("Duplicate attribute defaulthttpsport in <host>")))
-            | ("defaultprotocol", s)::suite ->
-                (match ishttps with
-                | None -> parse_attrs (name, charset,
-                                       defaulthostname,
-                                       defaulthttpport,
-                                       defaulthttpsport,
-                                       Some s) suite
-                | _ -> raise (Ocsigen_config.Config_file_error
-                                ("Duplicate attribute defaultprotocol in <host>")))
-            | (s, _)::_ ->
-                raise (Ocsigen_config.Config_file_error
-                         ("Wrong attribute for <host>: "^s))
-          in
-          let host, charset, defaulthostname, defaulthttpport,
-            defaulthttpsport, defaultprotocol =
-            parse_attrs (None, None, None, None, None, None) atts
-          in
-          let host = parse_host_field host in
-          let charset =
-            match charset, Ocsigen_config.get_default_charset () with
-              | Some charset, _
-              | None, Some charset -> charset
-              | None, None -> "utf-8"
-          in
-          let defaulthttpport = match defaulthttpport with
-            | None -> Ocsigen_config.get_default_port ()
-            | Some p -> int_of_string "host" p
-          in
-          let defaulthostname = get_defaulthostname
-            ~defaulthostname ~defaulthttpport ~host in
-          let defaulthttpsport = match defaulthttpsport with
-            | None -> Ocsigen_config.get_default_sslport ()
-            | Some p -> int_of_string "host" p
-          in
-          let serve_everything = {
-            Ocsigen_extensions.do_not_serve_regexps = [];
-            do_not_serve_files = [];
-            do_not_serve_extensions = [];
-          } in
-          let conf = {
-            Ocsigen_extensions.default_hostname = defaulthostname;
-            default_httpport = defaulthttpport;
-            default_httpsport = defaulthttpsport;
-            default_protocol_is_https = defaultprotocol = Some "https";
-            mime_assoc = Ocsigen_charset_mime.default_mime_assoc ();
-            charset_assoc = Ocsigen_charset_mime.empty_charset_assoc
-              ~default:charset ();
-            default_directory_index = ["index.html"];
-            list_directory_content = false;
-            follow_symlinks = Ocsigen_extensions.FollowSymlinksIfOwnerMatch;
-            do_not_serve_404 = serve_everything;
-            do_not_serve_403 = serve_everything;
-            uploaddir = Ocsigen_config.get_uploaddir ();
-            maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize ();
-          }
-          in
-          let parse_host = Ocsigen_extensions.parse_config_item host conf in
-          let parse_config =
-            Ocsigen_extensions.make_parse_config [] parse_host
-          in
-          (* default site for host *)
-          (host, conf, parse_config l)::(parse_server_aux ll)
-      | (Element ("extconf", [("dir", dir)], []))::ll ->
-          let one =
-            try
-              let files = Sys.readdir dir in
-              Array.sort compare files;
-              Array.fold_left
-                (fun l s ->
-                  if Filename.check_suffix s "conf" then
-                    let filename = dir^"/"^s in
-                    let filecont =
-                      try
-                        Lwt_log.ign_info_f ~section "Parsing configuration file %s" filename;
-                        parse_ext filename
-                      with e ->
-                        Lwt_log.ign_error_f ~section ~exn:e
-                          "Error while loading configuration file %s (ignored)" filename;
-                        []
-                    in
-                    (match filecont with
-                    | [] -> l
-                    | s::_ -> l@(parse_server_aux s)
-                    )
-                  else l
-                )
-                []
-                files
-            with
-            | Sys_error _ as e ->
-              Lwt_log.ign_error ~section ~exn:e
-                "Error while loading configuration file (ignored)";
-              []
-          in
-          one@(parse_server_aux ll)
-      | (Element (tag, _, _))::_ ->
-          raise (Config_file_error
-                   ("tag <"^tag^"> unexpected inside <server>"))
-      | _ ->
-          raise (Config_file_error "Syntax error")
-  in Ocsigen_extensions.set_hosts (parse_server_aux c)
+let later_pass_extension tag attrs l =
+  (* We do not reload extensions *)
+  match attrs with
+  | [] ->
+    raise
+      (Config_file_error
+         ("missing module, name or findlib-package attribute in " ^ tag))
+  | ["name", s] ->
+    Ocsigen_loader.init_module
+      (preloadfile l) postloadfile false s
+  | ["module", s] ->
+    Ocsigen_loader.loadfiles
+      (preloadfile l) postloadfile false
+      [s];
+  | ["findlib-package", s] ->
+    Ocsigen_loader.loadfiles
+      (preloadfile l) postloadfile false
+      (Ocsigen_loader.findfiles s)
+  | _ ->
+    raise (Config_file_error ("Wrong attribute for " ^ tag))
 
+let rec later_pass_extconf dir =
+  let f acc s =
+    if Filename.check_suffix s "conf" then
+      match
+        let filename = dir^"/"^s in
+        try
+          Lwt_log.ign_info_f ~section
+            "Parsing configuration file %s" filename;
+          parse_ext filename
+        with e ->
+          Lwt_log.ign_error_f ~section ~exn:e
+            "Error while loading configuration file %s (ignored)"
+            filename;
+          []
+      with
+      | [] -> acc
+      | s :: _ -> acc @ later_pass s
+    else
+      acc
+  in
+  try
+    let files = Sys.readdir dir in
+    Array.sort compare files;
+    Array.fold_left f [] files
+  with
+  | Sys_error _ as e ->
+    Lwt_log.ign_error ~section ~exn:e
+      "Error while loading configuration file (ignored)";
+    []
+
+(* Config file is parsed twice. This is the second parsing (site
+   loading). *)
+and later_pass = function
+  | [] -> []
+  | Element ("port", atts, p) :: ll ->
+    later_pass ll
+  | Element ("charset" as st, atts, p) :: ll ->
+    set_default_charset (Some (parse_string_tag st p));
+    later_pass ll
+  | Element ("logdir", [], p) :: ll ->
+    later_pass ll
+  | Element ("syslog", [], p) :: ll ->
+    later_pass ll
+  | Element ("ssl", [], p) :: ll ->
+    later_pass ll
+  | Element ("user", [], p) :: ll ->
+    later_pass ll
+  | Element ("group", [], p) :: ll ->
+    later_pass ll
+  | Element ("uploaddir" as st, [], p) :: ll ->
+    set_uploaddir (Some (parse_string_tag st p));
+    later_pass ll
+  | Element ("datadir" as st, [], p) :: ll ->
+    set_datadir (parse_string_tag st p);
+    later_pass ll
+  | Element ("minthreads", [], p) :: ll ->
+    later_pass ll
+  | Element ("maxthreads", [], p) :: ll ->
+    later_pass ll
+  | Element ("maxdetachedcomputationsqueued" as st, [], p) :: ll ->
+    set_max_number_of_threads_queued
+      (int_of_string st (parse_string_tag st p));
+    later_pass ll
+  | Element ("maxconnected" as st, [], p) :: ll ->
+    set_max_number_of_connections (int_of_string st (parse_string_tag st p));
+    later_pass ll
+  | Element ("mimefile" as st, [], p) :: ll ->
+    Ocsigen_config.set_mimefile (parse_string_tag st p);
+    later_pass ll
+  | Element ("maxretries" as st, [], p) :: ll ->
+    set_maxretries (int_of_string st (parse_string_tag st p));
+    later_pass ll
+  | Element ("timeout" as st, [], p) :: ll
+  | Element ("clienttimeout" as st, [], p) :: ll ->
+    set_client_timeout (int_of_string st (parse_string_tag st p));
+    later_pass ll
+  | Element ("servertimeout" as st, [], p) :: ll ->
+    set_server_timeout (int_of_string st (parse_string_tag st p));
+    later_pass ll
+  | Element ("netbuffersize" as st, [], p) :: ll ->
+    Ocsigen_stream.set_net_buffer_size
+      (int_of_string st (parse_string_tag st p));
+    later_pass ll
+  | Element ("filebuffersize" as st, [], p) :: ll ->
+    set_filebuffersize (int_of_string st (parse_string_tag st p));
+    later_pass ll
+  | Element ("maxrequestbodysize" as st, [], p) :: ll ->
+    set_maxrequestbodysize (parse_size_tag st (parse_string_tag st p));
+    later_pass ll
+  | Element ("maxuploadfilesize" as st, [], p) :: ll ->
+    set_maxuploadfilesize (parse_size_tag st (parse_string_tag st p));
+    later_pass ll
+  | Element ("commandpipe" as st, [], p) :: ll ->
+    set_command_pipe (parse_string_tag st p);
+    later_pass ll
+  | Element ("shutdowntimeout" as st, [], p) :: ll ->
+    set_shutdown_timeout
+      (match parse_string_tag st p with
+       | "notimeout" ->
+         None
+       | p ->
+         Some (float_of_string st p));
+    later_pass ll
+  | Element ("debugmode", [], []) :: ll ->
+    set_debugmode true;
+    later_pass ll
+  | Element ("usedefaulthostname", [], []) :: ll ->
+    set_usedefaulthostname true;
+    later_pass ll
+  | Element ("disablepartialrequests", [], []) :: ll ->
+    set_disablepartialrequests true;
+    later_pass ll
+  | Element ("respectpipeline", [], []) :: ll ->
+    set_respect_pipeline ();
+    later_pass ll
+  | Element ("findlib", ["path",p], []) :: ll ->
+    Ocsigen_loader.add_ocamlpath p;
+    later_pass ll
+  | Element ("require", atts, l) :: ll
+  | Element ("extension", atts, l) :: ll ->
+    later_pass_extension "<extension>" atts l;
+    later_pass ll
+  | Element ("library", atts, l) :: ll ->
+    later_pass_extension "<library>" atts l;
+    later_pass ll
+  | Element ("host", atts, l) :: ll ->
+    later_pass_host atts l :: later_pass ll
+  | Element ("extconf", [("dir", dir)], []) :: ll ->
+    later_pass_extconf dir @ later_pass ll
+  | Element (tag, _, _) :: _ ->
+    raise (Config_file_error
+             ("tag <"^tag^"> unexpected inside <server>"))
+  | _ ->
+    raise (Config_file_error "Syntax error")
+
+let later_pass l = Ocsigen_extensions.set_hosts (later_pass l)
 
 (* Parsing <port> tags *)
 let parse_port =
@@ -609,16 +566,24 @@ let parse_port =
     let do_match r = Netstring_pcre.string_match r s 0 in
     let get x i = Netstring_pcre.matched_group x i s in
     match do_match all_ipv6 with
-    | Some r -> IPv6 (Unix.inet6_addr_any), int_of_string "port" (get r 1)
+    | Some r ->
+      `IPv6 (Unix.inet6_addr_any),
+      int_of_string "port" (get r 1)
     | None -> match do_match all_ipv4 with
-      | Some r -> IPv4 (Unix.inet_addr_any), int_of_string "port" (get r 1)
+      | Some r ->
+        `IPv4 (Unix.inet_addr_any),
+        int_of_string "port" (get r 1)
       | None -> match do_match single_ipv6 with
-        | Some r -> IPv6 (Unix.inet_addr_of_string (get r 1)),
-                    int_of_string "port" (get r 2)
+        | Some r ->
+          `IPv6 (Unix.inet_addr_of_string (get r 1)),
+          int_of_string "port" (get r 2)
         | None -> match do_match single_ipv4 with
-          | Some r -> IPv4 (Unix.inet_addr_of_string (get r 1)),
-                      int_of_string "port" (get r 2)
-          | None -> All, int_of_string "port" s
+          | Some r ->
+            `IPv4 (Unix.inet_addr_of_string (get r 1)),
+            int_of_string "port" (get r 2)
+          | None ->
+            `All,
+            int_of_string "port" s
 
 let parse_facility = function
   | "auth" -> `Auth
@@ -653,6 +618,7 @@ let config_error_for_some s = function
   | _ -> raise (Config_file_error s)
 
 let make_ssl_info ~certificate ~privatekey ~ciphers ~dhfile ~curve = {
+  Ocsigen_config.
   ssl_certificate = certificate;
   ssl_privatekey  = privatekey;
   ssl_ciphers     = ciphers;
@@ -689,40 +655,42 @@ let rec parse_ssl l ~certificate ~privatekey ~ciphers ~dhfile ~curve =
   | _ ->
     raise (Config_file_error ("Unexpected content inside <ssl>"))
 
-let extract_info c =
-  let rec aux user group ssl ports sslports minthreads maxthreads = function
-      [] -> ((user, group), (ssl, ports,sslports), (minthreads, maxthreads))
-    | (Element ("logdir" as st, [], p))::ll ->
+let first_pass c =
+  let rec aux user group ssl ports sslports = function
+      [] -> ((user, group), (ssl, ports, sslports))
+    | Element ("logdir" as st, [], p) :: ll ->
       set_logdir (parse_string_tag st p);
-      aux user group ssl ports sslports minthreads maxthreads ll
-    | (Element ("syslog" as st, [], p))::ll ->
+      aux user group ssl ports sslports ll
+    | Element ("syslog" as st, [], p) :: ll ->
       let str = String.lowercase (parse_string_tag st p) in
       set_syslog_facility (Some (parse_facility str));
-      aux user group ssl ports sslports minthreads maxthreads ll
-    | (Element ("port" as st, atts, p))::ll ->
+      aux user group ssl ports sslports ll
+    | Element ("port" as st, atts, p) :: ll ->
       (match atts with
          []
        | [("protocol", "HTTP")] ->
-         let po = try
+         let po =
+           try
              parse_port (parse_string_tag st p)
            with Failure _ ->
              raise (Config_file_error "Wrong value for <port> tag")
-         in aux user group ssl (po::ports) sslports minthreads maxthreads ll
+         in
+         aux user group ssl (po::ports) sslports ll
        | [("protocol", "HTTPS")] ->
          let po = try
              parse_port (parse_string_tag st p)
            with Failure _ ->
              raise (Config_file_error "Wrong value for <port> tag")
          in
-         aux user group ssl ports (po::sslports) minthreads maxthreads ll
+         aux user group ssl ports (po::sslports) ll
        | _ -> raise (Config_file_error "Wrong attribute for <port>"))
-    | (Element ("minthreads" as st, [], p))::ll ->
-      aux user group ssl ports sslports
-        (Some (int_of_string st (parse_string_tag st p))) maxthreads ll
-    | (Element ("maxthreads" as st, [], p))::ll ->
-      aux user group ssl ports sslports minthreads
-        (Some (int_of_string st (parse_string_tag st p))) ll
-    | (Element ("ssl", [], p))::ll ->
+    | Element ("minthreads" as st, [], p) :: ll ->
+      set_minthreads (int_of_string st (parse_string_tag st p));
+      aux user group ssl ports sslports ll
+    | Element ("maxthreads" as st, [], p) :: ll ->
+      set_maxthreads (int_of_string st (parse_string_tag st p));
+      aux user group ssl ports sslports ll
+    | Element ("ssl", [], p) :: ll ->
       (match ssl with
          None ->
          let ssl =
@@ -733,34 +701,34 @@ let extract_info c =
            and curve = None in
            parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve p
          in
-         aux user group ssl ports sslports minthreads maxthreads ll
+         aux user group ssl ports sslports ll
        | _ ->
          raise
            (Config_file_error
               "Only one ssl certificate for each server supported for now"))
-    | (Element ("user" as st, [], p))::ll ->
+    | Element ("user" as st, [], p) :: ll ->
       (match user with
          None ->
-         aux (Some (parse_string_tag st p)) group ssl ports sslports
-           minthreads maxthreads ll
+         aux (Some (parse_string_tag st p)) group ssl ports sslports ll
        | _ -> raise (Config_file_error
                        "Only one <user> tag for each server allowed"))
-    | (Element ("group" as st, [], p))::ll ->
+    | Element ("group" as st, [], p) :: ll ->
       (match group with
          None ->
-         aux user (Some (parse_string_tag st p)) ssl ports sslports
-           minthreads maxthreads ll
+         aux user (Some (parse_string_tag st p)) ssl ports sslports ll
        | _ -> raise (Config_file_error
                        "Only one <group> tag for each server allowed"))
-    | (Element ("commandpipe" as st, [], p))::ll ->
+    | Element ("commandpipe" as st, [], p) :: ll ->
       set_command_pipe (parse_string_tag st p);
-      aux user group ssl ports sslports minthreads maxthreads ll
-    | (Element (tag, _, _))::ll ->
-      aux user group ssl ports sslports minthreads maxthreads ll
+      aux user group ssl ports sslports ll
+    | Element (tag, _, _) :: ll ->
+      aux user group ssl ports sslports ll
     | _ ->
       raise (Config_file_error "Syntax error")
   in
-  let (user, group), si, (mint, maxt) = aux None None None [] [] None None c in
+  let (user, group), (si, ports, ssl_ports) =
+    aux None None None [] [] c
+  in
   let user = match user with
       None -> None (* Some (get_default_user ()) *)
     | Some s -> if s = "" then None else Some s
@@ -769,15 +737,12 @@ let extract_info c =
       None -> None (* Some (get_default_group ()) *)
     | Some s -> if s = "" then None else Some s
   in
-  let mint = match mint with
-    | Some t -> t
-    | None -> get_minthreads ()
-  in
-  let maxt = match maxt with
-    | Some t -> t
-    | None -> get_maxthreads ()
-  in
-  ((user, group), si, (mint, maxt))
+  Ocsigen_config.set_user user;
+  Ocsigen_config.set_group group;
+  Ocsigen_config.set_ssl_info si;
+  Ocsigen_config.set_ports ports;
+  Ocsigen_config.set_ssl_ports ssl_ports;
+  ()
 
 let parse_config ?file () =
   let file =
@@ -785,6 +750,4 @@ let parse_config ?file () =
     | None -> Ocsigen_config.get_config_file ()
     | Some f -> f
   in
-  parser_config (Simplexmlparser.xmlparser_file file)
-
-(******************************************************************)
+  parser_config (Xml.parse_file file)

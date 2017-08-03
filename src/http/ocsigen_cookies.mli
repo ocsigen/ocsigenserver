@@ -41,7 +41,7 @@ type cookieset = cookie CookiesTable.t Cookies.t
 val empty_cookieset : 'a CookiesTable.t Cookies.t
 
 
-(** [add_cookie path c v cookie_table] 
+(** [add_cookie path c v cookie_table]
     adds the cookie [c] to the table [cookie_table].
     If the cookie is already bound, the previous binding disappear. *)
 val add_cookie : Url.path -> string -> 'a ->
@@ -52,7 +52,7 @@ val add_cookie : Url.path -> string -> 'a ->
     from the table [cookie_table].
     Warning: it is not equivalent to [add_cookie ... OUnset ...]).
 *)
-val remove_cookie : Url.path -> string -> 
+val remove_cookie : Url.path -> string ->
   'a CookiesTable.t Cookies.t ->
   'a CookiesTable.t Cookies.t
 
@@ -63,4 +63,3 @@ val add_cookies :
   cookie CookiesTable.t Cookies.t ->
   cookie CookiesTable.t Cookies.t ->
   cookie CookiesTable.t Cookies.t
-

@@ -37,6 +37,10 @@ type 'a t =
     mutable in_use : bool;
     mutable finalizer : outcome -> unit Lwt.t }
 
+let net_buffer_size = ref 8192
+
+let set_net_buffer_size i = net_buffer_size := i
+
 let empty follow =
   match follow with
     None    -> Lwt.return (Finished None)
@@ -116,28 +120,11 @@ let string_of_stream m s =
   in
   aux 0 s >|= Buffer.contents
 
-(*
-(*XXX Quadratic!!! *)
-let string_of_streams =
-  let rec aux l = function
-    | Finished None -> return ""
-    | Finished (Some s) -> next s >>= fun r -> aux l r
-    | Cont (s, f) ->
-        let l2 = l+String.length s in
-        if l2 > Ocsigen_config.get_netbuffersize ()
-        then Lwt.fail String_too_large
-        else
-          next f >>= fun r ->
-          aux l2 r >>= fun r ->
-          return (s^r)
-  in aux 0
-*)
-
 let enlarge_stream = function
   | Finished a -> Lwt.fail Stream_too_small
   | Cont (s, f) ->
     let long = String.length s in
-    let max = Ocsigen_config.get_netbuffersize () in
+    let max = !net_buffer_size in
     if long >= max
     then Lwt.fail Input_is_too_large
     else
@@ -183,7 +170,7 @@ let rec skip s k = match s with
     let len = String.length s in
     let len64 = Int64.of_int len in
     if Int64.compare k len64 <= 0
-    then 
+    then
       let k = Int64.to_int k in
       Lwt.return (Cont (String.sub s k (len - k), f))
     else (enlarge_stream (Cont ("", f)) >>=
@@ -193,7 +180,7 @@ let substream delim s =
   let ldelim = String.length delim in
   if ldelim = 0 then Lwt.fail (Stream_error "Empty delimiter")
   else
-    let rdelim = Netstring_pcre.regexp_string delim in
+    let rdelim = Pcre.(regexp (quote delim)) in
     let rec aux =
       function
       | Finished _ -> Lwt.fail Stream_too_small
@@ -202,7 +189,7 @@ let substream delim s =
         if len < ldelim
         then enlarge_stream stre >>= aux
         else try
-            let p,_ = Netstring_pcre.search_forward rdelim s 0 in
+            let p,_ = Ocsigen_lib.Netstring_pcre.search_forward rdelim s 0 in
             cont (String.sub s 0 p)
               (fun () ->
                  empty
@@ -211,7 +198,7 @@ let substream delim s =
           with Not_found ->
             let pos = (len + 1 - ldelim) in
             cont (String.sub s 0 pos)
-              (fun () -> 
+              (fun () ->
                  next f >>= function
                  | Finished _ -> Lwt.fail Stream_too_small
                  | Cont (s', f') ->
@@ -229,10 +216,10 @@ let of_file filename =
   let fd = Lwt_unix.of_unix_file_descr
       (Unix.openfile filename [Unix.O_RDONLY;Unix.O_NONBLOCK] 0o666)
   in
-  let ch = Lwt_chan.in_channel_of_descr fd in
+  let ch = Lwt_io.(of_fd ~mode:input) fd in
   let buf = Bytes.create 1024 in
   let rec aux () =
-    Lwt_chan.input ch buf 0 1024 >>= fun n ->
+    Lwt_io.read_into ch buf 0 1024 >>= fun n ->
     if n = 0 then empty None else
       (* Streams should be immutable, thus we always make a copy
          of the buffer *)
@@ -253,7 +240,7 @@ let of_lwt_stream stream =
 (** Convert an {!Ocsigen_stream.t} into a {!Lwt_stream.t}.
     @param is_empty function to skip empty chunk.
 *)
-let to_lwt_stream o_stream =
+let to_lwt_stream ?(is_empty = (fun _ -> false)) o_stream =
   let stream = ref (get o_stream) in
   let rec wrap () =
     next !stream >>= function
@@ -261,7 +248,9 @@ let to_lwt_stream o_stream =
     | Finished (Some next) -> stream := next; wrap ()
     | Cont (value, next) ->
       stream := next;
-      Lwt.return (Some value)
+      if is_empty value
+      then wrap ()
+      else Lwt.return (Some value)
   in Lwt_stream.from wrap
 
 module StringStream = struct

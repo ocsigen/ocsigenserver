@@ -23,7 +23,7 @@
 
 open Dbm
 open Ocsidbmtypes
-open Lwt
+open Lwt.Infix
 
 let directory = Sys.argv.(1)
 
@@ -156,14 +156,14 @@ let db_nextkey t = Dbm.nextkey (find_dont_create_table t)
 let db_length t =
   let table = find_dont_create_table t in
   let rec aux f n =
-    catch
+    Lwt.catch
       (fun () ->
          ignore (f table);
          Lwt_unix.yield () >>=
          (fun () -> aux Dbm.nextkey (n+1)))
       (function
-        | Not_found -> return n
-        | e -> fail e)
+        | Not_found -> Lwt.return n
+        | e -> Lwt.fail e)
   in
   aux Dbm.firstkey 0
 (* Because of Dbm implementation, the result may be less than the expected
@@ -198,8 +198,8 @@ let _ = Unix.setsid ()
 (** Communication functions: *)
 
 let send outch v =
-  Lwt_chan.output_value outch v >>=
-  (fun () -> Lwt_chan.flush outch)
+  Lwt_io.write_value outch v >>=
+  (fun () -> Lwt_io.flush outch)
 
 let execute outch =
   let handle_errors f = try f () with e -> send outch (Error e) in
@@ -231,7 +231,7 @@ let execute outch =
         with Not_found -> send outch End)
   | Length t ->
     handle_errors (fun () ->
-        catch
+      Lwt.catch
           (fun () ->
              db_length t >>=
              (fun i -> send outch (Value (Marshal.to_string i []))))
@@ -241,7 +241,7 @@ let execute outch =
 let nb_clients = ref 0
 
 let rec listen_client inch outch =
-  Lwt_chan.input_value inch >>=
+  Lwt_io.read_value inch >>=
   (fun v -> execute outch v) >>=
   (fun () -> listen_client inch outch)
 
@@ -249,7 +249,7 @@ let finish _ =
   nb_clients := !nb_clients - 1;
   if !nb_clients = 0
   then close_all 0 ();
-  return ()
+  Lwt.return ()
 
 
 let b = ref false
@@ -260,9 +260,9 @@ let rec loop socket =
      ignore (
        b := true;
        nb_clients := !nb_clients + 1;
-       let inch = Lwt_chan.in_channel_of_descr indescr in
-       let outch = Lwt_chan.out_channel_of_descr indescr in
-       catch
+       let inch = Lwt_io.(of_fd ~mode:input) indescr in
+       let outch = Lwt_io.(of_fd ~mode:output) indescr in
+       Lwt.catch
          (fun () -> listen_client inch outch >>= finish)
          finish);
      loop socket)
@@ -272,9 +272,12 @@ let rec loop socket =
 
 let _ = Lwt_main.run
     (let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
-     (try
-        Lwt_unix.bind socket (Unix.ADDR_UNIX (directory^"/"^socketname))
-      with _ -> errlog ("Please make sure that the directory "^directory^" exists, writable for ocsidbm, and no other ocsidbm process is running on the same directory. If not, remove the file "^(directory^"/"^socketname)); the_end 1);
+     Lwt.catch
+       (fun () ->
+          Lwt_unix.bind socket (Unix.ADDR_UNIX (directory^"/"^socketname)))
+       (fun exn ->
+          errlog ("Please make sure that the directory "^directory^" exists, writable for ocsidbm, and no other ocsidbm process is running on the same directory. If not, remove the file "^(directory^"/"^socketname));
+          the_end 1) >>= fun () ->
      Lwt_unix.listen socket 20;
      (* Done in ocsipersist.ml
         let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
@@ -283,7 +286,7 @@ let _ = Lwt_main.run
             Unix.close devnull;
             Unix.close Unix.stdin; *)
      ignore (Lwt_unix.sleep 4.1 >>=
-             (fun () -> if not !b then close_all 0 (); return ()));
+             (fun () -> if not !b then close_all 0 (); Lwt.return ()));
      (* If nothing happened during 5 seconds, I quit *)
 
      loop socket)
@@ -332,13 +335,12 @@ let _ = Lwt_main.run
                     )
                   )
                   t
-                  (return ()))
+                  (Lwt.return ()))
             )
             !tableoftables
-            (return ())
+            (Lwt.return ())
         ) >>=
         f
       in ignore (f ())
 
 *)
-
