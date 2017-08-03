@@ -55,7 +55,7 @@ depends: [
   "xml-light"
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
-  "cohttp" {>= "0.17.0"}
+  "cohttp-lwt-unix"
   "hmap"
 
   # REMOVE AFTER DEBUGGING
