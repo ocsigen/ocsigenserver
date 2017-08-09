@@ -48,7 +48,9 @@ depends: [
   "base-threads"
   "react"
   "ssl"
-  "lwt" {>= "2.5.0" & < "3.0.0"}
+  "lwt" {>= "3.0.0"}
+  "lwt_ssl"
+  "lwt_react"
   "ocamlnet" {>= "4.0.2"}
   "pcre"
   "cryptokit"

@@ -1,4 +1,5 @@
-PKG lwt lwt.ssl
+PKG lwt
+PKG lwt_ssl
 PKG findlib
 PKG react
 PKG pcre

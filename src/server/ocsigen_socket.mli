@@ -10,7 +10,7 @@ type socket_type =
     @param addr type of addresss (All | IPv4 | IPv6)
     @param port port of socket
 *)
-val make_sockets : socket_type -> int -> Lwt_unix.file_descr list
+val make_sockets : socket_type -> int -> Lwt_unix.file_descr list Lwt.t
 
 (** ip_of_sockaddr accessor for ip
     @param A Unix.ADDR_INET value or raise error

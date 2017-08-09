@@ -410,8 +410,8 @@ check_library ssl "See: http://sourceforge.net/projects/savonet/files/ocaml-ssl"
 
 check_library lwt "See: http://ocsigen.org/lwt"
 check_library lwt.unix  "Missing support for 'unix' in lwt."
-check_library lwt.react "Missing support for 'react' in lwt."
-check_library lwt.ssl   "Missing support for 'ssl' in lwt."
+check_library lwt_react   "See: http://ocsigen.org/lwt"
+check_library lwt_ssl   "See: http://ocsigen.org/lwt"
 check_library lwt.preemptive "Missing support for 'preemptive' in lwt."
 
 check_library netstring \
@@ -668,4 +668,3 @@ echo
 echo "   make install"
 echo "   make install.doc"
 echo
-
