@@ -42,17 +42,19 @@ let conn_pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t ref =
 
 let use_pool f = Lwt_pool.use !conn_pool @@ fun db -> f db
 
+let marshal value = Marshal.to_string value []
+let unmarshal str = Marshal.from_string str 0
+
 let key_value_of_row = function
-  | [Some key; Some value] -> (PGOCaml.bytea_of_string key, PGOCaml.bytea_of_string value)
+  | [Some key; Some value] ->
+      PGOCaml.bytea_of_string key,
+      unmarshal @@ PGOCaml.bytea_of_string value
   | _ -> raise Ocsipersist_error
 
 (* get one value from the result of a query *)
-let one = function
-  | [Some value]::xs -> PGOCaml.bytea_of_string value
+let one_value = function
+  | [Some value]::xs -> unmarshal @@ PGOCaml.bytea_of_string value
   | _ -> raise Not_found
-
-let marshal value = Marshal.to_string value []
-let unmarshal str = Marshal.from_string str 0
 
 let prepare db query =
   let hashtbl = PGOCaml.private_data db in
@@ -76,8 +78,7 @@ let cursor db query params f =
   let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
   let error = ref None in
   lwt () = PGOCaml.cursor db ~name ~params @@ fun row -> try_lwt
-      let (key,value) = key_value_of_row row in
-      f key (unmarshal value)
+      let key, value = key_value_of_row row in f key value
     with exn ->
       Lwt_log.error ~exn ~section "exception while evaluating cursor argument";
       error := Some exn;
@@ -128,7 +129,7 @@ let make_persistent_lazy ~store ~name ~default =
 
 let get p = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " p.store in
-  Lwt.map (unmarshal @. one) (exec db query [p.name])
+  Lwt.map one_value (exec db query [p.name])
 
 let set p v = use_pool @@ fun db ->
   let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 " p.store
@@ -143,7 +144,7 @@ let open_table table = use_pool @@ fun db ->
 
 let find table key = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " table in
-  Lwt.map (unmarshal @. one) (exec db query [key])
+  Lwt.map one_value (exec db query [key])
 
 let add table key value = use_pool @@ fun db ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
@@ -164,7 +165,7 @@ let remove table key = use_pool @@ fun db ->
 
 let length table = use_pool @@ fun db ->
   let query = sprintf "SELECT count(*) FROM %s " table in
-  Lwt.map (unmarshal @. one) (exec db query [])
+  Lwt.map one_value (exec db query [])
 
 let iter_step f table = use_pool @@ fun db ->
   let query = sprintf "SELECT * FROM %s " table in
