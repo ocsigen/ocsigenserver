@@ -45,15 +45,19 @@ let use_pool f = Lwt_pool.use !conn_pool @@ fun db -> f db
 let marshal value = Marshal.to_string value []
 let unmarshal str = Marshal.from_string str 0
 
+let pack_value v = PGOCaml.string_of_bytea @@ marshal v
+let unpack_value value = unmarshal @@ PGOCaml.bytea_of_string value
+let pack_key k = failwith "TODO"
+let unpack_key k = failwith "TODO"
+
 let key_value_of_row = function
   | [Some key; Some value] ->
-      PGOCaml.bytea_of_string key,
-      unmarshal @@ PGOCaml.bytea_of_string value
+      unpack_key key, unpack_value value
   | _ -> raise Ocsipersist_error
 
 (* get one value from the result of a query *)
 let one_value = function
-  | [Some value]::xs -> unmarshal @@ PGOCaml.bytea_of_string value
+  | [Some value]::xs -> unpack_value value
   | _ -> raise Not_found
 
 let prepare db query =
@@ -70,12 +74,12 @@ let prepare db query =
 
 let exec db query params =
   lwt name = prepare db query in
-  let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
+  let params = List.map (fun x -> Some x) params in
   PGOCaml.execute db ~name ~params ()
 
 let cursor db query params f =
   lwt name = prepare db query in
-  let params = params |> List.map @@ fun x -> Some (PGOCaml.string_of_bytea x) in
+  let params = List.map (fun x -> Some x) params in
   let error = ref None in
   lwt () = PGOCaml.cursor db ~name ~params @@ fun row -> try_lwt
       let key, value = key_value_of_row row in f key value
@@ -109,14 +113,14 @@ let make_persistent_worker ~store ~name ~default db =
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
                        ON CONFLICT ( key ) DO NOTHING" store in
   (* NOTE: incompatible with < 9.5 *)
-  exec db query [name; marshal default] >> Lwt.return {store; name}
+  exec db query [pack_key name; pack_value default] >> Lwt.return {store; name}
 
 let make_persistent ~store ~name ~default =
   use_pool @@ fun db -> make_persistent_worker ~store ~name ~default db
 
 let make_persistent_lazy_lwt ~store ~name ~default = use_pool @@ fun db ->
   let query = sprintf "SELECT 1 FROM %s WHERE key = $1 " store in
-  lwt result = exec db query [name] in
+  lwt result = exec db query [pack_key name] in
   match result with
   | [] ->
     lwt default = default () in
@@ -129,11 +133,11 @@ let make_persistent_lazy ~store ~name ~default =
 
 let get p = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " p.store in
-  Lwt.map one_value (exec db query [p.name])
+  Lwt.map one_value (exec db query [pack_key p.name])
 
 let set p v = use_pool @@ fun db ->
   let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 " p.store
-  in exec db query [p.name; marshal v] >> Lwt.return ()
+  in exec db query [pack_key p.name; pack_value v] >> Lwt.return ()
 
 type 'value table = string
 
@@ -144,24 +148,24 @@ let open_table table = use_pool @@ fun db ->
 
 let find table key = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " table in
-  Lwt.map one_value (exec db query [key])
+  Lwt.map one_value (exec db query [pack_key key])
 
 let add table key value = use_pool @@ fun db ->
   let query = sprintf "INSERT INTO %s VALUES ( $1 , $2 )
                        ON CONFLICT ( key ) DO UPDATE SET value = $2 " table
   (* NOTE: incompatible with < 9.5 *)
-  in exec db query [key; marshal value] >> Lwt.return ()
+  in exec db query [pack_key key; pack_value value] >> Lwt.return ()
 
 let replace_if_exists table key value = use_pool @@ fun db ->
   let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 RETURNING 0" table in
-  lwt result = exec db query [key; marshal value] in
+  lwt result = exec db query [pack_key key; pack_value value] in
   match result with
   | [] -> raise Not_found
   | _ -> Lwt.return ()
 
 let remove table key = use_pool @@ fun db ->
   let query = sprintf "DELETE FROM %s WHERE key = $1 " table in
-  exec db query [key] >> Lwt.return ()
+  exec db query [pack_key key] >> Lwt.return ()
 
 let length table = use_pool @@ fun db ->
   let query = sprintf "SELECT count(*) FROM %s " table in
