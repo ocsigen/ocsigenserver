@@ -47,8 +47,61 @@ let unmarshal str = Marshal.from_string str 0
 
 let pack_value v = PGOCaml.string_of_bytea @@ marshal v
 let unpack_value value = unmarshal @@ PGOCaml.bytea_of_string value
-let pack_key k = failwith "TODO"
-let unpack_key k = failwith "TODO"
+
+let is_first_oct_digit c = c >= '0' && c <= '3'
+let is_oct_digit c = c >= '0' && c <= '7'
+let oct_val c = Char.code c - 0x30
+
+(* escapes characters that are not in the range of 0x20..0x7e;
+   this is to meet PostgreSQL's format requirements for text fields
+   while keeping the key column readable whenever possible. *)
+let escape_string s =
+  let len = String.length s in
+  let buf = Buffer.create (len * 2) in
+  for i = 0 to len - 1 do
+    let c = s.[i] in
+    let cc = Char.code c in
+    if cc < 0x20 || cc > 0x7e then
+      Buffer.add_string buf (sprintf "\\%03o" cc) (* non-print -> \ooo *)
+    else if c = '\\' then
+      Buffer.add_string buf "\\\\" (* \ -> \\ *)
+    else
+      Buffer.add_char buf c
+  done;
+  Buffer.contents buf
+
+let unescape_string str =
+  let len = String.length str in
+  let buf = Buffer.create len in
+  let i = ref 0 in
+  while !i < len do
+    let c = str.[!i] in
+    if c = '\\' then (
+      incr i;
+      if !i < len && str.[!i] = '\\' then (
+  Buffer.add_char buf '\\';
+  incr i
+      ) else if !i+2 < len &&
+  is_first_oct_digit str.[!i] &&
+  is_oct_digit str.[!i+1] &&
+  is_oct_digit str.[!i+2] then (
+    let byte = oct_val str.[!i] in
+    incr i;
+    let byte = (byte lsl 3) + oct_val str.[!i] in
+    incr i;
+    let byte = (byte lsl 3) + oct_val str.[!i] in
+    incr i;
+    Buffer.add_char buf (Char.chr byte)
+  )
+    ) else (
+      incr i;
+      Buffer.add_char buf c
+    )
+  done;
+  Buffer.contents buf
+
+let pack_key = escape_string
+let unpack_key = unescape_string
 
 let key_value_of_row = function
   | [Some key; Some value] ->
