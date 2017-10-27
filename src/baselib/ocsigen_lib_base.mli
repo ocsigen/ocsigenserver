@@ -91,6 +91,7 @@ module List : sig
   val is_prefix : 'a list -> 'a list -> bool
 
   val chop : int -> 'a list -> 'a list
+  val split_at : int -> 'a list -> 'a list * 'a list
 
 end
 
