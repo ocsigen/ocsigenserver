@@ -173,6 +173,13 @@ module List = struct
       | [] -> []
       | x :: xs -> chop (n-1) xs
 
+  let rec split_at n xs =
+    if n <= 0
+    then [], xs
+    else match xs with
+           | [] -> [], []
+           | x::xs -> let l,r = split_at (n-1) xs in x::l, r
+
 end
 
 (*****************************************************************************)
