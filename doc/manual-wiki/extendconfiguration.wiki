@@ -25,7 +25,7 @@ where {{{VAL}}} can be:
     * {{{always}}} always follows symlinks (more efficient). Note that this setting is not permitted in userconf files
     * {{{ownermatch}}} symlinks are followed only if the owner of the symlink and of the target coincide. (Default value)
 
-Notice that staticmod partially overrides this setting when it not used in a userconf file. When used with the syntax {{{<static dir="dir" />}}}, the checks start only after the directory {{{dir}}}. In regexp mode, the checks only start after the value given by the {{{root}}} attribute. See the documentation of <<a_manual chpater="staticmod"|staticmod>>] for details.
+Notice that staticmod partially overrides this setting when it not used in a userconf file. When used with the syntax {{{<static dir="dir" />}}}, the checks start only after the directory {{{dir}}}. In regexp mode, the checks only start after the value given by the {{{root}}} attribute. See the documentation of <<a_manual chapter="staticmod"|staticmod>> for details.
 
 === Hiding or forbidding local files
 
