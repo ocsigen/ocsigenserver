@@ -48,7 +48,7 @@ let select_range length beg endopt skipfun stream =
          Lwt.fail Ocsigen_stream.Stream_too_small
        | Ocsigen_stream.Cont (c, f) -> Lwt.return (c, f))
       >>= fun (buf, nextstream) ->
-      let buflen = String.length buf in
+      let buflen = Bytes.length buf in
       let buflen64 = Int64.of_int buflen in
       if (Int64.compare buflen64 num) <= 0
       then
@@ -56,7 +56,7 @@ let select_range length beg endopt skipfun stream =
             Ocsigen_stream.next nextstream >>= fun next ->
             aux next (Int64.sub num buflen64) ())
       else
-        Ocsigen_stream.cont (String.sub buf 0 (Int64.to_int num))
+        Ocsigen_stream.cont (Bytes.sub buf 0 (Int64.to_int num))
           (fun () -> Ocsigen_stream.empty None)
   in
   Lwt.catch

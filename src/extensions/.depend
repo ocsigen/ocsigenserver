@@ -1,7 +1,3 @@
-accesscontrol.cmi : ../server/ocsigen_extensions.cmi
-authbasic.cmi :
-ocsigen_comet.cmi : ../baselib/ocsigen_stream.cmi
-ocsipersist.cmi :
 accesscontrol.cmo : ../server/ocsigen_request_info.cmi \
     ../baselib/ocsigen_lib.cmi ../http/ocsigen_http_frame.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi \
@@ -10,12 +6,14 @@ accesscontrol.cmx : ../server/ocsigen_request_info.cmx \
     ../baselib/ocsigen_lib.cmx ../http/ocsigen_http_frame.cmx \
     ../server/ocsigen_extensions.cmx ../http/ocsigen_cookies.cmx \
     ../http/http_headers.cmx ../http/framepp.cmx accesscontrol.cmi
+accesscontrol.cmi : ../server/ocsigen_extensions.cmi
 authbasic.cmo : ../server/ocsigen_request_info.cmi \
     ../http/ocsigen_http_frame.cmi ../server/ocsigen_extensions.cmi \
     ../http/ocsigen_cookies.cmi ../http/http_headers.cmi authbasic.cmi
 authbasic.cmx : ../server/ocsigen_request_info.cmx \
     ../http/ocsigen_http_frame.cmx ../server/ocsigen_extensions.cmx \
     ../http/ocsigen_cookies.cmx ../http/http_headers.cmx authbasic.cmi
+authbasic.cmi :
 cgimod.cmo : ../baselib/ocsigen_stream.cmi ../http/ocsigen_senders.cmi \
     ../server/ocsigen_request_info.cmi ../baselib/ocsigen_lib.cmi \
     ../http/ocsigen_http_frame.cmi ../http/ocsigen_http_com.cmi \
@@ -35,13 +33,13 @@ cors.cmx : ../server/ocsigen_request_info.cmx ../baselib/ocsigen_lib.cmx \
     ../http/ocsigen_http_frame.cmx ../server/ocsigen_extensions.cmx \
     ../http/http_headers.cmx ../http/framepp.cmx
 deflatemod.cmo : ../baselib/ocsigen_stream.cmi \
-    ../server/ocsigen_request_info.cmi ../http/ocsigen_http_frame.cmi \
-    ../http/ocsigen_headers.cmi ../server/ocsigen_extensions.cmi \
-    ../http/http_headers.cmi
+    ../server/ocsigen_request_info.cmi ../baselib/ocsigen_lib.cmi \
+    ../http/ocsigen_http_frame.cmi ../http/ocsigen_headers.cmi \
+    ../server/ocsigen_extensions.cmi ../http/http_headers.cmi
 deflatemod.cmx : ../baselib/ocsigen_stream.cmx \
-    ../server/ocsigen_request_info.cmx ../http/ocsigen_http_frame.cmx \
-    ../http/ocsigen_headers.cmx ../server/ocsigen_extensions.cmx \
-    ../http/http_headers.cmx
+    ../server/ocsigen_request_info.cmx ../baselib/ocsigen_lib.cmx \
+    ../http/ocsigen_http_frame.cmx ../http/ocsigen_headers.cmx \
+    ../server/ocsigen_extensions.cmx ../http/http_headers.cmx
 extendconfiguration.cmo : ../server/ocsigen_parseconfig.cmi \
     ../server/ocsigen_extensions.cmi ../http/ocsigen_cookies.cmi \
     ../baselib/ocsigen_config.cmi ../http/ocsigen_charset_mime.cmi
@@ -60,6 +58,8 @@ ocsigen_comet.cmx : ../baselib/ocsigen_stream.cmx \
     ../server/ocsigen_request_info.cmx ../baselib/ocsigen_lib.cmx \
     ../http/ocsigen_http_frame.cmx ../server/ocsigen_extensions.cmx \
     ../baselib/ocsigen_config.cmx ocsigen_comet.cmi
+ocsigen_comet.cmi : ../baselib/ocsigen_stream.cmi
+ocsipersist.cmi :
 outputfilter.cmo : ../http/ocsigen_http_frame.cmi \
     ../http/ocsigen_headers.cmi ../server/ocsigen_extensions.cmi \
     ../http/http_headers.cmi

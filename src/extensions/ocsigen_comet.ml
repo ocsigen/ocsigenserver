@@ -218,7 +218,7 @@ sig
   val encode_downgoing :
     Channels.chan_id list
     -> (Channels.t * string * Ocsigen_stream.outcome Lwt.u option) list option
-    -> string Ocsigen_stream.t
+    -> bytes Ocsigen_stream.t
   (* Encode outgoing messages : the first argument is the list of channels
    * that have already been collected.
    * The results is the stream to send to the client*)
@@ -267,8 +267,9 @@ end = struct
            Lwt.return []
          | Some body ->
            Lwt.return (Ocsigen_stream.get body) >>=
-           Ocsigen_stream.string_of_stream
+           Ocsigen_stream.bytes_of_stream
              (Ocsigen_config.get_maxrequestbodysizeinmemory ()) >|=
+           Bytes.unsafe_to_string >|=
            Url.fixup_url_string >|=
            Netencoding.Url.dest_url_encoded_parameters
       )

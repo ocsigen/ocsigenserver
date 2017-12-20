@@ -74,7 +74,7 @@ let read_header ?downcase ?unfold ?strip s =
   let rec find_end_of_header s =
     catch
       (fun () ->
-         let b = Ocsigen_stream.current_buffer s in
+         let b = Ocsigen_stream.current_buffer s |> Bytes.unsafe_to_string in
          (* Maybe the header is empty. In this case, there is an empty line
           * right at the beginning
          *)
@@ -95,7 +95,7 @@ let read_header ?downcase ?unfold ?strip s =
         | e -> fail e)
   in
   find_end_of_header s >>= (fun (s, end_pos) ->
-      let b = Ocsigen_stream.current_buffer s in
+      let b = Ocsigen_stream.current_buffer s |> Bytes.unsafe_to_string in
       let header, _ =
         scan_header ?downcase ?unfold ?strip b ~start_pos:0 ~end_pos
       in
@@ -109,9 +109,10 @@ let lf_re = S.regexp "[\n]";;
 
 let read_multipart_body decode_part boundary s =
 
-  let rec search_window s re start =
+  let rec search_window (s: bytes Ocsigen_stream.step) re start =
     try
-      return (s, snd (S.search_forward re (Ocsigen_stream.current_buffer s) start))
+      let str = Ocsigen_stream.current_buffer s |> Bytes.unsafe_to_string in
+      return (s, snd (S.search_forward re str start))
     with
       Not_found ->
       Ocsigen_stream.enlarge_stream s >>=
@@ -146,9 +147,10 @@ let read_multipart_body decode_part boundary s =
     Ocsigen_stream.stream_want s (ldel + 2) >>= (function
         | Finished _ as str2 -> return (str2, false, false)
         | Cont (ss, f) as str2 ->
-          let long = String.length ss in
-          let isdelim = (long >= ldel) && (String.sub ss 0 ldel = del) in
-          let islast = isdelim && (String.sub ss ldel 2 = "--") in
+          let long = Bytes.length ss in
+          let isdelim = (long >= ldel) && (Bytes.sub ss 0 ldel =
+                                           Bytes.of_string del) in
+          let islast = isdelim && (Bytes.sub ss ldel 2 = Bytes.of_string "--") in
           return (str2, isdelim, islast))
   in
 
@@ -169,10 +171,10 @@ let read_multipart_body decode_part boundary s =
     let last_part = match s with
       | Finished _ -> false
       | Cont (ss, f) ->
-        let long = String.length ss in
+        let long = Bytes.length ss in
         (long >= (l_delimiter+2)) &&
-        (ss.[l_delimiter] = '-') &&
-        (ss.[l_delimiter+1] = '-')
+        (Bytes.get ss (l_delimiter) = '-') &&
+        (Bytes.get ss (l_delimiter+1) = '-')
     in
     if last_part then
       return [ y ]
@@ -192,7 +194,7 @@ let read_multipart_body decode_part boundary s =
   if b then begin
     (* Move to the beginning of the next line: *)
     search_end_of_line s 0 >>= (fun (s, k_eol) ->
-        let uses_crlf = (Ocsigen_stream.current_buffer s).[k_eol-2] = '\r' in
+        let uses_crlf = Bytes.get (Ocsigen_stream.current_buffer s) (k_eol-2) = '\r' in
         Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
         (* Begin with first part: *)
         parse_parts s uses_crlf)
@@ -205,7 +207,7 @@ let read_multipart_body decode_part boundary s =
          (* Printf.printf "k_eob=%d\n" k_eob; *)
          (* Move to the beginning of the next line: *)
          search_end_of_line s k_eob >>= fun (s, k_eol) ->
-         let uses_crlf = (Ocsigen_stream.current_buffer s).[k_eol-2] = '\r' in
+         let uses_crlf = Bytes.get (Ocsigen_stream.current_buffer s) (k_eol-2) = '\r' in
          (* Printf.printf "k_eol=%d\n" k_eol; *)
          Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
          (* Begin with first part: *)
@@ -221,7 +223,7 @@ let read_multipart_body decode_part boundary s =
 let empty_stream =
   Ocsigen_stream.get (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None))
 
-let scan_multipart_body_from_stream s ~boundary ~create ~add ~stop ~maxsize=
+let scan_multipart_body_from_stream (s: bytes Ocsigen_stream.stream) ~boundary ~create ~add ~stop ~maxsize=
   let decode_part stream =
     read_header stream >>= (fun (s, header) ->
         let p = create header in
@@ -229,7 +231,7 @@ let scan_multipart_body_from_stream s ~boundary ~create ~add ~stop ~maxsize=
           | Finished None -> return (size, empty_stream)
           | Finished (Some ss) -> return (size, ss)
           | Cont (stri, f) ->
-            let long = String.length stri in
+            let long = Bytes.length stri in
             let size2 = Int64.add size (Int64.of_int long) in
             if
               (match maxsize with
@@ -239,7 +241,7 @@ let scan_multipart_body_from_stream s ~boundary ~create ~add ~stop ~maxsize=
             then
               fail Ocsigen_Request_too_long
             else
-            if stri = ""
+            if stri = Bytes.empty
             then Ocsigen_stream.next f >>= while_stream size
             else ((* catch
                      (fun () ->
@@ -266,5 +268,3 @@ let scan_multipart_body_from_stream s ~boundary ~create ~add ~stop ~maxsize=
     (function
       | Stream_too_small -> fail Ocsigen_Bad_Request
       | e -> fail e)
-;;
-
