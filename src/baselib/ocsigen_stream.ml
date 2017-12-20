@@ -103,18 +103,18 @@ exception Stream_too_small
 exception Stream_error of string
 exception String_too_large
 
-let string_of_stream m s =
+let bytes_of_stream m s =
   let buff = Buffer.create (m/4) in
   let rec aux i s =
     next s >>= function
     | Finished _ -> Lwt.return buff
     | Cont (s, f) ->
-      let i = i + String.length s in
+      let i = i + Bytes.length s in
       if i > m
       then Lwt.fail String_too_large
-      else (Buffer.add_string buff s; aux i f)
+      else (Buffer.add_bytes buff s; aux i f)
   in
-  aux 0 s >|= Buffer.contents
+  aux 0 s >|= Buffer.to_bytes
 
 (*
 (*XXX Quadratic!!! *)
@@ -136,7 +136,7 @@ let string_of_streams =
 let enlarge_stream = function
   | Finished a -> Lwt.fail Stream_too_small
   | Cont (s, f) ->
-    let long = String.length s in
+    let long = Bytes.length s in
     let max = Ocsigen_config.get_netbuffersize () in
     if long >= max
     then Lwt.fail Input_is_too_large
@@ -145,26 +145,26 @@ let enlarge_stream = function
       match e with
       | Finished _ -> Lwt.fail Stream_too_small
       | Cont (r, ff) ->
-        let long2 = String.length r in
+        let long2 = Bytes.length r in
         let long3=long+long2 in
-        let new_s = s^r in
+        let new_s = Bytes.cat s r in
         if long3 <= max
         then Lwt.return (Cont (new_s, ff))
         else let long4 = long3 - max in
-          cont (String.sub new_s 0 max)
+          cont (Bytes.sub new_s 0 max)
             (fun () ->
-               Lwt.return (Cont (String.sub new_s max long4, ff)))
+               Lwt.return (Cont (Bytes.sub new_s max long4, ff)))
 
 let rec stream_want s len =
   (* returns a stream with at least len bytes read if possible *)
   match s with
   | Finished _ -> Lwt.return s
   | Cont (stri, f)  ->
-    if String.length stri >= len then
+    if Bytes.length stri >= len then
       Lwt.return s
     else
       Lwt.catch
-        (fun () -> enlarge_stream s >>= fun r -> Lwt.return (`OK r))
+        (fun () -> enlarge_stream (s: bytes step) >>= fun r -> Lwt.return (`OK r))
         (function
           | Stream_too_small -> Lwt.return `Too_small
           | e -> Lwt.fail e)
@@ -180,13 +180,13 @@ let current_buffer = function
 let rec skip s k = match s with
   | Finished _ -> raise Stream_too_small
   | Cont (s, f) ->
-    let len = String.length s in
+    let len = Bytes.length s in
     let len64 = Int64.of_int len in
     if Int64.compare k len64 <= 0
-    then 
+    then
       let k = Int64.to_int k in
-      Lwt.return (Cont (String.sub s k (len - k), f))
-    else (enlarge_stream (Cont ("", f)) >>=
+      Lwt.return (Cont (Bytes.sub s k (len - k), f))
+    else (enlarge_stream (Cont (Bytes.empty, f)) >>=
           (fun s -> skip s (Int64.sub k len64)))
 
 let substream delim s =
@@ -198,25 +198,26 @@ let substream delim s =
       function
       | Finished _ -> Lwt.fail Stream_too_small
       | Cont (s, f) as stre ->
-        let len = String.length s in
+        let len = Bytes.length s in
         if len < ldelim
         then enlarge_stream stre >>= aux
         else try
-            let p,_ = Netstring_pcre.search_forward rdelim s 0 in
-            cont (String.sub s 0 p)
+            let p,_ = Netstring_pcre.search_forward rdelim
+                (Bytes.unsafe_to_string s) 0 in
+            cont (Bytes.sub s 0 p)
               (fun () ->
                  empty
-                   (Some (fun () -> Lwt.return (Cont (String.sub s p (len - p),
+                   (Some (fun () -> Lwt.return (Cont (Bytes.sub s p (len - p),
                                                       f)))))
           with Not_found ->
             let pos = (len + 1 - ldelim) in
-            cont (String.sub s 0 pos)
+            cont (Bytes.sub s 0 pos)
               (fun () -> 
                  next f >>= function
                  | Finished _ -> Lwt.fail Stream_too_small
                  | Cont (s', f') ->
                    aux
-                     (Cont (String.sub s pos (len - pos) ^ s',
+                     (Cont (Bytes.(cat (sub s pos (len - pos)) s'),
                             f'))
               )
     in aux s
@@ -240,7 +241,7 @@ let of_file filename =
   in make ~finalize:(fun _ -> Lwt_unix.close fd) aux
 
 let of_string s =
-  make (fun () -> cont s (fun () -> empty None))
+  make (fun () -> cont (Bytes.of_string s) (fun () -> empty None))
 
 (** Convert a {!Lwt_stream.t} to an {!Ocsigen_stream.t}. *)
 let of_lwt_stream stream =

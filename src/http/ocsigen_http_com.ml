@@ -102,7 +102,7 @@ type connection =
     timeout : Lwt_timeout.t;
     r_mode : mode;
     closed : unit Lwt.t * unit Lwt.u;
-    mutable buf : string;
+    mutable buf : bytes;
     mutable read_pos : int;
     mutable write_pos : int;
     mutable read_mutex : Lwt_mutex.t;
@@ -170,7 +170,7 @@ let block_next_request conn = Lwt_mutex.lock conn.extension_mutex
 let buf_used buffer = buffer.write_pos - buffer.read_pos
 let buf_size buffer = Bytes.length buffer.buf
 
-let buf_get_string buffer len =
+let buf_get_bytes buffer len =
   let pos = buffer.read_pos in
   assert (pos + len <= buffer.write_pos);
   buffer.read_pos <- buffer.read_pos + len;
@@ -230,13 +230,13 @@ let rec extract_aux receiver pos bound cont =
     match bound with
       Exact l when pos' >= l ->
       let len = Int64.to_int (Int64.sub l pos) in
-      let s = buf_get_string receiver len in
-      Ocsigen_stream.cont s cont
+      let buf = buf_get_bytes receiver len in
+      Ocsigen_stream.cont buf cont
     | Bounded (Some l) when pos' > l ->
       Lwt.fail (request_too_large l)
     | _ ->
-      let s = buf_get_string receiver avail in
-      Ocsigen_stream.cont s (fun () -> extract_aux receiver pos' bound cont)
+      let buf = buf_get_bytes receiver avail in
+      Ocsigen_stream.cont buf (fun () -> extract_aux receiver pos' bound cont)
 
 (** Stream from the receiver channel. *)
 let extract receiver bound =
@@ -264,13 +264,13 @@ let rec wait_pattern find_pattern receiver cur_pos =
 let rec find_header buf pos rem =
   if rem < 2 then
     Retry (pos - 3)
-  else if buf.[pos + 1] <> '\n' then
+  else if Bytes.get buf (pos + 1) <> '\n' then
     find_header buf (pos + 1) (rem - 1)
-  else if buf.[pos] = '\n' then
+  else if Bytes.get buf pos = '\n' then
     Found (pos + 2)
   else if
-    rem >= 4 && buf.[pos] = '\r' &&
-    buf.[pos + 2] = '\r' && buf.[pos + 3] = '\n'
+    rem >= 4 && Bytes.get buf pos = '\r' &&
+    Bytes.get buf (pos + 2) = '\r' && Bytes.get buf (pos + 3) = '\n'
   then
     Found (pos + 4)
   else
@@ -297,7 +297,7 @@ let wait_http_header receiver =
 (** Find an end of line crlf or lf in the buffer *)
 let rec find_line buf pos rem =
   if rem < 1 then Retry pos else
-  if buf.[pos] = '\n' then Found (pos + 1) else
+  if Bytes.get buf pos = '\n' then Found (pos + 1) else
     find_line buf (pos + 1) (rem - 1)
 
 (** Wait until a full line is received.
@@ -325,7 +325,7 @@ let extract_chunked receiver =
          fill receiver 2 >>= fun () ->
          let pos = receiver.read_pos in
          if
-           receiver.buf.[pos] = '\r' && receiver.buf.[pos + 1] = '\n'
+           Bytes.get receiver.buf pos = '\r' && Bytes.get receiver.buf (pos + 1) = '\n'
          then begin
            receiver.read_pos <- pos + 2;
            Lwt.return ()
@@ -338,7 +338,7 @@ let extract_chunked receiver =
   let rec aux () =
     Lwt.try_bind (fun () -> wait_line receiver)
       (fun len ->
-         let chunksize = buf_get_string receiver len in
+         let chunksize = buf_get_bytes receiver len |> Bytes.unsafe_to_string in
          (*XXX Should check that we really have chunked data *)
          let chunksize = Scanf.sscanf chunksize "%x" (fun x -> x) in
          if chunksize = 0 then begin
@@ -393,7 +393,7 @@ let get_http_frame ?(head = false) receiver =
 
   Lwt_mutex.lock receiver.read_mutex >>= fun () ->
   wait_http_header receiver >>= fun len ->
-  let string_header = buf_get_string receiver len in
+  let string_header = buf_get_bytes receiver len |> Bytes.unsafe_to_string in
   parse_http_header receiver.r_mode string_header >>= fun header ->
   (* RFC2616, sect 4.4
      1.  Any response message  which "MUST  NOT" include  a message-body
@@ -489,10 +489,10 @@ let get_http_frame ?(head = false) receiver =
         end
       end
   end >>= fun b ->
-  let la =
+  let (la: bytes Ocsigen_stream.t option) =
     (match b with
      | None -> Lwt_mutex.unlock receiver.read_mutex; None
-     | Some s ->
+     | Some (s: bytes Ocsigen_stream.t) ->
        Ocsigen_stream.add_finalizer s (fun _ -> Ocsigen_stream.consume s);
        Some s
     )
@@ -586,14 +586,16 @@ let (<<?) h (n, v) =
   | Some v -> Http_headers.replace n v h
 
 let gmtdate d =
-  let x = Netdate.mk_mail_date ~zone:0 d in try
+  let x = Netdate.mk_mail_date ~zone:0 d |> Bytes.of_string in try
     (*XXX !!!*)
     let ind_plus =  Bytes.index x '+' in
     Bytes.set x ind_plus 'G';
     Bytes.set x (ind_plus + 1) 'M';
     Bytes.set x (ind_plus + 2) 'T';
-    String.sub x 0 (ind_plus + 3)
-  with Invalid_argument _ | Not_found -> Lwt_log.ign_debug ~section "no +"; x
+    Bytes.sub x 0 (ind_plus + 3) |> Bytes.to_string
+  with Invalid_argument _ | Not_found ->
+    Lwt_log.ign_debug ~section "no +";
+    Bytes.to_string x
 
 type sender_type = {
   (** protocol to be used : HTTP/1.0 HTTP/1.1 *)
@@ -666,7 +668,7 @@ let write_stream_chunked out_ch stream =
          Lwt.return ()) >>= fun () ->
       Lwt_io.write out_ch "0\r\n\r\n"
     | Ocsigen_stream.Cont (s, next) ->
-      let l = String.length s in
+      let l = Bytes.length s in
       if l = 0 then
         aux next len
       else
@@ -691,23 +693,23 @@ let write_stream_chunked out_ch stream =
           Lwt_io.write_from_exactly out_ch s 0 available >>= fun () ->
           Lwt_io.write out_ch "\r\n" >>= fun () ->
           let newlen = l - available in
-          String.blit s available buffer 0 newlen;
+          Bytes.blit s available buffer 0 newlen;
           aux next newlen
         end
         else begin
-          String.blit s 0 buffer len l;
+          Bytes.blit s 0 buffer len l;
           aux next (len + l)
         end
   in
   aux stream 0
 
-let rec write_stream_raw out_ch stream =
+let rec write_stream_raw out_ch (stream: bytes Ocsigen_stream.stream) =
   Ocsigen_stream.next stream >>= fun e ->
   match e with
   | Ocsigen_stream.Finished _ ->
     Lwt.return ()
   | Ocsigen_stream.Cont (s, next) ->
-    Lwt_io.write out_ch s >>= fun () ->
+    Lwt_io.write_from out_ch s 0 (Bytes.length s) >>= fun _ ->
     write_stream_raw out_ch next
 
 (*XXX We should check the length of the stream:
@@ -715,7 +717,7 @@ let rec write_stream_raw out_ch stream =
   - abort the connection before the right length is emitted so that
     the client can know something wrong happened
 *)
-let write_stream ?(chunked=false) out_ch stream =
+let write_stream ?(chunked=false) out_ch (stream: bytes Ocsigen_stream.t) =
   let stream = Ocsigen_stream.get stream in
   if chunked then
     write_stream_chunked out_ch stream
@@ -878,7 +880,7 @@ let send
          (if empty_content || head then begin
            Lwt.return ()
          end else begin
-            Lwt_log.ign_info ~section "writing body";
+           Lwt_log.ign_info ~section "writing body";
            write_stream ~chunked out_ch (fst (Result.stream res))
          end) >>= fun () ->
          Lwt_io.flush out_ch (* Vincent: I add this otherwise HEAD answers

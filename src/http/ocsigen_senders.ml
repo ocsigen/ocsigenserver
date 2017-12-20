@@ -115,7 +115,7 @@ struct
          ~stream:
            (Ocsigen_stream.make
               (fun () ->
-                 Ocsigen_stream.cont c (fun () -> Ocsigen_stream.empty None)),
+                 Ocsigen_stream.cont (Bytes.of_string c) (fun () -> Ocsigen_stream.empty None)),
             None) ())
 end
 
@@ -123,7 +123,7 @@ end
 module Stream_content =
 (* Used to send data from a stream *)
 struct
-  type t = string Ocsigen_stream.t
+  type t = bytes Ocsigen_stream.t
 
   type options = unit
 
@@ -143,7 +143,7 @@ end
 module Streamlist_content =
 (* Used to send data from streams *)
 struct
-  type t = (unit -> string Ocsigen_stream.t Lwt.t) list
+  type t = (unit -> bytes Ocsigen_stream.t Lwt.t) list
            * string (* content-type *)
 
   type options = unit
@@ -238,7 +238,7 @@ struct
       else begin
         if read = buffer_size
         then Ocsigen_stream.cont buf read_aux
-        else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
+        else Ocsigen_stream.cont (Bytes.sub buf 0 read) read_aux
       end
     in read_aux
 

@@ -119,10 +119,10 @@ and find_post_params_form_urlencoded body_gen _ =
        let body = Ocsigen_stream.get body_gen in
        (* BY, adapted from a previous comment. Should this stream be
           consumed in case of error? *)
-       Ocsigen_stream.string_of_stream
+       Ocsigen_stream.bytes_of_stream
          (Ocsigen_config.get_maxrequestbodysizeinmemory ())
          body >>= fun r ->
-       let r = Url.fixup_url_string r in
+       let r = Url.fixup_url_string (Bytes.unsafe_to_string r) in
        Lwt.return ((Netencoding.Url.dest_url_encoded_parameters r), [])
     )
     (function
@@ -164,14 +164,14 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
   let rec add where s =
     match where with
     | No_File (p_name, to_buf) ->
-      Buffer.add_string to_buf s;
+      Buffer.add_bytes to_buf s;
       return ()
     | A_File (_,_,_,wh,_) ->
-      let len = String.length s in
+      let len = Bytes.length s in
       let r = Unix.write wh s 0 len in
       if r < len then
         (*XXXX Inefficient if s is long *)
-        add where (String.sub s r (len - r))
+        add where (Bytes.sub s r (len - r))
       else
         Lwt_unix.yield ()
   in
@@ -1416,8 +1416,8 @@ let start_server () =
       match Ocsigen_config.get_pidfile () with
         None -> ()
       | Some p ->
-        let spid = (string_of_int pid)^"\n" in
-        let len = String.length spid in
+        let spid = string_of_int pid ^ "\n" |> Bytes.of_string in
+        let len = Bytes.length spid in
         let f =
           Unix.openfile
             p

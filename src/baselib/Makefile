@@ -12,8 +12,8 @@ PACKAGE  := \
 	ipaddr
 
 LIBS     := ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
-OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
+OCAMLC   := $(OCAMLFIND) ocamlc -no-keep-locs ${BYTEDBG} ${THREAD}
+OCAMLOPT := $(OCAMLFIND) ocamlopt -no-keep-locs ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
 
