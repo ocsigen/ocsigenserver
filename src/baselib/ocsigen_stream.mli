@@ -123,10 +123,10 @@ val of_lwt_stream : 'a Lwt_stream.t -> 'a t
 *)
 val to_lwt_stream : 'a t -> 'a Lwt_stream.t
 
-module StringStream : sig
+module BytesStream : sig
 
   (** Interface for stream creation (for tyxml) *)
-  type out = string t
+  type out = bytes t
   type m
 
   val make: m -> out
@@ -135,7 +135,7 @@ module StringStream : sig
   val empty: m
 
   (** Create a stream with one element *)
-  val put: string -> m
+  val put: bytes -> m
 
   (** Concatenate two stream *)
   val concat: m -> m -> m

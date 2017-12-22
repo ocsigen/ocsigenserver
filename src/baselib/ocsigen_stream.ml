@@ -265,17 +265,17 @@ let to_lwt_stream o_stream =
       Lwt.return (Some value)
   in Lwt_stream.from wrap
 
-module StringStream = struct
+module BytesStream = struct
 
-  type out = string t
-  type m = (string stream -> string step Lwt.t) Lazy.t
+  type out = bytes t
+  type m = (bytes stream -> bytes step Lwt.t) Lazy.t
 
   let empty : m = lazy (fun c -> Lazy.force c)
   let concat (m: m) (f: m) : m =
     lazy (fun c -> Lazy.force m (lazy (Lazy.force f c)))
-  let put (s : string) : m = lazy (fun c -> Lwt.return (Cont (s, c)))
+  let put (s : bytes) : m = lazy (fun c -> Lwt.return (Cont (s, c)))
 
-  let make_stream (m: m) : string stream =
+  let make_stream (m: m) : bytes stream =
     lazy (Lazy.force m (lazy (Lwt.return (Finished None))))
 
   let make (m: m) : out = make (fun () -> Lazy.force (make_stream m))
