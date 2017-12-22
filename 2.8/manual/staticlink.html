@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Static linking</title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><h1>Static linking</h1><h2>Compiling Ocsigen without native dynlink support</h2><p>If Ocaml's native dynamic linking is not supported by your platform (or if you are using caml 3.10), it is possible to build a native code version of Ocsigen without dynlink support, by giving the option <span class="teletype">--disable-natdynlink</span> to the <span class="teletype">configure</span> script.
+</p><h2>Creating and running a statically linked executable</h2><p>By default, Ocsigen is linking extensions dynamically (and also Eliom modules). From version 1.2, it is also possible to create a standalone program, in which all modules are statically linked. This allows to use native code even on platforms where Ocaml's native dynamic linking is not supported. It also makes possible to create self-contained Ocsigen applications that can be run without needing a full OCaml environment at runtime (with no Ocaml dependencies).
+</p><p>To create a standalone server executable that includes all the extensions you need, use a command like:
+</p><pre>ocamlfind ocamlopt  
+    -package ocsigenserver.server,ocsigenserver.ext.ocsipersist-sqlite  
+    -package eliom,ocsigenserver.ext.staticmod  
+    othermodule.cmx server_main.cmx -o myserver -linkpkg -thread
+</pre><p>Do not forget to link <span class="teletype">server_main.cmx</span> to launch the server's main loop.
+</p><p>If you do not want to read the commandline when the server starts, add <span class="teletype">-predicates nocommandline</span> to this command line. Alternatively, you can provide a package containing the command-line you want to be parsed (with the same signature as <span class="teletype">baselib/ocsigen_getcommandline.mli</span>), then make the appropriate changes in <span class="teletype">files/META.in</span>.
+</p><p>If you still want to use dynamic linking, add option <span class="teletype">-linkall</span> while
+compiling, otherwise the compiler may remove some modules from packages
+<span class="teletype">cma/cmxa</span>.
+</p><p>All statically linked extensions need to be initialized from the configuration file. To do that, replace the lines like:
+</p><pre>&lt;extension module=&quot;staticmod.cmxs&quot; /&gt;
+</pre><p>or
+</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.staticmod&quot; /&gt;
+</pre><p>by
+</p><pre>&lt;extension name=&quot;staticmod&quot; /&gt;
+</pre><p>This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.
+</p><p><em>Warning:</em> If you are using Eliom with static linking, the registration of your services must be delayed until the configuration file is read. See how to do that <span><a class="ocsforge_doclink_eliom" href="/eliom/6.2/manual/config.html#static_linking">here</a></span>.
+</p></body></html>

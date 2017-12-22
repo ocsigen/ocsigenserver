@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Cross-Origin Resource Sharing</title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><h1>Cross-Origin Resource Sharing</h1><h1> The CORS extension </h1><p>This extension is used to allow other servers to serve pages
+requesting data on that one using XmlHttpRequest. It adds headers to
+the server response and handle preflight OPTIONS requests to indicate
+if some client side code has the right to access resources.
+</p><p>See the <a href="http://www.w3.org/TR/cors/" class="ocsimore_phrasing_link">CORS specifications</a> for more
+informations.
+</p><p>In order to use it, you must first add the following line to your
+<span class="teletype">ocsigenserver.conf</span>:
+</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.cors&quot;/&gt;
+</pre><h2> config </h2><p>The extension is activated by the <span class="teletype">&lt;cors/&gt;</span> tag.
+</p><p>The extension must be used after the extension serving the content (like eliom or staticmod) since it adds headers to already answered requests.
+</p><p>The attributes of the cors tag are:
+</p><ul><li> <span class="teletype">max_age</span>: this is a integer telling the browser how long the
+preflight information are valid: it prevents doing the OPTIONS
+requests. This option adds the <span class="teletype">Access-Control-Max-Age</span> header.
+</li></ul><ul><li> <span class="teletype">credentials</span>: Adds the <span class="teletype">Access-Control-Allow-Credentials</span>
+header to the preflight request.
+</li></ul><ul><li> <span class="teletype">exposed_headers</span>: This is a comma separated list of header
+names. This is the list of user defined headers accessible from the
+client. it Adds the <span class="teletype">Access-Control-Expose-Headers</span> header.
+</li></ul><ul><li> <span class="teletype">methods</span>: This is a comma separated list of method names. If
+there is a requested method header in the preflight request, it adds
+the <span class="teletype">Access-Control-Allow-Methods</span> header if it match, otherwise
+there is no cors header added.
+</li></ul><p>Note that the extension should be used with <span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/accesscontrol.html">accesscontrol</a></span> to limit the application having access to the resources. This is done by checking the &quot;origin&quot; header.
+</p><h2> Examples </h2><ul><li> minimal configuration allowing all requests with no credentials.
+</li></ul><pre>&lt;cors/&gt;
+</pre><ul><li> A configuration allowing access to an eliom application at path &quot;eliom_site&quot;, from localhost:8081
+</li></ul><pre>&lt;if&gt;
+  &lt;and&gt;
+    &lt;header name=&quot;origin&quot; regexp=&quot;http://localhost:8081&quot;/&gt;
+    &lt;path regexp=&quot;eliom_site&quot; /&gt;
+  &lt;/and&gt;
+  &lt;then&gt;
+    &lt;cors max_age=&quot;86400&quot;
+          credentials=&quot;true&quot;
+          methods=&quot;POST,GET,HEAD&quot;
+          exposed_headers=&quot;
+            x-eliom-application,
+            x-eliom-location,
+            x-eliom-set-process-cookies&quot;/&gt;
+  &lt;/then&gt;
+&lt;/if&gt;
+</pre></body></html>

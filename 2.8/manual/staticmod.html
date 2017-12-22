@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Staticmod</title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><h1>Staticmod</h1><p>Staticmod is a module allowing to serve static pages (files).
+</p><h2>Configuration</h2><h3>Basics</h3><p>To use that extension, first load it from the configuration file:
+</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.staticmod&quot;/&gt;
+</pre><p>Then configure your hosts as in this example:
+</p><pre>&lt;static dir=&quot;/path/to/the/local/directory&quot; /&gt;
+</pre><p>Note that when running Ocsigenserver as a daemon, a relative path is
+interpreted starting at <span class="monospace">/</span>.
+</p><h3>Rewriting URLs</h3><p>You may also want to filter or rewrite URLs, as in this example, that allows user to have their home pages:
+</p><pre>&lt;static regexp=&quot;~([^/]*)(.*)&quot; dest=&quot;/home/\1/public_html\2&quot;/&gt;
+</pre><p><span class="teletype">regexp</span> is a regular expression using PERL syntax (PCRE).
+</p><p>Actually, for user's pages, it is better to do:
+</p><pre>&lt;static regexp=&quot;~([^/]*)(.*)&quot; dest=&quot;$u(\1)/public_html\2&quot;/&gt;
+</pre><p><span class="teletype">$u(toto)</span> will be replaced by the home directory for user toto.
+</p><p>You can also specify the option root as in
+</p><pre>&lt;static regexp=&quot;~([^/]*)(.*)&quot; dest=&quot;$u(\1)/public_html\2&quot; root=&quot;$u(\1)/public_html&quot;/&gt;
+</pre><p>This will wave all symlinks checks above the directory <span class="teletype">u(\1)/public_html</span>. This option is not permitted inside userconf files.
+</p><h3>Catching HTTP errors</h3><p>Here is an example on how to set a default error page for all 40x errors:
+</p><pre>&lt;static code=&quot;40.&quot; regexp=&quot;.*&quot; dest=&quot;/your/error/page.html&quot;/&gt;
+</pre><p><span class="teletype">code</span> is a regular expression (here matching 400, 401 etc.). <span class="teletype">regexp</span> is optional (matches the URL path).
+</p><p>Note that if you want to catch errors from all sites, you need to put this configuration in a separate &lt;site path=&quot;&quot;&gt;at the end of your configuration file.
+</p><h3>Max-age and Expires</h3><p>Here is an example on how to set up the <span class="teletype">Cache-control: max-age</span>
+and <span class="teletype">Expires</span> HTTP headers:
+</p><pre>&lt;static dir=&quot;/path/to/the/local/directory&quot; cache=&quot;2678400&quot; /&gt;
+</pre><p>The <span class="teletype">cache</span> argument is given in seconds. (1 month in the example)
+</p><p>When the <span class="teletype">cache</span> argument is <span class="teletype">0</span> or <span class="teletype">no</span>, the
+<span class="teletype">Cache-control: no-cache</span> header is sent.
+</p><h3>Staticmod and userconf</h3><p>(version 1.2.0 and greater)
+</p><p>Staticmod is authorized inside userconf files, but all paths specified by dir or dest must be relative, and cannot contain &quot;<span class="teletype">/../</span>&quot; or end by &quot;<span class="teletype">/..</span>&quot;. The relative paths are concatenated with the result of evaluating the attribute localpath of userconf.
+</p><h3>Other options</h3><p>See also module extendconfiguration for some options, like the ability to follow symlinks or to display directories. In particular, the old syntax <span class="teletype">readable=&quot;readable&quot;</span> is no longer available in staticmod (but can be simulated by the option <span class="teletype">listdirs</span> of extendconfiguration).
+</p></body></html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Outputfilter</title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><h1>Outputfilter</h1><p>Outputfilter allows to filter the output and rewrite some part of it (for example headers) before sending it to the client. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) <a href="https://github.com/ocsigen/ocsigenserver" class="ocsimore_phrasing_link">here</a>.
+</p><p>For now it only allows to change or add headers, or to change the HTTP code.
+</p><h2> Configuration</h2><p>To use this extension, first load it from the configuration file:
+</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.outputfilter&quot;/&gt;
+</pre><h3> Rewrite headers</h3><p>When you want to rewrite one header (after having generated a page), do something like:
+</p><pre>&lt;outputfilter header=&quot;location&quot; regexp=&quot;http://my.newaddress.org/(.*)&quot; dest=&quot;http://my.publicaddress.org/\1&quot;/&gt;
+</pre><p>Here we rewrite the content of the header location (this line is useful when you are using the reverse proxy).
+</p><h3> Add headers</h3><p>When you want to add a header (after having generated a page), do something like:
+</p><pre>&lt;outputfilter header=&quot;X-Frame-Options&quot; dest=&quot;SAMEORIGIN&quot; replace=&quot;true&quot;/&gt;
+</pre><p>This will add the header &quot;X-Frame-Options&quot; with content &quot;SAMEORIGIN&quot;
+to the generated page. The replace attribute is optionnal.
+</p><ul><li> If replace is &quot;true&quot;, the previous headers are replaced.
+</li><li> If replace is &quot;false&quot;, it will be added even if there was a header with the same name.
+</li><li> If not set, it will be added only if there was no header with the same name.
+(This line is usefull when you want to avoid clickjacking)
+</li></ul><h3> Change HTTP code</h3><p>The syntax to change the HTTP code is:
+</p><pre>&lt;sethttpcode code=... /&gt;
+</pre><p>where the value of the code attribute is a valid HTTP code
+(404 or 200 for example).
+</p></body></html>

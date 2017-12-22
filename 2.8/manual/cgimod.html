@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>CGImod</title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><h1>CGImod</h1><p>CGImod is a module for running CGI scripts with ocsigen. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) <a href="https://github.com/ocsigen/ocsigenserver" class="ocsimore_phrasing_link">here</a>.
+</p><h2> CGImod </h2><h3>What is cgimod?</h3><p>Cgimod is a module for Ocsigen that allows you to run CGI scripts
+on your server. It is also the only way to run PHP scripts on
+Ocsigen, through php5-cgi.
+</p><h3>What do I need to use cgimod?</h3><p>You need a working Ocsigen installation. If you want to run PHP
+scripts, you need php5-cgi too.
+</p><h3>How do I use cgimod?</h3><p>First, load the extension in the configuration file:
+</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.cgimod&quot; /&gt;
+</pre><p>Alternatively, if you do not want to use findlib, you need to
+load cgimod explicitly:
+</p><pre>&lt;extension module=&quot;/path/to/cgimod.cmo&quot; /&gt;
+</pre><h3>How do I configure cgimod?</h3><p>You can set the timeout value for CGI scripts globally, using:
+</p><pre>  &lt;extension findlib-package=&quot;ocsigenserver.ext.cgimod&quot; &gt;
+    &lt;cgitimeout value=&quot;30&quot; /&gt; &lt;!-- optionnal --&gt;
+  &lt;/extension&gt;
+</pre><p>Next, you have to specify which scripts you wish to execute, in
+which host/site, and how. There are several ways to do that.
+Choose one which suits your needs and stick with it — it's very
+easy to get lost so keep things as simple as you can!
+</p><p>+ The easy way: useful if you just want a &quot;cgi-bin&quot; directory.
+</p><pre>  &lt;site dir=&quot;whatever&quot;&gt;
+    &lt;!-- ... --&gt;
+    &lt;cgi root=&quot;cgi-bin&quot; dir=&quot;/usr/lib/cgi-bin/&quot; /&gt;
+    &lt;!-- ... --&gt;
+  &lt;/site&gt;
+</pre><p>When someone reaches <span class="teletype">http://yoursite/whatever/cgi-bin/exec.sh</span>, then
+<span class="teletype">/usr/lib/cgi-bin/exec.sh</span> is executed.
+</p><p>+ The regexp way: useful if you want to specify the name of
+the script to be executed.
+</p><pre>  &lt;site dir=&quot;whatever&quot;&gt;
+    &lt;cgi regexp=&quot;cgi-bin/([^/]*)&quot;
+          dir=&quot;/usr/lib/cgi-bin/&quot;
+          script=&quot;\1&quot; /&gt;
+  &lt;/site&gt;
+</pre><p>This is the same example using regexps. The &quot;regexp&quot; part matches the
+url, &quot;dir&quot; is the physical directory containing the scripts and
+&quot;script&quot; is the name of the script to execute. Here, &quot;\1&quot; makes
+reference to the first (parenthesized) subexpression in &quot;regexp&quot; (and of
+course you can use &quot;\2&quot;, &quot;\3&quot;, for the second, third, etc.).
+<em>Warning: until recently, the syntax was $1, $2, etc.</em>
+</p><p><em>End your regexps with <span class="teletype">$</span> if you want them to match the full URL.</em>
+</p><p>Here is another example:
+</p><pre>  &lt;site dir=&quot;&quot;&gt;
+    &lt;cgi regexp=&quot;darcsweb&quot;
+          dir=&quot;/usr/lib/cgi-bin/&quot;
+          script=&quot;darcsweb.cgi&quot; /&gt;
+  &lt;/site&gt;
+</pre><p>Note: <a href="http://blitiri.com.ar/p/darcsweb/" class="ocsimore_phrasing_link">Darcsweb</a> is a clean web
+interface for darcs, written in Python.
+</p><p>+ The exec way: useful for PHP (and other script languages)
+</p><pre>  &lt;site dir=&quot;&quot;&gt;
+    &lt;!-- To use PHP as a CGI module: --&gt;
+    &lt;!-- WARNING:
+    remember to put the most generic regexp at the end! --&gt;
+
+    &lt;!-- First, take care of implicit index.php --&gt;
+    &lt;cgi regexp=&quot;(.*)/&quot;
+         dir=&quot;/var/www/\1&quot;
+         script=&quot;index.php&quot;
+         exec=&quot;/usr/bin/php5-cgi&quot;/&gt;
+
+    &lt;!-- Then, execute every other .php --&gt;
+    &lt;cgi regexp=&quot;((.*)/)?([^/]*).php&quot;
+         dir=&quot;/var/www/\2&quot;
+         script=&quot;\3.php&quot;
+         exec=&quot;/usr/bin/php5-cgi&quot;/&gt;
+  &lt;/site&gt;
+</pre><p>Just like the previous one, but you can execute the script through
+some interpreter (here, php5-cgi) instead of launching it directly.
+</p><h3>How do I set my own environment variables?</h3><p>Use <span class="teletype">&lt;setenv var=&quot;&quot; val=&quot;&quot; /&gt;</span> inside <span class="teletype">&lt;cgi&gt;</span>.
+</p><p>Here is an example for setting up trac:
+</p><pre>  &lt;!-- Trac --&gt;
+  &lt;site dir=&quot;trac&quot; charset=&quot;utf-8&quot;&gt;
+       &lt;static dir=&quot;/var/www/ocsigen/site/trac&quot; /&gt;
+
+       &lt;!-- An example defining its own environment variable: --&gt;
+       &lt;cgi regexp=&quot;&quot;
+            dir=&quot;/usr/share/trac/cgi-bin&quot;
+            script=&quot;trac.cgi&quot; &gt;
+
+            &lt;setenv var=&quot;TRAC_ENV&quot; val=&quot;/var/www/trac&quot; /&gt;
+    &lt;/cgi&gt;
+  &lt;/site&gt;
+</pre><h3>Limitations</h3><p>The <a href="http://www.w3.org/CGI/" class="ocsimore_phrasing_link">CGI spec</a> is very
+short and ambiguous. We tried to follow it as closely as we could, but
+this was not enough. Some environment variables are expected by most
+scripts but absent from the spec, and some variables present in the spec
+are very mysterious (<span class="teletype">PATH_TRANSLATED</span> for example). We did our best —
+don't hesitate to fill a bug report in case of problems.
+</p><p>The regexp part is quite intricate and some mysterious bugs happen from
+time to time for some users. Once again, report any reproductible
+problem!
+</p><p>Morever, cgimod does not support FastCGI, which makes it barely usable
+under heavy load (particularly for PHP).
+</p><p><em>Page written by Gabriel Kerneis</em>
+</p></body></html>

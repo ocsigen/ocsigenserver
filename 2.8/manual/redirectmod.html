@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Redirectmod</title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><h1>Redirectmod</h1><p>Redirectmod is a module allowing to define HTTP redirections from Ocsigen's configuration file. Submit your bugs and feature wishes (or any enhancement/mistake in the documentation) <a href="https://github.com/ocsigen/ocsigenserver" class="ocsimore_phrasing_link">here</a>.
+</p><p>To use that extension, first load it from the configuration file:
+</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.redirectmod&quot;/&gt;
+</pre><p>Then configure your hosts as in these examples:
+</p><pre>&lt;redirect suburl=&quot;(.*)&quot; dest=&quot;http://my.newaddress.org/\1&quot;/&gt;
+&lt;redirect suburl=&quot;dir/(.*)\.html&quot; dest=&quot;http://my.newaddress.org/\1.php&quot;/&gt;
+&lt;redirect fullurl=&quot;http://(.*).myserver.org/(.*)&quot; dest=&quot;http://\1.mynewserver.org/\2&quot;/&gt;
+</pre><p>The syntax of regular expression is PCRE's one.
+<em>Warning: the syntax recently changed from <span class="teletype">$i</span> to <span class="teletype">\i</span>.</em>
+</p><p>According to the RFC of the HTTP protocol, dest must be an absolute URL. By default, the redirection is permanent. For temporary redirection, use:
+</p><pre>&lt;redirect temporary=&quot;temporary&quot; suburl=&quot;(.*)&quot; dest=&quot;http://www.plopplopplop.com/\1&quot;/&gt;
+</pre><p>Old syntax was (before Ocsigen 1.2):
+</p><pre>&lt;redirect regexp=&quot;(.*)&quot; dest=&quot;http://my.newaddress.org/$1&quot;/&gt;
+&lt;redirect regexp=&quot;dir/(.*)\.html&quot; dest=&quot;http://my.newaddress.org/$1.php&quot;/&gt;
+&lt;redirect regexp=&quot;http://(.*).myserver.org/(.*)&quot; dest=&quot;http://$1.mynewserver.org/$2&quot;/&gt;
+</pre></body></html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Authbasic</title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><h1>Authbasic</h1><p>This module  implements Basic HTTP Authentication as  described in RFC
+2617. It can  be used to add an authentication layer  to sites with no
+built-in authentication (e.g. static files).
+</p><p>Beware, passwords  are transmitted in  cleartext with this  scheme, so
+the  medium should  be  secured  somehow (by  e.g.  SSL).
+</p><p>This  module
+implements only the HTTP-related part of the protocol, and is meant to
+be extended with  various authentication plugins.
+</p><p>A very  naive one is
+provided as an example. See  the developer's documentation if you want
+to make your own one.
+</p><p>In order to use it, you must first add the following line to your ocsigen.conf:
+</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.authbasic&quot;/&gt;
+</pre><p>This extension defines one action, <span class="teletype">&lt;authbasic&gt;</span>,
+and one authentication plugin, <span class="teletype">&lt;plain&gt;</span>.
+</p><h2>The <span class="teletype">&lt;authbasic&gt;</span> action</h2><p>To add an authentication layer to a site, add the following lines before the actions defining the restricted part of your site:
+</p><pre>&lt;authbasic realm=&quot;...&quot;&gt;
+   ...
+&lt;/authbasic&gt;
+</pre><p>The realm attribute is some name identifying the protected resource. The client is expected to send the same authentication info to all pages protected with the same realm on the same hostname.
+</p><p>When a request containing the right authentication token arrives, this action doesn't do anything (and therefore grants access). If the authentication info is missing, an HTTP 401 Unauthorized is immediately returned (no other extension is tried) to request the client to provide this authentication token. On most interactive browsers, this is done by popping up a dialog box asking the user for a login and a password.
+</p><p>The <span class="teletype">&lt;authbasic&gt;</span> element expects one child element,
+specifying which authentication plugin to use.
+</p><h2>The <span class="teletype">&lt;plain&gt;</span> plugin</h2><p>To protect a resource with some fixed login and password given in the configuration file, you can use the <span class="teletype">&lt;plain&gt;</span> plugin. Here is a self-contained example:
+</p><pre>&lt;authbasic realm=&quot;example&quot;&gt;
+   &lt;plain login=&quot;me&quot; password=&quot;mypassword&quot; /&gt;
+&lt;/authbasic&gt;
+</pre></body></html>
