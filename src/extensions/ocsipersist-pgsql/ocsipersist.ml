@@ -54,7 +54,13 @@ let conn_pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t ref =
   ref (Lwt_pool.create !size_conn_pool
          ~validate:PGOCaml.alive ~dispose connect)
 
-let use_pool f = Lwt_pool.use !conn_pool @@ fun db -> f db
+let use_pool f =
+  Lwt_pool.use !conn_pool @@ fun db ->
+  try_lwt
+    f db
+  with PGOCaml.Error msg as e ->
+    Lwt_log.ign_error_f ~section "postgresql protocol error: %s" msg;
+    lwt () = PGOCaml.close db in Lwt.fail e
 
 (* escapes characters that are not in the range of 0x20..0x7e;
    this is to meet PostgreSQL's format requirements for text fields
