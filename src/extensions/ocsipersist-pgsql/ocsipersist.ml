@@ -4,7 +4,17 @@ let section = Lwt_log.Section.make "ocsipersist:pgsql"
 
 module Lwt_thread = struct
   include Lwt
-  include Lwt_chan
+  let close_in = Lwt_io.close
+  let really_input = Lwt_io.read_into_exactly
+  let input_binary_int = Lwt_io.BE.read_int
+  let input_char = Lwt_io.read_char
+  let output_string = Lwt_io.write
+  let output_binary_int = Lwt_io.BE.write_int
+  let output_char = Lwt_io.write_char
+  let flush = Lwt_io.flush
+  let open_connection x = Lwt_io.open_connection x
+  type out_channel = Lwt_io.output_channel
+  type in_channel = Lwt_io.input_channel
 end
 module PGOCaml = PGOCaml_generic.Make(Lwt_thread)
 open Lwt
@@ -36,11 +46,21 @@ let connect () =
 
 let (>>) f g = f >>= fun _ -> g
 
+let dispose db =
+  Lwt.catch (fun () -> PGOCaml.close db) (fun _ -> Lwt.return_unit)
+
 let conn_pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t ref =
   (* This connection pool will be overwritten by init_fun! *)
-  ref @@ Lwt_pool.create !size_conn_pool ~validate:PGOCaml.alive connect
+  ref (Lwt_pool.create !size_conn_pool
+         ~validate:PGOCaml.alive ~dispose connect)
 
-let use_pool f = Lwt_pool.use !conn_pool @@ fun db -> f db
+let use_pool f =
+  Lwt_pool.use !conn_pool @@ fun db ->
+  try_lwt
+    f db
+  with PGOCaml.Error msg as e ->
+    Lwt_log.ign_error_f ~section "postgresql protocol error: %s" msg;
+    lwt () = PGOCaml.close db in Lwt.fail e
 
 (* escapes characters that are not in the range of 0x20..0x7e;
    this is to meet PostgreSQL's format requirements for text fields
@@ -138,7 +158,8 @@ let cursor db query params f =
   lwt () = PGOCaml.cursor db ~name ~params @@ fun row -> try_lwt
       let key, value = key_value_of_row row in f key value
     with exn ->
-      Lwt_log.error ~exn ~section "exception while evaluating cursor argument";
+      Lwt_log.ign_error
+        ~exn ~section "exception while evaluating cursor argument";
       error := Some exn;
       Lwt.return ()
   in match !error with
