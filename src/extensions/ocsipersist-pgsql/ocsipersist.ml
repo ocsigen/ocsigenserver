@@ -46,9 +46,13 @@ let connect () =
 
 let (>>) f g = f >>= fun _ -> g
 
+let dispose db =
+  Lwt.catch (fun () -> PGOCaml.close db) (fun _ -> Lwt.return_unit)
+
 let conn_pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t ref =
   (* This connection pool will be overwritten by init_fun! *)
-  ref @@ Lwt_pool.create !size_conn_pool ~validate:PGOCaml.alive connect
+  ref (Lwt_pool.create !size_conn_pool
+         ~validate:PGOCaml.alive ~dispose connect)
 
 let use_pool f = Lwt_pool.use !conn_pool @@ fun db -> f db
 
