@@ -73,7 +73,7 @@ let () =
 type output_buffer =
   {
     stream: Zlib.stream;
-    buf: string;
+    buf: bytes;
     mutable pos: int;
     mutable avail: int;
     mutable size : int32;
@@ -93,7 +93,7 @@ let write_int32 oz n =
 (* puts in oz the content of buf, from pos to pos + len ;
  * f is the continuation of the current stream *)
 let rec output oz f buf pos len  =
-  assert (pos >= 0 && len >= 0 && pos + len <= String.length buf);
+  assert (pos >= 0 && len >= 0 && pos + len <= Bytes.length buf);
   if oz.avail = 0 then begin
     let cont () = output oz f buf pos len in
     Lwt_log.ign_info ~section "Flushing because output buffer is full";
@@ -168,7 +168,7 @@ and next_cont oz stream =
     finish ()
   | Ocsigen_stream.Finished (Some s) -> next_cont oz s
   | Ocsigen_stream.Cont(s,f) ->
-    output oz f s 0 (String.length s)
+    output oz f s 0 (Bytes.length s)
 
 (* deflate param : true = deflate ; false = gzip (no header in this case) *)
 let compress deflate stream =
