@@ -11,8 +11,8 @@ PACKAGE  :=		\
 	tyxml.parser
 
 LIBS     := -I ../baselib -I ../http -I ../server ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG}
-OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG}
+OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
+OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
 
