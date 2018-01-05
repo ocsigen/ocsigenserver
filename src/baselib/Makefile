@@ -12,8 +12,12 @@ PACKAGE  := \
 	ipaddr
 
 LIBS     := ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
-OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
+# -no-keep-locs is needed since OCaml 4.06. If we don't compile with
+# -no-keep-locs, the .cmi's of the different ocsigen_*commandline will
+# be incompatible with each other leading to a compilation failure
+# later.
+OCAMLC   := $(OCAMLFIND) ocamlc -no-keep-locs ${BYTEDBG} ${THREAD}
+OCAMLOPT := $(OCAMLFIND) ocamlopt -no-keep-locs ${OPTDBG} ${THREAD}
 OCAMLDOC := $(OCAMLFIND) ocamldoc
 OCAMLDEP := $(OCAMLFIND) ocamldep
 

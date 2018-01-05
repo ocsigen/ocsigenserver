@@ -237,8 +237,9 @@ struct
         Ocsigen_stream.empty None
       else begin
         if read = buffer_size
-        then Ocsigen_stream.cont buf read_aux
-        else Ocsigen_stream.cont (String.sub buf 0 read) read_aux
+        then Ocsigen_stream.cont (Bytes.to_string buf) read_aux
+        (* copying :( *)
+        else Ocsigen_stream.cont (Bytes.sub_string buf 0 read) read_aux
       end
     in read_aux
 
