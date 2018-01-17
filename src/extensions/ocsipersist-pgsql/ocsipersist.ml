@@ -33,14 +33,15 @@ let size_conn_pool = ref 16
 let make_hashtbl () = Hashtbl.create 8
 
 let connect () =
-  lwt dbhandle = PGOCaml.connect
-                   ?host:!host
-                   ?port:!port
-                   ?user:!user
-                   ?password:!password
-                   ?database:(Some !database)
-                   ?unix_domain_socket_dir:!unix_domain_socket_dir
-                   () in
+  PGOCaml.connect
+    ?host:!host
+    ?port:!port
+    ?user:!user
+    ?password:!password
+    ?database:(Some !database)
+    ?unix_domain_socket_dir:!unix_domain_socket_dir
+    ()
+  >>= fun dbhandle ->
   PGOCaml.set_private_data dbhandle @@ make_hashtbl ();
   Lwt.return dbhandle
 
@@ -56,11 +57,16 @@ let conn_pool : (string, unit) Hashtbl.t PGOCaml.t Lwt_pool.t ref =
 
 let use_pool f =
   Lwt_pool.use !conn_pool @@ fun db ->
-  try_lwt
-    f db
-  with PGOCaml.Error msg as e ->
-    Lwt_log.ign_error_f ~section "postgresql protocol error: %s" msg;
-    lwt () = PGOCaml.close db in Lwt.fail e
+  Lwt.catch
+    (fun () -> f db)
+    (function
+      | PGOCaml.Error msg as e ->
+        Lwt_log.ign_error_f ~section "postgresql protocol error: %s" msg;
+        PGOCaml.close db >>= fun () ->
+        Lwt.fail e
+      | e ->
+        Lwt.fail e
+    )
 
 (* escapes characters that are not in the range of 0x20..0x7e;
    this is to meet PostgreSQL's format requirements for text fields
@@ -140,31 +146,34 @@ let prepare db query =
   let name = Digest.to_hex (Digest.string query) in
   (* Have we prepared this statement already?  If not, do so. *)
   let is_prepared = Hashtbl.mem hashtbl name in
-  lwt () = if is_prepared then Lwt.return () else begin
+  begin if is_prepared then Lwt.return () else begin
     PGOCaml.prepare db ~name ~query () >>
     Lwt.return @@ Hashtbl.add hashtbl name ()
-  end in
+  end end >>= fun () ->
   Lwt.return name
 
 let exec db query params =
-  lwt name = prepare db query in
+  prepare db query >>= fun name ->
   let params = List.map (fun x -> Some (pack x)) params in
   PGOCaml.execute db ~name ~params ()
 
 let cursor db query params f =
-  lwt name = prepare db query in
+  prepare db query >>= fun name ->
   let params = List.map (fun x -> Some (pack x)) params in
   let error = ref None in
-  lwt () = PGOCaml.cursor db ~name ~params @@ fun row -> try_lwt
-      let key, value = key_value_of_row row in f key value
-    with exn ->
-      Lwt_log.ign_error
-        ~exn ~section "exception while evaluating cursor argument";
-      error := Some exn;
-      Lwt.return ()
-  in match !error with
-    | None -> Lwt.return ()
-    | Some e -> Lwt.fail e
+  begin PGOCaml.cursor db ~name ~params @@ fun row ->
+    Lwt.catch
+      (fun () -> let key, value = key_value_of_row row in f key value)
+      (fun exn ->
+         Lwt_log.ign_error
+           ~exn ~section "exception while evaluating cursor argument";
+         error := Some exn;
+         Lwt.return ()
+      )
+  end >>= fun () ->
+  match !error with
+  | None -> Lwt.return ()
+  | Some e -> Lwt.fail e
 
 let (@.) f g = fun x -> f (g x) (* function composition *)
 
@@ -195,10 +204,9 @@ let make_persistent ~store ~name ~default =
 
 let make_persistent_lazy_lwt ~store ~name ~default = use_pool @@ fun db ->
   let query = sprintf "SELECT 1 FROM %s WHERE key = $1 " store in
-  lwt result = exec db query [Key name] in
-  match result with
+  exec db query [Key name] >>= function
   | [] ->
-    lwt default = default () in
+    default () >>= fun default ->
     make_persistent_worker ~store ~name ~default db
   | _ -> Lwt.return {store = store; name = name}
 
@@ -233,8 +241,7 @@ let add table key value = use_pool @@ fun db ->
 
 let replace_if_exists table key value = use_pool @@ fun db ->
   let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 RETURNING 0" table in
-  lwt result = exec db query [Key key; Value value] in
-  match result with
+  exec db query [Key key; Value value] >>= function
   | [] -> raise Not_found
   | _ -> Lwt.return ()
 
@@ -255,7 +262,7 @@ let iter_table = iter_step
 let fold_step f table x =
   let res = ref x in
   let g key value =
-    lwt res' = f key value !res in
+    f key value !res >>= fun res' ->
     res := res';
     Lwt.return ()
   in iter_step g table >> Lwt.return !res
