@@ -111,8 +111,11 @@ let rec parse_cookies s =
   try
     List.fold_left
       (fun beg a ->
-         let (n, v) = String.sep '=' a in
-         CookiesTable.add n v beg)
+         try
+           let (n, v) = String.sep '=' a in
+           CookiesTable.add n v beg
+         with Not_found ->
+           beg)
       CookiesTable.empty
       splitted
   with _ -> CookiesTable.empty
