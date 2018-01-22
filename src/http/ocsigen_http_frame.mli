@@ -55,8 +55,8 @@ module Result : sig
   (** accessor for content of result *)
   val stream :
     result ->
-    string Ocsigen_stream.t *
-    (string Ocsigen_stream.t -> int64 -> string Ocsigen_stream.step Lwt.t)
+    bytes Ocsigen_stream.t *
+    (bytes Ocsigen_stream.t -> int64 -> bytes Ocsigen_stream.step Lwt.t)
       option
 
   (** accessor for Content-Length value of header of result *)
@@ -85,9 +85,9 @@ module Result : sig
     ?lastmodified:float option ->
     ?etag:string option ->
     ?code:int ->
-    ?stream:string Ocsigen_stream.t *
-    (string Ocsigen_stream.t ->
-     int64 -> string Ocsigen_stream.step Lwt.t)
+    ?stream:bytes Ocsigen_stream.t *
+    (bytes Ocsigen_stream.t ->
+     int64 -> bytes Ocsigen_stream.step Lwt.t)
       option ->
     ?content_length:int64 option ->
     ?content_type:string option ->
@@ -148,6 +148,6 @@ end
 *)
 type t =
   { frame_header : Http_header.http_header;
-    frame_content : string Ocsigen_stream.t option;
+    frame_content : bytes Ocsigen_stream.t option;
     frame_abort : unit -> unit Lwt.t
   }

@@ -37,3 +37,4 @@ local/etc/ocsigenserver.conf
 local/etc/ocsigenserver.conf.opt
 doc/api-html
 _opam
+*.swp

@@ -82,10 +82,10 @@ module Result = struct
        lastmodified: float option; (** Default: [None] *)
        etag: string option;
        code: int; (** HTTP code, if not 200 *)
-       stream: string Ocsigen_stream.t *
-         (string Ocsigen_stream.t ->
+       stream: bytes Ocsigen_stream.t *
+         (bytes Ocsigen_stream.t ->
             int64 ->
-              string Ocsigen_stream.step Lwt.t) option
+              bytes Ocsigen_stream.step Lwt.t) option
        ; (** Default: empty stream.
              The second field is (optionaly)
              the function used to skip a part of the
@@ -342,7 +342,7 @@ end
 (** HTTP messages *)
 type t =
   { frame_header : Http_header.http_header;
-    frame_content : string Ocsigen_stream.t option;
+    frame_content : bytes Ocsigen_stream.t option;
     frame_abort : unit -> unit Lwt.t
     (*VVV abort looks like a hack.
       It has been added for the reverse proxy, to enable closing the connection

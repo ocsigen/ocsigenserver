@@ -113,7 +113,7 @@ val raw_request :
   ?headers: Http_headers.t ->
   ?https: bool ->
   ?port:int ->
-  content: string Ocsigen_stream.t option ->
+  content: bytes Ocsigen_stream.t option ->
   ?content_length: int64 ->
   http_method: Ocsigen_http_frame.Http_header.http_method ->
   host:string ->
@@ -168,7 +168,7 @@ val basic_raw_request :
   ?headers: Http_headers.t ->
   ?https: bool ->
   ?port:int ->
-  content: string Ocsigen_stream.t option ->
+  content: bytes Ocsigen_stream.t option ->
   ?content_length: int64 ->
   http_method: Ocsigen_http_frame.Http_header.http_method ->
   host:string ->

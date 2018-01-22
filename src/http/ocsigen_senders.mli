@@ -38,12 +38,12 @@ module Text_content :
   Ocsigen_http_frame.HTTP_CONTENT with type t = string * string
 
 module Stream_content :
-  Ocsigen_http_frame.HTTP_CONTENT with type t = string Ocsigen_stream.t
+  Ocsigen_http_frame.HTTP_CONTENT with type t = bytes Ocsigen_stream.t
 
 (** streams and content-type *)
 module Streamlist_content :
   Ocsigen_http_frame.HTTP_CONTENT
-  with type t = (unit -> string Ocsigen_stream.t Lwt.t) list
+  with type t = (unit -> bytes Ocsigen_stream.t Lwt.t) list
                 * string
 
 module Empty_content :

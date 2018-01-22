@@ -1,3 +1,0 @@
-ocsipersist.cmi :
-ocsipersist.cmo : ../../server/ocsigen_extensions.cmi ocsipersist.cmi
-ocsipersist.cmx : ../../server/ocsigen_extensions.cmx ocsipersist.cmi

@@ -69,7 +69,7 @@ val wait_all_senders : connection -> unit Lwt.t
    interrupted stream exception.
 *)
 val write_stream :
-  ?chunked:bool -> Lwt_chan.out_channel -> string Ocsigen_stream.t -> unit Lwt.t
+  ?chunked:bool -> Lwt_chan.out_channel -> bytes Ocsigen_stream.t -> unit Lwt.t
 
 (****)
 

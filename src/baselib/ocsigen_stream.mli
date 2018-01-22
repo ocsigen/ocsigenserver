@@ -85,34 +85,34 @@ exception String_too_large
 
 (** Creates a string from a stream. The first argument is the upper limit of the
     string length *)
-val string_of_stream : int -> string stream -> string Lwt.t
+val bytes_of_stream : int -> bytes stream -> bytes Lwt.t
 
 (** Read more data in the buffer *)
-val enlarge_stream : string step -> string step Lwt.t
+val enlarge_stream : bytes step -> bytes step Lwt.t
 
 (** [stream_want s len] Returns a stream with at least len
     bytes in the buffer if possible *)
-val stream_want : string step -> int -> string step Lwt.t
+val stream_want : bytes step -> int -> bytes step Lwt.t
 
 (** Returns the value of the current buffer *)
-val current_buffer : string step -> string
+val current_buffer : bytes step -> bytes
 
 (** Skips data. Raises [Stream_too_small (Some size)] 
     if the stream is too small, where [size] is the size of the stream. *)
-val skip : string step -> int64 -> string step Lwt.t
+val skip : bytes step -> int64 -> bytes step Lwt.t
 
 (** Cut the stream at the position given by a string delimiter *)
-val substream : string -> string step -> string step Lwt.t
+val substream : string -> bytes step -> bytes step Lwt.t
 
 
 
 (** returns a stream reading from a file.
     Do not forget to finalize the stream to close the file.
 *)
-val of_file : string -> string t
+val of_file : string -> bytes t
 
 (** returns a stream containing a string. *)
-val of_string : string -> string t
+val of_string : string -> bytes t
 
 (** Convert a {!Lwt_stream.t} to an {!Ocsigen_stream.t}. *)
 val of_lwt_stream : 'a Lwt_stream.t -> 'a t
@@ -123,10 +123,10 @@ val of_lwt_stream : 'a Lwt_stream.t -> 'a t
 *)
 val to_lwt_stream : 'a t -> 'a Lwt_stream.t
 
-module StringStream : sig
+module BytesStream : sig
 
   (** Interface for stream creation (for tyxml) *)
-  type out = string t
+  type out = bytes t
   type m
 
   val make: m -> out
@@ -135,7 +135,7 @@ module StringStream : sig
   val empty: m
 
   (** Create a stream with one element *)
-  val put: string -> m
+  val put: bytes -> m
 
   (** Concatenate two stream *)
   val concat: m -> m -> m
