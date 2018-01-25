@@ -168,7 +168,7 @@ and find_post_params_multipart_form_data body_gen ctparams filenames
       return ()
     | A_File (_,_,_,wh,_) ->
       let len = String.length s in
-      let r = Unix.write wh s 0 len in
+      let r = Unix.write_substring wh s 0 len in
       if r < len then
         (*XXXX Inefficient if s is long *)
         add where (String.sub s r (len - r))
@@ -1422,7 +1422,7 @@ let start_server () =
           Unix.openfile
             p
             [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC] 0o640 in
-        ignore (Unix.write f spid 0 len);
+        ignore (Unix.write_substring f spid 0 len);
         Unix.close f
     in
 

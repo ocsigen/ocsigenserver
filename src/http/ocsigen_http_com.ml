@@ -102,7 +102,7 @@ type connection =
     timeout : Lwt_timeout.t;
     r_mode : mode;
     closed : unit Lwt.t * unit Lwt.u;
-    mutable buf : string;
+    mutable buf : bytes;
     mutable read_pos : int;
     mutable write_pos : int;
     mutable read_mutex : Lwt_mutex.t;
@@ -174,7 +174,7 @@ let buf_get_string buffer len =
   let pos = buffer.read_pos in
   assert (pos + len <= buffer.write_pos);
   buffer.read_pos <- buffer.read_pos + len;
-  Bytes.sub buffer.buf pos len
+  Bytes.sub_string buffer.buf pos len
 
 (** Receive some more data. *)
 let receive receiver =
@@ -264,13 +264,13 @@ let rec wait_pattern find_pattern receiver cur_pos =
 let rec find_header buf pos rem =
   if rem < 2 then
     Retry (pos - 3)
-  else if buf.[pos + 1] <> '\n' then
+  else if Bytes.get buf (pos + 1) <> '\n' then
     find_header buf (pos + 1) (rem - 1)
-  else if buf.[pos] = '\n' then
+  else if Bytes.get buf pos = '\n' then
     Found (pos + 2)
   else if
-    rem >= 4 && buf.[pos] = '\r' &&
-    buf.[pos + 2] = '\r' && buf.[pos + 3] = '\n'
+    rem >= 4 && Bytes.get buf pos = '\r' &&
+    Bytes.get buf (pos + 2) = '\r' && Bytes.get buf (pos + 3) = '\n'
   then
     Found (pos + 4)
   else
@@ -297,7 +297,7 @@ let wait_http_header receiver =
 (** Find an end of line crlf or lf in the buffer *)
 let rec find_line buf pos rem =
   if rem < 1 then Retry pos else
-  if buf.[pos] = '\n' then Found (pos + 1) else
+  if Bytes.get buf pos = '\n' then Found (pos + 1) else
     find_line buf (pos + 1) (rem - 1)
 
 (** Wait until a full line is received.
@@ -325,7 +325,8 @@ let extract_chunked receiver =
          fill receiver 2 >>= fun () ->
          let pos = receiver.read_pos in
          if
-           receiver.buf.[pos] = '\r' && receiver.buf.[pos + 1] = '\n'
+           Bytes.get receiver.buf pos = '\r' &&
+           Bytes.get receiver.buf (pos + 1) = '\n'
          then begin
            receiver.read_pos <- pos + 2;
            Lwt.return ()
@@ -586,14 +587,17 @@ let (<<?) h (n, v) =
   | Some v -> Http_headers.replace n v h
 
 let gmtdate d =
-  let x = Netdate.mk_mail_date ~zone:0 d in try
+  let x = Netdate.mk_mail_date ~zone:0 d in
+  try
+    let x = Bytes.of_string x in
     (*XXX !!!*)
     let ind_plus =  Bytes.index x '+' in
     Bytes.set x ind_plus 'G';
     Bytes.set x (ind_plus + 1) 'M';
     Bytes.set x (ind_plus + 2) 'T';
-    String.sub x 0 (ind_plus + 3)
-  with Invalid_argument _ | Not_found -> Lwt_log.ign_debug ~section "no +"; x
+    Bytes.sub_string x 0 (ind_plus + 3)
+  with Invalid_argument _ | Not_found ->
+    Lwt_log.ign_debug ~section "no +"; x
 
 type sender_type = {
   (** protocol to be used : HTTP/1.0 HTTP/1.1 *)
@@ -677,9 +681,8 @@ let write_stream_chunked out_ch stream =
             Lwt_io.write_from_exactly out_ch buffer 0 len >>= fun () ->
             Lwt_io.write out_ch "\r\n"
           end else Lwt.return ()) >>= fun () ->
-        Lwt_io.write
-          out_ch (Format.sprintf "%x\r\n" l) >>= fun () ->
-        Lwt_io.write_from_exactly out_ch s 0 l >>= fun () ->
+        Lwt_io.write out_ch (Format.sprintf "%x\r\n" l) >>= fun () ->
+        Lwt_io.write_from_string_exactly out_ch s 0 l >>= fun () ->
         Lwt_io.write out_ch "\r\n" >>= fun () ->
         aux next 0
       end else (* Will not work if l is very large: *)
@@ -688,14 +691,14 @@ let write_stream_chunked out_ch stream =
           Lwt_io.write
             out_ch (Format.sprintf "%x\r\n" buf_size) >>= fun () ->
           Lwt_io.write_from_exactly out_ch buffer 0 len >>= fun () ->
-          Lwt_io.write_from_exactly out_ch s 0 available >>= fun () ->
+          Lwt_io.write_from_string_exactly out_ch s 0 available >>= fun () ->
           Lwt_io.write out_ch "\r\n" >>= fun () ->
           let newlen = l - available in
-          String.blit s available buffer 0 newlen;
+          Bytes.blit_string s available buffer 0 newlen;
           aux next newlen
         end
         else begin
-          String.blit s 0 buffer len l;
+          Bytes.blit_string s 0 buffer len l;
           aux next (len + l)
         end
   in
@@ -729,7 +732,7 @@ module H = Ocsigen_http_frame.Http_header
 
 let set_result_observer, observe_result =
   let observer = ref (fun _ _ -> Lwt.return ()) in
-  ((fun f -> 
+  ((fun f ->
       let o = !observer in
       observer := (fun a b -> o a b >>= fun () -> f a b)),
    (fun a b -> !observer a b))

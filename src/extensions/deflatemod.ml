@@ -61,19 +61,20 @@ let compress_level = ref 6
 
 (* Minimal header, by X. Leroy *)
 let gzip_header_length = 10
-let gzip_header = Bytes.make gzip_header_length (Char.chr 0)
-let () =
+
+let gzip_header =
+  let gzip_header = Bytes.make gzip_header_length (Char.chr 0) in
   Bytes.set gzip_header 0 @@ Char.chr 0x1F;
   Bytes.set gzip_header 1 @@ Char.chr 0x8B;
   Bytes.set gzip_header 2 @@ Char.chr 8;
-  Bytes.set gzip_header 9 @@ Char.chr 0xFF
-
+  Bytes.set gzip_header 9 @@ Char.chr 0xFF;
+  Bytes.unsafe_to_string gzip_header
 
 (* inspired by an auxiliary function from camlzip, by Xavier Leroy *)
 type output_buffer =
   {
     stream: Zlib.stream;
-    buf: string;
+    buf: bytes;
     mutable pos: int;
     mutable avail: int;
     mutable size : int32;
@@ -104,7 +105,8 @@ let rec output oz f buf pos len  =
     let  (_, used_in, used_out) =
       try
         Zlib.deflate
-          oz.stream buf pos len oz.buf oz.pos oz.avail Zlib.Z_NO_FLUSH
+          oz.stream (Bytes.unsafe_of_string buf)
+          pos len oz.buf oz.pos oz.avail Zlib.Z_NO_FLUSH
       with Zlib.Error(s, s') ->
         raise
           (Ocsigen_stream.Stream_error("Error during compression: "^s^" "^s'))
@@ -112,7 +114,7 @@ let rec output oz f buf pos len  =
     oz.pos <- oz.pos + used_out;
     oz.avail <- oz.avail - used_out;
     oz.size <- Int32.add oz.size (Int32.of_int used_in);
-    oz.crc <- Zlib.update_crc oz.crc buf pos used_in;
+    oz.crc <- Zlib.update_crc_string oz.crc buf pos used_in;
     output oz f buf (pos + used_in) (len - used_in)
   end
 
@@ -124,7 +126,12 @@ and flush oz cont =
     cont ()
   else begin
     let buf_len = Bytes.length oz.buf in
-    let s = if len = buf_len then oz.buf else Bytes.sub oz.buf 0 len in
+    let s =
+      if len = buf_len then
+        Bytes.to_string oz.buf
+      else
+        Bytes.sub_string oz.buf 0 len
+    in
     Lwt_log.ign_info ~section "Flushing!";
     oz.pos <- 0 ;
     oz.avail <- buf_len;
@@ -132,7 +139,7 @@ and flush oz cont =
   end
 
 and next_cont oz stream =
-  Ocsigen_stream.next stream >>= fun e ->
+  Ocsigen_stream.next (stream : string Ocsigen_stream.stream) >>= fun e ->
   match e with
   | Ocsigen_stream.Finished None ->
     Lwt_log.ign_info ~section "End of stream: big cleaning for zlib" ;
