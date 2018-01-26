@@ -1,6 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := tyxml.parser pgocaml.syntax lwt.syntax
+PACKAGE  := tyxml.parser pgocaml lwt
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}
@@ -40,14 +40,12 @@ ocsipersist.mli:
 
 ##########
 
-SYNTAX_FLAGS=-syntax camlp4o
-
 %.cmi: %.mli
 	$(OCAMLC) ${LIBS} -c $<
 %.cmo: %.ml
-	$(OCAMLC) ${LIBS} ${SYNTAX_FLAGS} -c $<
+	$(OCAMLC) ${LIBS} -c $<
 %.cmx: %.ml
-	$(OCAMLOPT) ${LIBS} ${SYNTAX_FLAGS} -c $<
+	$(OCAMLOPT) ${LIBS} -c $<
 %.cmxs: %.cmxa
 	$(OCAMLOPT) -shared -linkall -o $@ $<
 
@@ -63,7 +61,7 @@ distclean: clean
 ## Dependencies
 
 depend: ${PREDEP}
-	$(OCAMLDEP) ${LIBS} ${SYNTAX_FLAGS} *.mli *.ml > .depend
+	$(OCAMLDEP) ${LIBS} *.mli *.ml > .depend
 
 FORCE:
 -include .depend

@@ -7,7 +7,7 @@ Requirements:
 
 Compilers:
 
- * ocaml and camlp4  (need version >= 3.12.1)
+ * ocaml             (need version >= 3.12.1)
  * a C compiler      (tested with gcc-4.4.5)
 
 Libraries:
