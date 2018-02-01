@@ -1,3 +1,10 @@
+==== 2.9.0 (2018-02-01) ====
+
+ * Compatibility with OCaml 4.06
+ * Compatibility with Lwt 3.0.0
+ * More robust Ocsipersist DB connection handling
+ * Various small fixes and improvements
+
 ==== 2.8.0 (2016-11-24) ====
 
  * PostgreSQL Ocsipersist backend
