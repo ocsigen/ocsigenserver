@@ -2,6 +2,7 @@
 
  * Compatibility with OCaml 4.06
  * Compatibility with Lwt 3.0.0
+ * No longer use Camlp4
  * More robust Ocsipersist DB connection handling
  * Various small fixes and improvements
 
