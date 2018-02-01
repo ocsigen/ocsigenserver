@@ -57,6 +57,7 @@ depends: [
   "tyxml" {>= "4.0.0"}
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
+  "camlp4" # to force building tyxml.parser
 ]
 depopts: "camlzip"
 conflicts: [
