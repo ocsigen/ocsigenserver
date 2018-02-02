@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title> Quickstart </title><meta charset="utf8"/><link rel="stylesheet" href="/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><header><h1> Quickstart </h1><div id="overview" class="ocsimore_outline"></div><script>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title> Quickstart </title><meta charset="utf8"/><link rel="stylesheet" href="file:///home/balat/ocsigen/ocsigen.github.io/css/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script src="/client.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js"></script></head><body><header><h1> Quickstart </h1><div id="overview" class="ocsimore_outline"></div><script>
 //<![CDATA[
 outline([0,-515484383,0,0,[0,"nav",[0,"aside",0]],"overview",1])
 //]]>
@@ -32,19 +32,19 @@ and adapt it to your needs. Use a port greater than 1024, for example
 </p><pre>ocsigenserver -c //your_config_file//
 </pre><p>and go to the URL <span class="teletype">http://localhost:8080/</span> to see the default Web
 site.
-</p><h2> Personalizing my configuration </h2><p>Have a look at the page <span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/config.html">Configuration</a></span> to
+</p><h2> Personalizing my configuration </h2><p>Have a look at the page <span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/config">Configuration</a></span> to
 learn how to personalize the configuration file and adapt it to your
 needs.
 </p><p>The main extensions you need for basic use are:
-</p><dl><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/staticmod.html">Staticmod</a></span>
+</p><dl><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/staticmod">Staticmod</a></span>
 </dt><dd>for serving static pages,
-</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/accesscontrol.html">Accesscontrol</a></span>
+</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/accesscontrol">Accesscontrol</a></span>
 </dt><dd>if you need to restrict the access to the sites,
-</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/eliom.html">Eliom</a></span>
+</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/eliom">Eliom</a></span>
 </dt><dd>if you want to use dynamic Web sites written in OCaml with Eliom,
-</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/cgimod.html">CGImod</a></span>
+</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/cgimod">CGImod</a></span>
 </dt><dd>if you want to use dynamic Web sites written as CGI scripts (for example one way to run PHP pages),
-</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/revproxy.html">Revproxy</a></span>
+</dd><dt><span><a class="ocsforge_doclink_ocsigenserver" href="/ocsigenserver/2.8/manual/revproxy">Revproxy</a></span>
 </dt><dd>if you want to redirect some requests to another Web server, like Tomcat or Apache (another way to run PHP pages).
 </dd></dl><h2> Writing my own dynamic sites with Eliom </h2><p>Eliom Web sites are OCaml compiled modules (.cmo or .cma, possibly
 .cmxs with native code version) that are loaded dynamically from the
