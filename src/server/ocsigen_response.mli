@@ -1,24 +1,24 @@
 type t
 
 val make :
-  ?body : Cohttp_lwt_body.t ->
+  ?body : Cohttp_lwt.Body.t ->
   ?cookies : Ocsigen_cookies.cookieset ->
   Cohttp.Response.t ->
   t
 
 val update :
   ?response : Cohttp.Response.t ->
-  ?body : Cohttp_lwt_body.t ->
+  ?body : Cohttp_lwt.Body.t ->
   ?cookies : Ocsigen_cookies.cookieset ->
   t ->
   t
 
 val of_cohttp :
   ?cookies : Ocsigen_cookies.cookieset ->
-  (Cohttp.Response.t * Cohttp_lwt_body.t) ->
+  (Cohttp.Response.t * Cohttp_lwt.Body.t) ->
   t
 
-val to_cohttp : t -> Cohttp.Response.t * Cohttp_lwt_body.t
+val to_cohttp : t -> Cohttp.Response.t * Cohttp_lwt.Body.t
 
 val status : t -> Cohttp.Code.status
 

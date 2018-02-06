@@ -579,7 +579,7 @@ let start ?config () =
           Unix.openfile
             p
             [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC] 0o640 in
-        ignore (Unix.write f spid 0 len);
+        ignore (Unix.write_substring f spid 0 len);
         Unix.close f
     in
 

@@ -248,7 +248,7 @@ let service ?ssl ~address ~port ~connector () =
   Conduit_lwt_unix.init
     ~src:(Ocsigen_config.Socket_type.to_string address)
     ~tls_server_key () >>= fun conduit_ctx ->
-  Lwt.return (Cohttp_lwt_unix_net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
+  Lwt.return (Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
   (* We catch the INET_ADDR of the server *)
   let callback =
     let address = Ocsigen_config.Socket_type.to_inet_addr address

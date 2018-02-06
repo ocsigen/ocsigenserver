@@ -1,7 +1,7 @@
 open Lwt.Infix
 
 let post_data_of_body ~content_type b =
-  Cohttp_lwt_body.to_stream b
+  Cohttp_lwt.Body.to_stream b
   |> Ocsigen_stream.of_lwt_stream
   |> Ocsigen_multipart.post_params ~content_type
 
@@ -17,7 +17,7 @@ type file_info = Ocsigen_multipart.file_info = {
 type post_data = Ocsigen_multipart.post_data
 
 type body = [
-  | `Unparsed of Cohttp_lwt_body.t
+  | `Unparsed of Cohttp_lwt.Body.t
   | `Parsed of post_data Lwt.t option
 ]
 

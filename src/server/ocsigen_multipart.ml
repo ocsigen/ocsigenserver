@@ -48,7 +48,7 @@ let scan_header
       if i' > end_pos then raise (Multipart_error "Mimestring.scan_header");
       let name =
         if downcase then
-          String.lowercase (S.matched_group r 1 parstr)
+          String.lowercase_ascii (S.matched_group r 1 parstr)
         else
           S.matched_group r 1 parstr
       in
@@ -343,7 +343,7 @@ let post_params_multipart_form_data body_gen ctparams upload_dir max_size =
       Lwt.return ()
     | _, `Some_file (_, _, wh, _) ->
       let len = String.length s in
-      let r = Unix.write wh s 0 len in
+      let r = Unix.write_substring wh s 0 len in
       if r < len then
         (*XXXX Inefficient if s is long *)
         add p (String.sub s r (len - r))
@@ -413,7 +413,7 @@ let post_params_multipart_form_data body_gen ctparams upload_dir max_size =
 
 let post_params ~content_type body_gen =
   let (ct, cst), ctparams = content_type in
-  match String.lowercase ct, String.lowercase cst with
+  match String.lowercase_ascii ct, String.lowercase_ascii cst with
   | "application", "x-www-form-urlencoded" ->
     Some (post_params_form_urlencoded body_gen)
   | "multipart", "form-data" ->

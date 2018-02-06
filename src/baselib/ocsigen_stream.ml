@@ -223,7 +223,7 @@ let of_file filename =
     if n = 0 then empty None else
       (* Streams should be immutable, thus we always make a copy
          of the buffer *)
-      cont (Bytes.sub buf 0 n) aux
+      cont (Bytes.sub_string buf 0 n) aux
   in make ~finalize:(fun _ -> Lwt_unix.close fd) aux
 
 let of_string s =

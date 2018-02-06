@@ -22,7 +22,7 @@ val make :
   ssl : bool ->
   filenames : string list ref ->
   sockaddr : Lwt_unix.sockaddr ->
-  body : Cohttp_lwt_body.t ->
+  body : Cohttp_lwt.Body.t ->
   connection_closed : unit Lwt.t ->
   Cohttp.Request.t ->
   t
@@ -45,7 +45,7 @@ val to_cohttp : t -> Cohttp.Request.t
 
 val uri : t -> Uri.t
 
-val body : t -> Cohttp_lwt_body.t
+val body : t -> Cohttp_lwt.Body.t
 
 val address : t -> Unix.inet_addr
 

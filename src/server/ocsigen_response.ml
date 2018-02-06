@@ -1,11 +1,11 @@
 type t = {
   a_response : Cohttp.Response.t ;
-  a_body     : Cohttp_lwt_body.t ;
+  a_body     : Cohttp_lwt.Body.t ;
   a_cookies  : Ocsigen_cookies.cookieset
 }
 
 let make
-    ?(body = Cohttp_lwt_body.empty)
+    ?(body = Cohttp_lwt.Body.empty)
     ?(cookies = Ocsigen_cookies.empty_cookieset)
     a_response =
   { a_response ; a_body = body ; a_cookies = cookies }
