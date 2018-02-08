@@ -3,7 +3,7 @@ open Lwt.Infix
 let section = Lwt_log.Section.make "ocsigen:cohttp"
 
 exception Ocsigen_http_error of
-    Ocsigen_cookies.cookieset * Cohttp.Code.status
+    Ocsigen_cookie_map.t * Cohttp.Code.status
 
 exception Ext_http_error of
     Cohttp.Code.status * string option * Cohttp.Header.t option
@@ -52,21 +52,18 @@ module Cookie = struct
        | None ->
          "")
 
-  let serialize_cookies path table headers =
-    Ocsigen_cookies.CookiesTable.fold
-      (fun name c h ->
-         let exp, v, secure = match c with
-           | Ocsigen_cookies.OUnset -> (Some 0., "", false)
-           | Ocsigen_cookies.OSet (t, v, secure) -> (t, v, secure)
-         in
-         Cohttp.Header.add h
-           Ocsigen_header.Name.(to_string set_cookie)
-           (serialize_cookie_raw path exp name v secure))
-      table
-      headers
+  let serialize_cookies path =
+    Ocsigen_cookie_map.Map_inner.fold @@ fun name c h ->
+    let exp, v, secure = match c with
+      | `Unset -> (Some 0., "", false)
+      | `Set (t, v, secure) -> (t, v, secure)
+    in
+    Cohttp.Header.add h
+      Ocsigen_header.Name.(to_string set_cookie)
+      (serialize_cookie_raw path exp name v secure)
 
   let serialize cookies headers =
-    Ocsigen_cookies.Cookies.fold serialize_cookies cookies headers
+    Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
 
 end
 
@@ -83,13 +80,13 @@ let make_cookies_header path exp name c secure =
    | None   -> "")
 
 let make_cookies_headers path t hds =
-  Ocsigen_cookies.CookiesTable.fold
+  Ocsigen_cookie_map.Map_inner.fold
     (fun name c h ->
        let exp, v, secure =
          match c with
-         | Ocsigen_cookies.OUnset ->
+         | `Unset ->
            Some 0., "", false
-         | Ocsigen_cookies.OSet (t, v, secure) ->
+         | `Set (t, v, secure) ->
            t, v, secure
        in
        Cohttp.Header.add h
@@ -189,7 +186,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
        and cookies = Ocsigen_response.cookies response in
        let response =
          let headers =
-           Ocsigen_cookies.Cookies.fold
+           Ocsigen_cookie_map.Map_path.fold
              make_cookies_headers
              cookies
              (Cohttp.Response.headers response)

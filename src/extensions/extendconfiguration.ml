@@ -38,9 +38,7 @@ let gen configfun = function
     in
     Lwt.return
       (Ocsigen_extensions.Ext_continue_with
-         (request,
-          Ocsigen_cookies.Cookies.empty,
-          err))
+         (request, Ocsigen_cookie_map.empty, err))
 
 let gather_do_not_serve_files tag =
   let rec aux (regexps, files, extensions) = function

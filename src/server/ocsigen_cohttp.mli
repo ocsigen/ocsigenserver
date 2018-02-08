@@ -1,5 +1,5 @@
 exception Ocsigen_http_error of
-    Ocsigen_cookies.cookieset * Cohttp.Code.status
+    Ocsigen_cookie_map.t * Cohttp.Code.status
 
 (** Exception raised by exceptions to describe an HTTP error. It is
     possible to pass the code of the error, an optional comment, and

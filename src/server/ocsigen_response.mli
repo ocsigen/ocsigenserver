@@ -2,19 +2,19 @@ type t
 
 val make :
   ?body : Cohttp_lwt.Body.t ->
-  ?cookies : Ocsigen_cookies.cookieset ->
+  ?cookies : Ocsigen_cookie_map.t ->
   Cohttp.Response.t ->
   t
 
 val update :
   ?response : Cohttp.Response.t ->
   ?body : Cohttp_lwt.Body.t ->
-  ?cookies : Ocsigen_cookies.cookieset ->
+  ?cookies : Ocsigen_cookie_map.t ->
   t ->
   t
 
 val of_cohttp :
-  ?cookies : Ocsigen_cookies.cookieset ->
+  ?cookies : Ocsigen_cookie_map.t ->
   (Cohttp.Response.t * Cohttp_lwt.Body.t) ->
   t
 
@@ -24,9 +24,9 @@ val status : t -> Cohttp.Code.status
 
 val set_status : t -> Cohttp.Code.status -> t
 
-val cookies : t -> Ocsigen_cookies.cookieset
+val cookies : t -> Ocsigen_cookie_map.t
 
-val add_cookies : t -> Ocsigen_cookies.cookieset -> t
+val add_cookies : t -> Ocsigen_cookie_map.t -> t
 
 val header : t -> Ocsigen_header.Name.t -> string option
 

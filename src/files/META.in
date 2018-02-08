@@ -37,7 +37,7 @@ package "http" (
 
 package "cookies" (
   version = "[distributed with Ocsigen server]"
-  archive(byte) = "ocsigen_cookies.cmo"
+  archive(byte) = "ocsigen_cookie_map.cmo"
 )
 
 package "ext" (

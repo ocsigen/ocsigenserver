@@ -71,7 +71,7 @@ let gen regexp continue = function
                  ~uri:(Uri.of_string redir)
                  ri.Ocsigen_extensions.request_info
            },
-           Ocsigen_cookies.Cookies.empty,
+           Ocsigen_cookie_map.empty,
            err)
       else
         Lwt.return @@ Ocsigen_extensions.Ext_retry_with
@@ -81,7 +81,7 @@ let gen regexp continue = function
                  ~full_rewrite
                  ~uri:(Uri.of_string redir)
                  ri.Ocsigen_extensions.request_info },
-           Ocsigen_cookies.Cookies.empty)
+           Ocsigen_cookie_map.empty)
     and catch_block = function
       | Ocsigen_extensions.Not_concerned ->
         Lwt.return (Ocsigen_extensions.Ext_next err)

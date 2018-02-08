@@ -28,7 +28,7 @@ let section = Lwt_log.Section.make "ocsigen:ext:userconf"
 
 let err_500 =
   Ocsigen_extensions.Ext_stop_site
-    (Ocsigen_cookies.Cookies.empty, `Internal_server_error)
+    (Ocsigen_cookie_map.empty, `Internal_server_error)
 
 let handle_parsing_error {Ocsigen_extensions.request_info} = function
   | Ocsigen_extensions.Error_in_config_file s ->
@@ -83,7 +83,7 @@ let subresult new_req user_parse_site conf previous_err req req_state =
       (fun e ->
          handle_parsing_error req e >>=
          fun answer ->
-         Lwt.return (answer, Ocsigen_cookies.Cookies.empty))
+         Lwt.return (answer, Ocsigen_cookie_map.empty))
   )
 
 let conf_to_xml conf =

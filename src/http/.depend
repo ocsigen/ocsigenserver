@@ -3,9 +3,9 @@ ocsigen_charset_mime.cmo : ../baselib/ocsigen_lib.cmi \
 ocsigen_charset_mime.cmx : ../baselib/ocsigen_lib.cmx \
     ../baselib/ocsigen_config_static.cmx ocsigen_charset_mime.cmi
 ocsigen_charset_mime.cmi :
-ocsigen_cookies.cmo : ocsigen_cookies.cmi
-ocsigen_cookies.cmx : ocsigen_cookies.cmi
-ocsigen_cookies.cmi : ../baselib/ocsigen_lib.cmi
+ocsigen_cookie_map.cmo : ocsigen_cookie_map.cmi
+ocsigen_cookie_map.cmx : ocsigen_cookie_map.cmi
+ocsigen_cookie_map.cmi : ../baselib/ocsigen_lib.cmi
 ocsigen_header.cmo : ../baselib/ocsigen_lib.cmi ocsigen_header.cmi
 ocsigen_header.cmx : ../baselib/ocsigen_lib.cmx ocsigen_header.cmi
 ocsigen_header.cmi :

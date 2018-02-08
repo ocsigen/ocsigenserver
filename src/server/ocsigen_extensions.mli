@@ -23,7 +23,7 @@
 include (module type of Ocsigen_command)
 
 exception Ocsigen_http_error of
-    Ocsigen_cookies.cookieset * Cohttp.Code.status
+    Ocsigen_cookie_map.t * Cohttp.Code.status
 
 (** Xml tag not recognized by an extension (usually not a real error) *)
 exception Bad_config_tag_for_extension of string
@@ -141,33 +141,33 @@ type answer =
       `Not_found, but may be for example `Forbidden (403) if you want
       to try another extension afterwards. Same as Ext_continue_with
       but does not change the request. *)
-  | Ext_stop_site of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  | Ext_stop_site of (Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Error. Do not try next extension, but try next site. *)
-  | Ext_stop_host of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  | Ext_stop_host of (Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Error.
       Do not try next extension,
       do not try next site,
       but try next host. *)
-  | Ext_stop_all of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  | Ext_stop_all of (Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Error. Do not try next extension,
       do not try next site,
       do not try next host. *)
   | Ext_continue_with of
-      (request * Ocsigen_cookies.cookieset * Cohttp.Code.status)
+      (request * Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Used to modify the request before giving it to next extension.
       The extension returns the request (possibly modified) and a set
       of cookies if it wants to set or cookies
-      ({!Ocsigen_cookies.Cookies.empty} for no cookies).  You must add
+      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}.  The status is
       usually equal to the one received from preceding extension (but
       you may want to modify it). *)
-  | Ext_retry_with of request * Ocsigen_cookies.cookieset
+  | Ext_retry_with of request * Ocsigen_cookie_map.t
   (** Used to retry all the extensions with a new request.  The
       extension returns the request (possibly modified) and a set of
       cookies if it wants to set or cookies
-      ({!Ocsigen_cookies.Cookies.empty} for no cookies).  You must add
+      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
@@ -180,8 +180,7 @@ type answer =
   | Ext_found_continue_with of
       (unit -> (Ocsigen_response.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of
-      (Ocsigen_response.t * request)
+  | Ext_found_continue_with' of (Ocsigen_response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it, but
       for output filters. *)
@@ -191,9 +190,9 @@ and request_state =
   | Req_found of (request * Ocsigen_response.t)
 
 and extension_composite =
-  Ocsigen_cookies.cookieset ->
+  Ocsigen_cookie_map.t ->
   request_state ->
-  (answer * Ocsigen_cookies.cookieset) Lwt.t
+  (answer * Ocsigen_cookie_map.t) Lwt.t
 
 type extension = request_state -> answer Lwt.t
 (** For each <site> tag in the configuration file,
@@ -438,7 +437,7 @@ val get_hosts :
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
 val compute_result :
-  ?previous_cookies:Ocsigen_cookies.cookieset ->
+  ?previous_cookies:Ocsigen_cookie_map.t ->
   Ocsigen_request.t ->
   Ocsigen_response.t Lwt.t
 

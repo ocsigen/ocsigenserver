@@ -13,8 +13,6 @@
 Makefile.config
 src/baselib/dynlink_wrapper.ml
 src/baselib/ocsigen_config_static.ml
-src/http/http_parser.ml
-src/http/http_parser.mli
 src/server/ocsigenserver
 src/server/ocsigenserver.opt
 src/extensions/ocsipersist.mli

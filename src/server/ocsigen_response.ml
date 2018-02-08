@@ -1,12 +1,12 @@
 type t = {
   a_response : Cohttp.Response.t ;
   a_body     : Cohttp_lwt.Body.t ;
-  a_cookies  : Ocsigen_cookies.cookieset
+  a_cookies  : Ocsigen_cookie_map.t
 }
 
 let make
     ?(body = Cohttp_lwt.Body.empty)
-    ?(cookies = Ocsigen_cookies.empty_cookieset)
+    ?(cookies = Ocsigen_cookie_map.empty)
     a_response =
   { a_response ; a_body = body ; a_cookies = cookies }
 
@@ -31,7 +31,7 @@ let update
   { a_response ; a_body ; a_cookies }
 
 let of_cohttp
-    ?(cookies = Ocsigen_cookies.empty_cookieset)
+    ?(cookies = Ocsigen_cookie_map.empty)
     (a_response, a_body) =
   { a_response ; a_body ; a_cookies = cookies }
 
@@ -55,11 +55,11 @@ let set_status ({ a_response } as a) status =
 let cookies {a_cookies} = a_cookies
 
 let add_cookies ({ a_cookies } as a) cookies =
-  if cookies = Ocsigen_cookies.Cookies.empty then
+  if cookies = Ocsigen_cookie_map.empty then
     a
   else {
     a with
-    a_cookies = Ocsigen_cookies.add_cookies a_cookies cookies
+    a_cookies = Ocsigen_cookie_map.add_multi a_cookies cookies
   }
 
 let header {a_response} id =

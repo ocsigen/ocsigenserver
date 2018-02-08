@@ -212,33 +212,33 @@ type answer =
       `Not_found, but may be for example `Forbidden (403) if you want
       to try another extension afterwards. Same as Ext_continue_with
       but does not change the request. *)
-  | Ext_stop_site of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  | Ext_stop_site of (Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Error. Do not try next extension, but try next site. *)
-  | Ext_stop_host of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  | Ext_stop_host of (Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Error.
       Do not try next extension,
       do not try next site,
       but try next host. *)
-  | Ext_stop_all of (Ocsigen_cookies.cookieset * Cohttp.Code.status)
+  | Ext_stop_all of (Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Error. Do not try next extension,
       do not try next site,
       do not try next host. *)
   | Ext_continue_with of
-      (request * Ocsigen_cookies.cookieset * Cohttp.Code.status)
+      (request * Ocsigen_cookie_map.t * Cohttp.Code.status)
   (** Used to modify the request before giving it to next extension.
       The extension returns the request (possibly modified) and a set
       of cookies if it wants to set or cookies
-      ({!Ocsigen_cookies.Cookies.empty} for no cookies).  You must add
+      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}.  The status is
       usually equal to the one received from preceding extension (but
       you may want to modify it). *)
-  | Ext_retry_with of request * Ocsigen_cookies.cookieset
+  | Ext_retry_with of request * Ocsigen_cookie_map.t
   (** Used to retry all the extensions with a new request.  The
       extension returns the request (possibly modified) and a set of
       cookies if it wants to set or cookies
-      ({!Ocsigen_cookies.Cookies.empty} for no cookies).  You must add
+      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
@@ -261,9 +261,9 @@ and request_state =
   | Req_found of (request * Ocsigen_response.t)
 
 and extension_composite =
-  Ocsigen_cookies.cookieset ->
+  Ocsigen_cookie_map.t ->
   request_state ->
-  (answer * Ocsigen_cookies.cookieset) Lwt.t
+  (answer * Ocsigen_cookie_map.t) Lwt.t
 
 type extension = request_state -> answer Lwt.t
 
@@ -354,7 +354,7 @@ let default_extension_composite : extension_composite =
     | Req_not_found (e, ri) ->
       Lwt.return
         (Ext_continue_with
-           (ri, Ocsigen_cookies.Cookies.empty, e), cookies_to_set)
+           (ri, Ocsigen_cookie_map.empty, e), cookies_to_set)
 
 let compose_step (f : extension) (g : extension_composite)
   : extension_composite
@@ -369,14 +369,14 @@ let compose_step (f : extension) (g : extension_composite)
           | Req_found (ri, _) -> ri
           | Req_not_found (_, ri) -> ri
         in
-        g Ocsigen_cookies.Cookies.empty
+        g Ocsigen_cookie_map.empty
           (Req_found (ri, Ocsigen_response.add_cookies r' cookies_to_set))
       | Ext_found_continue_with r ->
         r () >>= fun (r', req) ->
-        g Ocsigen_cookies.Cookies.empty
+        g Ocsigen_cookie_map.empty
           (Req_found (req, Ocsigen_response.add_cookies r' cookies_to_set))
       | Ext_found_continue_with' (r', req) ->
-        g Ocsigen_cookies.Cookies.empty
+        g Ocsigen_cookie_map.empty
           (Req_found (req, Ocsigen_response.add_cookies r' cookies_to_set))
       | Ext_next e ->
         let ri = match req_state with
@@ -385,7 +385,7 @@ let compose_step (f : extension) (g : extension_composite)
         in
         g cookies_to_set (Req_not_found (e, ri))
       | Ext_continue_with (ri, cook, e) ->
-        g (Ocsigen_cookies.add_cookies cook cookies_to_set)
+        g (Ocsigen_cookie_map.add_multi cook cookies_to_set)
           (Req_not_found (e, ri))
       | Ext_found_stop _
       | Ext_stop_site _
@@ -526,7 +526,7 @@ let site_ext ext_of_children charset path cookies_to_set = function
         Lwt.return
           (Ext_continue_with
              (oldri,
-              Ocsigen_cookies.Cookies.empty,
+              Ocsigen_cookie_map.empty,
               e), cookies_to_set)
       | r ->
         Lwt.return r
@@ -808,7 +808,7 @@ let string_of_host (h : virtual_hosts) =
   in List.fold_left (fun d arg -> d ^ aux1  arg ^" ") "" h
 
 let compute_result
-    ?(previous_cookies = Ocsigen_cookies.Cookies.empty)
+    ?(previous_cookies = Ocsigen_cookie_map.empty)
     request_info =
 
   let host = Ocsigen_request.host request_info
@@ -854,17 +854,17 @@ let compute_result
        | Ext_stop_host (cook, e)
        | Ext_stop_site (cook, e) ->
          fold_hosts request_info e
-           (Ocsigen_cookies.add_cookies cook cookies_to_set) l
+           (Ocsigen_cookie_map.add_multi cook cookies_to_set) l
        (* try next site *)
        | Ext_stop_all (cook, e) ->
          Lwt.fail (Ocsigen_http_error (cookies_to_set, e))
        | Ext_continue_with (_, cook, e) ->
          fold_hosts request_info e
-           (Ocsigen_cookies.add_cookies cook cookies_to_set) l
+           (Ocsigen_cookie_map.add_multi cook cookies_to_set) l
        | Ext_retry_with (request2, cook) ->
          fold_hosts_limited
            (get_hosts ())
-           (Ocsigen_cookies.add_cookies cook cookies_to_set)
+           (Ocsigen_cookie_map.add_multi cook cookies_to_set)
            request2.request_info
        (* retry all *)
        | Ext_sub_result sr ->

@@ -1,39 +1,39 @@
 BIN := server/${PROJECTNAME}
 NATBIN := server/${PROJECTNAME}.opt
 
-INTF_BASE := baselib/ocsigen_cache.cmi	   \
-	baselib/ocsigen_lib_base.cmi	   \
-	baselib/ocsigen_lib.cmi	   \
-	baselib/ocsigen_stream.cmi	   \
-	baselib/ocsigen_loader.cmi	   \
-        baselib/polytables.cmi	           \
+INTF_BASE := baselib/ocsigen_cache.cmi     \
+        baselib/ocsigen_lib_base.cmi       \
+        baselib/ocsigen_lib.cmi            \
+        baselib/ocsigen_stream.cmi         \
+        baselib/ocsigen_loader.cmi         \
+        baselib/polytables.cmi             \
         \
-	http/ocsigen_charset_mime.cmi      \
-        http/ocsigen_cookies.cmi           \
-	http/ocsigen_header.cmi            \
-	\
+        http/ocsigen_charset_mime.cmi      \
+        http/ocsigen_cookie_map.cmi        \
+        http/ocsigen_header.cmi            \
+        \
         server/ocsigen_config.cmi          \
         server/ocsigen_request.cmi         \
         server/ocsigen_response.cmi        \
-	server/ocsigen_messages.cmi        \
+        server/ocsigen_messages.cmi        \
         server/ocsigen_multipart.cmi       \
-	server/ocsigen_extensions.cmi      \
-	server/ocsigen_parseconfig.cmi     \
-	server/ocsigen_local_files.cmi     \
-	server/ocsigen_server.cmi
+        server/ocsigen_extensions.cmi      \
+        server/ocsigen_parseconfig.cmi     \
+        server/ocsigen_local_files.cmi     \
+        server/ocsigen_server.cmi
 
 INTF := ${INTF_BASE}
 
-IMPL := baselib/ocsigen_lib_base.cmo	   \
+IMPL := baselib/ocsigen_lib_base.cmo       \
         baselib/ocsigen_config_static.cmo  \
-        baselib/baselib.cma		   \
-        baselib/polytables.cmo	           \
-	\
-        http/ocsigen_cookies.cmo           \
-        http/http.cma	                   \
-	\
-	server/${PROJECTNAME}.cma          \
-	server/server_main.cmo
+        baselib/baselib.cma                \
+        baselib/polytables.cmo             \
+        \
+        http/ocsigen_cookie_map.cmo        \
+        http/http.cma                      \
+        \
+        server/${PROJECTNAME}.cma          \
+        server/server_main.cmo
 
 INTF_CMX := $(patsubst %.cmi,%.cmx,${INTF_BASE})
 

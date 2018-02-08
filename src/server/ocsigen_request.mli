@@ -16,7 +16,7 @@ val make :
   ?sub_path : string ->
   ?original_full_path : string ->
   ?request_cache : Polytables.t ->
-  ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
+  ?cookies_override : string Ocsigen_cookie_map.Map_inner.t ->
   address : Unix.inet_addr ->
   port : int ->
   ssl : bool ->
@@ -35,7 +35,7 @@ val update :
   ?meth : Cohttp.Code.meth ->
   ?get_params_flat : (string * string) list ->
   ?post_data : post_data option ->
-  ?cookies_override : string Ocsigen_cookies.CookiesTable.t ->
+  ?cookies_override : string Ocsigen_cookie_map.Map_inner.t ->
   ?full_rewrite : bool ->
   ?uri : Uri.t ->
   t ->
@@ -83,7 +83,7 @@ val header_multi : t -> Ocsigen_header.Name.t -> string list
 
 val add_header : t -> Ocsigen_header.Name.t -> string -> t
 
-val cookies : t -> string Ocsigen_cookies.CookiesTable.t
+val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
 
 val files :
   t ->

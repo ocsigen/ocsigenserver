@@ -74,7 +74,7 @@ let gen ~realm ~auth rs =
       "AUTH: invalid Authorization header";
     Lwt.fail
       (Ocsigen_cohttp.Ocsigen_http_error
-         (Ocsigen_cookies.Cookies.empty, `Bad_request))
+         (Ocsigen_cookie_map.empty, `Bad_request))
 
   in
 

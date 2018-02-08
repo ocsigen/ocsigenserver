@@ -239,7 +239,7 @@ let parse_config parse_fun = function
     (fun rs ->
        Lwt_log.ign_info ~section "NOT_FOUND: taking in charge 404";
        Lwt.return (Ocsigen_extensions.Ext_stop_all
-                     (Ocsigen_cookies.Cookies.empty, `Not_found)))
+                     (Ocsigen_cookie_map.empty, `Not_found)))
   | Element ("notfound" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
 
@@ -250,7 +250,7 @@ let parse_config parse_fun = function
                       (fun () -> Lwt.return r))
       | Ocsigen_extensions.Req_not_found (err, ri) ->
         Lwt.return (Ocsigen_extensions.Ext_stop_site
-                      (Ocsigen_cookies.Cookies.empty, `Not_found)))
+                      (Ocsigen_cookie_map.empty, `Not_found)))
 
   | Element ("nexthost", [], []) ->
     (function
@@ -259,7 +259,7 @@ let parse_config parse_fun = function
                       (fun () -> Lwt.return r))
       | Ocsigen_extensions.Req_not_found (err, ri) ->
         Lwt.return (Ocsigen_extensions.Ext_stop_host
-                      (Ocsigen_cookies.Cookies.empty, `Not_found)))
+                      (Ocsigen_cookie_map.empty, `Not_found)))
   | Element ("nextsite" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
 
@@ -270,7 +270,7 @@ let parse_config parse_fun = function
                       (fun () -> Lwt.return r))
       | Ocsigen_extensions.Req_not_found (err, ri) ->
         Lwt.return (Ocsigen_extensions.Ext_stop_all
-                      (Ocsigen_cookies.Cookies.empty, `Not_found)))
+                      (Ocsigen_cookie_map.empty, `Not_found)))
   | Element ("stop" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
 
@@ -278,7 +278,7 @@ let parse_config parse_fun = function
     (fun rs ->
        Lwt_log.ign_info ~section "FORBIDDEN: taking in charge 403";
        Lwt.return (Ocsigen_extensions.Ext_stop_all
-                     (Ocsigen_cookies.Cookies.empty, `Forbidden)))
+                     (Ocsigen_cookie_map.empty, `Forbidden)))
 
   | Element ("forbidden" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
@@ -384,7 +384,7 @@ let parse_config parse_fun = function
       Lwt.return
         (Ocsigen_extensions.Ext_continue_with
            ( request,
-             Ocsigen_cookies.Cookies.empty,
+             Ocsigen_cookie_map.empty,
              code ))
     in
     (function
@@ -419,7 +419,7 @@ let parse_config parse_fun = function
       Lwt.return
         (Ocsigen_extensions.Ext_continue_with
            ( { request with Ocsigen_extensions.request_info },
-             Ocsigen_cookies.Cookies.empty,
+             Ocsigen_cookie_map.empty,
              code ))
     in
     (function

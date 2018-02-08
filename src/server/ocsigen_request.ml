@@ -77,7 +77,7 @@ type t = {
   r_body : body ref ;
   r_original_full_path : string option ;
   r_sub_path : string option ;
-  r_cookies_override : string Ocsigen_cookies.CookiesTable.t option ;
+  r_cookies_override : string Ocsigen_cookie_map.Map_inner.t option ;
   mutable r_request_cache : Polytables.t ;
   mutable r_tries : int ;
   r_connection_closed : unit Lwt.t
@@ -310,13 +310,13 @@ let parse_cookies s =
       (fun beg a ->
          try
            let (n, v) = Ocsigen_lib.String.sep '=' a in
-           Ocsigen_cookies.CookiesTable.add n v beg
+           Ocsigen_cookie_map.Map_inner.add n v beg
          with Not_found ->
            beg)
-      Ocsigen_cookies.CookiesTable.empty
+      Ocsigen_cookie_map.Map_inner.empty
       splitted
   with _ ->
-    Ocsigen_cookies.CookiesTable.empty
+    Ocsigen_cookie_map.Map_inner.empty
 
 let cookies = function
   | {r_cookies_override = Some cookies} ->
@@ -326,7 +326,7 @@ let cookies = function
     | Some cookies ->
       parse_cookies cookies
     | None ->
-      Ocsigen_cookies.CookiesTable.empty
+      Ocsigen_cookie_map.Map_inner.empty
 
 let content_type r =
   match header r Ocsigen_header.Name.content_type with
