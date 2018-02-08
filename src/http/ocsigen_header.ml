@@ -24,7 +24,7 @@ module Name = struct
 
   type t = string
 
-  let of_string = String.lowercase
+  let of_string = String.lowercase_ascii
   let to_string s = s
 
   let accept = of_string "Accept"

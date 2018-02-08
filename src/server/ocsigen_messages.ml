@@ -148,7 +148,7 @@ let command_f exc _ = function
        if a section with the same name
        already exists, it is returned. *)
     let sect = Lwt_log.Section.make sect_name in
-    (match level_of_string (String.lowercase level_name) with
+    (match level_of_string (String.lowercase_ascii level_name) with
     | None -> Lwt_log.Section.reset_level sect
     | Some l -> Lwt_log.Section.set_level sect l);
     Lwt.return ()

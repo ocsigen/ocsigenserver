@@ -662,7 +662,7 @@ let first_pass c =
       set_logdir (parse_string_tag st p);
       aux user group ssl ports sslports ll
     | Element ("syslog" as st, [], p) :: ll ->
-      let str = String.lowercase (parse_string_tag st p) in
+      let str = String.lowercase_ascii (parse_string_tag st p) in
       set_syslog_facility (Some (parse_facility str));
       aux user group ssl ports sslports ll
     | Element ("port" as st, atts, p) :: ll ->

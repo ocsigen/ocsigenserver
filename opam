@@ -66,3 +66,4 @@ conflicts: [
   "camlzip" {< "1.04"}
   "pgocaml" {< "2.2"}
 ]
+available: [ocaml-version >= "4.03.0"]

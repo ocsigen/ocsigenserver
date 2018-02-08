@@ -404,7 +404,7 @@ let parse_config parse_fun = function
         in
         match header with
         | Some header ->
-          (match String.lowercase header with
+          (match String.lowercase_ascii header with
            | "http" ->
              Ocsigen_request.update ~ssl:false request_info
            | "https" ->
