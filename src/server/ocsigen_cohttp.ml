@@ -35,7 +35,7 @@ let print_request fmt request =
           values))
     (Cohttp.Request.headers request)
 
-let waiters = Hashtbl.create 256
+let connections = Hashtbl.create 256
 
 exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
 
@@ -116,8 +116,15 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   in
 
   let sockaddr = getsockname edn in
-  let (connection_closed, wakener) = Lwt.wait () in
-  Hashtbl.add waiters conn wakener;
+
+  let connection_closed =
+    try
+      fst (Hashtbl.find connections conn)
+    with Not_found ->
+      let ((connection_closed, _) as p) = Lwt.wait () in
+      Hashtbl.add connections conn p;
+      connection_closed
+  in
 
   let handle_error exn =
 
@@ -202,9 +209,8 @@ let conn_closed (flow, conn) =
     Lwt_log.ign_debug_f ~section
       "Connection closed:\n%s"
       (Cohttp.Connection.to_string conn);
-    let wakener = Hashtbl.find waiters conn in
-    Lwt.wakeup wakener ();
-    Hashtbl.remove waiters conn
+    Lwt.wakeup (snd (Hashtbl.find connections conn)) ();
+    Hashtbl.remove connections conn
   with Not_found -> ()
 
 let stop, stop_wakener = Lwt.wait ()
