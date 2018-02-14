@@ -230,8 +230,15 @@ type 'value table = string
 
 let table_name table = Lwt.return table
 
-let open_table table = use_pool @@ fun db ->
-  create_table db table >> Lwt.return table
+let existing_tables = Hashtbl.create 16
+
+let open_table table =
+  if Hashtbl.mem existing_tables table then Lwt.return table else begin
+    use_pool @@ fun db ->
+    create_table db table >>= fun () ->
+    Hashtbl.add existing_tables table ();
+    Lwt.return table
+  end
 
 let find table key = use_pool @@ fun db ->
   let query = sprintf "SELECT value FROM %s WHERE key = $1 " table in
