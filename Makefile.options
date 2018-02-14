@@ -41,8 +41,7 @@ SERVER_PACKAGE := lwt_ssl           \
                   xml-light         \
                   dynlink           \
                   cohttp.lwt        \
-                  hmap              \
-                  ppx_deriving.std
+                  hmap
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \

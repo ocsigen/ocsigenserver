@@ -57,9 +57,6 @@ depends: [
   "ipaddr" {>= "2.1"}
   "cohttp-lwt-unix"
   "hmap"
-
-  # REMOVE AFTER DEBUGGING
-  "ppx_deriving"
 ]
 depopts: "camlzip"
 conflicts: [
