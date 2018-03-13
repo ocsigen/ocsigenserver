@@ -39,4 +39,6 @@ let cmdline : unit =
       ]
       (fun _ -> ())
       "usage: ocsigen [-c configfile]"
-  with Arg.Help s -> print_endline s; exit 0
+  with
+  | Arg.Help s -> print_string s; exit 0
+  | Arg.Bad s -> prerr_string s; exit 1
