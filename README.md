@@ -77,7 +77,7 @@ Build instructions:
 Local testings:
 ===============
 
- * run "make run.local" of "make run.opt.local"
+ * run "make run.local" or "make run.opt.local"
    in the ocsigen source directory.
 
  * open http://localhost:8080/index.html in your browser
