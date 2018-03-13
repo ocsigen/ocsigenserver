@@ -189,29 +189,29 @@ usage: ./configure [ options ]
   --with-dbm,		--without-dbm		Compile ocsipersist with DBM for persistent storage
   --with-camlzip,	--without-camlzip	Compile deflatemod extension, requires camlzip
 
-  --name=NAME		The name of the server binary and ocamlfind package.
+  --name NAME		The name of the server binary and ocamlfind package.
 
-  --ocsigen-user=NAME	The name of the ocsigen user
-  --ocsigen-group=NAME	The name of the ocsigen group
+  --ocsigen-user NAME	The name of the ocsigen user
+  --ocsigen-group NAME	The name of the ocsigen group
 
-  --root=DIR		Root directory to install the package, every other options are relatives to this path. (usually /)
-  --temproot=DIR	Temporary root directory to install the package (usually always "" but for package makers)
-  --prefix=DIR		Subdirectory where to install binaries and libs (usually /usr or /usr/local)
+  --root DIR		Root directory to install the package, every other options are relatives to this path. (usually /)
+  --temproot DIR	Temporary root directory to install the package (usually always "" but for package makers)
+  --prefix DIR		Subdirectory where to install binaries and libs (usually /usr or /usr/local)
 
-  --bindir=DIR		Install binaries into this directory
-  --libdir=DIR		Common directory for Ocsigen server's libraries
+  --bindir DIR		Install binaries into this directory
+  --libdir DIR		Common directory for Ocsigen server's libraries
 
-  --sysconfdir=DIR	Create configuration files in this directory
-  --mandir=DIR		Install man pages in this directory
-  --docdir=DIR		Install documentation in this directory
+  --sysconfdir DIR	Create configuration files in this directory
+  --mandir DIR		Install man pages in this directory
+  --docdir DIR		Install documentation in this directory
 
-  --logdir=DIR		Use this directory for Ocsigen's logs
-  --datadir=DIR		The directory for data written by the server
+  --logdir DIR		Use this directory for Ocsigen's logs
+  --datadir DIR		The directory for data written by the server
 
-  --staticpagesdir=DIR	Install default static pages in this directory
-  --uploaddir=DIR	By default, files will be uploaded in this directory
+  --staticpagesdir DIR	Install default static pages in this directory
+  --uploaddir DIR	By default, files will be uploaded in this directory
 
-  --commandpipe=FILE	The name of the named pipe used to command the server
+  --commandpipe FILE	The name of the named pipe used to command the server
 
 Defaults are:
 
