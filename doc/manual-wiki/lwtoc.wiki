@@ -4,4 +4,4 @@ Ocsigen is not using the usual preemptive threads model to handle simultaneaous 
 
 If you want to write an extension for Ocsigen or a Web site with Eliom, you must use this thread model.
 
-See [[wiki(21):|Lwt's documentation]].
+See [[wiki("lwt"):|Lwt's documentation]].
