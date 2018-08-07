@@ -1130,6 +1130,26 @@ let _ =
 
 exception Stop of int * string
 
+(* Copied from deprecated [Lwt_chan]. *)
+let lwt_chan_input_line ic =
+  let rec loop buf =
+    Lwt_io.read_char_opt ic >>= function
+    | None | Some '\n' ->
+      Lwt.return (Buffer.contents buf)
+    | Some char ->
+      Buffer.add_char buf char;
+      loop buf
+  in
+  Lwt_io.read_char_opt ic >>= function
+  | Some '\n' ->
+    Lwt.return ""
+  | Some char ->
+    let buf = Buffer.create 128 in
+    Buffer.add_char buf char;
+    loop buf
+  | None ->
+    Lwt.fail End_of_file
+
 let start_server () =
   let stop n fmt = Printf.ksprintf (fun s -> raise (Stop (n, s))) fmt in
   (** Thread waiting for events on a the listening port *)
@@ -1317,13 +1337,15 @@ let start_server () =
 
       Ocsigen_extensions.end_initialisation ();
 
-      let pipe = Lwt_chan.in_channel_of_descr
-          (Lwt_unix.of_unix_file_descr
-             (Unix.openfile commandpipe
-                [Unix.O_RDWR; Unix.O_NONBLOCK; Unix.O_APPEND] 0o660)) in
+      let pipe =
+        Lwt_io.of_fd ~mode:Lwt_io.input @@
+        Lwt_unix.of_unix_file_descr @@
+        Unix.openfile commandpipe
+          [Unix.O_RDWR; Unix.O_NONBLOCK; Unix.O_APPEND] 0o660
+      in
 
       let rec f () =
-        Lwt_chan.input_line pipe >>= fun s ->
+        lwt_chan_input_line pipe >>= fun s ->
         Lwt_log.ign_notice ~section ("Command received: "^s);
         (Lwt.catch
            (fun () ->

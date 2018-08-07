@@ -307,7 +307,25 @@ let create_process_cgi filename ri post_out cgi_in err_in re doc_root hostname =
       cgi_in
       err_in
 
-
+(* Copied from deprecated [Lwt_chan]. *)
+let lwt_chan_input_line ic =
+  let rec loop buf =
+    Lwt_io.read_char_opt ic >>= function
+    | None | Some '\n' ->
+      Lwt.return (Buffer.contents buf)
+    | Some char ->
+      Buffer.add_char buf char;
+      loop buf
+  in
+  Lwt_io.read_char_opt ic >>= function
+  | Some '\n' ->
+    Lwt.return ""
+  | Some char ->
+    let buf = Buffer.create 128 in
+    Buffer.add_char buf char;
+    loop buf
+  | None ->
+    Lwt.fail End_of_file
 
 (** This function makes it possible to launch a cgi script *)
 
@@ -368,7 +386,7 @@ let recupere_cgi head re doc_root filename ri hostname =
     Lwt_timeout.start timeout;
 
     (* A thread giving POST data to the CGI script: *)
-    let post_in_ch = Lwt_chan.out_channel_of_descr post_in in
+    let post_in_ch = Lwt_io.of_fd ~mode:Lwt_io.output post_in in
     ignore
       (catch
          (fun () ->
@@ -376,7 +394,7 @@ let recupere_cgi head re doc_root filename ri hostname =
              | None -> Lwt_unix.close post_in
              | Some content_post ->
                Ocsigen_http_com.write_stream post_in_ch content_post >>= fun () ->
-               Lwt_chan.flush post_in_ch >>= fun () ->
+               Lwt_io.flush post_in_ch >>= fun () ->
                Lwt_unix.close post_in
             ))
          (*XXX Check possible errors! *)
@@ -391,9 +409,9 @@ let recupere_cgi head re doc_root filename ri hostname =
 
     (* A thread listening the error output of the CGI script
        and writing them in warnings.log *)
-    let err_channel = Lwt_chan.in_channel_of_descr err_out in
+    let err_channel = Lwt_io.of_fd ~mode:Lwt_io.input err_out in
     let rec get_errors () =
-      Lwt_chan.input_line err_channel >>= fun err ->
+      lwt_chan_input_line err_channel >>= fun err ->
       Lwt_log.ign_warning ~section err;
       get_errors ()
     in ignore

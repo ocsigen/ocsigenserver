@@ -3,6 +3,7 @@ include ../../Makefile.config
 PACKAGE  := \
 	bytes \
 	lwt.unix \
+	lwt_log \
 	netstring \
 	netstring-pcre \
 	cryptokit \
