@@ -1029,9 +1029,12 @@ let errmsg = function
   | Ocsigen_extensions.Error_in_config_file msg ->
     (("Fatal - Error in configuration file: "^msg),
      50)
-  | Simplexmlparser.Xml_parser_error s ->
-    (("Fatal - Error in configuration file: "^s),
-     51)
+  | Xml.Error (s, loc) ->
+    let begin_char, end_char = Xml.range loc and line = Xml.line loc in
+    raise (Ocsigen_extensions.Error_in_config_file
+             (Printf.sprintf "%s, line %d, characters %d-%d"
+                (Xml.error_msg s)
+                line begin_char end_char))
   | Ocsigen_loader.Dynlink_error (s, exn) ->
     (("Fatal - While loading "^s^": "^(Printexc.to_string exn)),
      52)

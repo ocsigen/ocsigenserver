@@ -42,7 +42,6 @@ open Ocsigen_lib
 
 open Lwt
 open Ocsigen_extensions
-open Simplexmlparser
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 

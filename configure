@@ -424,6 +424,7 @@ check_library pcre "See: http://ocaml.info/home/ocaml_sources.html"
 check_library cryptokit "See: http://pauillac.inria.fr/~xleroy/software.html#cryptokit"
 
 check_library tyxml "See: http://ocsigen.org/tyxml/"
+check_library xml-light "See: https://github.com/ncannasse/xml-light"
 
 # Check PostgreSQL
 case "$with_pgsql" in

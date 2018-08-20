@@ -1,6 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := tyxml.parser pgocaml lwt lwt_log
+PACKAGE  := xml-light pgocaml lwt lwt_log
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}

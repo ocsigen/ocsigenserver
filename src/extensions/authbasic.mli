@@ -34,7 +34,7 @@
 
 
 val register_basic_authentication_method :
-  (Simplexmlparser.xml -> string -> string -> bool Lwt.t) -> unit
+  (Xml.xml -> string -> string -> bool Lwt.t) -> unit
 (** This function registers an authentication plugin: it adds a new
     parser to the list of available authentication schemes.
 
@@ -55,7 +55,7 @@ val register_basic_authentication_method :
 
 
 val get_basic_authentication_method :
-  Simplexmlparser.xml -> string -> string -> bool Lwt.t
+  Xml.xml -> string -> string -> bool Lwt.t
 (** This function combines all the parsers registered with
     [register_basic_authentication_method]. It might be useful for
     other extensions. Not for the casual user. *)

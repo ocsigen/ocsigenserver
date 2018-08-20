@@ -8,7 +8,8 @@ PKG cryptokit
 PKG netstring
 PKG netstring-pcre
 PKG ipaddr
-PKG tyxml tyxml.parser
+PKG tyxml
+PKG xml-light
 PKG camlzip
 PKG dynlink
 

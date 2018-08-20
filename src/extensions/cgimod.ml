@@ -28,7 +28,6 @@ open Ocsigen_lib
 
 open Lwt
 open Ocsigen_extensions
-open Simplexmlparser
 open Ocsigen_http_frame
 open Ocsigen_http_com
 open Ocsigen_senders
@@ -474,7 +473,7 @@ let get_content str =
 (*****************************************************************************)
 let rec parse_global_config = function
   | [] -> ()
-  | (Element ("cgitimeout", [("value", s)], []))::[] ->
+  | (Xml.Element ("cgitimeout", [("value", s)], []))::[] ->
     cgitimeout := int_of_string s
   | _ -> raise (Error_in_config_file
                   ("Unexpected content inside cgimod config"))
@@ -591,7 +590,7 @@ let gen reg = function
 
 let rec set_env = function
   | [] -> []
-  | (Element("setenv", [("var",vr);("val",vl)], []))::l ->
+  | (Xml.Element("setenv", [("var",vr);("val",vl)], []))::l ->
     if List.mem vr environment
     then (Lwt_log.ign_info_f ~section "Variable no set %s" vr;
           set_env l)
@@ -599,7 +598,7 @@ let rec set_env = function
   | _ :: l -> raise (Error_in_config_file "Bad config tag for <cgi>")
 
 let parse_config _ path _ _ = function
-  | Element ("cgi", atts, l) ->
+  | Xml.Element ("cgi", atts, l) ->
     let good_root r =
       Regexp.quote (string_conform2 r)
     in
