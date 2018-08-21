@@ -282,11 +282,9 @@ let fold_table = fold_step
 
 let iter_block a b = failwith "Ocsipersist.iter_block: not implemented"
 
-
-open Simplexmlparser
 let parse_global_config = function
   | [] -> ()
-  | [Element ("database", attrs, [])] -> let parse_attr = function
+  | [Xml.Element ("database", attrs, [])] -> let parse_attr = function
     | ("host", h) -> host := Some h
     | ("port", p) -> begin
         try port := Some (int_of_string p)

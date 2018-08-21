@@ -20,4 +20,4 @@
 
 
 val parse_condition :
-  Simplexmlparser.xml -> Ocsigen_extensions.request_info -> bool
+  Xml.xml -> Ocsigen_extensions.request_info -> bool

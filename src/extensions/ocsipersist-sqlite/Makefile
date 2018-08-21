@@ -1,8 +1,6 @@
 include ../../../Makefile.config
 
-PACKAGE  := lwt.preemptive  \
-	    tyxml.parser \
-	    sqlite3      \
+PACKAGE  := lwt lwt_log xml-light sqlite3
 
 LIBS     := -I ../../baselib -I ../../http -I ../../server \
 	    ${addprefix -package ,${PACKAGE}}

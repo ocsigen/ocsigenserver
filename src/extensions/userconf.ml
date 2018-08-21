@@ -98,12 +98,15 @@ let subresult new_req user_parse_site conf previous_err req req_state =
 
 
 let conf_to_xml conf =
-  try Simplexmlparser.xmlparser_file conf
+  try [Xml.parse_file conf]
   with
   | Sys_error _ -> raise NoConfFile
-  | Simplexmlparser.Xml_parser_error s ->
-    raise (Ocsigen_extensions.Error_in_config_file s)
-
+  | Xml.Error (s, loc) ->
+    let begin_char, end_char = Xml.range loc and line = Xml.line loc in
+    raise (Ocsigen_extensions.Error_in_config_file
+             (Printf.sprintf "%s, line %d, characters %d-%d"
+                (Xml.error_msg s)
+                line begin_char end_char))
 
 let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
   | Req_found _ ->

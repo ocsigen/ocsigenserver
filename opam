@@ -48,16 +48,17 @@ depends: [
   "base-threads"
   "react"
   "ssl"
-  "lwt" {>= "3.0.0" & < "4.0.0"}
+  "lwt" {>= "3.0.0"}
   "lwt_ssl"
   "lwt_react"
+  "lwt_log"
   "ocamlnet" {>= "4.0.2"}
   "pcre"
   "cryptokit"
   "tyxml" {>= "4.0.0"}
   ("dbm" | "sqlite3" | "pgocaml")
   "ipaddr" {>= "2.1"}
-  "camlp4" # to force building tyxml.parser
+  "xml-light"
 ]
 depopts: "camlzip"
 conflicts: [

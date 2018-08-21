@@ -4,6 +4,7 @@ PACKAGE  := \
 	netstring \
 	netstring-pcre \
 	lwt_ssl \
+	lwt_log \
 	tyxml
 
 LIBS     := -I ../baselib ${addprefix -package ,${PACKAGE}}

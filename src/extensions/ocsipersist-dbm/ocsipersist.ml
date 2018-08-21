@@ -38,26 +38,25 @@ let socketname = "socket"
 (*****************************************************************************)
 (** Internal functions: storage directory *)
 
-open Simplexmlparser
 (** getting the directory from config file *)
 let rec parse_global_config (store, ocsidbm, delayloading as d) = function
   | [] -> d
-  | Element ("delayloading", [("val", ("true" | "1"))], []) :: ll ->
+  | Xml.Element ("delayloading", [("val", ("true" | "1"))], []) :: ll ->
     parse_global_config (store, ocsidbm, true) ll
 
-  | Element ("store", [("dir", s)], []) :: ll ->
+  | Xml.Element ("store", [("dir", s)], []) :: ll ->
     if store = None then
       parse_global_config ((Some s), ocsidbm, delayloading) ll
     else
       Ocsigen_extensions.badconfig "Ocsipersist: Duplicate <store> tag"
 
-  | Element ("ocsidbm", [("name", s)], []) :: ll ->
+  | Xml.Element ("ocsidbm", [("name", s)], []) :: ll ->
     if ocsidbm = None then
       parse_global_config (store, (Some s), delayloading) ll
     else
       Ocsigen_extensions.badconfig "Ocsipersist: Duplicate <ocsidbm> tag"
 
-  | (Element (s,_,_))::ll -> Ocsigen_extensions.badconfig "Bad tag %s" s
+  | (Xml.Element (s,_,_))::ll -> Ocsigen_extensions.badconfig "Bad tag %s" s
 
   | _ -> Ocsigen_extensions.badconfig
            "Unexpected content inside Ocsipersist config"
@@ -151,12 +150,12 @@ let init_fun config =
        Lwt_log.ign_warning ~section "Initializing ...");
   let indescr = get_indescr 2 in
   if delay_loading then (
-    inch  := (indescr >>= fun r -> return (Lwt_chan.in_channel_of_descr r));
-    outch := (indescr >>= fun r -> return (Lwt_chan.out_channel_of_descr r));
+    inch  := Lwt.map (Lwt_io.of_fd ~mode:Lwt_io.input) indescr;
+    outch := Lwt.map (Lwt_io.of_fd ~mode:Lwt_io.output) indescr;
   ) else (
     let r = Lwt_main.run indescr in
-    inch  := return (Lwt_chan.in_channel_of_descr r);
-    outch := return (Lwt_chan.out_channel_of_descr r);
+    inch  := Lwt.return (Lwt_io.of_fd ~mode:Lwt_io.input r);
+    outch := Lwt.return (Lwt_io.of_fd ~mode:Lwt_io.output r);
     Lwt_log.ign_warning ~section "...Initialization complete";
   )
 
@@ -171,9 +170,9 @@ let send =
        !inch >>= fun inch ->
        !outch >>= fun outch ->
        previous :=
-         (Lwt_chan.output_value outch v >>= fun () ->
-          Lwt_chan.flush outch >>= fun () ->
-          Lwt_chan.input_value inch);
+         (Lwt_io.write_value outch v >>= fun () ->
+          Lwt_io.flush outch >>= fun () ->
+          Lwt_io.read_value inch);
        !previous)
 
 let db_get (store, name) =

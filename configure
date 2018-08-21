@@ -81,7 +81,6 @@ set_defaults () {
     with_pgsql=1
     with_camlzip=1
     with_dbm=1
-    with_preempt=1
     prefix="/usr/local"
     bindir=""
     logdir=""
@@ -108,7 +107,7 @@ full_pwd=`pwd`
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
 eoptions="debug annot natdynlink"
-woptions="pgsql sqlite dbm camlzip preempt"
+woptions="pgsql sqlite dbm camlzip"
 
 print_options () {
 	for opt in $eoptions; do
@@ -412,7 +411,7 @@ check_library lwt "See: http://ocsigen.org/lwt"
 check_library lwt.unix  "Missing support for 'unix' in lwt."
 check_library lwt_react   "See: http://ocsigen.org/lwt"
 check_library lwt_ssl   "See: http://ocsigen.org/lwt"
-check_library lwt.preemptive "Missing support for 'preemptive' in lwt."
+check_library lwt_log   "See: http://ocsigen.org/lwt"
 
 check_library netstring \
     "See ocamlnet: http://projects.camlcity.org/projects/ocamlnet.html"
@@ -425,6 +424,7 @@ check_library pcre "See: http://ocaml.info/home/ocaml_sources.html"
 check_library cryptokit "See: http://pauillac.inria.fr/~xleroy/software.html#cryptokit"
 
 check_library tyxml "See: http://ocsigen.org/tyxml/"
+check_library xml-light "See: https://github.com/ncannasse/xml-light"
 
 # Check PostgreSQL
 case "$with_pgsql" in
@@ -460,22 +460,6 @@ if [ "$with_camlzip" -gt 0 ]; then
     else
 	with_camlzip=0
     fi
-fi
-
-# Check Lwt.preemptive
-if [ "$with_preempt" -gt 0 ]; then
-    if test_library lwt.preemptive; then
-	echo -n
-    elif [ "$with_preempt" -gt 1 ]; then
-	fail_library lwt.preemptive "Missing support for 'preemptive' in lwt."
-    else
-	with_preempt=0
-    fi
-fi
-
-if [ "$with_sqlite" -eq 1 ] && [ "$with_preempt" -eq -1 ]; then
-    echo "preemptive threads are needed by sqlite, enable it with -with-preempt"
-    exit 1
 fi
 
 # Check rlwrap or ledit
@@ -532,11 +516,6 @@ if [ $with_camlzip -gt 0 ] ; then
 else
 	with_camlzip="NO"
 fi
-if [ $with_preempt -gt 0 ] ; then
-	with_preempt="YES"
-else
-	with_preempt="NO"
-fi
 
 ocamlinclude=`ocamlfind printconf stdlib`
 
@@ -587,9 +566,6 @@ OCSIPERSISTPGSQL:=$with_pgsql
 
 # Do you want ocsipersist with dbm? YES/NO
 OCSIPERSISTDBM:=$with_dbm
-
-# Do you want preemptive threads ? YES/NO
-PREEMPTIVE:=$with_preempt
 
 # Do you want debugging information (-g) ? YES/NO
 DEBUG:=$enable_debug

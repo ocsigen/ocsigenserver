@@ -1,6 +1,6 @@
 BYTEDBG :=
 OPTDBG  :=
-THREAD  :=
+THREAD  := -thread
 
 ifeq "$(DEBUG)" "YES"
 BYTEDBG += -g
@@ -17,29 +17,22 @@ BYTEDBG := -p ${BYTEDBG}
 OPTDBG  += -p
 endif
 
-ifeq "$(PREEMPTIVE)" "YES"
-  THREAD += -thread
-endif
-
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
 ## but also to generate src/baselib/ocsigen_config.ml and src/files/META
-
-ifeq "$(PREEMPTIVE)" "YES"
-LWT_PREEMPTIVE_PACKAGE:=lwt.preemptive
-endif
 
 BASE_PACKAGE := lwt ipaddr bytes
 
 SERVER_PACKAGE := lwt_ssl           \
-		  bytes			\
-	          ${LWT_PREEMPTIVE_PACKAGE} \
+		  bytes             \
+	          lwt.unix          \
+                  lwt_log           \
                   ipaddr            \
 	          netstring         \
 	          netstring-pcre    \
                   findlib           \
 	          cryptokit         \
 		  tyxml             \
-	          tyxml.parser      \
+	          xml-light         \
                   dynlink           \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
