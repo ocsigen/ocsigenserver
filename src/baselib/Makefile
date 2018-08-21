@@ -58,12 +58,6 @@ else
   NATIVECODE_RUNTIME_DETECT=false
 endif
 
-ifeq "$(PREEMPTIVE)" "YES"
-  PREEMTIMPLEM=Lwt_preemptive
-else
-  PREEMTIMPLEM=Fake_preempt
-endif
-
 VERSION := $(shell head -n 1 ../../VERSION)
 
 ocsigen_config.ml: ocsigen_config.ml.in ../../Makefile.config ../../Makefile.options ../../VERSION
@@ -81,7 +75,6 @@ ocsigen_config.ml: ocsigen_config.ml.in ../../Makefile.config ../../Makefile.opt
 	| sed s%_PROJECTNAME_%$(PROJECTNAME)%g \
 	| sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	| sed s%_CONFIGDIR_%$(CONFIGDIR)% \
-	| sed s%_PREEMTIMPLEM_%$(PREEMTIMPLEM)% \
 	| sed s%_ISNATIVE_%$(NATIVECODE_RUNTIME_DETECT)%g \
 	| sed "s%_DEPS_%$(INITPACKAGE)%g" \
 	> ocsigen_config.ml

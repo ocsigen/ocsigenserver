@@ -107,7 +107,7 @@ full_pwd=`pwd`
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
 eoptions="debug annot natdynlink"
-woptions="pgsql sqlite dbm camlzip preempt"
+woptions="pgsql sqlite dbm camlzip"
 
 print_options () {
 	for opt in $eoptions; do
