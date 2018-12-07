@@ -161,24 +161,6 @@ let exec db query params =
   let params = List.map (fun x -> Some (pack x)) params in
   PGOCaml.execute db ~name ~params ()
 
-let cursor db query params f =
-  prepare db query >>= fun name ->
-  let params = List.map (fun x -> Some (pack x)) params in
-  let error = ref None in
-  begin PGOCaml.cursor db ~name ~params @@ fun row ->
-    Lwt.catch
-      (fun () -> let key, value = key_value_of_row row in f key value)
-      (fun exn ->
-         Lwt_log.ign_error
-           ~exn ~section "exception while evaluating cursor argument";
-         error := Some exn;
-         Lwt.return ()
-      )
-  end >>= fun () ->
-  match !error with
-  | None -> Lwt.return ()
-  | Some e -> Lwt.fail e
-
 let (@.) f g = fun x -> f (g x) (* function composition *)
 
 let create_table db table =
@@ -264,9 +246,32 @@ let length table = use_pool @@ fun db ->
   let query = sprintf "SELECT count(*) FROM %s " table in
   Lwt.map one_value (exec db query [])
 
-let iter_step f table = use_pool @@ fun db ->
-  let query = sprintf "SELECT * FROM %s " table in
-  cursor db query [] f
+let rec list_last l =
+  match l with
+  | [x]    -> x
+  | _ :: r -> list_last r
+  | []     -> assert false
+
+let rec iter_rec f table last =
+  let query =
+    match last with
+    | None ->
+      sprintf "SELECT * FROM %s ORDER BY key LIMIT 1000" table
+    | Some last ->
+      sprintf "SELECT * FROM %s WHERE key > %s ORDER BY key LIMIT 1000"
+        table last
+  in
+  (use_pool @@ fun db -> exec db query []) >>= fun l ->
+  Lwt_list.iter_s
+    (fun row -> let key, value = key_value_of_row row in f key value) l
+  >>= fun () ->
+  if l = [] then
+    Lwt.return_unit
+  else
+    let last, _ = key_value_of_row (list_last l) in
+    iter_rec f table (Some last)
+
+let iter_step f table = iter_rec f table None
 
 let iter_table = iter_step
 
