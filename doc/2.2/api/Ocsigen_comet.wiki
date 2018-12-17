@@ -1,0 +1,99 @@
+=Module <<a_api_type | module Ocsigen_comet >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_comet>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_comet >><<span class="ocsforge_color_keyword"|end>>>>~Ocsigen~_comet server extension ~: provides low~-level server to client communication
+    scheme~.
+
+----
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="Channels" | module Ocsigen_comet.Channels >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_comet.Channels >><<span class="ocsforge_color_keyword"|end>>>><<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="Security" | module Ocsigen_comet.Security >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_comet.Security >><<span class="ocsforge_color_keyword"|end>>>>
+~Usage~:
+
+
+  ~On the server side ~:
+    ~1~) create needed channels
+    ~2~) transmit their identifiers to clients
+    ~3~) write when appropriate ~(using the outcome mechanism if necessary
+
+
+  ~On the client ~:
+    ~1~) make a ~Xml~Http~Request ~(~X~H~R~) with a list of channel identifiers~.
+    ~2~) wait for the reply
+    ~3~) ~G~O~T~O ~1
+
+
+  ~Encoding for client~-to~-server requests~:
+    ~* ~The content type header should be set to <<span class="odocwiki_inlinecode"|application~/x~-ocsigen~-comet>>
+      ~(without quotes~)
+    ~* ~A ~P~O~S~T parameter is required~. ~Its name should be <<span class="odocwiki_inlinecode"|registration>> and its
+      content should be a list of channel identifiers separated by <<span class="odocwiki_inlinecode"|~\n>>
+      ~(newline~) characters~.
+    ~* ~Name and content of the said ~P~O~S~T parameter should be encoded according to
+      the <<span class="odocwiki_inlinecode"|escape>> ~Java~Script primitive
+
+
+  ~Encoding for server~-to~-client answer~:
+    ~* ~The server answer is either empty ~(when no channel was written upon before
+      timeout~) or a list of pairs of channel identifiers and message content~.
+      ~The pairs are separated by <<span class="odocwiki_inlinecode"|~:>> ~(colon~) while the list elements are
+      separated by <<span class="odocwiki_inlinecode"|~\n>> ~(newline~) characters~.
+    ~* ~In the list~, channels that no longer exists on the server side are marked
+      as pairs of channel identifier and the special string <<span class="odocwiki_inlinecode"|~E~N~D~E~D~_~C~H~A~N~N~E~L>>~.
+      ~When receiving such a message~, the client should lose hope of ever
+      connecting to that particular channel ever again~.
+
+~Conf~-file options~:
+
+
+    ~One can use the configuration file to tweak ~Ocsigen~_comet settings~. ~The supported
+    options are~:
+
+
+    ~* max~_virtual~_channels~:
+      ~* default~: <<span class="odocwiki_inlinecode"|~None>>
+      ~* syntax~: "" is for <<span class="odocwiki_inlinecode"|~None>>~, "i" is for <<span class="odocwiki_inlinecode"|~Some ~(int~_of~_string i~)>>
+      ~* <<span class="odocwiki_inlinecode"|max~_virtual~_channels>> is an upper limit to the number of active
+        channels~. ~It does not limit the number of connections but the number of
+        values of type <<span class="odocwiki_inlinecode"|~Ocsigen~_comet~.~Channels~.t>> that can be used simultaneously~. ~If
+        one calls <<span class="odocwiki_inlinecode"|~Ocsigen~_comet~.~Channels~.create>> while the number of channels is
+        already maxed out~, the exception
+        <<span class="odocwiki_inlinecode"|~Ocsigen~_comet~.~Channels~.~Too~_many~_virtual~_channels>> is raised~.
+
+~Commands~:
+
+
+    ~Comet provides commands ~(to be piped into ~Ocsigen~'s command pipe~)~. ~The
+    complete list of commands is described here~. ~Don~'t forget to use the ~Comet
+    prefix~: each command is to be prefixed by "comet~:" ~(without quotes~)~.
+
+
+    ~* deactivate~:
+      ~* deactivate is a command that stops all ~Comet activity~. ~It is equivalent
+        to a call to <<span class="odocwiki_inlinecode"|~Ocsigen~_comet~.~Security~.deactivate>>~.
+
+
+    ~* activate~:
+      ~* activate is the dual command to deactivate~. ~It resumes ~Comet activity
+        ~(or do nothing is ~Comet is already activated~) with exactly the same
+        effect as a call to <<span class="odocwiki_inlinecode"|~Ocsigen~_comet~.~Security~.activate>> would have~.
+
+
+    ~* set~_timeout~:
+      ~* parameter~: f ~(float~)
+      ~* optional parameter~: s ~("~K~I~L~L"~)
+      ~* set~_timeout allows one to dynamically change the value of ~Comet
+        connections timeout to <<span class="odocwiki_inlinecode"|f>>~. ~Previously activated connections are closed
+        if the second optional parameter is used~. ~If not~, connections are
+        carried out with their old timeout unchanged~.
+
+~Note to ~Eliom users~:
+    ~Although it is possible to use ~Ocsigen~_comet as an extension to the ~Ocsigen ~Server~,
+    it is recommended to use the higher level ~Eliom modules~, namely ~Eliom~_comet
+    ~(for server side~) and ~Eliom~_client~_comet ~(for client side~)~. ~The former
+    provides typed channels ~(with automatic marshaling~) and channel wrapping~,
+    the later automates decoding and demarshaling and manages channel
+    registration and deregistration~.
+
+
+    ~The low level ~Ocisgen server extension can however be used with classic
+    ~Javascript clients ~(whereas the high level ~Eliom module requires ~Ocaml
+    compatible unmarshalling which may be difficult to find in a non
+    js~_of~_ocaml~/~O~'browser based client~)~. ~It may also be used to add your own
+    high level wrapper with a custom communication protocol~.

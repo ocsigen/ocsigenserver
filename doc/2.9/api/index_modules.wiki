@@ -1,0 +1,82 @@
+=Index of modules=
+
+|@@ @style="tet-align: left;"@@\\A|
+|@@class="odocwiki_index"@ @@<<a_api text="Authbasic"| module Authbasic >> |<<div class="odocwiki_info"|~Module <<span class="odocwiki_inlinecode"|~Authbasic>>~: ~Basic ~H~T~T~P ~Authentication~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\C|
+|@@class="odocwiki_index"@ @@<<a_api text="Clist"| module Ocsigen_lib_base.Clist >> ~[<<a_api | module Ocsigen_lib_base >>~]|<<div class="odocwiki_info"|~Circular lists
+>>
+|
+|@@ @style="tet-align: left;"@@\\D|
+|@@class="odocwiki_index"@ @@<<a_api text="Dlist"| module Ocsigen_cache.Dlist >> ~[<<a_api | module Ocsigen_cache >>~]|<<div class="odocwiki_info"|~Doubly~-linked lists with maximum number of entries~,
+    and ~(possibly~) limited lifespan for entries~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\H|
+|@@class="odocwiki_index"@ @@<<a_api text="Http_headers"| module Http_headers >> |<<div class="odocwiki_info"|returns an empty set of ~H~T~T~P headers
+>>
+|
+|@@ @style="tet-align: left;"@@\\I|
+|@@class="odocwiki_index"@ @@<<a_api text="Int"| module Ocsigen_lib_base.Int >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@ @style="tet-align: left;"@@\\L|
+|@@class="odocwiki_index"@ @@<<a_api text="List"| module Ocsigen_lib_base.List >> ~[<<a_api | module Ocsigen_lib_base >>~]|<<div class="odocwiki_info"|~Improvement of module ~List
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Lwt"| module Ocsigen_lib_base.Option.Lwt >> ~[<<a_api | module Ocsigen_lib_base.Option >>~]||
+|@@ @style="tet-align: left;"@@\\M|
+|@@class="odocwiki_index"@ @@<<a_api text="Make"| module Ocsigen_cache.Make >> ~[<<a_api | module Ocsigen_cache >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Map"| module Ocsigen_lib_base.String_base.Map >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@ @style="tet-align: left;"@@\\N|
+|@@class="odocwiki_index"@ @@<<a_api text="NameHtbl"| module Http_headers.NameHtbl >> ~[<<a_api | module Http_headers >>~]||
+|@@ @style="tet-align: left;"@@\\O|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_cache"| module Ocsigen_cache >> |<<div class="odocwiki_info"|~Cache~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_charset_mime"| module Ocsigen_charset_mime >> |<<div class="odocwiki_info"|~Charset
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_getcommandline"| module Ocsigen_getcommandline >> |<<div class="odocwiki_info"|~Contains the command line that will be parsed by the server
+    when ~Ocsigen~_commandline is linked
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_lib_base"| module Ocsigen_lib_base >> |<<div class="odocwiki_info"|~This module just contains only extensions of the standard library and very
+    basic ~Ocsigen values and exceptions~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_loader"| module Ocsigen_loader >> |<<div class="odocwiki_info"|~Module <<span class="odocwiki_inlinecode"|~Ocsigen~_loader>>~: ~Dynamic loading for ~Ocsigen~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_messages"| module Ocsigen_messages >> |<<div class="odocwiki_info"|~Writing messages in the logs
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_server"| module Ocsigen_server >> |<<div class="odocwiki_info"|~Reload the configuration of the server~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_stream"| module Ocsigen_stream >> |<<div class="odocwiki_info"|~Streams are a means to read data block by block
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsipersist"| module Ocsipersist >> |<<div class="odocwiki_info"|~Persistent data on hard disk~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Option"| module Ocsigen_lib_base.Option >> ~[<<a_api | module Ocsigen_lib_base >>~]|<<div class="odocwiki_info"|~Module ~Option to compute type <<span class="odocwiki_inlinecode"|~'a option>>
+>>
+|
+|@@ @style="tet-align: left;"@@\\P|
+|@@class="odocwiki_index"@ @@<<a_api text="Polytables"| module Polytables >> |<<div class="odocwiki_info"|~Polymorphic tables ~(using ~Map~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Printexc"| module Ocsigen_lib_base.Printexc >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@ @style="tet-align: left;"@@\\S|
+|@@class="odocwiki_index"@ @@<<a_api text="Set"| module Ocsigen_lib_base.String_base.Set >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="StringStream"| module Ocsigen_stream.StringStream >> ~[<<a_api | module Ocsigen_stream >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="String_base"| module Ocsigen_lib_base.String_base >> ~[<<a_api | module Ocsigen_lib_base >>~]|<<div class="odocwiki_info"|~Improvement of module ~String
+>>
+|
+|@@ @style="tet-align: left;"@@\\T|
+|@@class="odocwiki_index"@ @@<<a_api text="Table"| module Ocsigen_lib_base.String_base.Table >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Table"| module Ocsigen_lib_base.Int.Table >> ~[<<a_api | module Ocsigen_lib_base.Int >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Tuple3"| module Ocsigen_lib_base.Tuple3 >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@ @style="tet-align: left;"@@\\U|
+|@@class="odocwiki_index"@ @@<<a_api text="Url_base"| module Ocsigen_lib_base.Url_base >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+\\

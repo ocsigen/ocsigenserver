@@ -1,0 +1,29 @@
+<<code language="ocaml" | sig
+  type 'a t = 'a option
+  val map :
+    ('a -> 'b) ->
+    'a Ocsigen_lib_base.Option.t -> 'b Ocsigen_lib_base.Option.t
+  val get : (unit -> 'a) -> 'a Ocsigen_lib_base.Option.t -> 'a
+  val get' : 'a -> 'a Ocsigen_lib_base.Option.t -> 'a
+  val iter : ('a -> unit) -> 'a Ocsigen_lib_base.Option.t -> unit
+  val return : 'a -> 'a Ocsigen_lib_base.Option.t
+  val bind :
+    'a Ocsigen_lib_base.Option.t ->
+    ('a -> 'b Ocsigen_lib_base.Option.t) -> 'b Ocsigen_lib_base.Option.t
+  val to_list : 'a Ocsigen_lib_base.Option.t -> 'a list
+  module Lwt :
+    sig
+      val map :
+        ('a -> 'b Lwt.t) ->
+        'a Ocsigen_lib_base.Option.t -> 'b Ocsigen_lib_base.Option.t Lwt.t
+      val get :
+        (unit -> 'a Lwt.t) -> 'a Ocsigen_lib_base.Option.t -> 'a Lwt.t
+      val get' : 'a Lwt.t -> 'a Ocsigen_lib_base.Option.t -> 'a Lwt.t
+      val iter :
+        ('a -> unit Lwt.t) -> 'a Ocsigen_lib_base.Option.t -> unit Lwt.t
+      val bind :
+        'a Ocsigen_lib_base.Option.t ->
+        ('a -> 'b Ocsigen_lib_base.Option.t Lwt.t) ->
+        'b Ocsigen_lib_base.Option.t Lwt.t
+    end
+end >>

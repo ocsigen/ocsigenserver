@@ -1,0 +1,91 @@
+==
+
+=@@id="1_OcsigenserverAPIreference"@@~Ocsigen server ~- ~A~P~I reference=
+
+
+
+
+==@@id="2_Persistentdatawritinginthelogsconfigurationfileextensionpolymorphictables"@@~Persistent data~, writing in the logs~, configuration file extension~, polymorphic tables==
+
+
+|<<a_api | module Ocsigen_lib >>|<<div class="odocwiki_info"|~This module contains some auxiliaries for the ~Ocsigenserver~.
+>>
+|
+|<<a_api | module Ocsigen_messages >>|<<div class="odocwiki_info"|~Writing messages in the logs
+>>
+|
+|<<a_api | module Ocsigen_parseconfig >>|<<div class="odocwiki_info"|~Config file parsing
+>>
+|
+|<<a_api | module Polytables >>|<<div class="odocwiki_info"|~Polymorphic tables ~(using ~Map~)
+>>
+|
+|<<a_api | module Ocsigen_cache >>|<<div class="odocwiki_info"|~Cache~.
+>>
+|
+|<<a_api | module Ocsipersist >>|<<div class="odocwiki_info"|~Persistent data on hard disk~.
+>>
+|
+|<<a_api | module Ocsigen_config >>|<<div class="odocwiki_info"|~/~*
+>>
+|
+
+
+
+
+
+==@@id="2_ExtendingOcsigen"@@~Extending ~Ocsigen==
+
+
+|<<a_api | module Ocsigen_extensions >>|<<div class="odocwiki_info"|~Writing extensions for ~Ocsigen
+>>
+|
+|<<a_api | module Ocsigen_local_files >>|<<div class="odocwiki_info"|~The requested file does not exists
+>>
+|
+|<<a_api | module Ocsigen_headers >>|<<div class="odocwiki_info"|~Getting informations from ~H~T~T~P header~.
+>>
+|
+|<<a_api | module Ocsigen_senders >>|<<div class="odocwiki_info"|~Functions to create results for various kinds of documents
+>>
+|
+|<<a_api | module Ocsigen_http_frame >>|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|compute~_new~_ri~_cookies now path ri~_cookies cookies~_to~_set>>
+   adds the cookies from <<span class="odocwiki_inlinecode"|cookies~_to~_set>>
+   to <<span class="odocwiki_inlinecode"|ri~_cookies>>~, as if the cookies
+   had been send to the browser and the browser
+   was doing a new request to the url <<span class="odocwiki_inlinecode"|path>>~.
+>>
+|
+|<<a_api | module Ocsigen_http_client >>|<<div class="odocwiki_info"|~Using ~Ocsigen as a ~H~T~T~P client
+>>
+|
+|<<a_api | module Ocsigen_http_com >>|<<div class="odocwiki_info"|~Sending and receiving ~H~T~T~P frames
+>>
+|
+|<<a_api | module Ocsigen_stream >>|<<div class="odocwiki_info"|~Streams are a means to read data block by block
+>>
+|
+|<<a_api | module Ocsigen_comet >>|<<div class="odocwiki_info"|~Ocsigen~_comet server extension ~: provides low~-level server to client communication
+    scheme~.
+>>
+|
+|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Module <<span class="odocwiki_inlinecode"|~Authbasic>>~: ~Basic ~H~T~T~P ~Authentication~.
+>>
+|
+
+
+
+
+
+==@@id="2_Indexes"@@~Indexes==
+
+
+
+* <<a_api text="Index of types" | index types >>
+* <<a_api text="Index of exceptions" | index exceptions >>
+* <<a_api text="Index of values" | index values >>
+* <<a_api text="Index of class methods" | index methods >>
+* <<a_api text="Index of classes" | index classes >>
+* <<a_api text="Index of modules" | index modules >>
+* <<a_api text="Index of module types" | index module types >>
+

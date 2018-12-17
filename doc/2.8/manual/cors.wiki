@@ -1,0 +1,69 @@
+=Cross-Origin Resource Sharing=
+
+= The CORS extension =
+
+This extension is used to allow other servers to serve pages
+requesting data on that one using XmlHttpRequest. It adds headers to
+the server response and handle preflight OPTIONS requests to indicate
+if some client side code has the right to access resources.
+
+See the [[http://www.w3.org/TR/cors/|CORS specifications]] for more
+informations.
+
+In order to use it, you must first add the following line to your
+{{{ocsigenserver.conf}}}:
+{{{
+<extension findlib-package="ocsigenserver.ext.cors"/>
+}}}
+
+== config ==
+
+The extension is activated by the {{{<cors/>}}} tag.
+
+The extension must be used after the extension serving the content (like eliom or staticmod) since it adds headers to already answered requests.
+
+The attributes of the cors tag are:
+
+* {{{max_age}}}: this is a integer telling the browser how long the
+  preflight information are valid: it prevents doing the OPTIONS
+  requests. This option adds the {{{Access-Control-Max-Age}}} header.
+
+* {{{credentials}}}: Adds the {{{Access-Control-Allow-Credentials}}}
+  header to the preflight request.
+
+* {{{exposed_headers}}}: This is a comma separated list of header
+  names. This is the list of user defined headers accessible from the
+  client. it Adds the {{{Access-Control-Expose-Headers}}} header.
+
+* {{{methods}}}: This is a comma separated list of method names. If
+  there is a requested method header in the preflight request, it adds
+  the {{{Access-Control-Allow-Methods}}} header if it match, otherwise
+  there is no cors header added.
+
+Note that the extension should be used with <<a_manual chapter="accesscontrol"|accesscontrol>> to limit the application having access to the resources. This is done by checking the "origin" header.
+
+== Examples ==
+
+* minimal configuration allowing all requests with no credentials.
+{{{
+<cors/>
+}}}
+
+* A configuration allowing access to an eliom application at path "eliom_site", from localhost:8081
+{{{
+<if>
+  <and>
+    <header name="origin" regexp="http://localhost:8081"/>
+    <path regexp="eliom_site" />
+  </and>
+  <then>
+    <cors max_age="86400"
+          credentials="true"
+          methods="POST,GET,HEAD"
+          exposed_headers="
+            x-eliom-application,
+            x-eliom-location,
+            x-eliom-set-process-cookies"/>
+  </then>
+</if>
+}}}

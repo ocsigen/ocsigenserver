@@ -1,0 +1,10 @@
+<<code language="ocaml" | sig
+  type out = string Ocsigen_stream.t
+  type m
+  val make : Ocsigen_stream.StringStream.m -> Ocsigen_stream.StringStream.out
+  val empty : Ocsigen_stream.StringStream.m
+  val put : string -> Ocsigen_stream.StringStream.m
+  val concat :
+    Ocsigen_stream.StringStream.m ->
+    Ocsigen_stream.StringStream.m -> Ocsigen_stream.StringStream.m
+end >>
