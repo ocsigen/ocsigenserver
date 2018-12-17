@@ -13,7 +13,7 @@ jobs:
   include:
     - stage: deploy html_of_wiki
       install: true
-      script: ./howdocgen
+      script: ./.howdocgen
       deploy:
         provider: pages
         keep-history: true
