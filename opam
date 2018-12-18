@@ -1,12 +1,14 @@
-opam-version: "1.2"
+opam-version: "2.0"
 name: "ocsigenserver"
-version: "dev"
+version: "2.10"
 maintainer: "dev@ocsigen.org"
+synopsis: "A full-featured and extensible Web server."
+description: "Ocsigen Server implements most features of the HTTP protocol, and has a very powerful extension mechanism that makes it very easy to plug your own OCaml modules for generating pages. Many extensions are already implemented, like a reverse proxy, content compression, access control, authentication, etc."
 authors: "dev@ocsigen.org"
 homepage: "http://ocsigen.org/ocsigenserver/"
 bug-reports: "https://github.com/ocsigen/ocsigenserver/issues/"
 license: "LGPL-2.1 with OCaml linking exception"
-dev-repo: "https://github.com/ocsigen/ocsigenserver.git"
+dev-repo: "git+https://github.com/ocsigen/ocsigenserver.git"
 build: [
   [
     "sh"
@@ -43,6 +45,7 @@ remove: [
   ["rm" "-f" "%{man}%/man1/ocsigenserver.1"]
 ]
 depends: [
+  "ocaml" {>= "4.06.1"}
   "ocamlfind"
   "base-unix"
   "base-threads"
@@ -56,7 +59,7 @@ depends: [
   "pcre"
   "cryptokit"
   "tyxml" {>= "4.0.0"}
-  ("dbm" | "sqlite3" | "pgocaml")
+  "dbm" | "sqlite3" | "pgocaml"
   "ipaddr" {>= "2.1"}
   "xml-light"
 ]
@@ -65,3 +68,4 @@ conflicts: [
   "camlzip" {< "1.04"}
   "pgocaml" {< "2.2"}
 ]
+flags: light-uninstall
