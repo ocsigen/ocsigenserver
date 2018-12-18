@@ -45,7 +45,7 @@ remove: [
   ["rm" "-f" "%{man}%/man1/ocsigenserver.1"]
 ]
 depends: [
-  "ocaml"
+  "ocaml" {>= "4.06.1"}
   "ocamlfind"
   "base-unix"
   "base-threads"
