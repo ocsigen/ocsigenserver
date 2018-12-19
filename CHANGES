@@ -1,3 +1,7 @@
+==== 2.11.0 (2018-12-19) ====
+
+ * Ocsipersist-pgsql: no longer hold a database connection for a long time
+
 ==== 2.10 (2018-12-18) ====
 
  * Compatibility with OCaml 4.07
