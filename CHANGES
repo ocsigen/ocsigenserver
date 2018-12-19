@@ -1,3 +1,10 @@
+==== 2.10 (2018-12-18) ====
+
+ * Compatibility with OCaml 4.07
+ * Compatibility with Lwt 4.x
+ * Replace tyxml.parser with xml-light
+ * Gracefully respond to invalid command line options.
+
 ==== 2.9.0 (2018-02-01) ====
 
  * Compatibility with OCaml 4.06
