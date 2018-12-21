@@ -9,7 +9,7 @@ The easier way to install Ocsigenserver is to use the installation
 tool from your distribution. Ocsigenserver is available for example in
 Debian, Gentoo, FreeBSD... If your distribution is not shipping any
 package we recommend to use Godi to install Ocsigen and all its
-dependencies (including OCaml) or to use the [[wiki(2):install|Ocsigen
+dependencies (including OCaml) or to use the [[href:/|Ocsigen
 bunble]]. It is known to work on Linux, MacOS, FreeBSD, Solaris (but
 has not been tested on Windows).
 
