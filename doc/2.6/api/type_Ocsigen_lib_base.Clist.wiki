@@ -1,0 +1,14 @@
+<<code language="ocaml" | sig
+  type 'a t
+  type 'a node
+  val make : 'a -> 'a Ocsigen_lib_base.Clist.node
+  val create : unit -> 'a Ocsigen_lib_base.Clist.t
+  val insert :
+    'a Ocsigen_lib_base.Clist.t -> 'a Ocsigen_lib_base.Clist.node -> unit
+  val remove : 'a Ocsigen_lib_base.Clist.node -> unit
+  val value : 'a Ocsigen_lib_base.Clist.node -> 'a
+  val in_list : 'a Ocsigen_lib_base.Clist.node -> bool
+  val is_empty : 'a Ocsigen_lib_base.Clist.t -> bool
+  val iter : ('a -> unit) -> 'a Ocsigen_lib_base.Clist.t -> unit
+  val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b Ocsigen_lib_base.Clist.t -> 'a
+end >>

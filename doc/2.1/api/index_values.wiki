@@ -1,0 +1,812 @@
+=Index of values=
+
+|@@ @style="tet-align: left;"@@\\|
+|@@class="odocwiki_index"@ @@<<a_api text="(!!)"| value Ocsigen_lib_base.(!!) >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="(>>=)"| value Ocsigen_lib_base.(>>=) >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="(>|=)"| value Ocsigen_lib_base.(>|=) >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@ @style="tet-align: left;"@@\\A|
+|@@class="odocwiki_index"@ @@<<a_api text="abort"| value Ocsigen_http_com.abort >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="accept"| value Http_headers.accept >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="accept_charset"| value Http_headers.accept_charset >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="accept_encoding"| value Http_headers.accept_encoding >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="accept_language"| value Http_headers.accept_language >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="accept_ranges"| value Http_headers.accept_ranges >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_allow_credentials"| value Http_headers.access_control_allow_credentials >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_allow_headers"| value Http_headers.access_control_allow_headers >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_allow_methods"| value Http_headers.access_control_allow_methods >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_allow_origin"| value Http_headers.access_control_allow_origin >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_expose_headers"| value Http_headers.access_control_expose_headers >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_max_age"| value Http_headers.access_control_max_age >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_request_headers"| value Http_headers.access_control_request_headers >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="access_control_request_method"| value Http_headers.access_control_request_method >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="accesslog"| value Ocsigen_messages.accesslog >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Write a message in access~.log
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="activate"| value Ocsigen_comet.Security.activate >> ~[<<a_api | module Ocsigen_comet.Security >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|activate ~(~)>> starts serving ~Comet requests~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="activated"| value Ocsigen_comet.Security.activated >> ~[<<a_api | module Ocsigen_comet.Security >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|activated ~(~)>> reflects the activation state of the ~Comet
+      module~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="add"| value Ocsipersist.add >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|add table key value>> associates <<span class="odocwiki_inlinecode"|value>> to <<span class="odocwiki_inlinecode"|key>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="add"| value Http_headers.add >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|add name s h>> adds the header <<span class="odocwiki_inlinecode"|name~: s>> to <<span class="odocwiki_inlinecode"|h>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="add"| value Ocsigen_cache.Dlist.add >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|~Adds an element to the list~, 
+      and possibly returns the element that has been removed if the maximum
+      size was exceeded~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="add_cookie"| value Ocsigen_cookies.add_cookie >> ~[<<a_api | module Ocsigen_cookies >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|add~_cookie path c v cookie~_table>> 
+    adds the cookie <<span class="odocwiki_inlinecode"|c>> to the table <<span class="odocwiki_inlinecode"|cookie~_table>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="add_cookies"| value Ocsigen_cookies.add_cookies >> ~[<<a_api | module Ocsigen_cookies >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|add~_cookies newcookies oldcookies>> adds the cookies from <<span class="odocwiki_inlinecode"|newcookies>>
+   to <<span class="odocwiki_inlinecode"|oldcookies>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="add_end_slash_if_missing"| value Ocsigen_lib_base.Url_base.add_end_slash_if_missing >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="add_finalizer"| value Ocsigen_stream.add_finalizer >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Add a finalizer function
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="add_headers"| value Ocsigen_http_frame.Http_header.add_headers >> ~[<<a_api | module Ocsigen_http_frame.Http_header >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="add_ocamlpath"| value Ocsigen_loader.add_ocamlpath >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|~Adds a path to the ~Findlib library search path~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="advert"| value Ocsigen_lib_base.advert >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="assoc_remove"| value Ocsigen_lib_base.List.assoc_remove >> ~[<<a_api | module Ocsigen_lib_base.List >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="attribute"| value Ocsigen_extensions.Configuration.attribute >> ~[<<a_api | module Ocsigen_extensions.Configuration >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|attribute ~~name f>> create a specification of a ~X~M~L attribute~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\B|
+|@@class="odocwiki_index"@ @@<<a_api text="badconfig"| value Ocsigen_extensions.badconfig >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Convenient function for raising ~Error~_in~_config~_file exceptions with
+    a sprintf~-formatted argument~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="basic_raw_request"| value Ocsigen_http_client.basic_raw_request >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Same as <<a_api | val Ocsigen_http_client.raw_request >>~, 
+    but does not try to reuse connections~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="basic_sep"| value Ocsigen_lib_base.String_base.basic_sep >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="bind"| value Ocsigen_lib_base.Option.bind >> ~[<<a_api | module Ocsigen_lib_base.Option >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="block_next_request"| value Ocsigen_http_com.block_next_request >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="builtin_packages"| value Ocsigen_config.builtin_packages >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@ @style="tet-align: left;"@@\\C|
+|@@class="odocwiki_index"@ @@<<a_api text="cache_control"| value Http_headers.cache_control >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="cancel"| value Ocsigen_stream.cancel >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Cancel the stream~, i~.e~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="change_empty_list"| value Ocsigen_lib_base.Url_base.change_empty_list >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="chop"| value Ocsigen_lib_base.List.chop >> ~[<<a_api | module Ocsigen_lib_base.List >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="clear"| value Polytables.clear >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|clear t>> remove all data from t
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="clear_all_caches"| value Ocsigen_cache.clear_all_caches >> ~[<<a_api | module Ocsigen_cache >>~]|<<div class="odocwiki_info"|~Clear the contents of all the existing caches
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="client_connection"| value Ocsigen_extensions.client_connection >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Returns the connection
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="client_id"| value Ocsigen_extensions.client_id >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Returns the id number of the connection
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="closed"| value Ocsigen_http_com.closed >> ~[<<a_api | module Ocsigen_http_com >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|closed conn>> is a thread waking up when the connection is
+    closed
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="commandline"| value Ocsigen_getcommandline.commandline >> ~[<<a_api | module Ocsigen_getcommandline >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="comp"| value Ocsigen_lib_base.comp >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="compute_new_ri_cookies"| value Ocsigen_http_frame.compute_new_ri_cookies >> ~[<<a_api | module Ocsigen_http_frame >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|compute~_new~_ri~_cookies now path ri~_cookies cookies~_to~_set>>
+   adds the cookies from <<span class="odocwiki_inlinecode"|cookies~_to~_set>>
+   to <<span class="odocwiki_inlinecode"|ri~_cookies>>~, as if the cookies
+   had been send to the browser and the browser
+   was doing a new request to the url <<span class="odocwiki_inlinecode"|path>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="concat"| value Ocsigen_stream.StringStream.concat >> ~[<<a_api | module Ocsigen_stream.StringStream >>~]|<<div class="odocwiki_info"|~Concatenate two stream
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="connection"| value Http_headers.connection >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="connection_fd"| value Ocsigen_http_com.connection_fd >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="connection_id"| value Ocsigen_http_com.connection_id >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="console"| value Ocsigen_messages.console >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Write a message in the console ~(if not called in silent mode~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="console2"| value Ocsigen_messages.console2 >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Write a message in the console ~(if not called in silent mode~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="consume"| value Ocsigen_stream.consume >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Consume without cancelling~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="cont"| value Ocsigen_stream.cont >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|creates a non empty step~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="content"| value Ocsigen_local_files.content >> ~[<<a_api | module Ocsigen_local_files >>~]|<<div class="odocwiki_info"|~Given the local file <<span class="odocwiki_inlinecode"|file>>~, with a request originating at url
+    <<span class="odocwiki_inlinecode"|url>>~, returns a viewable content of <<span class="odocwiki_inlinecode"|file>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="content_encoding"| value Http_headers.content_encoding >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="content_length"| value Http_headers.content_length >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="content_range"| value Http_headers.content_range >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="content_type"| value Http_headers.content_type >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="cookie"| value Http_headers.cookie >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="create"| value Ocsigen_comet.Channels.create >> ~[<<a_api | module Ocsigen_comet.Channels >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|create ~(~)>> returns a channel with a freshly baked identifier while
+      <<span class="odocwiki_inlinecode"|create ~~name ~(~)>> returns a channel with the identifier <<span class="odocwiki_inlinecode"|name>> after
+      checking for uniqueness~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="create"| value Polytables.create >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|creates a new table
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="create"| value Ocsigen_lib_base.Clist.create >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="create"| value Ocsigen_cache.Dlist.create >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="create_receiver"| value Ocsigen_http_com.create_receiver >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="create_sender"| value Ocsigen_http_com.create_sender >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="current_buffer"| value Ocsigen_stream.current_buffer >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Returns the value of the current buffer
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="curry"| value Ocsigen_lib_base.curry >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@ @style="tet-align: left;"@@\\D|
+|@@class="odocwiki_index"@ @@<<a_api text="date"| value Http_headers.date >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="deactivate"| value Ocsigen_comet.Security.deactivate >> ~[<<a_api | module Ocsigen_comet.Security >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|deactivate ~(~)>> ceases all ~Comet related activity~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="debug"| value Ocsigen_messages.debug >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Write a message only in debugging mode ~(~-~V option~) ~- ~Non cooperative
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="debug"| value Ocsigen_lib_base.debug >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="debug2"| value Ocsigen_messages.debug2 >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Write a message only in debugging mode ~(~-~V option~) ~- ~Non cooperative
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="debug_noel"| value Ocsigen_messages.debug_noel >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Same as <<span class="odocwiki_inlinecode"|debug>> without new line at the end ~- ~Non cooperative
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="debug_noel2"| value Ocsigen_messages.debug_noel2 >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Same as <<span class="odocwiki_inlinecode"|debug>> without new line at the end ~- ~Non cooperative
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="decode"| value Ocsigen_lib.Url.decode >> ~[<<a_api | module Ocsigen_lib.Url >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="default_charset"| value Ocsigen_charset_mime.default_charset >> ~[<<a_api | module Ocsigen_charset_mime >>~]|<<div class="odocwiki_info"|~Functions related to the default charset in the association
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="default_mime"| value Ocsigen_charset_mime.default_mime >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="default_mime_assoc"| value Ocsigen_charset_mime.default_mime_assoc >> ~[<<a_api | module Ocsigen_charset_mime >>~]|<<div class="odocwiki_info"|~Default values~, obtained by reading the file specified by
+    <<span class="odocwiki_inlinecode"|~Ocsigen~_config~.get~_mimefile>>
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="default_mime_type"| value Ocsigen_charset_mime.default_mime_type >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="default_result"| value Ocsigen_http_frame.default_result >> ~[<<a_api | module Ocsigen_http_frame >>~]|<<div class="odocwiki_info"|~Default <<span class="odocwiki_inlinecode"|result>> to use as a base for constructing others~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="default_sender"| value Ocsigen_http_com.default_sender >> ~[<<a_api | module Ocsigen_http_com >>~]|<<div class="odocwiki_info"|~Sender with only the server name~, and ~H~T~T~P~/~1~.~1
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="display_http_exception"| value Ocsigen_http_frame.Http_error.display_http_exception >> ~[<<a_api | module Ocsigen_http_frame.Http_error >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="display_version"| value Ocsigen_config.display_version >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="do_not_serve_to_regexp"| value Ocsigen_extensions.do_not_serve_to_regexp >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Compile a do~_not~_serve structure into a regexp~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="dyn_headers"| value Http_headers.dyn_headers >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|~Headers for dynamic pages ~(non cachable~)
+>>
+|
+|@@ @style="tet-align: left;"@@\\E|
+|@@class="odocwiki_index"@ @@<<a_api text="element"| value Ocsigen_extensions.Configuration.element >> ~[<<a_api | module Ocsigen_extensions.Configuration >>~]|<<div class="odocwiki_info"|~Create the specification of a ~X~M~L element~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="empty"| value Http_headers.empty >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|returns an empty set of ~H~T~T~P headers
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="empty"| value Ocsigen_stream.StringStream.empty >> ~[<<a_api | module Ocsigen_stream.StringStream >>~]|<<div class="odocwiki_info"|~Create an empty stream
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="empty"| value Ocsigen_stream.empty >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|creates an empty step~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="empty_charset_assoc"| value Ocsigen_charset_mime.empty_charset_assoc >> ~[<<a_api | module Ocsigen_charset_mime >>~]|<<div class="odocwiki_info"|~All files are mapped to <<span class="odocwiki_inlinecode"|no~_charset>>
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="empty_cookieset"| value Ocsigen_cookies.empty_cookieset >> ~[<<a_api | module Ocsigen_cookies >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="empty_result"| value Ocsigen_http_frame.empty_result >> ~[<<a_api | module Ocsigen_http_frame >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|result>> for an empty page~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="encode"| value Ocsigen_lib.Url.encode >> ~[<<a_api | module Ocsigen_lib.Url >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="enlarge_stream"| value Ocsigen_stream.enlarge_stream >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Read more data in the buffer
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="equal_virtual_hosts"| value Ocsigen_extensions.equal_virtual_hosts >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="errlog"| value Ocsigen_messages.errlog >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Write a message in errors~.log
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="error_log_path"| value Ocsigen_messages.error_log_path >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Path to the error log file
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="etag"| value Http_headers.etag >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="expires"| value Http_headers.expires >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="expl_of_code"| value Ocsigen_http_frame.Http_error.expl_of_code >> ~[<<a_api | module Ocsigen_http_frame.Http_error >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="extension_no_directory"| value Ocsigen_lib.Filename.extension_no_directory >> ~[<<a_api | module Ocsigen_lib.Filename >>~]||
+|@@ @style="tet-align: left;"@@\\F|
+|@@class="odocwiki_index"@ @@<<a_api text="finalize"| value Ocsigen_stream.finalize >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Finalize the stream
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="find"| value Ocsipersist.find >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|find table key>> gives the value associated to <<span class="odocwiki_inlinecode"|key>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="find"| value Ocsigen_headers.find >> ~[<<a_api | module Ocsigen_headers >>~]|<<div class="odocwiki_info"|find one of the values bound to <<span class="odocwiki_inlinecode"|name>> in the ~H~T~T~P headers of the frame~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="find"| value Http_headers.find >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|find one of the values bound to <<span class="odocwiki_inlinecode"|name>> in the ~H~T~T~P header <<span class="odocwiki_inlinecode"|t>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="find_all"| value Ocsigen_headers.find_all >> ~[<<a_api | module Ocsigen_headers >>~]|<<div class="odocwiki_info"|find all the values bound to <<span class="odocwiki_inlinecode"|name>> in the ~H~T~T~P headers of the frame~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="find_all"| value Http_headers.find_all >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|find all the values bound to <<span class="odocwiki_inlinecode"|name>> in the ~H~T~T~P header <<span class="odocwiki_inlinecode"|t>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="find_charset"| value Ocsigen_charset_mime.find_charset >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="find_mime"| value Ocsigen_charset_mime.find_mime >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="find_redirection"| value Ocsigen_extensions.find_redirection >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="findfiles"| value Ocsigen_loader.findfiles >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|findfiles pkg>> returns the list of files needed to load ~Findlib
+      package <<span class="odocwiki_inlinecode"|pkg>>~, including dependencies~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="first_diff"| value Ocsigen_lib_base.String_base.first_diff >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="fixup_url_string"| value Ocsigen_lib.Url.fixup_url_string >> ~[<<a_api | module Ocsigen_lib.Url >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="fold"| value Http_headers.fold >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="fold"| value Ocsigen_cache.Dlist.fold >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|fold over the elements from the cache starting from the newest
+      to the oldest
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="fold_back"| value Ocsigen_cache.Dlist.fold_back >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|fold over the elements from the cache starting from the oldest
+      to the newest
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="fold_left"| value Ocsigen_lib_base.Clist.fold_left >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]|<<div class="odocwiki_info"|~Infinite fold on circular lists ~(use with care!~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="fold_step"| value Ocsipersist.fold_step >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Important warning~: this iterator may not iter on all data of the table
+    if another thread is modifying it in the same time~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="fold_table"| value Ocsipersist.fold_table >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Legacy interface for fold~_step
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="from_poly"| value Ocsigen_lib_base.from_poly >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="fst"| value Ocsigen_lib_base.Tuple3.fst >> ~[<<a_api | module Ocsigen_lib_base.Tuple3 >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="full_server_name"| value Ocsigen_config.full_server_name >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@ @style="tet-align: left;"@@\\G|
+|@@class="odocwiki_index"@ @@<<a_api text="get"| value Ocsipersist.get >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|get pv>> gives the value of <<span class="odocwiki_inlinecode"|pv>>
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get"| value Ocsigen_http_client.get >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Do a ~G~E~T ~H~T~T~P request~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get"| value Polytables.get >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|get t k>> returns the current binding of <<span class="odocwiki_inlinecode"|k>> in <<span class="odocwiki_inlinecode"|t>> or raises <<span class="odocwiki_inlinecode"|~Not~_found>>
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get"| value Ocsigen_stream.get >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|call this function if you decide to start reading a stream~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get"| value Ocsigen_lib_base.Option.get >> ~[<<a_api | module Ocsigen_lib_base.Option >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_accept"| value Ocsigen_headers.get_accept >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_accept_charset"| value Ocsigen_headers.get_accept_charset >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_accept_encoding"| value Ocsigen_headers.get_accept_encoding >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_accept_language"| value Ocsigen_headers.get_accept_language >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_access_control_request_headers"| value Ocsigen_headers.get_access_control_request_headers >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_access_control_request_method"| value Ocsigen_headers.get_access_control_request_method >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_basic_authentication_method"| value Authbasic.get_basic_authentication_method >> ~[<<a_api | module Authbasic >>~]|<<div class="odocwiki_info"|~This function combines all the parsers registered with
+      <<span class="odocwiki_inlinecode"|register~_basic~_authentication~_method>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get_bindir"| value Ocsigen_config.get_bindir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_client_timeout"| value Ocsigen_config.get_client_timeout >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_command_pipe"| value Ocsigen_config.get_command_pipe >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_config_file"| value Ocsigen_config.get_config_file >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_content_length"| value Ocsigen_headers.get_content_length >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_content_type"| value Ocsigen_headers.get_content_type >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_cookie_string"| value Ocsigen_headers.get_cookie_string >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_daemon"| value Ocsigen_config.get_daemon >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_datadir"| value Ocsigen_config.get_datadir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_debugmode"| value Ocsigen_config.get_debugmode >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_default_charset"| value Ocsigen_config.get_default_charset >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_default_group"| value Ocsigen_config.get_default_group >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_default_port"| value Ocsigen_config.get_default_port >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_default_sslport"| value Ocsigen_config.get_default_sslport >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_default_user"| value Ocsigen_config.get_default_user >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_disablepartialrequests"| value Ocsigen_config.get_disablepartialrequests >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_etag"| value Ocsigen_http_frame.HTTP_CONTENT.get_etag >> ~[<<a_api | module Ocsigen_http_frame.HTTP_CONTENT >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_extdir"| value Ocsigen_config.get_extdir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_filebuffersize"| value Ocsigen_config.get_filebuffersize >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_finaliser_after"| value Ocsigen_cache.Dlist.get_finaliser_after >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_finaliser_before"| value Ocsigen_cache.Dlist.get_finaliser_before >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_firstline"| value Ocsigen_http_frame.Http_header.get_firstline >> ~[<<a_api | module Ocsigen_http_frame.Http_header >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_group"| value Ocsigen_config.get_group >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_headers"| value Ocsigen_http_frame.Http_header.get_headers >> ~[<<a_api | module Ocsigen_http_frame.Http_header >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_headers_value"| value Ocsigen_http_frame.Http_header.get_headers_value >> ~[<<a_api | module Ocsigen_http_frame.Http_header >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_headers_values"| value Ocsigen_http_frame.Http_header.get_headers_values >> ~[<<a_api | module Ocsigen_http_frame.Http_header >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_host_from_host_header"| value Ocsigen_headers.get_host_from_host_header >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_hostname"| value Ocsigen_extensions.get_hostname >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Returns the hostname to be used for absolute links or redirections~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get_http_frame"| value Ocsigen_http_com.get_http_frame >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_id"| value Ocsigen_comet.Channels.get_id >> ~[<<a_api | module Ocsigen_comet.Channels >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|get~_id c>> returns the unique identifier associated to <<span class="odocwiki_inlinecode"|c>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get_if_match"| value Ocsigen_headers.get_if_match >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_if_modified_since"| value Ocsigen_headers.get_if_modified_since >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_if_none_match"| value Ocsigen_headers.get_if_none_match >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_if_unmodified_since"| value Ocsigen_headers.get_if_unmodified_since >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_inet_addr"| value Ocsigen_lib.Ip_address.get_inet_addr >> ~[<<a_api | module Ocsigen_lib.Ip_address >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_keepalive"| value Ocsigen_headers.get_keepalive >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_logdir"| value Ocsigen_config.get_logdir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_max_number_of_connections"| value Ocsigen_config.get_max_number_of_connections >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_max_number_of_threads_queued"| value Ocsigen_config.get_max_number_of_threads_queued >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_maxrequestbodysize"| value Ocsigen_config.get_maxrequestbodysize >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_maxrequestbodysizeinmemory"| value Ocsigen_config.get_maxrequestbodysizeinmemory >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_maxretries"| value Ocsigen_config.get_maxretries >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_maxthreads"| value Ocsigen_config.get_maxthreads >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_mimefile"| value Ocsigen_config.get_mimefile >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_minthreads"| value Ocsigen_config.get_minthreads >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_netbuffersize"| value Ocsigen_config.get_netbuffersize >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_ocamlpath"| value Ocsigen_loader.get_ocamlpath >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|~Returns the current ~Findlib library search path~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get_origin"| value Ocsigen_headers.get_origin >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_pidfile"| value Ocsigen_config.get_pidfile >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_port"| value Ocsigen_extensions.get_port >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Returns the port to be used for absolute links or redirections~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get_proto"| value Ocsigen_http_frame.Http_header.get_proto >> ~[<<a_api | module Ocsigen_http_frame.Http_header >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_referer"| value Ocsigen_headers.get_referer >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_referrer"| value Ocsigen_headers.get_referrer >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_respect_pipeline"| value Ocsigen_config.get_respect_pipeline >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_server_timeout"| value Ocsigen_config.get_server_timeout >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_shutdown_timeout"| value Ocsigen_config.get_shutdown_timeout >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_silent"| value Ocsigen_config.get_silent >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_timer"| value Ocsigen_cache.Dlist.get_timer >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|returns the timer of the ~Dlist
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get_url"| value Ocsigen_http_client.get_url >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Do a ~G~E~T ~H~T~T~P request~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="get_usedefaulthostname"| value Ocsigen_config.get_usedefaulthostname >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_user"| value Ocsigen_config.get_user >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_user_agent"| value Ocsigen_headers.get_user_agent >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_verbose"| value Ocsigen_config.get_verbose >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="get_veryverbose"| value Ocsigen_config.get_veryverbose >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@ @style="tet-align: left;"@@\\H|
+|@@class="odocwiki_index"@ @@<<a_api text="hash_virtual_hosts"| value Ocsigen_extensions.hash_virtual_hosts >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="host"| value Http_headers.host >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="host_match"| value Ocsigen_extensions.host_match >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@ @style="tet-align: left;"@@\\I|
+|@@class="odocwiki_index"@ @@<<a_api text="id"| value Ocsigen_lib_base.id >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="if_match"| value Http_headers.if_match >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="if_modified_since"| value Http_headers.if_modified_since >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="if_none_match"| value Http_headers.if_none_match >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="if_range"| value Http_headers.if_range >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="if_unmodified_since"| value Http_headers.if_unmodified_since >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="ignore_blank_pcdata"| value Ocsigen_extensions.Configuration.ignore_blank_pcdata >> ~[<<a_api | module Ocsigen_extensions.Configuration >>~]|<<div class="odocwiki_info"|~The specification for ignoring blank ~P~C~D~A~T~A ~(~'~\n~'~, ~'~\r~'~, ~' ~'~, ~'~\t~'~) and failing
+      otherwise ~(a reasonable default~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="in_list"| value Ocsigen_lib_base.Clist.in_list >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="inet6_addr_loopback"| value Ocsigen_lib.Ip_address.inet6_addr_loopback >> ~[<<a_api | module Ocsigen_lib.Ip_address >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="init_module"| value Ocsigen_loader.init_module >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|init~_module pre post force name>> runs the init function for the module
+      <<span class="odocwiki_inlinecode"|name>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="init_preempt"| value Ocsigen_config.init_preempt >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="insert"| value Ocsigen_lib_base.Clist.insert >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="is_empty"| value Ocsigen_lib_base.Clist.is_empty >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="is_native"| value Ocsigen_config.is_native >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="is_prefix_skip_end_slash"| value Ocsigen_lib_base.Url_base.is_prefix_skip_end_slash >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="iter"| value Http_headers.iter >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="iter"| value Ocsigen_lib_base.Clist.iter >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]|<<div class="odocwiki_info"|~Infinite iteration on circular lists
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="iter"| value Ocsigen_lib_base.Option.iter >> ~[<<a_api | module Ocsigen_lib_base.Option >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="iter_step"| value Ocsipersist.iter_step >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Important warning~: this iterator may not iter on all data of the table
+    if another thread is modifying it in the same time~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="iter_table"| value Ocsipersist.iter_table >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Legacy interface for iter~_step
+>>
+|
+|@@ @style="tet-align: left;"@@\\J|
+|@@class="odocwiki_index"@ @@<<a_api text="join_do_not_serve"| value Ocsigen_extensions.join_do_not_serve >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@ @style="tet-align: left;"@@\\L|
+|@@class="odocwiki_index"@ @@<<a_api text="last"| value Ocsigen_lib_base.List.last >> ~[<<a_api | module Ocsigen_lib_base.List >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="last_modified"| value Http_headers.last_modified >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="length"| value Ocsipersist.length >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Size of a table~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="list_of"| value Ocsigen_cache.Dlist.list_of >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|~The list to which the node belongs
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="listeners"| value Ocsigen_comet.Channels.listeners >> ~[<<a_api | module Ocsigen_comet.Channels >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|listeners c>> returns the number of clients currently registered on <<span class="odocwiki_inlinecode"|c>>
+      ~A client is "currently registered" on a channel if an actual
+      connection is open for the server to push a message onto~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="loadfile"| value Ocsigen_loader.loadfile >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|loadfile pre post force file>> ~(dynamically~) loads <<span class="odocwiki_inlinecode"|file>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="loadfiles"| value Ocsigen_loader.loadfiles >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|loadfiles pre post force file>> loads all the <<span class="odocwiki_inlinecode"|files>>~, using
+      <<span class="odocwiki_inlinecode"|loadfile ~(fun ~(~) ~-~> ~(~)~) ~(fun ~(~) ~-~> ~(~)~) false>> for all the files
+      but the last one~, and <<span class="odocwiki_inlinecode"|loadfile pre post force>> for the last one
+      ~(if any~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="location"| value Http_headers.location >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="lock_receiver"| value Ocsigen_http_com.lock_receiver >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@ @style="tet-align: left;"@@\\M|
+|@@class="odocwiki_index"@ @@<<a_api text="make"| value Ocsigen_stream.StringStream.make >> ~[<<a_api | module Ocsigen_stream.StringStream >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="make"| value Ocsigen_stream.make >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|creates a new stream
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="make"| value Ocsigen_lib_base.Clist.make >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="make_absolute_url"| value Ocsigen_lib_base.Url_base.make_absolute_url >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="make_cryptographic_safe_string"| value Ocsigen_lib.make_cryptographic_safe_string >> ~[<<a_api | module Ocsigen_lib >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="make_encoded_parameters"| value Ocsigen_lib.Url.make_encoded_parameters >> ~[<<a_api | module Ocsigen_lib.Url >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="make_key"| value Polytables.make_key >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|create a new key for each data you want to save
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="make_persistent"| value Ocsipersist.make_persistent >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|make~_persistent store name default>> find a persistent value
+    named <<span class="odocwiki_inlinecode"|name>> in store <<span class="odocwiki_inlinecode"|store>>
+    from database~, or create it with the default value <<span class="odocwiki_inlinecode"|default>> if it
+    does not exist~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="make_persistent_lazy"| value Ocsipersist.make_persistent_lazy >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Same as make~_persistent but the default value is evaluated only
+    if needed
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="map"| value Ocsigen_lib_base.Option.map >> ~[<<a_api | module Ocsigen_lib_base.Option >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="map_filter"| value Ocsigen_lib_base.List.map_filter >> ~[<<a_api | module Ocsigen_lib_base.List >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="match_ip"| value Ocsigen_lib.Ip_address.match_ip >> ~[<<a_api | module Ocsigen_lib.Ip_address >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="maxsize"| value Ocsigen_cache.Dlist.maxsize >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="may_append"| value Ocsigen_lib_base.String_base.may_append >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="may_concat"| value Ocsigen_lib_base.String_base.may_concat >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="method_of_string"| value Framepp.method_of_string >> ~[<<a_api | module Framepp >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="move"| value Ocsigen_cache.Dlist.move >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|~Move a node from one dlist to another one~, without finalizing~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\N|
+|@@class="odocwiki_index"@ @@<<a_api text="name"| value Http_headers.name >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="name_to_string"| value Http_headers.name_to_string >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="native_ext"| value Ocsigen_config.native_ext >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="network_of_ip"| value Ocsigen_lib.Ip_address.network_of_ip >> ~[<<a_api | module Ocsigen_lib.Ip_address >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="newest"| value Ocsigen_cache.Dlist.newest >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="next"| value Ocsigen_stream.next >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|get the next step of a stream~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="no_charset"| value Ocsigen_charset_mime.no_charset >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@ @style="tet-align: left;"@@\\O|
+|@@class="odocwiki_index"@ @@<<a_api text="of_file"| value Ocsigen_stream.of_file >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|returns a stream reading from a file~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="of_string"| value Ocsigen_stream.of_string >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|returns a stream containing a string~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="oldest"| value Ocsigen_cache.Dlist.oldest >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="open_store"| value Ocsipersist.open_store >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Open a store ~(and create it if it does not exist~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="open_table"| value Ocsipersist.open_table >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|~Open a table ~(and create it if it does not exist~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="origin"| value Http_headers.origin >> ~[<<a_api | module Http_headers >>~]||
+|@@ @style="tet-align: left;"@@\\P|
+|@@class="odocwiki_index"@ @@<<a_api text="parse"| value Ocsigen_lib.Url.parse >> ~[<<a_api | module Ocsigen_lib.Url >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse"| value Ocsigen_lib.Ip_address.parse >> ~[<<a_api | module Ocsigen_lib.Ip_address >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse_condition"| value Accesscontrol.parse_condition >> ~[<<a_api | module Accesscontrol >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse_content_type"| value Ocsigen_headers.parse_content_type >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse_cookies"| value Ocsigen_headers.parse_cookies >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse_host_field"| value Ocsigen_parseconfig.parse_host_field >> ~[<<a_api | module Ocsigen_parseconfig >>~]|<<div class="odocwiki_info"|~Parses the <<span class="odocwiki_inlinecode"|hostfilter>> field of the configuration file~, which
+    is a disjunction of possible hostnames ~(that can themselves contain
+    wildcards~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_mime_type"| value Ocsigen_headers.parse_mime_type >> ~[<<a_api | module Ocsigen_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse_mime_types"| value Ocsigen_charset_mime.parse_mime_types >> ~[<<a_api | module Ocsigen_charset_mime >>~]|<<div class="odocwiki_info"|~Parsing of a file containing mime associations~, such as ~/etc~/mime~-types
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_size"| value Ocsigen_parseconfig.parse_size >> ~[<<a_api | module Ocsigen_parseconfig >>~]|<<div class="odocwiki_info"|~Parse a size ~("infinity" or using ~S~I or binary units~,
+    e~.g~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_size_tag"| value Ocsigen_parseconfig.parse_size_tag >> ~[<<a_api | module Ocsigen_parseconfig >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|parse~_size~_tag tag s>> parses a size ~(same syntax as <<span class="odocwiki_inlinecode"|parse~_size>>~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_string"| value Ocsigen_parseconfig.parse_string >> ~[<<a_api | module Ocsigen_parseconfig >>~]|<<div class="odocwiki_info"|~Parse a string ~(~P~C~D~A~T~A~) as ~X~M~L content~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_string_tag"| value Ocsigen_parseconfig.parse_string_tag >> ~[<<a_api | module Ocsigen_parseconfig >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|parse~_string~_tag tag s>> parses a string ~(same syntax as <<span class="odocwiki_inlinecode"|parse~_string>>~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_user_dir"| value Ocsigen_extensions.parse_user_dir >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="post_string"| value Ocsigen_http_client.post_string >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Do a ~P~O~S~T ~H~T~T~P request~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="post_string_url"| value Ocsigen_http_client.post_string_url >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Do a ~G~E~T ~H~T~T~P request~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="post_urlencoded"| value Ocsigen_http_client.post_urlencoded >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Do a ~P~O~S~T ~H~T~T~P request with ~U~R~L encoded parameters as content~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="post_urlencoded_url"| value Ocsigen_http_client.post_urlencoded_url >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Do a ~G~E~T ~H~T~T~P request with ~U~R~L encoded parameters as content~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="process_element"| value Ocsigen_extensions.Configuration.process_element >> ~[<<a_api | module Ocsigen_extensions.Configuration >>~]|<<div class="odocwiki_info"|~Process an ~X~M~L element by the specifications~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="process_elements"| value Ocsigen_extensions.Configuration.process_elements >> ~[<<a_api | module Ocsigen_extensions.Configuration >>~]|<<div class="odocwiki_info"|~Application of <<span class="odocwiki_inlinecode"|process~_element>> on a list of ~X~M~L elements~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="proto_of_string"| value Framepp.proto_of_string >> ~[<<a_api | module Framepp >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="put"| value Ocsigen_stream.StringStream.put >> ~[<<a_api | module Ocsigen_stream.StringStream >>~]|<<div class="odocwiki_info"|~Create a stream with one element
+>>
+|
+|@@ @style="tet-align: left;"@@\\R|
+|@@class="odocwiki_index"@ @@<<a_api text="range"| value Http_headers.range >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="raw_request"| value Ocsigen_http_client.raw_request >> ~[<<a_api | module Ocsigen_http_client >>~]|<<div class="odocwiki_info"|~Do an ~H~T~T~P request ~(low level~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="referer"| value Http_headers.referer >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="register_basic_authentication_method"| value Authbasic.register_basic_authentication_method >> ~[<<a_api | module Authbasic >>~]|<<div class="odocwiki_info"|~This function registers an authentication plugin~: it adds a new
+      parser to the list of available authentication schemes~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="register_command_function"| value Ocsigen_extensions.register_command_function >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Use a prefix for all your commands when you want to create
+    extension~-specific commands~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="register_exn_printer"| value Ocsigen_lib_base.Printexc.register_exn_printer >> ~[<<a_api | module Ocsigen_lib_base.Printexc >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="register_extension"| value Ocsigen_extensions.register_extension >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~For each extension generating pages~, we register its name and six functions~: a function <<span class="odocwiki_inlinecode"|fun~_site>> of type <<span class="odocwiki_inlinecode"|parse~_config>>~. ~This function
+will be responsible for handling the options of the configuration
+files that are recognized by the extension~, and potentially generating
+a page~.~, a function <<span class="odocwiki_inlinecode"|user~_fun~_site>> of type <<span class="odocwiki_inlinecode"|parse~_user~_config>> which has the
+same role as <<span class="odocwiki_inlinecode"|fun~_site>>~, but inside userconf files~. ~Specify nothing
+if your extension is disallowed in userconf files~. ~Otherwise~, compared
+to <<span class="odocwiki_inlinecode"|fun~_site>>~, you can selectively disallow some options~,
+as <<span class="odocwiki_inlinecode"|user~_fun~_site>> must define only safe options ~(for example it is not
+safe to allow such options to load a cmo specified by a user~, or to
+execute a program~, as this program will be executed by ocsigen~'s user~)~.
+~Note that <<span class="odocwiki_inlinecode"|user~_fun~_site>> will be called for every request~, whereas the
+<<span class="odocwiki_inlinecode"|fun~_site>> is called only when starting or reloading the server~.~, a function <<span class="odocwiki_inlinecode"|begin~_init>> that will be called at the beginning
+of the initialisation phase of each site~, and each time the config file is
+reloaded~.~, a function <<span class="odocwiki_inlinecode"|end~_init>> that will be called at the end of the initialisation
+phase of each site~, a function <<span class="odocwiki_inlinecode"|init~_fun>> that will be called just before registering the
+extension~, taking as parameter the configuration options between
+<<span class="odocwiki_inlinecode"|~<extension~>>> and <<span class="odocwiki_inlinecode"|~<~/extension~>>>~. ~This allows to give configuration options
+to extensions~. ~If no function is supplied~, the extension is supposed to
+accept no option ~(and loading will fail if an option is supplied~)
+~See ~<~<a~_api module~="~Ocsigen~_extensions~.~Configuration" ~| val process~_elements ~>~> for
+the easy construction of such a function~.~, a function <<span class="odocwiki_inlinecode"|exn~_handler>> that will create an error message from the
+exceptions that may be raised during the initialisation phase~, and raise again
+all other exceptions
+~Moreover~, if the optional parameter <<span class="odocwiki_inlinecode"|~?respect~_pipeline>> is <<span class="odocwiki_inlinecode"|true>>~,
+the extension will ask the server to respect the order of the
+pipeline~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="reload"| value Ocsigen_server.reload >> ~[<<a_api | module Ocsigen_server >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove"| value Ocsipersist.remove >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|remove table key>> removes the entry in the table if it exists
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="remove"| value Polytables.remove >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|remove t k>> remove the current binding of <<span class="odocwiki_inlinecode"|k>> in <<span class="odocwiki_inlinecode"|t>> if it exists
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="remove"| value Ocsigen_lib_base.Clist.remove >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove"| value Ocsigen_cache.Dlist.remove >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|~Removes an element from its list~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="remove_all_assoc"| value Ocsigen_lib_base.List.remove_all_assoc >> ~[<<a_api | module Ocsigen_lib_base.List >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_cookie"| value Ocsigen_cookies.remove_cookie >> ~[<<a_api | module Ocsigen_cookies >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|remove~_cookie c cookie~_table>> removes the cookie <<span class="odocwiki_inlinecode"|c>>
+    from the table <<span class="odocwiki_inlinecode"|cookie~_table>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="remove_dotdot"| value Ocsigen_lib_base.Url_base.remove_dotdot >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_end_slash"| value Ocsigen_lib_base.Url_base.remove_end_slash >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_first_if_any"| value Ocsigen_lib_base.List.remove_first_if_any >> ~[<<a_api | module Ocsigen_lib_base.List >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_first_if_any_q"| value Ocsigen_lib_base.List.remove_first_if_any_q >> ~[<<a_api | module Ocsigen_lib_base.List >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_internal_slash"| value Ocsigen_lib_base.Url_base.remove_internal_slash >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_n_oldest"| value Ocsigen_cache.Dlist.remove_n_oldest >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|remove the n oldest values ~(or less if the list is not long enough~) ~;
+      returns the list of removed values
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="remove_slash_at_beginning"| value Ocsigen_lib_base.Url_base.remove_slash_at_beginning >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_slash_at_end"| value Ocsigen_lib_base.Url_base.remove_slash_at_end >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="remove_spaces"| value Ocsigen_lib_base.String_base.remove_spaces >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="replace"| value Http_headers.replace >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|replace a header by another one~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="replace_if_exists"| value Ocsipersist.replace_if_exists >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|replace~_if~_exists table key value>>
+   associates <<span class="odocwiki_inlinecode"|value>> to <<span class="odocwiki_inlinecode"|key>> only if <<span class="odocwiki_inlinecode"|key>> is already bound~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="replace_opt"| value Http_headers.replace_opt >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|replace or remove a header~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="replace_user_dir"| value Ocsigen_extensions.replace_user_dir >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|raises <<span class="odocwiki_inlinecode"|~Not~_found>> is the directory does not exist
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="resolve"| value Ocsigen_local_files.resolve >> ~[<<a_api | module Ocsigen_local_files >>~]|<<div class="odocwiki_info"|~Finds <<span class="odocwiki_inlinecode"|filename>> in the filesystem~, with a possible redirection
+    if it is a directory~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="result_of_content"| value Ocsigen_http_frame.HTTP_CONTENT.result_of_content >> ~[<<a_api | module Ocsigen_http_frame.HTTP_CONTENT >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="return"| value Ocsigen_lib_base.Option.return >> ~[<<a_api | module Ocsigen_lib_base.Option >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="ri_of_url"| value Ocsigen_extensions.ri_of_url >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Parsing ~U~R~Ls~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\S|
+|@@class="odocwiki_index"@ @@<<a_api text="send"| value Ocsigen_http_com.send >> ~[<<a_api | module Ocsigen_http_com >>~]|<<div class="odocwiki_info"|send an ~H~T~T~P message~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="send_error"| value Ocsigen_senders.send_error >> ~[<<a_api | module Ocsigen_senders >>~]|<<div class="odocwiki_info"|~Sending an error page
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="sep"| value Ocsigen_lib_base.String_base.sep >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="server"| value Http_headers.server >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="server_name"| value Ocsigen_config.server_name >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set"| value Ocsipersist.set >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|set pv value>> sets a persistent value <<span class="odocwiki_inlinecode"|pv>> to <<span class="odocwiki_inlinecode"|value>>
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set"| value Polytables.set >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|set t k v>> associates <<span class="odocwiki_inlinecode"|v>> to <<span class="odocwiki_inlinecode"|k>> in <<span class="odocwiki_inlinecode"|t>>
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_bindir"| value Ocsigen_config.set_bindir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_client_timeout"| value Ocsigen_config.set_client_timeout >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_command_pipe"| value Ocsigen_config.set_command_pipe >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_configfile"| value Ocsigen_config.set_configfile >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_cookie"| value Http_headers.set_cookie >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_daemon"| value Ocsigen_config.set_daemon >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_datadir"| value Ocsigen_config.set_datadir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_debugmode"| value Ocsigen_config.set_debugmode >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_default_charset"| value Ocsigen_charset_mime.set_default_charset >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_default_charset"| value Ocsigen_config.set_default_charset >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_default_mime"| value Ocsigen_charset_mime.set_default_mime >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_default_port"| value Ocsigen_config.set_default_port >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_default_sslport"| value Ocsigen_config.set_default_sslport >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_disablepartialrequests"| value Ocsigen_config.set_disablepartialrequests >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_extdir"| value Ocsigen_config.set_extdir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_filebuffersize"| value Ocsigen_config.set_filebuffersize >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_finaliser_after"| value Ocsigen_cache.Dlist.set_finaliser_after >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|set a function to be called automatically on a piece of data
+      just after it disappears from the list
+      ~(either by explicit removal or because the maximum size is exceeded~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_finaliser_before"| value Ocsigen_cache.Dlist.set_finaliser_before >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|set a function to be called automatically on a piece of data
+      just before it disappears from the list
+      ~(either by explicit removal or because the maximum size is exceeded~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_group"| value Ocsigen_config.set_group >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_init_on_load"| value Ocsigen_loader.set_init_on_load >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|~If set to <<span class="odocwiki_inlinecode"|true>>~, the module initialization functions passed to
+      <<span class="odocwiki_inlinecode"|set~_module~_init~_function>> will be executed directly~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_logdir"| value Ocsigen_config.set_logdir >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_max_number_of_connections"| value Ocsigen_config.set_max_number_of_connections >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_max_number_of_threads_queued"| value Ocsigen_config.set_max_number_of_threads_queued >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_maxrequestbodysize"| value Ocsigen_config.set_maxrequestbodysize >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_maxrequestbodysizeinmemory"| value Ocsigen_config.set_maxrequestbodysizeinmemory >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_maxretries"| value Ocsigen_config.set_maxretries >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_maxsize"| value Ocsigen_cache.Dlist.set_maxsize >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|change the maximum size ~;
+      returns the list of removed values~, if any~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_maxthreads"| value Ocsigen_config.set_maxthreads >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_mimefile"| value Ocsigen_config.set_mimefile >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_minthreads"| value Ocsigen_config.set_minthreads >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_module_init_function"| value Ocsigen_loader.set_module_init_function >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|set~_module~_init~_function name f>> registers the function <<span class="odocwiki_inlinecode"|f>>~, which will
+      be used to initialize the module when <<span class="odocwiki_inlinecode"|init~_module name>> is called~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_netbuffersize"| value Ocsigen_config.set_netbuffersize >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_ocamlpath"| value Ocsigen_loader.set_ocamlpath >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|~Sets the current ~Findlib library search path~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_pidfile"| value Ocsigen_config.set_pidfile >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_respect_pipeline"| value Ocsigen_config.set_respect_pipeline >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_result_observer"| value Ocsigen_http_com.set_result_observer >> ~[<<a_api | module Ocsigen_http_com >>~]|<<div class="odocwiki_info"|~Use this function to make an action just before sending the result 
+    ~(for example observe the headers that will be sent~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_server_timeout"| value Ocsigen_config.set_server_timeout >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_shutdown_timeout"| value Ocsigen_config.set_shutdown_timeout >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_silent"| value Ocsigen_config.set_silent >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_timeout"| value Ocsigen_comet.Security.set_timeout >> ~[<<a_api | module Ocsigen_comet.Security >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|set~_timeout ~?reset f>> sets the timeout value for future ~Comet connections
+      to <<span class="odocwiki_inlinecode"|f>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="set_usedefaulthostname"| value Ocsigen_config.set_usedefaulthostname >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_user"| value Ocsigen_config.set_user >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_verbose"| value Ocsigen_config.set_verbose >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="set_veryverbose"| value Ocsigen_config.set_veryverbose >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="size"| value Ocsigen_cache.Dlist.size >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="skip"| value Ocsigen_stream.skip >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Skips data~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="snd"| value Ocsigen_lib_base.Tuple3.snd >> ~[<<a_api | module Ocsigen_lib_base.Tuple3 >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="split"| value Ocsigen_lib_base.String_base.split >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="split_fragment"| value Ocsigen_lib_base.Url_base.split_fragment >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="start_processing"| value Ocsigen_http_com.start_processing >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="start_server"| value Ocsigen_server.start_server >> ~[<<a_api | module Ocsigen_server >>~]|<<div class="odocwiki_info"|~Start the server ~(does not return~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="status"| value Http_headers.status >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="stream_want"| value Ocsigen_stream.stream_want >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|stream~_want s len>> ~Returns a stream with at least len
+    bytes in the buffer if possible
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="string_of_header"| value Framepp.string_of_header >> ~[<<a_api | module Framepp >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="string_of_http_exception"| value Ocsigen_http_frame.Http_error.string_of_http_exception >> ~[<<a_api | module Ocsigen_http_frame.Http_error >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="string_of_method"| value Framepp.string_of_method >> ~[<<a_api | module Framepp >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="string_of_proto"| value Framepp.string_of_proto >> ~[<<a_api | module Framepp >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="string_of_stream"| value Ocsigen_stream.string_of_stream >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Creates a string from a stream~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="string_of_url_path"| value Ocsigen_lib.Url.string_of_url_path >> ~[<<a_api | module Ocsigen_lib.Url >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="substream"| value Ocsigen_stream.substream >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Cut the stream at the position given by a string delimiter
+>>
+|
+|@@ @style="tet-align: left;"@@\\T|
+|@@class="odocwiki_index"@ @@<<a_api text="table_name"| value Ocsipersist.table_name >> ~[<<a_api | module Ocsipersist >>~]|<<div class="odocwiki_info"|returns the name of the table
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="thd"| value Ocsigen_lib_base.Tuple3.thd >> ~[<<a_api | module Ocsigen_lib_base.Tuple3 >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="to_poly"| value Ocsigen_lib_base.to_poly >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="transfer_encoding"| value Http_headers.transfer_encoding >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="translate"| value Ocsigen_loader.translate >> ~[<<a_api | module Ocsigen_loader >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|translate filename>> translate ~.cmo~/~.cma extensions to ~.cmxs in
+      native mode~, and ~.cmxs to ~.cmo ~(~.cma if it exists~) in bytecode
+      mode~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\U|
+|@@class="odocwiki_index"@ @@<<a_api text="uncurry"| value Ocsigen_lib_base.uncurry >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="unexpected_exception"| value Ocsigen_messages.unexpected_exception >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Use that function for all impossible cases in exception handlers
+   ~(<<span class="odocwiki_inlinecode"|try ~.~.~. with ~.~.~. ~| e ~-~> unexpected~_exception ~.~.~.>> or <<span class="odocwiki_inlinecode"|~Lwt~.catch ~.~.~.>>~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="unlock_receiver"| value Ocsigen_http_com.unlock_receiver >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="up"| value Ocsigen_cache.Dlist.up >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]|<<div class="odocwiki_info"|~Removes the element from its list without finalising~, 
+      then adds it as newest~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="update_charset_ext"| value Ocsigen_charset_mime.update_charset_ext >> ~[<<a_api | module Ocsigen_charset_mime >>~]|<<div class="odocwiki_info"|~Updates the mapping between extensions from a file to its charset~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="update_charset_file"| value Ocsigen_charset_mime.update_charset_file >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="update_charset_regexp"| value Ocsigen_charset_mime.update_charset_regexp >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="update_mime_ext"| value Ocsigen_charset_mime.update_mime_ext >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="update_mime_file"| value Ocsigen_charset_mime.update_mime_file >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="update_mime_regexp"| value Ocsigen_charset_mime.update_mime_regexp >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="user_agent"| value Http_headers.user_agent >> ~[<<a_api | module Http_headers >>~]||
+|@@ @style="tet-align: left;"@@\\V|
+|@@class="odocwiki_index"@ @@<<a_api text="value"| value Ocsigen_lib_base.Clist.value >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="value"| value Ocsigen_cache.Dlist.value >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="version_number"| value Ocsigen_config.version_number >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@ @style="tet-align: left;"@@\\W|
+|@@class="odocwiki_index"@ @@<<a_api text="wait_all_senders"| value Ocsigen_http_com.wait_all_senders >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="wakeup_next_request"| value Ocsigen_http_com.wakeup_next_request >> ~[<<a_api | module Ocsigen_http_com >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="warning"| value Ocsigen_messages.warning >> ~[<<a_api | module Ocsigen_messages >>~]|<<div class="odocwiki_info"|~Write a message in warnings~.log
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="with_defaults"| value Http_headers.with_defaults >> ~[<<a_api | module Http_headers >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|with~_defaults h~1 h~2>> adds headers from <<span class="odocwiki_inlinecode"|h~1>> to <<span class="odocwiki_inlinecode"|h~2>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="write"| value Ocsigen_comet.Channels.write >> ~[<<a_api | module Ocsigen_comet.Channels >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|write c ~(s~, u~)>> sends the string <<span class="odocwiki_inlinecode"|s>> on the channel <<span class="odocwiki_inlinecode"|c>>~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="write_stream"| value Ocsigen_http_com.write_stream >> ~[<<a_api | module Ocsigen_http_com >>~]|<<div class="odocwiki_info"|~This function may return any ~I~/~O error from the channel~, or a
+interrupted stream exception~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\X|
+|@@class="odocwiki_index"@ @@<<a_api text="x_forwarded_for"| value Http_headers.x_forwarded_for >> ~[<<a_api | module Http_headers >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="x_forwarded_proto"| value Http_headers.x_forwarded_proto >> ~[<<a_api | module Http_headers >>~]||
+\\

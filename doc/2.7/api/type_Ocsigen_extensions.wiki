@@ -1,0 +1,403 @@
+<<code language="ocaml" | sig
+  exception Unknown_command
+  val register_command_function :
+    ?prefix:string -> (string -> string list -> unit Lwt.t) -> unit
+  val get_command_function :
+    unit -> ?prefix:string -> string -> string list -> unit Lwt.t
+  module Ocsigen_request_info :
+    sig
+      type ifrange =
+        Ocsigen_request_info.ifrange =
+          IR_No
+        | IR_Ifunmodsince of float
+        | IR_ifmatch of string
+      type file_info =
+        Ocsigen_request_info.file_info = {
+        tmp_filename : string;
+        filesize : int64;
+        raw_original_filename : string;
+        original_basename : string;
+        file_content_type :
+          ((string * string) * (string * string) list) option;
+      }
+      type request_info = Ocsigen_request_info.request_info
+      val ri_of_url :
+        ?full_rewrite:bool -> string -> request_info -> request_info
+      val make :
+        url_string:string ->
+        meth:Ocsigen_http_frame.Http_header.http_method ->
+        protocol:Ocsigen_http_frame.Http_header.proto ->
+        ?ssl:bool ->
+        full_path_string:string ->
+        full_path:Ocsigen_lib.Url.path ->
+        ?original_full_path_string:string ->
+        ?original_full_path:Ocsigen_lib.Url.path ->
+        ?sub_path:Ocsigen_lib.Url.path ->
+        ?sub_path_string:Ocsigen_lib.Url.uri ->
+        get_params_string:string option ->
+        host:string option ->
+        port_from_host_field:int option ->
+        get_params:(string * string) list Lazy.t ->
+        ?initial_get_params:(string * string) list Lazy.t ->
+        post_params:(string option * Int64.t option ->
+                     (string * string) list Lwt.t)
+                    option ->
+        files:(string option * Int64.t option ->
+               (string * file_info) list Lwt.t)
+              option ->
+        remote_inet_addr:Unix.inet_addr ->
+        remote_ip:string ->
+        ?remote_ip_parsed:Ipaddr.t Lazy.t ->
+        remote_port:int ->
+        ?forward_ip:string list ->
+        server_port:int ->
+        user_agent:string ->
+        cookies_string:string option Lazy.t ->
+        cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
+        ifmodifiedsince:float option ->
+        ifunmodifiedsince:float option ->
+        ifnonematch:string list option ->
+        ifmatch:string list option ->
+        content_type:((string * string) * (string * string) list) option ->
+        content_type_string:string option ->
+        content_length:int64 option ->
+        referer:string option Lazy.t ->
+        origin:string option Lazy.t ->
+        access_control_request_method:string option Lazy.t ->
+        access_control_request_headers:string list option Lazy.t ->
+        accept:Http_headers.accept Lazy.t ->
+        accept_charset:(string option * float option) list Lazy.t ->
+        accept_encoding:(string option * float option) list Lazy.t ->
+        accept_language:(string * float option) list Lazy.t ->
+        http_frame:Ocsigen_http_frame.t ->
+        ?request_cache:Polytables.t ->
+        client:Ocsigen_http_com.connection ->
+        range:((int64 * int64) list * int64 option * ifrange) option Lazy.t ->
+        ?timeofday:float ->
+        ?nb_tries:int ->
+        ?connection_closed:unit Lwt.t -> unit -> request_info
+      val update :
+        request_info ->
+        ?url_string:string ->
+        ?meth:Ocsigen_http_frame.Http_header.http_method ->
+        ?protocol:Ocsigen_http_frame.Http_header.proto ->
+        ?ssl:bool ->
+        ?full_path_string:string ->
+        ?full_path:string list ->
+        ?original_full_path_string:string ->
+        ?original_full_path:string list ->
+        ?sub_path:string list ->
+        ?sub_path_string:string ->
+        ?get_params_string:string option ->
+        ?host:string option ->
+        ?port_from_host_field:int option ->
+        ?get_params:(string * string) list Lazy.t ->
+        ?initial_get_params:(string * string) list Lazy.t ->
+        ?post_params:(string option * Int64.t option ->
+                      (string * string) list Lwt.t)
+                     option ->
+        ?files:(string option * Int64.t option ->
+                (string * file_info) list Lwt.t)
+               option ->
+        ?remote_inet_addr:Unix.inet_addr ->
+        ?remote_ip:string ->
+        ?remote_ip_parsed:Ipaddr.t Lazy.t ->
+        ?remote_port:int ->
+        ?forward_ip:string list ->
+        ?server_port:int ->
+        ?user_agent:string ->
+        ?cookies_string:string option Lazy.t ->
+        ?cookies:string Ocsigen_cookies.CookiesTable.t Lazy.t ->
+        ?ifmodifiedsince:float option ->
+        ?ifunmodifiedsince:float option ->
+        ?ifnonematch:string list option ->
+        ?ifmatch:string list option ->
+        ?content_type:((string * string) * (string * string) list) option ->
+        ?content_type_string:string option ->
+        ?content_length:int64 option ->
+        ?referer:string option Lazy.t ->
+        ?origin:string option Lazy.t ->
+        ?access_control_request_method:string option Lazy.t ->
+        ?access_control_request_headers:string list option Lazy.t ->
+        ?accept:Http_headers.accept Lazy.t ->
+        ?accept_charset:(string option * float option) list Lazy.t ->
+        ?accept_encoding:(string option * float option) list Lazy.t ->
+        ?accept_language:(string * float option) list Lazy.t ->
+        ?http_frame:Ocsigen_http_frame.t ->
+        ?request_cache:Polytables.t ->
+        ?client:Ocsigen_http_com.connection ->
+        ?range:((int64 * int64) list * int64 option * ifrange) option Lazy.t ->
+        ?timeofday:float ->
+        ?nb_tries:int ->
+        ?connection_closed:unit Lwt.t -> unit -> request_info
+      val update_nb_tries : request_info -> int -> unit
+      val update_request_cache : request_info -> Polytables.t -> unit
+      val range :
+        request_info ->
+        ((int64 * int64) list * int64 option * ifrange) option Lazy.t
+      val url_string : request_info -> string
+      val protocol : request_info -> Ocsigen_http_frame.Http_header.proto
+      val http_frame : request_info -> Ocsigen_http_frame.t
+      val meth : request_info -> Ocsigen_http_frame.Http_header.http_method
+      val ifmatch : request_info -> string list option
+      val ifunmodifiedsince : request_info -> float option
+      val ifnonematch : request_info -> string list option
+      val ifmodifiedsince : request_info -> float option
+      val remote_ip : request_info -> string
+      val user_agent : request_info -> string
+      val host : request_info -> string option
+      val ssl : request_info -> bool
+      val port_from_host_field : request_info -> int option
+      val server_port : request_info -> int
+      val full_path : request_info -> string list
+      val get_params_string : request_info -> string option
+      val client : request_info -> Ocsigen_http_com.connection
+      val nb_tries : request_info -> int
+      val sub_path : request_info -> string list
+      val content_length : request_info -> int64 option
+      val content_type_string : request_info -> string option
+      val remote_port : request_info -> int
+      val sub_path_string : request_info -> string
+      val full_path_string : request_info -> string
+      val remote_inet_addr : request_info -> Unix.inet_addr
+      val forward_ip : request_info -> string list
+      val remote_ip_parsed : request_info -> Ipaddr.t Lazy.t
+      val content_type :
+        request_info -> ((string * string) * (string * string) list) option
+      val origin : request_info -> string option Lazy.t
+      val access_control_request_method :
+        request_info -> string option Lazy.t
+      val access_control_request_headers :
+        request_info -> string list option Lazy.t
+      val request_cache : request_info -> Polytables.t
+      val files :
+        request_info ->
+        (string option * Int64.t option -> (string * file_info) list Lwt.t)
+        option
+      val original_full_path : request_info -> string list
+      val cookies :
+        request_info -> string Ocsigen_cookies.CookiesTable.t Lazy.t
+      val post_params :
+        request_info ->
+        (string option * Int64.t option -> (string * string) list Lwt.t)
+        option
+      val get_params : request_info -> (string * string) list Lazy.t
+      val initial_get_params : request_info -> (string * string) list Lazy.t
+      val original_full_path_string : request_info -> string
+      val timeofday : request_info -> float
+      val accept_language :
+        request_info -> (string * float option) list Lazy.t
+      val accept_encoding :
+        request_info -> (string option * float option) list Lazy.t
+      val accept : request_info -> Http_headers.accept Lazy.t
+      val connection_closed : request_info -> unit Lwt.t
+    end
+  exception Ocsigen_http_error of (Ocsigen_cookies.cookieset * int)
+  exception Bad_config_tag_for_extension of string
+  exception Error_in_config_file of string
+  exception Error_in_user_config_file of string
+  val badconfig : ('a, unit, string, 'b) Pervasives.format4 -> 'a
+  type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
+  val hash_virtual_hosts : Ocsigen_extensions.virtual_hosts -> int
+  val equal_virtual_hosts :
+    Ocsigen_extensions.virtual_hosts ->
+    Ocsigen_extensions.virtual_hosts -> bool
+  val host_match :
+    virtual_hosts:Ocsigen_extensions.virtual_hosts ->
+    host:string option -> port:int -> bool
+  type do_not_serve = {
+    do_not_serve_regexps : string list;
+    do_not_serve_files : string list;
+    do_not_serve_extensions : string list;
+  }
+  exception IncorrectRegexpes of Ocsigen_extensions.do_not_serve
+  val do_not_serve_to_regexp :
+    Ocsigen_extensions.do_not_serve -> Netstring_pcre.regexp
+  val join_do_not_serve :
+    Ocsigen_extensions.do_not_serve ->
+    Ocsigen_extensions.do_not_serve -> Ocsigen_extensions.do_not_serve
+  type config_info = {
+    default_hostname : string;
+    default_httpport : int;
+    default_httpsport : int;
+    default_protocol_is_https : bool;
+    mime_assoc : Ocsigen_charset_mime.mime_assoc;
+    charset_assoc : Ocsigen_charset_mime.charset_assoc;
+    default_directory_index : string list;
+    list_directory_content : bool;
+    follow_symlinks : Ocsigen_extensions.follow_symlink;
+    do_not_serve_404 : Ocsigen_extensions.do_not_serve;
+    do_not_serve_403 : Ocsigen_extensions.do_not_serve;
+    uploaddir : string option;
+    maxuploadfilesize : int64 option;
+  }
+  and follow_symlink =
+      DoNotFollowSymlinks
+    | FollowSymlinksIfOwnerMatch
+    | AlwaysFollowSymlinks
+  type client = Ocsigen_http_com.connection
+  val client_id : Ocsigen_extensions.client -> int
+  val client_connection :
+    Ocsigen_extensions.client -> Ocsigen_http_com.connection
+  type ifrange =
+    Ocsigen_extensions.Ocsigen_request_info.ifrange =
+      IR_No
+    | IR_Ifunmodsince of float
+    | IR_ifmatch of string
+  type file_info =
+    Ocsigen_extensions.Ocsigen_request_info.file_info = {
+    tmp_filename : string;
+    filesize : int64;
+    raw_original_filename : string;
+    original_basename : string;
+    file_content_type : ((string * string) * (string * string) list) option;
+  }
+  type request_info = Ocsigen_extensions.Ocsigen_request_info.request_info
+  and request = {
+    request_info : Ocsigen_extensions.request_info;
+    request_config : Ocsigen_extensions.config_info;
+  }
+  exception Ocsigen_Is_a_directory of
+              (Ocsigen_extensions.Ocsigen_request_info.request_info ->
+               Neturl.url)
+  type answer =
+      Ext_do_nothing
+    | Ext_found of (unit -> Ocsigen_http_frame.result Lwt.t)
+    | Ext_found_stop of (unit -> Ocsigen_http_frame.result Lwt.t)
+    | Ext_next of int
+    | Ext_stop_site of (Ocsigen_cookies.cookieset * int)
+    | Ext_stop_host of (Ocsigen_cookies.cookieset * int)
+    | Ext_stop_all of (Ocsigen_cookies.cookieset * int)
+    | Ext_continue_with of
+        (Ocsigen_extensions.request * Ocsigen_cookies.cookieset * int)
+    | Ext_retry_with of Ocsigen_extensions.request *
+        Ocsigen_cookies.cookieset
+    | Ext_sub_result of Ocsigen_extensions.extension2
+    | Ext_found_continue_with of
+        (unit ->
+         (Ocsigen_http_frame.result * Ocsigen_extensions.request) Lwt.t)
+    | Ext_found_continue_with' of
+        (Ocsigen_http_frame.result * Ocsigen_extensions.request)
+  and request_state =
+      Req_not_found of (int * Ocsigen_extensions.request)
+    | Req_found of (Ocsigen_extensions.request * Ocsigen_http_frame.result)
+  and extension2 =
+      (unit -> unit) ->
+      Ocsigen_cookies.cookieset ->
+      request_state -> (answer * Ocsigen_cookies.cookieset) Lwt.t
+  type extension =
+      Ocsigen_extensions.request_state -> Ocsigen_extensions.answer Lwt.t
+  type parse_fun = Simplexmlparser.xml list -> Ocsigen_extensions.extension2
+  type parse_host
+  type userconf_info = { localfiles_root : string; }
+  type parse_config =
+      Ocsigen_extensions.virtual_hosts ->
+      Ocsigen_extensions.config_info -> parse_config_aux
+  and parse_config_user = Ocsigen_extensions.userconf_info -> parse_config
+  and parse_config_aux =
+      Ocsigen_lib.Url.path ->
+      Ocsigen_extensions.parse_host ->
+      Ocsigen_extensions.parse_fun ->
+      Simplexmlparser.xml -> Ocsigen_extensions.extension
+  val register_extension :
+    name:string ->
+    ?fun_site:Ocsigen_extensions.parse_config ->
+    ?user_fun_site:Ocsigen_extensions.parse_config_user ->
+    ?begin_init:(unit -> unit) ->
+    ?end_init:(unit -> unit) ->
+    ?init_fun:(Simplexmlparser.xml list -> unit) ->
+    ?exn_handler:(exn -> string) -> ?respect_pipeline:bool -> unit -> unit
+  module Configuration :
+    sig
+      type element
+      type attribute
+      val element :
+        name:string ->
+        ?obligatory:bool ->
+        ?init:(unit -> unit) ->
+        ?elements:Ocsigen_extensions.Configuration.element list ->
+        ?attributes:Ocsigen_extensions.Configuration.attribute list ->
+        ?pcdata:(string -> unit) ->
+        ?other_elements:(string ->
+                         (string * string) list ->
+                         Simplexmlparser.xml list -> unit) ->
+        ?other_attributes:(string -> string -> unit) ->
+        unit -> Ocsigen_extensions.Configuration.element
+      val attribute :
+        name:string ->
+        ?obligatory:bool ->
+        (string -> unit) -> Ocsigen_extensions.Configuration.attribute
+      val process_element :
+        in_tag:string ->
+        elements:Ocsigen_extensions.Configuration.element list ->
+        ?pcdata:(string -> unit) ->
+        ?other_elements:(string ->
+                         (string * string) list ->
+                         Simplexmlparser.xml list -> unit) ->
+        Simplexmlparser.xml -> unit
+      val process_elements :
+        in_tag:string ->
+        elements:Ocsigen_extensions.Configuration.element list ->
+        ?pcdata:(string -> unit) ->
+        ?other_elements:(string ->
+                         (string * string) list ->
+                         Simplexmlparser.xml list -> unit) ->
+        ?init:(unit -> unit) -> Simplexmlparser.xml list -> unit
+      val ignore_blank_pcdata : in_tag:string -> string -> unit
+    end
+  val get_hostname : Ocsigen_extensions.request -> string
+  val get_port : Ocsigen_extensions.request -> int
+  val new_url_of_directory_request :
+    Ocsigen_extensions.request ->
+    Ocsigen_extensions.request_info -> Neturl.url
+  val ri_of_url :
+    ?full_rewrite:bool ->
+    string ->
+    Ocsigen_extensions.request_info -> Ocsigen_extensions.request_info
+  exception NoSuchUser
+  type ud_string
+  val parse_user_dir : string -> Ocsigen_extensions.ud_string
+  val replace_user_dir :
+    Netstring_pcre.regexp -> Ocsigen_extensions.ud_string -> string -> string
+  exception Not_concerned
+  val find_redirection :
+    Netstring_pcre.regexp ->
+    bool ->
+    string ->
+    bool ->
+    string option -> int -> string option -> string -> string -> string
+  val make_parse_config :
+    Ocsigen_lib.Url.path ->
+    Ocsigen_extensions.parse_config_aux -> Ocsigen_extensions.parse_fun
+  val parse_config_item : Ocsigen_extensions.parse_config
+  val parse_user_site_item : Ocsigen_extensions.parse_config_user
+  val set_hosts :
+    (Ocsigen_extensions.virtual_hosts * Ocsigen_extensions.config_info *
+     Ocsigen_extensions.extension2)
+    list -> unit
+  val get_hosts :
+    unit ->
+    (Ocsigen_extensions.virtual_hosts * Ocsigen_extensions.config_info *
+     Ocsigen_extensions.extension2)
+    list
+  val compute_result :
+    ?previous_cookies:Ocsigen_cookies.cookieset ->
+    ?awake_next_request:bool ->
+    Ocsigen_extensions.request_info -> Ocsigen_http_frame.result Lwt.t
+  val get_number_of_connected : unit -> int
+  val incr_connected : int -> unit
+  val decr_connected : unit -> unit Lwt.t
+  val wait_fewer_connected : int -> unit Lwt.t
+  val during_initialisation : unit -> bool
+  val start_initialisation : unit -> unit
+  val end_initialisation : unit -> unit
+  val get_numberofreloads : unit -> int
+  val get_init_exn_handler : unit -> exn -> string
+  val set_config : Simplexmlparser.xml list -> unit
+  val client_of_connection :
+    Ocsigen_http_com.connection -> Ocsigen_extensions.client
+  val get_server_address :
+    Ocsigen_extensions.request_info -> Unix.inet_addr * int
+  val sockets : Lwt_unix.file_descr list Pervasives.ref
+  val sslsockets : Lwt_unix.file_descr list Pervasives.ref
+end >>

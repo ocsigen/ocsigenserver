@@ -1,0 +1,11 @@
+<<code language="ocaml" | sig
+  val accesslog : string -> unit
+  val errlog : ?section:Lwt_log.section -> string -> unit
+  val warning : ?section:Lwt_log.section -> string -> unit
+  val console : (unit -> string) -> unit
+  val unexpected_exception : exn -> string -> unit
+  val error_log_path : unit -> string
+  val open_files :
+    ?user:string option -> ?group:string option -> unit -> unit Lwt.t
+  val command_f : exn -> string -> string list -> unit Lwt.t
+end >>

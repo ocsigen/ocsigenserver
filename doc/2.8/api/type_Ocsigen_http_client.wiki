@@ -1,0 +1,60 @@
+<<code language="ocaml" | sig
+  val get :
+    ?v6:bool ->
+    ?https:bool ->
+    ?port:int ->
+    ?headers:Http_headers.t ->
+    host:string -> uri:string -> unit -> Ocsigen_http_frame.t Lwt.t
+  val get_url :
+    ?v6:bool ->
+    ?headers:Http_headers.t -> string -> Ocsigen_http_frame.t Lwt.t
+  val post_string :
+    ?v6:bool ->
+    ?https:bool ->
+    ?port:int ->
+    ?headers:Http_headers.t ->
+    host:string ->
+    uri:string ->
+    content:string ->
+    content_type:string * string -> unit -> Ocsigen_http_frame.t Lwt.t
+  val post_string_url :
+    ?v6:bool ->
+    ?headers:Http_headers.t ->
+    content:string ->
+    content_type:string * string -> string -> Ocsigen_http_frame.t Lwt.t
+  val post_urlencoded :
+    ?v6:bool ->
+    ?https:bool ->
+    ?port:int ->
+    ?headers:Http_headers.t ->
+    host:string ->
+    uri:string ->
+    content:(string * string) list -> unit -> Ocsigen_http_frame.t Lwt.t
+  val post_urlencoded_url :
+    ?v6:bool ->
+    ?headers:Http_headers.t ->
+    content:(string * string) list -> string -> Ocsigen_http_frame.t Lwt.t
+  val raw_request :
+    ?client:Ocsigen_extensions.client ->
+    ?keep_alive:bool ->
+    ?headers:Http_headers.t ->
+    ?https:bool ->
+    ?port:int ->
+    content:string Ocsigen_stream.t option ->
+    ?content_length:int64 ->
+    http_method:Ocsigen_http_frame.Http_header.http_method ->
+    host:string ->
+    inet_addr:Unix.inet_addr ->
+    uri:string -> unit -> unit -> Ocsigen_http_frame.t Lwt.t
+  val basic_raw_request :
+    ?headers:Http_headers.t ->
+    ?https:bool ->
+    ?port:int ->
+    content:string Ocsigen_stream.t option ->
+    ?content_length:int64 ->
+    http_method:Ocsigen_http_frame.Http_header.http_method ->
+    host:string ->
+    inet_addr:Unix.inet_addr ->
+    uri:string -> unit -> Ocsigen_http_frame.t Lwt.t
+  val sslcontext : Ssl.context Pervasives.ref
+end >>

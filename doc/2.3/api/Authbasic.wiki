@@ -1,0 +1,41 @@
+=Module <<a_api_type | module Authbasic >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Authbasic>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Authbasic >><<span class="ocsforge_color_keyword"|end>>>>~Module <<span class="odocwiki_inlinecode"|~Authbasic>>~: ~Basic ~H~T~T~P ~Authentication~.
+
+----
+
+~This module implements ~Basic ~H~T~T~P ~Authentication as described in
+    [[http://www.ietf.org/rfc/rfc2617.txt|~R~F~C ~2~6~1~7]]~.  ~It can be used
+    to add an authentication layer to sites with no built~-in
+    authentication ~(e~.g~. static files~)~. ~Beware~, passwords are
+    transmitted in cleartext with this scheme~, so the medium should be
+    secured somehow ~(by e~.g~. ~S~S~L~)~.
+
+
+    ~This module implements only the ~H~T~T~P~-related part of the protocol~,
+    and is meant to be extended with various authentication schemes~. ~A
+    very naive one ~(authentication with a single user~/password~, given
+    in the configuration file~) is provided~.
+<<pre id="VALregister_basic_authentication_method" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|register~_basic~_authentication~_method>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_delimiter"| ( >><<span class="ocsforge_color_uid"|Simplexmlparser>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>><<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~This function registers an authentication plugin~: it adds a new
+      parser to the list of available authentication schemes~.
+
+
+      ~A parser takes as argument an ~X~M~L tree ~(corresponding to the
+      first son of an ~<authbasic~> element in the configuration
+      file~) and returns an authentication function <<span class="odocwiki_inlinecode"|f>>~. <<span class="odocwiki_inlinecode"|f>> will be
+      called for each request with the supplied user and password and
+      should return ~(cooperatively~) a boolean telling whether access
+      is granted or not~. ~Exceptions are handled the same way as for
+      extension parsers~.
+
+
+      ~The ~<authbasic~> element must have a //realm// attribute~,
+      giving some identifier to the resource which is protected
+      ~(several resources on the same hostname can share the same
+      realm~)~. ~This gives a general customization scheme "for free"
+      from the point of view of plugin developers and is totally
+      transparent to the plugin~.
+>>
+<<pre id="VALget_basic_authentication_method" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|get~_basic~_authentication~_method>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_uid"|Simplexmlparser>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>>>>>><<div class="odocwiki_info"|~This function combines all the parsers registered with
+      <<span class="odocwiki_inlinecode"|register~_basic~_authentication~_method>>~. ~It might be useful for
+      other extensions~. ~Not for the casual user~.
+>>

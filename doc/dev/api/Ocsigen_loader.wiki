@@ -1,0 +1,53 @@
+=Module <<a_api_type | module Ocsigen_loader >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_loader>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_loader >><<span class="ocsforge_color_keyword"|end>>>>~Module <<span class="odocwiki_inlinecode"|~Ocsigen~_loader>>~: ~Dynamic loading for ~Ocsigen~.
+
+----
+
+~Notes about ~Findlib usage~:
+* ~Findlib is called with predicates "plugin"~, "mt"~. ~Moreover~, the
+      predicate "native" or "byte" is added~, depending on whether
+      ~Ocsigen is running in native or bytecode mode~.
+* ~In native mode~, ~.cmx~/~.cmxa extensions provided by ~M~E~T~A files are
+      replaced by ~.cmxs~.
+* ~The ~O~C~A~M~L~P~A~T~H environment variable is ignored altogether~.
+
+<<pre id="EXCEPTIONDynlink_error" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|exception>> <<span class="odocwiki_name"|Dynlink_error>> <<span class="ocsforge_color_keyword"|of>> <<span class="odocwiki_type"|string * exn>>>><<pre id="EXCEPTIONFindlib_error" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|exception>> <<span class="odocwiki_name"|Findlib_error>> <<span class="ocsforge_color_keyword"|of>> <<span class="odocwiki_type"|string * exn>>>><<pre id="VALtranslate" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|translate>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> string>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|translate filename>> translate ~.cmo~/~.cma extensions to ~.cmxs in
+    native mode~, and ~.cmxs to ~.cmo ~(~.cma if it exists~) in bytecode
+    mode~.
+>>
+<<pre id="VALset_init_on_load" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|set~_init~_on~_load>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|bool <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~If set to <<span class="odocwiki_inlinecode"|true>>~, the module initialization functions passed to
+    <<span class="odocwiki_inlinecode"|set~_module~_init~_function>> will be executed directly~. ~Otherwise~,
+    they will have to be invoked using <<span class="odocwiki_inlinecode"|init~_module>> at some later stage~.
+>>
+<<pre id="VALloadfile" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|loadfile>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_delimiter"| ( >>unit <<span class="ocsforge_color_delimiter"| -> >> unit<<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_delimiter"| ( >>unit <<span class="ocsforge_color_delimiter"| -> >> unit<<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|loadfile pre post force file>> ~(dynamically~) loads <<span class="odocwiki_inlinecode"|file>>~. ~If
+    <<span class="odocwiki_inlinecode"|force>> is <<span class="odocwiki_inlinecode"|false>>~, remember <<span class="odocwiki_inlinecode"|file>> so that it isn~'t loaded
+    twice~. ~If the loading effectively occurs~, <<span class="odocwiki_inlinecode"|pre>> ~(resp~. <<span class="odocwiki_inlinecode"|post>>~)
+    is called before ~(resp~. after~) the loading~. <<span class="odocwiki_inlinecode"|post>> will be
+    called even if the loading fails~.
+>>
+<<pre id="VALloadfiles" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|loadfiles>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_delimiter"| ( >>unit <<span class="ocsforge_color_delimiter"| -> >> unit<<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_delimiter"| ( >>unit <<span class="ocsforge_color_delimiter"| -> >> unit<<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_delimiter"| -> >> string list <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|loadfiles pre post force file>> loads all the <<span class="odocwiki_inlinecode"|files>>~, using
+    <<span class="odocwiki_inlinecode"|loadfile ~(fun ~(~) ~-~> ~(~)~) ~(fun ~(~) ~-~> ~(~)~) false>> for all the files
+    but the last one~, and <<span class="odocwiki_inlinecode"|loadfile pre post force>> for the last one
+    ~(if any~)~.
+>>
+<<pre id="VALset_module_init_function" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|set~_module~_init~_function>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_delimiter"| ( >>unit <<span class="ocsforge_color_delimiter"| -> >> unit<<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|set~_module~_init~_function name f>> registers the function <<span class="odocwiki_inlinecode"|f>>~, which will
+    be used to initialize the module when <<span class="odocwiki_inlinecode"|init~_module name>> is called~.
+>>
+<<pre id="VALinit_module" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|init~_module>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_delimiter"| ( >>unit <<span class="ocsforge_color_delimiter"| -> >> unit<<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_delimiter"| ( >>unit <<span class="ocsforge_color_delimiter"| -> >> unit<<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|init~_module pre post force name>> runs the init function for the module
+    <<span class="odocwiki_inlinecode"|name>>~. ~If <<span class="odocwiki_inlinecode"|force>> is <<span class="odocwiki_inlinecode"|false>>~, remember <<span class="odocwiki_inlinecode"|name>> so that the init function
+    isn~'t executed twice~. ~If the function is executed~, <<span class="odocwiki_inlinecode"|pre>> ~(resp~. <<span class="odocwiki_inlinecode"|post>>~)
+    is called before ~(resp~. after~) the loading~. <<span class="odocwiki_inlinecode"|post>> will be
+    called even if the loading fails~.
+>>
+<<pre id="VALget_ocamlpath" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|get~_ocamlpath>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|unit <<span class="ocsforge_color_delimiter"| -> >> string list>>>><<div class="odocwiki_info"|~Returns the current ~Findlib library search path~.
+>>
+<<pre id="VALset_ocamlpath" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|set~_ocamlpath>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string list <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~Sets the current ~Findlib library search path~. ~The ~O~Caml standard
+    library path and some site~-specific paths are always implicitly
+    added~.
+>>
+<<pre id="VALadd_ocamlpath" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|add~_ocamlpath>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~Adds a path to the ~Findlib library search path~.
+>>
+<<pre id="VALfindfiles" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|findfiles>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> string list>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|findfiles pkg>> returns the list of files needed to load ~Findlib
+    package <<span class="odocwiki_inlinecode"|pkg>>~, including dependencies~. ~The archive files of
+    <<span class="odocwiki_inlinecode"|pkg>> will appear last in the returned result~.
+>>

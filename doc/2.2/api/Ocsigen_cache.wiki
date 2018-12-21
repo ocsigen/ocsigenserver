@@ -1,0 +1,23 @@
+=Module <<a_api_type | module Ocsigen_cache >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_cache>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_cache >><<span class="ocsforge_color_keyword"|end>>>>~Cache~.
+~Association tables ~(from any kind of database~)
+that keep the most recently used values in memory~.
+~It is also possible to set a maximum lifetime for data in the cache~.
+
+
+~It is based on a structure of doubly linked lists with maximum size~,
+that keeps only the mostly recently used values first~, if you call the <<span class="odocwiki_inlinecode"|up>>
+function each time you use a value~.
+~(~Insertion~, remove and "up" in time ~1~)~.
+~This structure is exported~, so that it can be used in other cases~.
+
+
+~Not ~(preemptive~) thread safe~.
+**Author(s):** Vincent Balat, Raphaël Proust (adding timers)\\
+
+----
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="Make" | module Ocsigen_cache.Make >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_sig_block"|<<span class="ocsforge_color_keyword"|functor>> <<span class="ocsforge_color_delimiter"|(>>A <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<span class="odocwiki_sig_block"|<<span class="ocsforge_color odocwiki_code" id="TYPEkey"|      <<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|key>>>><<span class="ocsforge_color odocwiki_code" id="TYPEvalue"|      <<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|value>>>>>><<span class="ocsforge_color_keyword"|end>><<span class="ocsforge_color_delimiter"|)>> <<span class="ocsforge_color_delimiter"|-~>>> \\  <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_cache.Make >><<span class="ocsforge_color_keyword"|end>>>>>><<pre id="VALclear_all_caches" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|clear~_all~_caches>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|unit <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~Clear the contents of all the existing caches
+>>
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="Dlist" | module Ocsigen_cache.Dlist >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_cache.Dlist >><<span class="ocsforge_color_keyword"|end>>>><<div class="odocwiki_info"|~Doubly~-linked lists with maximum number of entries and limited lifespan for
+    entries~.
+>>

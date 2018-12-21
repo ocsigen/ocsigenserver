@@ -1,0 +1,84 @@
+<<code language="ocaml" | sig
+  type name
+  val name : string -> Http_headers.name
+  val name_to_string : Http_headers.name -> string
+  module NameHtbl :
+    sig
+      type key = name
+      type 'a t
+      val create : int -> 'a t
+      val clear : 'a t -> unit
+      val reset : 'a t -> unit
+      val copy : 'a t -> 'a t
+      val add : 'a t -> key -> 'a -> unit
+      val remove : 'a t -> key -> unit
+      val find : 'a t -> key -> 'a
+      val find_all : 'a t -> key -> 'a list
+      val replace : 'a t -> key -> 'a -> unit
+      val mem : 'a t -> key -> bool
+      val iter : (key -> 'a -> unit) -> 'a t -> unit
+      val fold : (key -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
+      val length : 'a t -> int
+      val stats : 'a t -> Hashtbl.statistics
+    end
+  val accept : Http_headers.name
+  val accept_charset : Http_headers.name
+  val accept_encoding : Http_headers.name
+  val accept_language : Http_headers.name
+  val accept_ranges : Http_headers.name
+  val cache_control : Http_headers.name
+  val connection : Http_headers.name
+  val content_encoding : Http_headers.name
+  val content_length : Http_headers.name
+  val content_type : Http_headers.name
+  val content_range : Http_headers.name
+  val cookie : Http_headers.name
+  val date : Http_headers.name
+  val etag : Http_headers.name
+  val expires : Http_headers.name
+  val host : Http_headers.name
+  val if_match : Http_headers.name
+  val if_modified_since : Http_headers.name
+  val if_none_match : Http_headers.name
+  val if_unmodified_since : Http_headers.name
+  val if_range : Http_headers.name
+  val last_modified : Http_headers.name
+  val location : Http_headers.name
+  val server : Http_headers.name
+  val set_cookie : Http_headers.name
+  val status : Http_headers.name
+  val transfer_encoding : Http_headers.name
+  val user_agent : Http_headers.name
+  val referer : Http_headers.name
+  val range : Http_headers.name
+  val x_forwarded_for : Http_headers.name
+  val x_forwarded_proto : Http_headers.name
+  val origin : Http_headers.name
+  val access_control_request_method : Http_headers.name
+  val access_control_request_headers : Http_headers.name
+  val access_control_allow_origin : Http_headers.name
+  val access_control_allow_credentials : Http_headers.name
+  val access_control_expose_headers : Http_headers.name
+  val access_control_max_age : Http_headers.name
+  val access_control_allow_methods : Http_headers.name
+  val access_control_allow_headers : Http_headers.name
+  type t
+  val empty : Http_headers.t
+  val add : Http_headers.name -> string -> Http_headers.t -> Http_headers.t
+  val replace :
+    Http_headers.name -> string -> Http_headers.t -> Http_headers.t
+  val replace_opt :
+    Http_headers.name -> string option -> Http_headers.t -> Http_headers.t
+  val find : Http_headers.name -> Http_headers.t -> string
+  val find_all : Http_headers.name -> Http_headers.t -> string list
+  val iter : (Http_headers.name -> string -> unit) -> Http_headers.t -> unit
+  val fold :
+    (Http_headers.name -> string list -> 'a -> 'a) ->
+    Http_headers.t -> 'a -> 'a
+  val with_defaults : Http_headers.t -> Http_headers.t -> Http_headers.t
+  val dyn_headers : Http_headers.t
+  type accept =
+      ((string option * string option) * float option *
+       (string * string) list)
+      list
+end >>

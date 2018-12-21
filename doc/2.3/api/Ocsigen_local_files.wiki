@@ -1,0 +1,39 @@
+=Module <<a_api_type | module Ocsigen_local_files >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_local_files>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_local_files >><<span class="ocsforge_color_keyword"|end>>>>~The requested file does not exists
+
+----
+<<pre id="EXCEPTIONFailed_404" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|exception>> <<span class="odocwiki_name"|Failed_404>>>><<div class="odocwiki_info"|~The requested file cannot be served~: does not exists~, not
+    enough permissions ~.~.~.
+>>
+<<pre id="EXCEPTIONFailed_403" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|exception>> <<span class="odocwiki_name"|Failed_403>>>><<div class="odocwiki_info"|~The file is a directory which we should not display
+>>
+<<pre id="EXCEPTIONNotReadableDirectory" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|exception>> <<span class="odocwiki_name"|NotReadableDirectory>>>><<pre class="ocsforge_color odocwiki_code" id="TYPEresolved"|<<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|resolved>> <<span class="ocsforge_color_delimiter"|~=>> <<span class="odocwiki_variants"|<<span class="odocwiki_variant"|<<span class="odocwiki_variant_constr"|<<span class="ocsforge_color_keyword"| ~|>> <<span class="ocsforge_color_uid"|RFile>> <<span class="ocsforge_color_keyword"|of>> <<span class="odocwiki_type"|string>>>>>><<span class="odocwiki_variant"|<<span class="odocwiki_variant_constr"|<<span class="ocsforge_color_keyword"| ~|>> <<span class="ocsforge_color_uid"|RDir>> <<span class="ocsforge_color_keyword"|of>> <<span class="odocwiki_type"|string>>>>>>>>>><<div class="odocwiki_info"|~Local file corresponding to a request~. ~The string argument
+   represents the real file or directory to serve~, eg~. foo~/index~.html
+   instead of foo
+>>
+<<pre id="VALresolve" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|resolve>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?no_check_for: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| request: >><<a_api text="Ocsigen_extensions.request" | type Ocsigen_extensions.request >> <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| filename: >>string <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="resolved" | type Ocsigen_local_files.resolved >>>>>><<div class="odocwiki_info"|~Finds <<span class="odocwiki_inlinecode"|filename>> in the filesystem~, with a possible redirection
+    if it is a directory~. ~Takes into account the fact that <<span class="odocwiki_inlinecode"|filename>>
+    does not exists~, is a symlink or is a directory~, and raises
+    ~Failed~_~4~0~4 or ~Failed~_~4~0~3 accordingly~.
+
+
+* we return <<span class="odocwiki_inlinecode"|"filename~/index~.html">> if <<span class="odocwiki_inlinecode"|filename>> corresponds to
+    a directory~, <<span class="odocwiki_inlinecode"|"filename~/index~.html">> is valid~, and <<span class="odocwiki_inlinecode"|"index~.html">>
+    is one possible index ~(trying all possible indexes in order~)
+* we raise <<span class="odocwiki_inlinecode"|~Failed~_~4~0~4>> if <<span class="odocwiki_inlinecode"|filename>> corresponds to a directory~,
+    no index exists and <<span class="odocwiki_inlinecode"|list~_dir~_content>> is false~.
+    ~Warning~: this behaviour is not the same as ~Apache~'s but it corresponds
+    to a missing service in ~Eliom ~(answers ~4~0~4~)~. ~This also allows to have
+    an ~Eliom service after a "forbidden" directory
+* we raise <<span class="odocwiki_inlinecode"|~Failed~_~4~0~3>> if <<span class="odocwiki_inlinecode"|filename>> is a symlink that must
+    not be followed
+* raises <<span class="odocwiki_inlinecode"|~Failed~_~4~0~4>> if <<span class="odocwiki_inlinecode"|filename>> does not exist~, or is a special file
+* otherwise returns <<span class="odocwiki_inlinecode"|filename>>
+
+    <<span class="odocwiki_inlinecode"|no~_check~_for>> is supposed to be a prefix of <<span class="odocwiki_inlinecode"|filename>> ~;
+    directories above <<span class="odocwiki_inlinecode"|no~_check~_for>> are not checked for symlinks
+>>
+<<pre id="VALcontent" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|content>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| request: >><<a_api text="Ocsigen_extensions.request" | type Ocsigen_extensions.request >> <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| file: >><<a_api text="resolved" | type Ocsigen_local_files.resolved >> <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_http_frame.result" | type Ocsigen_http_frame.result >> <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>>>>>><<div class="odocwiki_info"|~Given the local file <<span class="odocwiki_inlinecode"|file>>~, with a request originating at url
+    <<span class="odocwiki_inlinecode"|url>>~, returns a viewable content of <<span class="odocwiki_inlinecode"|file>>~. ~Currently~, the <<span class="odocwiki_inlinecode"|url>>
+    parameter is used only if <<span class="odocwiki_inlinecode"|url>> is a directory
+>>
