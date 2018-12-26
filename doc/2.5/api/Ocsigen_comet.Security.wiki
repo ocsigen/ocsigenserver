@@ -1,0 +1,23 @@
+=Module <<a_api_type | module Ocsigen_comet.Security >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Security>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_comet.Security >><<span class="ocsforge_color_keyword"|end>>>>
+----
+<<pre id="VALset_timeout" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|set~_timeout>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_label"| ?reset: >>bool <<span class="ocsforge_color_delimiter"| -> >> float <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|set~_timeout ~?reset f>> sets the timeout value for future ~Comet connections
+      to <<span class="odocwiki_inlinecode"|f>>~. ~If <<span class="odocwiki_inlinecode"|reset>> is <<span class="odocwiki_inlinecode"|true>> then current connections are closed and the
+      new timeout value will apply to the reopened connections~. ~Default value
+      for <<span class="odocwiki_inlinecode"|reset>> is false~.
+>>
+<<pre id="VALdeactivate" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|deactivate>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|unit <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|deactivate ~(~)>> ceases all ~Comet related activity~. ~Each opened connection
+      is closed~. ~Further attempts to connect to the server with a ~Comet specific
+      content type will result in a ~H~T~T~P status code ~5~0~3 ~(~Unavailable~)~.
+      ~If called when ~Comet is not activated it does nothing ~(not even logging
+      the deactivation attempt~.
+>>
+<<pre id="VALactivate" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|activate>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|unit <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|activate ~(~)>> starts serving ~Comet requests~. ~It is the client~'s own
+      responsibility to reopen a connection~. ~If ~Comet was already activated it
+      keeps going and nothing happens~.
+>>
+<<pre id="VALactivated" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|activated>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|unit <<span class="ocsforge_color_delimiter"| -> >> bool>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|activated ~(~)>> reflects the activation state of the ~Comet
+      module~. ~If <<span class="odocwiki_inlinecode"|false>> it indicates that ~Comet connections are answered with a
+      ~H~T~T~P status code ~5~0~3~. ~If <<span class="odocwiki_inlinecode"|true>> it indicates that ~Comet connections are
+      handled in a standard fashion by the server~.
+>>

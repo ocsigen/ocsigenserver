@@ -1,0 +1,45 @@
+=Outputfilter=
+
+Outputfilter allows to filter the output and rewrite some part of it (for example headers) before sending it to the client. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [[https://github.com/ocsigen/ocsigenserver|here]].
+
+For now it only allows to change or add headers, or to change the HTTP code.
+
+== Configuration
+
+To use this extension, first load it from the configuration file:
+{{{
+<extension findlib-package="ocsigenserver.ext.outputfilter"/>
+}}}
+
+=== Rewrite headers
+
+When you want to rewrite one header (after having generated a page), do something like:
+{{{
+<outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/\1"/>
+}}}
+Here we rewrite the content of the header location (this line is useful when you are using the reverse proxy).
+
+=== Add headers
+
+When you want to add a header (after having generated a page), do something like:
+{{{
+<outputfilter header="X-Frame-Options" dest="SAMEORIGIN" replace="true"/>
+}}}
+
+This will add the header "X-Frame-Options" with content "SAMEORIGIN"
+to the generated page. The replace attribute is optionnal.
+* If replace is "true", the previous headers are replaced.
+* If replace is "false", it will be added even if there was a header with the same name.
+* If not set, it will be added only if there was no header with the same name.
+(This line is usefull when you want to avoid clickjacking)
+
+=== Change HTTP code
+
+The syntax to change the HTTP code is:
+
+{{{
+<sethttpcode code=... />
+}}}
+
+where the value of the code attribute is a valid HTTP code
+(404 or 200 for example).

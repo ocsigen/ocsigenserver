@@ -1,0 +1,85 @@
+<<code language="ocaml" | sig
+  exception Config_file_error of string
+  val server_name : string
+  val full_server_name : string
+  val version_number : string
+  val is_native : bool
+  val native_ext : string
+  val builtin_packages : Ocsigen_lib.String.Set.t
+  val set_logdir : string -> unit
+  val set_syslog_facility : Lwt_log.syslog_facility option -> unit
+  val set_configfile : string -> unit
+  val set_pidfile : string -> unit
+  val set_mimefile : string -> unit
+  val set_verbose : unit -> unit
+  val set_silent : unit -> unit
+  val set_daemon : unit -> unit
+  val set_veryverbose : unit -> unit
+  val set_minthreads : int -> unit
+  val set_maxthreads : int -> unit
+  val set_max_number_of_threads_queued : int -> unit
+  val set_max_number_of_connections : int -> unit
+  val set_client_timeout : int -> unit
+  val set_server_timeout : int -> unit
+  val set_netbuffersize : int -> unit
+  val set_filebuffersize : int -> unit
+  val set_maxrequestbodysize : int64 option -> unit
+  val set_maxrequestbodysizeinmemory : int -> unit
+  val set_default_charset : string option -> unit
+  val set_datadir : string -> unit
+  val set_bindir : string -> unit
+  val set_extdir : string -> unit
+  val set_user : string option -> unit
+  val set_group : string option -> unit
+  val set_command_pipe : string -> unit
+  val set_debugmode : bool -> unit
+  val set_disablepartialrequests : bool -> unit
+  val set_usedefaulthostname : bool -> unit
+  val set_respect_pipeline : unit -> unit
+  val set_default_port : int -> unit
+  val set_default_sslport : int -> unit
+  val set_maxretries : int -> unit
+  val set_shutdown_timeout : float option -> unit
+  val get_logdir : unit -> string
+  val get_syslog_facility : unit -> Lwt_log.syslog_facility option
+  val get_config_file : unit -> string
+  val get_pidfile : unit -> string option
+  val get_mimefile : unit -> string
+  val get_verbose : unit -> bool
+  val get_silent : unit -> bool
+  val get_daemon : unit -> bool
+  val get_veryverbose : unit -> bool
+  val get_default_user : unit -> string
+  val get_default_group : unit -> string
+  val get_minthreads : unit -> int
+  val get_maxthreads : unit -> int
+  val get_max_number_of_threads_queued : unit -> int
+  val get_max_number_of_connections : unit -> int
+  val get_client_timeout : unit -> int
+  val get_server_timeout : unit -> int
+  val get_netbuffersize : unit -> int
+  val get_filebuffersize : unit -> int
+  val get_maxrequestbodysize : unit -> int64 option
+  val get_maxrequestbodysizeinmemory : unit -> int
+  val get_default_charset : unit -> string option
+  val get_datadir : unit -> string
+  val get_bindir : unit -> string
+  val get_extdir : unit -> string
+  val get_user : unit -> string option
+  val get_group : unit -> string option
+  val get_command_pipe : unit -> string
+  val get_debugmode : unit -> bool
+  val get_disablepartialrequests : unit -> bool
+  val get_usedefaulthostname : unit -> bool
+  val get_respect_pipeline : unit -> bool
+  val get_default_port : unit -> int
+  val get_default_sslport : unit -> int
+  val get_maxretries : unit -> int
+  val get_shutdown_timeout : unit -> float option
+  val display_version : unit -> 'a
+  val init_preempt : int -> int -> (string -> unit) -> unit
+  val set_uploaddir : string option -> unit
+  val get_uploaddir : unit -> string option
+  val set_maxuploadfilesize : int64 option -> unit
+  val get_maxuploadfilesize : unit -> int64 option
+end >>

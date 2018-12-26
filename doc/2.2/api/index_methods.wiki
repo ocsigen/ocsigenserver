@@ -1,0 +1,20 @@
+=Index of class methods=
+
+|@@ @style="tet-align: left;"@@\\A|
+|@@class="odocwiki_index"@ @@<<a_api text="add"| method Ocsigen_cache.Make.cache#add >> ~[<<a_api | module Ocsigen_cache.Make >>~]||
+|@@ @style="tet-align: left;"@@\\C|
+|@@class="odocwiki_index"@ @@<<a_api text="clear"| method Ocsigen_cache.Make.cache#clear >> ~[<<a_api | module Ocsigen_cache.Make >>~]||
+|@@ @style="tet-align: left;"@@\\F|
+|@@class="odocwiki_index"@ @@<<a_api text="find"| method Ocsigen_cache.Make.cache#find >> ~[<<a_api | module Ocsigen_cache.Make >>~]|<<div class="odocwiki_info"|~Find the cached value associated to the key~, or binds this
+          value in the cache using the function <<span class="odocwiki_inlinecode"|finder>> passed as argument
+          to <<span class="odocwiki_inlinecode"|create>>~, and returns this value
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="find_in_cache"| method Ocsigen_cache.Make.cache#find_in_cache >> ~[<<a_api | module Ocsigen_cache.Make >>~]|<<div class="odocwiki_info"|~Find the cached value associated to the key~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\R|
+|@@class="odocwiki_index"@ @@<<a_api text="remove"| method Ocsigen_cache.Make.cache#remove >> ~[<<a_api | module Ocsigen_cache.Make >>~]||
+|@@ @style="tet-align: left;"@@\\S|
+|@@class="odocwiki_index"@ @@<<a_api text="size"| method Ocsigen_cache.Make.cache#size >> ~[<<a_api | module Ocsigen_cache.Make >>~]||
+\\

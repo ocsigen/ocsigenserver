@@ -1,0 +1,52 @@
+=Libraries
+
+==Ocsigen_cache
+
+
+==Ocsipersist
+
+<<div class="wip"|Ocsipersist (3 implémentations)
+Eliom allows to use more persistent data, using the module
+<<a_api project="ocsigenserver" | module Ocsipersist >> is needed in
+{{{ eliom.cma }}}, thus you need to dynlink it in the
+configuration file before {{{ Eliom }}}).
+There are currently two implementations of {{{ Ocsipersist }}}:
+{{{ ocsipersist-dbm.cma }}} (uses the DBM database);
+{{{ ocsipersist-sqlite.cma }}} (uses the SQLite database
+and depends on {{{ sqlite3.cma }}} from the OPAM package sqlite3);
+{{{ ocsipersist-pgsql.cma }}} (uses the PostgreSQL (version >= 9.5)
+database and depends on {{{ pa_pgsql.cma }}} from the OPAM package pgocaml);
+>>
+
+It is possible to customize the location of the database on the 
+file system. For example, with sqlite:
+{{{
+    <extension findlib-package="ocsigen.ext.ocsipersist-sqlite">
+      <database file="_DATADIR_/ocsidb"/>
+    </extension>
+}}}
+And with DBM, you can customize the location of the database and the
+name of the {{{ocsidbm}}} process you want to use:
+{{{
+    <extension findlib-package="ocsigen.ext.ocsipersist-dbm">
+      <store dir="_DATADIR_"/>
+      <ocsidbm name="_EXTRALIBDIR_/ocsidbm"/>
+    </extension>
+}}}
+PostgreSQL has more options to specify how to connect to the database.
+Note that the ocsipersist-database under the specified name (default:
+"ocsipersist") needs to exist. To create it run {{{psql}}} and execute
+{{{CREATE TABLE ocsipersist;}}}.
+{{{
+    <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
+      <database <!-- optional, as each of the following attributes are -->
+        host="localhost"
+        port="3000"
+        user="Aerobic Respirator"
+        password="Guess what I need!"
+        database="ocsipersist" <!-- this is the default value if not specified -->
+        unix_domain_socket_dir="./udsd"
+        size_conn_pool="16" <!-- this is the default value; number of DB connections -->
+      />
+    </extension>
+}}}

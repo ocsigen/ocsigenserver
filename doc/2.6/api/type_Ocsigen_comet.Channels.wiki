@@ -1,0 +1,12 @@
+<<code language="ocaml" | sig
+  exception Too_many_virtual_channels
+  exception Non_unique_channel_name
+  type t
+  type chan_id = string
+  val create : ?name:string -> unit -> Ocsigen_comet.Channels.t
+  val write :
+    Ocsigen_comet.Channels.t ->
+    string * Ocsigen_stream.outcome Lwt.u option -> unit
+  val listeners : Ocsigen_comet.Channels.t -> int
+  val get_id : Ocsigen_comet.Channels.t -> Ocsigen_comet.Channels.chan_id
+end >>

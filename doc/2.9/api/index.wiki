@@ -1,0 +1,63 @@
+==
+
+=@@id="1_OcsigenserverAPIreference"@@~Ocsigen server ~- ~A~P~I reference=
+
+
+
+
+==@@id="2_Persistentdatawritinginthelogsconfigurationfileextensionpolymorphictables"@@~Persistent data~, writing in the logs~, configuration file extension~, polymorphic tables==
+
+
+|Ocsigen_lib||
+|<<a_api | module Ocsigen_messages >>|<<div class="odocwiki_info"|~Writing messages in the logs
+>>
+|
+|Ocsigen_parseconfig||
+|<<a_api | module Polytables >>|<<div class="odocwiki_info"|~Polymorphic tables ~(using ~Map~)
+>>
+|
+|<<a_api | module Ocsigen_cache >>|<<div class="odocwiki_info"|~Cache~.
+>>
+|
+|<<a_api | module Ocsipersist >>|<<div class="odocwiki_info"|~Persistent data on hard disk~.
+>>
+|
+|Ocsigen_config||
+
+
+
+
+
+==@@id="2_ExtendingOcsigenServer"@@~Extending ~Ocsigen ~Server==
+
+
+|Ocsigen_extensions||
+|Ocsigen_local_files||
+|Ocsigen_headers||
+|Ocsigen_senders||
+|Ocsigen_http_frame||
+|Ocsigen_http_client||
+|Ocsigen_http_com||
+|<<a_api | module Ocsigen_stream >>|<<div class="odocwiki_info"|~Streams are a means to read data block by block
+>>
+|
+|Ocsigen_comet||
+|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Module <<span class="odocwiki_inlinecode"|~Authbasic>>~: ~Basic ~H~T~T~P ~Authentication~.
+>>
+|
+
+
+
+
+
+==@@id="2_Indexes"@@~Indexes==
+
+
+
+* <<a_api text="Index of types" | index types >>
+* <<a_api text="Index of exceptions" | index exceptions >>
+* <<a_api text="Index of values" | index values >>
+* <<a_api text="Index of class methods" | index methods >>
+* <<a_api text="Index of classes" | index classes >>
+* <<a_api text="Index of modules" | index modules >>
+

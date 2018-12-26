@@ -1,0 +1,11 @@
+=Index of classes=
+
+|@@ @style="tet-align: left;"@@\\C|
+|@@class="odocwiki_index"@ @@<<a_api text="cache"| class Ocsigen_cache.Make.cache >> ~[<<a_api | module Ocsigen_cache.Make >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|new cache finder ~?timer size>> creates a cache object where <<span class="odocwiki_inlinecode"|finder>>
+        is the function responsible for retrieving non~-cached data~, <<span class="odocwiki_inlinecode"|timer>>
+        ~(if any~) is the life span of cached values ~(in seconds~) ~(values in the
+        cache are removed after their time is up~) and <<span class="odocwiki_inlinecode"|size>> is the upper
+        bound to the number of simultaneoulsy cached elements~.
+>>
+|
+\\

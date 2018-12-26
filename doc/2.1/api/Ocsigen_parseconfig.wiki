@@ -1,0 +1,23 @@
+=Module <<a_api_type | module Ocsigen_parseconfig >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_parseconfig>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_parseconfig >><<span class="ocsforge_color_keyword"|end>>>>~Config file parsing
+
+----
+<<pre id="VALparse_size" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|parse~_size>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> int64 option>>>><<div class="odocwiki_info"|~Parse a size ~("infinity" or using ~S~I or binary units~,
+    e~.g~. ~1~0 ~1~0~B ~1~0o ~1~0ko ~1~0k~B ~1~0ki~B ~1~0~Mi~B ~1~0~T~B ~.~.~.~)~.
+    ~Raises <<span class="odocwiki_inlinecode"|~Failure "~Ocsigen~_parseconfig~.parse~_size">> in case of error~.
+>>
+<<pre id="VALparse_size_tag" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|parse~_size~_tag>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> int64 option>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|parse~_size~_tag tag s>> parses a size ~(same syntax as <<span class="odocwiki_inlinecode"|parse~_size>>~)~.
+    ~In case of error~, raises <<span class="odocwiki_inlinecode"|~Ocsigen~_config~.~Config~_file~_error m>> where <<span class="odocwiki_inlinecode"|m>>
+    is an error message explaining that a size was expected in tag <<span class="odocwiki_inlinecode"|~<tag~>>>~.
+>>
+<<pre id="VALparse_string" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|parse~_string>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Simplexmlparser>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> list <<span class="ocsforge_color_delimiter"| -> >> string>>>><<div class="odocwiki_info"|~Parse a string ~(~P~C~D~A~T~A~) as ~X~M~L content~.
+    ~Raises <<span class="odocwiki_inlinecode"|~Failure "~Ocsigen~_parseconfig~.parse~_string">> in case of error~.
+>>
+<<pre id="VALparse_string_tag" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|parse~_string~_tag>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_uid"|Simplexmlparser>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> list <<span class="ocsforge_color_delimiter"| -> >> string>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|parse~_string~_tag tag s>> parses a string ~(same syntax as <<span class="odocwiki_inlinecode"|parse~_string>>~)~.
+    ~In case of error~, raises <<span class="odocwiki_inlinecode"|~Ocsigen~_config~.~Config~_file~_error m>> where <<span class="odocwiki_inlinecode"|m>>
+    is an error message explaining that a string was expected in tag <<span class="odocwiki_inlinecode"|~<tag~>>>~.
+>>
+<<pre id="VALparse_host_field" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|parse~_host~_field>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string option <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_extensions.virtual_hosts" | type Ocsigen_extensions.virtual_hosts >>>>>><<div class="odocwiki_info"|~Parses the <<span class="odocwiki_inlinecode"|hostfilter>> field of the configuration file~, which
+    is a disjunction of possible hostnames ~(that can themselves contain
+    wildcards~)
+>>

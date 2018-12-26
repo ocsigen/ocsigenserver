@@ -1,0 +1,25 @@
+<<code language="ocaml" | sig
+  type t = Url_base.t
+  type uri = string
+  val make_absolute_url : https:bool -> host:string -> port:int -> uri -> t
+  type path = string list
+  val remove_dotdot : path -> path
+  val remove_end_slash : string -> string
+  val remove_internal_slash : path -> path
+  val change_empty_list : path -> path
+  val add_end_slash_if_missing : path -> path
+  val remove_slash_at_end : path -> path
+  val remove_slash_at_beginning : path -> path
+  val is_prefix_skip_end_slash : string list -> string list -> bool
+  val split_fragment : string -> string * string option
+  val fixup_url_string : t -> t
+  val encode : ?plus:bool -> string -> string
+  val decode : ?plus:bool -> string -> string
+  val make_encoded_parameters : (string * string) list -> string
+  val string_of_url_path : encode:bool -> path -> uri
+  val parse :
+    t ->
+    bool option * string option * int option * string * string list *
+    string option * (string * string) list Lazy.t
+  val split_path : string -> string list
+end >>
