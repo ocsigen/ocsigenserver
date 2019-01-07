@@ -50,7 +50,7 @@ cat >$f <<EOF
 EOF
 quickdop -f doc _doc -t json -c $f -viu
 
-make-redir "$LATEST/manual/intro" _doc/index.html
+make-redir "$LATEST/manual/quickstart" _doc/index.html
 
 # TODO Also remove that line.
 mv tmp _doc
