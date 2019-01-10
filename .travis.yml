@@ -1,7 +1,15 @@
 language: c
 
-install: true
-script: ./.howdocgen
+env: HOW_DOC=doc HOW_CONFIG=how.json HOW_OUT=_doc 
+
+install: 
+    - wget https://ocsigen.org/how.sh
+    - . how.sh
+    - how-install
+
+script:
+    - how-generate
+    - how-redirect "$LATEST/manual/quickstart" $HOW_OUT/index.html
 
 deploy:
   provider: pages
