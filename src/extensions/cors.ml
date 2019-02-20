@@ -69,6 +69,15 @@ let add_headers config rq response =
           (Ocsigen_request_info
            .access_control_request_method rq.Ocsigen_extensions.request_info)
       in
+
+      let req_path =
+        Ocsigen_request_info
+        .full_path_string rq.Ocsigen_extensions.request_info
+      in
+      Format.eprintf
+        "OPTION {\"method\":\"%s\",\"origin\":\"%s\",\"path\",\"%s\"}@."
+        (match req_method with Some m -> m | None -> "<none>") origin req_path;
+
       match req_method with
         None -> res_headers
       | Some request_method ->
