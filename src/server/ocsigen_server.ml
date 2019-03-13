@@ -47,6 +47,9 @@ let () = Ocsigen_commandline.cmdline
    an exception ... *)
 let _ = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
 
+(* Exit gracefully on SIGINT so that profiling will work *)
+let _ = Sys.set_signal Sys.sigint (Sys.Signal_handle(fun _ -> exit 0))
+
 let section = Lwt_log.Section.make "ocsigen:main"
 
 (* Initialize exception handler for Lwt timeouts: *)

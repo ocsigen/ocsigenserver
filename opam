@@ -13,6 +13,7 @@ build: [
   [
     "sh"
     "configure"
+    "--enable-profiling"
     "--prefix"
     "%{prefix}%"
     "--ocsigen-user"
