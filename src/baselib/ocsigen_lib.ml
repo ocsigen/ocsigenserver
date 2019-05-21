@@ -303,4 +303,20 @@ module Url = struct
 
   let split_path = Neturl.split_path
 
+  let prefix_and_path_of_t url =
+    let (https, host, port, _, path, _, _) = parse url in
+    let https_str = match https with
+    | None -> ""
+    | Some x -> if x then "https://" else "http://"
+    in
+    let host_str = match host with
+    | None -> ""
+    | Some x -> x
+    in
+    let port_str = match port with
+    | None -> ""
+    | Some x -> string_of_int x
+    in
+    (https_str ^ host_str ^ ":" ^ port_str, path)
+
 end

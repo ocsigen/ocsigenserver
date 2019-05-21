@@ -78,4 +78,13 @@ module Url : sig
   (** alias of (Ocamlnet) [Neturl.split_path] *)
   val split_path : string -> string list
 
+  (** [prefix_and_path_of_t url] splits [url] in a couple [(prefix, path)] where
+      [prefix] is ["http(s)://host:port"] and [path] is the path as [string list]
+
+      Example: [prefix_and_path_of_t "http://ocsigen.org:80/tuto/manual"]
+      returns [("http://ocsigen.org:80", ["tuto", "manual"])].
+   *)
+  val prefix_and_path_of_t :
+    string ->
+    string * string list
 end
