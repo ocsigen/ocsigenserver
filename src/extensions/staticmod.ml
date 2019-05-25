@@ -33,7 +33,7 @@ exception Not_concerned
 (*****************************************************************************)
 (* Structures describing the static pages a each virtual server *)
 
-(* A static site is either an entire directory served unconditionnaly,
+(* A static site is either an entire directory served unconditionally,
    or a more elaborate redirection based on regexpes and http error
    codes. See the web documentation of staticmod for detail *)
 type static_site_kind =

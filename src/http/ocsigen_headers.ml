@@ -18,7 +18,7 @@
 
 (* TODO: rewrite header parsing! *)
 
-(** This module is for getting informations from HTTP header. *)
+(** This module is for getting information from HTTP header. *)
 (** It uses the lowel level module Ocsigen_http_frame.Http_header.    *)
 (** It is very basic and must be completed for exhaustiveness. *)
 (* Operation on strings are hand-written ... *)

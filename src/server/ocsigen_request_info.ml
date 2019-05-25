@@ -34,7 +34,7 @@ type request_info =
    remote_ip: string;            (** IP of the client *)
    remote_ip_parsed: Ipaddr.t Lazy.t;    (** IP of the client, parsed *)
    remote_port: int;      (** Port used by the client *)
-   forward_ip: string list; (** IPs of gateways the request went throught *)
+   forward_ip: string list; (** IPs of gateways the request went through *)
    server_port: int;      (** Port of the request (server) *)
    user_agent: string;    (** User_agent of the browser *)
    cookies_string: string option Lazy.t; (** Cookies sent by the browser *)

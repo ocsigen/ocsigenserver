@@ -20,10 +20,10 @@
 
 open Ocsigen_lib
 
-(** this set of modules discribes the http protocol and
+(** this set of modules describes the http protocol and
     the operation on this protocol*)
 
-(** this signature provides a template to discribe the content of a http
+(** this signature provides a template to describe the content of a http
     frame *)
 
 open Ocsigen_stream
@@ -87,7 +87,7 @@ module Result = struct
             int64 ->
               string Ocsigen_stream.step Lwt.t) option
        ; (** Default: empty stream.
-             The second field is (optionaly)
+             The second field is (optionally)
              the function used to skip a part of the
              stream, if you do not you want to use
              a basic reading of the stream.
@@ -269,7 +269,7 @@ struct
       the error, some comment, and some headers. *)
   exception Http_exception of int * string option * Http_headers.t option
 
-  (* this fonction provides the translation mecanisme between a code and
+  (* this function provides the translation mecanisme between a code and
    * its explanation *)
   let expl_of_code =
     function

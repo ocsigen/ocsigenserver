@@ -2,7 +2,7 @@
 (* Copyright Gerd Stolpmann, Patrick Doane *)
 (* Modified for Ocsigen/Lwt by Nataliya Guts and Vincent Balat *)
 
-(*VVV Check wether we should support int64 for large files? *)
+(*VVV Check whether we should support int64 for large files? *)
 
 open Ocsigen_lib
 

@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-(** Getting informations from HTTP header. *)
+(** Getting information from HTTP header. *)
 (** This module uses the lowel level module Ocsigen_http_frame.Http_header.
      It is very basic and must be completed for exhaustiveness. *)
 

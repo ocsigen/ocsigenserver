@@ -63,7 +63,7 @@ type ssl_info = {
   ssl_curve       : string option
 }
 
-(** First pass of parse XML file. Extracts this informations:
+(** First pass of parse XML file. Extracts this information:
     {ul
     {- user to execute OcsigenServer (ex: www-data) }
     {- group to execute OcsigenServer (ex: www-data) }

@@ -46,7 +46,7 @@ let map_rev_accu_split func lst accu1 accu2 =
 (*** EXTENSION OPTIONS ***)
 
 
-(* timeout for comet connections : if no value has been written in the ellapsed
+(* timeout for comet connections : if no value has been written in the elapsed
  * time, connection will be closed. Should be equal to client timeout. *)
 let timeout_ref = ref 20.
 let get_timeout () = !timeout_ref
@@ -128,7 +128,7 @@ end = struct
   let new_id = Ocsigen_lib.make_cryptographic_safe_string
 
   (* because Hashtables allow search for elements with a corresponding hash, we
-   * have to create a dummy channel in order to retreive the original channel.
+   * have to create a dummy channel in order to retrieve the original channel.
    * Is there a KISSer way to do that ? *)
   let (dummy1, dummy2) = Lwt.task ()
   let dummy_chan i =
@@ -212,7 +212,7 @@ sig
 
   val decode_upcomming :
     Ocsigen_extensions.request -> (Channels.t list * Channels.chan_id list) Lwt.t
-  (* decode incomming message : the result is the list of channels to listen
+  (* decode incoming message : the result is the list of channels to listen
      to (on the left) or to signal non existence (on the right). *)
 
   val encode_downgoing :

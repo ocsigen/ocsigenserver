@@ -298,7 +298,7 @@ module String_base = struct
     with Invalid_argument _ -> raise Not_found
 
   (* Cut a string to the next separator, removing spaces.
-     Raises Not_found if the separator connot be found.
+     Raises Not_found if the separator cannot be found.
   *)
   let sep char s =
     let len = String.length s in

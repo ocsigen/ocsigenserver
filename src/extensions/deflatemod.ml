@@ -238,7 +238,7 @@ let convert = function
   |(None,v) -> Some (Star, qvalue v)
   |_ -> None
 
-(* Follow http's RFC to select the transfert encoding *)
+(* Follow http's RFC to select the transfer encoding *)
 let select_encoding accept_header =
   let h = List.sort enc_compare (filtermap convert accept_header) in
   let (exclude,accept) =
