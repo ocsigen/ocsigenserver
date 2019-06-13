@@ -25,3 +25,4 @@
 === <<a_api text="Index of class methods" | index methods >>
 === <<a_api text="Index of classes" | index classes >>
 === <<a_api text="Index of modules" | index modules >>
+=== <<a_api text="Index of module types" | index module types >>

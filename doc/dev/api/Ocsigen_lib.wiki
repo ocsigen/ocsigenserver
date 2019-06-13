@@ -1,0 +1,12 @@
+=Module <<a_api_type | module Ocsigen_lib >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_lib>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_lib >><<span class="ocsforge_color_keyword"|end>>>>~This module contains some auxiliaries for the ~Ocsigenserver~. ~In contrast to
+    <<a_api | module Ocsigen_lib_base >>~, the function may also refer to libraries other than the
+    standard library~.
+
+----
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|include>> <<a_api | module Ocsigen_lib_base >>>>
+<<pre id="VALmake_cryptographic_safe_string" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|make~_cryptographic~_safe~_string>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|unit <<span class="ocsforge_color_delimiter"| -> >> string>>>><<div class="odocwiki_info"|~Generate an unique and cryptographically safe random string~.
+    ~It is impossible to guess for other people and
+    will never return twice the same value ~(with very good probabilities~)~.
+>>
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="String" | module Ocsigen_lib.String >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|module type of String_base>>>><<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="Ip_address" | module Ocsigen_lib.Ip_address >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_lib.Ip_address >><<span class="ocsforge_color_keyword"|end>>>><<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="Filename" | module Ocsigen_lib.Filename >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_lib.Filename >><<span class="ocsforge_color_keyword"|end>>>><<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<a_api text="Url" | module Ocsigen_lib.Url >> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_lib.Url >><<span class="ocsforge_color_keyword"|end>>>>

@@ -1,6 +1,6 @@
 =Module <<a_api_type | module Ocsigen_lib_base >> =
 <<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_lib_base>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_lib_base >><<span class="ocsforge_color_keyword"|end>>>>~This module just contains only extensions of the standard library and very
-    basic ~Ocsigen values and exceptions~. ~Cf~. <<span class="odocwiki_inlinecode"|~Ocsigen~_lib>> for functionality
+    basic ~Ocsigen values and exceptions~. ~Cf~. <<a_api | module Ocsigen_lib >> for functionality
     which depends on specific external libraries~.
 
 ----

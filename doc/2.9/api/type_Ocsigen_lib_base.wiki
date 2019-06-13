@@ -58,11 +58,15 @@
   module List :
     sig
       val length : 'a list -> int
+      val compare_lengths : 'a list -> 'b list -> int
+      val compare_length_with : 'a list -> int -> int
       val cons : 'a -> 'a list -> 'a list
       val hd : 'a list -> 'a
       val tl : 'a list -> 'a list
       val nth : 'a list -> int -> 'a
+      val nth_opt : 'a list -> int -> 'a option
       val rev : 'a list -> 'a list
+      val init : int -> (int -> 'a) -> 'a list
       val append : 'a list -> 'a list -> 'a list
       val rev_append : 'a list -> 'a list -> 'a list
       val concat : 'a list list -> 'a list
@@ -88,11 +92,14 @@
       val mem : 'a -> 'a list -> bool
       val memq : 'a -> 'a list -> bool
       val find : ('a -> bool) -> 'a list -> 'a
+      val find_opt : ('a -> bool) -> 'a list -> 'a option
       val filter : ('a -> bool) -> 'a list -> 'a list
       val find_all : ('a -> bool) -> 'a list -> 'a list
       val partition : ('a -> bool) -> 'a list -> 'a list * 'a list
       val assoc : 'a -> ('a * 'b) list -> 'b
+      val assoc_opt : 'a -> ('a * 'b) list -> 'b option
       val assq : 'a -> ('a * 'b) list -> 'b
+      val assq_opt : 'a -> ('a * 'b) list -> 'b option
       val mem_assoc : 'a -> ('a * 'b) list -> bool
       val mem_assq : 'a -> ('a * 'b) list -> bool
       val remove_assoc : 'a -> ('a * 'b) list -> ('a * 'b) list
@@ -145,6 +152,7 @@
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
           val add : key -> 'a -> 'a t -> 'a t
+          val update : key -> ('a option -> 'a option) -> 'a t -> 'a t
           val singleton : key -> 'a -> 'a t
           val remove : key -> 'a t -> 'a t
           val merge :
@@ -162,10 +170,18 @@
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
           val min_binding : 'a t -> key * 'a
+          val min_binding_opt : 'a t -> (key * 'a) option
           val max_binding : 'a t -> key * 'a
+          val max_binding_opt : 'a t -> (key * 'a) option
           val choose : 'a t -> key * 'a
+          val choose_opt : 'a t -> (key * 'a) option
           val split : key -> 'a t -> 'a t * 'a option * 'a t
           val find : key -> 'a t -> 'a
+          val find_opt : key -> 'a t -> 'a option
+          val find_first : (key -> bool) -> 'a t -> key * 'a
+          val find_first_opt : (key -> bool) -> 'a t -> (key * 'a) option
+          val find_last : (key -> bool) -> 'a t -> key * 'a
+          val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
         end
@@ -190,9 +206,13 @@
       val trim : string -> string
       val escaped : string -> string
       val index : string -> char -> int
+      val index_opt : string -> char -> int option
       val rindex : string -> char -> int
+      val rindex_opt : string -> char -> int option
       val index_from : string -> int -> char -> int
+      val index_from_opt : string -> int -> char -> int option
       val rindex_from : string -> int -> char -> int
+      val rindex_from_opt : string -> int -> char -> int option
       val contains : string -> char -> bool
       val contains_from : string -> int -> char -> bool
       val rcontains_from : string -> int -> char -> bool
@@ -230,6 +250,7 @@
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
           val add : key -> 'a -> 'a t -> 'a t
+          val update : key -> ('a option -> 'a option) -> 'a t -> 'a t
           val singleton : key -> 'a -> 'a t
           val remove : key -> 'a t -> 'a t
           val merge :
@@ -247,10 +268,18 @@
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
           val min_binding : 'a t -> key * 'a
+          val min_binding_opt : 'a t -> (key * 'a) option
           val max_binding : 'a t -> key * 'a
+          val max_binding_opt : 'a t -> (key * 'a) option
           val choose : 'a t -> key * 'a
+          val choose_opt : 'a t -> (key * 'a) option
           val split : key -> 'a t -> 'a t * 'a option * 'a t
           val find : key -> 'a t -> 'a
+          val find_opt : key -> 'a t -> 'a option
+          val find_first : (key -> bool) -> 'a t -> key * 'a
+          val find_first_opt : (key -> bool) -> 'a t -> (key * 'a) option
+          val find_last : (key -> bool) -> 'a t -> key * 'a
+          val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
         end
@@ -280,10 +309,18 @@
           val cardinal : t -> int
           val elements : t -> elt list
           val min_elt : t -> elt
+          val min_elt_opt : t -> elt option
           val max_elt : t -> elt
+          val max_elt_opt : t -> elt option
           val choose : t -> elt
+          val choose_opt : t -> elt option
           val split : elt -> t -> t * bool * t
           val find : elt -> t -> elt
+          val find_opt : elt -> t -> elt option
+          val find_first : (elt -> bool) -> t -> elt
+          val find_first_opt : (elt -> bool) -> t -> elt option
+          val find_last : (elt -> bool) -> t -> elt
+          val find_last_opt : (elt -> bool) -> t -> elt option
           val of_list : elt list -> t
         end
       module Map :
@@ -294,6 +331,7 @@
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
           val add : key -> 'a -> 'a t -> 'a t
+          val update : key -> ('a option -> 'a option) -> 'a t -> 'a t
           val singleton : key -> 'a -> 'a t
           val remove : key -> 'a t -> 'a t
           val merge :
@@ -311,10 +349,18 @@
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
           val min_binding : 'a t -> key * 'a
+          val min_binding_opt : 'a t -> (key * 'a) option
           val max_binding : 'a t -> key * 'a
+          val max_binding_opt : 'a t -> (key * 'a) option
           val choose : 'a t -> key * 'a
+          val choose_opt : 'a t -> (key * 'a) option
           val split : key -> 'a t -> 'a t * 'a option * 'a t
           val find : key -> 'a t -> 'a
+          val find_opt : key -> 'a t -> 'a option
+          val find_first : (key -> bool) -> 'a t -> key * 'a
+          val find_first_opt : (key -> bool) -> 'a t -> (key * 'a) option
+          val find_last : (key -> bool) -> 'a t -> key * 'a
+          val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
         end
@@ -359,6 +405,8 @@
       val get_raw_backtrace : unit -> raw_backtrace
       val print_raw_backtrace : out_channel -> raw_backtrace -> unit
       val raw_backtrace_to_string : raw_backtrace -> string
+      external raise_with_backtrace : exn -> raw_backtrace -> 'a
+        = "%raise_with_backtrace"
       val get_callstack : int -> raw_backtrace
       val set_uncaught_exception_handler :
         (exn -> raw_backtrace -> unit) -> unit

@@ -11,6 +11,8 @@
   val get_raw_backtrace : unit -> raw_backtrace
   val print_raw_backtrace : out_channel -> raw_backtrace -> unit
   val raw_backtrace_to_string : raw_backtrace -> string
+  external raise_with_backtrace : exn -> raw_backtrace -> 'a
+    = "%raise_with_backtrace"
   val get_callstack : int -> raw_backtrace
   val set_uncaught_exception_handler : (exn -> raw_backtrace -> unit) -> unit
   type backtrace_slot

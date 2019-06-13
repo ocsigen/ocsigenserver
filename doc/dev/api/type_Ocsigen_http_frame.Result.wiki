@@ -1,0 +1,34 @@
+<<code language="ocaml" | sig
+  type result
+  val cookies : Ocsigen_http_frame.Result.result -> Ocsigen_cookies.cookieset
+  val lastmodified : Ocsigen_http_frame.Result.result -> float option
+  val etag : Ocsigen_http_frame.Result.result -> string option
+  val code : Ocsigen_http_frame.Result.result -> int
+  val stream :
+    Ocsigen_http_frame.Result.result ->
+    string Ocsigen_stream.t *
+    (string Ocsigen_stream.t -> int64 -> string Ocsigen_stream.step Lwt.t)
+    option
+  val content_length : Ocsigen_http_frame.Result.result -> int64 option
+  val content_type : Ocsigen_http_frame.Result.result -> string option
+  val headers : Ocsigen_http_frame.Result.result -> Http_headers.t
+  val charset : Ocsigen_http_frame.Result.result -> string option
+  val location : Ocsigen_http_frame.Result.result -> string option
+  val default : unit -> Ocsigen_http_frame.Result.result
+  val update :
+    Ocsigen_http_frame.Result.result ->
+    ?cookies:Ocsigen_cookies.cookieset ->
+    ?lastmodified:float option ->
+    ?etag:string option ->
+    ?code:int ->
+    ?stream:string Ocsigen_stream.t *
+            (string Ocsigen_stream.t ->
+             int64 -> string Ocsigen_stream.step Lwt.t)
+            option ->
+    ?content_length:int64 option ->
+    ?content_type:string option ->
+    ?headers:Http_headers.t ->
+    ?charset:string option ->
+    ?location:string option -> unit -> Ocsigen_http_frame.Result.result
+  val empty : unit -> Ocsigen_http_frame.Result.result
+end >>
