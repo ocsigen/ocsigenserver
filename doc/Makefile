@@ -7,6 +7,8 @@ ODOC_WIKI := odoc_wiki.cma
 LIBS := -package lwt,lwt_log,lwt_ssl,tyxml,ssl,netstring,netstring-pcre,ipaddr,xml-light \
         ${addprefix -I ../src/, baselib http server extensions }
 
+all: doc wikidoc
+
 doc: api-html/index.html
 api-html/index.html: indexdoc $(addprefix ../src/,$(DOC) $(PLUGINS_DOC))
 	mkdir -p api-html
