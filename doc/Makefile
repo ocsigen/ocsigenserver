@@ -4,7 +4,7 @@ include ../src/Makefile.filelist
 OCAMLDOC := ${OCAMLFIND} ocamldoc
 ODOC_WIKI := odoc_wiki.cma
 
-LIBS := -package lwt,lwt_ssl,tyxml,ssl,netstring,netstring-pcre,ipaddr \
+LIBS := -package lwt,lwt_log,lwt_ssl,tyxml,ssl,netstring,netstring-pcre,ipaddr,xml-light \
         ${addprefix -I ../src/, baselib http server extensions }
 
 doc: api-html/index.html
