@@ -26,8 +26,6 @@ let loadfile = loadfile
 
 let error_message = error_message
 
-let init = init
-
 let allow_unsafe_modules = allow_unsafe_modules
 
 let prohibit = prohibit
