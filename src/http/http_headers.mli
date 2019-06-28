@@ -112,7 +112,7 @@ val with_defaults : t -> t -> t
 
 
 val dyn_headers : t
-(** Headers for dynamic pages (non cachable) *)
+(** Headers for dynamic pages (non cacheable) *)
 
 type accept =
   ( (string option * string option)

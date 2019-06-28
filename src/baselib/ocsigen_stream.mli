@@ -62,7 +62,7 @@ val cont : 'a -> (unit -> 'a step Lwt.t) -> 'a step Lwt.t
     finalizers must be called manually. *)
 val add_finalizer : 'a t -> (outcome -> unit Lwt.t) -> unit
 
-(** Finalize the stream. This function must be called explicitely after reading
+(** Finalize the stream. This function must be called explicitly after reading
     the stream, otherwise finalizers won't be called. *)
 val finalize : 'a t -> outcome -> unit Lwt.t
 

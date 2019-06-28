@@ -58,7 +58,7 @@ type reg = {
   path: string; (** path of the script *)
   path_info: string; (** path_info environment variable *)
 
-  exec:string option; (** binary to execute the script with (optionnal) *)
+  exec:string option; (** binary to execute the script with (optional) *)
   env:(string * string) list (** environment variables *) }
 
 (*****************************************************************************)
@@ -121,7 +121,7 @@ let string_conform2 s =
 (* split a string in two parts, according to a regexp *)
 let split_regexp r s =
   match Regexp.string_match r s 0 with
-  | None -> None (* the begining of the string doesn't match the regexp *)
+  | None -> None (* the beginning of the string doesn't match the regexp *)
   | Some result ->
     let (split,l) = Regexp.match_end result, String.length s in
     let s' = Regexp.first_chars s split in

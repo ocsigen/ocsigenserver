@@ -128,7 +128,7 @@ val raw_request :
    If the optional argument [headers] is present, no headers will be
    added by Ocsigen, but those in this argument and host, and
    [connection: close] or [connection: keep-alive].
-   Be carefull to respect HTTP/1.1 in this case!
+   Be careful to respect HTTP/1.1 in this case!
    ([host] is the full Host HTTP field to send).
 
    The default port is 80 for HTTP, 443 for HTTPS.

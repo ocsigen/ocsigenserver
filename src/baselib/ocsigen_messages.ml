@@ -172,7 +172,7 @@ reviewed the proposed library, it is next step.
 The four methods tested are: lazy, fun, ifprint, and fun moving the "if"
 to the caller (see full listing and results at the end of the post). Two
 test has been done for each one: when parameter is an integer constant
-and when parameter is the result of a funcion call who mades an addition.
+and when parameter is the result of a function call who mades an addition.
 
 The conclusion seems: defining that "lazy" method needs 1 unit of time,
 proposal using "fun" instead of lazy needs 0.8, and the version
@@ -180,7 +180,7 @@ proposal using "fun" instead of lazy needs 0.8, and the version
 
 Thus, if no error has been done, fun is the fastest option, lazy is near.
 
-Another point is the posibility of, using a camlp4 syntax extension, to
+Another point is the possibility of, using a camlp4 syntax extension, to
 introduce a few of sugar. Something like expand:
 
 from: log "some=%d\n" 14;

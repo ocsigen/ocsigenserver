@@ -43,7 +43,7 @@ open Ocsigen_cookies
 
 let section = Lwt_log.Section.make "ocsigen:http:com"
 
-(** this module provide a mecanism to communicate with some http frames *)
+(** this module provide a mechanism to communicate with some http frames *)
 
 let (>>=) = Lwt.(>>=)
 
@@ -602,7 +602,7 @@ let gmtdate d =
 type sender_type = {
   (** protocol to be used : HTTP/1.0 HTTP/1.1 *)
   mutable s_proto: Ocsigen_http_frame.Http_header.proto;
-  (** the options to send with each frame, for exemple : server name , ... *)
+  (** the options to send with each frame, for example : server name , ... *)
   mutable s_headers: Http_headers.t
 }
 

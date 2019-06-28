@@ -108,7 +108,7 @@ let connection_table = T.create 100
   in order to try to pipeline them on the same output connection.
 
   If the client parameter is not present, we do the
-  requests independantly.
+  requests independently.
   We try to find a free connection to the right server
   or we create one if there is none.
   In that case, the distant server may have the request in wrong order.

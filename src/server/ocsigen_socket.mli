@@ -7,7 +7,7 @@ type socket_type =
   | IPv6 of Unix.inet_addr
 
 (** make_sockets create socket ready to listen in addr:port
-    @param addr type of addresss (All | IPv4 | IPv6)
+    @param addr type of addresses (All | IPv4 | IPv6)
     @param port port of socket
 *)
 val make_sockets : socket_type -> int -> Lwt_unix.file_descr list Lwt.t

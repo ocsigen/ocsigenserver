@@ -59,7 +59,7 @@ val badconfig : ('a, unit, string, 'b) format4 -> 'a
 (** Type of the result of parsing the field [hostfiler] in the configuration
     file. Inside the list, the first argument is the host itself
     (which is a glob-like pattern that can contains [*]), a regexp
-    parsing this pattern, and optionnaly a port.
+    parsing this pattern, and optionally a port.
 *)
 type virtual_hosts = (string * Netstring_pcre.regexp * int option) list
 
@@ -179,7 +179,7 @@ type answer =
   (** Found but do not try next extensions *)
   | Ext_next of int (** Page not found. Try next extension.
                         The integer is the HTTP error code.
-                        It is usally 404, but may be for ex 403 (forbidden)
+                        It is usually 404, but may be for ex 403 (forbidden)
                         if you want another extension to try after a 403.
                         Same as Ext_continue_with but does not change
                         the request.
@@ -187,20 +187,20 @@ type answer =
   | Ext_stop_site of (Ocsigen_cookies.cookieset * int)
   (** Error. Do not try next extension, but
       try next site.
-      The integer is the HTTP error code, usally 403.
+      The integer is the HTTP error code, usually 403.
   *)
   | Ext_stop_host of (Ocsigen_cookies.cookieset * int)
   (** Error. Do not try next extension,
       do not try next site,
       but try next host.
-      The integer is the HTTP error code, usally 403.
+      The integer is the HTTP error code, usually 403.
   *)
   | Ext_stop_all of (Ocsigen_cookies.cookieset * int)
   (** Error. Do not try next extension (even filters),
       do not try next site,
       do not try next host,
       do not .
-      The integer is the HTTP error code, usally 403.
+      The integer is the HTTP error code, usually 403.
   *)
   | Ext_continue_with of (request * Ocsigen_cookies.cookieset * int)
   (** Used to modify the request before giving it to next extension.

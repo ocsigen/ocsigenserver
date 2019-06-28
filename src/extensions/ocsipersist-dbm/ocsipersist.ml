@@ -130,8 +130,8 @@ let rec get_indescr i =
        end
        else (Lwt_unix.sleep 2.1) >>= (fun () -> get_indescr (i-1))))
 
-let inch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
-let outch = ref (Lwt.fail (Failure "Ocsipersist not initalised"))
+let inch = ref (Lwt.fail (Failure "Ocsipersist not initialised"))
+let outch = ref (Lwt.fail (Failure "Ocsipersist not initialised"))
 
 let init_fun config =
   let (store, ocsidbmconf, delay_loading) =
@@ -354,7 +354,7 @@ let iter_block a b = failwith "iter_block not implemented for DBM. Please use Oc
 
 let length table =
   db_length table
-(* Because of Dbm implementation, the result may be less thann the expected
+(* Because of Dbm implementation, the result may be less than the expected
    result in some case (with a version of ocsipersist based on Dbm) *)
 
 let _ = Ocsigen_extensions.register_extension ~name:"ocsipersist" ~init_fun ()

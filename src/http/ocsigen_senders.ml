@@ -98,7 +98,7 @@ struct
      etag match and respond with code 412 ( precondition failed ).
      Since the etag is calculated from the content of the answer,
      we cannot enforce this semantic correctly, so it is better not
-     to send etags with POST requests. Here, we cannot know wether
+     to send etags with POST requests. Here, we cannot know whether
      the request was in POST or GET, so the easiest way to fix that
      is to never send etags *)
 
@@ -214,7 +214,7 @@ end
 (*****************************************************************************)
 (* Files *)
 
-(** this module instanciate the HTTP_CONTENT signature for files *)
+(** this module instantiate the HTTP_CONTENT signature for files *)
 module File_content =
 struct
   type t =
@@ -300,7 +300,7 @@ end
 (*****************************************************************************)
 (* directory listing - by Gabriel Kerneis *)
 
-(** this module instanciate the HTTP_CONTENT signature for directories *)
+(** this module instantiate the HTTP_CONTENT signature for directories *)
 module Directory_content =
 struct
   type t = string (* dir name *) * string list (* corresponding URL path *)
