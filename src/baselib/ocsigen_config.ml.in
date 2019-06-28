@@ -79,7 +79,9 @@ let set_syslog_facility f = syslog_facility := f; logdir := None
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
 let set_mimefile s = mimefile := s
-let set_verbose () = verbose := true
+let set_verbose () =
+  verbose := true;
+  Lwt_log.add_rule "*" Lwt_log.Info
 let set_silent () = silent := true
 let set_daemon () = set_silent (); daemon := true
 let set_veryverbose () =
