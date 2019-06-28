@@ -1314,7 +1314,6 @@ let start_server () =
                 (fun s -> Lwt_log.ign_error ~section s));
 
       (* Now I can load the modules *)
-      Dynlink_wrapper.init ();
       Dynlink_wrapper.allow_unsafe_modules true;
 
       Ocsigen_extensions.start_initialisation ();
