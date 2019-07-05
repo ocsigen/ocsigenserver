@@ -80,6 +80,7 @@ let set_syslog_facility f = syslog_facility := f; logdir := None
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
 let set_mimefile s = mimefile := s
+let () = Lwt_log.add_rule "*" Lwt_log.Warning (* without --verbose *)
 let set_verbose () =
   verbose := true;
   Lwt_log.add_rule "*" Lwt_log.Notice
