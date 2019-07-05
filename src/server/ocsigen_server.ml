@@ -1025,8 +1025,8 @@ let errmsg = function
   | (Unix.Unix_error _) as e ->
     (("Fatal - "^(Printexc.to_string e)),
      9)
-  | Ssl.Private_key_error ->
-    (("Fatal - bad password"),
+  | Ssl.Private_key_error msg ->
+    (("Fatal - bad password: " ^ msg),
      10)
   | Ocsigen_config.Config_file_error msg
   | Ocsigen_extensions.Error_in_config_file msg ->
