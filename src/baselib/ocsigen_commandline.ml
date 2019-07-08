@@ -29,10 +29,12 @@ let cmdline : unit =
        ("--silent", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
        ("-p", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
        ("--pidfile", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
-       ("-v", Arg.Unit set_verbose, "Verbose mode");
-       ("--verbose", Arg.Unit set_verbose, "Verbose mode");
-       ("-V", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
-       ("--veryverbose", Arg.Unit set_veryverbose, "Very verbose mode (debug)");
+       ("-v", Arg.Unit set_verbose, "Verbose mode (notice)");
+       ("--verbose", Arg.Unit set_verbose, "Verbose mode (notice)");
+       ("-vv", Arg.Unit set_veryverbose, "Very verbose mode (info)");
+       ("--veryverbose", Arg.Unit set_veryverbose, "Very verbose mode (info)");
+       ("-vvv", Arg.Unit set_debug, "Extremely verbose mode (info)");
+       ("--debug", Arg.Unit set_debug, "Extremely verbose mode (debug)");
        ("-d", Arg.Unit set_daemon, "Daemon mode (detach the process)");
        ("--daemon", Arg.Unit set_daemon, "Daemon mode (detach the process) (This is the default when there are more than 1 process)");
        ("--version", Arg.Unit display_version, "Display version number and exit")

@@ -28,6 +28,7 @@ let verbose = ref false
 let silent = ref false
 let daemon = ref false
 let veryverbose = ref false
+let debug = ref false
 let version_number = (**)"0000000000000000"(**)
 let pidfile = ref None
 let server_name = "Ocsigen"
@@ -79,14 +80,20 @@ let set_syslog_facility f = syslog_facility := f; logdir := None
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
 let set_mimefile s = mimefile := s
+let () = Lwt_log.add_rule "*" Lwt_log.Warning (* without --verbose *)
 let set_verbose () =
   verbose := true;
-  Lwt_log.add_rule "*" Lwt_log.Info
+  Lwt_log.add_rule "*" Lwt_log.Notice
 let set_silent () = silent := true
 let set_daemon () = set_silent (); daemon := true
 let set_veryverbose () =
   verbose := true;
   veryverbose := true;
+  Lwt_log.add_rule "*" Lwt_log.Info
+let set_debug () =
+  verbose := true;
+  veryverbose := true;
+  debug := true;
   Lwt_log.add_rule "*" Lwt_log.Debug
 
 let set_minthreads i = minthreads := i
@@ -133,6 +140,7 @@ let get_verbose () = !verbose
 let get_silent () = !silent
 let get_daemon () = !daemon
 let get_veryverbose () = !veryverbose
+let get_debug () = !debug
 let get_default_user () = !default_user
 let get_default_group () = !default_group
 let get_minthreads () = !minthreads
