@@ -1,3 +1,10 @@
+==== 2.12.0 (2019-07-10) ====
+
+ * more fine-grained verbosity control
+ * disable profiling by default
+ * compatibility with ssl.0.5.8
+ * documentation
+
 ==== 2.11.0 (2018-12-19) ====
 
  * Ocsipersist-pgsql: no longer hold a database connection for a long time
