@@ -25,7 +25,7 @@
 open Ocsidbmtypes
 open Lwt
 
-let section = Lwt_log.Section.make "ocsipersist:dbm"
+let section = Lwt_log.Section.make "ocsigen:ocsipersist:dbm"
 (** Data are divided into stores.
     Create one store for your project, where you will save all your data.
 *)
