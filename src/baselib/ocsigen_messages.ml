@@ -96,9 +96,16 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
                         (Unix.getpwnam user).Unix.pw_uid
                       with Not_found as e -> ignore (Lwt_log.error "Error: Wrong user"); raise e)
     in
-    Lwt_unix.chown (full_path access_file) uid gid >>= fun () ->
-    Lwt_unix.chown (full_path warning_file) uid gid >>= fun () ->
-    Lwt_unix.chown (full_path error_file) uid gid
+    Lwt.catch
+      (fun () ->
+         Lwt_unix.chown (full_path access_file) uid gid >>= fun () ->
+         Lwt_unix.chown (full_path warning_file) uid gid >>= fun () ->
+         Lwt_unix.chown (full_path error_file) uid gid)
+      (fun e -> match e with
+         | Unix.Unix_error (Unix.EPERM, _, _) ->
+             (* to allow for symlinks to /dev/null *)
+             Lwt.return_unit
+         | _ -> Lwt.fail e)
 
 (****)
 
