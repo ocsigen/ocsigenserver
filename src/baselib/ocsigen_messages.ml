@@ -81,14 +81,7 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
                 | _                             -> Lwt_log.null);
          Lwt_log.dispatch
            (fun sect lev ->
-              let show =
-                match lev with
-                | Lwt_log.Error | Lwt_log.Fatal ->
-                  not (Ocsigen_config.get_silent ())
-                | _ ->
-                  Ocsigen_config.get_verbose ()
-              in
-              if show then stderr else Lwt_log.null)];
+              if Ocsigen_config.get_silent () then Lwt_log.null else stderr)];
 
     let gid = match group with
       | None -> Unix.getgid ()
