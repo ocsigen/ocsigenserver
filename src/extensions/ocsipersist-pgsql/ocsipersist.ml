@@ -1,6 +1,6 @@
 (** PostgreSQL (>= 9.5) backend for Ocsipersist. *)
 
-let section = Lwt_log.Section.make "ocsipersist:pgsql"
+let section = Lwt_log.Section.make "ocsigen:ocsipersist:pgsql"
 
 module Lwt_thread = struct
   include Lwt

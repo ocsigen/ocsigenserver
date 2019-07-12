@@ -81,14 +81,7 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
                 | _                             -> Lwt_log.null);
          Lwt_log.dispatch
            (fun sect lev ->
-              let show =
-                match lev with
-                | Lwt_log.Error | Lwt_log.Fatal ->
-                  not (Ocsigen_config.get_silent ())
-                | _ ->
-                  Ocsigen_config.get_verbose ()
-              in
-              if show then stderr else Lwt_log.null)];
+              if Ocsigen_config.get_silent () then Lwt_log.null else stderr)];
 
     let gid = match group with
       | None -> Unix.getgid ()
@@ -103,9 +96,16 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
                         (Unix.getpwnam user).Unix.pw_uid
                       with Not_found as e -> ignore (Lwt_log.error "Error: Wrong user"); raise e)
     in
-    Lwt_unix.chown (full_path access_file) uid gid >>= fun () ->
-    Lwt_unix.chown (full_path warning_file) uid gid >>= fun () ->
-    Lwt_unix.chown (full_path error_file) uid gid
+    Lwt.catch
+      (fun () ->
+         Lwt_unix.chown (full_path access_file) uid gid >>= fun () ->
+         Lwt_unix.chown (full_path warning_file) uid gid >>= fun () ->
+         Lwt_unix.chown (full_path error_file) uid gid)
+      (fun e -> match e with
+         | Unix.Unix_error (Unix.EPERM, _, _) ->
+             (* to allow for symlinks to /dev/null *)
+             Lwt.return_unit
+         | _ -> Lwt.fail e)
 
 (****)
 

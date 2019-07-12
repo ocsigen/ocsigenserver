@@ -83,18 +83,18 @@ let set_mimefile s = mimefile := s
 let () = Lwt_log.add_rule "*" Lwt_log.Warning (* without --verbose *)
 let set_verbose () =
   verbose := true;
-  Lwt_log.add_rule "*" Lwt_log.Notice
+  Lwt_log.add_rule "ocsigen:*" Lwt_log.Notice
 let set_silent () = silent := true
 let set_daemon () = set_silent (); daemon := true
 let set_veryverbose () =
   verbose := true;
   veryverbose := true;
-  Lwt_log.add_rule "*" Lwt_log.Info
+  Lwt_log.add_rule "ocsigen:*" Lwt_log.Info
 let set_debug () =
   verbose := true;
   veryverbose := true;
   debug := true;
-  Lwt_log.add_rule "*" Lwt_log.Debug
+  Lwt_log.add_rule "ocsigen:*" Lwt_log.Debug
 
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i
