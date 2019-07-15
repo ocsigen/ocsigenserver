@@ -48,7 +48,7 @@ let add_headers config r response =
 
     Lwt_log.ign_info_f ~section "request with origin: %s" origin;
 
-    let l = [Ocsigen_header.Name.origin, origin] in
+    let l = [Ocsigen_header.Name.access_control_allow_origin, origin] in
 
     let l =
       if config.credentials then
@@ -90,7 +90,7 @@ let add_headers config r response =
           Ocsigen_header.Name.access_control_request_headers
       with
       | Some request_headers ->
-        (Ocsigen_header.Name.access_control_request_headers,
+        (Ocsigen_header.Name.access_control_allow_headers,
          request_headers) :: l
       | None ->
         l
