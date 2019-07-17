@@ -213,10 +213,16 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
        and cookies = Ocsigen_response.cookies response in
        let response =
          let headers =
-           Ocsigen_cookie_map.Map_path.fold
-             make_cookies_headers
-             cookies
-             (Cohttp.Response.headers response)
+           Cohttp.Header.add_unless_exists
+             (Cohttp.Header.add_unless_exists
+                (Ocsigen_cookie_map.Map_path.fold
+                   make_cookies_headers
+                   cookies
+                   (Cohttp.Response.headers response))
+                "server" Ocsigen_config.server_name)
+             "date"
+             (Ocsigen_lib.Date.to_string
+                (Unix.time ()))
          in
          { response with Cohttp.Response.headers }
        in
