@@ -508,7 +508,7 @@ module Date = struct
       tm_mday ; tm_mon ; tm_year ;
       tm_hour ; tm_min ; tm_sec
     } = Unix.gmtime d in
-    Printf.sprintf "%s, %02d %s %d %2d:%2d:%2d GMT"
+    Printf.sprintf "%s, %02d %s %d %02d:%02d:%02d GMT"
       (name_of_day tm_wday)
       tm_mday (name_of_month tm_mon) (tm_year + 1900)
       tm_hour tm_min tm_sec
