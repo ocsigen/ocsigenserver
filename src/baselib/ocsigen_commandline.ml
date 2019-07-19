@@ -25,8 +25,8 @@ let cmdline : unit =
         "Alternate config file (default "^ Ocsigen_config.get_config_file() ^")");
        ("--config", Arg.String set_configfile,
         "Alternate config file (default "^ Ocsigen_config.get_config_file() ^")");
-       ("-s", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
-       ("--silent", Arg.Unit set_silent, "Silent mode (error messages in errors.log only)");
+       ("-s", Arg.Unit set_silent, "silent mode (no logging to console; does not affect *.log files)");
+       ("--silent", Arg.Unit set_silent, "silent mode (no logging to console; does not affect *.log files)");
        ("-p", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
        ("--pidfile", Arg.String set_pidfile, "Specify a file where to write the PIDs of servers");
        ("-v", Arg.Unit set_verbose, "Verbose mode (notice)");

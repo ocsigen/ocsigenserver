@@ -25,15 +25,18 @@ let warning_file = "warnings.log"
 let error_file = "errors.log"
 
 
-let access_sect = Lwt_log.Section.make "access"
+let access_sect = Lwt_log.Section.make "ocsigen:access"
 
 let full_path f = Filename.concat (Ocsigen_config.get_logdir ()) f
 
 let error_log_path () = full_path error_file
 
 let stderr = Lwt_log.channel `Keep Lwt_io.stderr ()
+let stdout = Lwt_log.channel `Keep Lwt_io.stdout ()
 
 let loggers = ref []
+
+let access_logger = ref Lwt_log_core.null
 
 let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get_group ()) () =
 
@@ -66,6 +69,7 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
     in
 
     open_log access_file >>= fun acc ->
+    access_logger := acc;
     open_log warning_file >>= fun war ->
     open_log error_file >>= fun err ->
     loggers := [acc; war; err];
@@ -74,14 +78,16 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
       Lwt_log.broadcast
         [Lwt_log.dispatch
            (fun sect lev ->
-              if sect = access_sect then acc else
-                match lev with
-                | Lwt_log.Error | Lwt_log.Fatal -> err
-                | Lwt_log.Warning               -> war
-                | _                             -> Lwt_log.null);
+              match lev with
+              | Lwt_log.Error | Lwt_log.Fatal -> err
+              | Lwt_log.Warning               -> war
+              | _                             -> Lwt_log.null);
          Lwt_log.dispatch
            (fun sect lev ->
-              if Ocsigen_config.get_silent () then Lwt_log.null else stderr)];
+              if Ocsigen_config.get_silent () then Lwt_log.null else
+              match lev with
+              | Lwt_log.Warning | Lwt_log.Error | Lwt_log.Fatal -> stderr
+              | _ -> stdout)];
 
     let gid = match group with
       | None -> Unix.getgid ()
@@ -109,7 +115,10 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
 
 (****)
 
-let accesslog s = Lwt_log.ign_notice ~section:access_sect s
+let accesslog s =
+  (* not really fatal, but log in all cases; does not affect console *)
+  Lwt_log.ign_fatal ~section:access_sect ~logger:!access_logger s;
+  Lwt_log.ign_notice ~section:access_sect s
 
 let errlog ?section s = Lwt_log.ign_error ?section s
 
