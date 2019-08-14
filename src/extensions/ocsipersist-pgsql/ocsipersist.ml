@@ -253,15 +253,15 @@ let rec list_last l =
   | []     -> assert false
 
 let rec iter_rec f table last =
-  let query =
+  let (query, args) =
     match last with
     | None ->
-      sprintf "SELECT * FROM %s ORDER BY key LIMIT 1000" table
+      (sprintf "SELECT * FROM %s ORDER BY key LIMIT 1000" table, [])
     | Some last ->
-      sprintf "SELECT * FROM %s WHERE key > %s ORDER BY key LIMIT 1000"
-        table last
+      (sprintf "SELECT * FROM %s WHERE key > $1 ORDER BY key LIMIT 1000" table,
+       [Key last])
   in
-  (use_pool @@ fun db -> exec db query []) >>= fun l ->
+  (use_pool @@ fun db -> exec db query args) >>= fun l ->
   Lwt_list.iter_s
     (fun row -> let key, value = key_value_of_row row in f key value) l
   >>= fun () ->
