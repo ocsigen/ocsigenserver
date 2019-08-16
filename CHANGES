@@ -1,3 +1,6 @@
+==== 2.15.0 (2019-08-16) ====
+ * Ocsipersist-pgsql: fix iter_table function
+
 ==== 2.12.0 (2019-07-10) ====
 
  * more fine-grained verbosity control
