@@ -30,7 +30,7 @@ let err_500 =
   Ocsigen_extensions.Ext_stop_site
     (Ocsigen_cookie_map.empty, `Internal_server_error)
 
-let handle_parsing_error {Ocsigen_extensions.request_info} = function
+let handle_parsing_error {Ocsigen_extensions.request_info; _} = function
   | Ocsigen_extensions.Error_in_config_file s ->
     Lwt_log.ign_error_f ~section
       "Syntax error in userconf configuration file for url %s: %s"
@@ -46,7 +46,7 @@ let handle_parsing_error {Ocsigen_extensions.request_info} = function
 
 (* Answer returned by userconf when the url matches *)
 let subresult new_req user_parse_site conf previous_err req req_state =
-  Ocsigen_extensions.Ext_sub_result (fun cookies_to_set rs ->
+  Ocsigen_extensions.Ext_sub_result (fun cookies_to_set _ ->
     (* XXX why is rs above never used ?? *)
     Lwt.catch
       (fun () ->
@@ -63,7 +63,7 @@ let subresult new_req user_parse_site conf previous_err req req_state =
              sr cookies_to_set req_state
              >>= aux
            | Ocsigen_extensions.Ext_continue_with
-               ({Ocsigen_extensions.request_config}, cookies, err) ->
+               ({Ocsigen_extensions.request_config; _}, cookies, err) ->
              Lwt.return
                ((Ocsigen_extensions.Ext_continue_with
                    ({req with Ocsigen_extensions.request_config},
@@ -73,7 +73,7 @@ let subresult new_req user_parse_site conf previous_err req req_state =
              Lwt.return
                (Ocsigen_extensions.Ext_found_continue_with
                   (fun () ->
-                     r () >|= fun (r, {Ocsigen_extensions.request_config}) ->
+                     r () >|= fun (r, {Ocsigen_extensions.request_config; _}) ->
                      r, { req with Ocsigen_extensions.request_config }
                   ), cts)
            | _ ->

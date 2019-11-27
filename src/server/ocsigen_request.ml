@@ -122,10 +122,10 @@ let make
     r_timeofday = Unix.gettimeofday ()
   }
 
-let path_string {r_uri = {u_path_string}} =
+let path_string {r_uri = {u_path_string; _}; _} =
   Lazy.force u_path_string
 
-let path {r_uri = {u_path}} =
+let path {r_uri = {u_path; _}; _} =
   Lazy.force u_path
 
 let update
@@ -137,7 +137,7 @@ let update
     ?(full_rewrite = false) ?uri
     ({
       r_ssl ;
-      r_uri = {u_uri} as r_uri;
+      r_uri = {u_uri; _} as r_uri;
       r_meth ;
       r_forward_ip ;
       r_remote_ip ;
@@ -145,7 +145,8 @@ let update
       r_cookies_override ;
       r_body ;
       r_sub_path ;
-      r_original_full_path
+      r_original_full_path ;
+      _
     } as r) =
   let r_ssl =
     match ssl with
@@ -235,46 +236,46 @@ let update
     r_original_full_path ;
   }
 
-let uri {r_uri = {u_uri}} =
+let uri {r_uri = {u_uri; _}; _} =
   Lazy.force u_uri
 
-let to_cohttp ({ r_meth ; r_encoding ; r_version ; r_headers } as r) =
+let to_cohttp ({ r_meth ; r_encoding ; r_version ; r_headers ; _ } as r) =
   Cohttp.Request.make
     ~meth:r_meth ~encoding:r_encoding ~version:r_version ~headers:r_headers
     (uri r)
 
 let body = function
-  | {r_body = {contents = `Unparsed body}} ->
+  | {r_body = {contents = `Unparsed body}; _} ->
     body
   | _ ->
     failwith "Ocsigen_request.body: body has already been parsed"
 
-let address {r_address} = r_address
+let address {r_address; _} = r_address
 
-let host {r_uri = {u_uri}} =
+let host {r_uri = {u_uri; _}; _} =
   Uri.host (Lazy.force u_uri)
 
-let meth {r_meth} = r_meth
+let meth {r_meth; _} = r_meth
 
-let port {r_port} = r_port
+let port {r_port; _} = r_port
 
-let ssl {r_ssl} = r_ssl
+let ssl {r_ssl; _} = r_ssl
 
-let version {r_version} = r_version
+let version {r_version; _} = r_version
 
-let query {r_uri = {u_uri}} =
+let query {r_uri = {u_uri; _}; _} =
   Uri.verbatim_query (Lazy.force u_uri)
 
-let get_params {r_uri = { u_get_params }} =
+let get_params {r_uri = { u_get_params; _ }; _} =
   Lazy.force u_get_params
 
-let get_params_flat {r_uri = { u_get_params_flat }} =
+let get_params_flat {r_uri = { u_get_params_flat; _ }; _} =
   Lazy.force u_get_params_flat
 
 let sub_path_string req =
   remove_trailing_slash_string
     (match req with
-     | {r_sub_path = Some r_sub_path} ->
+     | {r_sub_path = Some r_sub_path; _} ->
        r_sub_path
      | r ->
        path_string r)
@@ -283,7 +284,7 @@ let sub_path r =
   Ocsigen_lib.Url.split_path (sub_path_string r)
 
 let original_full_path_string = function
-  | {r_original_full_path = Some r_original_full_path} ->
+  | {r_original_full_path = Some r_original_full_path; _} ->
     r_original_full_path
   | r ->
     path_string r
@@ -291,13 +292,13 @@ let original_full_path_string = function
 let original_full_path r =
   Ocsigen_lib.Url.split_path (original_full_path_string r)
 
-let header {r_headers} id =
+let header {r_headers; _} id =
   Cohttp.Header.get r_headers (Ocsigen_header.Name.to_string id)
 
-let header_multi {r_headers} id =
+let header_multi {r_headers; _} id =
   Cohttp.Header.get_multi r_headers (Ocsigen_header.Name.to_string id)
 
-let add_header ({r_headers} as r) id v =
+let add_header ({r_headers; _} as r) id v =
   { r with
     r_headers =
       Cohttp.Header.add r_headers
@@ -321,7 +322,7 @@ let parse_cookies s =
     Ocsigen_cookie_map.Map_inner.empty
 
 let cookies = function
-  | {r_cookies_override = Some cookies} ->
+  | {r_cookies_override = Some cookies; _} ->
     cookies
   | r ->
     match header r Ocsigen_header.Name.cookie with
@@ -337,7 +338,7 @@ let content_type r =
   | None ->
     None
 
-let force_post_data ({r_body} as r) s i =
+let force_post_data ({r_body; _} as r) s i =
   match !r_body with
   | `Parsed post_data ->
     post_data
@@ -372,18 +373,18 @@ let files r s i =
   | None ->
     None
 
-let remote_ip {r_remote_ip} = Lazy.force r_remote_ip
+let remote_ip {r_remote_ip; _} = Lazy.force r_remote_ip
 
-let remote_ip_parsed {r_remote_ip_parsed} = Lazy.force r_remote_ip_parsed
+let remote_ip_parsed {r_remote_ip_parsed; _} = Lazy.force r_remote_ip_parsed
 
-let forward_ip {r_forward_ip} = r_forward_ip
+let forward_ip {r_forward_ip; _} = r_forward_ip
 
-let request_cache {r_request_cache} = r_request_cache
+let request_cache {r_request_cache; _} = r_request_cache
 
-let tries {r_tries} = r_tries
+let tries {r_tries; _} = r_tries
 
 let incr_tries r = r.r_tries <- r.r_tries + 1
 
-let connection_closed {r_connection_closed} = r_connection_closed
+let connection_closed {r_connection_closed; _} = r_connection_closed
 
-let timeofday {r_timeofday} = r_timeofday
+let timeofday {r_timeofday; _} = r_timeofday

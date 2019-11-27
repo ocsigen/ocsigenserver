@@ -171,7 +171,7 @@ module List = struct
     else
       match xs with
       | [] -> []
-      | x :: xs -> chop (n-1) xs
+      | _ :: xs -> chop (n-1) xs
 
   let rec split_at n xs =
     if n <= 0
@@ -307,7 +307,7 @@ module String_base = struct
      (remove_spaces s (seppos+1) (len-1)))
 
   (* splits a string, for ex "azert,   sdfmlskdf,    dfdsfs" *)
-  let rec split ?(multisep=false) char s =
+  let split ?(multisep=false) char s =
     let longueur = String.length s in
     let rec aux deb =
       if deb >= longueur
@@ -425,12 +425,6 @@ module Url_base = struct
     | ""::l -> l
     | l -> l
 
-  let rec recursively_remove_slash_at_beginning = function
-    | [] -> []
-    | [""] -> [""]
-    | ""::l -> recursively_remove_slash_at_beginning l
-    | l -> l
-
   let rec is_prefix_skip_end_slash l1 l2 =
     match (l1, l2) with
     | [""], _
@@ -541,7 +535,7 @@ module Printexc = struct
       let old = !exc_printer in
       (fun f_rec s ->
          try p f_rec s
-         with e -> old f_rec s) in
+         with _ -> old f_rec s) in
     exc_printer := printer
 
 end

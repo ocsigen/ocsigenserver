@@ -18,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-open Lwt.Infix
-
 let name = "extendconfiguration"
 
 let bad_config s = raise (Ocsigen_extensions.Error_in_config_file s)
@@ -29,7 +27,7 @@ let gen configfun = function
     Lwt.return Ocsigen_extensions.Ext_do_nothing
 
   | Ocsigen_extensions.Req_not_found
-      (err, ({Ocsigen_extensions.request_config} as request)) ->
+      (err, ({Ocsigen_extensions.request_config; _} as request)) ->
     Lwt_log.ign_info "Updating configuration";
     let request =
       { request with
@@ -54,7 +52,7 @@ let gather_do_not_serve_files tag =
     | Xml.Element ("extension", ["ext", f], []) :: q ->
       aux (regexps, files, f :: extensions) q
 
-    | _ :: q -> bad_config ("invalid options in tag " ^ tag)
+    | _ -> bad_config ("invalid options in tag " ^ tag)
   in
   aux ([], [], [])
 
@@ -126,7 +124,7 @@ let fun_site usermode _ _ _ _ _ = function
                 charset_assoc r charset)
              q
          with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
-      | _ :: q -> bad_config "invalid subtag in option charset"
+      | _ -> bad_config "invalid subtag in option charset"
     in
     gen (fun config ->
       let config = match attrs with
@@ -161,7 +159,7 @@ let fun_site usermode _ _ _ _ _ = function
            let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
            aux (Ocsigen_charset_mime.update_mime_regexp mime_assoc r mime) q
          with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
-      | _ :: q -> bad_config "invalid subtag in option mime"
+      | _ -> bad_config "invalid subtag in option mime"
     in
     gen (fun config ->
       let config = match attrs with
@@ -183,7 +181,7 @@ let fun_site usermode _ _ _ _ _ = function
       | Xml.Element
           ("index", [], [Xml.PCData f]) :: q ->
         aux (f :: indexes) q
-      | _ :: q -> bad_config "subtags must be of the form \
+      | _ -> bad_config "subtags must be of the form \
                               <index>...</index> \
                               in option defaultindex"
     in

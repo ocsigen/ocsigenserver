@@ -1,0 +1,18 @@
+(executable
+ (name server_main)
+ (modes byte exe)
+ (modules server_main)
+ (link_flags -linkall)
+ (libraries str dynlink baselib http server))
+
+(library
+ (name server)
+ (public_name ocsigenserver)
+ (modules (:standard \ server_main))
+ (wrapped false)
+ (libraries xml-light hmap baselib http))
+
+(install
+ (section bin)
+ (files (server_main.exe as ocsigenserver.opt)
+        (server_main.bc as ocsigenserver)))

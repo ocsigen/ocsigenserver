@@ -91,7 +91,7 @@ let read_header ?downcase ?unfold ?strip s =
           (function
             | Ocsigen_stream.Finished _ ->
               Lwt.fail Ocsigen_stream.Stream_too_small
-            | Ocsigen_stream.Cont (stri, _) as s ->
+            | Ocsigen_stream.Cont _ as s ->
               find_end_of_header s)
         | e -> Lwt.fail e)
   in
@@ -111,7 +111,7 @@ let rec search_window s re start =
     Ocsigen_stream.enlarge_stream s >>= function
     | Ocsigen_stream.Finished _ ->
       Lwt.fail Ocsigen_stream.Stream_too_small
-    | Ocsigen_stream.Cont (stri, _) as s ->
+    | Ocsigen_stream.Cont _ as s ->
       search_window s re start
 
 let search_end_of_line s k =
@@ -142,7 +142,7 @@ let check_beginning_is_boundary ~boundary s =
   Ocsigen_stream.stream_want s (ldel + 2) >>= function
   | Ocsigen_stream.Finished _ as str2 ->
     Lwt.return (str2, false, false)
-  | Ocsigen_stream.Cont (ss, f) as str2 ->
+  | Ocsigen_stream.Cont (ss, _) as str2 ->
     let long = String.length ss in
     let isdelim = (long >= ldel) && (String.sub ss 0 ldel = del) in
     let islast = isdelim && (String.sub ss ldel 2 = "--") in
@@ -163,7 +163,7 @@ let rec parse_parts ~boundary ~decode_part s uses_crlf =
   let last_part = match s with
     | Ocsigen_stream.Finished _ ->
       false
-    | Ocsigen_stream.Cont (ss, f) ->
+    | Ocsigen_stream.Cont (ss, _) ->
       let long = String.length ss in
       long >= l_delimiter + 2 &&
       ss.[l_delimiter] = '-' &&

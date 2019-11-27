@@ -28,7 +28,8 @@ module Ip_address = struct
   let get_inet_addr ?(v6=false) host =
     let rec aux = function
       | [] -> Lwt.fail No_such_host
-      | {Unix.ai_addr=Unix.ADDR_INET (inet_addr, _)}::_ -> Lwt.return inet_addr
+      | {Unix.ai_addr=Unix.ADDR_INET (inet_addr, _); _}::_ ->
+         Lwt.return inet_addr
       | _::l -> aux l
     in
     let options = [if v6 then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6 else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET] in
@@ -37,7 +38,7 @@ module Ip_address = struct
       aux
 
   let of_sockaddr = function
-    | Unix.ADDR_INET (ip, port) ->
+    | Unix.ADDR_INET (ip, _) ->
       ip
     | _ ->
       raise (Ocsigen_Internal_Error "ip of unix socket")
@@ -240,7 +241,7 @@ module Url = struct
           l' := !l' + lengths.(Char.code s.[i])
         done;
         if l = !l' then
-          String.copy s
+          s
         else
           let s' = Bytes.create !l' in
           let j = ref 0 in
@@ -506,7 +507,8 @@ module Date = struct
     let {
       Unix.tm_wday ;
       tm_mday ; tm_mon ; tm_year ;
-      tm_hour ; tm_min ; tm_sec
+      tm_hour ; tm_min ; tm_sec ;
+      _
     } = Unix.gmtime d in
     Printf.sprintf "%s, %02d %s %d %02d:%02d:%02d GMT"
       (name_of_day tm_wday)

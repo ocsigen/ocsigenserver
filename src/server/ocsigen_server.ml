@@ -37,22 +37,6 @@ let _ =
     (fun e -> Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt \
                                                  timeout")
 
-let warn sockaddr s =
-  Lwt_log.ign_warning_f ~section "While talking to %a:%s"
-    (fun () sockaddr ->
-       Unix.string_of_inet_addr
-         (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
-    sockaddr s
-
-let dbg sockaddr s =
-  Lwt_log.ign_info_f ~section "While talking to %a:%s"
-    (fun () sockaddr ->
-       Unix.string_of_inet_addr
-         (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
-    sockaddr s
-
-let try_bind' f g h = Lwt.try_bind f h g
-
 (* fatal errors messages *)
 let errmsg = function
   | Dynlink_wrapper.Error e ->
@@ -124,7 +108,7 @@ let reload ?file () =
   Lwt_log.ign_warning ~section "Config file reloaded"
 
 let _ =
-  let f s = function
+  let f _ = function
     | ["reopen_logs"] ->
       Ocsigen_messages.open_files () >>= fun () ->
       Lwt_log.ign_warning ~section "Log files reopened";
@@ -203,8 +187,6 @@ end
 
 module Site = struct
 
-  type 'a config_key = 'a Hmap.key
-
   type extension_simple = accessor -> Ocsigen_extensions.extension
 
   type extension =
@@ -242,7 +224,7 @@ module Site = struct
 
   let default_re = Ocsigen_lib.Netstring_pcre.regexp default_re_string
 
-  let rec path_and_hosts {s_id} =
+  let rec path_and_hosts {s_id; _} =
     match s_id with
     | `Host hosts ->
       [], hosts
@@ -250,7 +232,7 @@ module Site = struct
       let path, hosts = path_and_hosts s in
       path @ path', hosts
 
-  let register ({ s_config_info ; s_children_l } as s) =
+  let register ({ s_config_info ; s_children_l ; _ } as s) =
     function
     | `Simple f ->
       s.s_children_l <- `Extension f :: s_children_l
@@ -294,11 +276,11 @@ module Site = struct
 
   let rec dump_host
       path
-      { s_config_info ; s_config_map ; s_children_l ; s_id } =
+      { s_config_map ; s_children_l ; _ } =
     let f = function
       | `Extension f ->
         f {accessor = fun (_, k) -> Hmap.find k s_config_map}
-      | `Child ({s_charset ; s_id = `Attach (_, path')} as s) ->
+      | `Child ({s_charset ; s_id = `Attach (_, path'); _} as s) ->
         let path = path @ path' in
         Ocsigen_extensions.site_ext (dump_host path s) s_charset path
       | `Child _ ->
@@ -308,7 +290,7 @@ module Site = struct
 
   let dump () =
     let f acc = function
-      | { s_config_info ; s_id = `Host l ; s_children_l = _ :: _ } as s ->
+      | { s_config_info ; s_id = `Host l ; s_children_l = _ :: _ ; _ } as s ->
         (l, s_config_info, dump_host [] s) :: acc
       | _ ->
         acc
@@ -318,8 +300,8 @@ module Site = struct
   module Config =
     Make_config_nested (struct
       type nonrec t = t
-      let get {s_config_map} = s_config_map
-      let do_ ({s_config_map} as vh) f =
+      let get {s_config_map; _} = s_config_map
+      let do_ ({s_config_map; _} as vh) f =
         vh.s_config_map <- f s_config_map
     end)
 
@@ -385,17 +367,19 @@ let start ?config () =
           | None
           | Some {
               Ocsigen_config.ssl_certificate = None ;
-              Ocsigen_config.ssl_privatekey = None
+              Ocsigen_config.ssl_privatekey = None ;
+              _
             } ->
             None
           | Some {
               Ocsigen_config.ssl_certificate = Some crt ;
-              Ocsigen_config.ssl_privatekey = Some key
+              Ocsigen_config.ssl_privatekey = Some key ;
+              _
           } ->
             Some (crt, key)
-          | Some { Ocsigen_config.ssl_privatekey = None } ->
+          | Some { Ocsigen_config.ssl_privatekey = None; _ } ->
             raise (Ocsigen_config.Config_file_error "SSL key is missing")
-          | Some { Ocsigen_config.ssl_certificate = None } ->
+          | Some { Ocsigen_config.ssl_certificate = None; _ } ->
             raise (Ocsigen_config.Config_file_error "SSL certificate is missing")
         in
         match ssl_ports, ssl with

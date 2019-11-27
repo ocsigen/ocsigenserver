@@ -1,22 +1,6 @@
 include ../Makefile.config
 
 all: metas confs
-	${MAKE} -C baselib all
-	${MAKE} -C http all
-	${MAKE} -C server all
-	${MAKE} -C extensions all
-
-byte: metas confs
-	${MAKE} -C baselib byte
-	${MAKE} -C http byte
-	${MAKE} -C server byte
-	${MAKE} -C extensions byte
-
-opt: metas confs
-	${MAKE} -C baselib opt
-	${MAKE} -C http opt
-	${MAKE} -C server opt
-	${MAKE} -C extensions opt
 
 ### META ###
 
@@ -86,63 +70,6 @@ confs: ../$(PROJECTNAME).conf.sample ../local/etc/${PROJECTNAME}.conf
 	  | sed s%store\ dir=\"$(SRC)/var/lib\"%store\ dir=\"$(SRC)/local/var/lib/ocsipersist\"%g \
 	  > $@
 
-
-### Install ###
-
-include Makefile.filelist
-
-VERSION := $(shell head -n 1 ../VERSION)
-
-install: INSTALL_BIN=$(BIN) $(NATBIN)
-install: INSTALL_IMPL=$(IMPL) $(NATIMPL)
-install: INSTALL_PLUGINS_IMPL=$(PLUGINS_IMPL) $(PLUGINS_NATIMPL)
-install: INSTALL_PLUGINS_BIN=$(PLUGINS_BIN) $(PLUGINS_NATBIN)
-install: raw_install
-
-install.byte: INSTALL_BIN=$(BIN)
-install.byte: INSTALL_IMPL=$(IMPL)
-install.byte: INSTALL_PLUGINS_IMPL=$(PLUGINS_IMPL)
-install.byte: INSTALL_PLUGINS_BIN=$(PLUGINS_BIN)
-install.byte: raw_install
-
-install.opt: INSTALL_BIN=$(NATBIN)
-install.opt: INSTALL_IMPL=$(NATIMPL)
-install.opt: INSTALL_PLUGINS_IMPL=$(PLUGINS_NATIMPL)
-install.opt: INSTALL_PLUGINS_BIN=$(PLUGINS_NATBIN)
-install.opt: raw_install
-
-raw_install:
-	 # Server binaries
-	$(INSTALL) -m 755 -d $(TEMPROOT)$(BINDIR)
-	$(INSTALL) -m 755 $(INSTALL_BIN) $(TEMPROOT)$(BINDIR)/
-	 # Server libraries
-	$(INSTALL) -m 755 -d $(TEMPROOT)$(LIBDIR)
-	$(OCAMLFIND) install $(PROJECTNAME) \
-	   -destdir $(TEMPROOT)$(LIBDIR) \
-	   -patch-version ${VERSION} \
-	   ${INTF} ${INTF_CMX} $(INSTALL_IMPL) $(DOC) files/META
-	 # Extensions
-	$(INSTALL) -m 755 -d $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-	$(INSTALL) -m 644 \
-	  $(PLUGINS_INTF) $(INSTALL_PLUGINS_IMPL) $(PLUGINS_DOC) \
-	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-	[ -z "$(strip ${INSTALL_PLUGINS_BIN})" ] || \
-	  $(INSTALL) -m 755 $(INSTALL_PLUGINS_BIN) \
-	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-
-uninstall:
-	 # Extensions
-	-rm -r $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-	 # Server libraries
-	-$(OCAMLFIND) remove ${PROJECTNAME} -destdir $(TEMPROOT)${LIBDIR}
-	 # Server binaries
-	-rm -r $(addprefix $(TEMPROOT)$(BINDIR)/,$(notdir ${BIN} ${NATBIN}))
-	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(BINDIR)
-
-reinstall: uninstall install
-
-###
-
 clean: clean.local
 	${MAKE} -C baselib clean
 	${MAKE} -C http clean
@@ -167,9 +94,3 @@ distclean: clean.local
 	-rm -fr ../local/var/lib/ocsidb
 	-rm -fr ../local/etc/${PROJECTNAME}.conf
 	-rm -fr ../local/etc/${PROJECTNAME}.conf.opt
-
-depend:
-	${MAKE} -C baselib depend
-	${MAKE} -C http depend
-	${MAKE} -C server depend
-	${MAKE} -C extensions depend

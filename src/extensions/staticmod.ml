@@ -115,10 +115,10 @@ let find_static_page ~request ~usermode ~dir ~(err : Cohttp.Code.status) ~pathst
              "Staticmod: cannot use '..' in user paths")
 
 let gen ~usermode ?cache dir = function
-  | Ocsigen_extensions.Req_found (_, r) ->
+  | Ocsigen_extensions.Req_found _ ->
     Lwt.return (Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_not_found
-      (err, ({ Ocsigen_extensions.request_info } as request)) ->
+      (err, ({ Ocsigen_extensions.request_info; _ } as request)) ->
     let try_block () =
       Lwt_log.ign_info ~section "Is it a static file?";
       let status_filter, page =

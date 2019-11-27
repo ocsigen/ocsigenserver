@@ -35,12 +35,14 @@ let print_request fmt request =
           values))
     (Cohttp.Request.headers request)
 
+let _ = print_request
+
 let connections = Hashtbl.create 256
 
 let get_number_of_connected,
     incr_connected,
     decr_connected,
-    wait_fewer_connected =
+    _ =
   let connected = ref 0 in
   let maxr = ref (-1000) in
   let mvar = Lwt_mvar.create_empty () in
@@ -94,13 +96,12 @@ module Cookie = struct
 
 end
 
-(* FIXME: secure *)
 let make_cookies_header path exp name c secure =
-  Format.sprintf "%s=%s%s%s" name c
+  Format.sprintf "%s=%s%s" name c
     (*VVV encode = true? *)
     ("; path=/" ^ Ocsigen_lib.Url.string_of_url_path ~encode:true path)
-    (* (if secure && slot.sl_ssl then "; secure" else "")^ *)
-    "" ^
+   ^
+  (if secure then "; secure" else "") ^
   (match exp with
    | Some s ->
      "; expires=" ^ Ocsigen_lib.Date.to_string s
@@ -238,7 +239,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       | exn ->
         handle_error exn)
 
-let conn_closed (flow, conn) =
+let conn_closed (_, conn) =
   try
     Lwt_log.ign_debug_f ~section
       "Connection closed:\n%s"

@@ -159,7 +159,7 @@ let parse_string_tag tag s =
       (Ocsigen_config.Config_file_error
          ("While parsing <"^tag^"> - String expected."))
 
-let rec parser_config =
+let parser_config =
   let rec parse_servers n = function
     | [] -> (match n with
         | [] -> raise (Config_file_error ("<server> tag expected"))
@@ -453,20 +453,20 @@ let rec later_pass_extconf dir =
    loading). *)
 and later_pass = function
   | [] -> []
-  | Element ("port", atts, p) :: ll ->
+  | Element ("port", _, _) :: ll ->
     later_pass ll
-  | Element ("charset" as st, atts, p) :: ll ->
+  | Element ("charset" as st, _, p) :: ll ->
     set_default_charset (Some (parse_string_tag st p));
     later_pass ll
-  | Element ("logdir", [], p) :: ll ->
+  | Element ("logdir", [], _) :: ll ->
     later_pass ll
-  | Element ("syslog", [], p) :: ll ->
+  | Element ("syslog", [], _) :: ll ->
     later_pass ll
-  | Element ("ssl", [], p) :: ll ->
+  | Element ("ssl", [], _) :: ll ->
     later_pass ll
-  | Element ("user", [], p) :: ll ->
+  | Element ("user", [], _) :: ll ->
     later_pass ll
-  | Element ("group", [], p) :: ll ->
+  | Element ("group", [], _) :: ll ->
     later_pass ll
   | Element ("uploaddir" as st, [], p) :: ll ->
     set_uploaddir (Some (parse_string_tag st p));
@@ -474,9 +474,9 @@ and later_pass = function
   | Element ("datadir" as st, [], p) :: ll ->
     set_datadir (parse_string_tag st p);
     later_pass ll
-  | Element ("minthreads", [], p) :: ll ->
+  | Element ("minthreads", [], _) :: ll ->
     later_pass ll
-  | Element ("maxthreads", [], p) :: ll ->
+  | Element ("maxthreads", [], _) :: ll ->
     later_pass ll
   | Element ("maxdetachedcomputationsqueued" as st, [], p) :: ll ->
     set_max_number_of_threads_queued
@@ -652,7 +652,7 @@ let rec parse_ssl l ~certificate ~privatekey ~ciphers ~dhfile ~curve =
     config_error_for_some "Two (EC) curves inside <ssl>" curve;
     let curve = Some (parse_string_tag st p) in
     parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve l
-  | Element (tag, _, _) :: l ->
+  | Element (tag, _, _) :: _ ->
     raise (Config_file_error ("<"^tag^"> tag unexpected inside <ssl>"))
   | _ ->
     raise (Config_file_error ("Unexpected content inside <ssl>"))
@@ -723,7 +723,7 @@ let first_pass c =
     | Element ("commandpipe" as st, [], p) :: ll ->
       set_command_pipe (parse_string_tag st p);
       aux user group ssl ports sslports ll
-    | Element (tag, _, _) :: ll ->
+    | Element (_, _, _) :: ll ->
       aux user group ssl ports sslports ll
     | _ ->
       raise (Config_file_error "Syntax error")

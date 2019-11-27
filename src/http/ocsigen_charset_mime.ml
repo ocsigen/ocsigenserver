@@ -93,7 +93,6 @@ let no_charset : charset = ""
 let default_mime_type : mime_type = "application/octet-stream"
 
 let empty_charset_assoc ?(default=no_charset) = empty default
-let empty_mime_assoc ?(default=default_mime_type) = empty default
 
 (* Generic functions *)
 
@@ -165,9 +164,9 @@ let default_mime_assoc () =
   let parsed = ref None in
   match !parsed with
     | None ->
-        let file = !Ocsigen_config_static.mimefile in
-        Lwt_log.ign_info_f ~section "Loading mime types in '%s'" file;
-        let map = parse_mime_types file in
+        let filename = !Ocsigen_config_static.mimefile in
+        Lwt_log.ign_info_f ~section "Loading mime types in '%s'" filename;
+        let map = parse_mime_types ~filename in
         parsed := Some map;
         map
     | Some map -> map

@@ -29,7 +29,7 @@ exception Bad_config_tag_for_auth of string
 let register_basic_authentication_method, get_basic_authentication_method =
 
   let fun_auth =
-    ref (fun config ->
+    ref (fun _ ->
       raise
         (Bad_config_tag_for_auth
            "<unknown basic authentication method>"))
@@ -41,7 +41,7 @@ let register_basic_authentication_method, get_basic_authentication_method =
      fun_auth := (fun config ->
        try
          old_fun_auth config
-       with Bad_config_tag_for_auth c ->
+       with Bad_config_tag_for_auth _ ->
          new_fun_auth config)),
 
   (* get_basic_authentication_method *)
@@ -86,7 +86,7 @@ let gen ~realm ~auth rs =
         Lwt.return (Ocsigen_extensions.Ext_next err)
       else
         reject ()
-    | `Other s ->
+    | `Other _ ->
       invalid_header ()
   in
 
@@ -101,7 +101,7 @@ let gen ~realm ~auth rs =
        validate ~err s
      | None ->
        reject ())
-  | Ocsigen_extensions.Req_found (ri, r) ->
+  | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
 
 let parse_config element =

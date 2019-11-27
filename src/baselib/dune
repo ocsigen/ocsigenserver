@@ -1,0 +1,31 @@
+(library
+ (name baselib)
+ (public_name ocsigenserver.baselib)
+ (wrapped false)
+ (modules (:standard \ ocsigen_lib_base polytables))
+ (libraries lwt_log pcre cryptokit findlib.dynload baselib_base polytables))
+
+(library
+ (name baselib_base)
+ (public_name ocsigenserver.baselib.base)
+ (wrapped false)
+ (modules ocsigen_lib_base)
+ (libraries lwt))
+
+(library
+ (name polytables)
+ (public_name ocsigenserver.polytables)
+ (wrapped false)
+ (modules polytables)
+ (libraries ))
+
+(rule
+ (target ocsigen_config_static.ml)
+ (deps ocsigen_config_static.ml.in Makefile ../../Makefile.config)
+ (action (run make %{target})))
+
+(rule
+ (target dynlink_wrapper.ml)
+ (deps dynlink_wrapper.natdynlink.ml dynlink_wrapper.nonatdynlink.ml
+       Makefile ../../VERSION ../../Makefile.config ../../Makefile.options)
+ (action (run make %{target})))

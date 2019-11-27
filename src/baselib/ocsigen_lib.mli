@@ -72,7 +72,7 @@ module Url : sig
   *)
   val parse : t ->
     bool option * string option * int option *
-    string (** the path, as a string, without the first / *) *
+    string (* the path, as a string, without the first / *) *
     string list * string option *
     (string * string) list Lazy.t
 

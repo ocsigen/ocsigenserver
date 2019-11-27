@@ -140,19 +140,19 @@ type config_info = {
 
   charset_assoc : Ocsigen_charset_mime.charset_assoc;
 
+  default_directory_index : string list;
   (** Default name to use as index file when a directory is requested.
       Use [None] if no index should be tried. The various indexes
       are tried in the given order. If no index is specified,
       or the index does not exists, the content of the directory
       might be listed, according to [list_directry_content] *)
-  default_directory_index : string list;
 
+  list_directory_content : bool;
   (** Should the list of files in a directory be displayed
       if there is no index in this directory ? *)
-  list_directory_content : bool;
 
-  (** Should symlinks be followed when accessign a local file? *)
   follow_symlinks: [`No | `Owner_match | `Always];
+  (** Should symlinks be followed when accessign a local file? *)
 
   do_not_serve_404: do_not_serve;
   do_not_serve_403: do_not_serve;
@@ -283,7 +283,7 @@ let get_hosts () = !hosts
 
 (* Default hostname is either the Host header or the hostname set in
    the configuration file. *)
-let get_hostname {request_info ; request_config = {default_hostname}} =
+let get_hostname {request_info ; request_config = {default_hostname; _}} =
   if Ocsigen_config.get_usedefaulthostname () then
     default_hostname
   else
@@ -298,7 +298,7 @@ let get_hostname {request_info ; request_config = {default_hostname}} =
 let get_port
     {
       request_info ;
-      request_config = { default_httpport ; default_httpsport }
+      request_config = { default_httpport ; default_httpsport; _ }
     } =
   if Ocsigen_config.get_usedefaulthostname () then
     if Ocsigen_request.ssl request_info then
@@ -518,10 +518,10 @@ let site_ext ext_of_children charset path cookies_to_set = function
         Lwt.return
           (Ext_continue_with (oldri, cs, err), cookies_to_set)
       | (Ext_found_continue_with r, cookies_to_set) ->
-        r () >>= fun (r', req) ->
+        r () >>= fun (r', _) ->
         Lwt.return
           (Ext_found_continue_with' (r', oldri), cookies_to_set)
-      | (Ext_found_continue_with' (r, req), cookies_to_set) ->
+      | (Ext_found_continue_with' (r, _), cookies_to_set) ->
         Lwt.return
           (Ext_found_continue_with' (r, oldri), cookies_to_set)
       | (Ext_do_nothing, cookies_to_set) ->
@@ -536,7 +536,7 @@ let site_ext ext_of_children charset path cookies_to_set = function
 let site_ext ext_of_children charset path : extension = function
   | Req_found (ri, r) ->
     Lwt.return (Ext_found_continue_with' (r, ri))
-  | Req_not_found (err, ri) ->
+  | Req_not_found _ ->
     Lwt.return (Ext_sub_result (site_ext ext_of_children charset path))
 
 let preprocess_site_path p = Url.(
@@ -548,12 +548,12 @@ let preprocess_site_path p = Url.(
 (* Implements only <site> parsing. Uses parse_host to recursively
    parse children of <site>. *)
 let default_parse_config
-    userconf_info
-    (host : virtual_hosts)
-    config_info
+    _
+    (_ : virtual_hosts)
+    _
     prevpath
     (Parse_host parse_host)
-    (parse_fun : parse_fun) = function
+    (_ : parse_fun) = function
   | Xml.Element ("site", atts, l) ->
     let charset, dir = parse_site_attrs (None, None) atts in
     let path = prevpath @ preprocess_site_path (Url.split_path dir) in
@@ -578,10 +578,6 @@ and parse_config_aux =
     (parse_fun -> Xml.xml ->
      extension
     )
-
-let extension_void_fun_site : parse_config = fun _ _ _ _ _ _ -> function
-  | Xml.Element (t, _, _) -> raise (Bad_config_tag_for_extension t)
-  | _ -> raise (Error_in_config_file "Unexpected data in config file")
 
 let register, parse_config_item, get_init_exn_handler =
   let ref_fun_site = ref default_parse_config in
@@ -608,7 +604,7 @@ let register, parse_config_item, get_init_exn_handler =
                 try
                   oldf parse_config config_tag
                 with
-                | Bad_config_tag_for_extension c ->
+                | Bad_config_tag_for_extension _ ->
                   newf parse_config config_tag
          ));
     (match end_init with
@@ -682,13 +678,8 @@ module Configuration = struct
                       ("Non-blank PCDATA in tag "^in_tag)))
         str
 
-  let refuse_pcdata ~in_tag =
-    fun _ ->
-      raise (Error_in_user_config_file
-               ("No PCDATA allowed in tag "^in_tag))
-
-  let check_attribute_occurrence ~in_tag ?other_elements attributes = function
-    | name, { attribute_obligatory = true } ->
+  let check_attribute_occurrence ~in_tag ?other_elements:_ attributes = function
+    | name, { attribute_obligatory = true; _ } ->
       (try ignore (List.assoc name attributes)
        with Not_found ->
          raise (Error_in_user_config_file
@@ -696,7 +687,7 @@ module Configuration = struct
     | _ -> ()
 
   let check_element_occurrence ~in_tag elements = function
-    | name, { obligatory = true } ->
+    | name, { obligatory = true; _ } ->
       let corresponding_element = function
         | Xml.Element (name', _, _) -> name = name'
         | _ -> false
@@ -858,7 +849,7 @@ let compute_result
          fold_hosts request_info e
            (Ocsigen_cookie_map.add_multi cook cookies_to_set) l
        (* try next site *)
-       | Ext_stop_all (cook, e) ->
+       | Ext_stop_all (_, e) ->
          Lwt.fail (Ocsigen_http_error (cookies_to_set, e))
        | Ext_continue_with (_, cook, e) ->
          fold_hosts request_info e
@@ -869,7 +860,7 @@ let compute_result
            (Ocsigen_cookie_map.add_multi cook cookies_to_set)
            request2.request_info
        (* retry all *)
-       | Ext_sub_result sr ->
+       | Ext_sub_result _ ->
          assert false
       )
     | (h, _, _)::l ->
@@ -958,9 +949,9 @@ let find_redirection regexp full_url dest r =
     in
     let path =
       Url.make_absolute_url
-        (Ocsigen_request.ssl r)
-        host
-        (Ocsigen_request.port r)
+        ~https:(Ocsigen_request.ssl r)
+        ~host
+        ~port:(Ocsigen_request.port r)
         ("/" ^ path)
     in
     Ocsigen_lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->

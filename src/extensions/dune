@@ -1,0 +1,71 @@
+(library
+ (name redirectmod)
+ (public_name ocsigenserver.ext.redirectmod)
+ (libraries server)
+ (modules redirectmod))
+
+(library
+ (name outputfilter)
+ (public_name ocsigenserver.ext.outputfilter)
+ (libraries server)
+ (modules outputfilter))
+
+(library
+ (name userconf)
+ (public_name ocsigenserver.ext.userconf)
+ (libraries server)
+ (modules userconf))
+
+(library
+ (name staticmod)
+ (public_name ocsigenserver.ext.staticmod)
+ (libraries server)
+ (modules staticmod))
+
+(library
+ (name revproxy)
+ (public_name ocsigenserver.ext.revproxy)
+ (libraries server)
+ (modules revproxy))
+
+(library
+ (name accesscontrol)
+ (public_name ocsigenserver.ext.accesscontrol)
+ (libraries server)
+ (modules accesscontrol))
+
+(library
+ (name cors)
+ (public_name ocsigenserver.ext.cors)
+ (libraries server)
+ (modules cors))
+
+(library
+ (name extendconfiguration)
+ (public_name ocsigenserver.ext.extendconfiguration)
+ (libraries server)
+ (modules extendconfiguration))
+
+(library
+ (name authbasic)
+ (public_name ocsigenserver.ext.authbasic)
+ (libraries server)
+ (modules authbasic))
+
+;(library
+; (name cgimod)
+; (public_name ocsigenserver.ext.cgimod)
+; (libraries baselib http server)
+; (modules cgimod))
+
+(library
+ (name deflatemod)
+ (public_name ocsigenserver.ext.deflatemod)
+ (libraries server camlzip)
+ (modules deflatemod))
+
+(library
+ (name rewritemod)
+ (public_name ocsigenserver.ext.rewritemod)
+ (libraries server)
+ (modules rewritemod))

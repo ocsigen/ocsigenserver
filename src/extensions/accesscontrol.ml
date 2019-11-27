@@ -212,7 +212,7 @@ let parse_config parse_fun = function
       | _ ->
         Ocsigen_extensions.badconfig "Bad <then> branch in <if>"
     in
-    let (ielse, sub) = match sub with
+    let (ielse, _) = match sub with
       | Element ("else", [], ielse)::([] as q) ->
         parse_fun ielse, q
       | [] -> (parse_fun [], [])
@@ -236,7 +236,7 @@ let parse_config parse_fun = function
 
 
   | Element ("notfound", [], []) ->
-    (fun rs ->
+    (fun _ ->
        Lwt_log.ign_info ~section "NOT_FOUND: taking in charge 404";
        Lwt.return (Ocsigen_extensions.Ext_stop_all
                      (Ocsigen_cookie_map.empty, `Not_found)))
@@ -248,7 +248,7 @@ let parse_config parse_fun = function
       | Ocsigen_extensions.Req_found (_, r) ->
         Lwt.return (Ocsigen_extensions.Ext_found_stop
                       (fun () -> Lwt.return r))
-      | Ocsigen_extensions.Req_not_found (err, ri) ->
+      | Ocsigen_extensions.Req_not_found _ ->
         Lwt.return (Ocsigen_extensions.Ext_stop_site
                       (Ocsigen_cookie_map.empty, `Not_found)))
 
@@ -257,7 +257,7 @@ let parse_config parse_fun = function
       | Ocsigen_extensions.Req_found (_, r) ->
         Lwt.return (Ocsigen_extensions.Ext_found_stop
                       (fun () -> Lwt.return r))
-      | Ocsigen_extensions.Req_not_found (err, ri) ->
+      | Ocsigen_extensions.Req_not_found _ ->
         Lwt.return (Ocsigen_extensions.Ext_stop_host
                       (Ocsigen_cookie_map.empty, `Not_found)))
   | Element ("nextsite" as s, _, _) ->
@@ -268,14 +268,14 @@ let parse_config parse_fun = function
       | Ocsigen_extensions.Req_found (_, r) ->
         Lwt.return (Ocsigen_extensions.Ext_found_stop
                       (fun () -> Lwt.return r))
-      | Ocsigen_extensions.Req_not_found (err, ri) ->
+      | Ocsigen_extensions.Req_not_found _ ->
         Lwt.return (Ocsigen_extensions.Ext_stop_all
                       (Ocsigen_cookie_map.empty, `Not_found)))
   | Element ("stop" as s, _, _) ->
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
 
   | Xml.Element ("forbidden", [], []) ->
-    (fun rs ->
+    (fun _ ->
        Lwt_log.ign_info ~section "FORBIDDEN: taking in charge 403";
        Lwt.return (Ocsigen_extensions.Ext_stop_all
                      (Ocsigen_cookie_map.empty, `Forbidden)))
@@ -288,7 +288,7 @@ let parse_config parse_fun = function
     (function
       | Ocsigen_extensions.Req_found (_, _) ->
         Lwt.return (Ocsigen_extensions.Ext_sub_result ext)
-      | Ocsigen_extensions.Req_not_found (err, ri) ->
+      | Ocsigen_extensions.Req_not_found (err, _) ->
         Lwt.return (Ocsigen_extensions.Ext_next err))
 
   | Element ("iffound" as s, _, _) ->
@@ -300,7 +300,7 @@ let parse_config parse_fun = function
       | Ocsigen_extensions.Req_found (_, r) ->
         Lwt.return (Ocsigen_extensions.Ext_found
                       (fun () -> Lwt.return r))
-      | Ocsigen_extensions.Req_not_found (err, ri) ->
+      | Ocsigen_extensions.Req_not_found _ ->
         Lwt.return (Ocsigen_extensions.Ext_sub_result ext))
   | Element ("ifnotfound", [("code", s)], sub) ->
     let ext = parse_fun sub in
@@ -309,7 +309,7 @@ let parse_config parse_fun = function
       | Ocsigen_extensions.Req_found (_, r) ->
         Lwt.return (Ocsigen_extensions.Ext_found
                       (fun () -> Lwt.return r))
-      | Ocsigen_extensions.Req_not_found (err, ri) ->
+      | Ocsigen_extensions.Req_not_found (err, _) ->
         if
           let err =
             string_of_int
@@ -324,7 +324,7 @@ let parse_config parse_fun = function
     Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
 
   | Element ("allow-forward-for", param, _) ->
-    let apply ({Ocsigen_extensions.request_info} as request) code =
+    let apply ({Ocsigen_extensions.request_info; _} as request) code =
       Lwt_log.ign_info ~section "Allowed proxy";
       let request =
         let header =
@@ -394,7 +394,7 @@ let parse_config parse_fun = function
         apply request code)
 
   | Element ("allow-forward-proto", _, _) ->
-    let apply ({ Ocsigen_extensions.request_info } as request) code =
+    let apply ({ Ocsigen_extensions.request_info; _ } as request) code =
       Lwt_log.ign_info ~section "Allowed proxy for ssl";
       let request_info =
         let header =
