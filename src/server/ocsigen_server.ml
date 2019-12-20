@@ -1217,24 +1217,28 @@ let start_server () =
     in
     let run (user, group) (_, ports, sslports) (minthreads, maxthreads) s =
 
-      Ocsigen_messages.open_files ~user ~group () >>= fun () ->
-
       let wait_end_init, wait_end_init_awakener = wait () in
       (* Listening on all ports: *)
 
-      Lwt_list.fold_left_s
-        (fun a i ->
-           listen false i wait_end_init >>= fun l ->
-           Lwt.return (l @ a))
-        [] ports >>= fun l ->
-      sockets := l;
+      let () =
+        Lwt_main.run
+          (Ocsigen_messages.open_files ~user ~group () >>= fun () ->
 
-      Lwt_list.fold_left_s
-        (fun a i ->
-           listen true i wait_end_init >>= fun l ->
-           Lwt.return (l @ a))
-        [] sslports >>= fun l ->
-      sslsockets := l;
+           Lwt_list.fold_left_s
+             (fun a i ->
+               listen false i wait_end_init >>= fun l ->
+               Lwt.return (l @ a))
+             [] ports >>= fun l ->
+           sockets := l;
+
+           Lwt_list.fold_left_s
+             (fun a i ->
+               listen true i wait_end_init >>= fun l ->
+               Lwt.return (l @ a))
+             [] sslports >>= fun l ->
+           sslsockets := l;
+           Lwt.return_unit)
+      in
 
       begin match ports with
         | (_, p)::_ -> Ocsigen_config.set_default_port p
@@ -1385,7 +1389,7 @@ let start_server () =
       Lwt_log.ign_notice ~section "Ocsigen has been launched \
                                     (initialisations ok)";
 
-      fst (Lwt.wait ())
+      Lwt_main.run @@ fst (Lwt.wait ())
 
     in
 
@@ -1466,7 +1470,7 @@ let start_server () =
           let pid = Lwt_unix.fork () in
           if pid = 0
           then
-            Lwt_main.run (run user_info sslinfo threadinfo h)
+            run user_info sslinfo threadinfo h
           else begin
             Ocsigen_messages.console
               (fun () -> "Process "^(string_of_int pid)^" detached");
@@ -1474,7 +1478,7 @@ let start_server () =
           end
         else begin
           write_pid (Unix.getpid ());
-          Lwt_main.run (run user_info sslinfo threadinfo h)
+          run user_info sslinfo threadinfo h
         end
       | _ -> () (* Multiple servers not supported any more *)
 
