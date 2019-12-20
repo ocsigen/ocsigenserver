@@ -1,3 +1,6 @@
+==== 2.16.0 (2019-12-20) ====
+ * compatibility with lwt.5.0: fix nested Lwt_main.run
+
 ==== 2.15.0 (2019-08-16) ====
  * Ocsipersist-pgsql: fix iter_table function
 
