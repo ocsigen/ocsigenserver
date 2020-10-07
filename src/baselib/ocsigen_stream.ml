@@ -121,7 +121,7 @@ let string_of_stream m s =
   aux 0 s >|= Buffer.contents
 
 let enlarge_stream = function
-  | Finished a -> Lwt.fail Stream_too_small
+  | Finished _a -> Lwt.fail Stream_too_small
   | Cont (s, f) ->
     let long = String.length s in
     let max = !net_buffer_size in
@@ -146,7 +146,7 @@ let rec stream_want s len =
   (* returns a stream with at least len bytes read if possible *)
   match s with
   | Finished _ -> Lwt.return s
-  | Cont (stri, f)  ->
+  | Cont (stri, _f)  ->
     if String.length stri >= len then
       Lwt.return s
     else
