@@ -119,18 +119,18 @@ module Netstring_pcre = struct
     (* Unfortunately we cannot just replace \ by $. *)
     let rec tr l =
       match l with
-	Pcre.Delim "$" :: l' -> "$$" :: tr l'
+        Pcre.Delim "$" :: l' -> "$$" :: tr l'
       | Pcre.Delim "\\" :: Pcre.Delim "$" :: l'  -> "$$" :: tr l'
       | Pcre.Delim "\\" :: Pcre.Delim s :: l' -> s :: tr l'
       | Pcre.Delim "\\" :: Pcre.Text s :: l' -> s :: tr l'
       | [ Pcre.Delim "\\" ] -> failwith "trailing backslash"
       | Pcre.Delim d :: l' ->
-	assert(d.[0] = '\\');
-	let n = Char.code d.[1] - Char.code '0' in
-	if n = 0 then
-	  "$&" :: tr l'
-	else
-	  ("$" ^ string_of_int n ^ "$!") :: tr l'
+        assert(d.[0] = '\\');
+        let n = Char.code d.[1] - Char.code '0' in
+        if n = 0 then
+          "$&" :: tr l'
+        else
+          ("$" ^ string_of_int n ^ "$!") :: tr l'
       | Pcre.Text t :: l' -> t :: tr l'
       | Pcre.Group(_,_) :: _ -> assert false
       | Pcre.NoGroup :: _ -> assert false
@@ -169,15 +169,15 @@ module Netstring_pcre = struct
         let (_,match_end) = Pcre.get_substring_ofs start_substrs 0 in
         match_end
       with
-	Not_found -> 0
+        Not_found -> 0
     in
     let rec split start n =
       if start >= String.length text then [] else
       if n = 1 then [string_after text start] else
         try
-	  let next_substrs = Pcre.exec ~rex:expr ~pos:start text
-	  in (* or Not_found *)
-	  let pos, match_end = Pcre.get_substring_ofs next_substrs 0 in
+          let next_substrs = Pcre.exec ~rex:expr ~pos:start text
+          in (* or Not_found *)
+          let pos, match_end = Pcre.get_substring_ofs next_substrs 0 in
           String.sub text start (pos-start) :: split match_end (n-1)
         with Not_found ->
           [string_after text start] in
@@ -314,29 +314,29 @@ module Url = struct
     let s_l = String.length s in
     let s1 =
       if pos = 0 && len=None then s else
-	let len = match len with Some n -> n | None -> s_l in
-	String.sub s pos len in
+        let len = match len with Some n -> n | None -> s_l in
+        String.sub s pos len in
     let l = String.length s1 in
     Netstring_pcre.global_substitute
       url_decoding_re
       (fun r _ ->
-	 match Netstring_pcre.matched_string r s1 with
-	 | "+" -> if plus then " " else "+"
-	 | _ ->
+         match Netstring_pcre.matched_string r s1 with
+         | "+" -> if plus then " " else "+"
+         | _ ->
            let i = fst (Pcre.get_substring_ofs r 0) in
-	   (* Assertion: s1.[i] = '%' *)
-	   if i+2 >= l then failwith "decode";
-	   let c1 = s1.[i+1] in
-	   let c2 = s1.[i+2] in
-	   begin
-	     try
-	       let k1 = of_hex1 c1 in
-	       let k2 = of_hex1 c2 in
-	       String.make 1 (Char.chr((k1 lsl 4) lor k2))
-	     with
-	       Not_found ->
-	       failwith "decode"
-	   end
+           (* Assertion: s1.[i] = '%' *)
+           if i+2 >= l then failwith "decode";
+           let c1 = s1.[i+1] in
+           let c2 = s1.[i+2] in
+           begin
+             try
+               let k1 = of_hex1 c1 in
+               let k2 = of_hex1 c2 in
+               String.make 1 (Char.chr((k1 lsl 4) lor k2))
+             with
+               Not_found ->
+               failwith "decode"
+           end
       )
       s1
 
@@ -360,20 +360,20 @@ module Url = struct
     let rec parse_after_amp tl =
       match tl with
       | Str.Text name :: Str.Delim "=" :: Str.Text value :: tl' ->
-	(decode name, decode value) :: parse_next tl'
+        (decode name, decode value) :: parse_next tl'
       | Str.Text name :: Str.Delim "=" :: Str.Delim "&" :: tl' ->
-	(decode name, "") :: parse_after_amp tl'
+        (decode name, "") :: parse_after_amp tl'
       | Str.Text name :: Str.Delim "=" :: [] ->
-	[decode name, ""]
+        [decode name, ""]
       | _ ->
-	failwith "dest_url_encoded_parameters"
+        failwith "dest_url_encoded_parameters"
     and parse_next tl =
       match tl with
       | [] -> []
       | Str.Delim "&" :: tl' ->
-	parse_after_amp tl'
+        parse_after_amp tl'
       | _ ->
-	failwith "dest_url_encoded_parameters"
+        failwith "dest_url_encoded_parameters"
     in
     let toklist = Str.full_split url_split_re parstr in
     match toklist with

@@ -454,9 +454,9 @@ module Url_base = struct
     let rec collect_words k =
       let k' =
         try
-	  String.index_from s k '/'
+          String.index_from s k '/'
         with
-	  Not_found -> l
+          Not_found -> l
       in
       let word = String.sub s k (k'-k) in
       if k' >= l then
@@ -475,39 +475,39 @@ module Url_base = struct
     let rec remove_slash_slash l first =
       match l with
       | [ "" ] ->
-	[ "" ]
+        [ "" ]
       | [ ""; "" ] when first ->
-	[ "" ]
+        [ "" ]
       | "" :: l' when not first ->
-	remove_slash_slash l' false
+        remove_slash_slash l' false
       | x :: l' ->
-	x :: remove_slash_slash l' false
+        x :: remove_slash_slash l' false
       | [] ->
-	[]
+        []
     in
 
     let rec remove_dot l first =
       match l with
       | ([ "." ] | ["."; ""]) ->
-	if first then [] else [ "" ]
+        if first then [] else [ "" ]
       |	"." :: x :: l' ->
-	remove_dot (x :: l') false
+        remove_dot (x :: l') false
       | x :: l' ->
-	x :: remove_dot l' false
+        x :: remove_dot l' false
       | [] ->
-	[]
+        []
     in
 
     let rec remove_dot_dot_once l first =
       match l with
-	x :: ".." :: [] when x <> "" && x <> ".." && not first ->
-	[ "" ]
+        x :: ".." :: [] when x <> "" && x <> ".." && not first ->
+        [ "" ]
       |	x :: ".." :: l' when x <> "" && x <> ".." ->
-	l'
+        l'
       | x :: l' ->
-	x :: remove_dot_dot_once l' false
+        x :: remove_dot_dot_once l' false
       | [] ->
-	raise Not_found
+        raise Not_found
     in
 
     let rec remove_dot_dot l =
@@ -515,7 +515,7 @@ module Url_base = struct
         let l' = remove_dot_dot_once l true in
         remove_dot_dot l'
       with
-	Not_found -> l
+        Not_found -> l
     in
 
     let l' = remove_dot_dot (remove_dot (remove_slash_slash l true) true) in

@@ -22,7 +22,7 @@
 
 type 'a key = int * 'a option ref
 
-module T = Map.Make(struct 
+module T = Map.Make(struct
     type t = int
     let compare = compare
   end)
@@ -50,4 +50,3 @@ let remove ~(table : t) ~key:((k, r) : 'a key) =
 
 let clear ~(table : t) =
   table := T.empty
-
