@@ -424,7 +424,7 @@ check_library xml-light "See: https://github.com/ncannasse/xml-light"
 
 # Check PostgreSQL
 case "$with_pgsql" in
- 1) if test_library pgocaml && test_library pgocaml_ppx; then with_pgsql=1; else with_pgsql=0; fi;;
+ 1) if test_library pgocaml; then with_pgsql=1; else with_pgsql=0; fi;;
  2) check_library pgocaml "https://github.com/darioteixeira/pgocaml";;
 esac
 
