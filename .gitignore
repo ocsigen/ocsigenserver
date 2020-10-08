@@ -13,6 +13,7 @@
 Makefile.config
 src/baselib/dynlink_wrapper.ml
 src/baselib/ocsigen_config_static.ml
+src/baselib/.merlin
 src/server/ocsigenserver
 src/server/ocsigenserver.opt
 src/extensions/ocsipersist.mli
@@ -35,3 +36,4 @@ local/etc/ocsigenserver.conf
 local/etc/ocsigenserver.conf.opt
 doc/api-html
 _opam
+_build
