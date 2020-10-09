@@ -153,9 +153,9 @@ let parse_mime_types ~filename : mime_type assoc =
               close_in in_ch;
               map
             with exn ->
-	            Lwt_log.ign_error ~section ~exn
+                    Lwt_log.ign_error ~section ~exn
                "unable to read the mime.types file";
-	           MapString.empty
+                   MapString.empty
            )];
     assoc_default = default_mime_type;
   }
