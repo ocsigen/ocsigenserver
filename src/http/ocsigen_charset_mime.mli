@@ -36,6 +36,7 @@ type charset_assoc
 
 (** All files are mapped to [no_charset] *)
 val empty_charset_assoc : ?default:charset -> unit -> charset_assoc
+val empty_mime_assoc : ?default:charset -> unit -> charset_assoc
 
 val find_charset : string -> charset_assoc -> charset
 
