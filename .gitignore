@@ -19,6 +19,7 @@ src/server/.merlin
 src/server/ocsigenserver
 src/server/ocsigenserver.opt
 src/extensions/ocsipersist.mli
+src/extensions/.merlin
 src/extensions/ocsipersist-dbm/ocsidbm
 src/extensions/ocsipersist-dbm/ocsidbm.opt
 src/extensions/ocsipersist-dbm/ocsipersist.mli
