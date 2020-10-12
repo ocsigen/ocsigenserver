@@ -91,19 +91,19 @@ type config_info = {
 
   charset_assoc : Ocsigen_charset_mime.charset_assoc;
 
+  default_directory_index : string list;
   (** Default name to use as index file when a directory is requested.
       Use [None] if no index should be tried. The various indexes are
       tried in the given order. If no index is specified, or the index
       does not exists, the content of the directory might be listed,
       according to [list_directory_content] *)
-  default_directory_index : string list;
 
+  list_directory_content : bool;
   (** Should the list of files in a directory be displayed if there is
       no index in this directory ? *)
-  list_directory_content : bool;
 
-  (** Should symlinks be followed when accessing a local file? *)
   follow_symlinks: [`No | `Owner_match | `Always];
+  (** Should symlinks be followed when accessing a local file? *)
 
   do_not_serve_404: do_not_serve;
   do_not_serve_403: do_not_serve;
@@ -364,6 +364,8 @@ module Configuration : sig
   (** The specification for ignoring blank PCDATA ('\n', '\r', ' ', '\t') and failing
       otherwise (a reasonable default). *)
   val ignore_blank_pcdata : in_tag:string -> string -> unit
+
+  val refuse_pcdata : in_tag:string -> string -> unit
 
 end
 

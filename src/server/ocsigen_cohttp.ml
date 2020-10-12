@@ -12,7 +12,7 @@ exception Ext_http_error of
     @param out_ch output for debug
     @param request Cohttp request *)
 
-let print_request fmt request =
+let _print_request fmt request =
 
   let print_list print_data out_ch lst =
     let rec aux = function
@@ -40,7 +40,7 @@ let connections = Hashtbl.create 256
 let get_number_of_connected,
     incr_connected,
     decr_connected,
-    wait_fewer_connected =
+    _wait_fewer_connected =
   let connected = ref 0 in
   let maxr = ref (-1000) in
   let mvar = Lwt_mvar.create_empty () in
@@ -96,7 +96,7 @@ module Cookie = struct
 end
 
 (* FIXME: secure *)
-let make_cookies_header path exp name c secure =
+let make_cookies_header path exp name c _secure =
   Format.sprintf "%s=%s%s%s" name c
     (*VVV encode = true? *)
     ("; path=/" ^ Ocsigen_lib.Url.string_of_url_path ~encode:true path)
@@ -260,7 +260,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
 
 
 
-let conn_closed (flow, conn) =
+let conn_closed (_flow, conn) =
   try
     Lwt_log.ign_debug_f ~section
       "Connection closed:\n%s"
