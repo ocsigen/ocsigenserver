@@ -2,3 +2,8 @@
   (name accesscontrol)
   (modules accesscontrol)
   (libraries xml-light ipaddr baselib ocsigenserver))
+
+(library
+  (name authbasic)
+  (modules authbasic)
+  (libraries lwt xml-light ocsigenserver))
