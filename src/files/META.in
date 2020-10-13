@@ -125,14 +125,6 @@ package "ext" (
     archive(native) = "authbasic.cmx"
   )
 
-  package "cgimod" (
-    exists_if = "cgimod.cmo,cgimod.cmx"
-    version = "[distributed with Ocsigen server]"
-    description = "CGI support"
-    archive(byte) = "cgimod.cmo"
-    archive(native) = "cgimod.cmx"
-  )
-
   package "ocsipersist-sqlite" (
     exists_if = "ocsipersist-sqlite.cma,ocsipersist-sqlite.cmxa"
     requires = "sqlite3"
