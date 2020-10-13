@@ -124,7 +124,7 @@ let add_headers config r response =
 let main config = function
 
   | Ocsigen_extensions.Req_not_found
-      (_, {Ocsigen_extensions.request_info}) ->
+      (_, {Ocsigen_extensions.request_info ;_}) ->
     (match Ocsigen_request.meth request_info with
      | `OPTIONS ->
        (Lwt_log.ign_info ~section "OPTIONS request";
@@ -137,7 +137,7 @@ let main config = function
        Lwt.return Ocsigen_extensions.Ext_do_nothing)
 
   | Ocsigen_extensions.Req_found
-      ({Ocsigen_extensions.request_info}, response) ->
+      ({Ocsigen_extensions.request_info; _}, response) ->
     Lwt_log.ign_info ~section "answered request";
     add_headers config request_info response
 
@@ -146,7 +146,7 @@ let main config = function
 let comma_space_regexp =
   Ocsigen_lib.Netstring_pcre.regexp "[[:blank:]\n]*,[[:blank:]\n]*"
 
-let parse_config _ _ parse_fun config_elem =
+let parse_config _ _ _parse_fun config_elem =
   let config = ref {
     methods = None;
     credentials = false;

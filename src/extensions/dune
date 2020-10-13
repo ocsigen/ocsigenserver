@@ -7,3 +7,8 @@
   (name authbasic)
   (modules authbasic)
   (libraries lwt xml-light ocsigenserver))
+
+(library
+  (name cors)
+  (modules cors)
+  (libraries ocsigenserver))
