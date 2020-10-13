@@ -30,10 +30,9 @@
     </extension>
     -->
 
-    <!--
+    <!-- the database-tag and its attributes are all optional
     <findlib path="_LIBDIR_"/>
     <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
-      <!-- the database-tag and its attributes are all optional -->
       <database
         host="localhost"
         port="3000"
