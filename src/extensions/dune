@@ -27,3 +27,8 @@
   (name redirectmod)
   (modules redirectmod)
   (libraries ocsigenserver))
+
+(library
+  (name revproxy)
+  (modules revproxy)
+  (libraries ocsigenserver))

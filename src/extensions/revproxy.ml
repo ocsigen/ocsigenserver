@@ -23,7 +23,6 @@
     The reverse proxy is still experimental. *)
 
 open Lwt.Infix
-open Xml
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 
@@ -43,7 +42,7 @@ let gen dir = function
   | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found
-      (err, {Ocsigen_extensions.request_info}) ->
+      (err, {Ocsigen_extensions.request_info; _}) ->
     Lwt.catch
       (* Is it a redirection? *)
       (fun () ->
@@ -88,7 +87,7 @@ let gen dir = function
            "YES! Redirection to http%s://%s:%d/%s"
            (if https then "s" else "") host port path;
 
-         Ocsigen_lib.Ip_address.get_inet_addr host >>= fun inet_addr ->
+         Ocsigen_lib.Ip_address.get_inet_addr host >>= fun _inet_addr ->
 
          (* It is now safe to start processing next request.
 
