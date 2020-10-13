@@ -20,11 +20,12 @@ src/server/ocsigenserver
 src/server/ocsigenserver.opt
 src/extensions/ocsipersist.mli
 src/extensions/.merlin
-src/extensions/ocsipersist-dbm/ocsidbm
-src/extensions/ocsipersist-dbm/ocsidbm.opt
 src/extensions/ocsipersist-dbm/ocsipersist.mli
+src/extensions/ocsipersist-dbm/.merlin
 src/extensions/ocsipersist-sqlite/ocsipersist.mli
+src/extensions/ocsipersist-sqlite/.merlin
 src/extensions/ocsipersist-pgsql/ocsipersist.mli
+src/extensions/ocsipersist-pgsql/.merlin
 src/files/META
 src/files/META.ocsigenserver
 src/extensions/files/META

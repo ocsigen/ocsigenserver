@@ -173,7 +173,7 @@ let db_length t =
 (* signals *)
 let close_all i _ =
   Unix.unlink (directory^"/"^socketname);
-  Tableoftables.iter (fun k t -> Dbm.close t) !tableoftables;
+  Tableoftables.iter (fun _k t -> Dbm.close t) !tableoftables;
   exit i
 
 let the_end i =
@@ -275,7 +275,7 @@ let _ = Lwt_main.run
      Lwt.catch
        (fun () ->
           Lwt_unix.bind socket (Unix.ADDR_UNIX (directory^"/"^socketname)))
-       (fun exn ->
+       (fun _exn ->
           errlog ("Please make sure that the directory "^directory^" exists, writable for ocsidbm, and no other ocsidbm process is running on the same directory. If not, remove the file "^(directory^"/"^socketname));
           the_end 1) >>= fun () ->
      Lwt_unix.listen socket 20;

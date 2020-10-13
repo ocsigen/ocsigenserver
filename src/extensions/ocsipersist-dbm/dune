@@ -1,0 +1,15 @@
+(library
+  (name ocsidbmtypes)
+  (modules_without_implementation ocsidbmtypes)
+  (modules ocsidbmtypes))
+
+(library
+  (name ocsipersistdbm)
+  (modules ocsipersist)
+  (libraries lwt lwt_log xml-light dbm ocsidbmtypes ocsigenserver))
+
+(executable
+  (name ocsidbm)
+  (modules ocsidbm)
+  (libraries lwt lwt.unix dbm ocsidbmtypes)
+  (modes byte exe))

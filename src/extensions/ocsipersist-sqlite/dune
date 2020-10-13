@@ -1,0 +1,3 @@
+(library
+  (name ocsipersistsqlite)
+  (libraries lwt_log sqlite3 xml-light ocsigenserver))

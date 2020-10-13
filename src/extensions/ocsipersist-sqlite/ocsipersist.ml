@@ -31,13 +31,10 @@ open Printf
 *)
 type store = string
 
-exception Ocsipersist_error
-
-
 (*****************************************************************************)
 
 (** getting the directory from config file *)
-let rec parse_global_config = function
+let parse_global_config = function
   | [] -> None
   | (Xml.Element ("database", [("file", s)], []))::[] -> Some s
   | _ -> raise (Ocsigen_extensions.Error_in_config_file

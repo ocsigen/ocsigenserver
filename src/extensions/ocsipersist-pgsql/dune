@@ -1,0 +1,3 @@
+(library
+  (name ocsipersistpgsql)
+  (libraries lwt_log xml-light pgocaml ocsigenserver))
