@@ -17,3 +17,8 @@
   (name extendconfiguration)
   (modules extendconfiguration)
   (libraries ocsigenserver))
+
+(library
+  (name outputfilter)
+  (modules outputfilter)
+  (libraries ocsigenserver))
