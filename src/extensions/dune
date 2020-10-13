@@ -32,3 +32,8 @@
   (name revproxy)
   (modules revproxy)
   (libraries ocsigenserver))
+
+(library
+  (name rewritemod)
+  (modules rewritemod)
+  (libraries ocsigenserver))
