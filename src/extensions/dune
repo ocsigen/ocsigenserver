@@ -1,12 +1,12 @@
 (library
   (name accesscontrol)
   (modules accesscontrol)
-  (libraries xml-light ipaddr baselib ocsigenserver))
+  (libraries ocsigenserver))
 
 (library
   (name authbasic)
   (modules authbasic)
-  (libraries lwt xml-light ocsigenserver))
+  (libraries ocsigenserver))
 
 (library
   (name cors)

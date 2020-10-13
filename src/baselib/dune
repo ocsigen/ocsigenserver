@@ -2,4 +2,4 @@
   (name baselib)
   (wrapped false)
   (flags (:standard -no-keep-locs))
-  (libraries findlib lwt lwt_log lwt.unix cryptokit netstring-pcre netclient))
+  (libraries findlib lwt_log lwt.unix cryptokit netstring-pcre netclient))

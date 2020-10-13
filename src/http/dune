@@ -1,4 +1,4 @@
 (library
   (name http)
   (wrapped false)
-  (libraries pcre cohttp-lwt-unix baselib))
+  (libraries cohttp-lwt-unix baselib))

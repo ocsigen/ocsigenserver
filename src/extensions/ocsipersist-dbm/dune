@@ -6,7 +6,7 @@
 (library
   (name ocsipersistdbm)
   (modules ocsipersist)
-  (libraries lwt lwt_log xml-light dbm ocsidbmtypes ocsigenserver))
+  (libraries dbm ocsidbmtypes ocsigenserver))
 
 (executable
   (name ocsidbm)
