@@ -22,3 +22,8 @@
   (name outputfilter)
   (modules outputfilter)
   (libraries ocsigenserver))
+
+(library
+  (name redirectmod)
+  (modules redirectmod)
+  (libraries ocsigenserver))
