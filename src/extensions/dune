@@ -12,3 +12,8 @@
   (name cors)
   (modules cors)
   (libraries ocsigenserver))
+
+(library
+  (name extendconfiguration)
+  (modules extendconfiguration)
+  (libraries ocsigenserver))
