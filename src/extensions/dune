@@ -42,3 +42,8 @@
   (name staticmod)
   (modules staticmod)
   (libraries ocsigenserver))
+
+(library
+  (name userconf)
+  (modules userconf)
+  (libraries ocsigenserver))
