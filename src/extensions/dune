@@ -37,3 +37,8 @@
   (name rewritemod)
   (modules rewritemod)
   (libraries ocsigenserver))
+
+(library
+  (name staticmod)
+  (modules staticmod)
+  (libraries ocsigenserver))
