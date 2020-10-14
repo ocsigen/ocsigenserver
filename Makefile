@@ -2,17 +2,12 @@ include Makefile.config
 
 ### Building
 
-.PHONY: all byte opt doc
+.PHONY: default
+default: build
 
-all:
-	${MAKE} -C src all
-
-byte:
-	${MAKE} -C src byte
-
-opt:
-	${MAKE} -C src opt
-
+.PHONY: build
+build:
+	${MAKE} -C src
 doc:
 	$(MAKE) -C doc
 
@@ -165,9 +160,3 @@ logrotate:
 	     | sed s%GROUP%"$(OCSIGENGROUP)"%g \
 	     | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	     > $(TEMPROOT)/etc/logrotate.d/$(PROJECTNAME)
-
-###
-
-.PHONY: depend
-depend:
-	${MAKE} -C src depend
