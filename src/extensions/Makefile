@@ -1,101 +1,49 @@
 include ../../Makefile.config
 
-PACKAGE  :=		\
-	bytes		\
-	lwt.unix	\
-	lwt_log		\
-	ipaddr		\
-	lwt_ssl		\
-	pcre		\
-	xml-light 	\
-	cohttp-lwt-unix
+.PHONY: default
+default: build
 
-LIBS     := -I ../baselib -I ../http -I ../server \
-            ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
-OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
-OCAMLDOC := $(OCAMLFIND) ocamldoc
-OCAMLDEP := $(OCAMLFIND) ocamldep
-
-all: byte opt
-
-### Extensions ###
-
-FILES := accesscontrol.ml authbasic.ml cors.ml extendconfiguration.ml \
-	 outputfilter.ml redirectmod.ml revproxy.ml \
-	 rewritemod.ml staticmod.ml userconf.ml
+.PHONY: build
+build::
+	dune build
 
 ifeq "$(CAMLZIP)" "YES"
-FILES += deflatemod.ml
-deflatemod.cmo deflatemod.cmx: LIBS+=-package ${CAMLZIPNAME}
-endif
-
-byte:: ${FILES:.ml=.cmo}
-opt:: ${FILES:.ml=.cmx}
-ifeq "$(NATDYNLINK)" "YES"
-opt:: ${FILES:.ml=.cmxs}
+build::
+	$(MAKE) -C deflatemod
 endif
 
 ### PostgreSQL ###
 
 ifeq "$(OCSIPERSISTPGSQL)" "YES"
-byte::
-	$(MAKE) -C ocsipersist-pgsql byte
-opt::
-	$(MAKE) -C ocsipersist-pgsql opt
+build::
+	$(MAKE) -C ocsipersist-pgsql
 endif
 ### SQLite ###
 
 ifeq "$(OCSIPERSISTSQLITE)" "YES"
-byte::
-	$(MAKE) -C ocsipersist-sqlite byte
-opt::
-	$(MAKE) -C ocsipersist-sqlite opt
+build::
+	$(MAKE) -C ocsipersist-sqlite
 endif
 
 ### DBM ####
 
 ifeq "$(OCSIPERSISTDBM)" "YES"
-byte::
-	$(MAKE) -C ocsipersist-dbm byte
-opt::
-	$(MAKE) -C ocsipersist-dbm opt
+build::
+	$(MAKE) -C ocsipersist-dbm
 endif
-
-##########
-
-%.cmi: %.mli
-	$(OCAMLC) ${LIBS} -c $<
-%.cmo: %.ml
-	$(OCAMLC) ${LIBS} -c $<
-%.cmx: %.ml
-	$(OCAMLOPT) ${LIBS} -c $<
-%.cmxs: %.cmx
-	$(OCAMLOPT) -shared -linkall -o $@ $<
 
 ## Clean up
 
-clean: clean.local
+clean:
+	dune clean
 	${MAKE} -C ocsipersist-dbm clean
 	${MAKE} -C ocsipersist-sqlite clean
 	${MAKE} -C ocsipersist-pgsql clean
-clean.local:
-	-rm -f *.cm* *.o *.a *.annot
-	-rm -f ${PREDEP}
-distclean: clean.local
+	${MAKE} -C deflatemod clean
+
+distclean: clean
 	-rm -f *~ \#* .\#*
 	${MAKE} -C ocsipersist-dbm distclean
 	${MAKE} -C ocsipersist-sqlite distclean
 	${MAKE} -C ocsipersist-pgsql distclean
-	-rm -f .depend
-
-## Dependencies
-
-depend: ${PREDEP}
-	$(OCAMLDEP) ${LIBS} *.mli *.ml > .depend
-	${MAKE} -C ocsipersist-dbm depend
-	${MAKE} -C ocsipersist-sqlite depend
-	${MAKE} -C ocsipersist-pgsql depend
-
-FORCE:
--include .depend
+	${MAKE} -C deflatemod distclean
