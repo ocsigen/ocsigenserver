@@ -1,22 +1,10 @@
 include ../Makefile.config
 
 all: metas confs
-	${MAKE} -C baselib all
-	${MAKE} -C http all
-	${MAKE} -C server all
-	${MAKE} -C extensions all
-
-byte: metas confs
-	${MAKE} -C baselib byte
-	${MAKE} -C http byte
-	${MAKE} -C server byte
-	${MAKE} -C extensions byte
-
-opt: metas confs
-	${MAKE} -C baselib opt
-	${MAKE} -C http opt
-	${MAKE} -C server opt
-	${MAKE} -C extensions opt
+	${MAKE} -C baselib
+	${MAKE} -C http
+	${MAKE} -C server
+	${MAKE} -C extensions
 
 ### META ###
 
@@ -167,9 +155,3 @@ distclean: clean.local
 	-rm -fr ../local/var/lib/ocsidb
 	-rm -fr ../local/etc/${PROJECTNAME}.conf
 	-rm -fr ../local/etc/${PROJECTNAME}.conf.opt
-
-depend:
-	${MAKE} -C baselib depend
-	${MAKE} -C http depend
-	${MAKE} -C server depend
-	${MAKE} -C extensions depend
