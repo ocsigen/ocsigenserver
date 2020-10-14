@@ -5,6 +5,7 @@ all: metas confs
 	${MAKE} -C http
 	${MAKE} -C server
 	${MAKE} -C extensions
+	dune build
 
 ### META ###
 
@@ -136,6 +137,7 @@ clean: clean.local
 	${MAKE} -C http clean
 	${MAKE} -C server clean
 	${MAKE} -C extensions clean
+	dune clean
 
 clean.local:
 	-rm -f ../${PROJECTNAME}.conf.sample

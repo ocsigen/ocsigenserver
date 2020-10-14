@@ -11,13 +11,12 @@
 *.cmti
 *~
 Makefile.config
+src/.merlin
 src/baselib/dynlink_wrapper.ml
 src/baselib/ocsigen_config_static.ml
 src/baselib/.merlin
 src/http/.merlin
 src/server/.merlin
-src/server/ocsigenserver
-src/server/ocsigenserver.opt
 src/extensions/ocsipersist.mli
 src/extensions/.merlin
 src/extensions/ocsipersist-dbm/ocsipersist.mli

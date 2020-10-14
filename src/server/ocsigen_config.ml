@@ -60,7 +60,7 @@ let version_number = "0000000000000000"
 let pidfile = ref (None : string option)
 let server_name = "Ocsigen"
 let full_server_name = server_name^"/"^version_number
-let native_ext = if is_native then ".opt" else ""
+let native_ext = if is_native then ".exe" else ".bc"
 
 let (uploaddir : string option ref) = ref None
 let syslog_facility = ref (None : Lwt_log.syslog_facility option)

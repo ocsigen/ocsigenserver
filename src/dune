@@ -1,0 +1,4 @@
+(executable
+  (name ocsigenserver)
+  (libraries dynlink ocsigenserver)
+  (modes exe byte))
