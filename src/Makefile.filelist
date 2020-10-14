@@ -61,8 +61,8 @@ PLUGINS_IMPL := extensions/accesscontrol.cmo extensions/authbasic.cmo	\
              extensions/staticmod.cmo
 
 ifeq "$(CAMLZIP)" "YES"
-PLUGINS_IMPL += extensions/deflatemod.cmo
-PLUGINS_INTF += extensions/deflatemod.cmi
+PLUGINS_IMPL += extensions/deflatemod/deflatemod.cmo
+PLUGINS_INTF += extensions/deflatemod/deflatemod.cmi
 endif
 
 ifeq "$(OCSIPERSISTSQLITE)" "YES"

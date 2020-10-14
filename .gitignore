@@ -26,6 +26,7 @@ src/extensions/ocsipersist-sqlite/ocsipersist.mli
 src/extensions/ocsipersist-sqlite/.merlin
 src/extensions/ocsipersist-pgsql/ocsipersist.mli
 src/extensions/ocsipersist-pgsql/.merlin
+src/extensions/deflatemod/.merlin
 src/files/META
 src/files/META.ocsigenserver
 src/extensions/files/META
