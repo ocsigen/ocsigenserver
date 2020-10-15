@@ -7,7 +7,7 @@ INTF_BASE := baselib/ocsigen_cache.cmi     \
         baselib/ocsigen_config_static.cmi  \
         baselib/ocsigen_stream.cmi         \
         baselib/ocsigen_loader.cmi         \
-        baselib/polytables.cmi             \
+        baselib/polytables/polytables.cmi  \
         \
         http/ocsigen_charset_mime.cmi      \
         http/ocsigen_cookie_map.cmi        \
