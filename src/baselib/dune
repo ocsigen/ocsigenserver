@@ -1,11 +1,13 @@
 (library
   (name ocsigen_lib_base)
+  (public_name ocsigenserver.baselib.base)
   (flags (:standard -no-keep-locs))
   (modules ocsigen_lib_base)
   (libraries lwt))
 
 (library
   (name baselib)
+  (public_name ocsigenserver.baselib)
   (wrapped false)
   (flags (:standard -no-keep-locs))
   (modules

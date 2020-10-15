@@ -1,10 +1,12 @@
 (library
   (name ocsidbmtypes)
+  (public_name ocsigenserver.ext.ocsidbmtypes)
   (modules_without_implementation ocsidbmtypes)
   (modules ocsidbmtypes))
 
 (library
   (name ocsipersistdbm)
+  (public_name ocsigenserver.ext.ocsipersist-dbm)
   (modules ocsipersist)
   (libraries dbm ocsidbmtypes ocsigenserver))
 

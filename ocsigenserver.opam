@@ -37,8 +37,9 @@ build: [
     "%{lib}%/ocsigenserver/etc/ocsigenserver"
   ]
   [make]
+  ["dune" "build" "-p" name "-j" jobs]
 ]
-install: [make "install"]
+install:[make "install.files"]
 depends: [
   "ocaml" {>= "4.08.1"}
   "ocamlfind"
