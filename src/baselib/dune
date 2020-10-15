@@ -1,5 +1,18 @@
 (library
+  (name ocsigen_lib_base)
+  (flags (:standard -no-keep-locs))
+  (modules ocsigen_lib_base)
+  (libraries lwt))
+
+(library
   (name baselib)
   (wrapped false)
   (flags (:standard -no-keep-locs))
-  (libraries findlib lwt_log lwt.unix cryptokit netstring-pcre netclient))
+  (modules
+    dynlink_wrapper
+    ocsigen_cache
+    ocsigen_config_static
+    ocsigen_lib
+    ocsigen_loader
+    ocsigen_stream)
+  (libraries findlib lwt_log lwt.unix cryptokit netstring-pcre netclient ocsigen_lib_base))
