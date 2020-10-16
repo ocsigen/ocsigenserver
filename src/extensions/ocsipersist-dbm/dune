@@ -8,7 +8,8 @@
   (name ocsipersistdbm)
   (public_name ocsigenserver.ext.ocsipersist-dbm)
   (modules ocsipersist)
-  (libraries dbm ocsidbmtypes ocsigenserver))
+  (libraries dbm ocsidbmtypes ocsigenserver)
+  (implements ocsigenpersist))
 
 (executable
   (name ocsidbm)

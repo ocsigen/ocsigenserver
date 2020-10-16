@@ -57,3 +57,12 @@
   (public_name ocsigenserver.ext.userconf)
   (modules userconf)
   (libraries ocsigenserver))
+
+(library
+ (name ocsigenpersist)
+ (wrapped false)
+ (public_name ocsigenserver.ext)
+ (virtual_modules ocsipersist)
+ (modules ocsipersist)
+ (libraries lwt))
+
