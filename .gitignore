@@ -25,5 +25,6 @@ local/var/lib/ocsidb
 local/etc/ocsigenserver.conf
 local/etc/ocsigenserver.conf.opt
 doc/api-html
+doc/api-wiki
 _opam
 _build
