@@ -11,7 +11,7 @@ build:
 doc:
 	$(MAKE) -C doc
 
-### Testing and debugging : local execution and toplevel ###
+### Testing : local execution and toplevel ###
 
 .PHONY: run.local run.opt.local top
 

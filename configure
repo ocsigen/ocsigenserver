@@ -75,7 +75,6 @@ check_library () {
 set_defaults () {
     name="ocsigenserver"
     enable_natdynlink=1
-    enable_debug=1
     enable_annot=1
 		enable_profiling=0
     with_sqlite=1
@@ -107,7 +106,7 @@ full_pwd=`pwd`
 ## Option parsing
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
-eoptions="debug annot profiling natdynlink"
+eoptions="annot profiling natdynlink"
 woptions="pgsql sqlite dbm camlzip"
 
 print_options () {
@@ -180,7 +179,6 @@ usage () {
 	cat <<_EOF_ >&2
 usage: ./configure [ options ]
 
-  --enable-debug,	--disable-debug		Enable/disable debug output
   --enable-annot,	--disable-annot		Enable/disable .cmt{,i} files generation
   --enable-profiling,	--disable-profiling	Enable/disable profiling
   --enable-natdynlink,	--disable-natdynlink	Enable/disable nativecode dynamic linking
@@ -477,11 +475,6 @@ echo
 
 
 #Convert 0/1 values to YES/NO
-if [ $enable_debug -gt 0 ] ; then
-	enable_debug="YES"
-else
-	enable_debug="NO"
-fi
 if [ $enable_annot -gt 0 ] ; then
 	enable_annot="YES"
 else
@@ -567,9 +560,6 @@ OCSIPERSISTPGSQL:=$with_pgsql
 
 # Do you want ocsipersist with dbm? YES/NO
 OCSIPERSISTDBM:=$with_dbm
-
-# Do you want debugging information (-g) ? YES/NO
-DEBUG:=$enable_debug
 
 # Do you want annot files (-bin-annot) ? YES/NO
 ANNOT:=$enable_annot

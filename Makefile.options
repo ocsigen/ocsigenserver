@@ -1,11 +1,4 @@
-BYTEDBG :=
-OPTDBG  :=
 THREAD  := -thread
-
-ifeq "$(DEBUG)" "YES"
-BYTEDBG += -g
-OPTDBG  += -g
-endif
 
 ifeq "$(ANNOT)" "YES"
 BYTEDBG += -bin-annot
@@ -22,22 +15,22 @@ endif
 
 SERVER_PACKAGE := lwt_ssl           \
 		  bytes             \
-	          lwt.unix          \
-                  lwt_log           \
-                  ipaddr            \
-                  findlib           \
-	          cryptokit         \
-                  pcre              \
-                  str               \
-                  xml-light         \
-                  dynlink           \
-                  cohttp-lwt-unix   \
-                  hmap              \
+		  lwt.unix          \
+		  lwt_log           \
+		  ipaddr            \
+		  findlib           \
+		  cryptokit         \
+		  pcre              \
+		  str               \
+		  xml-light         \
+		  dynlink           \
+		  cohttp-lwt-unix   \
+		  hmap              \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
-	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \
-               \"${PROJECTNAME}.polytables\";   \
-               \"${PROJECTNAME}.cookies\";      \
-               \"${PROJECTNAME}.baselib\";      \
-               \"${PROJECTNAME}.http\";         \
-               \"${PROJECTNAME}\";              \
+				    -separator '\";\"' ${SERVER_PACKAGE})\"; \
+	       \"${PROJECTNAME}.polytables\";   \
+	       \"${PROJECTNAME}.cookies\";      \
+	       \"${PROJECTNAME}.baselib\";      \
+	       \"${PROJECTNAME}.http\";         \
+	       \"${PROJECTNAME}\";              \

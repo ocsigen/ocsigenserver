@@ -34,8 +34,7 @@ Local testings:
  * open http://localhost:8080/index.html in your browser
 
  * if it does not work, look at the logs (see 'local/var/log/' in the
-   ocsgigen source directory) or run ocsigen with options -v or -V
-   (verbose and debug mode).
+   ocsgigen source directory) or run ocsigen with options -v.
 
 ------------------------------------------------------------------
 
