@@ -75,7 +75,6 @@ check_library () {
 set_defaults () {
     name="ocsigenserver"
     enable_natdynlink=1
-		enable_profiling=0
     with_sqlite=1
     with_pgsql=1
     with_camlzip=1
@@ -105,7 +104,7 @@ full_pwd=`pwd`
 ## Option parsing
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
-eoptions="profiling natdynlink"
+eoptions="natdynlink"
 woptions="pgsql sqlite dbm camlzip"
 
 print_options () {
@@ -178,7 +177,6 @@ usage () {
 	cat <<_EOF_ >&2
 usage: ./configure [ options ]
 
-  --enable-profiling,	--disable-profiling	Enable/disable profiling
   --enable-natdynlink,	--disable-natdynlink	Enable/disable nativecode dynamic linking
 
   --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
@@ -473,11 +471,6 @@ echo
 
 
 #Convert 0/1 values to YES/NO
-if [ $enable_profiling -gt 0 ] ; then
-	enable_profiling="YES"
-else
-	enable_profiling="NO"
-fi
 if [ $enable_natdynlink -gt 0 ] ; then
 	enable_natdynlink="YES"
 else
@@ -553,10 +546,6 @@ OCSIPERSISTPGSQL:=$with_pgsql
 
 # Do you want ocsipersist with dbm? YES/NO
 OCSIPERSISTDBM:=$with_dbm
-
-# Profiling (always put NO here - but if you want to debug ocsigen):
-PROFILING:=$enable_profiling
-
 
 
 ### Paths ###
