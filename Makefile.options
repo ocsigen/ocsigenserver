@@ -1,10 +1,5 @@
 THREAD  := -thread
 
-ifeq "$(ANNOT)" "YES"
-BYTEDBG += -bin-annot
-OPTDBG  += -bin-annot
-endif
-
 ifeq "$(PROFILING)" "YES"
 BYTEDBG := ${BYTEDBG}
 OPTDBG  += -p
