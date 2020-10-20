@@ -19,8 +19,8 @@ SERVER_PACKAGE := lwt_ssl           \
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 				    -separator '\";\"' ${SERVER_PACKAGE})\"; \
-	       \"${PROJECTNAME}.polytables\";   \
-	       \"${PROJECTNAME}.cookies\";      \
-	       \"${PROJECTNAME}.baselib\";      \
-	       \"${PROJECTNAME}.http\";         \
-	       \"${PROJECTNAME}\";              \
+	       \"ocsigenserver.polytables\";   \
+	       \"ocsigenserver.cookies\";      \
+	       \"ocsigenserver.baselib\";      \
+	       \"ocsigenserver.http\";         \
+	       \"ocsigenserver\";              \

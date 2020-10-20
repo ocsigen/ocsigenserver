@@ -15,7 +15,7 @@ build:
 SERVERLIBS := ../baselib/baselib.cma    \
 	      ../baselib/polytables.cma \
 	      ../http/http.cma          \
-	      ${PROJECTNAME}.cma         \
+	      ocsigenserver.cma         \
 
 top: servertop
 	OCAMLPATH=${SRC}/src/files/:${OCAMLPATH} ${RLWRAP} ./servertop

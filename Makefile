@@ -16,10 +16,10 @@ doc:
 .PHONY: run.local run.opt.local top
 
 run.local: byte
-	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/${PROJECTNAME} -c local/etc/${PROJECTNAME}.conf
+	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/ocsigenserver -c local/etc/ocsigenserver.conf
 
 run.opt.local: opt
-	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/${PROJECTNAME}.opt -c local/etc/${PROJECTNAME}.conf
+	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/ocsigenserver.opt -c local/etc/ocsigenserver.conf
 
 top:
 	cd src/server && ${MAKE} top
@@ -30,7 +30,7 @@ clean: clean.local
 	${MAKE} -C src clean
 
 clean.local:
-	-rm -f $(PROJECTNAME)-*.tar.gz
+	-rm -f ocsigenserver-*.tar.gz
 
 distclean: clean.local
 	${MAKE} -C src distclean
@@ -82,10 +82,10 @@ install.files:
 	   fi; }
 	 ## Configuration files
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
-	${INSTALL} -m ${INSTALL_MOD_644} ${PROJECTNAME}.conf.sample $(TEMPROOT)$(CONFIGDIR)/
-	[ -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf ] || \
-	  { $(INSTALL) -m ${INSTALL_MOD_644} $(PROJECTNAME).conf.sample \
-                $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf;  }
+	${INSTALL} -m ${INSTALL_MOD_644} ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
+	[ -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf ] || \
+	  { $(INSTALL) -m ${INSTALL_MOD_644} ocsigenserver.conf.sample \
+		$(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory
 	$(INSTALL) -m ${INSTALL_MOD_644} src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
@@ -101,12 +101,12 @@ install.files:
 	  local/var/www/ocsigenstuff/*.png local/var/www/ocsigenstuff/*.css \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	$(INSTALL) -d -m ${INSTALL_MOD_755} $(TEMPROOT)$(MANDIR)
-	$(INSTALL) -m ${INSTALL_MOD_644} src/files/${PROJECTNAME}.1 $(TEMPROOT)$(MANDIR)
+	$(INSTALL) -m ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
 
 uninstall:
 	-make -C doc uninstall
-	-rm -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf.sample
-	-rm -f $(TEMPROOT)$(MANDIR)/${PROJECTNAME}.1
+	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf.sample
+	-rm -f $(TEMPROOT)$(MANDIR)/ocsigenserver.1
 	-rm -f $(TEMPROOT)$(COMMANDPIPE)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(CONFIGDIR)/conf.d
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(CONFIGDIR)
@@ -118,14 +118,14 @@ purge: purge.files
 
 purge.files:
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
-	-rm -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf
+	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf
 	-rm -f $(patsubst local/var/www/ocsigenstuff/%, \
-	 		  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff/%, \
-	                  $(wildcard local/var/www/ocsigenstuff/*))
+			  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff/%, \
+			  $(wildcard local/var/www/ocsigenstuff/*))
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	-rm -f $(patsubst local/var/www/%, \
-	 		  $(TEMPROOT)$(STATICPAGESDIR)/%, \
-	                  $(wildcard local/var/www/*.html))
+			  $(TEMPROOT)$(STATICPAGESDIR)/%, \
+			  $(wildcard local/var/www/*.html))
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(STATICPAGESDIR)
 
 install.doc:
@@ -142,4 +142,4 @@ logrotate:
 	     | sed s%USER%$(OCSIGENUSER)%g \
 	     | sed s%GROUP%"$(OCSIGENGROUP)"%g \
 	     | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
-	     > $(TEMPROOT)/etc/logrotate.d/$(PROJECTNAME)
+	     > $(TEMPROOT)/etc/logrotate.d/ocsigenserver

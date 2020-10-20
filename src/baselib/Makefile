@@ -24,12 +24,11 @@ ocsigen_config_static.ml: ocsigen_config_static.ml.in ../../Makefile.config ../.
 	| sed s%_LOGDIR_%$(LOGDIR)% \
 	| sed s%_DATADIR_%$(DATADIR)%g \
 	| sed s%_BINDIR_%$(BINDIR)%g \
-	| sed s%_EXTDIR_%$(LIBDIR)/${PROJECTNAME}/extensions%g \
+	| sed s%_EXTDIR_%$(LIBDIR)/ocsigenserver/extensions%g \
 	| sed s%_STATICPAGESDIR_%$(STATICPAGESDIR)% \
 	| sed s%_UP_%$(UPLOADDIR)%g \
 	| sed s%_OCSIGENUSER_%$(OCSIGENUSER)%g \
 	| sed s%_OCSIGENGROUP_%"$(OCSIGENGROUP)"%g \
-	| sed s%_PROJECTNAME_%$(PROJECTNAME)%g \
 	| sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	| sed s%_CONFIGDIR_%$(CONFIGDIR)% \
 	| sed s%_ISNATIVE_%$(NATIVECODE_RUNTIME_DETECT)%g \

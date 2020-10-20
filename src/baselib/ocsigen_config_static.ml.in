@@ -19,7 +19,7 @@
  *)
 
 let version_number = "_VERSION_"
-let config_file = ref "_CONFIGDIR_/_PROJECTNAME_.conf"
+let config_file = ref "_CONFIGDIR_/ocsigenserver.conf"
 (* We could eventually use Sys.backend_type. *)
 let is_native = _ISNATIVE_
 let logdir = ref (Some "_LOGDIR_")
