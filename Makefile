@@ -40,25 +40,7 @@ distclean: clean.local
 
 ### Installation ####
 
-.PHONY: install partialinstall reinstall uninstall purge.files install.files
-
-install.META:
-	$(MAKE) -C src install
-install.META.byte:
-	$(MAKE) -C src install.byte
-install.META.opt:
-	$(MAKE) -C src install.opt
-
-reinstall: uninstall install
-reinstall.byte: uninstall install.byte
-reinstall.opt: uninstall install.opt
-
-install: install.META install.files
-	@echo
-	@echo "## Run \"make doc\" and \"make install.doc\" to build and install the ocamldoc."
-
-install.byte: install.META.byte install.files
-install.opt: install.META.opt install.files
+.PHONY: purge.files install.files
 
 # BB If install is not run by root but OCSIGENUSER, OCSIGENGROUP is somebody
 # BB different, make files universally accessible, we cannot chown.
@@ -88,6 +70,8 @@ ifeq ($(INSTALL_CAN_PUT_PERMISSIONS), no)
 endif
 
 install.files:
+	@echo
+	@echo "## Run \"make doc\" and \"make install.doc\" to build and install the ocamldoc."
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
 	 ## Command pipe
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(dir $(TEMPROOT)$(COMMANDPIPE))
@@ -129,9 +113,8 @@ uninstall:
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(LOGDIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(DATADIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(MANDIR)
-	-$(MAKE) -C src uninstall
 
-purge: purge.files uninstall
+purge: purge.files
 
 purge.files:
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old

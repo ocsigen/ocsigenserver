@@ -18,9 +18,7 @@ OPTDBG  += -p
 endif
 
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
-## but also to generate src/baselib/ocsigen_config_static.ml and src/files/META
-
-BASE_PACKAGE := lwt ipaddr bytes
+## but also to generate src/baselib/ocsigen_config_static.ml
 
 SERVER_PACKAGE := lwt_ssl           \
 		  bytes             \

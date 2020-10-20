@@ -1,35 +1,11 @@
 include ../Makefile.config
 
-all: metas confs
+all: confs
 	${MAKE} -C baselib
 	${MAKE} -C http
 	${MAKE} -C server
 	${MAKE} -C extensions
 	dune build
-
-### META ###
-
-metas: files/META files/META.${PROJECTNAME}
-
-files/META: files/META.in ../Makefile.config ../Makefile.options Makefile
-	cat $< \
-	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
-	  | sed s/%%NAME%%/$(PROJECTNAME)/g \
-	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVER_PACKAGE})/g \
-	  | sed s/%%BASEDEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${BASE_PACKAGE})/g \
-	  > $@
-
-files/META.${PROJECTNAME}: files/META.in ../Makefile.config ../Makefile.options Makefile
-	echo directory = \"../server\" > $@
-	cat $< \
-	  | sed s/%%CAMLZIPNAME%%/$(CAMLZIPNAME)/ \
-	  | sed s/%%NAME%%/$(PROJECTNAME)/g \
-	  | sed s/%%DEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${SERVER_PACKAGE})/g \
-	  | sed s/%%BASEDEPS%%/$(shell ${OCAMLFIND} query -p-format -separator ',' ${BASE_PACKAGE})/g \
-	  | sed "s%package \"\(polytables\|baselib\)\" (%package \"\1\" (\n  directory = \"../baselib\"%" \
-	  | sed "s%package \"\(http\|cookies\)\" (%package \"\1\" (\n  directory = \"../http\"%" \
-	  | sed "s%directory = \"extensions\"%directory = \"../extensions\"%" \
-	  >> $@
 
 ### CONF ####
 
@@ -75,61 +51,6 @@ confs: ../$(PROJECTNAME).conf.sample ../local/etc/${PROJECTNAME}.conf
 	  | sed s%store\ dir=\"$(SRC)/var/lib\"%store\ dir=\"$(SRC)/local/var/lib/ocsipersist\"%g \
 	  > $@
 
-
-### Install ###
-
-include Makefile.filelist
-
-VERSION := $(shell head -n 1 ../VERSION)
-
-install: INSTALL_BIN=$(BIN) $(NATBIN)
-install: INSTALL_IMPL=$(IMPL) $(NATIMPL)
-install: INSTALL_PLUGINS_IMPL=$(PLUGINS_IMPL) $(PLUGINS_NATIMPL)
-install: INSTALL_PLUGINS_BIN=$(PLUGINS_BIN) $(PLUGINS_NATBIN)
-install: raw_install
-
-install.byte: INSTALL_BIN=$(BIN)
-install.byte: INSTALL_IMPL=$(IMPL)
-install.byte: INSTALL_PLUGINS_IMPL=$(PLUGINS_IMPL)
-install.byte: INSTALL_PLUGINS_BIN=$(PLUGINS_BIN)
-install.byte: raw_install
-
-install.opt: INSTALL_BIN=$(NATBIN)
-install.opt: INSTALL_IMPL=$(NATIMPL)
-install.opt: INSTALL_PLUGINS_IMPL=$(PLUGINS_NATIMPL)
-install.opt: INSTALL_PLUGINS_BIN=$(PLUGINS_NATBIN)
-install.opt: raw_install
-
-raw_install:
-	 # Server binaries
-	$(INSTALL) -m 755 -d $(TEMPROOT)$(BINDIR)
-	$(INSTALL) -m 755 $(INSTALL_BIN) $(TEMPROOT)$(BINDIR)/
-	 # Server libraries
-	$(INSTALL) -m 755 -d $(TEMPROOT)$(LIBDIR)
-	$(OCAMLFIND) install $(PROJECTNAME) \
-	   -destdir $(TEMPROOT)$(LIBDIR) \
-	   -patch-version ${VERSION} \
-	   ${INTF} ${INTF_CMX} $(INSTALL_IMPL) $(DOC) files/META
-	 # Extensions
-	$(INSTALL) -m 755 -d $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-	$(INSTALL) -m 644 \
-	  $(PLUGINS_INTF) $(INSTALL_PLUGINS_IMPL) $(PLUGINS_DOC) \
-	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-	[ -z "$(strip ${INSTALL_PLUGINS_BIN})" ] || \
-	  $(INSTALL) -m 755 $(INSTALL_PLUGINS_BIN) \
-	  $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-
-uninstall:
-	 # Extensions
-	-rm -r $(TEMPROOT)${LIBDIR}/${PROJECTNAME}/extensions/
-	 # Server libraries
-	-$(OCAMLFIND) remove ${PROJECTNAME} -destdir $(TEMPROOT)${LIBDIR}
-	 # Server binaries
-	-rm -r $(addprefix $(TEMPROOT)$(BINDIR)/,$(notdir ${BIN} ${NATBIN}))
-	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(BINDIR)
-
-reinstall: uninstall install
-
 ###
 
 clean: clean.local
@@ -144,7 +65,6 @@ clean.local:
 	-rm -f ../${PROJECTNAME}.conf.opt.sample
 	-rm -f ../${PROJECTNAME}.conf.local
 	-rm -f ../${PROJECTNAME}.conf.opt.local
-	-rm -f files/META files/META.${PROJECTNAME}
 
 distclean: clean.local
 	${MAKE} -C baselib distclean

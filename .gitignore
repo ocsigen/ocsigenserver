@@ -1,14 +1,3 @@
-*.cmi
-*.cmx
-*.cmo
-*.cma
-*.cmxa
-*.cmxs
-*.o
-*.a
-*.annot
-*.cmt
-*.cmti
 *~
 Makefile.config
 src/.merlin
@@ -27,10 +16,6 @@ src/extensions/ocsipersist-sqlite/.merlin
 src/extensions/ocsipersist-pgsql/ocsipersist.mli
 src/extensions/ocsipersist-pgsql/.merlin
 src/extensions/deflatemod/.merlin
-src/files/META
-src/files/META.ocsigenserver
-src/extensions/files/META
-src/extensions/files/META.ocsigenserver_ext
 ocsigenserver.conf.sample
 ocsigenserver.conf.opt.sample
 local/var/log/access.log
