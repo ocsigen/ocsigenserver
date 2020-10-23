@@ -1,3 +1,4 @@
+include Makefile.options
 include Makefile.config
 
 ### Building
@@ -14,8 +15,6 @@ doc:
 ### Testing : local execution and toplevel ###
 
 .PHONY: run.local run.opt.local top
-
-BLD=_build/default/src
 
 run.local: build install.files
 	CAML_LD_LIBRARY_PATH=${BLD}/server:$(CAML_LD_LIBRARY_PATH) ${BLD}/ocsigenserver.bc -c local/etc/ocsigenserver.conf
