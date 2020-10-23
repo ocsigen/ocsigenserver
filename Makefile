@@ -15,11 +15,13 @@ doc:
 
 .PHONY: run.local run.opt.local top
 
-run.local: byte
-	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/ocsigenserver -c local/etc/ocsigenserver.conf
+BLD=_build/default/src
 
-run.opt.local: opt
-	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/ocsigenserver.opt -c local/etc/ocsigenserver.conf
+run.local: build install.files
+	CAML_LD_LIBRARY_PATH=${BLD}/server:$(CAML_LD_LIBRARY_PATH) ${BLD}/ocsigenserver.bc -c local/etc/ocsigenserver.conf
+
+run.opt.local: build install.files
+	CAML_LD_LIBRARY_PATH=${BLD}/server:$(CAML_LD_LIBRARY_PATH) ${BLD}/ocsigenserver.exe -c local/etc/ocsigenserver.conf
 
 top:
 	cd src/server && ${MAKE} top

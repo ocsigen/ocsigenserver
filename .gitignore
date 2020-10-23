@@ -18,12 +18,7 @@ src/extensions/ocsipersist-pgsql/.merlin
 src/extensions/deflatemod/.merlin
 ocsigenserver.conf.sample
 ocsigenserver.conf.opt.sample
-local/var/log/access.log
-local/var/log/errors.log
-local/var/log/warnings.log
-local/var/lib/ocsidb
-local/etc/ocsigenserver.conf
-local/etc/ocsigenserver.conf.opt
+local
 doc/api-html
 doc/api-wiki
 _opam

@@ -39,7 +39,7 @@ confs: ../ocsigenserver.conf.sample ../local/etc/ocsigenserver.conf
 	  | sed s%_MIMEFILE_%$(SRC)/src/files/mime.types%g \
 	  | sed s%_METADIR_%${LIBDIR}\"/\>\<findlib\ path=\"$(SRC)/src/files/\"/\>\<findlib\ path=\"$(SRC)/src/extensions/files/%g \
 	  | sed s%_EXTLIBDIR_%${SRC}/src/extensions/ocsipersist-dbm%g \
-	  | sed s%_CONFIGDIR_%$(SRC)/local/etc%g \
+	  | sed s%_CONFIGDIR_%$(SRC)/local/etc/ocsigenserver%g \
 	  | sed s%_STATICPAGESDIR_%$(SRC)/local/var/www%g \
 	  | sed s%_EXTPACKAGENAME_%ocsigenserver.ext%g \
 	  | sed s%\<\!--\ \<commandpipe%\<commandpipe%g \

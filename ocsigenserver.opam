@@ -33,6 +33,8 @@ build: [
     "%{lib}%/ocsigenserver/var/www"
     "--datadir"
     "%{lib}%/ocsigenserver/var/lib/ocsigenserver"
+    "--temproot"
+    ""
     "--sysconfdir"
     "%{lib}%/ocsigenserver/etc/ocsigenserver"
   ]

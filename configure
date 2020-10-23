@@ -88,7 +88,7 @@ set_defaults () {
     staticpagesdir="/var/www/ocsigenserver"
     uploaddir="/tmp"
     datadir="/var/lib/ocsigenserver"
-    temproot=""
+    temproot="local"
     root=""
     ocsigen_user="www-data"
     ocsigen_group="www-data"
