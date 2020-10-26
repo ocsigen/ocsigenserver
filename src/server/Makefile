@@ -1,7 +1,5 @@
+include ../../Makefile.options
 include ../../Makefile.config
-
-PACKAGE  := ${SERVER_PACKAGE} ## See ../../Makefile.options
-LIBS     := -I ../baselib -I ../http ${addprefix -package ,${PACKAGE}}
 
 .PHONY: default
 default: build
@@ -12,17 +10,19 @@ build:
 
 ## Toplevel
 
-SERVERLIBS := ../baselib/baselib.cma    \
-	      ../baselib/polytables.cma \
-	      ../http/http.cma          \
-	      ocsigenserver.cma         \
+SERVERLIBS := ${BLD}/baselib/ocsigen_lib_base.cma      \
+	      ${BLD}/baselib/baselib.cma               \
+	      ${BLD}/baselib/polytables/polytables.cma \
+	      ${BLD}/http/http.cma                     \
+	      ${BLD}/http/ocsigen_cookie_map.cma       \
+	      ${BLD}/server/ocsigenserver.cma
 
 top: servertop
 	OCAMLPATH=${SRC}/src/files/:${OCAMLPATH} ${RLWRAP} ./servertop
 
-servertop: ${SERVERLIBS}
+servertop: build
 	OCAMLPATH=${SRC}/src/files/:${OCAMLPATH} ${OCAMLFIND} ocamlmktop \
-	   -o $@ -linkall -linkpkg ${THREAD} ${LIBS} $^
+	   -o $@ -linkall -linkpkg ${THREAD} ${LIBS} ${SERVERLIBS}
 
 ## Clean up
 
