@@ -1,0 +1,5 @@
+(library
+  (name ocsigenserver)
+  (wrapped false)
+  (libraries xml-light lwt cohttp-lwt-unix hmap baselib http))
+  
