@@ -28,7 +28,7 @@ INCS=   -I ${BLD}/server/.ocsigenserver.objs/byte \
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
 ## but also to generate src/baselib/ocsigen_config_static.ml
 
-SERVER_PACKAGE := lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,pcre,str,xml-light,dynlink,cohttp-lwt-unix,hmap
+SERVER_PACKAGE := lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,netstring-pcre,str,xml-light,dynlink,cohttp-lwt-unix,hmap
 
 LIBS := -package ${SERVER_PACKAGE} ${INCS}
 
@@ -36,6 +36,7 @@ INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
 				    -separator '\";\"' ${SERVER_PACKAGE})\"; \
 	       \"ocsigenserver.polytables\";   \
 	       \"ocsigenserver.cookies\";      \
+	       \"ocsigenserver.baselib.base\"; \
 	       \"ocsigenserver.baselib\";      \
 	       \"ocsigenserver.http\";         \
 	       \"ocsigenserver\";              \
