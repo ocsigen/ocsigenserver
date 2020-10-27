@@ -17,4 +17,4 @@
     ocsigen_lib
     ocsigen_loader
     ocsigen_stream)
-  (libraries findlib lwt_log lwt.unix cryptokit netstring-pcre netclient ocsigen_lib_base))
+  (libraries str findlib lwt_log lwt.unix cryptokit netstring-pcre ocsigen_lib_base))
