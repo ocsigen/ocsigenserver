@@ -11,15 +11,11 @@ Build instructions:
  * verify that 'Makefile.config' suits to your needs.
 
  * run "make" to compile
- * run "make install" as root to install
 
  * [optional] run "make logrotate" as root to install logrotate
               configuration files in /etc/logrotate.d
 
  * [optional] run "make doc" to build the ocamldoc
- * [optional] run "make install.doc" as root to install the ocamldoc
-
- * run "make uninstall" to uninstall (almost) everything
 
  * run "make purge" to uninstall everything (even configuration files)
 

@@ -595,13 +595,8 @@ echo
 echo "   make"
 echo "   make doc"
 echo
-echo "You may want to test the server before installation:"
+echo "You may test the server by invoking:"
 echo
 echo "   make run.local"
 echo "   make run.opt.local"
-echo
-echo "Finally, if you want system-wide install, (become root if needed and) do:"
-echo
-echo "   make install"
-echo "   make install.doc"
 echo
