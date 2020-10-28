@@ -19,7 +19,7 @@
 (** This type of maps is used to store cookie values for each
     path. The key has type Url.path option: it is for the path
     (default: root of the site). *)
-module Map_path : Map.S with type key := Ocsigen_lib.Url.path
+module Map_path : Map.S with type key := Ocsigen_lib_base.Url_base.path
 
 module Map_inner : Map.S with type key := string
 
@@ -39,7 +39,7 @@ val empty : t
 
     If the cookie is already bound, the previous binding disappear. *)
 val add :
-  path:Ocsigen_lib.Url.path ->
+  path:Ocsigen_lib_base.Url_base.path ->
   string ->
   cookie ->
   t -> t
@@ -53,7 +53,7 @@ val add_multi : t -> t -> t
 
     Warning: it is not equivalent to [add ... OUnset ...]). *)
 val remove :
-  path:Ocsigen_lib.Url.path ->
+  path:Ocsigen_lib_base.Url_base.path ->
   string ->
   t -> t
 
@@ -62,14 +62,14 @@ val remove :
 module Poly : sig
 
   val add :
-    path:Ocsigen_lib.Url.path ->
+    path:Ocsigen_lib_base.Url_base.path ->
     string ->
     'a ->
     'a Map_inner.t Map_path.t ->
     'a Map_inner.t Map_path.t
 
   val remove :
-    path:Ocsigen_lib.Url.path ->
+    path:Ocsigen_lib_base.Url_base.path ->
     string ->
     'a Map_inner.t Map_path.t ->
     'a Map_inner.t Map_path.t

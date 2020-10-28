@@ -2,7 +2,7 @@
   (name ocsigen_cookie_map)
   (public_name ocsigenserver.cookies)
   (modules ocsigen_cookie_map)
-  (libraries baselib))
+  (libraries ocsigen_lib_base))
 
 (library
   (name http)
