@@ -264,7 +264,107 @@ let set pvname v =
   let data = Marshal.to_string v [] in
   db_replace pvname data
 
+(* FUNCTORIAL INTERFACE *******************************************************)
 
+module type TABLE_CONF = sig
+  val name : string
+end
+
+type internal = string
+
+module type COLUMN = sig
+  type t
+  val column_type : string
+  val encode : t -> string
+  val decode : string -> t
+end
+
+module type TABLE = sig
+  type key
+  type value
+
+  val name : string
+  val find : key -> value Lwt.t
+  val add : key -> value -> unit Lwt.t
+  val replace_if_exists : key -> value -> unit Lwt.t
+  val remove : key -> unit Lwt.t
+  val modify_opt : key -> (value option -> value option) -> unit Lwt.t
+  val length : unit -> int Lwt.t
+  val iter :
+    ?from:key -> ?until:key -> (key -> value -> unit Lwt.t) -> unit Lwt.t
+  val fold :
+    ?from:key -> ?until:key -> (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
+  val iter_block :
+    ?from:key -> ?until:key -> (key -> value -> unit) -> unit Lwt.t
+end
+
+module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
+       : TABLE with type key = Key.t and type value = Value.t = struct
+  type key = Key.t
+  type value = Value.t
+  let name = T.name
+
+  let find key = Lwt.map Value.decode @@ db_get (name, Key.encode key)
+  let add key value = db_replace (name, Key.encode key) (Value.encode value)
+  let replace_if_exists key value =
+    db_replace_if_exists (name, Key.encode key) (Value.encode value)
+  let remove key = db_remove (name, Key.encode key)
+
+  let fold ?from ?until f beg =
+    let rec aux nextkey beg =
+      nextkey name >>=
+      function
+        | None -> Lwt.return beg
+        | Some k ->
+            let k = Key.decode k in
+            match from, until with
+            | Some f, _ when k < f -> aux db_nextkey beg
+            | _, Some u when k > u -> Lwt.return beg
+            | _ -> find k >>= fun r -> f k r beg >>= aux db_nextkey
+    in
+    aux db_firstkey beg
+
+  let iter ?from ?until f = fold ?from ?until (fun k v () -> f k v) ()
+
+  let iter_block ?from:_ ?until:_ _ =
+    failwith "iter_block not implemented for DBM. Please use Ocsipersist with sqlite"
+
+  let modify_opt key f =
+    catch (fun () -> find key >>= fun v -> Lwt.return_some v)
+          (function Not_found -> Lwt.return_none | _ -> assert false)
+    >>= fun old_value ->
+    match f old_value with
+    | None -> remove key
+    | Some new_value -> replace_if_exists key new_value
+
+  let length () = db_length name
+  (* for DBM the result may be less than the actual lengeth *)
+end
+
+module Column = struct
+  module String : COLUMN with type t = string = struct
+    type t = string
+    let column_type = "_"
+    let encode s = s
+    let decode s = s
+  end
+
+  module Float : COLUMN with type t = float = struct
+    type t = float
+    let column_type = "_"
+    let encode = string_of_float
+    let decode = float_of_string
+  end
+
+  module Marshal (C : sig type t end) : COLUMN with type t = C.t = struct
+    type t = C.t
+    let column_type = "_"
+    let encode v = Marshal.to_string v []
+    let decode v = Marshal.from_string v 0
+  end
+end
+
+(******************************************************************************)
 
 (** Type of persistent tables *)
 type 'value table = string

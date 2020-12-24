@@ -67,8 +67,53 @@ val get : 'a t -> 'a Lwt.t
 val set : 'a t -> 'a -> unit Lwt.t
 (** [set pv value] sets a persistent value [pv] to [value] *)
 
-(*****************************************************************************)
+
 (** {2 Persistent tables} *)
+
+(* FUNCTORIAL INTERFACE ******************************************************)
+
+type internal
+
+module type TABLE_CONF = sig
+  val name : string
+end
+
+module type COLUMN = sig
+  type t
+  val column_type : string
+  val encode : t -> internal
+  val decode : internal -> t
+end
+
+module type TABLE = sig
+  type key
+  type value
+
+  val name : string
+  val find : key -> value Lwt.t
+  val add : key -> value -> unit Lwt.t
+  val replace_if_exists : key -> value -> unit Lwt.t
+  val remove : key -> unit Lwt.t
+  val modify_opt : key -> (value option -> value option) -> unit Lwt.t
+  val length : unit -> int Lwt.t
+  val iter :
+    ?from:key -> ?until:key -> (key -> value -> unit Lwt.t) -> unit Lwt.t
+  val fold :
+    ?from:key -> ?until:key -> (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
+  val iter_block :
+    ?from:key -> ?until:key -> (key -> value -> unit) -> unit Lwt.t
+end
+
+module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
+       : TABLE with type key = Key.t and type value = Value.t
+
+module Column : sig
+  module String : COLUMN with type t = string
+  module Float : COLUMN with type t = float
+  module Marshal (C : sig type t end) : COLUMN with type t = C.t
+end
+
+(*****************************************************************************)
 
 (** Type of persistent table *)
 type 'value table

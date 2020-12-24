@@ -254,6 +254,225 @@ let set pvname v =
   let data = Marshal.to_string v [] in
   db_replace pvname data
 
+(* FUNCTORIAL INTERFACE *******************************************************)
+
+module type TABLE_CONF = sig
+  val name : string
+end
+
+type internal = Data.t
+
+module type COLUMN = sig
+  type t
+  val column_type : string
+  val encode : t -> internal
+  val decode : internal -> t
+end
+
+module type TABLE = sig
+  type key
+  type value
+
+  val name : string
+  val find : key -> value Lwt.t
+  val add : key -> value -> unit Lwt.t
+  val replace_if_exists : key -> value -> unit Lwt.t
+  val remove : key -> unit Lwt.t
+  val modify_opt : key -> (value option -> value option) -> unit Lwt.t
+  val length : unit -> int Lwt.t
+  val iter :
+    ?from:key -> ?until:key -> (key -> value -> unit Lwt.t) -> unit Lwt.t
+  val fold :
+    ?from:key -> ?until:key -> (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
+  val iter_block :
+    ?from:key -> ?until:key -> (key -> value -> unit) -> unit Lwt.t
+end
+
+module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
+       : TABLE with type key = Key.t and type value = Value.t = struct
+  type key = Key.t
+  type value = Value.t
+  let name = "store___" ^ T.name
+
+  let init =
+    let create db =
+      let sql = sprintf
+        "CREATE TABLE IF NOT EXISTS %s
+           (key %s, value %s, PRIMARY KEY (key) ON CONFLICT REPLACE)"
+        name Key.column_type Value.column_type
+      in
+      let stmt = prepare db sql in
+      let rec aux () =
+        match step stmt with
+        | Rc.DONE -> ignore (finalize stmt)
+        | Rc.BUSY | Rc.LOCKED -> yield (); aux ()
+        | rc -> ignore (finalize stmt); failwith (Rc.to_string rc)
+      in
+      aux ()
+    in
+    lazy (exec_safely create)
+
+  let with_table f = Lazy.force init >>= fun () -> exec_safely f
+
+  let db_get key db =
+    let sqlget = sprintf "SELECT value FROM %s WHERE key = :key" name in
+    let stmt = bind_safely (prepare db sqlget) [Key.encode key, ":key"] in
+    let rec aux () =
+      match step stmt with
+      | Rc.ROW ->
+        let value = column stmt 0 in
+        ignore (finalize stmt);
+        value
+      | Rc.DONE -> ignore (finalize stmt); raise Not_found
+      | Rc.BUSY | Rc.LOCKED -> yield (); aux ()
+      | rc -> ignore (finalize stmt); failwith (Rc.to_string rc)
+    in Value.decode @@ aux ()
+
+  let db_replace key value db =
+    let sqlreplace = sprintf "INSERT INTO %s VALUES (:key, :value)" name in
+    let stmt =
+      bind_safely
+        (prepare db sqlreplace)
+        [Key.encode key, ":key"; Value.encode value, ":value"]
+    in
+    let rec aux () =
+      match step stmt with
+      | Rc.DONE -> ignore (finalize stmt)
+      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore (finalize stmt) ; failwith (Rc.to_string rc)
+    in aux ()
+
+  let db_remove key db =
+    let sql = sprintf "DELETE FROM %s WHERE key = :key " name in
+    let stmt = bind_safely (prepare db sql) [Key.encode key, ":key"] in
+    let rec aux () =
+      match step stmt with
+      | Rc.DONE -> ignore (finalize stmt)
+      | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
+      | rc -> ignore (finalize stmt) ; failwith (Rc.to_string rc)
+    in aux ()
+
+  let db_length table db =
+    let sql = sprintf "SELECT count (1) FROM %s " table in
+      let stmt = prepare db sql in
+      let rec aux () =
+        match step stmt with
+        | Rc.ROW ->
+          let value = match column stmt 0 with
+            | Data.INT s -> Int64.to_int s
+            | _ -> assert false
+          in
+          ignore (finalize stmt);
+          value
+        | Rc.DONE -> ignore (finalize stmt); raise Not_found
+        | Rc.BUSY | Rc.LOCKED -> yield (); aux ()
+        | rc -> ignore (finalize stmt) ; failwith (Rc.to_string rc)
+      in aux ()
+
+  let db_iter ?from ?until table rowid db =
+    let sql =
+      sprintf "SELECT key, value, ROWID FROM %s
+               WHERE ROWID > :rowid
+               AND coalesce (key >= :from, true) AND coalesce (key <= :until)"
+              table
+    in
+    let encode_key_opt = function Some k -> Key.encode k | None -> Data.NULL in
+    let from_sql = encode_key_opt from and until_sql = encode_key_opt until in
+    let stmt = bind_safely (prepare db sql) [Data.INT rowid, ":rowid";
+                                             from_sql, ":from";
+                                             until_sql, ":until"] in
+    let rec aux () =
+      match step stmt with
+      | Rc.ROW ->
+        (match (column stmt 0, column stmt 1, column stmt 2) with
+         | k, v, Data.INT rowid ->
+           ignore (finalize stmt);
+           Some (k, v, rowid)
+         | _ -> assert false)
+      | Rc.DONE -> ignore (finalize stmt); None
+      | Rc.BUSY | Rc.LOCKED -> yield (); aux ()
+      | rc -> ignore (finalize stmt); failwith (Rc.to_string rc)
+    in aux ()
+
+  let find k = with_table @@ db_get k
+  let add k v = with_table @@ db_replace k v
+  let replace_if_exists k v = with_table @@ fun db ->
+    ignore (db_get k db);
+    db_replace k v db
+
+  let remove key = with_table @@ db_remove key
+
+  let modify_opt key f =
+    with_table @@ fun db ->
+      let old_value =
+        try Some (db_get key db)
+        with Not_found -> None
+      in
+      match f old_value with
+      | Some new_value -> db_replace key new_value db
+      | None -> db_remove key db
+
+  let fold ?from ?until f beg =
+    let rec aux rowid beg =
+      with_table (db_iter ?from ?until name rowid) >>=
+      function
+        | None -> Lwt.return beg
+        | Some (k, v, rowid') ->
+          f (Key.decode k) (Value.decode v) beg >>= aux rowid'
+    in
+    aux Int64.zero beg
+
+  let iter ?from ?until f = fold ?from ?until (fun k v () -> f k v) ()
+
+  let iter_block ?from ?until f =
+    let sql = sprintf
+      "SELECT key, value FROM %s
+       WHERE coalesce (key >= :from, true) AND coalesce (key <= :until)"
+      name
+    in
+    let encode_key_opt = function Some k -> Key.encode k | None -> Data.NULL in
+    let from_sql = encode_key_opt from and until_sql = encode_key_opt until in
+    let iter db =
+      let stmt = bind_safely (prepare db sql) [from_sql, ":from"; until_sql, ":until"] in
+      let rec aux () =
+        match step stmt with
+        | Rc.ROW ->
+            f (Key.decode @@ column stmt 0) (Value.decode @@ column stmt 1); aux ()
+        | Rc.DONE -> ignore (finalize stmt)
+        | Rc.BUSY | Rc.LOCKED ->  yield () ; aux ()
+        | rc -> ignore (finalize stmt) ; failwith (Rc.to_string rc)
+      in aux ()
+    in
+   with_table iter
+
+  let length () = with_table @@ db_length name
+end
+
+module Column = struct
+  module String : COLUMN with type t = string = struct
+    type t = string
+    let column_type = "text"
+    let encode s = Data.TEXT s
+    let decode = function Data.TEXT f -> f | _ -> assert false
+  end
+
+  module Float : COLUMN with type t = float = struct
+    type t = float
+    let column_type = "float"
+    let encode f = Data.FLOAT f
+    let decode = function Data.FLOAT f -> f | _ -> assert false
+  end
+
+  module Marshal (C : sig type t end) : COLUMN with type t = C.t = struct
+    type t = C.t
+    let column_type = "blob"
+    let encode v = Data.BLOB (Marshal.to_string v [])
+    let decode = function (Data.BLOB v) -> Marshal.from_string v 0 | _ -> assert false
+  end
+end
+
+(******************************************************************************)
+
 (** Type of persistent tables *)
 type 'value table = string
 

@@ -139,6 +139,12 @@ let key_value_of_row = function
       unpack_key key, unpack_value value
   | _ -> raise Ocsipersist_error
 
+let rec list_last l =
+  match l with
+  | [x] -> x
+  | _ :: r -> list_last r
+  | [] -> raise Not_found
+
 (* get one value from the result of a query *)
 let one_value = function
   | [Some value]::xs -> unpack_value value
@@ -160,6 +166,8 @@ let exec db query params =
   prepare db query >>= fun name ->
   let params = List.map (fun x -> Some (pack x)) params in
   PGOCaml.execute db ~name ~params ()
+
+let exec_ db query params = exec db query params >> Lwt.return_unit
 
 let (@.) f g = fun x -> f (g x) (* function composition *)
 
@@ -208,6 +216,177 @@ let set p v = use_pool @@ fun db ->
   let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 " p.store
   in exec db query [Key p.name; Value v] >> Lwt.return ()
 
+(* FUNCTORIAL INTERFACE *******************************************************)
+
+module type TABLE_CONF = sig
+  val name : string
+end
+
+type internal = string
+
+module type COLUMN = sig
+  type t
+  val column_type : string
+  val encode : t -> internal
+  val decode : internal -> t
+end
+
+module type TABLE = sig
+  type key
+  type value
+
+  val name : string
+  val find : key -> value Lwt.t
+  val add : key -> value -> unit Lwt.t
+  val replace_if_exists : key -> value -> unit Lwt.t
+  val remove : key -> unit Lwt.t
+  val modify_opt : key -> (value option -> value option) -> unit Lwt.t
+  val length : unit -> int Lwt.t
+  val iter :
+    ?from:key -> ?until:key -> (key -> value -> unit Lwt.t) -> unit Lwt.t
+  val fold :
+    ?from:key -> ?until:key -> (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
+  val iter_block :
+    ?from:key -> ?until:key -> (key -> value -> unit) -> unit Lwt.t
+end
+
+module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
+       : TABLE with type key = Key.t and type value = Value.t = struct
+  type key = Key.t
+  type value = Value.t
+  let name = T.name
+
+  module Aux = struct
+    let exec_opt db query params =
+      prepare db query >>= fun name ->
+      PGOCaml.execute db ~name ~params ()
+
+    let exec db query params =
+      prepare db query >>= fun name ->
+      let params = List.map (fun x -> Some x) params in
+      PGOCaml.execute db ~name ~params ()
+
+    let exec_ db query params = exec db query params >> Lwt.return_unit
+
+    let encode_pair key value = [Key.encode key; Value.encode value]
+  end
+
+  let init =
+    let create_table table db =
+      let query =
+        sprintf "CREATE TABLE IF NOT EXISTS %s \
+                 (key %s, value %s, PRIMARY KEY (key))"
+                table Key.column_type Value.column_type
+      in Aux.exec_ db query []
+    in
+    lazy (use_pool @@ create_table T.name)
+
+  let with_table f = Lazy.force init >>= fun () -> use_pool f
+
+  let find key = with_table @@ fun db ->
+    let query = sprintf "SELECT value FROM %s WHERE key = $1 " name in
+    Aux.exec db query [Key.encode key] >>=
+    function
+    | [Some value]::xs -> Lwt.return (Value.decode value)
+    | _ -> Lwt.fail Not_found
+
+  let add key value = with_table @@ fun db ->
+    let query = sprintf "INSERT INTO %s VALUES ($1, $2)
+                         ON CONFLICT (key) DO UPDATE SET value = $2" name
+    in Aux.exec_ db query @@ Aux.encode_pair key value
+
+  let replace_if_exists key value = with_table @@ fun db ->
+    let query = sprintf "UPDATE %s SET value = $2 WHERE key = $1 RETURNING 0" name in
+    Aux.exec db query (Aux.encode_pair key value) >>= function
+    | [] -> raise Not_found
+    | _ -> Lwt.return_unit
+
+  let remove key = with_table @@ fun db ->
+    let query = sprintf "DELETE FROM %s WHERE key = $1" name in
+    Aux.exec_ db query [Key.encode key]
+
+  let modify_opt key f = with_table @@ fun db ->
+    let query = sprintf "SELECT value FROM %s WHERE key = $1" name in
+    Aux.exec db query [Key.encode key] >>= fun value ->
+    let old_value = match value with
+      | [Some v]::xs -> Some (Value.decode v)
+      | _ -> None
+    in
+    match f old_value with
+    | Some new_value ->
+        let query = sprintf "INSERT INTO %s VALUES ($1, $2)
+                             ON CONFLICT (key) DO UPDATE SET value = $2" name
+        in Aux.exec_ db query @@ Aux.encode_pair key new_value
+    | None ->
+        let query = sprintf "DELETE FROM %s WHERE key = $1" name in
+        Aux.exec_ db query [Key.encode key]
+
+  let length () = with_table @@ fun db ->
+    let query = sprintf "SELECT count (1) FROM %s" name in
+    Lwt.map one_value @@ Aux.exec db query []
+
+  let rec iter_rec ?from ?until f last =
+    let key_value_of_row = function
+      | [Some key; Some value] -> Key.decode key, Value.decode value
+      | _ -> raise Ocsipersist_error
+    in
+    let query = sprintf "SELECT * FROM %s
+                         WHERE coalesce (key > $1, true)
+                         AND coalesce (key >= $2, true)
+                         AND coalesce (key <= $3, true)
+                         ORDER BY key LIMIT 1000" name
+    and args = [Ocsigen_lib.Option.map Key.encode last;
+                Ocsigen_lib.Option.map Key.encode from;
+                Ocsigen_lib.Option.map Key.encode until]
+    in
+    with_table (fun db -> Aux.exec_opt db query args) >>= fun l ->
+    Lwt_list.iter_s (fun row -> let k, v = key_value_of_row row in f k v) l
+    >>= fun () ->
+    if l = [] then
+      Lwt.return_unit
+    else
+      let last, _ = key_value_of_row @@ list_last l in
+      iter_rec f (Some last)
+
+  let iter ?from ?until f = iter_rec ?from ?until f None
+
+  let fold ?from ?until f x =
+    let res = ref x in
+    let g key value =
+      f key value !res >>= fun res' ->
+      res := res';
+      Lwt.return_unit
+    in iter ?from ?until g >> Lwt.return !res
+
+  let iter_block ?from:_ ?until:_ _ =
+    failwith "Ocsipersist.iter_block: not implemented"
+end
+
+module Column = struct
+  module String : COLUMN with type t = string = struct
+    type t = string
+    let column_type = "text"
+    let encode = escape_string
+    let decode = unescape_string
+  end
+
+  module Float : COLUMN with type t = float = struct
+    type t = float
+    let column_type = "float"
+    let encode = PGOCaml.string_of_float
+    let decode = PGOCaml.float_of_string
+  end
+
+  module Marshal (C : sig type t end) : COLUMN with type t = C.t = struct
+    type t = C.t
+    let column_type = "bytea"
+    let encode v = PGOCaml.string_of_bytea @@ Marshal.to_string v []
+    let decode v = Marshal.from_string (PGOCaml.bytea_of_string v) 0
+  end
+end
+
+(******************************************************************************)
+
 type 'value table = string
 
 let table_name table = Lwt.return table
@@ -245,12 +424,6 @@ let remove table key = use_pool @@ fun db ->
 let length table = use_pool @@ fun db ->
   let query = sprintf "SELECT count(*) FROM %s " table in
   Lwt.map one_value (exec db query [])
-
-let rec list_last l =
-  match l with
-  | [x]    -> x
-  | _ :: r -> list_last r
-  | []     -> assert false
 
 let rec iter_rec f table last =
   let (query, args) =
