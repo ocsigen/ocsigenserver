@@ -57,6 +57,7 @@ depends: [
   "dbm" | "sqlite3" | "pgocaml"
   "ipaddr" {>= "2.1"}
   "xml-light"
+  "conf-which"
 ]
 depopts: "camlzip"
 conflicts: [
