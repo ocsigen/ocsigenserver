@@ -346,7 +346,7 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
       Lwt.return_unit
     else
       let last, _ = key_value_of_row @@ list_last l in
-      iter_rec f (Some last)
+      iter_rec f ?until (Some last)
 
   let iter ?from ?until f = iter_rec ?from ?until f None
 

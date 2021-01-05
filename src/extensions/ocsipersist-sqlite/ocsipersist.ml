@@ -373,7 +373,7 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     let sql =
       sprintf "SELECT key, value, ROWID FROM %s
                WHERE ROWID > :rowid
-               AND coalesce (key >= :from, true) AND coalesce (key <= :until)"
+               AND coalesce (key >= :from, true) AND coalesce (key <= :until, true)"
               table
     in
     let encode_key_opt = function Some k -> Key.encode k | None -> Data.NULL in
@@ -427,7 +427,7 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
   let iter_block ?from ?until f =
     let sql = sprintf
       "SELECT key, value FROM %s
-       WHERE coalesce (key >= :from, true) AND coalesce (key <= :until)"
+       WHERE coalesce (key >= :from, true) AND coalesce (key <= :until, true)"
       name
     in
     let encode_key_opt = function Some k -> Key.encode k | None -> Data.NULL in
