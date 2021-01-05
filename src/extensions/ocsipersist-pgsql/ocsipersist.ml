@@ -243,11 +243,20 @@ module type TABLE = sig
   val modify_opt : key -> (value option -> value option) -> unit Lwt.t
   val length : unit -> int Lwt.t
   val iter :
-    ?from:key -> ?until:key -> (key -> value -> unit Lwt.t) -> unit Lwt.t
+    ?count:int64 ->
+    ?from:key ->
+    ?until:key ->
+    (key -> value -> unit Lwt.t) -> unit Lwt.t
   val fold :
-    ?from:key -> ?until:key -> (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
+    ?count:int64 ->
+    ?from:key ->
+    ?until:key ->
+    (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
   val iter_block :
-    ?from:key -> ?until:key -> (key -> value -> unit) -> unit Lwt.t
+    ?count:int64 ->
+    ?from:key ->
+    ?until:key ->
+    (key -> value -> unit) -> unit Lwt.t
 end
 
 module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
@@ -325,7 +334,8 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     let query = sprintf "SELECT count (1) FROM %s" name in
     Lwt.map one_value @@ Aux.exec db query []
 
-  let rec iter_rec ?from ?until f last =
+  let rec iter_rec ?count ?from ?until f last =
+    match count with Some c when c <= 0L -> Lwt.return_unit | _ ->
     let key_value_of_row = function
       | [Some key; Some value] -> Key.decode key, Value.decode value
       | _ -> raise Ocsipersist_error
@@ -334,10 +344,11 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
                          WHERE coalesce (key > $1, true)
                          AND coalesce (key >= $2, true)
                          AND coalesce (key <= $3, true)
-                         ORDER BY key LIMIT 1000" name
-    and args = [Ocsigen_lib.Option.map Key.encode last;
-                Ocsigen_lib.Option.map Key.encode from;
-                Ocsigen_lib.Option.map Key.encode until]
+                         ORDER BY key LIMIT least (1000, $4)" name
+    and args = [Option.map Key.encode last;
+                Option.map Key.encode from;
+                Option.map Key.encode until;
+                Option.map Int64.to_string count]
     in
     with_table (fun db -> Aux.exec_opt db query args) >>= fun l ->
     Lwt_list.iter_s (fun row -> let k, v = key_value_of_row row in f k v) l
@@ -346,19 +357,22 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
       Lwt.return_unit
     else
       let last, _ = key_value_of_row @@ list_last l in
-      iter_rec f ?until (Some last)
+      let count =
+        Option.map Int64.(fun c -> sub c @@ of_int @@ List.length l) count
+      in
+      iter_rec ?count f ?until (Some last)
 
-  let iter ?from ?until f = iter_rec ?from ?until f None
+  let iter ?count ?from ?until f = iter_rec ?count ?from ?until f None
 
-  let fold ?from ?until f x =
+  let fold ?count ?from ?until f x =
     let res = ref x in
     let g key value =
       f key value !res >>= fun res' ->
       res := res';
       Lwt.return_unit
-    in iter ?from ?until g >> Lwt.return !res
+    in iter ?count ?from ?until g >> Lwt.return !res
 
-  let iter_block ?from:_ ?until:_ _ =
+  let iter_block ?count:_ ?from:_ ?until:_ _ =
     failwith "Ocsipersist.iter_block: not implemented"
 end
 
