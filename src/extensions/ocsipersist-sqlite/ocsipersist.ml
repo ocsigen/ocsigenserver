@@ -282,18 +282,15 @@ module type TABLE = sig
   val length : unit -> int Lwt.t
   val iter :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> unit Lwt.t) -> unit Lwt.t
   val fold :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
   val iter_block :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> unit) -> unit Lwt.t
 end
 
@@ -378,18 +375,27 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
         | rc -> ignore (finalize stmt) ; failwith (Rc.to_string rc)
       in aux ()
 
-  let db_iter ?from ?until table rowid db =
+  let db_iter ?gt ?geq ?lt ?leq table rowid db =
     let sql =
       sprintf "SELECT key, value, ROWID FROM %s
                WHERE ROWID > :rowid
-               AND coalesce (key >= :from, true) AND coalesce (key <= :until, true)"
+               AND coalesce (key > :gt, true)
+               AND coalesce (key >= :geq, true)
+               AND coalesce (key < :lt, true)
+               AND coalesce (key <= :leq, true)"
               table
     in
     let encode_key_opt = function Some k -> Key.encode k | None -> Data.NULL in
-    let from_sql = encode_key_opt from and until_sql = encode_key_opt until in
+    let gt_sql = encode_key_opt gt
+    and geq_sql = encode_key_opt geq
+    and lt_sql = encode_key_opt lt
+    and leq_sql = encode_key_opt leq
+    in
     let stmt = bind_safely (prepare db sql) [Data.INT rowid, ":rowid";
-                                             from_sql, ":from";
-                                             until_sql, ":until"] in
+                                             gt_sql, ":gt";
+                                             geq_sql, ":geq";
+                                             lt_sql, ":lt";
+                                             leq_sql, ":leq"] in
     let rec aux () =
       match step stmt with
       | Rc.ROW ->
@@ -421,12 +427,12 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
       | Some new_value -> db_replace key new_value db
       | None -> db_remove key db
 
-  let fold ?count ?from ?until f beg =
+  let fold ?count ?gt ?geq ?lt ?leq f beg =
     let i = ref 0L in
     let rec aux rowid beg =
       match count with Some c when !i >= c -> Lwt.return beg | _ ->
       i := Int64.succ !i;
-      with_table (db_iter ?from ?until name rowid) >>=
+      with_table (db_iter ?gt ?geq ?lt ?leq name rowid) >>=
       function
         | None -> Lwt.return beg
         | Some (k, v, rowid') ->
@@ -434,21 +440,31 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     in
     aux Int64.zero beg
 
-  let iter ?count ?from ?until f = fold ?count ?from ?until (fun k v () -> f k v) ()
+  let iter ?count ?gt ?geq ?lt ?leq f =
+    fold ?count ?gt ?geq ?lt ?leq (fun k v () -> f k v) ()
 
-  let iter_block ?count ?from ?until f =
+  let iter_block ?count ?gt ?geq ?lt ?leq f =
     let sql = sprintf
       "SELECT key, value FROM %s
-       WHERE coalesce (key >= :from, true) AND coalesce (key <= :until, true)
+       WHERE coalesce (key > :gt, true)
+         AND coalesce (key >= :geq, true)
+         AND coalesce (key < :lt, true)
+         AND coalesce (key <= :leq, true)
        LIMIT coalesce (:count, -1)"
       name
     in
     let encode_key_opt = function Some k -> Key.encode k | None -> Data.NULL in
-    let from_sql = encode_key_opt from and until_sql = encode_key_opt until in
+    let gt_sql = encode_key_opt gt
+    and geq_sql = encode_key_opt geq
+    and lt_sql = encode_key_opt lt
+    and leq_sql = encode_key_opt leq
+    in
     let count_sql = match count with Some c -> Data.INT c | None -> Data.NULL in
     let iter db =
-      let stmt = bind_safely (prepare db sql) [from_sql, ":from";
-                                               until_sql, ":until";
+      let stmt = bind_safely (prepare db sql) [gt_sql, ":gt";
+                                               geq_sql, ":geq";
+                                               lt_sql, ":lt";
+                                               leq_sql, ":leq";
                                                count_sql, ":count"] in
       let rec aux () =
         match step stmt with

@@ -98,18 +98,15 @@ module type TABLE = sig
   val length : unit -> int Lwt.t
   val iter :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> unit Lwt.t) -> unit Lwt.t
   val fold :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
   val iter_block :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> unit) -> unit Lwt.t
 end
 

@@ -244,18 +244,15 @@ module type TABLE = sig
   val length : unit -> int Lwt.t
   val iter :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> unit Lwt.t) -> unit Lwt.t
   val fold :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
   val iter_block :
     ?count:int64 ->
-    ?from:key ->
-    ?until:key ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
     (key -> value -> unit) -> unit Lwt.t
 end
 
@@ -336,7 +333,7 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
 
   let max_iter_block_size = 1000L
 
-  let rec iter_rec ?count ?from ?until f last =
+  let rec iter_rec ?count ?gt ?geq ?lt ?leq f last =
     match count with Some c when c <= 0L -> Lwt.return_unit | _ ->
     let key_value_of_row = function
       | [Some key; Some value] -> Key.decode key, Value.decode value
@@ -344,9 +341,12 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     in
     let query = sprintf "SELECT * FROM %s
                          WHERE ($1 :: %s IS NULL OR key > $1)
-                         AND ($2 :: %s IS NULL OR key >= $2)
-                         AND ($3 :: %s IS NULL OR key <= $3)
-                         ORDER BY key LIMIT $4" name
+                         AND ($2 :: %s IS NULL OR key > $2)
+                         AND ($3 :: %s IS NULL OR key >= $3)
+                         AND ($4 :: %s IS NULL OR key < $4)
+                         AND ($5 :: %s IS NULL OR key <= $5)
+                         ORDER BY key LIMIT $6"
+                         name Key.column_type Key.column_type
                          Key.column_type Key.column_type Key.column_type
     and args =
       let count = match count with
@@ -354,8 +354,10 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
         | _ -> max_iter_block_size
       in
       [Option.map Key.encode last;
-       Option.map Key.encode from;
-       Option.map Key.encode until;
+       Option.map Key.encode gt;
+       Option.map Key.encode geq;
+       Option.map Key.encode lt;
+       Option.map Key.encode leq;
        Some (Int64.to_string count)]
     in
     with_table (fun db -> Aux.exec_opt db query args) >>= fun l ->
@@ -368,19 +370,20 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
       let count =
         Option.map Int64.(fun c -> sub c @@ of_int @@ List.length l) count
       in
-      iter_rec ?count f ?until (Some last)
+      iter_rec ?count f ?gt ?geq ?lt ?leq (Some last)
 
-  let iter ?count ?from ?until f = iter_rec ?count ?from ?until f None
+  let iter ?count ?gt ?geq ?lt ?leq f =
+    iter_rec ?count ?gt ?geq ?lt ?leq f None
 
-  let fold ?count ?from ?until f x =
+  let fold ?count ?gt ?geq ?lt ?leq f x =
     let res = ref x in
     let g key value =
       f key value !res >>= fun res' ->
       res := res';
       Lwt.return_unit
-    in iter ?count ?from ?until g >> Lwt.return !res
+    in iter ?count ?gt ?geq ?lt ?leq g >> Lwt.return !res
 
-  let iter_block ?count:_ ?from:_ ?until:_ _ =
+  let iter_block ?count:_ ?gt:_ ?geq:_ ?lt:_ ?leq:_ _ =
     failwith "Ocsipersist.iter_block: not implemented"
 end
 
