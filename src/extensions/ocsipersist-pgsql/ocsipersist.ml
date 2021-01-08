@@ -334,6 +334,8 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     let query = sprintf "SELECT count (1) FROM %s" name in
     Lwt.map one_value @@ Aux.exec db query []
 
+  let max_iter_block_size = 1000L
+
   let rec iter_rec ?count ?from ?until f last =
     match count with Some c when c <= 0L -> Lwt.return_unit | _ ->
     let key_value_of_row = function
@@ -341,14 +343,20 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
       | _ -> raise Ocsipersist_error
     in
     let query = sprintf "SELECT * FROM %s
-                         WHERE coalesce (key > $1, true)
-                         AND coalesce (key >= $2, true)
-                         AND coalesce (key <= $3, true)
-                         ORDER BY key LIMIT least (1000, $4)" name
-    and args = [Option.map Key.encode last;
-                Option.map Key.encode from;
-                Option.map Key.encode until;
-                Option.map Int64.to_string count]
+                         WHERE ($1 :: %s IS NULL OR key > $1)
+                         AND ($2 :: %s IS NULL OR key >= $2)
+                         AND ($3 :: %s IS NULL OR key <= $3)
+                         ORDER BY key LIMIT $4" name
+                         Key.column_type Key.column_type Key.column_type
+    and args =
+      let count = match count with
+        | Some c when c <= max_iter_block_size -> c
+        | _ -> max_iter_block_size
+      in
+      [Option.map Key.encode last;
+       Option.map Key.encode from;
+       Option.map Key.encode until;
+       Some (Int64.to_string count)]
     in
     with_table (fun db -> Aux.exec_opt db query args) >>= fun l ->
     Lwt_list.iter_s (fun row -> let k, v = key_value_of_row row in f k v) l
