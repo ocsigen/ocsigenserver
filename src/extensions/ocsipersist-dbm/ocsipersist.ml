@@ -291,11 +291,17 @@ module type TABLE = sig
   val modify_opt : key -> (value option -> value option) -> unit Lwt.t
   val length : unit -> int Lwt.t
   val iter :
-    ?from:key -> ?until:key -> (key -> value -> unit Lwt.t) -> unit Lwt.t
+    ?count:int64 ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
+    (key -> value -> unit Lwt.t) -> unit Lwt.t
   val fold :
-    ?from:key -> ?until:key -> (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
+    ?count:int64 ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
+    (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
   val iter_block :
-    ?from:key -> ?until:key -> (key -> value -> unit) -> unit Lwt.t
+    ?count:int64 ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
+    (key -> value -> unit) -> unit Lwt.t
 end
 
 module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
@@ -310,23 +316,30 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     db_replace_if_exists (name, Key.encode key) (Value.encode value)
   let remove key = db_remove (name, Key.encode key)
 
-  let fold ?from ?until f beg =
+  let fold ?count ?gt ?geq ?lt ?leq f beg =
+    let i = ref 0L in
     let rec aux nextkey beg =
+      match count with | Some c when !i >= c -> Lwt.return beg | _ ->
       nextkey name >>=
       function
         | None -> Lwt.return beg
         | Some k ->
             let k = Key.decode k in
-            match from, until with
-            | Some f, _ when k < f -> aux db_nextkey beg
-            | _, Some u when k > u -> Lwt.return beg
-            | _ -> find k >>= fun r -> f k r beg >>= aux db_nextkey
+            match gt, geq, lt, leq with
+            | _, _, Some lt, _ when k >= lt -> Lwt.return beg
+            | _, _, _, Some le when k > le -> Lwt.return beg
+            | Some gt, _, _, _ when k <= gt -> aux db_nextkey beg
+            | _, Some ge, _, _ when k < ge -> aux db_nextkey beg
+            | _ ->
+                i := Int64.succ !i;
+                find k >>= fun r -> f k r beg >>= aux db_nextkey
     in
     aux db_firstkey beg
 
-  let iter ?from ?until f = fold ?from ?until (fun k v () -> f k v) ()
+  let iter ?count ?gt ?geq ?lt ?leq f =
+    fold ?count ?gt ?geq ?lt ?leq (fun k v () -> f k v) ()
 
-  let iter_block ?from:_ ?until:_ _ =
+  let iter_block ?count:_ ?gt:_ ?geq:_ ?lt:_ ?leq:_ _ =
     failwith "iter_block not implemented for DBM. Please use Ocsipersist with sqlite"
 
   let modify_opt key f =

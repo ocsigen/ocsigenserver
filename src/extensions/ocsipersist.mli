@@ -97,11 +97,17 @@ module type TABLE = sig
   val modify_opt : key -> (value option -> value option) -> unit Lwt.t
   val length : unit -> int Lwt.t
   val iter :
-    ?from:key -> ?until:key -> (key -> value -> unit Lwt.t) -> unit Lwt.t
+    ?count:int64 ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
+    (key -> value -> unit Lwt.t) -> unit Lwt.t
   val fold :
-    ?from:key -> ?until:key -> (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
+    ?count:int64 ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
+    (key -> value -> 'a -> 'a Lwt.t) -> 'a -> 'a Lwt.t
   val iter_block :
-    ?from:key -> ?until:key -> (key -> value -> unit) -> unit Lwt.t
+    ?count:int64 ->
+    ?gt:key -> ?geq:key -> ?lt:key -> ?leq:key ->
+    (key -> value -> unit) -> unit Lwt.t
 end
 
 module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)

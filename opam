@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "ocsigenserver"
-version: "2.17.0"
+version: "2.18.0"
 maintainer: "dev@ocsigen.org"
 synopsis: "A full-featured and extensible Web server"
 description: "Ocsigen Server implements most features of the HTTP protocol, and has a very powerful extension mechanism that makes it very easy to plug your own OCaml modules for generating pages. Many extensions are already implemented, like a reverse proxy, content compression, access control, authentication, etc."
