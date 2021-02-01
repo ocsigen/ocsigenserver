@@ -81,9 +81,10 @@ module Cookie = struct
 
   let serialize_cookies path =
     Ocsigen_cookie_map.Map_inner.fold @@ fun name c h ->
+    let open Ocsigen_cookie_map in
     let exp, v, secure = match c with
-      | `Unset -> (Some 0., "", false)
-      | `Set (t, v, secure) -> (t, v, secure)
+      | OUnset -> (Some 0., "", false)
+      | OSet (t, v, secure) -> (t, v, secure)
     in
     Cohttp.Header.add h
       Ocsigen_header.Name.(to_string set_cookie)
@@ -109,11 +110,12 @@ let make_cookies_header path exp name c secure =
 let make_cookies_headers path t hds =
   Ocsigen_cookie_map.Map_inner.fold
     (fun name c h ->
+       let open Ocsigen_cookie_map in
        let exp, v, secure =
          match c with
-         | `Unset ->
+         | OUnset ->
            Some 0., "", false
-         | `Set (t, v, secure) ->
+         | OSet (t, v, secure) ->
            t, v, secure
        in
        Cohttp.Header.add h

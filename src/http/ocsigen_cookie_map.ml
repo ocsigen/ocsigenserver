@@ -22,8 +22,8 @@ module Map_path =
 module Map_inner = Map.Make(String)
 
 type cookie =
-  [ `Set of (float option * string * bool)
-  | `Unset ]
+  | OSet of float option * string * bool
+  | OUnset
 
 type t = cookie Map_inner.t Map_path.t
 
@@ -41,10 +41,10 @@ let add_multi =
   Map_path.fold @@ fun path ->
   Map_inner.fold @@ fun n v beg ->
   match v with
-  | `Set (expo, v, secure) ->
-    add ~path n (`Set (expo, v, secure)) beg
-  | `Unset ->
-    add ~path n `Unset beg
+  | OSet (expo, v, secure) ->
+    add ~path n (OSet (expo, v, secure)) beg
+  | OUnset ->
+    add ~path n OUnset beg
 
 let remove ~path n m =
   try

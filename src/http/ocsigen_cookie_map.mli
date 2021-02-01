@@ -28,8 +28,8 @@ module Map_inner : Map.S with type key := string
     true and the protocol is https, the cookie will be secure (will ask
     the browser to send it only through secure connections). *)
 type cookie =
-  [ `Set of (float option * string * bool)
-  | `Unset ]
+  | OSet of float option * string * bool
+  | OUnset
 
 type t = cookie Map_inner.t Map_path.t
 
@@ -51,14 +51,14 @@ val add_multi : t -> t -> t
 
 (** [remove c cookie_table] removes the cookie [c] from [m].
 
-    Warning: it is not equivalent to [add ... `Unset ...]). *)
+    Warning: it is not equivalent to [add ... OUnset ...]). *)
 val remove :
   path:Ocsigen_lib.Url.path ->
   string ->
   t -> t
 
 (** Polymorphic versions of [add] and [remove] to use when we don't need to
-    `Unset (client-side) *)
+    OUnset (client-side) *)
 module Poly : sig
 
   val add :
