@@ -261,7 +261,7 @@ let shutdown timeout =
   ignore (Lwt.pick [process (); stop] >>= fun () -> exit 0)
 
 let service ?ssl ~address ~port ~connector () =
-  let tls_server_key =
+  let tls_own_key =
     match ssl with
     | Some (crt, key, Some password) ->
       `TLS (`Crt_file_path crt,
@@ -276,7 +276,7 @@ let service ?ssl ~address ~port ~connector () =
   (* We create a specific context for Conduit and Cohttp. *)
   Conduit_lwt_unix.init
     ~src:(Ocsigen_config.Socket_type.to_string address)
-    ~tls_server_key () >>= fun conduit_ctx ->
+    ~tls_own_key () >>= fun conduit_ctx ->
   Lwt.return (Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
   (* We catch the INET_ADDR of the server *)
   let callback =
@@ -286,7 +286,7 @@ let service ?ssl ~address ~port ~connector () =
   in
   let config = Cohttp_lwt_unix.Server.make ~conn_closed ~callback () in
   let mode =
-    match tls_server_key with
+    match tls_own_key with
     | `None -> `TCP (`Port port)
     | `TLS (crt, key, pass) ->
       `OpenSSL (crt, key, pass, `Port port)
