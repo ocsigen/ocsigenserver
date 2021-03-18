@@ -190,16 +190,6 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       ?headers ~status:(ret_code :> Cohttp.Code.status_code) ~body ()
   in
 
-  if !filenames <> [] then
-    List.iter
-      (fun a ->
-         try
-           Unix.unlink a
-         with Unix.Unix_error _ as exn ->
-           Lwt_log.ign_warning_f ~section ~exn
-             "Error while removing file %s" a)
-      !filenames;
-
   (* TODO: equivalent of Ocsigen_range *)
 
   let request =
@@ -208,52 +198,67 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       ~filenames ~sockaddr ~body ~connection_closed request
   in
 
-  Ocsigen_messages.accesslog
-    (Format.sprintf
-       "connection for %s from %s (%s)%s: %s"
-       (match Ocsigen_request.host request with
-        | None   -> "<host not specified in the request>"
-        | Some h -> h)
-       (Ocsigen_request.remote_ip request)
-       (Option.value ~default:"" (Ocsigen_request.header request
-                                    Ocsigen_header.Name.user_agent))
-       (Option.fold ~none:"" ~some:(fun s -> " X-Forwarded-For: " ^ s)
-          (Ocsigen_request.header request
-             Ocsigen_header.Name.x_forwarded_for))
-       (Uri.path (Ocsigen_request.uri request))
-    );
-
-  Lwt.catch
+  Lwt.finalize
     (fun () ->
-       connector request >>= fun response ->
-       let response, body = Ocsigen_response.to_cohttp response
-       and cookies = Ocsigen_response.cookies response in
-       let response =
-         let headers =
-           Cohttp.Header.add_unless_exists
-             (Cohttp.Header.add_unless_exists
-                (Ocsigen_cookie_map.Map_path.fold
-                   make_cookies_headers
-                   cookies
-                   (Cohttp.Response.headers response))
-                "server" Ocsigen_config.server_name)
-             "date"
-             (Ocsigen_lib.Date.to_string
-                (Unix.time ()))
-         in
-         { response with Cohttp.Response.headers }
-       in
-       Lwt.return (response, body))
-    (function
-      | Ocsigen_is_dir fun_request ->
-        let headers =
-          fun_request request
-          |> Uri.to_string
-          |> Cohttp.Header.init_with "location"
-        and status = `Moved_permanently in
-        Cohttp_lwt_unix.Server.respond ~headers ~status ~body:`Empty ()
-      | exn ->
-        handle_error exn)
+      Ocsigen_messages.accesslog
+        (Format.sprintf
+           "connection for %s from %s (%s)%s: %s"
+           (match Ocsigen_request.host request with
+            | None   -> "<host not specified in the request>"
+            | Some h -> h)
+           (Ocsigen_request.remote_ip request)
+           (Option.value ~default:"" (Ocsigen_request.header request
+                                        Ocsigen_header.Name.user_agent))
+           (Option.fold ~none:"" ~some:(fun s -> " X-Forwarded-For: " ^ s)
+              (Ocsigen_request.header request
+                 Ocsigen_header.Name.x_forwarded_for))
+           (Uri.path (Ocsigen_request.uri request))
+        );
+
+      Lwt.catch
+        (fun () ->
+          connector request >>= fun response ->
+          let response, body = Ocsigen_response.to_cohttp response
+          and cookies = Ocsigen_response.cookies response in
+          let response =
+            let headers =
+              Cohttp.Header.add_unless_exists
+                (Cohttp.Header.add_unless_exists
+                   (Ocsigen_cookie_map.Map_path.fold
+                      make_cookies_headers
+                      cookies
+                      (Cohttp.Response.headers response))
+                   "server" Ocsigen_config.server_name)
+                "date"
+                (Ocsigen_lib.Date.to_string
+                   (Unix.time ()))
+            in
+            { response with Cohttp.Response.headers }
+          in
+          Lwt.return (response, body))
+        (function
+         | Ocsigen_is_dir fun_request ->
+            let headers =
+              fun_request request
+              |> Uri.to_string
+              |> Cohttp.Header.init_with "location"
+            and status = `Moved_permanently in
+            Cohttp_lwt_unix.Server.respond ~headers ~status ~body:`Empty ()
+         | exn ->
+            handle_error exn))
+    (fun () ->
+      if !filenames <> [] then
+        List.iter
+          (fun a ->
+            try
+              Unix.unlink a
+            with Unix.Unix_error _ as exn ->
+              Lwt_log.ign_warning_f ~section ~exn
+                "Error while removing file %s" a)
+          !filenames;
+      Lwt.return_unit)
+
+
 
 let conn_closed (flow, conn) =
   try
