@@ -208,6 +208,21 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       ~filenames ~sockaddr ~body ~connection_closed request
   in
 
+  Ocsigen_messages.accesslog
+    (Format.sprintf
+       "connection for %s from %s (%s)%s: %s"
+       (match Ocsigen_request.host request with
+        | None   -> "<host not specified in the request>"
+        | Some h -> h)
+       (Ocsigen_request.remote_ip request)
+       (Option.value ~default:"" (Ocsigen_request.header request
+                                    Ocsigen_header.Name.user_agent))
+       (Option.fold ~none:"" ~some:(fun s -> " X-Forwarded-For: " ^ s)
+          (Ocsigen_request.header request
+             Ocsigen_header.Name.x_forwarded_for))
+       (Uri.path (Ocsigen_request.uri request))
+    );
+
   Lwt.catch
     (fun () ->
        connector request >>= fun response ->
