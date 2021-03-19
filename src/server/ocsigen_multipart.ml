@@ -327,7 +327,7 @@ let post_params_form_urlencoded body_gen _ _ =
         Lwt.fail Ocsigen_lib.Input_is_too_large
       | e -> Lwt.fail e)
 
-let post_params_multipart_form_data body_gen ctparams upload_dir max_size =
+let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
   (* Same question here, should this stream be consumed after an
      error? *)
   let body = Ocsigen_stream.get body_gen
@@ -415,8 +415,14 @@ let post_params ~content_type body_gen =
   let (ct, cst), ctparams = content_type in
   match String.lowercase_ascii ct, String.lowercase_ascii cst with
   | "application", "x-www-form-urlencoded" ->
-    Some (post_params_form_urlencoded body_gen)
+    Some (body_gen
+          |> Cohttp_lwt.Body.to_stream
+          |> Ocsigen_stream.of_lwt_stream
+          |> post_params_form_urlencoded)
   | "multipart", "form-data" ->
-    Some (post_params_multipart_form_data body_gen ctparams)
+    Some (body_gen
+          |> Cohttp_lwt.Body.to_stream
+          |> Ocsigen_stream.of_lwt_stream
+          |> post_params_multipart_form_data ctparams)
   | _ ->
     None

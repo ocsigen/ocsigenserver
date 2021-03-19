@@ -20,7 +20,7 @@ type post_data = (string * string) list * (string * file_info) list
 
 val post_params :
   content_type : content_type ->
-  string Ocsigen_stream.t ->
+  Cohttp_lwt.Body.t ->
   (string option -> Int64.t option -> post_data Lwt.t) option
 
 val parse_content_type : string -> content_type option

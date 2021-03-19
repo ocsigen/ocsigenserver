@@ -1,9 +1,7 @@
 open Lwt.Infix
 
 let post_data_of_body ~content_type b =
-  Cohttp_lwt.Body.to_stream b
-  |> Ocsigen_stream.of_lwt_stream
-  |> Ocsigen_multipart.post_params ~content_type
+  Ocsigen_multipart.post_params ~content_type b
 
 type content_type = Ocsigen_multipart.content_type
 
@@ -18,7 +16,7 @@ type post_data = Ocsigen_multipart.post_data
 
 type body = [
   | `Unparsed of Cohttp_lwt.Body.t
-  | `Parsed of post_data Lwt.t option
+  | `Parsed of post_data Lwt.t
 ]
 
 (* Wrapper around Uri providing our derived fields.
@@ -174,10 +172,8 @@ let update
   and r_body =
     match post_data with
     | Some (Some post_data) ->
-      ref (`Parsed (Some (Lwt.return post_data)))
-    | Some None ->
-      ref (`Parsed None)
-    | None ->
+      ref (`Parsed (Lwt.return post_data))
+    | None | Some None ->
       r_body
   and r_cookies_override =
     match cookies_override with
@@ -340,23 +336,21 @@ let content_type r =
 let force_post_data ({r_body} as r) s i =
   match !r_body with
   | `Parsed post_data ->
-    post_data
+    Some post_data
   | `Unparsed body ->
-    let v =
-      match content_type r with
-      | Some content_type ->
-        (match
-           post_data_of_body ~content_type body
-         with
-         | Some f ->
-           Some (f s i)
-         | None ->
-           None)
-      | None ->
-        None
-    in
-    r.r_body := `Parsed v;
-    v
+    match content_type r with
+    | Some content_type ->
+      (match
+         post_data_of_body ~content_type body
+       with
+       | Some f ->
+         let v = f s i in
+         r.r_body := `Parsed v;
+         Some v
+       | None ->
+         None)
+    | None ->
+      None
 
 let post_params r s i =
   match force_post_data r s i with
