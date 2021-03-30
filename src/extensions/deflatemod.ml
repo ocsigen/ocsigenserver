@@ -270,6 +270,12 @@ let stream_filter contentencoding url deflate choice res =
       | None ->
         Lwt.return res
       | Some contenttype ->
+        let contenttype =
+          try
+            String.sub contenttype 0 (String.index contenttype ';')
+          with Not_found ->
+            contenttype
+        in
         match Ocsigen_header.Mime_type.parse contenttype with
         | None, _ | _, None ->
           Lwt.return res
