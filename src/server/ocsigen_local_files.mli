@@ -43,7 +43,6 @@ type resolved =
   | RFile of string
   | RDir of string
 
-
 (** Finds [filename] in the filesystem, with a possible redirection
     if it is a directory. Takes into account the fact that [filename]
     does not exists, is a symlink or is a directory, and raises
@@ -68,10 +67,3 @@ val resolve :
   ?no_check_for:string ->
   request:Ocsigen_extensions.request ->
   filename:string -> unit -> resolved
-
-
-(** Given the local file [file], with a request originating at url
-    [url], returns a viewable content of [file]. Currently, the [url]
-    parameter is used only if [url] is a directory *)
-val content:
-  request:Ocsigen_extensions.request -> file:resolved -> Ocsigen_http_frame.result Lwt.t

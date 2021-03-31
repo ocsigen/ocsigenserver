@@ -1,7 +1,5 @@
-(* Warning! ocsigen_config.ml is generated automatically from ocsigen_config.ml.in!
-   Do not modify it manually *)
 (* Ocsigen
- * Copyright (C) 2005 Vincent Balat
+ * Copyright (C) 2005-2017 Vincent Balat
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -18,61 +16,75 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-open Ocsigen_lib
+include Ocsigen_config_static
 
 exception Config_file_error of string
 
+type ssl_info = {
+  ssl_certificate : string option ;
+  ssl_privatekey  : string option ;
+  ssl_ciphers     : string option ;
+  ssl_dhfile      : string option ;
+  ssl_curve       : string option
+}
+
+module Socket_type = struct
+
+  type t = [
+    | `All
+    | `IPv4 of Unix.inet_addr
+    | `IPv6 of Unix.inet_addr
+  ]
+
+  let to_string = function
+    | `All -> Unix.string_of_inet_addr Unix.inet_addr_any
+    | `IPv4 u -> Unix.string_of_inet_addr u
+    | `IPv6 u -> Unix.string_of_inet_addr u
+
+  let to_inet_addr = function
+    | `All -> Unix.inet_addr_any
+    | `IPv4 u -> u
+    | `IPv6 u -> u
+
+end
+
+type socket_type = Socket_type.t
+
 (* General config *)
-let config_file = ref "_CONFIGDIR_/_PROJECTNAME_.conf"
 let verbose = ref false
 let silent = ref false
 let daemon = ref false
 let veryverbose = ref false
 let debug = ref false
 let version_number = (**)"0000000000000000"(**)
-let pidfile = ref None
+let pidfile = ref (None : string option)
 let server_name = "Ocsigen"
 let full_server_name = server_name^"/"^version_number
-let is_native = _ISNATIVE_
 let native_ext = if is_native then ".opt" else ""
 
-let builtin_packages =
-  List.fold_left (fun a s -> String.Set.add s a) String.Set.empty [_DEPS_]
-
-(* Server config: *)
 let (uploaddir : string option ref) = ref None
-let logdir = ref (Some ("_LOGDIR_"))
-let syslog_facility = ref None
-let default_user = ref "_OCSIGENUSER_"
-let default_group = ref "_OCSIGENGROUP_"
+let syslog_facility = ref (None : Lwt_log.syslog_facility option)
 let minthreads = ref 10
 let maxthreads = ref 30
 let max_number_of_connections = ref 350
-let mimefile = ref "_CONFIGDIR_/mime.types"
 let silent_client_timeout = ref 30 (* without speaking during sending frame *)
 let silent_server_timeout = ref 30 (* without speaking during sending frame *)
-(*let keepalive_timeout = ref 30
-let keepopen_timeout = ref 300 (* for ocsigen as client *) *)
-let netbuffersize = ref 8192
 let filebuffersize = ref 8192
 let maxrequestbodysize = ref (Some (Int64.of_int 8000000))
 let maxrequestbodysizeinmemory = ref 8192
 let maxuploadfilesize = ref (Some (Int64.of_int 2000000))
 let defaultcharset = ref (None : string option)
-let datadir = ref "_DATADIR_"
-let bindir = ref "_BINDIR_"
-let extdir = ref "_EXTDIR_"
 let user = ref (Some !default_user)
 let group = ref (Some !default_group)
-let command_pipe = ref "_COMMANDPIPE_"
 let debugmode = ref false
 let disablepartialrequests = ref false
 let usedefaulthostname = ref false
 let respectpipeline = ref false
-let default_port = ref 80
-let default_sslport = ref 443
 let maxretries = ref 10
 let shutdowntimeout = ref (Some 10.)
+let ssl_info = ref None
+let ports = ref []
+let ssl_ports = ref []
 
 let set_uploaddir u = uploaddir := u
 let set_logdir s = logdir := Some s
@@ -105,7 +117,6 @@ let set_client_timeout i = silent_client_timeout := i
 let set_server_timeout i = silent_server_timeout := i
 (* let set_keepalive_timeout i = keepalive_timeout := i
 let set_keepopen_timeout i = keepopen_timeout := i *)
-let set_netbuffersize i = netbuffersize := i
 let set_filebuffersize i = filebuffersize := i
 let set_maxuploadfilesize i = maxuploadfilesize := i
 let set_maxrequestbodysize i = maxrequestbodysize := i
@@ -121,10 +132,11 @@ let set_debugmode s = debugmode := s
 let set_disablepartialrequests s = disablepartialrequests := s
 let set_usedefaulthostname s = usedefaulthostname := s
 let set_respect_pipeline () = respectpipeline := true
-let set_default_port p = default_port := p
-let set_default_sslport p = default_sslport := p
 let set_maxretries i = maxretries := i
 let set_shutdown_timeout s = shutdowntimeout := s
+let set_ssl_info i = ssl_info := i
+let set_ports l = ports := l
+let set_ssl_ports l = ssl_ports := l
 
 let get_uploaddir () = !uploaddir
 let get_logdir () =
@@ -150,9 +162,6 @@ let get_max_number_of_threads_queued =
 let get_max_number_of_connections () = !max_number_of_connections
 let get_client_timeout () = !silent_client_timeout
 let get_server_timeout () = !silent_server_timeout
-(*let get_keepalive_timeout () = !keepalive_timeout
-let get_keepopen_timeout () = !keepopen_timeout *)
-let get_netbuffersize () = !netbuffersize
 let get_filebuffersize () = !filebuffersize
 let get_maxuploadfilesize () = !maxuploadfilesize
 let get_maxrequestbodysize () = !maxrequestbodysize
@@ -168,14 +177,52 @@ let get_debugmode () = !debugmode
 let get_disablepartialrequests () = !disablepartialrequests
 let get_usedefaulthostname () = !usedefaulthostname
 let get_respect_pipeline () = !respectpipeline
-let get_default_port () = !default_port
-let get_default_sslport () = !default_sslport
 let get_maxretries () = !maxretries
 let get_shutdown_timeout () = !shutdowntimeout
+let get_ssl_info () = !ssl_info
+let get_ports () = !ports
+let get_ssl_ports () = !ssl_ports
+
+let get_default_port () =
+  match !ports with
+  | (_, p) :: _ ->
+    p
+  | [] ->
+    80
+
+let get_default_sslport () =
+  match !ssl_ports with
+  | (_, p) :: _ ->
+    p
+  | [] ->
+    443
 
 let display_version () =
   print_string version_number;
   print_newline ();
   exit 0
 
-let init_preempt = Lwt_preemptive.init
+module Custom = struct
+
+  let m = ref Hmap.empty
+
+  (* TODO : two type variables? *)
+  type 'a key = ('a -> 'a) option * 'a Hmap.key
+
+  let key ?preprocess () = preprocess, Hmap.Key.create ()
+
+  let find (_, k) = Hmap.find k !m
+
+  let set (f, k) v =
+    let v =
+      match f with
+      | Some f ->
+        f v
+      | None ->
+        v
+    in
+    m := Hmap.add k v !m
+
+  let unset (_, k) = m := Hmap.rem k !m
+
+end

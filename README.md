@@ -2,55 +2,6 @@ Ocsigen server
 
 ------------------------------------------------------------------
 
-Requirements:
-=============
-
-Compilers:
-
- * ocaml             (need version >= 3.12.1)
- * a C compiler      (tested with gcc-4.4.5)
-
-Libraries:
-
- * findlib
- * react             (tested with 0.9.3)
- * ocamlssl          (tested with 0.4.6)
- * lwt               (need version >= 2.4.2, with react and ssl support)
- * ocamlnet          (tested with 3.6, with netstring, netstring-pcre and netsys)
- * pcre-ocaml        (tested with 6.2.5)
- * cryptokit         (tested with 1.6)
- * ocaml-text        (tested with 0.6)
- * tyxml             (need version 3)
- * ipaddr            (need version >= 2.1)
- * ocamlsqlite3      (tested with 2.0.2) OR
- * pgocaml           (tested with 2.3) OR
- * dbm               (tested with 1.0)
-
-
-Optional libraries:
-
- * camlzip           (tested with 1.04)
-
-Ocsigenserver supports both dbm and sqlite3. Note well, that dbm isn't part of
-the distribution of OCaml>=4 any more, but an external package.
-
-If OCaml 3.12.1 and the needed libraries (findlib/react/lwt...) are not
-installed on your computer and not available on your favorite linux
-distribution, you may use the Ocsigen bunble GODI to install them
-automatically, see:
-
-  http://ocsigen.org/install#bundle
-  http://godi.camlcity.org/godi/index.html
-
-To run the native code version of ocsigen server, you may need to
-generate cmxs files for the libraries you need, if they are not
-included in your distribution, see:
-
-  http://ocsigen.org/ocsigenserver/manual/misc
-
-
-------------------------------------------------------------------
-
 Build instructions:
 ===================
 

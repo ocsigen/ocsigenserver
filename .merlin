@@ -5,13 +5,11 @@ PKG react
 PKG pcre
 PKG ssl
 PKG cryptokit
-PKG netstring
-PKG netstring-pcre
 PKG ipaddr
-PKG tyxml
 PKG xml-light
 PKG camlzip
 PKG dynlink
+PKG cohttp conduit.lwt-unix
 
 S src/**
 B src/**
