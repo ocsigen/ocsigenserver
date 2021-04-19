@@ -40,7 +40,7 @@ build: [
 ]
 install: [make "install"]
 depends: [
-  "ocaml" {>= "4.06.1"}
+  "ocaml" {>= "4.08.1"}
   "ocamlfind"
   "base-unix"
   "base-threads"
