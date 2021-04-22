@@ -174,7 +174,9 @@ let update
     match post_data with
     | Some (Some post_data) ->
       ref (`Parsed (Lwt.return post_data))
-    | None | Some None ->
+    | Some None ->
+      ref (`Parsed (Lwt.return ([], [])))
+    | None ->
       r_body
   and r_cookies_override =
     match cookies_override with
