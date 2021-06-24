@@ -467,6 +467,13 @@ let start ?config () =
            minthreads maxthreads
            (fun s -> Lwt_log.ign_error ~section s));
 
+      Lwt.async_exception_hook := (fun e ->
+        (* replace the default "exit 2" behaviour *)
+        match e with
+        | Unix.Unix_error (Unix.EPIPE, _, _) -> ()
+        | _ -> Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
+      );
+
       (match s with
        | Some s ->
          (* Now I can load the modules *)
@@ -529,15 +536,6 @@ let start ?config () =
                Lwt.fail e))
         >>= f
       in ignore (f ());
-
-      Lwt.async_exception_hook := (fun e ->
-        (* replace the default "exit 2" behaviour *)
-           match e with
-           | Unix.Unix_error (Unix.EPIPE, _, _) ->
-              ()
-           | _ ->
-              Lwt_log.ign_error ~section ~exn:e "Uncaught Exception"
-      );
 
       Lwt_main.run @@ Lwt.join
         ((List.map (fun (address, port) -> Ocsigen_cohttp.service
