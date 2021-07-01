@@ -111,3 +111,6 @@ Authors:
 
 * Cécile Herbelin
   (HTML5, Benchmarks)
+
+* Jan Rochel
+  (Ocsipersist)

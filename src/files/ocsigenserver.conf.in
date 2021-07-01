@@ -23,35 +23,6 @@
 
     <extension findlib-package="_EXTPACKAGENAME_.staticmod"/>
 
-    <!--
-    <findlib path="_LIBDIR_"/>
-    <extension findlib-package="_EXTPACKAGENAME_.ocsipersist-sqlite">
-      <database file="_DATADIR_/ocsidb"/>
-    </extension>
-    -->
-
-    <!-- the database-tag and its attributes are all optional
-    <findlib path="_LIBDIR_"/>
-    <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
-      <database
-        host="localhost"
-        port="3000"
-        user="_OCSIGENUSER_"
-        password="pw"
-        database="db"
-        unix_domain_socket_dir="./udsd"
-      />
-    </extension>
-    -->
-
-    <!-- You may want to use DBM instead of SQLite (if compiled). -->
-    <!--
-    <extension findlib-package="_EXTPACKAGENAME_.ocsipersist-dbm">
-      <store dir="_DATADIR_"/>
-      <ocsidbm name="_EXTDIR_/ocsidbm"/>
-    </extension>
-    -->
-
     <!-- Inclusion of all external configuration files matching *.conf
          from the directory 'dir' (in alphabetical order): -->
     <extconf dir="_CONFIGDIR_/conf.d" />

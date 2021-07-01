@@ -2,10 +2,6 @@
 Makefile.config
 src/baselib/dynlink_wrapper.ml
 src/baselib/ocsigen_config_static.ml
-src/extensions/ocsipersist.mli
-src/extensions/ocsipersist-dbm/ocsipersist.mli
-src/extensions/ocsipersist-sqlite/ocsipersist.mli
-src/extensions/ocsipersist-pgsql/ocsipersist.mli
 ocsigenserver.conf.sample
 ocsigenserver.conf.opt.sample
 local

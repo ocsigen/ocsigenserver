@@ -7,7 +7,6 @@ Ocsigen_messages
 Ocsigen_parseconfig
 Polytables
 Ocsigen_cache
-Ocsipersist
 Ocsigen_config
 }
 

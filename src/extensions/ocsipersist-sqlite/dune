@@ -1,6 +1,0 @@
-(library
-  (name ocsipersistsqlite)
-  (public_name ocsigenserver.ext.ocsipersist-sqlite)
-  (libraries sqlite3 ocsigenserver)
-  (implements ocsigenpersist)
-  (optional))

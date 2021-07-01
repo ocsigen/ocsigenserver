@@ -174,9 +174,6 @@ usage () {
 	cat <<_EOF_ >&2
 usage: ./configure [ options ]
 
-  --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
-  --with-pgsql,	--without-pgsql		Compile ocsipersist with PostgreSQL for persistent storage
-  --with-dbm,		--without-dbm		Compile ocsipersist with DBM for persistent storage
   --name NAME		The name of the server binary and ocamlfind package.
 
   --ocsigen-user NAME	The name of the ocsigen user
@@ -498,15 +495,6 @@ OCSIGENUSER := $ocsigen_user
 # group who will run Ocsigen server (not root) (eg, for debian, www-data)
 # (This group must exist)
 OCSIGENGROUP := $ocsigen_group
-
-# Do you want ocsipersist with sqlite? YES/NO
-OCSIPERSISTSQLITE:=$with_sqlite
-
-# Do you want ocsipersist with pgsql? YES/NO
-OCSIPERSISTPGSQL:=$with_pgsql
-
-# Do you want ocsipersist with dbm? YES/NO
-OCSIPERSISTDBM:=$with_dbm
 
 
 ### Paths ###

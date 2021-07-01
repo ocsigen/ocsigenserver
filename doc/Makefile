@@ -27,7 +27,6 @@ DOC := baselib/ocsigen_cache.mli          \
        server/ocsigen_server.mli
 
 PLUGINS_DOC := extensions/accesscontrol.mli extensions/authbasic.mli	\
-	       extensions/cors.mli extensions/ocsipersist.mli		\
 	       extensions/outputfilter.mli				\
 	       extensions/redirectmod.mli extensions/staticmod.mli	\
 	       extensions/deflatemod/deflatemod.mli
