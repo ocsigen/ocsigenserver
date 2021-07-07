@@ -31,8 +31,8 @@ let full_path f = Filename.concat (Ocsigen_config.get_logdir ()) f
 
 let error_log_path () = full_path error_file
 
-let stderr = Lwt_log.channel `Keep Lwt_io.stderr ()
-let stdout = Lwt_log.channel `Keep Lwt_io.stdout ()
+let stderr = Lwt_log.channel ~close_mode:`Keep ~channel:Lwt_io.stderr ()
+let stdout = Lwt_log.channel ~close_mode:`Keep ~channel:Lwt_io.stdout ()
 
 let loggers = ref []
 
@@ -57,7 +57,7 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
     let open_log path =
       let path = full_path path in
       Lwt.catch
-        (fun () -> Lwt_log.file path ())
+        (fun () -> Lwt_log.file ~file_name:path ())
         (function
           | Unix.Unix_error (error, _, _) ->
             Lwt.fail
@@ -77,13 +77,13 @@ let open_files ?(user = Ocsigen_config.get_user ()) ?(group = Ocsigen_config.get
     Lwt_log.default :=
       Lwt_log.broadcast
         [Lwt_log.dispatch
-           (fun sect lev ->
+           (fun _sect lev ->
               match lev with
               | Lwt_log.Error | Lwt_log.Fatal -> err
               | Lwt_log.Warning               -> war
               | _                             -> Lwt_log.null);
          Lwt_log.dispatch
-           (fun sect lev ->
+           (fun _sect lev ->
               if Ocsigen_config.get_silent () then Lwt_log.null else
               match lev with
               | Lwt_log.Warning | Lwt_log.Error | Lwt_log.Fatal -> stderr
@@ -133,7 +133,7 @@ let console =
   if (not (Ocsigen_config.get_silent ())) then
     (fun s -> print_endline (s ()))
   else
-    (fun s -> ())
+    (fun _s -> ())
 
 let level_of_string = function
   | "debug"  -> Some Lwt_log.Debug

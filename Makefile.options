@@ -1,45 +1,42 @@
-BYTEDBG :=
-OPTDBG  :=
 THREAD  := -thread
 
-ifeq "$(DEBUG)" "YES"
-BYTEDBG += -g
-OPTDBG  += -g
-endif
+BLD=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))_build/default/src
 
-ifeq "$(ANNOT)" "YES"
-BYTEDBG += -bin-annot
-OPTDBG  += -bin-annot
-endif
-
-ifeq "$(PROFILING)" "YES"
-BYTEDBG := ${BYTEDBG}
-OPTDBG  += -p
-endif
+INCS=   -I ${BLD}/server/.ocsigenserver.objs/byte \
+	-I ${BLD}/http/.http.objs/byte \
+	-I ${BLD}/http/.ocsigen_cookie_map.objs/byte \
+	-I ${BLD}/baselib/.baselib.objs/byte \
+	-I ${BLD}/baselib/.ocsigen_lib_base.objs/byte \
+	-I ${BLD}/baselib/polytables/.polytables.objs/byte \
+	-I ${BLD}/extensions/.accesscontrol.objs/byte \
+	-I ${BLD}/extensions/.authbasic.objs/byte \
+	-I ${BLD}/extensions/.cors.objs/byte \
+	-I ${BLD}/extensions/.extendconfiguration.objs/byte \
+	-I ${BLD}/extensions/.ocsigenpersist.objs/byte \
+	-I ${BLD}/extensions/.outputfilter.objs/byte \
+	-I ${BLD}/extensions/.redirectmod.objs/byte \
+	-I ${BLD}/extensions/.revproxy.objs/byte \
+	-I ${BLD}/extensions/.rewritemod.objs/byte \
+	-I ${BLD}/extensions/.staticmod.objs/byte \
+	-I ${BLD}/extensions/.userconf.objs/byte \
+	-I ${BLD}/extensions/deflatemod/.deflatemod.objs/byte \
+	-I ${BLD}/extensions/ocsipersist-dbm/.ocsidbmtypes.objs/byte \
+	-I ${BLD}/extensions/ocsipersist-dbm/.ocsipersistdbm.objs/byte \
+	-I ${BLD}/extensions/ocsipersist-pgsql/.ocsipersistpgsql.objs/byte \
+	-I ${BLD}/extensions/ocsipersist-sqlite/.ocsipersistsqlite.objs/byte
 
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
-## but also to generate src/baselib/ocsigen_config_static.ml and src/files/META
+## but also to generate src/baselib/ocsigen_config_static.ml
 
-BASE_PACKAGE := lwt ipaddr bytes
+SERVER_PACKAGE := lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,netstring-pcre,str,xml-light,dynlink,cohttp-lwt-unix,hmap
 
-SERVER_PACKAGE := lwt_ssl           \
-		  bytes             \
-	          lwt.unix          \
-                  lwt_log           \
-                  ipaddr            \
-                  findlib           \
-	          cryptokit         \
-                  pcre              \
-                  str               \
-                  xml-light         \
-                  dynlink           \
-                  cohttp-lwt-unix   \
-                  hmap              \
+LIBS := -package ${SERVER_PACKAGE} ${INCS}
 
 INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
-	                            -separator '\";\"' ${SERVER_PACKAGE})\"; \
-               \"${PROJECTNAME}.polytables\";   \
-               \"${PROJECTNAME}.cookies\";      \
-               \"${PROJECTNAME}.baselib\";      \
-               \"${PROJECTNAME}.http\";         \
-               \"${PROJECTNAME}\";              \
+				    -separator '\";\"' ${SERVER_PACKAGE})\"; \
+	       \"ocsigenserver.polytables\";   \
+	       \"ocsigenserver.cookies\";      \
+	       \"ocsigenserver.baselib.base\"; \
+	       \"ocsigenserver.baselib\";      \
+	       \"ocsigenserver.http\";         \
+	       \"ocsigenserver\";              \

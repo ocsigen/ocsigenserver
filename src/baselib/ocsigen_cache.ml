@@ -218,8 +218,8 @@ end = struct
 
   (* computing the timestamp for a node *)
   let collect_timer = function
-    | {time_bound = Some {timer = t} } -> Some (t +. (Unix.gettimeofday ()))
-    | {time_bound = None} -> None
+    | {time_bound = Some {timer = t; _}; _  } -> Some (t +. (Unix.gettimeofday ()))
+    | {time_bound = None; _} -> None
 
   (* do collect. We first check if the node is still in the list and then if
    * its collection hasn't been rescheduled ! *)
@@ -242,8 +242,8 @@ end = struct
   (* a function to set the collector. *)
   let rec update_collector r = match r.time_bound with
     | None (* Not time bounded dlist *)
-    | Some {collector = Some _} -> () (* Already collecting *)
-    | Some ({collector = None} as t) -> match r.oldest with
+    | Some {collector = Some _; _} -> () (* Already collecting *)
+    | Some ({collector = None; _} as t) -> match r.oldest with
       | None -> () (* Empty dlist *)
       | Some n ->
         t.collector <- Some (sleep_until n.collection >>= fun () ->
@@ -345,7 +345,7 @@ end = struct
     | Some v -> remove v; Some v.value
 
   (* fold over the elements from the newest to the oldest *)
-  let lwt_fold f accu {newest} =
+  let lwt_fold f accu {newest; _} =
     match newest with
     | None -> Lwt.return accu
     | Some newest ->
@@ -360,7 +360,7 @@ end = struct
       fold accu newest
 
   (* fold over the elements from the oldest to the newest *)
-  let lwt_fold_back f accu {oldest} =
+  let lwt_fold_back f accu {oldest; _} =
     match oldest with
     | None -> Lwt.return accu
     | Some oldest ->
@@ -375,7 +375,7 @@ end = struct
       fold accu oldest
 
   (* fold over the elements from the newest to the oldest *)
-  let fold f accu {newest} =
+  let fold f accu {newest; _} =
     match newest with
     | None -> accu
     | Some newest ->
@@ -390,7 +390,7 @@ end = struct
       fold accu newest
 
   (* fold over the elements from the oldest to the newest *)
-  let fold_back f accu {oldest} =
+  let fold_back f accu {oldest; _} =
     match oldest with
     | None -> accu
     | Some oldest ->
@@ -419,7 +419,7 @@ end = struct
 
   let get_finaliser_before l = l.finaliser_before
 
-  let add_finaliser_before f l = 
+  let add_finaliser_before f l =
     let oldf = l.finaliser_before in
     l.finaliser_before <- (fun n -> oldf n; f n)
 
@@ -448,8 +448,6 @@ module Make =
            end) ->
   struct
 
-    type data = A.key
-
     module H = Hashtbl.Make(
       struct
         type t = A.key
@@ -467,7 +465,7 @@ module Make =
                                a weak hash table *)
       }
 
-    let mk f ?timer size =
+    let mk ?timer size =
       let (l, t) as a = (Dlist.create ?timer size, H.create size) in
       Dlist.set_finaliser_after
         (fun n -> H.remove t (Dlist.value n))
@@ -476,7 +474,7 @@ module Make =
 
     let rec create f ?timer size =
       let rec cache =
-        let (l, t) = mk f ?timer size in
+        let (l, t) = mk ?timer size in
         {pointers = l;
          table = t;
          finder = f;
@@ -490,7 +488,7 @@ module Make =
     and clear cache =
       let size = Dlist.maxsize cache.pointers in
       let timer = Dlist.get_timer cache.pointers in
-      let (l, t) = mk cache.finder ?timer size in
+      let (l, t) = mk ?timer size in
       cache.pointers <- l;
       cache.table <- t
 

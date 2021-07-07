@@ -1,0 +1,68 @@
+(library
+  (name accesscontrol)
+  (public_name ocsigenserver.ext.accesscontrol)
+  (modules accesscontrol)
+  (libraries ocsigenserver))
+
+(library
+  (name authbasic)
+  (public_name ocsigenserver.ext.authbasic)
+  (modules authbasic)
+  (libraries ocsigenserver))
+
+(library
+  (name cors)
+  (public_name ocsigenserver.ext.cors)
+  (modules cors)
+  (libraries ocsigenserver))
+
+(library
+  (name extendconfiguration)
+  (public_name ocsigenserver.ext.extendconfiguration)
+  (modules extendconfiguration)
+  (libraries ocsigenserver))
+
+(library
+  (name outputfilter)
+  (public_name ocsigenserver.ext.outputfilter)
+  (modules outputfilter)
+  (libraries ocsigenserver))
+
+(library
+  (name redirectmod)
+  (public_name ocsigenserver.ext.redirectmod)
+  (modules redirectmod)
+  (libraries ocsigenserver))
+
+(library
+  (name revproxy)
+  (public_name ocsigenserver.ext.revproxy)
+  (modules revproxy)
+  (libraries ocsigenserver))
+
+(library
+  (name rewritemod)
+  (public_name ocsigenserver.ext.rewritemod)
+  (modules rewritemod)
+  (libraries ocsigenserver))
+
+(library
+  (name staticmod)
+  (public_name ocsigenserver.ext.staticmod)
+  (modules staticmod)
+  (libraries ocsigenserver))
+
+(library
+  (name userconf)
+  (public_name ocsigenserver.ext.userconf)
+  (modules userconf)
+  (libraries ocsigenserver))
+
+(library
+ (name ocsigenpersist)
+ (wrapped false)
+ (public_name ocsigenserver.ext)
+ (virtual_modules ocsipersist)
+ (modules ocsipersist)
+ (libraries lwt))
+

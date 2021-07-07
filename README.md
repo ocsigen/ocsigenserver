@@ -11,15 +11,11 @@ Build instructions:
  * verify that 'Makefile.config' suits to your needs.
 
  * run "make" to compile
- * run "make install" as root to install
 
  * [optional] run "make logrotate" as root to install logrotate
               configuration files in /etc/logrotate.d
 
  * [optional] run "make doc" to build the ocamldoc
- * [optional] run "make install.doc" as root to install the ocamldoc
-
- * run "make uninstall" to uninstall (almost) everything
 
  * run "make purge" to uninstall everything (even configuration files)
 
@@ -34,8 +30,7 @@ Local testings:
  * open http://localhost:8080/index.html in your browser
 
  * if it does not work, look at the logs (see 'local/var/log/' in the
-   ocsgigen source directory) or run ocsigen with options -v or -V
-   (verbose and debug mode).
+   ocsgigen source directory) or run ocsigen with options -v.
 
 ------------------------------------------------------------------
 

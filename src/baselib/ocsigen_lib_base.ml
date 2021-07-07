@@ -171,7 +171,7 @@ module List = struct
     else
       match xs with
       | [] -> []
-      | x :: xs -> chop (n-1) xs
+      | _x :: xs -> chop (n-1) xs
 
   let rec split_at n xs =
     if n <= 0
@@ -307,7 +307,7 @@ module String_base = struct
      (remove_spaces s (seppos+1) (len-1)))
 
   (* splits a string, for ex "azert,   sdfmlskdf,    dfdsfs" *)
-  let rec split ?(multisep=false) char s =
+  let split ?(multisep=false) char s =
     let longueur = String.length s in
     let rec aux deb =
       if deb >= longueur
@@ -425,12 +425,6 @@ module Url_base = struct
     | ""::l -> l
     | l -> l
 
-  let rec recursively_remove_slash_at_beginning = function
-    | [] -> []
-    | [""] -> [""]
-    | ""::l -> recursively_remove_slash_at_beginning l
-    | l -> l
-
   let rec is_prefix_skip_end_slash l1 l2 =
     match (l1, l2) with
     | [""], _
@@ -454,9 +448,9 @@ module Url_base = struct
     let rec collect_words k =
       let k' =
         try
-	  String.index_from s k '/'
+          String.index_from s k '/'
         with
-	  Not_found -> l
+          Not_found -> l
       in
       let word = String.sub s k (k'-k) in
       if k' >= l then
@@ -475,39 +469,39 @@ module Url_base = struct
     let rec remove_slash_slash l first =
       match l with
       | [ "" ] ->
-	[ "" ]
+        [ "" ]
       | [ ""; "" ] when first ->
-	[ "" ]
+        [ "" ]
       | "" :: l' when not first ->
-	remove_slash_slash l' false
+        remove_slash_slash l' false
       | x :: l' ->
-	x :: remove_slash_slash l' false
+        x :: remove_slash_slash l' false
       | [] ->
-	[]
+        []
     in
 
     let rec remove_dot l first =
       match l with
       | ([ "." ] | ["."; ""]) ->
-	if first then [] else [ "" ]
+        if first then [] else [ "" ]
       |	"." :: x :: l' ->
-	remove_dot (x :: l') false
+        remove_dot (x :: l') false
       | x :: l' ->
-	x :: remove_dot l' false
+        x :: remove_dot l' false
       | [] ->
-	[]
+        []
     in
 
     let rec remove_dot_dot_once l first =
       match l with
-	x :: ".." :: [] when x <> "" && x <> ".." && not first ->
-	[ "" ]
+        x :: ".." :: [] when x <> "" && x <> ".." && not first ->
+        [ "" ]
       |	x :: ".." :: l' when x <> "" && x <> ".." ->
-	l'
+        l'
       | x :: l' ->
-	x :: remove_dot_dot_once l' false
+        x :: remove_dot_dot_once l' false
       | [] ->
-	raise Not_found
+        raise Not_found
     in
 
     let rec remove_dot_dot l =
@@ -515,7 +509,7 @@ module Url_base = struct
         let l' = remove_dot_dot_once l true in
         remove_dot_dot l'
       with
-	Not_found -> l
+        Not_found -> l
     in
 
     let l' = remove_dot_dot (remove_dot (remove_slash_slash l true) true) in
@@ -541,7 +535,7 @@ module Printexc = struct
       let old = !exc_printer in
       (fun f_rec s ->
          try p f_rec s
-         with e -> old f_rec s) in
+         with _e -> old f_rec s) in
     exc_printer := printer
 
 end

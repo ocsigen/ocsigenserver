@@ -30,7 +30,7 @@ type symlink_policy =
   stat:Unix.LargeFile.stats -> lstat:Unix.LargeFile.stats -> bool
 
 let never_follow_symlinks : symlink_policy =
-  fun ~stat ~lstat -> false
+  fun ~stat:_ ~lstat:_ -> false
 
 let follow_symlinks_if_owner_match : symlink_policy =
   fun ~stat ~lstat ->
@@ -85,7 +85,7 @@ let check_symlinks ~no_check_for ~filename policy =
           filename
       in
       check_symlinks_aux filename policy &&
-      check_symlinks_parent_directories filename no_check_for policy
+      check_symlinks_parent_directories ~filename ~no_check_for policy
   in
   match policy with
   | `Always ->
@@ -154,7 +154,7 @@ type resolved =
 (* See also module Files in eliom.ml *)
 let resolve
     ?no_check_for
-    ~request:({Ocsigen_extensions.request_config} as request)
+    ~request:({Ocsigen_extensions.request_config ;_} as request)
     ~filename () =
   (* We only accept absolute filenames in daemon mode,
      as we do not really know what is the current directory *)

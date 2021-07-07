@@ -1,11 +1,39 @@
 include ../Makefile.config
-include ../src/Makefile.filelist
+include ../Makefile.options
 
 OCAMLDOC := ${OCAMLFIND} ocamldoc
 ODOC_WIKI := odoc_wiki.cma
 
-LIBS := -package lwt,lwt_log,lwt_ssl,ssl,ipaddr,cohttp.lwt,pcre,xml-light \
-        ${addprefix -I ../src/, baselib http server extensions }
+DOC := baselib/ocsigen_cache.mli          \
+       baselib/ocsigen_lib_base.mli       \
+       baselib/ocsigen_lib.mli            \
+       baselib/ocsigen_config_static.mli  \
+       baselib/ocsigen_stream.mli         \
+       baselib/ocsigen_loader.mli         \
+       baselib/polytables/polytables.mli  \
+       \
+       http/ocsigen_charset_mime.mli      \
+       http/ocsigen_cookie_map.mli        \
+       http/ocsigen_header.mli            \
+       \
+       server/ocsigen_config.mli          \
+       server/ocsigen_request.mli         \
+       server/ocsigen_response.mli        \
+       server/ocsigen_messages.mli        \
+       server/ocsigen_multipart.mli       \
+       server/ocsigen_extensions.mli      \
+       server/ocsigen_parseconfig.mli     \
+       server/ocsigen_local_files.mli     \
+       server/ocsigen_server.mli
+
+PLUGINS_DOC := extensions/accesscontrol.mli extensions/authbasic.mli	\
+	       extensions/cors.mli extensions/ocsipersist.mli		\
+	       extensions/outputfilter.mli				\
+	       extensions/redirectmod.mli extensions/staticmod.mli
+
+ifeq "$(CAMLZIP)" "YES"
+PLUGINS_DOC += extensions/deflatemod/deflatemod.mli
+endif
 
 all: doc wikidoc
 

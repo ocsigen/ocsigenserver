@@ -39,7 +39,7 @@ let create_redirection
 
 let attempt_redir
     { r_regexp ; r_dest ; r_full ; r_temp }
-    err ri () =
+    _err ri () =
   Lwt_log.ign_info ~section "Is it a redirection?";
   let redir =
     let find full =
@@ -73,7 +73,7 @@ let gen dir = function
   | Ocsigen_extensions.Req_found _ ->
     Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found
-      (err, {Ocsigen_extensions.request_info}) ->
+      (err, {Ocsigen_extensions.request_info; _}) ->
     Lwt.catch (attempt_redir dir err request_info) @@ function
     | Ocsigen_extensions.Not_concerned ->
       Lwt.return (Ocsigen_extensions.Ext_next err)

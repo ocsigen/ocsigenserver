@@ -1,0 +1,12 @@
+(library
+  (name ocsigen_cookie_map)
+  (public_name ocsigenserver.cookies)
+  (modules ocsigen_cookie_map)
+  (libraries ocsigen_lib_base))
+
+(library
+  (name http)
+  (public_name ocsigenserver.http)
+  (wrapped false)
+  (modules ocsigen_charset_mime ocsigen_header)
+  (libraries cohttp-lwt-unix baselib))

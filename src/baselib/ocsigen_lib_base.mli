@@ -179,8 +179,6 @@ module Url_base : sig
   val remove_slash_at_end : path -> path
   val remove_slash_at_beginning : path -> path
 
-  (* val recursively_remove_slash_at_beginning : path -> path *)
-
   (** [is_prefix_skip_end_slash path1 path2] returns [true] if [path1] is the same
       as [path2] before a first slash *)
   val is_prefix_skip_end_slash : string list -> string list -> bool

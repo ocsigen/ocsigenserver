@@ -26,9 +26,9 @@ open Ocsidbmtypes
 open Lwt.Infix
 
 let section = Lwt_log.Section.make "ocsigen:ocsipersist:dbm"
+
 (** Data are divided into stores.
-    Create one store for your project, where you will save all your data.
-*)
+    Create one store for your project, where you will save all your data. *)
 type store = string
 
 exception Ocsipersist_error
@@ -56,7 +56,7 @@ let rec parse_global_config (store, ocsidbm, delayloading as d) = function
     else
       Ocsigen_extensions.badconfig "Ocsipersist: Duplicate <ocsidbm> tag"
 
-  | (Xml.Element (s,_,_))::ll -> Ocsigen_extensions.badconfig "Bad tag %s" s
+  | (Xml.Element (s,_,_))::_ll -> Ocsigen_extensions.badconfig "Bad tag %s" s
 
   | _ -> Ocsigen_extensions.badconfig
            "Unexpected content inside Ocsipersist config"
@@ -71,7 +71,7 @@ let (directory, ocsidbm) =
 
 external sys_exit : int -> 'a = "caml_sys_exit"
 
-let rec try_connect sname =
+let try_connect sname =
   Lwt.catch
     (fun () ->
        let socket = Lwt_unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
@@ -424,7 +424,7 @@ let fold_table f table beg =
 
 let fold_step = fold_table
 
-let iter_block a b = failwith "iter_block not implemented for DBM. Please use Ocsipersist with sqlite"
+let iter_block _a _b = failwith "iter_block not implemented for DBM. Please use Ocsipersist with sqlite"
 
 (* iterator: with a separate connexion:
    exception Exn1

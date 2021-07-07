@@ -1,30 +1,26 @@
+include Makefile.options
 include Makefile.config
 
 ### Building
 
-.PHONY: all byte opt doc
+.PHONY: default
+default: build
 
-all:
-	${MAKE} -C src all
-
-byte:
-	${MAKE} -C src byte
-
-opt:
-	${MAKE} -C src opt
-
+.PHONY: build
+build:
+	${MAKE} -C src
 doc:
 	$(MAKE) -C doc
 
-### Testing and debugging : local execution and toplevel ###
+### Testing : local execution and toplevel ###
 
 .PHONY: run.local run.opt.local top
 
-run.local: byte
-	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/${PROJECTNAME} -c local/etc/${PROJECTNAME}.conf
+run.local: build install.files
+	CAML_LD_LIBRARY_PATH=${BLD}/server:$(CAML_LD_LIBRARY_PATH) ${BLD}/ocsigenserver.bc -c local/etc/ocsigenserver.conf
 
-run.opt.local: opt
-	CAML_LD_LIBRARY_PATH=src/server:$(CAML_LD_LIBRARY_PATH) src/server/${PROJECTNAME}.opt -c local/etc/${PROJECTNAME}.conf
+run.opt.local: build install.files
+	CAML_LD_LIBRARY_PATH=${BLD}/server:$(CAML_LD_LIBRARY_PATH) ${BLD}/ocsigenserver.exe -c local/etc/ocsigenserver.conf
 
 top:
 	cd src/server && ${MAKE} top
@@ -35,7 +31,7 @@ clean: clean.local
 	${MAKE} -C src clean
 
 clean.local:
-	-rm -f $(PROJECTNAME)-*.tar.gz
+	-rm -f ocsigenserver-*.tar.gz
 
 distclean: clean.local
 	${MAKE} -C src distclean
@@ -45,25 +41,7 @@ distclean: clean.local
 
 ### Installation ####
 
-.PHONY: install partialinstall reinstall uninstall purge.files install.files
-
-install.META:
-	$(MAKE) -C src install
-install.META.byte:
-	$(MAKE) -C src install.byte
-install.META.opt:
-	$(MAKE) -C src install.opt
-
-reinstall: uninstall install
-reinstall.byte: uninstall install.byte
-reinstall.opt: uninstall install.opt
-
-install: install.META install.files
-	@echo
-	@echo "## Run \"make doc\" and \"make install.doc\" to build and install the ocamldoc."
-
-install.byte: install.META.byte install.files
-install.opt: install.META.opt install.files
+.PHONY: purge.files install.files
 
 # BB If install is not run by root but OCSIGENUSER, OCSIGENGROUP is somebody
 # BB different, make files universally accessible, we cannot chown.
@@ -93,6 +71,8 @@ ifeq ($(INSTALL_CAN_PUT_PERMISSIONS), no)
 endif
 
 install.files:
+	@echo
+	@echo "## Run \"make doc\" and \"make install.doc\" to build and install the ocamldoc."
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
 	 ## Command pipe
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(dir $(TEMPROOT)$(COMMANDPIPE))
@@ -103,10 +83,10 @@ install.files:
 	   fi; }
 	 ## Configuration files
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
-	${INSTALL} -m ${INSTALL_MOD_644} ${PROJECTNAME}.conf.sample $(TEMPROOT)$(CONFIGDIR)/
-	[ -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf ] || \
-	  { $(INSTALL) -m ${INSTALL_MOD_644} $(PROJECTNAME).conf.sample \
-                $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf;  }
+	${INSTALL} -m ${INSTALL_MOD_644} ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
+	[ -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf ] || \
+	  { $(INSTALL) -m ${INSTALL_MOD_644} ocsigenserver.conf.sample \
+		$(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory
 	$(INSTALL) -m ${INSTALL_MOD_644} src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
@@ -122,32 +102,31 @@ install.files:
 	  local/var/www/ocsigenstuff/*.png local/var/www/ocsigenstuff/*.css \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	$(INSTALL) -d -m ${INSTALL_MOD_755} $(TEMPROOT)$(MANDIR)
-	$(INSTALL) -m ${INSTALL_MOD_644} src/files/${PROJECTNAME}.1 $(TEMPROOT)$(MANDIR)
+	$(INSTALL) -m ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
 
 uninstall:
 	-make -C doc uninstall
-	-rm -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf.sample
-	-rm -f $(TEMPROOT)$(MANDIR)/${PROJECTNAME}.1
+	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf.sample
+	-rm -f $(TEMPROOT)$(MANDIR)/ocsigenserver.1
 	-rm -f $(TEMPROOT)$(COMMANDPIPE)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(CONFIGDIR)/conf.d
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(CONFIGDIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(LOGDIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(DATADIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(MANDIR)
-	-$(MAKE) -C src uninstall
 
-purge: purge.files uninstall
+purge: purge.files
 
 purge.files:
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
-	-rm -f $(TEMPROOT)$(CONFIGDIR)/$(PROJECTNAME).conf
+	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf
 	-rm -f $(patsubst local/var/www/ocsigenstuff/%, \
-	 		  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff/%, \
-	                  $(wildcard local/var/www/ocsigenstuff/*))
+			  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff/%, \
+			  $(wildcard local/var/www/ocsigenstuff/*))
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	-rm -f $(patsubst local/var/www/%, \
-	 		  $(TEMPROOT)$(STATICPAGESDIR)/%, \
-	                  $(wildcard local/var/www/*.html))
+			  $(TEMPROOT)$(STATICPAGESDIR)/%, \
+			  $(wildcard local/var/www/*.html))
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(STATICPAGESDIR)
 
 install.doc:
@@ -164,10 +143,4 @@ logrotate:
 	     | sed s%USER%$(OCSIGENUSER)%g \
 	     | sed s%GROUP%"$(OCSIGENGROUP)"%g \
 	     | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
-	     > $(TEMPROOT)/etc/logrotate.d/$(PROJECTNAME)
-
-###
-
-.PHONY: depend
-depend:
-	${MAKE} -C src depend
+	     > $(TEMPROOT)/etc/logrotate.d/ocsigenserver

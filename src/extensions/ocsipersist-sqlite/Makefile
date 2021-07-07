@@ -1,66 +1,14 @@
-include ../../../Makefile.config
+.PHONY: default
+default: build
 
-PACKAGE  := lwt lwt_log xml-light sqlite3
-
-LIBS     := -I ../../baselib -I ../../server ${addprefix -package ,${PACKAGE}}
-OCAMLC   := $(OCAMLFIND) ocamlc ${BYTEDBG} ${THREAD}
-OCAMLOPT := $(OCAMLFIND) ocamlopt ${OPTDBG} ${THREAD}
-OCAMLDOC := $(OCAMLFIND) ocamldoc
-OCAMLDEP := $(OCAMLFIND) ocamldep
-
-all: byte opt
-
-###
-
-byte: ocsipersist-sqlite.cma
-opt:: ocsipersist-sqlite.cmxa
-ifeq "$(NATDYNLINK)" "YES"
-opt:: ocsipersist-sqlite.cmxs
-endif
-
-PREDEP := ocsipersist.mli
-
-ocsipersist-sqlite.cma: ocsipersist.cmo
-	$(OCAMLC) -a -o $@ $^
-	cp ocsipersist.cmi ..
-	cp $@ ..
-
-ocsipersist-sqlite.cmxa: ocsipersist.cmx
-	$(OCAMLOPT) -a -o $@ $^
-	cp ocsipersist.cmi ..
-	cp $@ ${patsubst %.cmxa,%.a,$@} ..
-
-ocsipersist-sqlite.cmxs: ocsipersist-sqlite.cmxa
-	$(OCAMLOPT) -shared -linkall -o $@ $^
-	cp $@ ..
-
-ocsipersist.mli:
-	ln -s -f ../ocsipersist.mli .
-
-##########
-
-%.cmi: %.mli
-	$(OCAMLC) ${LIBS} -c $<
-%.cmo: %.ml
-	$(OCAMLC) ${LIBS} -c $<
-%.cmx: %.ml
-	$(OCAMLOPT) ${LIBS} -c $<
-%.cmxs: %.cmxa
-	$(OCAMLOPT) -shared -linkall -o $@ $<
+.PHONY: build
+build:
+	dune build
 
 ## Clean up
 
 clean:
-	-rm -f *.cm[ioax] *.cmxa *.cmxs *.o *.a *.annot
-	-rm -f ${PREDEP}
+	dune clean
+
 distclean: clean
 	-rm -f *~ \#* .\#*
-	-rm -f .depend
-
-## Dependencies
-
-depend: ${PREDEP}
-	$(OCAMLDEP) ${LIBS} *.mli *.ml > .depend
-
-FORCE:
--include .depend

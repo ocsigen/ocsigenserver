@@ -147,7 +147,7 @@ let rec list_last l =
 
 (* get one value from the result of a query *)
 let one_value = function
-  | [Some value]::xs -> unpack_value value
+  | [Some value]::_xs -> unpack_value value
   | _ -> raise Not_found
 
 let prepare db query =
@@ -166,10 +166,6 @@ let exec db query params =
   prepare db query >>= fun name ->
   let params = List.map (fun x -> Some (pack x)) params in
   PGOCaml.execute db ~name ~params ()
-
-let exec_ db query params = exec db query params >> Lwt.return_unit
-
-let (@.) f g = fun x -> f (g x) (* function composition *)
 
 let create_table db table =
   let query = sprintf "CREATE TABLE IF NOT EXISTS %s \
@@ -293,7 +289,7 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     let query = sprintf "SELECT value FROM %s WHERE key = $1 " name in
     Aux.exec db query [Key.encode key] >>=
     function
-    | [Some value]::xs -> Lwt.return (Value.decode value)
+    | [Some value]::_ -> Lwt.return (Value.decode value)
     | _ -> Lwt.fail Not_found
 
   let add key value = with_table @@ fun db ->
@@ -315,7 +311,7 @@ module Table (T : TABLE_CONF) (Key : COLUMN) (Value : COLUMN)
     let query = sprintf "SELECT value FROM %s WHERE key = $1" name in
     Aux.exec db query [Key.encode key] >>= fun value ->
     let old_value = match value with
-      | [Some v]::xs -> Some (Value.decode v)
+      | [Some v]::_ -> Some (Value.decode v)
       | _ -> None
     in
     match f old_value with
@@ -483,7 +479,7 @@ let fold_step f table x =
 
 let fold_table = fold_step
 
-let iter_block a b = failwith "Ocsipersist.iter_block: not implemented"
+let iter_block _a _b = failwith "Ocsipersist.iter_block: not implemented"
 
 let parse_global_config = function
   | [] -> ()

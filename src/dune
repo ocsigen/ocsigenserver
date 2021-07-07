@@ -1,0 +1,11 @@
+(executable
+  (name ocsigenserver)
+  (public_name ocsigenserver.opt)
+  (link_flags (:standard -linkall))
+  (libraries dynlink ocsigenserver)
+  (modes exe byte))
+
+(install
+ (files (ocsigenserver.bc as ocsigenserver))
+ (section bin)
+ (package ocsigenserver))

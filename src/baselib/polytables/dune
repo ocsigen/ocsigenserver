@@ -1,0 +1,3 @@
+(library
+  (name polytables)
+  (public_name ocsigenserver.polytables))

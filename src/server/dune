@@ -1,0 +1,5 @@
+(library
+  (name ocsigenserver)
+  (public_name ocsigenserver)
+  (wrapped false)
+  (libraries xml-light cohttp-lwt-unix hmap polytables ocsigen_cookie_map baselib http))

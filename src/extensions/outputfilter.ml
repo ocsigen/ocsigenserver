@@ -28,7 +28,7 @@ type header_filter = [
 let gen filter = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
     Lwt.return (Ocsigen_extensions.Ext_next code)
-  | Ocsigen_extensions.Req_found (ri, res) ->
+  | Ocsigen_extensions.Req_found (_ri, res) ->
     Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
       Lwt.return @@ match filter with
       | `Rewrite (header, regexp, dest) ->
@@ -57,7 +57,7 @@ let gen filter = function
 let gen_code code = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
     Lwt.return (Ocsigen_extensions.Ext_next code)
-  | Ocsigen_extensions.Req_found (ri, res) ->
+  | Ocsigen_extensions.Req_found (_ri, res) ->
     Lwt.return @@ Ocsigen_extensions.Ext_found (fun () ->
       Lwt.return (Ocsigen_response.set_status res code))
 

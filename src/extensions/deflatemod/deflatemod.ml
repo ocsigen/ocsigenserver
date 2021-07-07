@@ -30,11 +30,6 @@ type filter = [
   | `Extension of string
 ]
 
-type mode = [
-  | `All_but of filter list
-  | `Only of filter list
-]
-
 let should_compress (t, t') url choice_list =
   let check = function
     | `Type (None, None) -> true
@@ -184,7 +179,7 @@ let compress deflate stream : string Ocsigen_stream.t =
       deflate
   in
   let finalize status =
-    Ocsigen_stream.finalize stream status >>= fun e ->
+    Ocsigen_stream.finalize stream status >>= fun _e ->
     (try
        Zlib.deflate_end zstream
      with
@@ -318,7 +313,7 @@ let filter choice_list = function
   | Ocsigen_extensions.Req_not_found (code,_) ->
     Lwt.return (Ocsigen_extensions.Ext_next code)
   | Ocsigen_extensions.Req_found
-      ({ Ocsigen_extensions.request_info = ri }, res) ->
+      ({ Ocsigen_extensions.request_info = ri ; _ }, res) ->
     match
       Ocsigen_request.header_multi ri Ocsigen_header.Name.accept_encoding
       |> Ocsigen_header.Accept_encoding.parse

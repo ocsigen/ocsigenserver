@@ -1,0 +1,5 @@
+(library
+  (name ocsipersistpgsql)
+  (public_name ocsigenserver.ext.ocsipersist-pgsql)
+  (libraries pgocaml ocsigenserver)
+  (implements ocsigenpersist))
