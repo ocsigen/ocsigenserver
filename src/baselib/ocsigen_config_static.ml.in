@@ -20,8 +20,7 @@
 
 let version_number = "_VERSION_"
 let config_file = ref "_CONFIGDIR_/ocsigenserver.conf"
-(* We could eventually use Sys.backend_type. *)
-let is_native = _ISNATIVE_
+let is_native = Sys.backend_type = Sys.Native
 let logdir = ref (Some "_LOGDIR_")
 let default_user = ref "_OCSIGENUSER_"
 let default_group = ref "_OCSIGENGROUP_"
