@@ -4,8 +4,11 @@ include ../../Makefile.config
 default: build
 
 .PHONY: build
-build: ocsigen_config_static.ml dynlink_wrapper.ml
+build: confs
 	dune build
+
+.PHONY: confs
+confs: ocsigen_config_static.ml dynlink_wrapper.ml
 
 ## Ocsigen_config ##
 
@@ -48,7 +51,6 @@ endif
 ## Clean up
 
 clean:
-	dune clean
 	-rm -f ocsigen_config_static.ml dynlink_wrapper.ml
 
 distclean: clean

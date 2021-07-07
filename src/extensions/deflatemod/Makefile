@@ -8,7 +8,6 @@ build:
 ## Clean up
 
 clean:
-	dune clean
 
 distclean: clean
 	-rm -f *~ \#* .\#*

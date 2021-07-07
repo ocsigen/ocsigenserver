@@ -35,11 +35,6 @@ endif
 ## Clean up
 
 clean:
-	dune clean
-	${MAKE} -C ocsipersist-dbm clean
-	${MAKE} -C ocsipersist-sqlite clean
-	${MAKE} -C ocsipersist-pgsql clean
-	${MAKE} -C deflatemod clean
 
 distclean: clean
 	-rm -f *~ \#* .\#*
