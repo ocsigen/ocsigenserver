@@ -73,7 +73,6 @@ check_library () {
 # defaults:
 
 set_defaults () {
-    enable_natdynlink=1
     with_sqlite=1
     with_pgsql=1
     with_camlzip=1
@@ -103,7 +102,7 @@ full_pwd=`pwd`
 ## Option parsing
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
-eoptions="natdynlink"
+eoptions=""
 woptions="pgsql sqlite dbm camlzip"
 
 print_options () {
@@ -175,8 +174,6 @@ usage () {
 	set_defaults
 	cat <<_EOF_ >&2
 usage: ./configure [ options ]
-
-  --enable-natdynlink,	--disable-natdynlink	Enable/disable nativecode dynamic linking
 
   --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
   --with-pgsql,	--without-pgsql		Compile ocsipersist with PostgreSQL for persistent storage
@@ -468,11 +465,6 @@ echo
 
 
 #Convert 0/1 values to YES/NO
-if [ $enable_natdynlink -gt 0 ] ; then
-	enable_natdynlink="YES"
-else
-	enable_natdynlink="NO"
-fi
 if [ $with_dbm -gt 0 ] ; then
 	with_dbm="YES"
 else
@@ -543,9 +535,6 @@ OCSIPERSISTDBM:=$with_dbm
 
 # Temporary root directory to install the package (usually always "" but for package makers)
 TEMPROOT := $temproot
-
-# Do you want to use dynamic linking for native code? YES/NO
-NATDYNLINK:=$enable_natdynlink
 
 # The directory for ocsigen server (binary):
 BINDIR := $root$bindir

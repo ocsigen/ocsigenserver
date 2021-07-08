@@ -31,3 +31,5 @@ let init _ = ()
 let allow_unsafe_modules _ = ()
 
 let prohibit _ = ()
+
+let is_native = false

@@ -29,3 +29,5 @@ let error_message = error_message
 let allow_unsafe_modules = allow_unsafe_modules
 
 let prohibit = prohibit
+
+let is_native = is_native

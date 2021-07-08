@@ -4,16 +4,13 @@ include ../../Makefile.config
 default: build
 
 .PHONY: build
-build: ocsigen_config_static.ml dynlink_wrapper.ml
+build: confs
 	dune build
 
-## Ocsigen_config ##
+.PHONY: confs
+confs: ocsigen_config_static.ml
 
-ifeq "$(NATDYNLINK)" "YES"
-  NATIVECODE_RUNTIME_DETECT=Dynlink.is_native
-else
-  NATIVECODE_RUNTIME_DETECT=false
-endif
+## Ocsigen_config ##
 
 VERSION := $(shell head -n 1 ../../VERSION)
 
@@ -35,21 +32,10 @@ ocsigen_config_static.ml: ocsigen_config_static.ml.in ../../Makefile.config ../.
 	| sed "s%_DEPS_%$(INITPACKAGE)%g" \
 	> ocsigen_config_static.ml
 
-## Dynlink_wrapper ##
-
-ifeq "$(NATDYNLINK)" "YES"
-dynlink_wrapper.ml:
-	ln -s dynlink_wrapper.natdynlink.ml $@
-else
-dynlink_wrapper.ml:
-	ln -s dynlink_wrapper.nonatdynlink.ml $@
-endif
-
 ## Clean up
 
 clean:
-	dune clean
-	-rm -f ocsigen_config_static.ml dynlink_wrapper.ml
+	-rm -f ocsigen_config_static.ml
 
 distclean: clean
 	-rm -f *~ \#* .\#*

@@ -1,15 +1,12 @@
 include ../Makefile.config
 
 all: confs
-	${MAKE} -C baselib
-	${MAKE} -C http
-	${MAKE} -C server
-	${MAKE} -C extensions
 	dune build
 
 ### CONF ####
 
 confs: ../ocsigenserver.conf.sample ../local/etc/ocsigenserver.conf
+	${MAKE} -C baselib confs
 
 ../ocsigenserver.conf.sample: files/ocsigenserver.conf.in ../Makefile.config Makefile
 	cat $< \
@@ -53,9 +50,6 @@ confs: ../ocsigenserver.conf.sample ../local/etc/ocsigenserver.conf
 
 clean: clean.local
 	${MAKE} -C baselib clean
-	${MAKE} -C http clean
-	${MAKE} -C server clean
-	${MAKE} -C extensions clean
 	dune clean
 
 clean.local:
