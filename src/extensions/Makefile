@@ -34,8 +34,6 @@ endif
 
 ## Clean up
 
-clean:
-
 distclean: clean
 	-rm -f *~ \#* .\#*
 	${MAKE} -C ocsipersist-dbm distclean

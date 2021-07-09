@@ -7,7 +7,5 @@ build:
 
 ## Clean up
 
-clean:
-
 distclean: clean
 	-rm -f *~ \#* .\#*
