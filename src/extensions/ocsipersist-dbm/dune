@@ -16,4 +16,5 @@
   (name ocsidbm)
   (modules ocsidbm)
   (libraries lwt lwt.unix dbm ocsidbmtypes)
-  (modes byte exe))
+  (modes byte exe)
+  (optional))
