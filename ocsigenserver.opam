@@ -62,8 +62,8 @@ depends: [
   "hmap"
   "xml-light"
   "conf-which"
+  "camlzip"
 ]
-depopts: "camlzip"
 conflicts: [
   "camlzip" {< "1.04"}
   "pgocaml" {< "2.2"}

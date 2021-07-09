@@ -75,7 +75,6 @@ check_library () {
 set_defaults () {
     with_sqlite=1
     with_pgsql=1
-    with_camlzip=1
     with_dbm=1
     prefix="/usr/local"
     bindir=""
@@ -103,7 +102,7 @@ full_pwd=`pwd`
 
 ## Which options exist? eoptions for enable/disable, woptions for with/without:
 eoptions=""
-woptions="pgsql sqlite dbm camlzip"
+woptions="pgsql sqlite dbm"
 
 print_options () {
 	for opt in $eoptions; do
@@ -178,8 +177,6 @@ usage: ./configure [ options ]
   --with-sqlite,	--without-sqlite	Compile ocsipersist with SQLite for persistent storage
   --with-pgsql,	--without-pgsql		Compile ocsipersist with PostgreSQL for persistent storage
   --with-dbm,		--without-dbm		Compile ocsipersist with DBM for persistent storage
-  --with-camlzip,	--without-camlzip	Compile deflatemod extension, requires camlzip
-
   --name NAME		The name of the server binary and ocamlfind package.
 
   --ocsigen-user NAME	The name of the ocsigen user
@@ -435,17 +432,6 @@ if [ "$with_dbm" -gt 0 ]; then
     fi
 fi
 
-# Check Camlzip
-if [ "$with_camlzip" -gt 0 ]; then
-    if test_library camlzip; then
-	echo -n
-    elif [ "$with_camlzip" -gt 1 ]; then
-	fail_library camlzip "https://forge.ocamlcore.org/projects/camlzip/"
-    else
-	with_camlzip=0
-    fi
-fi
-
 # Check rlwrap or ledit
 if test_binary rlwrap; then
     rlwrap=rlwrap
@@ -480,11 +466,6 @@ if [ $with_pgsql -gt 0 ] ; then
 else
 	with_pgsql="NO"
 fi
-if [ $with_camlzip -gt 0 ] ; then
-	with_camlzip="YES"
-else
-	with_camlzip="NO"
-fi
 
 ocamlinclude=`ocamlfind printconf stdlib`
 
@@ -517,9 +498,6 @@ OCSIGENUSER := $ocsigen_user
 # group who will run Ocsigen server (not root) (eg, for debian, www-data)
 # (This group must exist)
 OCSIGENGROUP := $ocsigen_group
-
-# Do you want deflatemod? YES/NO (requires camlzip)
-CAMLZIP:=$with_camlzip
 
 # Do you want ocsipersist with sqlite? YES/NO
 OCSIPERSISTSQLITE:=$with_sqlite

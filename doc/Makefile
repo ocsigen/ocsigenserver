@@ -29,11 +29,8 @@ DOC := baselib/ocsigen_cache.mli          \
 PLUGINS_DOC := extensions/accesscontrol.mli extensions/authbasic.mli	\
 	       extensions/cors.mli extensions/ocsipersist.mli		\
 	       extensions/outputfilter.mli				\
-	       extensions/redirectmod.mli extensions/staticmod.mli
-
-ifeq "$(CAMLZIP)" "YES"
-PLUGINS_DOC += extensions/deflatemod/deflatemod.mli
-endif
+	       extensions/redirectmod.mli extensions/staticmod.mli	\
+	       extensions/deflatemod/deflatemod.mli
 
 all: doc wikidoc
 

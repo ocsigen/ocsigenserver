@@ -17,6 +17,12 @@
   (libraries ocsigenserver))
 
 (library
+  (name deflatemod)
+  (public_name ocsigenserver.ext.deflatemod)
+  (modules deflatemod)
+  (libraries camlzip ocsigenserver))
+
+(library
   (name extendconfiguration)
   (public_name ocsigenserver.ext.extendconfiguration)
   (modules extendconfiguration)

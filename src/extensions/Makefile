@@ -7,11 +7,6 @@ default: build
 build::
 	dune build
 
-ifeq "$(CAMLZIP)" "YES"
-build::
-	$(MAKE) -C deflatemod
-endif
-
 ### PostgreSQL ###
 
 ifeq "$(OCSIPERSISTPGSQL)" "YES"
