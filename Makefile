@@ -3,8 +3,8 @@ include Makefile.config
 
 ### Building
 
-.PHONY: default
-default: build
+.PHONY: default all
+default all: build
 
 .PHONY: build
 build:

@@ -1,4 +1,0 @@
-(library
-  (name deflatemod)
-  (public_name ocsigenserver.ext.deflatemod)
-  (libraries camlzip ocsigenserver))
