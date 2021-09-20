@@ -9,6 +9,7 @@ default all: build
 .PHONY: build
 build:
 	${MAKE} -C src
+	dune build
 doc:
 	$(MAKE) -C doc
 
