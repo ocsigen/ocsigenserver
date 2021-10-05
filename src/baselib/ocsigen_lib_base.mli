@@ -195,12 +195,4 @@ module Url_base : sig
 
 end
 
-module Printexc : sig
-
-  include module type of Printexc
-
-  val register_exn_printer : ((exn -> string) -> exn -> string) -> unit
-
-end
-
 val debug : string -> unit
