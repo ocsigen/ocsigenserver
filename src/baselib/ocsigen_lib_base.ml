@@ -520,26 +520,6 @@ module Url_base = struct
 
 end
 
-(************************************************************************)
-
-module Printexc = struct
-
-  include Printexc
-
-  let exc_printer = ref (fun _ e -> Printexc.to_string e)
-
-  let rec to_string e = !exc_printer to_string e
-
-  let register_exn_printer p =
-    let printer =
-      let old = !exc_printer in
-      (fun f_rec s ->
-         try p f_rec s
-         with _e -> old f_rec s) in
-    exc_printer := printer
-
-end
-
 (*****************************************************************************)
 
 let debug = prerr_endline
