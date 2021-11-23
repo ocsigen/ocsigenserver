@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 (** Module [Authbasic]: Basic HTTP Authentication. *)
 
 type auth = string -> string -> bool Lwt.t

@@ -20,6 +20,8 @@
 
 (** Extensions interface for Ocsigen Server *)
 
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 include (module type of Ocsigen_command)
 
 exception Ocsigen_http_error of

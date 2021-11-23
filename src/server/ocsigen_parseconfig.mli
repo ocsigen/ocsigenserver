@@ -23,6 +23,8 @@
 
 (**/**)
 
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 (** [parse_size_tag tag s] parses a size.
 
     The size can be either "infinity" or use SI or binary units, e.g.,

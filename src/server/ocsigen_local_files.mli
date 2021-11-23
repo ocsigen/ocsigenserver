@@ -16,6 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
+
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 (** The requested file does not exists *)
 exception Failed_404
 

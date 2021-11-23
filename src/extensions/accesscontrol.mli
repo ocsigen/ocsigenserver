@@ -22,3 +22,5 @@
 val parse_condition :
   Xml.xml -> Ocsigen_extensions.request_info -> bool
 *)
+
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)

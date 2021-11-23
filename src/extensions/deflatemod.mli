@@ -1,3 +1,5 @@
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 val compress_level : int Ocsigen_config.Custom.key
 
 val buffer_size : int Ocsigen_config.Custom.key

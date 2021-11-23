@@ -1,3 +1,5 @@
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 val scan_multipart_body_from_stream:
   ?max_size : Int64.t ->
   boundary : string ->
