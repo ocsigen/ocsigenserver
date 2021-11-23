@@ -32,6 +32,8 @@
 exception Dynlink_error of string * exn
 exception Findlib_error of string * exn
 
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 val translate : string -> string
 (** [translate filename] translate .cmo/.cma extensions to .cmxs in
     native mode, and .cmxs to .cmo (.cma if it exists) in bytecode

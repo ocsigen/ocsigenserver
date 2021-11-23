@@ -1,3 +1,5 @@
+val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+
 type redirection
 
 val create_redirection :

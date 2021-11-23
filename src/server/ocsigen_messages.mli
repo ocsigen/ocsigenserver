@@ -18,6 +18,7 @@
 
 (** Writing messages in the logs *)
 
+val access_sect : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
 
 (** Write a message in access.log *)
 val accesslog : string -> unit
