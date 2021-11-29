@@ -1,7 +1,7 @@
 include ../Makefile.config
 
 all: confs
-	dune build @install
+	dune build @all
 
 ### CONF ####
 
