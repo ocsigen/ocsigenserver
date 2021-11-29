@@ -56,7 +56,6 @@ depends: [
   "lwt_log"
   "pcre"
   "cryptokit"
-  "dbm" | "sqlite3" | "pgocaml"
   "ipaddr" {>= "2.1"}
   "cohttp-lwt-unix"
   "conduit-lwt-unix" {>= "2.0.0"}
