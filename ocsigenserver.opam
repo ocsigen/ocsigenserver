@@ -62,7 +62,6 @@ depends: [
   "conduit-lwt-unix" {>= "2.0.0"}
   "hmap"
   "xml-light"
-  "conf-which"
   "camlzip"
 ]
 conflicts: [
