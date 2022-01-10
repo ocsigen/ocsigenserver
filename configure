@@ -8,7 +8,7 @@
 test_binary () {
   # $1: the name of the binary
   echo -n "Checking for $1 ... "
-  if which "$1" >/dev/null 2>/dev/null; then
+  if command -v "$1" >/dev/null 2>/dev/null; then
     echo "found"
     return 0
   else
