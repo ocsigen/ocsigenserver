@@ -348,7 +348,7 @@ let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
         (*XXXX Inefficient if s is long *)
         add p (String.sub s r (len - r))
       else
-        Lwt_unix.yield ()
+        Lwt.pause ()
   in
 
   let create hs =
