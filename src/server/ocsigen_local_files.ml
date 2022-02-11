@@ -15,12 +15,13 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (* Display of a local file or directory. Currently used in staticmod
    and eliom_predefmod *)
 
 let section = Lwt_log.Section.make "ocsigen:local-file"
+
 exception Failed_403
 exception Failed_404
 exception NotReadableDirectory
@@ -29,43 +30,42 @@ exception NotReadableDirectory
 type symlink_policy =
   stat:Unix.LargeFile.stats -> lstat:Unix.LargeFile.stats -> bool
 
-let never_follow_symlinks : symlink_policy =
-  fun ~stat:_ ~lstat:_ -> false
+let never_follow_symlinks : symlink_policy = fun ~stat:_ ~lstat:_ -> false
 
 let follow_symlinks_if_owner_match : symlink_policy =
-  fun ~stat ~lstat ->
-    stat.Unix.LargeFile.st_uid = lstat.Unix.LargeFile.st_uid
-
+ fun ~stat ~lstat -> stat.Unix.LargeFile.st_uid = lstat.Unix.LargeFile.st_uid
 
 (* checks that [filename] can be followed depending on the predicate
    [policy] which must receives as argument both the results
    of calling [stat] and [lstat] on filenam.
    If supplied, [stat] must be the result of calling [Unix.stat] on
    [filename] *)
-let check_symlinks_aux
-    filename ?(stat=Unix.LargeFile.stat filename) (policy : symlink_policy) =
+let check_symlinks_aux filename ?(stat = Unix.LargeFile.stat filename)
+    (policy : symlink_policy)
+  =
   let lstat = Unix.LargeFile.lstat filename in
-  if lstat.Unix.LargeFile.st_kind = Unix.S_LNK then
-    policy ~stat ~lstat
-  else
-    true
+  if lstat.Unix.LargeFile.st_kind = Unix.S_LNK
+  then policy ~stat ~lstat
+  else true
 
 (* Check that there are no invalid symlinks in the directories leading to
    [filename]. Paths upwards [no_check_for] are not checked. *)
-let rec check_symlinks_parent_directories ~filename ~no_check_for (policy : symlink_policy) =
-  if filename = "/" || filename = "." || Some filename = no_check_for then
-    true
+let rec check_symlinks_parent_directories ~filename ~no_check_for
+    (policy : symlink_policy)
+  =
+  if filename = "/" || filename = "." || Some filename = no_check_for
+  then true
   else
     let dirname = Filename.dirname filename in
-    check_symlinks_aux dirname policy &&
-    check_symlinks_parent_directories ~filename:dirname ~no_check_for policy
-
+    check_symlinks_aux dirname policy
+    && check_symlinks_parent_directories ~filename:dirname ~no_check_for policy
 
 (* Check that [filename] can be reached according to the given
    symlink policy  *)
 let check_symlinks ~no_check_for ~filename policy =
   let aux policy =
-    if filename = "/" then
+    if filename = "/"
+    then
       (* The root cannot be a symlink, and this avoids some degenerate
          cases later on *)
       true
@@ -79,21 +79,15 @@ let check_symlinks ~no_check_for ~filename policy =
            that Unix.lstat returns the correct result (Unix.lstat "foo/" and
            Unix.lstat "foo" return two different results...)  *)
         let len = String.length filename - 1 in
-        if filename.[len] = '/' then
-          String.sub filename 0 len
-        else
-          filename
+        if filename.[len] = '/' then String.sub filename 0 len else filename
       in
-      check_symlinks_aux filename policy &&
-      check_symlinks_parent_directories ~filename ~no_check_for policy
+      check_symlinks_aux filename policy
+      && check_symlinks_parent_directories ~filename ~no_check_for policy
   in
   match policy with
-  | `Always ->
-    true
-  | `No ->
-    aux never_follow_symlinks
-  | `Owner_match ->
-    aux follow_symlinks_if_owner_match
+  | `Always -> true
+  | `No -> aux never_follow_symlinks
+  | `Owner_match -> aux follow_symlinks_if_owner_match
 
 let check_dotdot =
   let regexp = Ocsigen_lib.Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
@@ -102,40 +96,35 @@ let check_dotdot =
        In URLs, .. have already been removed by the server,
        but the filename may come from somewhere else than URLs ... *)
     try
-      ignore
-        (Ocsigen_lib.Netstring_pcre.search_forward regexp filename 0);
+      ignore (Ocsigen_lib.Netstring_pcre.search_forward regexp filename 0);
       false
     with Not_found -> true
 
 let can_send filename request =
   let filename =
     Ocsigen_lib.Url.split_path filename
-    |> Ocsigen_lib.Url.norm_path
-    |> Ocsigen_lib.Url.join_path
+    |> Ocsigen_lib.Url.norm_path |> Ocsigen_lib.Url.join_path
   in
   Lwt_log.ign_info_f ~section "checking if file %s can be sent" filename;
   let matches arg =
     Ocsigen_lib.Netstring_pcre.string_match
       (Ocsigen_extensions.do_not_serve_to_regexp arg)
-      filename 0 <>
-    None
+      filename 0
+    <> None
   in
-  if matches request.Ocsigen_extensions.do_not_serve_403 then (
+  if matches request.Ocsigen_extensions.do_not_serve_403
+  then (
     Lwt_log.ign_info ~section "this file is forbidden";
     raise Failed_403)
-  else
-    if matches request.Ocsigen_extensions.do_not_serve_404 then (
-      Lwt_log.ign_info ~section "this file must be hidden";
-      raise Failed_404)
-
+  else if matches request.Ocsigen_extensions.do_not_serve_404
+  then (
+    Lwt_log.ign_info ~section "this file must be hidden";
+    raise Failed_404)
 
 (* Return type of a request for a local file. The string argument
    represents the real file/directory to serve, eg. foo/index.html
    instead of foo *)
-type resolved =
-  | RFile of string
-  | RDir of string
-
+type resolved = RFile of string | RDir of string
 
 (* given [filename], we search for it in the local filesystem and
    - we return ["filename/index.html"] if [filename] corresponds to
@@ -152,74 +141,70 @@ type resolved =
    - otherwise returns [filename]
 *)
 (* See also module Files in eliom.ml *)
-let resolve
-    ?no_check_for
-    ~request:({Ocsigen_extensions.request_config ;_} as request)
-    ~filename () =
+let resolve ?no_check_for
+    ~request:({Ocsigen_extensions.request_config; _} as request) ~filename ()
+  =
   (* We only accept absolute filenames in daemon mode,
      as we do not really know what is the current directory *)
   let filename =
-    if Filename.is_relative filename && Ocsigen_config.get_daemon () then
-      "/"^filename
-    else
-      filename
+    if Filename.is_relative filename && Ocsigen_config.get_daemon ()
+    then "/" ^ filename
+    else filename
   in
   try
     Lwt_log.ign_info_f ~section "Testing \"%s\"." filename;
     let stat = Unix.LargeFile.stat filename in
-    let (filename, stat) =
-      if stat.Unix.LargeFile.st_kind = Unix.S_DIR then
-        if filename.[String.length filename - 1] <> '/' then begin
+    let filename, stat =
+      if stat.Unix.LargeFile.st_kind = Unix.S_DIR
+      then
+        if filename.[String.length filename - 1] <> '/'
+        then (
           (* In this case, [filename] is a directory but this is not visible in
              its name as there is no final slash. We signal this fact to
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
           Lwt_log.ign_info_f ~section "LocalFiles: %s is a directory" filename;
           raise
             (Ocsigen_extensions.Ocsigen_is_dir
-               (Ocsigen_extensions.new_url_of_directory_request request))
-        end
-
+               (Ocsigen_extensions.new_url_of_directory_request request)))
         else
           let rec find_index = function
             | [] ->
                 (* No suitable index, we try to list the directory *)
-                if request_config.Ocsigen_extensions.list_directory_content then (
+                if request_config.Ocsigen_extensions.list_directory_content
+                then (
                   Lwt_log.ign_info ~section "Displaying directory content";
-                  (filename, stat)
-                ) else (
+                  filename, stat)
+                else (
                   (* No suitable index *)
                   Lwt_log.ign_info ~section "No index and no listing";
                   raise NotReadableDirectory)
-            | e :: q ->
+            | e :: q -> (
                 let index = filename ^ e in
-                Lwt_log.ign_info_f ~section "Testing \"%s\" as possible index." index;
-                try
-                  (index, Unix.LargeFile.stat index)
-                with
-                  | Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q
+                Lwt_log.ign_info_f ~section "Testing \"%s\" as possible index."
+                  index;
+                try index, Unix.LargeFile.stat index
+                with Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q)
           in
-          find_index
-            request_config.Ocsigen_extensions.default_directory_index
-
-      else (filename, stat)
+          find_index request_config.Ocsigen_extensions.default_directory_index
+      else filename, stat
     in
     if not (check_dotdot ~filename)
-    then
-      (Lwt_log.ign_info_f ~section "Filenames cannot contain .. as in \"%s\"." filename;
-       raise Failed_403)
+    then (
+      Lwt_log.ign_info_f ~section "Filenames cannot contain .. as in \"%s\"."
+        filename;
+      raise Failed_403)
     else if check_symlinks ~filename ~no_check_for
-        request_config.Ocsigen_extensions.follow_symlinks
+              request_config.Ocsigen_extensions.follow_symlinks
     then (
       can_send filename request_config;
       (* If the previous function did not fail, we are authorized to
          send this file *)
-        Lwt_log.ign_info_f ~section "Returning \"%s\"." filename;
-      if stat.Unix.LargeFile.st_kind = Unix.S_REG then
-        RFile filename
-      else if stat.Unix.LargeFile.st_kind = Unix.S_DIR then
-        RDir filename
-      else raise Failed_404
-    )
+      Lwt_log.ign_info_f ~section "Returning \"%s\"." filename;
+      if stat.Unix.LargeFile.st_kind = Unix.S_REG
+      then RFile filename
+      else if stat.Unix.LargeFile.st_kind = Unix.S_DIR
+      then RDir filename
+      else raise Failed_404)
     else (
       (* [filename] is accessed through as symlink which we should not
          follow according to the current policy *)
@@ -227,5 +212,5 @@ let resolve
       raise Failed_403)
   with
   (* We can get an EACCESS here, if are missing some rights on a directory *)
-  | Unix.Unix_error (Unix.EACCES,_,_) -> raise Failed_403
-  | Unix.Unix_error (Unix.ENOENT,_,_) -> raise Failed_404
+  | Unix.Unix_error (Unix.EACCES, _, _) -> raise Failed_403
+  | Unix.Unix_error (Unix.ENOENT, _, _) -> raise Failed_404

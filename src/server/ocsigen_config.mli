@@ -14,32 +14,24 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (** Configuring Ocsigen server *)
 
 open Ocsigen_lib
 
-type ssl_info = {
-  ssl_certificate : string option ;
-  ssl_privatekey  : string option ;
-  ssl_ciphers     : string option ;
-  ssl_dhfile      : string option ;
-  ssl_curve       : string option
-}
+type ssl_info =
+  { ssl_certificate : string option
+  ; ssl_privatekey : string option
+  ; ssl_ciphers : string option
+  ; ssl_dhfile : string option
+  ; ssl_curve : string option }
 
 module Socket_type : sig
-
-  type t = [
-    | `All
-    | `IPv4 of Unix.inet_addr
-    | `IPv6 of Unix.inet_addr
-  ]
+  type t = [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr]
 
   val to_string : t -> string
-
   val to_inet_addr : t -> Unix.inet_addr
-
 end
 
 type socket_type = Socket_type.t
@@ -51,11 +43,9 @@ val full_server_name : string
 val version_number : string
 val is_native : bool
 val native_ext : string
-
 val builtin_packages : String.Set.t
-
 val set_logdir : string -> unit
-val set_syslog_facility: Lwt_log.syslog_facility option -> unit
+val set_syslog_facility : Lwt_log.syslog_facility option -> unit
 val set_configfile : string -> unit
 val set_pidfile : string -> unit
 val set_mimefile : string -> unit
@@ -70,6 +60,7 @@ val set_max_number_of_threads_queued : int -> unit
 val set_max_number_of_connections : int -> unit
 val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
+
 (* val set_keepalive_timeout : int -> unit
    val set_keepopen_timeout : int -> unit *)
 val set_filebuffersize : int -> unit
@@ -91,9 +82,8 @@ val set_shutdown_timeout : float option -> unit
 val set_ssl_info : ssl_info option -> unit
 val set_ports : (socket_type * int) list -> unit
 val set_ssl_ports : (socket_type * int) list -> unit
-
 val get_logdir : unit -> string
-val get_syslog_facility: unit -> Lwt_log.syslog_facility option
+val get_syslog_facility : unit -> Lwt_log.syslog_facility option
 val get_config_file : unit -> string
 val get_pidfile : unit -> string option
 val get_mimefile : unit -> string
@@ -110,6 +100,7 @@ val get_max_number_of_threads_queued : unit -> int
 val get_max_number_of_connections : unit -> int
 val get_client_timeout : unit -> int
 val get_server_timeout : unit -> int
+
 (*val get_keepalive_timeout : unit -> int
   val get_keepopen_timeout : unit -> int*)
 val get_filebuffersize : unit -> int
@@ -133,7 +124,6 @@ val get_shutdown_timeout : unit -> float option
 val get_ssl_info : unit -> ssl_info option
 val get_ports : unit -> (socket_type * int) list
 val get_ssl_ports : unit -> (socket_type * int) list
-
 val display_version : unit -> 'a
 
 (**/**)
@@ -150,15 +140,10 @@ val set_maxuploadfilesize : int64 option -> unit
 val get_maxuploadfilesize : unit -> int64 option
 
 module Custom : sig
-
   type 'a key
 
   val key : ?preprocess:('a -> 'a) -> unit -> 'a key
-
   val find : 'a key -> 'a option
-
   val set : 'a key -> 'a -> unit
-
   val unset : 'a key -> unit
-
 end

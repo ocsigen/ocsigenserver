@@ -15,21 +15,20 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
-val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+val section : Lwt_log_core.section
+(** use Lwt_log.Section.set_level in order to debug *)
 
-(** The requested file does not exists *)
 exception Failed_404
+(** The requested file does not exists *)
 
+exception Failed_403
 (** The requested file cannot be served: does not exists, not
     enough permissions ... *)
-exception Failed_403
 
-(** The file is a directory which we should not display *)
 exception NotReadableDirectory
-
-
+(** The file is a directory which we should not display *)
 
 (*
 (** Default options:
@@ -40,14 +39,17 @@ exception NotReadableDirectory
 val default_options : options
 *)
 
-
 (** Local file corresponding to a request. The string argument
     represents the real file or directory to serve, eg. foo/index.html
     instead of foo *)
-type resolved =
-  | RFile of string
-  | RDir of string
+type resolved = RFile of string | RDir of string
 
+val resolve
+  :  ?no_check_for:string
+  -> request:Ocsigen_extensions.request
+  -> filename:string
+  -> unit
+  -> resolved
 (** Finds [filename] in the filesystem, with a possible redirection
     if it is a directory. Takes into account the fact that [filename]
     does not exists, is a symlink or is a directory, and raises
@@ -68,7 +70,3 @@ type resolved =
 
     [no_check_for] is supposed to be a prefix of [filename] ;
     directories above [no_check_for] are not checked for symlinks *)
-val resolve :
-  ?no_check_for:string ->
-  request:Ocsigen_extensions.request ->
-  filename:string -> unit -> resolved

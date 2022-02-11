@@ -16,15 +16,17 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (** Config file parsing. See also module
     {! Ocsigen_extensions.​Configuration } *)
 
 (**/**)
 
-val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+val section : Lwt_log_core.section
+(** use Lwt_log.Section.set_level in order to debug *)
 
+val parse_size_tag : string -> string -> int64 option
 (** [parse_size_tag tag s] parses a size.
 
     The size can be either "infinity" or use SI or binary units, e.g.,
@@ -33,8 +35,8 @@ val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to
     In case of error, raises [Ocsigen_config.Config_file_error m]
     where [m] is an error message explaining that a size was expected
     in tag [<tag>]. *)
-val parse_size_tag : string -> string -> int64 option
 
+val first_pass : Xml.xml list -> unit
 (** Extracts (and stores via Ocsigen_config) the following information:
     {ul
     {- user to execute OcsigenServer (ex: www-data) }
@@ -47,11 +49,6 @@ val parse_size_tag : string -> string -> int64 option
     }
     To be called early by [Ocsigen_server].
 *)
-val first_pass : Xml.xml list -> unit
 
 val later_pass : Xml.xml list -> unit
-
-val parse_config :
-  ?file:string ->
-  unit ->
-  Xml.xml list list
+val parse_config : ?file:string -> unit -> Xml.xml list list

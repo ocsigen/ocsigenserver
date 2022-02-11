@@ -21,12 +21,10 @@ type t = Cohttp.Header.t
 val of_option : t option -> t
 
 module Name : sig
-
   type t
 
   val to_string : t -> string
   val of_string : string -> t
-
   val accept : t
   val accept_charset : t
   val accept_encoding : t
@@ -43,7 +41,7 @@ module Name : sig
   val cookie : t
   val date : t
   val etag : t
-  val expect: t
+  val expect : t
   val expires : t
   val host : t
   val if_match : t
@@ -72,46 +70,32 @@ module Name : sig
   val access_control_max_age : t
   val access_control_allow_methods : t
   val access_control_allow_headers : t
-
 end
 
 module Mime_type : sig
-
   type t = string option * string option
 
   val parse : string -> t
-
 end
 
 module Accept : sig
-
-  type t =
-    (Mime_type.t
-     * float option
-     * (string * string) list) list
+  type t = (Mime_type.t * float option * (string * string) list) list
 
   val parse : string list -> t
-
 end
 
 module Accept_encoding : sig
-
   type t = (string option * float option) list
 
   val parse : string list -> t
-
 end
 
 module Accept_language : sig
-
   type t = (string * float option) list
 
   val parse : string list -> t
-
 end
 
 module Content_type : sig
-
   val choose : Accept.t -> string -> string list -> string
-
 end

@@ -16,20 +16,14 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 exception Error of string
 
 let message = "ocsigen compiled without native dynlink support"
-
 let loadfile _ = failwith message
-
 let error_message _ = failwith message
-
 let init _ = ()
-
 let allow_unsafe_modules _ = ()
-
 let prohibit _ = ()
-
 let is_native = false

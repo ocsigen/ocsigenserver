@@ -16,13 +16,16 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (** Extending server commands *)
 
-
 exception Unknown_command
 
+val register_command_function
+  :  ?prefix:string
+  -> (string -> string list -> unit Lwt.t)
+  -> unit
 (** Use a prefix for all your commands when you want to create
     extension-specific commands.
     For example if the prefix is "myextension" and the commande "blah",
@@ -33,9 +36,12 @@ exception Unknown_command
     It must raise [ocsigen_extensions.Unknown_command] if it does
     not recognize the command.
 *)
-val register_command_function :
-  ?prefix:string -> (string -> string list -> unit Lwt.t) -> unit
 
 (**/**)
-val get_command_function :
-  unit -> (?prefix:string -> string -> string list -> unit Lwt.t)
+
+val get_command_function
+  :  unit
+  -> ?prefix:string
+  -> string
+  -> string list
+  -> unit Lwt.t
