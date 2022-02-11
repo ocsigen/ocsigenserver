@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
-val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+val section : Lwt_log_core.section
+(** use Lwt_log.Section.set_level in order to debug *)
 
 (** Module [Authbasic]: Basic HTTP Authentication. *)
 
@@ -35,7 +36,6 @@ type auth = string -> string -> bool Lwt.t
     and is meant to be extended with various authentication schemes. A
     very naive one (authentication with a single user/password, given
     in the configuration file) is provided. *)
-
 
 val register_basic_authentication_method : (Xml.xml -> auth) -> unit
 (** This function registers an authentication plugin: it adds a new
@@ -60,9 +60,7 @@ val register_basic_authentication_method : (Xml.xml -> auth) -> unit
     transparent to the plugin. *)
 
 val realm : string Ocsigen_server.Site.Config.key
-
 val auth : auth Ocsigen_server.Site.Config.key
-
 val extension : Ocsigen_server.Site.extension
 
 (**/**)

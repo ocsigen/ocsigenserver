@@ -14,36 +14,42 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (** Writing messages in the logs *)
 
-val access_sect : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+val access_sect : Lwt_log_core.section
+(** use Lwt_log.Section.set_level in order to debug *)
 
-(** Write a message in access.log *)
 val accesslog : string -> unit
+(** Write a message in access.log *)
 
-(** Write a message in errors.log *)
 val errlog : ?section:Lwt_log.section -> string -> unit
+(** Write a message in errors.log *)
 
-(** Write a message in warnings.log *)
 val warning : ?section:Lwt_log.section -> string -> unit
+(** Write a message in warnings.log *)
 
-(** Write a message in the console (if not called in silent mode) *)
 val console : (unit -> string) -> unit
+(** Write a message in the console (if not called in silent mode) *)
 
+val unexpected_exception : exn -> string -> unit
 (** Use that function for all impossible cases in exception handlers
     ([try ... with ... | e -> unexpected_exception ...] or [Lwt.catch ...]).
     A message will be written in [warnings.log].
     Put something in the string to help locating the problem (usually the name
     of the function where is has been called).
 *)
-val unexpected_exception : exn -> string -> unit
 
-(** Path to the error log file *)
 val error_log_path : unit -> string
+(** Path to the error log file *)
 
 (**/**)
 
-val open_files : ?user:string option -> ?group:string option -> unit -> unit Lwt.t
+val open_files
+  :  ?user:string option
+  -> ?group:string option
+  -> unit
+  -> unit Lwt.t
+
 val command_f : exn -> string -> string list -> unit Lwt.t

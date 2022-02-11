@@ -16,69 +16,61 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
-val section : Lwt_log_core.section (** use Lwt_log.Section.set_level in order to debug *)
+val section : Lwt_log_core.section
+(** use Lwt_log.Section.set_level in order to debug *)
 
+val reload : ?file:string -> unit -> unit
 (** Reload the configuration of the server. The optional parameter
     [?file] may be used to read the configuration from another
     file. *)
-val reload : ?file : string -> unit -> unit
 
+val start : ?config:Xml.xml list list -> unit -> unit
 (** Start the server. Never returns. *)
-val start : ?config : Xml.xml list list -> unit -> unit
 
 module type Config_nested = sig
-
   type t
-
   type 'a key
 
   val key : ?preprocess:('a -> 'a) -> unit -> 'a key
-
   val find : t -> 'a key -> 'a option
-
   val set : t -> 'a key -> 'a -> unit
-
   val unset : t -> 'a key -> unit
 
-  type accessor = { accessor : 'a . 'a key -> 'a option }
-
+  type accessor = {accessor : 'a. 'a key -> 'a option}
 end
 
 module Site : sig
-
   type t
 
-  val create :
-    ?config_info:Ocsigen_extensions.config_info ->
-    ?id:
-      [ `Attach of t * Ocsigen_lib.Url.path
-      | `Host of string * int option ] ->
-    ?charset:Ocsigen_charset_mime.charset ->
-    ?auto_load_extensions:bool ->
-    unit -> t
+  val create
+    :  ?config_info:Ocsigen_extensions.config_info
+    -> ?id:[`Attach of t * Ocsigen_lib.Url.path | `Host of string * int option]
+    -> ?charset:Ocsigen_charset_mime.charset
+    -> ?auto_load_extensions:bool
+    -> unit
+    -> t
 
   module Config : Config_nested with type t := t
 
   type extension
 
-  val create_extension :
-    (Config.accessor -> Ocsigen_extensions.extension) -> extension
+  val create_extension
+    :  (Config.accessor -> Ocsigen_extensions.extension)
+    -> extension
 
-  val register :
-    t -> extension -> unit
+  val register : t -> extension -> unit
 
   (**/**)
 
+  val create_extension_intrusive
+    :  (Ocsigen_extensions.virtual_hosts
+        -> Ocsigen_extensions.config_info
+        -> Ocsigen_lib.Url.path
+        -> Config.accessor
+        -> Ocsigen_extensions.extension)
+    -> extension
   (** Lower-level interface for creating extensions that gives the
       extension more info. To be avoided. Currently used by Eliom. *)
-  val create_extension_intrusive :
-    (Ocsigen_extensions.virtual_hosts ->
-     Ocsigen_extensions.config_info ->
-     Ocsigen_lib.Url.path ->
-     Config.accessor ->
-     Ocsigen_extensions.extension) ->
-    extension
-
 end

@@ -14,38 +14,35 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 (**
    Polymorphic tables (using Map)
    @author Vincent Balat
    @author Jérôme Vouillon
 *)
 
-
-
 (** Warning: this module is not thread safe! *)
 
-(** The type of key for a piece of data of type 'a *)
 type 'a key
+(** The type of key for a piece of data of type 'a *)
 
-(** The type of tables *)
 type t
+(** The type of tables *)
 
-(** creates a new table *)
 val create : unit -> t
+(** creates a new table *)
 
-(** create a new key for each data you want to save *)
 val make_key : unit -> 'a key
+(** create a new key for each data you want to save *)
 
-(** [set t k v] associates [v] to [k] in [t] *)
 val set : table:t -> key:'a key -> value:'a -> unit
+(** [set t k v] associates [v] to [k] in [t] *)
 
-(** [get t k] returns the current binding of [k] in [t] or raises [Not_found] *)
 val get : table:t -> key:'a key -> 'a
+(** [get t k] returns the current binding of [k] in [t] or raises [Not_found] *)
 
-(** [remove t k] remove the current binding of [k] in [t] if it exists *)
 val remove : table:t -> key:'a key -> unit
+(** [remove t k] remove the current binding of [k] in [t] if it exists *)
 
-(** [clear t] remove all data from t *)
 val clear : table:t -> unit
-
+(** [clear t] remove all data from t *)
