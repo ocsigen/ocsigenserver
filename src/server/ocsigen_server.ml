@@ -326,6 +326,18 @@ let start ?config () =
         | l, Some (crt, key) -> List.map (fun (a, p) -> a, p, (crt, key)) l
         | _ -> []
       in
+      Lwt_main.run
+      @@ Lwt.join
+           (List.map
+              (fun (address, port) ->
+                Ocsigen_cohttp.service ~address ~port
+                  ~connector:extensions_connector ())
+              connection
+           @ (List.map (fun (address, port, (crt, key)) ->
+                  Ocsigen_cohttp.service
+                    ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+                    ~address ~port ~connector:extensions_connector ()))
+               ssl_connection);
       let current_uid = Unix.getuid () in
       let gid =
         match group with
@@ -438,18 +450,6 @@ let start ?config () =
         >>= f
       in
       ignore (f ());
-      Lwt_main.run
-      @@ Lwt.join
-           (List.map
-              (fun (address, port) ->
-                Ocsigen_cohttp.service ~address ~port
-                  ~connector:extensions_connector ())
-              connection
-           @ (List.map (fun (address, port, (crt, key)) ->
-                  Ocsigen_cohttp.service
-                    ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-                    ~address ~port ~connector:extensions_connector ()))
-               ssl_connection)
       (*
          Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
 
