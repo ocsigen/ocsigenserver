@@ -358,14 +358,21 @@ let start ?config () =
          with e ->
            Lwt_log.ign_error ~section ~exn:e "Cannot create the command pipe"));
       (* I change the user for the process *)
-      (try
-         (if current_uid = 0
-         then
-           match user with None -> () | Some user -> Unix.initgroups user gid);
-         Unix.setgid gid; Unix.setuid uid
-       with (Unix.Unix_error _ | Failure _) as e ->
-         Lwt_log.ign_error ~section "Error: Wrong user or group";
-         raise e);
+      Lwt.async (fun () ->
+          Lwt_unix.sleep 2. >>= fun () ->
+          (*HACK! This is to wait for the server to be initialized by cohttp.
+                  How to do that in a cleaner way? *)
+          (try
+             (if current_uid = 0
+             then
+               match user with
+               | None -> ()
+               | Some user -> Unix.initgroups user gid);
+             Unix.setgid gid; Unix.setuid uid
+           with (Unix.Unix_error _ | Failure _) as e ->
+             Lwt_log.ign_error ~section "Error: Wrong user or group";
+             raise e);
+          Lwt.return ());
       let minthreads = Ocsigen_config.get_minthreads ()
       and maxthreads = Ocsigen_config.get_maxthreads () in
       if minthreads > maxthreads
@@ -445,10 +452,11 @@ let start ?config () =
                 Ocsigen_cohttp.service ~address ~port
                   ~connector:extensions_connector ())
               connection
-           @ (List.map (fun (address, port, (crt, key)) ->
-                  Ocsigen_cohttp.service
-                    ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-                    ~address ~port ~connector:extensions_connector ()))
+           @ List.map
+               (fun (address, port, (crt, key)) ->
+                 Ocsigen_cohttp.service
+                   ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+                   ~address ~port ~connector:extensions_connector ())
                ssl_connection)
       (*
          Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
