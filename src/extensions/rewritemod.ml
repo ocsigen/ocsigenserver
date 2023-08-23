@@ -20,6 +20,8 @@
 
 (* Rewrite URLs in the configuration file *)
 
+module Pcre = Re.Pcre
+
 (* IMPORTANT WARNING
 
    It is really basic for now:

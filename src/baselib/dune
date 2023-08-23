@@ -18,7 +18,7 @@
     ocsigen_loader
     ocsigen_stream)
   (libraries
-     str findlib lwt_log lwt.unix cryptokit pcre ocsigen_lib_base
+     str findlib lwt_log lwt.unix cryptokit re ocsigen_lib_base
      (select dynlink_wrapper.ml from
        (dynlink -> dynlink_wrapper.natdynlink.ml)
        (_ -> dynlink_wrapper.nonatdynlink.ml))))

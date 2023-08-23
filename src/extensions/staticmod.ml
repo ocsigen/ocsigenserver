@@ -19,6 +19,7 @@
  *)
 
 open Lwt.Infix
+module Pcre = Re.Pcre
 
 let name = "staticmod"
 let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
@@ -233,7 +234,7 @@ let parse_config userconf _ : Ocsigen_extensions.parse_config_aux =
               ; Configuration.attribute ~name:"regexp" (fun s ->
                     let s =
                       try Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                      with Pcre.Error (Pcre.BadPattern _) ->
+                      with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
                         badconfig
                           "Bad regexp \"%s\" in <static regexp=\"...\" />" s
                     in
@@ -241,7 +242,7 @@ let parse_config userconf _ : Ocsigen_extensions.parse_config_aux =
               ; Configuration.attribute ~name:"code" (fun s ->
                     let c =
                       try Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                      with Pcre.Error (Pcre.BadPattern _) ->
+                      with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
                         badconfig "Bad regexp \"%s\" in <static code=\"...\" />"
                           s
                     in

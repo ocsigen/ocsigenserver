@@ -20,6 +20,8 @@
 
 (* Define page redirections in the configuration file *)
 
+module Pcre = Re.Pcre
+
 let section = Lwt_log.Section.make "ocsigen:ext:redirectmod"
 
 (* The table of redirections for each virtual server *)

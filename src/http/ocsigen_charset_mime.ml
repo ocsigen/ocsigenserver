@@ -31,7 +31,7 @@ let section = Lwt_log.Section.make "ocsigen:mimetype"
 type 'a assoc_item =
   | Extension of extension * 'a
   | File of filename * 'a
-  | Regexp of Pcre.regexp * 'a
+  | Regexp of Re.Pcre.regexp * 'a
   | Map of 'a MapString.t
 
 type 'a assoc = {assoc_list : 'a assoc_item list; assoc_default : 'a}

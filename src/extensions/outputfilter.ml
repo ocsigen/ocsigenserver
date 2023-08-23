@@ -21,7 +21,7 @@
 (* This module enables rewritting the server output *)
 
 type header_filter =
-  [ `Rewrite of Ocsigen_header.Name.t * Pcre.regexp * string
+  [ `Rewrite of Ocsigen_header.Name.t * Re.Pcre.regexp * string
   | `Add of Ocsigen_header.Name.t * string * bool option ]
 
 let gen filter = function

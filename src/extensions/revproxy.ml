@@ -23,6 +23,7 @@
     The reverse proxy is still experimental. *)
 
 open Lwt.Infix
+module Pcre = Re.Pcre
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 

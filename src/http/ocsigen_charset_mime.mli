@@ -55,7 +55,7 @@ val update_charset_file : charset_assoc -> filename -> charset -> charset_assoc
 
 val update_charset_regexp
   :  charset_assoc
-  -> Pcre.regexp
+  -> Re.Pcre.regexp
   -> charset
   -> charset_assoc
 
@@ -81,4 +81,4 @@ val default_mime : mime_assoc -> mime_type
 val set_default_mime : mime_assoc -> mime_type -> mime_assoc
 val update_mime_ext : mime_assoc -> extension -> mime_type -> mime_assoc
 val update_mime_file : mime_assoc -> filename -> mime_type -> mime_assoc
-val update_mime_regexp : mime_assoc -> Pcre.regexp -> mime_type -> mime_assoc
+val update_mime_regexp : mime_assoc -> Re.Pcre.regexp -> mime_type -> mime_assoc

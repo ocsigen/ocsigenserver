@@ -147,7 +147,7 @@ let add_ocamlpath p =
 (* Using Findlib to locate files *)
 
 let findfiles =
-  let cmx = Pcre.regexp ~flags:[`MULTILINE; `CASELESS] "\\.cmx($| |a)" in
+  let cmx = Re.Pcre.regexp ~flags:[`MULTILINE; `CASELESS] "\\.cmx($| |a)" in
   fun package ->
     try
       let preds =

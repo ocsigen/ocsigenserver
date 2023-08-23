@@ -6,6 +6,7 @@
 
 open Lwt.Infix
 module S = Ocsigen_lib.Netstring_pcre
+module Pcre = Re.Pcre
 
 let section = Lwt_log.Section.make "ocsigen:server:multipart"
 

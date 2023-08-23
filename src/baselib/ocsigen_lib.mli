@@ -95,13 +95,15 @@ end
 (* This exists to facilitate transition away from Ocamlnet. Do not use
    for new code! *)
 module Netstring_pcre : sig
+  open Re
+
   val regexp : string -> Pcre.regexp
-  val matched_group : Pcre.substrings -> int -> string -> string
-  val matched_string : Pcre.substrings -> string -> string
+  val matched_group : Pcre.groups -> int -> string -> string
+  val matched_string : Pcre.groups -> string -> string
   val global_replace : Pcre.regexp -> string -> string -> string
-  val search_forward : Pcre.regexp -> string -> int -> int * Pcre.substrings
+  val search_forward : Pcre.regexp -> string -> int -> int * Pcre.groups
   val split : Pcre.regexp -> string -> string list
-  val string_match : Pcre.regexp -> string -> int -> Pcre.substrings option
+  val string_match : Pcre.regexp -> string -> int -> Pcre.groups option
 end
 
 module Date : sig
