@@ -180,7 +180,7 @@ let substream delim s =
   if ldelim = 0
   then Lwt.fail (Stream_error "Empty delimiter")
   else
-    let rdelim = Pcre.(regexp (quote delim)) in
+    let rdelim = Re.Pcre.(regexp (quote delim)) in
     let rec aux = function
       | Finished _ -> Lwt.fail Stream_too_small
       | Cont (s, f) as stre -> (

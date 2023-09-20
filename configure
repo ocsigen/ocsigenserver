@@ -401,7 +401,7 @@ check_library lwt_react   "See: http://ocsigen.org/lwt"
 check_library lwt_ssl   "See: http://ocsigen.org/lwt"
 check_library lwt_log   "See: http://ocsigen.org/lwt"
 
-check_library pcre "See: http://ocaml.info/home/ocaml_sources.html"
+check_library re "See: https://github.com/ocaml/ocaml-re/"
 check_library cryptokit "See: http://pauillac.inria.fr/~xleroy/software.html#cryptokit"
 
 check_library xml-light "See: https://github.com/ncannasse/xml-light"

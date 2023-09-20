@@ -54,10 +54,10 @@ depends: [
   "lwt_ssl"
   "lwt_react"
   "lwt_log"
-  "pcre"
+  "re" {>= "1.11.0"}
   "cryptokit"
   "ipaddr" {>= "2.1"}
-  "cohttp-lwt-unix" {< "5.0.0"}
+  "cohttp-lwt-unix" {>= "5.0.0"}
   "conduit-lwt-unix" {>= "2.0.0"}
   "hmap"
   "xml-light"

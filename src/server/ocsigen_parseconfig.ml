@@ -207,7 +207,7 @@ let parse_host_field =
               in
               let split_host = function
                 | Str.Delim _ -> ".*"
-                | Str.Text t -> Pcre.quote t
+                | Str.Text t -> Re.Pcre.quote t
               in
               ( host
               , Netstring_pcre.regexp

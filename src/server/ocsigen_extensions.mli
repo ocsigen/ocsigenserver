@@ -48,7 +48,7 @@ val badconfig : ('a, unit, string, 'b) format4 -> 'a
 
 (*****************************************************************************)
 
-type virtual_hosts = (string * Pcre.regexp * int option) list
+type virtual_hosts = (string * Re.Pcre.regexp * int option) list
 (** Type of the result of parsing the field [hostfiler] in the configuration
     file. Inside the list, the first argument is the host itself
     (which is a glob-like pattern that can contains [*]), a regexp
@@ -76,7 +76,7 @@ val serve_everything : do_not_serve
 
 exception IncorrectRegexpes of do_not_serve
 
-val do_not_serve_to_regexp : do_not_serve -> Pcre.regexp
+val do_not_serve_to_regexp : do_not_serve -> Re.Pcre.regexp
 (** Compile a do_not_serve structure into a regexp. Raises
     [IncorrectRegexpes] if the compilation fails. The result is
     memoized for subsequent calls with the same argument *)
@@ -380,14 +380,14 @@ type ud_string
 
 val parse_user_dir : string -> ud_string
 
-val replace_user_dir : Pcre.regexp -> ud_string -> string -> string
+val replace_user_dir : Re.Pcre.regexp -> ud_string -> string -> string
 (** raises [Not_found] is the directory does not exist *)
 
 exception Not_concerned
 (** {3 Regular expressions for redirections} *)
 
 val find_redirection
-  :  Pcre.regexp
+  :  Re.Pcre.regexp
   -> bool
   -> string
   -> Ocsigen_request.t

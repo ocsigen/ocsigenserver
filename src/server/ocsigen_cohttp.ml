@@ -12,23 +12,12 @@ exception
     @param request Cohttp request *)
 
 let _print_request fmt request =
-  let print_list print_data out_ch lst =
-    let rec aux = function
-      | [] -> ()
-      | [x] -> print_data out_ch x
-      | x :: r -> print_data out_ch x; aux r
-    in
-    aux lst
-  in
   Format.fprintf fmt "%s [%s/%s]:\n"
     (Uri.to_string (Cohttp.Request.uri request))
     Cohttp.(Code.string_of_version (Request.version request))
     Cohttp.(Code.string_of_method (Request.meth request));
   Cohttp.Header.iter
-    (fun key values ->
-      print_list
-        (fun fmt value -> Format.fprintf fmt "\t%s = %s\n" key value)
-        fmt values)
+    (fun key value -> Format.fprintf fmt "\t%s = %s\n" key value)
     (Cohttp.Request.headers request)
 
 let connections = Hashtbl.create 256

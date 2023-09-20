@@ -100,35 +100,35 @@ let make_cryptographic_safe_string =
 *)
 
 module Netstring_pcre = struct
+  module Pcre = Re.Pcre
+
   let regexp s = Pcre.regexp ~flags:[`MULTILINE] s
   let templ_re = Pcre.regexp "(?:\\\\\\d)|[\\$\\\\]"
 
-  let tr_templ s =
-    (* Convert \n to $n etc. *)
-    (* Unfortunately we cannot just replace \ by $. *)
+  let tr_templ s g =
+    (* Instantiate backreferences in s based on match g *)
+    let b = Buffer.create (String.length s) in
     let rec tr l =
       match l with
-      | Pcre.Delim "$" :: l' -> "$$" :: tr l'
-      | Pcre.Delim "\\" :: Pcre.Delim "$" :: l' -> "$$" :: tr l'
-      | Pcre.Delim "\\" :: Pcre.Delim s :: l' -> s :: tr l'
-      | Pcre.Delim "\\" :: Pcre.Text s :: l' -> s :: tr l'
+      | Pcre.Delim "$" :: l' -> Buffer.add_char b '$'; tr l'
+      | Pcre.Delim "\\" :: Pcre.Delim s :: l' -> Buffer.add_string b s; tr l'
+      | Pcre.Delim "\\" :: Pcre.Text s :: l' -> Buffer.add_string b s; tr l'
       | [Pcre.Delim "\\"] -> failwith "trailing backslash"
       | Pcre.Delim d :: l' ->
           assert (d.[0] = '\\');
           let n = Char.code d.[1] - Char.code '0' in
-          if n = 0
-          then "$&" :: tr l'
-          else ("$" ^ string_of_int n ^ "$!") :: tr l'
-      | Pcre.Text t :: l' -> t :: tr l'
+          Buffer.add_string b (Re.Group.get g n);
+          tr l'
+      | Pcre.Text t :: l' -> Buffer.add_string b t; tr l'
       | Pcre.Group (_, _) :: _ -> assert false
       | Pcre.NoGroup :: _ -> assert false
-      | [] -> []
+      | [] -> ()
     in
     let l = Pcre.full_split ~rex:templ_re ~max:(-1) s in
-    String.concat "" (tr l)
+    tr l; Buffer.contents b
 
   let matched_group result n _ =
-    if n < 0 || n >= Pcre.num_of_subs result then raise Not_found;
+    if n < 0 || n >= Re.Group.nb_groups result then raise Not_found;
     ignore (Pcre.get_substring_ofs result n);
     Pcre.get_substring result n
 
@@ -136,11 +136,8 @@ module Netstring_pcre = struct
     ignore (Pcre.get_substring_ofs result 0);
     Pcre.get_substring result 0
 
-  let global_replace pat templ s =
-    Pcre.replace ~rex:pat ~itempl:(Pcre.subst (tr_templ templ)) s
-
-  let global_substitute pat subst s =
-    Pcre.substitute_substrings ~rex:pat ~subst:(fun r -> subst r s) s
+  let global_replace pat templ s = Re.replace pat ~f:(tr_templ templ) s
+  let global_substitute pat subst s = Re.replace pat ~f:(fun r -> subst r s) s
 
   let search_forward pat s pos =
     let result = Pcre.exec ~rex:pat ~pos s in
@@ -149,14 +146,6 @@ module Netstring_pcre = struct
   let string_after s n = String.sub s n (String.length s - n)
 
   let bounded_split expr text num =
-    let start =
-      try
-        let start_substrs = Pcre.exec ~rex:expr ~flags:[`ANCHORED] text in
-        (* or Not_found *)
-        let _, match_end = Pcre.get_substring_ofs start_substrs 0 in
-        match_end
-      with Not_found -> 0
-    in
     let rec split start n =
       if start >= String.length text
       then []
@@ -167,21 +156,24 @@ module Netstring_pcre = struct
           let next_substrs = Pcre.exec ~rex:expr ~pos:start text in
           (* or Not_found *)
           let pos, match_end = Pcre.get_substring_ofs next_substrs 0 in
-          String.sub text start (pos - start) :: split match_end (n - 1)
+          if pos = 0
+          then split match_end n (* a leading match is ignored *)
+          else String.sub text start (pos - start) :: split match_end (n - 1)
         with Not_found -> [string_after text start]
     in
-    split start num
+    split 0 num
 
   let split sep s = bounded_split sep s 0
 
   let string_match pat s pos =
     try
-      let result = Pcre.exec ~rex:pat ~flags:[`ANCHORED] ~pos s in
-      Some result
+      let result = Pcre.exec ~rex:pat ~pos s in
+      if Re.Group.start result 0 = pos then Some result else None
     with Not_found -> None
 end
 
 module Url = struct
+  module Pcre = Re.Pcre
   include Url_base
 
   (* Taken from Neturl version 1.1.2 *)

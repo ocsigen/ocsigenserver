@@ -21,6 +21,7 @@
 let section = Lwt_log.Section.make "ocsigen:ext"
 
 open Lwt.Infix
+module Pcre = Re.Pcre
 module Url = Ocsigen_lib.Url
 include Ocsigen_command
 
