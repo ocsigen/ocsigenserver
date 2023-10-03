@@ -136,7 +136,14 @@ let gen ~usermode ?cache dir = function
           | Ocsigen_local_files.RDir _ ->
               failwith "FIXME: staticmod dirs not implemented"
         in
-        Cohttp_lwt_unix.Server.respond_file ~fname () >>= fun answer ->
+        Cohttp_lwt_unix.Server.respond_file
+          ~headers:
+            (Cohttp.Header.of_list
+               [ ( "content-type"
+                 , Ocsigen_charset_mime.find_mime fname
+                     request.request_config.mime_assoc ) ])
+          ~fname ()
+        >>= fun answer ->
         let answer = Ocsigen_response.of_cohttp answer in
         let answer =
           if not status_filter
