@@ -80,6 +80,7 @@ set_defaults () {
     bindir=""
     logdir=""
     libdir=""
+    libdir_set=0
     mandir=""
     docdir=""
     sysconfdir="/etc/ocsigenserver"
@@ -282,6 +283,7 @@ while [ "$#" -gt 0 ]; do
                         ;;
                 --libdir)
                         libdir="$2"
+                        libdir_set=1
                         shift
                         shift
                         ;;
@@ -485,31 +487,13 @@ CC        := gcc
 # optional
 RLWRAP    := $rlwrap
 
-
-### Options ###
-
-# User who will run Ocsigen server (not root) (eg, for debian, www-data)
-# (This user must exist on your system)
-OCSIGENUSER := $ocsigen_user
-
-# group who will run Ocsigen server (not root) (eg, for debian, www-data)
-# (This group must exist)
-OCSIGENGROUP := $ocsigen_group
-
-
 ### Paths ###
 
 # Temporary root directory to install the package (usually always "" but for package makers)
 TEMPROOT := $temproot
 
-# The directory for ocsigen server (binary):
-BINDIR := $root$bindir
-
 # The directory for ocsigen manpage:
 MANDIR := $root$mandir
-
-# Where to install the libraries
-LIBDIR := $libdir
 
 # ocsigen's logs:
 LOGDIR := $root$logdir
@@ -536,6 +520,22 @@ COMMANDPIPE := $root$commandpipe
 SRC := $full_pwd
 
 include \$(SRC)/Makefile.options
+_EOF_
+
+echo "Writing config options"
+cat <<_EOF_ > $my_pwd/src/files/ocsigenserver.conf/options.ml
+let src = "$full_pwd"
+let port = 80
+let bindir = "$root$bindir"
+let libdir = "$libdir"
+let libdir_set = $libdir_set
+let logdir = "$root$logdir"
+let configdir = "$root$sysconfdir"
+let staticpagesdir = "$root$staticpagesdir"
+let datadir = "$root$datadir"
+let uploaddir = "$root$uploaddir"
+let commandpipe = "$root$commandpipe"
+let mimefile = "$root$sysconfdir/mime.types"
 _EOF_
 
 ######################################################################

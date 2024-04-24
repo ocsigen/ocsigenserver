@@ -8,37 +8,12 @@ all: confs
 confs: ../ocsigenserver.conf.sample ../local/etc/ocsigenserver.conf
 	${MAKE} -C baselib confs
 
-../ocsigenserver.conf.sample: files/ocsigenserver.conf.in ../Makefile.config Makefile
-	cat $< \
-	  | sed s%_LOGDIR_%$(LOGDIR)%g \
-	  | sed s%_DATADIR_%$(DATADIR)%g \
-	  | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
-	  | sed s%_MIMEFILE_%$(CONFIGDIR)/mime.types%g \
-	  | sed s%_METADIR_%$(LIBDIR)%g \
-	  | sed s%_LIBDIR_%$(LIBDIR)%g \
-	  | sed s%_EXTDIR_%$(LIBDIR)/ocsigenserver/extensions%g \
-	  | sed s%_CONFIGDIR_%$(CONFIGDIR)%g \
-	  | sed s%_STATICPAGESDIR_%$(STATICPAGESDIR)%g \
-	  | sed s%_EXTPACKAGENAME_%ocsigenserver.ext%g \
-	  > $@
+../ocsigenserver.conf.sample: files/ocsigenserver.conf/options.ml
+	dune exec -- files/ocsigenserver.conf/gen.exe > "$@"
 
-../local/etc/ocsigenserver.conf: files/ocsigenserver.conf.in ../Makefile.config Makefile
+../local/etc/ocsigenserver.conf: files/ocsigenserver.conf/options.ml
 	mkdir -p ../local/etc ../local/var/log ../local/var/run
-	cat $< \
-	  | sed s%80\</port\>%8080\</port\>%g \
-	  | sed s%_LOGDIR_%$(SRC)/local/var/log%g \
-	  | sed s%_DATADIR_%$(SRC)/local/var/lib%g \
-	  | sed s%_COMMANDPIPE_%$(SRC)/local/var/run/ocsigenserver_command%g \
-	  | sed s%_MIMEFILE_%$(SRC)/src/files/mime.types%g \
-	  | sed s%_METADIR_%${LIBDIR}\"/\>\<findlib\ path=\"$(SRC)/src/files/\"/\>\<findlib\ path=\"$(SRC)/src/extensions/files/%g \
-	  | sed s%_CONFIGDIR_%$(SRC)/local/etc/ocsigenserver%g \
-	  | sed s%_STATICPAGESDIR_%$(SRC)/local/var/www%g \
-	  | sed s%_EXTPACKAGENAME_%ocsigenserver.ext%g \
-	  | sed s%\<\!--\ \<commandpipe%\<commandpipe%g \
-	  | sed s%\</commandpipe\>\ --\>%\</commandpipe\>%g \
-	  | sed s%\<\!--\ \<mimefile%\<mimefile%g \
-	  | sed s%\</mimefile\>\ --\>%\</mimefile\>%g \
-	  > $@
+	dune exec -- files/ocsigenserver.conf/gen.exe local > "$@"
 
 ###
 
