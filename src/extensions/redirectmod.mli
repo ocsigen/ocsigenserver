@@ -3,8 +3,8 @@ val section : Lwt_log_core.section
 
 type redirection
 
-val create_redirection
-  :  ?full:[`Maybe | `No | `Yes]
+val create_redirection :
+   ?full:[`Maybe | `No | `Yes]
   -> ?temporary:bool
   -> regexp:string
   -> string

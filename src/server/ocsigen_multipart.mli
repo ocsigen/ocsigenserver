@@ -1,8 +1,8 @@
 val section : Lwt_log_core.section
 (** use Lwt_log.Section.set_level in order to debug *)
 
-val scan_multipart_body_from_stream
-  :  ?max_size:Int64.t
+val scan_multipart_body_from_stream :
+   ?max_size:Int64.t
   -> boundary:string
   -> create:((string * string) list -> 'a)
   -> add:('a -> string -> unit Lwt.t)
@@ -20,8 +20,8 @@ type file_info =
 
 type post_data = (string * string) list * (string * file_info) list
 
-val post_params
-  :  content_type:content_type
+val post_params :
+   content_type:content_type
   -> Cohttp_lwt.Body.t
   -> (string option -> Int64.t option -> post_data Lwt.t) option
 

@@ -189,7 +189,7 @@ let compress deflate stream : string Ocsigen_stream.t =
   then Ocsigen_stream.make ~finalize new_stream
   else
     Ocsigen_stream.make ~finalize (fun () ->
-        Ocsigen_stream.cont gzip_header new_stream)
+      Ocsigen_stream.cont gzip_header new_stream)
 
 (* We implement Content-Encoding, not Transfer-Encoding *)
 type encoding = Deflate | Gzip | Id | Star | Not_acceptable
@@ -382,6 +382,6 @@ let mode = Ocsigen_server.Site.Config.key ()
 let extension =
   Ocsigen_server.Site.create_extension
     (fun {Ocsigen_server.Site.Config.accessor} ->
-      match accessor mode with
-      | Some mode -> filter mode
-      | None -> failwith "Deflatemod.mode not set")
+       match accessor mode with
+       | Some mode -> filter mode
+       | None -> failwith "Deflatemod.mode not set")

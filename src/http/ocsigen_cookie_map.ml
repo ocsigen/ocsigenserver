@@ -17,10 +17,10 @@
  *)
 
 module Map_path = Map.Make (struct
-  type t = string list
+    type t = string list
 
-  let compare = compare
-end)
+    let compare = compare
+  end)
 
 module Map_inner = Map.Make (String)
 

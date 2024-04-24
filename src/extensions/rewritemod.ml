@@ -104,9 +104,9 @@ let parse_config element =
               ; Configuration.attribute ~name:"url" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"fullrewrite" (fun s ->
-                    fullrewrite := s = "fullrewrite" || s = "true")
+                  fullrewrite := s = "fullrewrite" || s = "true")
               ; Configuration.attribute ~name:"continue" (fun s ->
-                    continue := s = "continue" || s = "true") ]
+                  continue := s = "continue" || s = "true") ]
             () ]
       element);
   match !dest with

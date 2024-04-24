@@ -33,8 +33,8 @@ module Ip_address = struct
     in
     let options =
       [ (if v6
-        then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6
-        else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET) ]
+         then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6
+         else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET) ]
     in
     Lwt.bind (Lwt_unix.getaddrinfo host "" options) aux
 
@@ -181,7 +181,7 @@ module Url = struct
 
   let fixup_url_string1 =
     Netstring_pcre.global_substitute problem_re1 (fun m s ->
-        Printf.sprintf "%%%02x" (Char.code s.[fst (Pcre.get_substring_ofs m 0)]))
+      Printf.sprintf "%%%02x" (Char.code s.[fst (Pcre.get_substring_ofs m 0)]))
 
   (* I add this fixup to handle %uxxxx sent by browsers.
      Translated to %xx%xx *)
@@ -191,11 +191,11 @@ module Url = struct
     fixup_url_string1
       (Netstring_pcre.global_substitute problem_re2
          (fun m s ->
-           String.concat ""
-             [ "%"
-             ; Netstring_pcre.matched_group m 1 s
-             ; "%"
-             ; Netstring_pcre.matched_group m 2 s ])
+            String.concat ""
+              [ "%"
+              ; Netstring_pcre.matched_group m 1 s
+              ; "%"
+              ; Netstring_pcre.matched_group m 2 s ])
          s)
 
   (*VVV This is in Netencoding but we have a problem with ~
@@ -296,19 +296,19 @@ module Url = struct
     let l = String.length s1 in
     Netstring_pcre.global_substitute url_decoding_re
       (fun r _ ->
-        match Netstring_pcre.matched_string r s1 with
-        | "+" -> if plus then " " else "+"
-        | _ -> (
-            let i = fst (Pcre.get_substring_ofs r 0) in
-            (* Assertion: s1.[i] = '%' *)
-            if i + 2 >= l then failwith "decode";
-            let c1 = s1.[i + 1] in
-            let c2 = s1.[i + 2] in
-            try
-              let k1 = of_hex1 c1 in
-              let k2 = of_hex1 c2 in
-              String.make 1 (Char.chr ((k1 lsl 4) lor k2))
-            with Not_found -> failwith "decode"))
+         match Netstring_pcre.matched_string r s1 with
+         | "+" -> if plus then " " else "+"
+         | _ -> (
+             let i = fst (Pcre.get_substring_ofs r 0) in
+             (* Assertion: s1.[i] = '%' *)
+             if i + 2 >= l then failwith "decode";
+             let c1 = s1.[i + 1] in
+             let c2 = s1.[i + 2] in
+             try
+               let k1 = of_hex1 c1 in
+               let k2 = of_hex1 c2 in
+               String.make 1 (Char.chr ((k1 lsl 4) lor k2))
+             with Not_found -> failwith "decode"))
       s1
 
   let make_encoded_parameters params =

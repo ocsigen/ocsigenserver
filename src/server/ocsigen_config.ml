@@ -60,9 +60,7 @@ let minthreads = ref 10
 let maxthreads = ref 30
 let max_number_of_connections = ref 350
 let silent_client_timeout = ref 30 (* without speaking during sending frame *)
-
 let silent_server_timeout = ref 30 (* without speaking during sending frame *)
-
 let filebuffersize = ref 8192
 let maxrequestbodysize = ref (Some (Int64.of_int 8000000))
 let maxrequestbodysizeinmemory = ref 8192

@@ -9,8 +9,8 @@ type file_info = Ocsigen_multipart.file_info =
 
 type post_data = (string * string) list * (string * file_info) list
 
-val make
-  :  ?forward_ip:string list
+val make :
+   ?forward_ip:string list
   -> ?sub_path:string
   -> ?original_full_path:string
   -> ?request_cache:Polytables.t
@@ -25,8 +25,8 @@ val make
   -> Cohttp.Request.t
   -> t
 
-val update
-  :  ?ssl:bool
+val update :
+   ?ssl:bool
   -> ?forward_ip:string list
   -> ?remote_ip:string
   -> ?sub_path:string
@@ -62,14 +62,14 @@ val header_multi : t -> Ocsigen_header.Name.t -> string list
 val add_header : t -> Ocsigen_header.Name.t -> string -> t
 val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
 
-val files
-  :  t
+val files :
+   t
   -> string option
   -> Int64.t option
   -> (string * file_info) list Lwt.t option
 
-val post_params
-  :  t
+val post_params :
+   t
   -> string option
   -> Int64.t option
   -> (string * string) list Lwt.t option

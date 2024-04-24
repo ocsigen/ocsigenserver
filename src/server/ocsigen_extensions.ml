@@ -133,7 +133,7 @@ type config_info =
   ; mime_assoc : Ocsigen_charset_mime.mime_assoc
   ; charset_assoc : Ocsigen_charset_mime.charset_assoc
   ; default_directory_index : string list
-        (** Default name to use as index file
+  (** Default name to use as index file
                                               when a directory is requested.
                                               Use [None] if no index should be
                                               tried. The various indexes are
@@ -144,11 +144,11 @@ type config_info =
                                               according to
                                               [list_directry_content] *)
   ; list_directory_content : bool
-        (** Should the list of files in a directory be
+  (** Should the list of files in a directory be
                                     displayed if there is no index in this
                                     directory ? *)
   ; follow_symlinks : [`No | `Owner_match | `Always]
-        (** Should symlinks be
+  (** Should symlinks be
                                                       followed when accessign a
                                                       local file? *)
   ; do_not_serve_404 : do_not_serve
@@ -187,7 +187,7 @@ exception Ocsigen_is_dir = Ocsigen_cohttp.Ocsigen_is_dir
 type answer =
   | Ext_do_nothing  (** I don't want to do anything *)
   | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
-      (** "OK stop! I will take the page.  You can start the following
+  (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
       soon as possible when it is sure it is safe to start next
@@ -197,25 +197,25 @@ type answer =
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
   | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
-      (** Found but do not try next extensions *)
+  (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
-      (** Page not found. Try next extension. The status is usually
+  (** Page not found. Try next extension. The status is usually
       `Not_found, but may be for example `Forbidden (403) if you want
       to try another extension afterwards. Same as Ext_continue_with
       but does not change the request. *)
   | Ext_stop_site of (Ocsigen_cookie_map.t * Cohttp.Code.status)
-      (** Error. Do not try next extension, but try next site. *)
+  (** Error. Do not try next extension, but try next site. *)
   | Ext_stop_host of (Ocsigen_cookie_map.t * Cohttp.Code.status)
-      (** Error.
+  (** Error.
       Do not try next extension,
       do not try next site,
       but try next host. *)
   | Ext_stop_all of (Ocsigen_cookie_map.t * Cohttp.Code.status)
-      (** Error. Do not try next extension,
+  (** Error. Do not try next extension,
       do not try next site,
       do not try next host. *)
   | Ext_continue_with of (request * Ocsigen_cookie_map.t * Cohttp.Code.status)
-      (** Used to modify the request before giving it to next extension.
+  (** Used to modify the request before giving it to next extension.
       The extension returns the request (possibly modified) and a set
       of cookies if it wants to set or cookies
       ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
@@ -225,7 +225,7 @@ type answer =
       usually equal to the one received from preceding extension (but
       you may want to modify it). *)
   | Ext_retry_with of request * Ocsigen_cookie_map.t
-      (** Used to retry all the extensions with a new request.  The
+  (** Used to retry all the extensions with a new request.  The
       extension returns the request (possibly modified) and a set of
       cookies if it wants to set or cookies
       ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
@@ -233,15 +233,15 @@ type answer =
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
   | Ext_sub_result of extension_composite
-      (** Used if your extension want to define option that may contain
+  (** Used if your extension want to define option that may contain
       other options from other extensions.  In that case, while
       parsing the configuration file, call the parsing function (of
       type [parse_fun]), that will return something of type
       [extension_composite]. *)
   | Ext_found_continue_with of (unit -> (Ocsigen_response.t * request) Lwt.t)
-      (** Same as [Ext_found] but may modify the request. *)
+  (** Same as [Ext_found] but may modify the request. *)
   | Ext_found_continue_with' of (Ocsigen_response.t * request)
-      (** Same as [Ext_found_continue_with] but does not allow to delay
+  (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it, but
       for output filters. *)
 
@@ -452,15 +452,15 @@ let site_ext ext_of_children charset path cookies_to_set = function
             (fun () path -> Url.string_of_url_path ~encode:true path)
             path
             (fun () oldri ->
-              Url.string_of_url_path ~encode:true
-                (Ocsigen_request.path oldri.request_info))
+               Url.string_of_url_path ~encode:true
+                 (Ocsigen_request.path oldri.request_info))
             oldri;
           Lwt.return (Ext_next e, cookies_to_set)
       | Some sub_path -> (
           Lwt_log.ign_info_f ~section "site found: url \"%a\" matches \"%a\"."
             (fun () oldri ->
-              Url.string_of_url_path ~encode:true
-                (Ocsigen_request.path oldri.request_info))
+               Url.string_of_url_path ~encode:true
+                 (Ocsigen_request.path oldri.request_info))
             oldri
             (fun () path -> Url.string_of_url_path ~encode:true path)
             path;
@@ -524,8 +524,11 @@ let _extension_void_fun_site : parse_config =
 
 let register, parse_config_item, get_init_exn_handler =
   let ref_fun_site = ref default_parse_config in
-  ( (fun ?fun_site ?end_init ?(exn_handler = raise) ?(respect_pipeline = false)
-         () ->
+  ( (fun ?fun_site
+      ?end_init
+      ?(exn_handler = raise)
+      ?(respect_pipeline = false)
+      () ->
       if respect_pipeline then Ocsigen_config.set_respect_pipeline ();
       (match fun_site with
       | None -> ()
@@ -563,10 +566,10 @@ let register ~name ?fun_site ?end_init ?init_fun ?exn_handler ?respect_pipeline
     ()
   =
   Ocsigen_loader.set_module_init_function name (fun () ->
-      (match init_fun with
-      | None -> default_parse_extension name (get_config ())
-      | Some f -> f (get_config ()));
-      register ?fun_site ?end_init ?exn_handler ?respect_pipeline ())
+    (match init_fun with
+    | None -> default_parse_extension name (get_config ())
+    | Some f -> f (get_config ()));
+    register ?fun_site ?end_init ?exn_handler ?respect_pipeline ())
 
 module Configuration = struct
   type attribute' =
@@ -587,8 +590,7 @@ module Configuration = struct
   and element = string * element'
 
   let element ~name ?(obligatory = false) ?(init = ignore) ?(elements = [])
-      ?(attributes = []) ?pcdata ?other_elements ?other_attributes ()
-      : element
+      ?(attributes = []) ?pcdata ?other_elements ?other_attributes () : element
     =
     ( name
     , { obligatory
@@ -605,10 +607,10 @@ module Configuration = struct
   let ignore_blank_pcdata ~in_tag str =
     String.iter
       (fun c ->
-        if not (List.mem c [' '; '\n'; '\r'; '\t'])
-        then
-          raise
-            (Error_in_user_config_file ("Non-blank PCDATA in tag " ^ in_tag)))
+         if not (List.mem c [' '; '\n'; '\r'; '\t'])
+         then
+           raise
+             (Error_in_user_config_file ("Non-blank PCDATA in tag " ^ in_tag)))
       str
 
   let refuse_pcdata ~in_tag _ =

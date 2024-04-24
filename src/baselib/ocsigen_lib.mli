@@ -23,11 +23,11 @@
 
 include
   module type of Ocsigen_lib_base
-    with type poly = Ocsigen_lib_base.poly
-     and type yesnomaybe = Ocsigen_lib_base.yesnomaybe
-     and type ('a, 'b) leftright = ('a, 'b) Ocsigen_lib_base.leftright
-     and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
-     and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
+  with type poly = Ocsigen_lib_base.poly
+   and type yesnomaybe = Ocsigen_lib_base.yesnomaybe
+   and type ('a, 'b) leftright = ('a, 'b) Ocsigen_lib_base.leftright
+   and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
+   and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
 
 val make_cryptographic_safe_string : unit -> string
 (** Generate an unique and cryptographically safe random string.
@@ -60,8 +60,8 @@ module Url : sig
   val make_encoded_parameters : (string * string) list -> string
   val string_of_url_path : encode:bool -> path -> uri
 
-  val parse
-    :  t
+  val parse :
+     t
     -> bool option
        * string option
        * int option

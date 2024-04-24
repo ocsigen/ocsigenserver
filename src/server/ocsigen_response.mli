@@ -1,20 +1,20 @@
 type t
 
-val make
-  :  ?body:Cohttp_lwt.Body.t
+val make :
+   ?body:Cohttp_lwt.Body.t
   -> ?cookies:Ocsigen_cookie_map.t
   -> Cohttp.Response.t
   -> t
 
-val update
-  :  ?response:Cohttp.Response.t
+val update :
+   ?response:Cohttp.Response.t
   -> ?body:Cohttp_lwt.Body.t
   -> ?cookies:Ocsigen_cookie_map.t
   -> t
   -> t
 
-val of_cohttp
-  :  ?cookies:Ocsigen_cookie_map.t
+val of_cohttp :
+   ?cookies:Ocsigen_cookie_map.t
   -> Cohttp.Response.t * Cohttp_lwt.Body.t
   -> t
 

@@ -30,8 +30,7 @@ let status {a_response = {Cohttp.Response.status; _}; _} =
 let set_status ({a_response; _} as a) status =
   { a with
     a_response =
-      { a_response with
-        Cohttp.Response.status = (status :> Cohttp.Code.status_code) } }
+      {a_response with Cohttp.Response.status :> Cohttp.Code.status_code} }
 
 let cookies {a_cookies; _} = a_cookies
 
@@ -80,7 +79,9 @@ let replace_headers ({a_response; _} as a) l =
   let headers =
     List.fold_left
       (fun headers (id, content) ->
-        Cohttp.Header.replace headers (Ocsigen_header.Name.to_string id) content)
+         Cohttp.Header.replace headers
+           (Ocsigen_header.Name.to_string id)
+           content)
       (Cohttp.Response.headers a_response)
       l
   in

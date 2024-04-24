@@ -158,7 +158,7 @@ let findfiles =
       let deps =
         List.filter
           (fun a ->
-            not @@ String.Set.mem a Ocsigen_config_static.builtin_packages)
+             not @@ String.Set.mem a Ocsigen_config_static.builtin_packages)
           (Findlib.package_deep_ancestors preds [package])
       in
       Lwt_log.ign_info_f ~section "Dependencies of %s: %s" package

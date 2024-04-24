@@ -45,101 +45,101 @@ let gen dir = function
     ->
       Lwt.catch
         (* Is it a redirection? *)
-          (fun () ->
-          Lwt_log.ign_info ~section "Is it a redirection?";
-          let dest =
-            let fi full =
-              Ocsigen_extensions.find_redirection dir.regexp full dir.dest
-                request_info
-            in
-            match dir.full_url with
-            | Ocsigen_lib.Yes -> fi true
-            | Ocsigen_lib.No -> fi false
-            | Ocsigen_lib.Maybe -> (
-              try fi false with Ocsigen_extensions.Not_concerned -> fi true)
-          in
-          let https, host, port, path =
-            try
-              (* FIXME: we do not seem to handle GET
+           (fun () ->
+           Lwt_log.ign_info ~section "Is it a redirection?";
+           let dest =
+             let fi full =
+               Ocsigen_extensions.find_redirection dir.regexp full dir.dest
+                 request_info
+             in
+             match dir.full_url with
+             | Ocsigen_lib.Yes -> fi true
+             | Ocsigen_lib.No -> fi false
+             | Ocsigen_lib.Maybe -> (
+               try fi false with Ocsigen_extensions.Not_concerned -> fi true)
+           in
+           let https, host, port, path =
+             try
+               (* FIXME: we do not seem to handle GET
                 parameters. Why? *)
-              match Ocsigen_lib.Url.parse dest with
-              | Some https, Some host, port, path, _, _, _ ->
-                  let port =
-                    match port with
-                    | None -> if https then 443 else 80
-                    | Some p -> p
-                  in
-                  https, host, port, path
-              | _ ->
-                  raise
-                    (Ocsigen_extensions.Error_in_config_file
-                       ("Revproxy : error in destination URL " ^ dest))
-              (*VVV catch only URL-related exceptions? *)
-            with e ->
-              raise
-                (Ocsigen_extensions.Error_in_config_file
-                   ("Revproxy : error in destination URL " ^ dest ^ " - "
-                  ^ Printexc.to_string e))
-          in
-          Lwt_log.ign_info_f ~section "YES! Redirection to http%s://%s:%d/%s"
-            (if https then "s" else "")
-            host port path;
-          Ocsigen_lib.Ip_address.get_inet_addr host >>= fun _inet_addr ->
-          (* It is now safe to start processing next request.
+               match Ocsigen_lib.Url.parse dest with
+               | Some https, Some host, port, path, _, _, _ ->
+                   let port =
+                     match port with
+                     | None -> if https then 443 else 80
+                     | Some p -> p
+                   in
+                   https, host, port, path
+               | _ ->
+                   raise
+                     (Ocsigen_extensions.Error_in_config_file
+                        ("Revproxy : error in destination URL " ^ dest))
+               (*VVV catch only URL-related exceptions? *)
+             with e ->
+               raise
+                 (Ocsigen_extensions.Error_in_config_file
+                    ("Revproxy : error in destination URL " ^ dest ^ " - "
+                   ^ Printexc.to_string e))
+           in
+           Lwt_log.ign_info_f ~section "YES! Redirection to http%s://%s:%d/%s"
+             (if https then "s" else "")
+             host port path;
+           Ocsigen_lib.Ip_address.get_inet_addr host >>= fun _inet_addr ->
+           (* It is now safe to start processing next request.
 
             We are sure that the request won't be taken in disorder,
             so we return. *)
-          let do_request () =
-            let headers =
-              let h =
-                Cohttp.Request.headers (Ocsigen_request.to_cohttp request_info)
-              in
-              let h =
-                Ocsigen_request.version request_info
-                |> Cohttp.Code.string_of_version
-                |> Cohttp.Header.replace h
-                     Ocsigen_header.Name.(to_string x_forwarded_proto)
-              in
-              let h =
-                let forward =
-                  let address =
-                    Unix.string_of_inet_addr
-                      (Ocsigen_request.address request_info)
-                  in
-                  String.concat ", "
-                    (Ocsigen_request.remote_ip request_info
-                     :: Ocsigen_request.forward_ip request_info
-                    @ [address])
-                in
-                Cohttp.Header.replace h
-                  Ocsigen_header.Name.(to_string x_forwarded_for)
-                  forward
-              in
-              Cohttp.Header.remove h Ocsigen_header.Name.(to_string host)
-            and uri =
-              let scheme =
-                if Ocsigen_request.ssl request_info then "https" else "http"
-              and host =
-                match
-                  if dir.keephost
-                  then Ocsigen_request.host request_info
-                  else None
-                with
-                | Some host -> host
-                | None -> host
-              in
-              Uri.make ~scheme ~host ~port ~path ()
-            and body = Ocsigen_request.body request_info
-            and meth = Ocsigen_request.meth request_info in
-            Cohttp_lwt_unix.Client.call ~headers ~body meth uri
-          in
-          Lwt.return
-          @@ Ocsigen_extensions.Ext_found
-               (fun () -> do_request () >|= Ocsigen_response.of_cohttp))
+           let do_request () =
+             let headers =
+               let h =
+                 Cohttp.Request.headers (Ocsigen_request.to_cohttp request_info)
+               in
+               let h =
+                 Ocsigen_request.version request_info
+                 |> Cohttp.Code.string_of_version
+                 |> Cohttp.Header.replace h
+                      Ocsigen_header.Name.(to_string x_forwarded_proto)
+               in
+               let h =
+                 let forward =
+                   let address =
+                     Unix.string_of_inet_addr
+                       (Ocsigen_request.address request_info)
+                   in
+                   String.concat ", "
+                     (Ocsigen_request.remote_ip request_info
+                      :: Ocsigen_request.forward_ip request_info
+                     @ [address])
+                 in
+                 Cohttp.Header.replace h
+                   Ocsigen_header.Name.(to_string x_forwarded_for)
+                   forward
+               in
+               Cohttp.Header.remove h Ocsigen_header.Name.(to_string host)
+             and uri =
+               let scheme =
+                 if Ocsigen_request.ssl request_info then "https" else "http"
+               and host =
+                 match
+                   if dir.keephost
+                   then Ocsigen_request.host request_info
+                   else None
+                 with
+                 | Some host -> host
+                 | None -> host
+               in
+               Uri.make ~scheme ~host ~port ~path ()
+             and body = Ocsigen_request.body request_info
+             and meth = Ocsigen_request.meth request_info in
+             Cohttp_lwt_unix.Client.call ~headers ~body meth uri
+           in
+           Lwt.return
+           @@ Ocsigen_extensions.Ext_found
+                (fun () -> do_request () >|= Ocsigen_response.of_cohttp))
         (function
-          | Ocsigen_extensions.Not_concerned ->
-              Lwt.return (Ocsigen_extensions.Ext_next err)
-          | e -> Lwt.fail e)
+           | Ocsigen_extensions.Not_concerned ->
+               Lwt.return (Ocsigen_extensions.Ext_next err)
+           | e -> Lwt.fail e)
 
 let parse_config config_elem =
   let regexp = ref None in
@@ -154,14 +154,14 @@ let parse_config config_elem =
         [ Configuration.element ~name:"revproxy"
             ~attributes:
               [ Configuration.attribute ~name:"regexp" (fun s ->
-                    regexp := Some s;
-                    full_url := Ocsigen_lib.Yes)
+                  regexp := Some s;
+                  full_url := Ocsigen_lib.Yes)
               ; Configuration.attribute ~name:"fullurl" (fun s ->
-                    regexp := Some s;
-                    full_url := Ocsigen_lib.Yes)
+                  regexp := Some s;
+                  full_url := Ocsigen_lib.Yes)
               ; Configuration.attribute ~name:"suburl" (fun s ->
-                    regexp := Some s;
-                    full_url := Ocsigen_lib.No)
+                  regexp := Some s;
+                  full_url := Ocsigen_lib.No)
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"keephost" (function
                   | "keephost" -> keephost := true
