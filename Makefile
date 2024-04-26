@@ -74,13 +74,6 @@ install.files:
 	@echo
 	@echo "## Run \"make doc\" and \"make install.doc\" to build and install the ocamldoc."
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
-	 ## Command pipe
-	$(INSTALL) -m ${INSTALL_MOD_755} -d $(dir $(TEMPROOT)$(COMMANDPIPE))
-	[ -p $(TEMPROOT)$(COMMANDPIPE) ] || \
-	 { mkfifo -m ${INSTALL_MOD_660} $(TEMPROOT)$(COMMANDPIPE); \
-	   if [ "${INSTALL_CAN_PUT_PERMISSIONS}" = yes ]; \
-	     then $(CHOWN) -R $(OCSIGENUSER):"$(OCSIGENGROUP)" $(TEMPROOT)$(COMMANDPIPE); \
-	   fi; }
 	 ## Configuration files
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
 	${INSTALL} -m ${INSTALL_MOD_644} ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
