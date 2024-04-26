@@ -326,15 +326,23 @@ let start ?config () =
       in
       (* A pipe to communicate with the server *)
       let commandpipe = Ocsigen_config.get_command_pipe () in
-      (try ignore (Unix.stat commandpipe)
-       with Unix.Unix_error _ -> (
-         try
-           let umask = Unix.umask 0 in
-           Unix.mkfifo commandpipe 0o660;
-           ignore (Unix.umask umask);
-           Lwt_log.ign_warning ~section "Command pipe created"
-         with e ->
-           Lwt_log.ign_error ~section ~exn:e "Cannot create the command pipe"));
+      let with_commandpipe =
+        try
+          ignore (Unix.stat commandpipe);
+          true
+        with Unix.Unix_error _ -> (
+          try
+            let umask = Unix.umask 0 in
+            Unix.mkfifo commandpipe 0o660;
+            ignore (Unix.umask umask);
+            Lwt_log.ign_warning ~section "Command pipe created";
+            true
+          with e ->
+            Lwt_log.ign_warning_f ~section ~exn:e
+              "Cannot create the command pipe %s. I will continue without."
+              commandpipe;
+            false)
+      in
       let minthreads = Ocsigen_config.get_minthreads ()
       and maxthreads = Ocsigen_config.get_maxthreads () in
       if minthreads > maxthreads
@@ -376,37 +384,39 @@ let start ?config () =
       (* detach from the terminal *)
       if Ocsigen_config.get_daemon () then ignore (Unix.setsid ());
       Ocsigen_extensions.end_initialisation ();
-      let pipe =
-        Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
-        |> Lwt_unix.of_unix_file_descr
-        |> Lwt_io.(of_fd ~mode:input)
-      in
-      let rec f () =
-        Lwt_io.read_line pipe >>= fun s ->
-        Ocsigen_messages.warning ("Command received: " ^ s);
-        Lwt.catch
-          (fun () ->
-             let prefix, c =
-               match Ocsigen_lib.String.split ~multisep:true ' ' s with
-               | [] -> raise Ocsigen_command.Unknown_command
-               | a :: l -> (
-                 try
-                   let aa, ab = Ocsigen_lib.String.sep ':' a in
-                   Some aa, ab :: l
-                 with Not_found -> None, a :: l)
-             in
-             Ocsigen_command.get_command_function () ?prefix s c)
-          (function
-             | Ocsigen_command.Unknown_command ->
-                 Lwt_log.ign_warning ~section "Unknown command";
-                 Lwt.return ()
-             | e ->
-                 Lwt_log.ign_error ~section ~exn:e
-                   "Uncaught Exception after command";
-                 Lwt.fail e)
-        >>= f
-      in
-      ignore (f ());
+      (if with_commandpipe
+       then
+         let pipe =
+           Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
+           |> Lwt_unix.of_unix_file_descr
+           |> Lwt_io.(of_fd ~mode:input)
+         in
+         let rec f () =
+           Lwt_io.read_line pipe >>= fun s ->
+           Ocsigen_messages.warning ("Command received: " ^ s);
+           Lwt.catch
+             (fun () ->
+                let prefix, c =
+                  match Ocsigen_lib.String.split ~multisep:true ' ' s with
+                  | [] -> raise Ocsigen_command.Unknown_command
+                  | a :: l -> (
+                    try
+                      let aa, ab = Ocsigen_lib.String.sep ':' a in
+                      Some aa, ab :: l
+                    with Not_found -> None, a :: l)
+                in
+                Ocsigen_command.get_command_function () ?prefix s c)
+             (function
+                | Ocsigen_command.Unknown_command ->
+                    Lwt_log.ign_warning ~section "Unknown command";
+                    Lwt.return ()
+                | e ->
+                    Lwt_log.ign_error ~section ~exn:e
+                      "Uncaught Exception after command";
+                    Lwt.fail e)
+           >>= f
+         in
+         ignore (f ()));
       Lwt_main.run
       @@ Lwt.join
            (List.map
