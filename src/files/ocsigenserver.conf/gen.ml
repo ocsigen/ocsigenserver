@@ -148,4 +148,5 @@ let () =
   match arg with
   | "static.ml" -> interpolate static_options conf_ml
   | "local" -> interpolate local_options conf_in
-  | _ -> interpolate sample_options conf_in
+  | "sample" -> interpolate sample_options conf_in
+  | _ -> failwith arg
