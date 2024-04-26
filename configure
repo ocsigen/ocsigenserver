@@ -524,6 +524,7 @@ _EOF_
 
 echo "Writing config options"
 cat <<_EOF_ > $my_pwd/src/files/ocsigenserver.conf/options.ml
+let version = "$version"
 let src = "$full_pwd"
 let port = 80
 let bindir = "$root$bindir"

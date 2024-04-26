@@ -13,8 +13,6 @@ let conf_in =
 
     <logdir>_LOGDIR_</logdir>
     <datadir>_DATADIR_</datadir>
-    _OCSIGENUSER_
-    _OCSIGENGROUP_
     _COMMANDPIPE_
     _MIMEFILE_
 
@@ -42,6 +40,23 @@ let conf_in =
 
 </ocsigen>|}
 
+let conf_ml =
+  {|
+let version_number = "_VERSION_"
+let config_file = ref "_CONFIGDIR_/ocsigenserver.conf"
+let is_native = Sys.backend_type = Sys.Native
+let logdir = ref (Some "_LOGDIR_")
+let mimefile = ref "_CONFIGDIR_/mime.types"
+let datadir = ref "_DATADIR_"
+let bindir = ref "_BINDIR_"
+let extdir = ref "_EXTDIR_"
+let command_pipe = ref "_COMMANDPIPE_"
+let builtin_packages =
+  List.fold_left
+    (fun a s -> Ocsigen_lib.String.Set.add s a)
+    Ocsigen_lib.String.Set.empty
+    [_DEPS_]|}
+
 let interpolate f s =
   let regexp = Str.regexp "_\\([A-Z]+\\)_" in
   let f s = f (Str.matched_group 1 s) in
@@ -58,6 +73,44 @@ let libdir () =
     libdir)
   else libdir
 
+let deps () =
+  let extra_deps =
+    [ "ocsigenserver.polytables"
+    ; "ocsigenserver.cookies"
+    ; "ocsigenserver.baselib.base"
+    ; "ocsigenserver.baselib"
+    ; "ocsigenserver.http"
+    ; "ocsigenserver" ]
+  in
+  let packages =
+    "lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix,hmap"
+  in
+  let inp =
+    Unix.open_process_in ("ocamlfind query -p-format -recursive " ^ packages)
+  in
+  let deps = ref [] in
+  (try
+     while true do
+       deps := input_line inp :: !deps
+     done
+   with End_of_file -> ());
+  ignore (Unix.close_process_in inp);
+  !deps @ extra_deps
+
+let static_options = function
+  | "VERSION" -> version
+  | "WARNING" -> "Warning: this file has been generated - DO NOT MODIFY!"
+  | "LOGDIR" -> logdir
+  | "DATADIR" -> datadir
+  | "BINDIR" -> bindir
+  | "EXTDIR" -> libdir () ^ "/ocsigenserver/extensions"
+  | "STATICPAGESDIR" -> staticpagesdir
+  | "UP" -> uploaddir
+  | "COMMANDPIPE" -> commandpipe
+  | "CONFIGDIR" -> configdir
+  | "DEPS" -> String.concat ";" (List.map (Format.asprintf "%S") (deps ()))
+  | _ as s -> failwith s
+
 let sample_options = function
   | "PORT" -> string_of_int port
   | "LOGDIR" -> logdir
@@ -69,7 +122,7 @@ let sample_options = function
   | "CONFIGDIR" -> configdir
   | "STATICPAGESDIR" -> staticpagesdir
   | "FINDLIBEXTRA" -> ""
-  | s -> "_" ^ s ^ "_"
+  | _ as s -> failwith s
 
 let local_options = function
   | "PORT" -> "8080"
@@ -86,11 +139,13 @@ let local_options = function
   | "FINDLIBEXTRA" ->
       "<findlib path=\"" ^ src ^ "/src/files/\"/><findlib path=\"" ^ src
       ^ "/src/extensions/files/\"/>"
-  | s -> "_" ^ s ^ "_"
+  | _ as s -> failwith s
 
 let () =
   let arg = if Array.length Sys.argv > 1 then Sys.argv.(1) else "" in
-  let options =
-    match arg with "local" -> local_options | _ -> sample_options
-  in
-  print_endline (interpolate options conf_in)
+  print_endline
+  @@
+  match arg with
+  | "static.ml" -> interpolate static_options conf_ml
+  | "local" -> interpolate local_options conf_in
+  | _ -> interpolate sample_options conf_in

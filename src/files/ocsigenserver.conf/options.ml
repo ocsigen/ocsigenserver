@@ -1,3 +1,4 @@
+let version = "dev"
 let src = ""
 let port = 80
 let bindir = ""
