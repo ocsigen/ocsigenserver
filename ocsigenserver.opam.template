@@ -27,7 +27,6 @@ build: [
     "--sysconfdir"
     "%{lib}%/ocsigenserver/etc/ocsigenserver"
   ]
-  [make "-C" "src" "confs"]
   ["dune" "build" "-p" name "-j" jobs]
 ]
 install:[make "install.files"]
