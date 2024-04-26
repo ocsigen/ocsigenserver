@@ -12,8 +12,6 @@ confs: ../ocsigenserver.conf.sample ../local/etc/ocsigenserver.conf
 	cat $< \
 	  | sed s%_LOGDIR_%$(LOGDIR)%g \
 	  | sed s%_DATADIR_%$(DATADIR)%g \
-	  | sed s%_OCSIGENUSER_%$(OCSIGENUSER)%g \
-	  | sed s%_OCSIGENGROUP_%"$(OCSIGENGROUP)"%g \
 	  | sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	  | sed s%_MIMEFILE_%$(CONFIGDIR)/mime.types%g \
 	  | sed s%_METADIR_%$(LIBDIR)%g \
@@ -30,8 +28,6 @@ confs: ../ocsigenserver.conf.sample ../local/etc/ocsigenserver.conf
 	  | sed s%80\</port\>%8080\</port\>%g \
 	  | sed s%_LOGDIR_%$(SRC)/local/var/log%g \
 	  | sed s%_DATADIR_%$(SRC)/local/var/lib%g \
-	  | sed s%\<user\>_OCSIGENUSER_\</user\>%%g \
-	  | sed s%\<group\>_OCSIGENGROUP_\</group\>%%g \
 	  | sed s%_COMMANDPIPE_%$(SRC)/local/var/run/ocsigenserver_command%g \
 	  | sed s%_MIMEFILE_%$(SRC)/src/files/mime.types%g \
 	  | sed s%_METADIR_%${LIBDIR}\"/\>\<findlib\ path=\"$(SRC)/src/files/\"/\>\<findlib\ path=\"$(SRC)/src/extensions/files/%g \
