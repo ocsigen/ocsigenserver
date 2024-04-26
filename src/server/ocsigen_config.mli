@@ -70,8 +70,6 @@ val set_default_charset : string option -> unit
 val set_datadir : string -> unit
 val set_bindir : string -> unit
 val set_extdir : string -> unit
-val set_user : string option -> unit
-val set_group : string option -> unit
 val set_command_pipe : string -> unit
 val set_debugmode : bool -> unit
 val set_disablepartialrequests : bool -> unit
@@ -92,8 +90,6 @@ val get_silent : unit -> bool
 val get_daemon : unit -> bool
 val get_veryverbose : unit -> bool
 val get_debug : unit -> bool
-val get_default_user : unit -> string
-val get_default_group : unit -> string
 val get_minthreads : unit -> int
 val get_maxthreads : unit -> int
 val get_max_number_of_threads_queued : unit -> int
@@ -110,8 +106,6 @@ val get_default_charset : unit -> string option
 val get_datadir : unit -> string
 val get_bindir : unit -> string
 val get_extdir : unit -> string
-val get_user : unit -> string option
-val get_group : unit -> string option
 val get_command_pipe : unit -> string
 val get_debugmode : unit -> bool
 val get_disablepartialrequests : unit -> bool
