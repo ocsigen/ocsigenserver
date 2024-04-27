@@ -312,6 +312,9 @@ let filter choice_list = function
           (Ocsigen_extensions.Ext_stop_all
              (Ocsigen_response.cookies res, `Not_acceptable)))
 
+let set_compress_level i = Ocsigen_config.Custom.set compress_level i
+let set_buffer_size i = Ocsigen_config.Custom.set buffer_size i
+
 let rec parse_global_config = function
   | [] -> ()
   | Xml.Element ("compress", [("level", i)], []) :: ll ->
@@ -322,8 +325,7 @@ let rec parse_global_config = function
             (Ocsigen_extensions.Error_in_config_file
                "Compress level should be an integer between 0 and 9")
       in
-      Ocsigen_config.Custom.set compress_level i;
-      parse_global_config ll
+      set_compress_level i; parse_global_config ll
   | Xml.Element ("buffer", [("size", s)], []) :: ll ->
       let s =
         try int_of_string s
@@ -332,8 +334,7 @@ let rec parse_global_config = function
             (Ocsigen_extensions.Error_in_config_file
                "Buffer size should be a positive integer")
       in
-      Ocsigen_config.Custom.set buffer_size s;
-      parse_global_config ll
+      set_buffer_size s; parse_global_config ll
   | _ ->
       raise
         (Ocsigen_extensions.Error_in_config_file
@@ -377,11 +378,4 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ~init_fun:parse_global_config ()
 
-let mode = Ocsigen_server.Site.Config.key ()
-
-let extension =
-  Ocsigen_server.Site.create_instruction
-    (fun {Ocsigen_server.Site.Config.accessor} ->
-       match accessor mode with
-       | Some mode -> filter mode
-       | None -> failwith "Deflatemod.mode not set")
+let run ~mode () = Ocsigen_server.Site.create_instruction (fun _ -> filter mode)
