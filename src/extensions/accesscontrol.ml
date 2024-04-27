@@ -363,7 +363,7 @@ let parse_config parse_fun = function
       raise (Ocsigen_extensions.Bad_config_tag_for_extension t)
   | _ -> Ocsigen_extensions.badconfig "(accesscontrol extension) Bad data"
 
-(* Registration of the extension *)
+(* Registration of the extension for the config file: *)
 let () =
   Ocsigen_extensions.register ~name:"accesscontrol"
     ~fun_site:(fun _ _ _ _ _ -> parse_config)
