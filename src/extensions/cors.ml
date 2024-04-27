@@ -156,18 +156,8 @@ let () =
     ~fun_site:(fun _ _ _ -> parse_config)
     ()
 
-let credentials = Ocsigen_server.Site.Config.key ()
-let max_age = Ocsigen_server.Site.Config.key ()
-let exposed_headers = Ocsigen_server.Site.Config.key ()
-let methods = Ocsigen_server.Site.Config.key ()
-
-let extension =
-  Ocsigen_server.Site.create_instruction
-    (fun {Ocsigen_server.Site.Config.accessor} ->
-       let methods = accessor methods
-       and credentials = Ocsigen_lib.Option.get' false (accessor credentials)
-       and max_age = accessor max_age
-       and exposed_headers =
-         Ocsigen_lib.Option.get' [] (accessor exposed_headers)
-       in
-       main {credentials; methods; max_age; exposed_headers})
+let run ?credentials ?max_age ?exposed_headers ?methods () =
+  Ocsigen_server.Site.create_instruction (fun _ ->
+    let credentials = Ocsigen_lib.Option.get' false credentials in
+    let exposed_headers = Ocsigen_lib.Option.get' [] exposed_headers in
+    main {credentials; methods; max_age; exposed_headers})
