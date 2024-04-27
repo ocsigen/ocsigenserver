@@ -116,12 +116,6 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let mode = Ocsigen_server.Site.Config.key ()
-
-let extension =
-  Ocsigen_server.Site.create_instruction
-    (fun {Ocsigen_server.Site.Config.accessor} ->
-       match accessor mode with
-       | Some (`Code c) -> gen_code c
-       | Some (#header_filter as f) -> gen f
-       | None -> failwith "Outputfilter.mode not set")
+let run ~mode () =
+  Ocsigen_server.Site.create_instruction (fun _ ->
+    match mode with `Code c -> gen_code c | #header_filter as f -> gen f)
