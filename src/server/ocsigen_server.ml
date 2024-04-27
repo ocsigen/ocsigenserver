@@ -190,7 +190,9 @@ module Site = struct
     ; mutable s_children_l :
         [`Instruction of instruction_simple | `Child of t] list }
 
+  (** host list *)
   let l = ref []
+
   let default_re_string = ".*"
   let default_re = Ocsigen_lib.Netstring_pcre.regexp default_re_string
 
@@ -245,7 +247,7 @@ module Site = struct
           Ocsigen_extensions.site_ext (dump_host path s) s_charset path
       | `Child _ -> failwith "Ocsigen_server.dump_host"
     in
-    Ocsigen_extensions.compose (List.map f s_children_l)
+    Ocsigen_extensions.compose (List.map f (List.rev s_children_l))
 
   let dump () =
     let f acc = function
