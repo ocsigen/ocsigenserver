@@ -162,7 +162,7 @@ let exposed_headers = Ocsigen_server.Site.Config.key ()
 let methods = Ocsigen_server.Site.Config.key ()
 
 let extension =
-  Ocsigen_server.Site.create_extension
+  Ocsigen_server.Site.create_instruction
     (fun {Ocsigen_server.Site.Config.accessor} ->
        let methods = accessor methods
        and credentials = Ocsigen_lib.Option.get' false (accessor credentials)

@@ -111,7 +111,7 @@ let () =
 let redirection = Ocsigen_server.Site.Config.key ()
 
 let extension =
-  Ocsigen_server.Site.create_extension
+  Ocsigen_server.Site.create_instruction
     (fun {Ocsigen_server.Site.Config.accessor} ->
        match accessor redirection with
        | Some redirection -> gen redirection
