@@ -1,7 +1,7 @@
-val mode :
-  [ `Rewrite of Ocsigen_header.Name.t * Re.Pcre.regexp * string
-  | `Add of Ocsigen_header.Name.t * string * bool option
-  | `Code of Cohttp.Code.status ]
-    Ocsigen_server.Site.Config.key
-
-val extension : Ocsigen_server.Site.instruction
+val run :
+   mode:
+     [ `Rewrite of Ocsigen_header.Name.t * Re.Pcre.regexp * string
+     | `Add of Ocsigen_header.Name.t * string * bool option
+     | `Code of Cohttp.Code.status ]
+  -> unit
+  -> Ocsigen_server.Site.instruction
