@@ -4,11 +4,10 @@ val section : Lwt_log_core.section
 type redirection
 
 val create_redirection :
-   ?full:[`Maybe | `No | `Yes]
+   ?full_url:[< `Maybe | `No | `Yes > `Yes]
   -> ?temporary:bool
   -> regexp:string
   -> string
   -> redirection
 
-val redirection : redirection Ocsigen_server.Site.Config.key
-val extension : Ocsigen_server.Site.instruction
+val run : redirection:redirection -> unit -> Ocsigen_server.Site.instruction

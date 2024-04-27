@@ -31,9 +31,12 @@ type redirection =
   ; r_full : [`Yes | `No | `Maybe]
   ; r_temp : bool }
 
-let create_redirection ?(full = `Yes) ?(temporary = false) ~regexp r_dest =
+let create_redirection ?(full_url = `Yes) ?(temporary = false) ~regexp r_dest =
   let r_regexp = Pcre.regexp ("^" ^ regexp ^ "$") in
-  {r_regexp; r_dest; r_full = full; r_temp = temporary}
+  { r_regexp
+  ; r_dest
+  ; r_full = (full_url :> [`Yes | `No | `Maybe])
+  ; r_temp = temporary }
 
 let attempt_redir {r_regexp; r_dest; r_full; r_temp} _err ri () =
   Lwt_log.ign_info ~section "Is it a redirection?";
@@ -101,18 +104,13 @@ let parse_config config_elem =
   | None ->
       Ocsigen_extensions.badconfig "Missing attribute regexp for <redirect>"
   | Some regexp ->
-      gen (create_redirection ~full:!mode ~regexp ~temporary:!temporary !dest)
+      gen
+        (create_redirection ~full_url:!mode ~regexp ~temporary:!temporary !dest)
 
 let () =
   Ocsigen_extensions.register ~name:"redirectmod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let redirection = Ocsigen_server.Site.Config.key ()
-
-let extension =
-  Ocsigen_server.Site.create_instruction
-    (fun {Ocsigen_server.Site.Config.accessor} ->
-       match accessor redirection with
-       | Some redirection -> gen redirection
-       | None -> failwith "Redirectmod.redirection not set")
+let run ~redirection () =
+  Ocsigen_server.Site.create_instruction (fun _ -> gen redirection)
