@@ -114,7 +114,7 @@ let realm = Ocsigen_server.Site.Config.key ()
 let auth = Ocsigen_server.Site.Config.key ()
 
 let extension =
-  Ocsigen_server.Site.create_extension
+  Ocsigen_server.Site.create_instruction
     (fun {Ocsigen_server.Site.Config.accessor} ->
        match accessor realm, accessor auth with
        | Some realm, Some auth -> gen ~realm ~auth

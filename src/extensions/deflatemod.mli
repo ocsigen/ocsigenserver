@@ -10,4 +10,4 @@ val mode :
   [`All_but of filter list | `Only of filter list]
     Ocsigen_server.Site.Config.key
 
-val extension : Ocsigen_server.Site.extension
+val extension : Ocsigen_server.Site.instruction

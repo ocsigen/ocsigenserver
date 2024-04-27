@@ -380,7 +380,7 @@ let () =
 let mode = Ocsigen_server.Site.Config.key ()
 
 let extension =
-  Ocsigen_server.Site.create_extension
+  Ocsigen_server.Site.create_instruction
     (fun {Ocsigen_server.Site.Config.accessor} ->
        match accessor mode with
        | Some mode -> filter mode

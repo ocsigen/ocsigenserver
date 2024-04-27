@@ -158,26 +158,26 @@ module Make_config_nested (W : Hmap_wrapped) = struct
 end
 
 module Site = struct
-  type extension_simple = accessor -> Ocsigen_extensions.extension
+  type instruction_simple = accessor -> Ocsigen_extensions.extension
 
-  type extension =
-    [ `Simple of extension_simple
+  type instruction =
+    [ `Simple of instruction_simple
     | `Intrusive of
       Ocsigen_extensions.virtual_hosts
       -> Ocsigen_extensions.config_info
       -> Ocsigen_lib.Url.path
-      -> extension_simple ]
+      -> instruction_simple ]
 
-  let registered_extensions = ref []
+  let registered_instructions = ref []
 
-  let create_extension f =
+  let create_instruction f =
     let v = `Simple f in
-    registered_extensions := v :: !registered_extensions;
+    registered_instructions := v :: !registered_instructions;
     v
 
-  let create_extension_intrusive f =
+  let create_instruction_intrusive f =
     let v = `Intrusive f in
-    registered_extensions := v :: !registered_extensions;
+    registered_instructions := v :: !registered_instructions;
     v
 
   type t =
@@ -187,8 +187,8 @@ module Site = struct
     ; s_config_info : Ocsigen_extensions.config_info
     ; s_charset : Ocsigen_charset_mime.charset option
     ; mutable s_config_map : Hmap.t
-    ; mutable s_children_l : [`Extension of extension_simple | `Child of t] list
-    }
+    ; mutable s_children_l :
+        [`Instruction of instruction_simple | `Child of t] list }
 
   let l = ref []
   let default_re_string = ".*"
@@ -202,15 +202,15 @@ module Site = struct
         path @ path', hosts
 
   let register ({s_config_info; s_children_l; _} as s) = function
-    | `Simple f -> s.s_children_l <- `Extension f :: s_children_l
+    | `Simple f -> s.s_children_l <- `Instruction f :: s_children_l
     | `Intrusive f ->
         let path, hosts = path_and_hosts s in
         s.s_children_l <-
-          `Extension (f hosts s_config_info path) :: s_children_l
+          `Instruction (f hosts s_config_info path) :: s_children_l
 
   let create ?(config_info = Ocsigen_extensions.default_config_info ())
       ?(id = `Host (default_re_string, None)) ?charset
-      ?(auto_load_extensions = false) ()
+      ?(auto_load_instructions = false) ()
     =
     let s_id =
       match id with
@@ -233,13 +233,13 @@ module Site = struct
     | `Host _ -> l := s :: !l
     | `Attach (parent, _) ->
         parent.s_children_l <- `Child s :: parent.s_children_l);
-    if auto_load_extensions
-    then List.iter (register s) (List.rev !registered_extensions);
+    if auto_load_instructions
+    then List.iter (register s) (List.rev !registered_instructions);
     s
 
   let rec dump_host path {s_config_map; s_children_l; _} =
     let f = function
-      | `Extension f -> f {accessor = (fun (_, k) -> Hmap.find k s_config_map)}
+      | `Instruction f -> f {accessor = (fun (_, k) -> Hmap.find k s_config_map)}
       | `Child ({s_charset; s_id = `Attach (_, path'); _} as s) ->
           let path = path @ path' in
           Ocsigen_extensions.site_ext (dump_host path s) s_charset path

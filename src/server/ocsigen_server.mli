@@ -41,6 +41,8 @@ module type Config_nested = sig
   type accessor = {accessor : 'a. 'a key -> 'a option}
 end
 
+(** Use this to create an extension that can be linked statically,
+    and used without configuration file. *)
 module Site : sig
   type t
 
@@ -48,29 +50,38 @@ module Site : sig
      ?config_info:Ocsigen_extensions.config_info
     -> ?id:[`Attach of t * Ocsigen_lib.Url.path | `Host of string * int option]
     -> ?charset:Ocsigen_charset_mime.charset
-    -> ?auto_load_extensions:bool
+    -> ?auto_load_instructions:bool
     -> unit
     -> t
+  (** [create ?config_info ?id ?charset ?auto_load_extensions ()]
+  creates a subsite.
+  This is equivalent to the [<host>] or [<site>] config file options.
+  *)
 
   module Config : Config_nested with type t := t
 
-  type extension
+  type instruction
+  (** Instructions are defined by extensions, and correspond to the 
+      configuration file options defined by extensions (<staticmod/> ...)*)
 
-  val create_extension :
+  val create_instruction :
      (Config.accessor -> Ocsigen_extensions.extension)
-    -> extension
+    -> instruction
+  (** [create_instruction] makes it possible to use your extension without
+      configuration file *)
 
-  val register : t -> extension -> unit
+  val register : t -> instruction -> unit
+  (** [register t s e] registers instruction [e] to be run inside site [s] *)
 
   (**/**)
 
-  val create_extension_intrusive :
+  val create_instruction_intrusive :
      (Ocsigen_extensions.virtual_hosts
       -> Ocsigen_extensions.config_info
       -> Ocsigen_lib.Url.path
       -> Config.accessor
       -> Ocsigen_extensions.extension)
-    -> extension
-  (** Lower-level interface for creating extensions that gives the
-      extension more info. To be avoided. Currently used by Eliom. *)
+    -> instruction
+  (** Lower-level interface for creating instructions that gives the
+      instruction more info. To be avoided. Currently used by Eliom. *)
 end

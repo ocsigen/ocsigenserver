@@ -11,4 +11,4 @@ val create_redirection :
   -> redirection
 
 val redirection : redirection Ocsigen_server.Site.Config.key
-val extension : Ocsigen_server.Site.extension
+val extension : Ocsigen_server.Site.instruction
