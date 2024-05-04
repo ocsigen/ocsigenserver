@@ -282,18 +282,17 @@ let () =
 let preprocess s = "^" ^ s ^ "$"
 
 let run ?dir ?regexp ?dest ?code ?cache ?root () =
-  Ocsigen_server.Site.create_instruction (fun _ ->
-    let kind =
-      kind dir
-        (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) regexp)
-        (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) code)
-        (Ocsigen_lib.Option.map
-           (fun x ->
-              Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
-           dest)
-        (Ocsigen_lib.Option.map
-           (fun x ->
-              Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
-           root)
-    in
-    gen ~usermode:None ?cache kind)
+  let kind =
+    kind dir
+      (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) regexp)
+      (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) code)
+      (Ocsigen_lib.Option.map
+         (fun x ->
+            Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
+         dest)
+      (Ocsigen_lib.Option.map
+         (fun x ->
+            Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
+         root)
+  in
+  fun _ _ _ -> gen ~usermode:None ?cache kind
