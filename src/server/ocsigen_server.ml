@@ -151,13 +151,8 @@ module Site = struct
         let path, hosts = path_and_hosts s in
         path @ path', hosts
 
-  let register ({s_config_info; s_children_l; _} as s) f =
-    let path, hosts = path_and_hosts s in
-    s.s_children_l <- `Instruction (f hosts s_config_info path) :: s_children_l
-
   let create ?(config_info = Ocsigen_extensions.default_config_info ())
-      ?(id = `Host (default_re_string, None)) ?charset
-      ()
+      ?(id = `Host (default_re_string, None)) ?charset ()
     =
     let s_id =
       match id with
@@ -170,16 +165,21 @@ module Site = struct
           `Attach (parent, Ocsigen_extensions.preprocess_site_path path)
     in
     let s =
-      { s_id
-      ; s_charset = charset
-      ; s_config_info = config_info
-      ; s_children_l = [] }
+      {s_id; s_charset = charset; s_config_info = config_info; s_children_l = []}
     in
     (match s_id with
     | `Host _ -> l := s :: !l
     | `Attach (parent, _) ->
         parent.s_children_l <- `Child s :: parent.s_children_l);
     s
+
+  let default_host = create ()
+
+  let register ?(site = default_host) f =
+    let {s_config_info; s_children_l; _} = site in
+    let path, hosts = path_and_hosts site in
+    site.s_children_l <-
+      `Instruction (f hosts s_config_info path) :: s_children_l
 
   let rec dump_host path {s_children_l; _} =
     let f = function

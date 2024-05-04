@@ -45,6 +45,10 @@ module Site : sig
   This is equivalent to the [<host>] or [<site>] config file options.
   *)
 
+  val default_host : t
+  (** Defaut host. Any hostname, any port.
+      Will be used if you don not specify [?site]. *)
+
   type instruction =
     Ocsigen_extensions.virtual_hosts
     -> Ocsigen_extensions.config_info
@@ -53,6 +57,7 @@ module Site : sig
   (** Instructions are defined by extensions, and correspond to the 
       configuration file options defined by extensions (<staticmod/> ...)*)
 
-  val register : t -> instruction -> unit
-  (** [register t s e] registers instruction [e] to be run inside site [s] *)
+  val register : ?site:t -> instruction -> unit
+  (** [register t s e] registers instruction [e] to be run inside site [s]. 
+      Use this if you want to create an extension yourself. *)
 end
