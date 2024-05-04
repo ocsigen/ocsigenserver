@@ -23,7 +23,7 @@ INCS=   -I ${BLD}/server/.ocsigenserver.objs/byte \
 ## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
 ## but also to generate src/baselib/ocsigen_config_static.ml
 
-SERVER_PACKAGE := lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix,hmap
+SERVER_PACKAGE := lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix
 
 LIBS := -package ${SERVER_PACKAGE} ${INCS}
 

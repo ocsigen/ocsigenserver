@@ -112,5 +112,4 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let run ~redirection () =
-  Ocsigen_server.Site.create_instruction (fun _ -> gen redirection)
+let run ~redirection () _ _ _ = gen redirection

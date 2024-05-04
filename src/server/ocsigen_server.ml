@@ -122,63 +122,12 @@ let _ =
   in
   Ocsigen_command.register_command_function f
 
-type accessor = {accessor : 'a. ('a -> 'a) option * 'a Hmap.key -> 'a option}
-
-module type Hmap_wrapped = sig
-  type t
-
-  val get : t -> Hmap.t
-  val do_ : t -> (Hmap.t -> Hmap.t) -> unit
-end
-
-module type Config_nested = sig
-  type t
-  type 'a key
-
-  val key : ?preprocess:('a -> 'a) -> unit -> 'a key
-  val find : t -> 'a key -> 'a option
-  val set : t -> 'a key -> 'a -> unit
-  val unset : t -> 'a key -> unit
-
-  type accessor = {accessor : 'a. 'a key -> 'a option}
-end
-
-module Make_config_nested (W : Hmap_wrapped) = struct
-  type 'a key = ('a -> 'a) option * 'a Hmap.key
-  type nonrec accessor = accessor = {accessor : 'a. 'a key -> 'a option}
-
-  let key ?preprocess () = preprocess, Hmap.Key.create ()
-  let find w (_, k) = Hmap.find k (W.get w)
-
-  let set w (f, k) v =
-    let v = match f with Some f -> f v | None -> v in
-    W.do_ w (Hmap.add k v)
-
-  let unset w (_, k) = W.do_ w (Hmap.rem k)
-end
-
 module Site = struct
-  type instruction_simple = accessor -> Ocsigen_extensions.extension
-
   type instruction =
-    [ `Simple of instruction_simple
-    | `Intrusive of
-      Ocsigen_extensions.virtual_hosts
-      -> Ocsigen_extensions.config_info
-      -> Ocsigen_lib.Url.path
-      -> instruction_simple ]
-
-  let registered_instructions = ref []
-
-  let create_instruction f =
-    let v = `Simple f in
-    registered_instructions := v :: !registered_instructions;
-    v
-
-  let create_instruction_intrusive f =
-    let v = `Intrusive f in
-    registered_instructions := v :: !registered_instructions;
-    v
+    Ocsigen_extensions.virtual_hosts
+    -> Ocsigen_extensions.config_info
+    -> Ocsigen_lib.Url.path
+    -> Ocsigen_extensions.extension
 
   type t =
     { s_id :
@@ -186,9 +135,8 @@ module Site = struct
         | `Attach of t * Ocsigen_lib.Url.path ]
     ; s_config_info : Ocsigen_extensions.config_info
     ; s_charset : Ocsigen_charset_mime.charset option
-    ; mutable s_config_map : Hmap.t
     ; mutable s_children_l :
-        [`Instruction of instruction_simple | `Child of t] list }
+        [`Instruction of Ocsigen_extensions.extension | `Child of t] list }
 
   (** host list *)
   let l = ref []
@@ -203,16 +151,13 @@ module Site = struct
         let path, hosts = path_and_hosts s in
         path @ path', hosts
 
-  let register ({s_config_info; s_children_l; _} as s) = function
-    | `Simple f -> s.s_children_l <- `Instruction f :: s_children_l
-    | `Intrusive f ->
-        let path, hosts = path_and_hosts s in
-        s.s_children_l <-
-          `Instruction (f hosts s_config_info path) :: s_children_l
+  let register ({s_config_info; s_children_l; _} as s) f =
+    let path, hosts = path_and_hosts s in
+    s.s_children_l <- `Instruction (f hosts s_config_info path) :: s_children_l
 
   let create ?(config_info = Ocsigen_extensions.default_config_info ())
       ?(id = `Host (default_re_string, None)) ?charset
-      ?(auto_load_instructions = false) ()
+      ()
     =
     let s_id =
       match id with
@@ -228,20 +173,17 @@ module Site = struct
       { s_id
       ; s_charset = charset
       ; s_config_info = config_info
-      ; s_config_map = Hmap.empty
       ; s_children_l = [] }
     in
     (match s_id with
     | `Host _ -> l := s :: !l
     | `Attach (parent, _) ->
         parent.s_children_l <- `Child s :: parent.s_children_l);
-    if auto_load_instructions
-    then List.iter (register s) (List.rev !registered_instructions);
     s
 
-  let rec dump_host path {s_config_map; s_children_l; _} =
+  let rec dump_host path {s_children_l; _} =
     let f = function
-      | `Instruction f -> f {accessor = (fun (_, k) -> Hmap.find k s_config_map)}
+      | `Instruction f -> f
       | `Child ({s_charset; s_id = `Attach (_, path'); _} as s) ->
           let path = path @ path' in
           Ocsigen_extensions.site_ext (dump_host path s) s_charset path
@@ -256,13 +198,6 @@ module Site = struct
       | _ -> acc
     in
     Ocsigen_extensions.set_hosts (List.fold_left f [] !l)
-
-  module Config = Make_config_nested (struct
-      type nonrec t = t
-
-      let get {s_config_map; _} = s_config_map
-      let do_ ({s_config_map; _} as vh) f = vh.s_config_map <- f s_config_map
-    end)
 end
 
 let start ?config () =

@@ -29,18 +29,6 @@ val reload : ?file:string -> unit -> unit
 val start : ?config:Xml.xml list list -> unit -> unit
 (** Start the server. Never returns. *)
 
-module type Config_nested = sig
-  type t
-  type 'a key
-
-  val key : ?preprocess:('a -> 'a) -> unit -> 'a key
-  val find : t -> 'a key -> 'a option
-  val set : t -> 'a key -> 'a -> unit
-  val unset : t -> 'a key -> unit
-
-  type accessor = {accessor : 'a. 'a key -> 'a option}
-end
-
 (** Use this to create an extension that can be linked statically,
     and used without configuration file. *)
 module Site : sig
@@ -50,38 +38,21 @@ module Site : sig
      ?config_info:Ocsigen_extensions.config_info
     -> ?id:[`Attach of t * Ocsigen_lib.Url.path | `Host of string * int option]
     -> ?charset:Ocsigen_charset_mime.charset
-    -> ?auto_load_instructions:bool
     -> unit
     -> t
-  (** [create ?config_info ?id ?charset ?auto_load_extensions ()]
+  (** [create ?config_info ?id ?charset ()]
   creates a subsite.
   This is equivalent to the [<host>] or [<site>] config file options.
   *)
 
-  module Config : Config_nested with type t := t
-
-  type instruction
+  type instruction =
+    Ocsigen_extensions.virtual_hosts
+    -> Ocsigen_extensions.config_info
+    -> Ocsigen_lib.Url.path
+    -> Ocsigen_extensions.extension
   (** Instructions are defined by extensions, and correspond to the 
       configuration file options defined by extensions (<staticmod/> ...)*)
 
-  val create_instruction :
-     (Config.accessor -> Ocsigen_extensions.extension)
-    -> instruction
-  (** [create_instruction] makes it possible to use your extension without
-      configuration file *)
-
   val register : t -> instruction -> unit
   (** [register t s e] registers instruction [e] to be run inside site [s] *)
-
-  (**/**)
-
-  val create_instruction_intrusive :
-     (Ocsigen_extensions.virtual_hosts
-      -> Ocsigen_extensions.config_info
-      -> Ocsigen_lib.Url.path
-      -> Config.accessor
-      -> Ocsigen_extensions.extension)
-    -> instruction
-  (** Lower-level interface for creating instructions that gives the
-      instruction more info. To be avoided. Currently used by Eliom. *)
 end

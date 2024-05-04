@@ -39,13 +39,10 @@ let should_compress (t, t') url choice_list =
   | `Only l -> List.exists check l
   | `All_but l -> List.for_all (fun c -> not (check c)) l
 
-let compress_level =
-  let preprocess i = if i >= 0 && i <= 9 then i else 6 in
-  Ocsigen_config.Custom.key ~preprocess ()
-
-let buffer_size =
-  let preprocess s = if s > 0 then s else 8192 in
-  Ocsigen_config.Custom.key ~preprocess ()
+let compress_level = ref 6
+let set_compress_level i = compress_level := if i >= 0 && i <= 9 then i else 6
+let buffer_size = ref 8192
+let set_buffer_size s = buffer_size := if s > 0 then s else 8192
 
 (* Minimal header, by X. Leroy *)
 let gzip_header_length = 10
@@ -157,11 +154,7 @@ and next_cont oz stream =
 
 (* deflate param : true = deflate ; false = gzip (no header in this case) *)
 let compress deflate stream : string Ocsigen_stream.t =
-  let zstream =
-    Zlib.deflate_init
-      (Ocsigen_lib.Option.get' 6 (Ocsigen_config.Custom.find compress_level))
-      deflate
-  in
+  let zstream = Zlib.deflate_init !compress_level deflate in
   let finalize status =
     Ocsigen_stream.finalize stream status >>= fun _e ->
     (try Zlib.deflate_end zstream
@@ -172,9 +165,7 @@ let compress deflate stream : string Ocsigen_stream.t =
     Lwt.return (Lwt_log.ign_info ~section "Zlib stream closed")
   in
   let oz =
-    let buffer_size =
-      Ocsigen_lib.Option.get' 8192 (Ocsigen_config.Custom.find buffer_size)
-    in
+    let buffer_size = !buffer_size in
     { stream = zstream
     ; buf = Bytes.create buffer_size
     ; pos = 0
@@ -312,9 +303,6 @@ let filter choice_list = function
           (Ocsigen_extensions.Ext_stop_all
              (Ocsigen_response.cookies res, `Not_acceptable)))
 
-let set_compress_level i = Ocsigen_config.Custom.set compress_level i
-let set_buffer_size i = Ocsigen_config.Custom.set buffer_size i
-
 let rec parse_global_config = function
   | [] -> ()
   | Xml.Element ("compress", [("level", i)], []) :: ll ->
@@ -378,4 +366,4 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ~init_fun:parse_global_config ()
 
-let run ~mode () = Ocsigen_server.Site.create_instruction (fun _ -> filter mode)
+let run ~mode () _ _ _ = filter mode
