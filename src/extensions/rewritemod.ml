@@ -129,7 +129,7 @@ let () =
     ()
 
 let instruction ?(continue = false) ?(full_rewrite = false) ~regexp dest () _ _
-    _
+    _ _
   =
   gen
     (Regexp

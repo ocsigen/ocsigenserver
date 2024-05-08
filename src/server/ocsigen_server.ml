@@ -123,12 +123,6 @@ let _ =
   Ocsigen_command.register_command_function f
 
 module Site = struct
-  type instruction =
-    Ocsigen_extensions.virtual_hosts
-    -> Ocsigen_extensions.config_info
-    -> Ocsigen_lib.Url.path
-    -> Ocsigen_extensions.extension
-
   type t =
     { s_id :
         [ `Host of Ocsigen_extensions.virtual_hosts
@@ -137,6 +131,13 @@ module Site = struct
     ; s_charset : Ocsigen_charset_mime.charset option
     ; mutable s_children_l :
         [`Instruction of Ocsigen_extensions.extension | `Child of t] list }
+
+  type instruction =
+    t
+    -> Ocsigen_extensions.virtual_hosts
+    -> Ocsigen_extensions.config_info
+    -> Ocsigen_lib.Url.path
+    -> Ocsigen_extensions.extension
 
   (** host list *)
   let l = ref []
@@ -179,7 +180,7 @@ module Site = struct
     let {s_config_info; s_children_l; _} = site in
     let path, hosts = path_and_hosts site in
     site.s_children_l <-
-      `Instruction (f hosts s_config_info path) :: s_children_l
+      `Instruction (f site hosts s_config_info path) :: s_children_l
 
   let rec dump_host path {s_children_l; _} =
     let f = function

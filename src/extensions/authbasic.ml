@@ -111,7 +111,7 @@ let () =
     ()
 
 (** Instruction for static linking without config file: *)
-let instruction ~realm ~auth () _ _ _ = gen ~realm ~auth
+let instruction ~realm ~auth () _ _ _ _ = gen ~realm ~auth
 
 let run ?site ~realm ~auth () =
   Ocsigen_server.Site.register ?site (instruction ~realm ~auth ())

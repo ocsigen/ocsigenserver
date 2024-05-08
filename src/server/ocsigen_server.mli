@@ -50,7 +50,8 @@ module Site : sig
       Will be used if you don not specify [?site]. *)
 
   type instruction =
-    Ocsigen_extensions.virtual_hosts
+    t
+    -> Ocsigen_extensions.virtual_hosts
     -> Ocsigen_extensions.config_info
     -> Ocsigen_lib.Url.path
     -> Ocsigen_extensions.extension

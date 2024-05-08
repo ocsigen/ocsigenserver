@@ -366,7 +366,7 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ~init_fun:parse_global_config ()
 
-let instruction ~mode () _ _ _ = filter mode
+let instruction ~mode () _ _ _ _ = filter mode
 
 let run ?site ~mode () =
   Ocsigen_server.Site.register ?site (instruction ~mode ())

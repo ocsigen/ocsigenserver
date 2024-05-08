@@ -156,7 +156,7 @@ let () =
     ~fun_site:(fun _ _ _ -> parse_config)
     ()
 
-let instruction ?credentials ?max_age ?exposed_headers ?methods () _ _ _ =
+let instruction ?credentials ?max_age ?exposed_headers ?methods () _ _ _ _ =
   let credentials = Ocsigen_lib.Option.get' false credentials in
   let exposed_headers = Ocsigen_lib.Option.get' [] exposed_headers in
   main {credentials; methods; max_age; exposed_headers}

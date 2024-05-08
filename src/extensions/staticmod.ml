@@ -295,7 +295,7 @@ let instruction ?dir ?regexp ?dest ?code ?cache ?root () =
             Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
          root)
   in
-  fun _ _ _ -> gen ~usermode:None ?cache kind
+  fun _ _ _ _ -> gen ~usermode:None ?cache kind
 
 let run ?site ?dir ?regexp ?dest ?code ?cache ?root () =
   Ocsigen_server.Site.register ?site
