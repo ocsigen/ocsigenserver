@@ -565,7 +565,7 @@ let default_parse_extension ext_name = function
 let register ~name ?fun_site ?end_init ?init_fun ?exn_handler ?respect_pipeline
     ()
   =
-  Ocsigen_loader.set_module_init_function name (fun () ->
+  Ocsigen_loader.set_module_init_function (`Name name) (fun () ->
     (match init_fun with
     | None -> default_parse_extension name (get_config ())
     | Some f -> f (get_config ()));

@@ -58,11 +58,32 @@ val loadfiles : (unit -> unit) -> (unit -> unit) -> bool -> string list -> unit
     but the last one, and [loadfile pre post force] for the last one
     (if any). *)
 
-val set_module_init_function : string -> (unit -> unit) -> unit
-(** [set_module_init_function name f] registers the function [f], which will
-    be used to initialize the module when [init_module name] is called.  *)
+type site
 
-val init_module : (unit -> unit) -> (unit -> unit) -> bool -> string -> unit
+val new_site : unit -> site
+
+val set_module_init_function :
+   [< `Name of string | `Site of site | `Default_site]
+  -> (unit -> unit)
+  -> unit
+(** [set_module_init_function name f] registers the function [f], which will
+    be used to initialize the module when [init_module name] is called.
+    Will replace the previous value.
+  *)
+
+val add_module_init_function :
+   [< `Name of string | `Site of site | `Default_site]
+  -> (unit -> unit)
+  -> unit
+(** [add_module_init_function name f] adds [f] to the initialisation functions
+    to be run when [init_module name] is called.  *)
+
+val init_module :
+   (unit -> unit)
+  -> (unit -> unit)
+  -> bool
+  -> [< `Name of string | `Site of site | `Default_site]
+  -> unit
 (** [init_module pre post force name] runs the init function for the module
     [name]. If [force] is [false], remember [name] so that the init function
     isn't executed twice. If the function is executed, [pre] (resp. [post])

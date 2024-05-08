@@ -53,7 +53,17 @@ let isloaded, addloaded =
   let set = ref String.Set.empty in
   (fun s -> String.Set.mem s !set), fun s -> set := String.Set.add s !set
 
-module M = Map.Make (String)
+type site = int
+
+let new_site =
+  let r = ref 0 in
+  fun () -> incr r; !r
+
+module M = Map.Make (struct
+    type t = [`Name of string | `Site of site | `Default_site]
+
+    let compare = compare
+  end)
 
 let init_functions = ref M.empty
 
@@ -96,31 +106,41 @@ let loadfiles pre post force modules =
   aux modules
 
 let set_module_init_function name f =
-  init_functions := M.add name f !init_functions;
-  (* print_endline ("Added init_function for " ^ name); *)
-  (* print_endline ("get_init_on_load: " ^ string_of_bool (get_init_on_load ())); *)
+  let name = (name :> [`Name of string | `Site of site | `Default_site]) in
+  init_functions := M.add name [f] !init_functions;
+  if get_init_on_load () then f ()
+
+let add_module_init_function name f =
+  let name = (name :> [`Name of string | `Site of site | `Default_site]) in
+  let update = function
+    | None (* no binding so far *) -> Some [f]
+    | Some old -> Some (f :: old)
+  in
+  init_functions := M.update name update !init_functions;
   if get_init_on_load () then f ()
 
 let init_module pre post force name =
+  let name = (name :> [`Name of string | `Site of site | `Default_site]) in
   let f =
-    try M.find name !init_functions
-    with Not_found as e -> raise (Dynlink_error ("named module " ^ name, e))
+    try
+      let l = List.rev @@ M.find name !init_functions in
+      fun () -> List.iter (fun f -> f ()) l
+    with Not_found -> (
+      match name with
+      | `Name name -> failwith ("No init function for named module " ^ name)
+      | _ -> fun () -> ())
   in
-  try
-    if force
-    then (
+  match name with
+  | `Name name when (not force) && isloaded name ->
+      Lwt_log.ign_info_f ~section "Module %s already initialized." name
+  | `Name name ->
       pre ();
-      Lwt_log.ign_info_f ~section
-        "Initializing %s (will be initialized every time)" name;
-      try f (); post () with e -> post (); raise e)
-    else if not (isloaded name)
-    then (
-      pre ();
-      Lwt_log.ign_info_f ~section "Initializing module %s " name;
+      Lwt_log.ign_info_f ~section "Initializing module %s" name;
       (try f (); post () with e -> post (); raise e);
-      addloaded name)
-    else Lwt_log.ign_info_f ~section "Module %s already initialized." name
-  with e -> raise (Dynlink_error (name, e))
+      addloaded name
+  | _ -> (
+      pre ();
+      try f (); post () with e -> post (); raise e)
 
 (************************************************************************)
 (* Manipulating Findlib's search path *)

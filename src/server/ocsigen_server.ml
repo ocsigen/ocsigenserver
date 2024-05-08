@@ -124,13 +124,16 @@ let _ =
 
 module Site = struct
   type t =
-    { s_id :
+    { s_repr : Ocsigen_loader.site
+    ; s_id :
         [ `Host of Ocsigen_extensions.virtual_hosts
         | `Attach of t * Ocsigen_lib.Url.path ]
     ; s_config_info : Ocsigen_extensions.config_info
     ; s_charset : Ocsigen_charset_mime.charset option
     ; mutable s_children_l :
         [`Instruction of Ocsigen_extensions.extension | `Child of t] list }
+
+  let repr s = s.s_repr
 
   type instruction =
     t
@@ -155,6 +158,7 @@ module Site = struct
   let create ?(config_info = Ocsigen_extensions.default_config_info ())
       ?(id = `Host (default_re_string, None)) ?charset ()
     =
+    let s_repr = Ocsigen_loader.new_site () in
     let s_id =
       match id with
       | `Host (host_regexp, port) when host_regexp = default_re_string ->
@@ -166,7 +170,11 @@ module Site = struct
           `Attach (parent, Ocsigen_extensions.preprocess_site_path path)
     in
     let s =
-      {s_id; s_charset = charset; s_config_info = config_info; s_children_l = []}
+      { s_repr
+      ; s_id
+      ; s_charset = charset
+      ; s_config_info = config_info
+      ; s_children_l = [] }
     in
     (match s_id with
     | `Host _ -> l := s :: !l

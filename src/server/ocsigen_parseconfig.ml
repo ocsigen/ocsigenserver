@@ -377,7 +377,7 @@ let later_pass_extension tag attrs l =
         (Config_file_error
            ("missing module, name or findlib-package attribute in " ^ tag))
   | [("name", s)] ->
-      Ocsigen_loader.init_module (preloadfile l) postloadfile false s
+      Ocsigen_loader.init_module (preloadfile l) postloadfile false (`Name s)
   | [("module", s)] ->
       Ocsigen_loader.loadfiles (preloadfile l) postloadfile false [s]
   | [("findlib-package", s)] ->

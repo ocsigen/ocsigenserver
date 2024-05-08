@@ -34,6 +34,8 @@ val start : ?config:Xml.xml list list -> unit -> unit
 module Site : sig
   type t
 
+  val repr : t -> Ocsigen_loader.site
+
   val create :
      ?config_info:Ocsigen_extensions.config_info
     -> ?id:[`Attach of t * Ocsigen_lib.Url.path | `Host of string * int option]
