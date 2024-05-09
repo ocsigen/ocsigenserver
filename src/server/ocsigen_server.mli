@@ -58,6 +58,6 @@ module Site : sig
       configuration file options defined by extensions (<staticmod/> ...)*)
 
   val register : ?site:t -> instruction -> unit
-  (** [register t s e] registers instruction [e] to be run inside site [s]. 
+  (** [register ~site:s e] registers instruction [e] to be run inside site [s]. 
       Use this if you want to create an extension yourself. *)
 end
