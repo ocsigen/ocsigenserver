@@ -36,6 +36,12 @@ module Site : sig
 
   val repr : t -> Ocsigen_loader.site
 
+  val path_and_hosts :
+     t
+    -> Ocsigen_lib.Url.path * Ocsigen_extensions.virtual_hosts
+
+  val config_info : t -> Ocsigen_extensions.config_info
+
   val create :
      ?config_info:Ocsigen_extensions.config_info
     -> ?id:[`Attach of t * Ocsigen_lib.Url.path | `Host of string * int option]

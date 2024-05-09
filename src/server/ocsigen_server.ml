@@ -155,6 +155,8 @@ module Site = struct
         let path, hosts = path_and_hosts s in
         path @ path', hosts
 
+  let config_info {s_config_info; _} = s_config_info
+
   let create ?(config_info = Ocsigen_extensions.default_config_info ())
       ?(id = `Host (default_re_string, None)) ?charset ()
     =
