@@ -128,16 +128,10 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let instruction ?(continue = false) ?(full_rewrite = false) ~regexp dest () _ _
-    _
-  =
+let run ?(continue = false) ?(full_rewrite = false) ~regexp dest () _ _ _ =
   gen
     (Regexp
        ( Ocsigen_lib.Netstring_pcre.regexp ("^" ^ regexp ^ "$")
        , dest
        , full_rewrite ))
     continue
-
-let run ?site ?continue ?full_rewrite ~regexp dest () =
-  Ocsigen_server.Site.register ?site
-    (instruction ?continue ?full_rewrite ~regexp dest ())

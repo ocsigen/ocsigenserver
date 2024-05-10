@@ -116,8 +116,5 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let instruction ~mode () _ _ _ =
+let run ~mode () _ _ _ =
   match mode with `Code c -> gen_code c | #header_filter as f -> gen f
-
-let run ?site ~mode () =
-  Ocsigen_server.Site.register ?site (instruction ~mode ())

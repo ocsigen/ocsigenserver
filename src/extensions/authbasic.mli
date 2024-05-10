@@ -59,13 +59,8 @@ val register_basic_authentication_method : (Xml.xml -> auth) -> unit
     from the point of view of plugin developers and is totally
     transparent to the plugin. *)
 
-val run :
-   ?site:Ocsigen_server.Site.t
-  -> realm:string
-  -> auth:auth
-  -> unit
-  -> unit
-(** [run ~realm ~auth ()] makes it possible to use this extension without 
+val run : realm:string -> auth:auth -> unit -> Ocsigen_server.instruction
+(** [run ~realm ~auth ()] makes it possible to use this extension without
     configuration file.  *)
 
 (**/**)

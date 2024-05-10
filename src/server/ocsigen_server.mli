@@ -26,38 +26,39 @@ val reload : ?file:string -> unit -> unit
     [?file] may be used to read the configuration from another
     file. *)
 
-val start : ?config:Xml.xml list list -> unit -> unit
-(** Start the server. Never returns. *)
+val exec : Xml.xml list list -> unit
+(** Start the server with a configuration file. Never returns. *)
 
-(** Use this to create an extension that can be linked statically,
-    and used without configuration file. *)
-module Site : sig
-  type t
+val start : Ocsigen_extensions.host_config list -> unit
+(** Start the server with some instructions. Never returns. *)
 
-  val create :
-     ?config_info:Ocsigen_extensions.config_info
-    -> ?id:[`Attach of t * Ocsigen_lib.Url.path | `Host of string * int option]
-    -> ?charset:Ocsigen_charset_mime.charset
-    -> unit
-    -> t
-  (** [create ?config_info ?id ?charset ()]
-  creates a subsite.
-  This is equivalent to the [<host>] or [<site>] config file options.
-  *)
+type instruction =
+  Ocsigen_extensions.virtual_hosts
+  -> Ocsigen_extensions.config_info
+  -> Ocsigen_lib.Url.path
+  -> Ocsigen_extensions.extension
 
-  val default_host : t
-  (** Defaut host. Any hostname, any port.
-      Will be used if you don not specify [?site]. *)
+val host :
+   ?re:string
+  -> ?port:int
+  -> ?default_hostname:string
+  -> ?default_httpport:int
+  -> ?default_httpsport:int
+  -> ?default_protocol_is_https:bool
+  -> ?mime_assoc:Ocsigen_charset_mime.mime_assoc
+  -> ?charset_assoc:Ocsigen_charset_mime.charset_assoc
+  -> ?default_directory_index:string list
+  -> ?list_directory_content:bool
+  -> ?follow_symlinks:[`Always | `No | `Owner_match]
+  -> ?do_not_serve_404:Ocsigen_extensions.do_not_serve
+  -> ?do_not_serve_403:Ocsigen_extensions.do_not_serve
+  -> ?uploaddir:string option
+  -> ?maxuploadfilesize:int64 option
+  -> instruction list
+  -> Ocsigen_extensions.host_config
 
-  type instruction =
-    Ocsigen_extensions.virtual_hosts
-    -> Ocsigen_extensions.config_info
-    -> Ocsigen_lib.Url.path
-    -> Ocsigen_extensions.extension
-  (** Instructions are defined by extensions, and correspond to the 
-      configuration file options defined by extensions (<staticmod/> ...)*)
-
-  val register : ?site:t -> instruction -> unit
-  (** [register ~site:s e] registers instruction [e] to be run inside site [s]. 
-      Use this if you want to create an extension yourself. *)
-end
+val site :
+   ?charset:string
+  -> Ocsigen_lib.Url.path
+  -> instruction list
+  -> instruction
