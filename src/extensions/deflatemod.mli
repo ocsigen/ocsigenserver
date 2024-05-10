@@ -7,7 +7,6 @@ val set_buffer_size : int -> unit
 type filter = [`Type of string option * string option | `Extension of string]
 
 val run :
-   ?site:Ocsigen_server.Site.t
-  -> mode:[`All_but of filter list | `Only of filter list]
+   mode:[`All_but of filter list | `Only of filter list]
   -> unit
-  -> unit
+  -> Ocsigen_server.instruction

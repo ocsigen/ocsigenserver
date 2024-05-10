@@ -11,4 +11,4 @@ val create_redirection :
   -> string
   -> redirection
 
-val run : ?site:Ocsigen_server.Site.t -> redirection:redirection -> unit -> unit
+val run : redirection:redirection -> unit -> Ocsigen_server.instruction

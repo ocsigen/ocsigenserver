@@ -281,7 +281,7 @@ let () =
 (* Registration for static linking: *)
 let preprocess s = "^" ^ s ^ "$"
 
-let instruction ?dir ?regexp ?dest ?code ?cache ?root () =
+let run ?dir ?regexp ?dest ?code ?cache ?root () =
   let kind =
     kind dir
       (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) regexp)
@@ -296,7 +296,3 @@ let instruction ?dir ?regexp ?dest ?code ?cache ?root () =
          root)
   in
   fun _ _ _ -> gen ~usermode:None ?cache kind
-
-let run ?site ?dir ?regexp ?dest ?code ?cache ?root () =
-  Ocsigen_server.Site.register ?site
-    (instruction ?dir ?regexp ?dest ?code ?cache ?root ())

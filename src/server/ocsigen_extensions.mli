@@ -406,7 +406,9 @@ val site_ext :
   -> Ocsigen_lib.Url.path
   -> extension
 
-val set_hosts : (virtual_hosts * config_info * extension_composite) list -> unit
+type host_config = virtual_hosts * config_info * extension_composite
+
+val set_hosts : host_config list -> unit
 val get_hosts : unit -> (virtual_hosts * config_info * extension_composite) list
 
 val compute_result :
@@ -416,9 +418,9 @@ val compute_result :
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
 
-val get_number_of_connected : unit -> int
-(** Profiling *)
+(** {3 Profiling} *)
 
+val get_number_of_connected : unit -> int
 val during_initialisation : unit -> bool
 val start_initialisation : unit -> unit
 val end_initialisation : unit -> unit
