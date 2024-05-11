@@ -97,6 +97,9 @@ val get_max_number_of_connections : unit -> int
 val get_client_timeout : unit -> int
 val get_server_timeout : unit -> int
 
+val has_configuration_file : unit -> bool
+(** returns true if Ocsigen Server is running with a configuration file, *)
+
 (*val get_keepalive_timeout : unit -> int
   val get_keepopen_timeout : unit -> int*)
 val get_filebuffersize : unit -> int
@@ -132,3 +135,4 @@ val get_uploaddir : unit -> string option
 (* Same thing for upload size *)
 val set_maxuploadfilesize : int64 option -> unit
 val get_maxuploadfilesize : unit -> int64 option
+val has_config_file : bool ref

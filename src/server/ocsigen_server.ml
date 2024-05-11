@@ -378,7 +378,9 @@ let main config =
     Ocsigen_messages.errlog msg;
     exit errno
 
-let exec = function
+let exec config =
+  Ocsigen_config.has_config_file := true;
+  match config with
   | [] -> ()
   | [h] ->
       (try Ocsigen_parseconfig.first_pass h

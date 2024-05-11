@@ -190,3 +190,6 @@ let display_version () =
   print_string version_number;
   print_newline ();
   exit 0
+
+let has_config_file = ref false
+let has_configuration_file () = !has_config_file
