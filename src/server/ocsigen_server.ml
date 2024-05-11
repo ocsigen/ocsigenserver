@@ -171,7 +171,11 @@ let site ?charset path instructions vh config_info parent_path =
   in
   Ocsigen_extensions.site_ext composite charset path
 
+let main_loop_is_running = ref false
+
 let main config =
+  if !main_loop_is_running then Lwt_log.ign_fatal "Cannot run main loop twice";
+  main_loop_is_running := true;
   try
     (* initialization functions for modules (Ocsigen extensions or application
        code) loaded from now on will be executed directly. *)
