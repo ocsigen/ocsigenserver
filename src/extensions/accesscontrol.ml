@@ -90,10 +90,10 @@ let rec parse_condition = function
         let r =
           List.exists
             (fun a ->
-              let r = Netstring_pcre.string_match regexp a 0 <> None in
-              if r
-              then Lwt_log.ign_info_f "HEADER: header %s matches %S" name reg;
-              r)
+               let r = Netstring_pcre.string_match regexp a 0 <> None in
+               if r
+               then Lwt_log.ign_info_f "HEADER: header %s matches %S" name reg;
+               r)
             (Ocsigen_request.header_multi ri
                (Ocsigen_header.Name.of_string name))
         in
@@ -187,12 +187,13 @@ let parse_config parse_fun = function
       | Ocsigen_extensions.Req_not_found (_, ri) ->
           Lwt.return
             (if condition ri.Ocsigen_extensions.request_info
-            then (
-              Lwt_log.ign_info ~section "COND: going into <then> branch";
-              Ocsigen_extensions.Ext_sub_result ithen)
-            else (
-              Lwt_log.ign_info ~section "COND: going into <else> branch, if any";
-              Ocsigen_extensions.Ext_sub_result ielse)))
+             then (
+               Lwt_log.ign_info ~section "COND: going into <then> branch";
+               Ocsigen_extensions.Ext_sub_result ithen)
+             else (
+               Lwt_log.ign_info ~section
+                 "COND: going into <else> branch, if any";
+               Ocsigen_extensions.Ext_sub_result ielse)))
   | Element (("if" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("notfound", [], []) ->

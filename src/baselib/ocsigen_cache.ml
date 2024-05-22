@@ -407,11 +407,11 @@ end = struct
 end
 
 module Weak = Weak.Make (struct
-  type t = unit -> unit
+    type t = unit -> unit
 
-  let hash = Hashtbl.hash
-  let equal = ( == )
-end)
+    let hash = Hashtbl.hash
+    let equal = ( == )
+  end)
 
 let clear_all = Weak.create 17
 
@@ -424,18 +424,18 @@ functor
   ->
   struct
     module H = Hashtbl.Make (struct
-      type t = A.key
+        type t = A.key
 
-      let equal a a' = a = a'
-      let hash = Hashtbl.hash
-    end)
+        let equal a a' = a = a'
+        let hash = Hashtbl.hash
+      end)
 
     type t =
       { mutable pointers : A.key Dlist.t
       ; mutable table : (A.value * A.key Dlist.node) H.t
       ; finder : A.key -> A.value Lwt.t
       ; clear : unit -> unit
-            (* This function clears the cache. It is put inside the
+      (* This function clears the cache. It is put inside the
                                cache structure so that it is garbage-collected only when the cache
                                is no longer referenced, as the functions themselves are put inside
                                a weak hash table *)

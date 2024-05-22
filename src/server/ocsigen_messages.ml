@@ -49,12 +49,12 @@ let open_files ?(user = Ocsigen_config.get_user ())
         Lwt.catch
           (fun () -> Lwt_log.file ~file_name:path ())
           (function
-            | Unix.Unix_error (error, _, _) ->
-                Lwt.fail
-                  (Ocsigen_config.Config_file_error
-                     (Printf.sprintf "can't open log file %s: %s" path
-                        (Unix.error_message error)))
-            | exn -> Lwt.fail exn)
+             | Unix.Unix_error (error, _, _) ->
+                 Lwt.fail
+                   (Ocsigen_config.Config_file_error
+                      (Printf.sprintf "can't open log file %s: %s" path
+                         (Unix.error_message error)))
+             | exn -> Lwt.fail exn)
       in
       open_log access_file >>= fun acc ->
       access_logger := acc;
@@ -64,17 +64,17 @@ let open_files ?(user = Ocsigen_config.get_user ())
       Lwt_log.default :=
         Lwt_log.broadcast
           [ Lwt_log.dispatch (fun _sect lev ->
-                match lev with
-                | Lwt_log.Error | Lwt_log.Fatal -> err
-                | Lwt_log.Warning -> war
-                | _ -> Lwt_log.null)
+              match lev with
+              | Lwt_log.Error | Lwt_log.Fatal -> err
+              | Lwt_log.Warning -> war
+              | _ -> Lwt_log.null)
           ; Lwt_log.dispatch (fun _sect lev ->
-                if Ocsigen_config.get_silent ()
-                then Lwt_log.null
-                else
-                  match lev with
-                  | Lwt_log.Warning | Lwt_log.Error | Lwt_log.Fatal -> stderr
-                  | _ -> stdout) ];
+              if Ocsigen_config.get_silent ()
+              then Lwt_log.null
+              else
+                match lev with
+                | Lwt_log.Warning | Lwt_log.Error | Lwt_log.Fatal -> stderr
+                | _ -> stdout) ];
       let gid =
         match group with
         | None -> Unix.getgid ()
@@ -95,15 +95,15 @@ let open_files ?(user = Ocsigen_config.get_user ())
       in
       Lwt.catch
         (fun () ->
-          Lwt_unix.chown (full_path access_file) uid gid >>= fun () ->
-          Lwt_unix.chown (full_path warning_file) uid gid >>= fun () ->
-          Lwt_unix.chown (full_path error_file) uid gid)
+           Lwt_unix.chown (full_path access_file) uid gid >>= fun () ->
+           Lwt_unix.chown (full_path warning_file) uid gid >>= fun () ->
+           Lwt_unix.chown (full_path error_file) uid gid)
         (fun e ->
-          match e with
-          | Unix.Unix_error (Unix.EPERM, _, _) ->
-              (* to allow for symlinks to /dev/null *)
-              Lwt.return_unit
-          | _ -> Lwt.fail e)
+           match e with
+           | Unix.Unix_error (Unix.EPERM, _, _) ->
+               (* to allow for symlinks to /dev/null *)
+               Lwt.return_unit
+           | _ -> Lwt.fail e)
 
 (****)
 

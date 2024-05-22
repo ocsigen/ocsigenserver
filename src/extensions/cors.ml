@@ -131,22 +131,22 @@ let parse_config _ _ _parse_fun config_elem =
         [ Configuration.element ~name:"cors"
             ~attributes:
               [ Configuration.attribute ~name:"credentials" (fun s ->
-                    let s = bool_of_string s in
-                    config := {!config with credentials = s})
+                  let s = bool_of_string s in
+                  config := {!config with credentials = s})
               ; Configuration.attribute ~name:"max_age" (fun s ->
-                    let s = Some (int_of_string s) in
-                    config := {!config with max_age = s})
+                  let s = Some (int_of_string s) in
+                  config := {!config with max_age = s})
               ; Configuration.attribute ~name:"exposed_headers" (fun s ->
-                    let s =
-                      Ocsigen_lib.Netstring_pcre.split comma_space_regexp s
-                    in
-                    config := {!config with exposed_headers = s})
+                  let s =
+                    Ocsigen_lib.Netstring_pcre.split comma_space_regexp s
+                  in
+                  config := {!config with exposed_headers = s})
               ; Configuration.attribute ~name:"methods" (fun s ->
-                    let s =
-                      Ocsigen_lib.Netstring_pcre.split comma_space_regexp s
-                    in
-                    let s = Some (List.map Cohttp.Code.method_of_string s) in
-                    config := {!config with methods = s}) ]
+                  let s =
+                    Ocsigen_lib.Netstring_pcre.split comma_space_regexp s
+                  in
+                  let s = Some (List.map Cohttp.Code.method_of_string s) in
+                  config := {!config with methods = s}) ]
             () ]
       config_elem);
   main !config
@@ -164,10 +164,10 @@ let methods = Ocsigen_server.Site.Config.key ()
 let extension =
   Ocsigen_server.Site.create_extension
     (fun {Ocsigen_server.Site.Config.accessor} ->
-      let methods = accessor methods
-      and credentials = Ocsigen_lib.Option.get' false (accessor credentials)
-      and max_age = accessor max_age
-      and exposed_headers =
-        Ocsigen_lib.Option.get' [] (accessor exposed_headers)
-      in
-      main {credentials; methods; max_age; exposed_headers})
+       let methods = accessor methods
+       and credentials = Ocsigen_lib.Option.get' false (accessor credentials)
+       and max_age = accessor max_age
+       and exposed_headers =
+         Ocsigen_lib.Option.get' [] (accessor exposed_headers)
+       in
+       main {credentials; methods; max_age; exposed_headers})

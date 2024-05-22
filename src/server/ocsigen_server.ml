@@ -33,18 +33,18 @@ let section = Lwt_log.Section.make "ocsigen:main"
 (* Initialize exception handler for Lwt timeouts: *)
 let _ =
   Lwt_timeout.set_exn_handler (fun e ->
-      Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt timeout")
+    Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt timeout")
 
 let _warn sockaddr s =
   Lwt_log.ign_warning_f ~section "While talking to %a:%s"
     (fun () sockaddr ->
-      Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
+       Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
     sockaddr s
 
 let _dbg sockaddr s =
   Lwt_log.ign_info_f ~section "While talking to %a:%s"
     (fun () sockaddr ->
-      Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
+       Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
     sockaddr s
 
 (* fatal errors messages *)
@@ -256,11 +256,11 @@ module Site = struct
     Ocsigen_extensions.set_hosts (List.fold_left f [] !l)
 
   module Config = Make_config_nested (struct
-    type nonrec t = t
+      type nonrec t = t
 
-    let get {s_config_map; _} = s_config_map
-    let do_ ({s_config_map; _} as vh) f = vh.s_config_map <- f s_config_map
-  end)
+      let get {s_config_map; _} = s_config_map
+      let do_ ({s_config_map; _} as vh) f = vh.s_config_map <- f s_config_map
+    end)
 end
 
 let start ?config () =
@@ -360,8 +360,8 @@ let start ?config () =
       (* I change the user for the process *)
       (try
          (if current_uid = 0
-         then
-           match user with None -> () | Some user -> Unix.initgroups user gid);
+          then
+            match user with None -> () | Some user -> Unix.initgroups user gid);
          Unix.setgid gid; Unix.setuid uid
        with (Unix.Unix_error _ | Failure _) as e ->
          Lwt_log.ign_error ~section "Error: Wrong user or group";
@@ -375,7 +375,7 @@ let start ?config () =
              "maxthreads should be greater than minthreads");
       ignore
         (Lwt_preemptive.init minthreads maxthreads (fun s ->
-             Lwt_log.ign_error ~section s));
+           Lwt_log.ign_error ~section s));
       (Lwt.async_exception_hook :=
          fun e ->
            (* replace the default "exit 2" behaviour *)
@@ -417,24 +417,24 @@ let start ?config () =
         Ocsigen_messages.warning ("Command received: " ^ s);
         Lwt.catch
           (fun () ->
-            let prefix, c =
-              match Ocsigen_lib.String.split ~multisep:true ' ' s with
-              | [] -> raise Ocsigen_command.Unknown_command
-              | a :: l -> (
-                try
-                  let aa, ab = Ocsigen_lib.String.sep ':' a in
-                  Some aa, ab :: l
-                with Not_found -> None, a :: l)
-            in
-            Ocsigen_command.get_command_function () ?prefix s c)
+             let prefix, c =
+               match Ocsigen_lib.String.split ~multisep:true ' ' s with
+               | [] -> raise Ocsigen_command.Unknown_command
+               | a :: l -> (
+                 try
+                   let aa, ab = Ocsigen_lib.String.sep ':' a in
+                   Some aa, ab :: l
+                 with Not_found -> None, a :: l)
+             in
+             Ocsigen_command.get_command_function () ?prefix s c)
           (function
-            | Ocsigen_command.Unknown_command ->
-                Lwt_log.ign_warning ~section "Unknown command";
-                Lwt.return ()
-            | e ->
-                Lwt_log.ign_error ~section ~exn:e
-                  "Uncaught Exception after command";
-                Lwt.fail e)
+             | Ocsigen_command.Unknown_command ->
+                 Lwt_log.ign_warning ~section "Unknown command";
+                 Lwt.return ()
+             | e ->
+                 Lwt_log.ign_error ~section ~exn:e
+                   "Uncaught Exception after command";
+                 Lwt.fail e)
         >>= f
       in
       ignore (f ());
@@ -442,22 +442,22 @@ let start ?config () =
       @@ Lwt.join
            (List.map
               (fun (address, port) ->
-                Ocsigen_cohttp.service ~address ~port
-                  ~connector:extensions_connector ())
+                 Ocsigen_cohttp.service ~address ~port
+                   ~connector:extensions_connector ())
               connection
            @ (List.map (fun (address, port, (crt, key)) ->
-                  Ocsigen_cohttp.service
-                    ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-                    ~address ~port ~connector:extensions_connector ()))
+                Ocsigen_cohttp.service
+                  ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+                  ~address ~port ~connector:extensions_connector ()))
                ssl_connection)
       (*
          Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
 
        fst (Lwt.wait ())
-       *)
+      *)
     in
     (*
-  let set_passwd_if_needed (ssl, ports, sslports) =
+       let set_passwd_if_needed (ssl, ports, sslports) =
     if sslports <> []
     then
       match ssl with
@@ -471,7 +471,7 @@ let start ?config () =
         Ssl.set_password_callback !Server.ssl_context (ask_for_passwd sslports);
         Ssl.use_certificate !Server.ssl_context c k
   in
-  *)
+    *)
     let write_pid pid =
       match Ocsigen_config.get_pidfile () with
       | None -> ()
@@ -494,7 +494,7 @@ let start ?config () =
         then run h
         else (
           Ocsigen_messages.console (fun () ->
-              "Process " ^ string_of_int pid ^ " detached");
+            "Process " ^ string_of_int pid ^ " detached");
           write_pid pid)
       else (
         write_pid (Unix.getpid ());

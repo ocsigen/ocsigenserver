@@ -22,8 +22,8 @@
 
 exception Unknown_command
 
-val register_command_function
-  :  ?prefix:string
+val register_command_function :
+   ?prefix:string
   -> (string -> string list -> unit Lwt.t)
   -> unit
 (** Use a prefix for all your commands when you want to create
@@ -39,8 +39,8 @@ val register_command_function
 
 (**/**)
 
-val get_command_function
-  :  unit
+val get_command_function :
+   unit
   -> ?prefix:string
   -> string
   -> string list

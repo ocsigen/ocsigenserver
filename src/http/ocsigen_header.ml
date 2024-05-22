@@ -152,11 +152,11 @@ module Content_type = struct
     try
       List.find
         (fun content_type ->
-          let f = function
-            | (Some a, Some b), _, _ -> a ^ "/" ^ b = content_type
-            | _ -> false
-          in
-          List.exists f accept)
+           let f = function
+             | (Some a, Some b), _, _ -> a ^ "/" ^ b = content_type
+             | _ -> false
+           in
+           List.exists f accept)
         (default :: alt)
     with Not_found -> default
 end

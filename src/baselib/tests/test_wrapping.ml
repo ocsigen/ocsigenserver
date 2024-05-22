@@ -7,7 +7,7 @@ type a = {a : float; a_wrap : a Ocsigen_wrap.wrapper}
 
 let a_wrap () =
   Ocsigen_wrap.create_wrapper (fun t ->
-      {a = t.a +. 1.; a_wrap = Ocsigen_wrap.empty_wrapper})
+    {a = t.a +. 1.; a_wrap = Ocsigen_wrap.empty_wrapper})
 
 let a i = {a = i; a_wrap = a_wrap ()}
 let va = a 3.14
@@ -64,7 +64,7 @@ let ( -- ) x y =
   aux y x []
 
 (*
-type l =
+   type l =
     | A
     | L of l * int
 
@@ -116,8 +116,8 @@ let i = ref 0
 
 let mtoto () =
   Ocsigen_wrap.create_wrapper (fun t ->
-      incr i;
-      string_of_float t.a, !i)
+    incr i;
+    string_of_float t.a, !i)
 
 let mt () = Ocsigen_wrap.create_wrapper (fun t -> incr i; t.v2)
 let toto i = {a = i; mtoto = mtoto ()}
@@ -140,13 +140,13 @@ let r3 = ref 88
 
 let t1mark () =
   Ocsigen_wrap.create_wrapper (fun t ->
-      incr r1;
-      {t1a = 3.14; t1mark = Ocsigen_wrap.empty_wrapper})
+    incr r1;
+    {t1a = 3.14; t1mark = Ocsigen_wrap.empty_wrapper})
 
 let t2mark () =
   Ocsigen_wrap.create_wrapper (fun t ->
-      (match t.t2f with Some f -> f r2 | None -> assert false);
-      {t with t2f = None; t2mark = Ocsigen_wrap.empty_wrapper})
+    (match t.t2f with Some f -> f r2 | None -> assert false);
+    {t with t2f = None; t2mark = Ocsigen_wrap.empty_wrapper})
 
 let t1 = {t1a = 1.1; t1mark = t1mark ()}
 let t2 = {t2t1 = t1; t2f = Some (fun r -> incr r; incr r3); t2mark = t2mark ()}

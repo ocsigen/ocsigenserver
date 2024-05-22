@@ -119,21 +119,21 @@ let fun_site usermode _ _ _ _ _ = function
         | _ :: _ -> bad_config "invalid subtag in option charset"
       in
       gen (fun config ->
-          let config =
-            match attrs with
-            | [("default", s)] ->
-                { config with
-                  Ocsigen_extensions.charset_assoc =
-                    Ocsigen_charset_mime.set_default_charset
-                      config.Ocsigen_extensions.charset_assoc s }
-            | [] -> config
-            | _ ->
-                bad_config
-                  "Only attribute \"default\" is permitted for option \"charset\""
-          in
-          { config with
-            Ocsigen_extensions.charset_assoc =
-              aux config.Ocsigen_extensions.charset_assoc exts })
+        let config =
+          match attrs with
+          | [("default", s)] ->
+              { config with
+                Ocsigen_extensions.charset_assoc =
+                  Ocsigen_charset_mime.set_default_charset
+                    config.Ocsigen_extensions.charset_assoc s }
+          | [] -> config
+          | _ ->
+              bad_config
+                "Only attribute \"default\" is permitted for option \"charset\""
+        in
+        { config with
+          Ocsigen_extensions.charset_assoc =
+            aux config.Ocsigen_extensions.charset_assoc exts })
   | Xml.Element ("contenttype", attrs, exts) ->
       let rec aux mime_assoc = function
         | [] -> mime_assoc
@@ -153,21 +153,21 @@ let fun_site usermode _ _ _ _ _ = function
         | _ :: _ -> bad_config "invalid subtag in option mime"
       in
       gen (fun config ->
-          let config =
-            match attrs with
-            | [("default", s)] ->
-                { config with
-                  Ocsigen_extensions.mime_assoc =
-                    Ocsigen_charset_mime.set_default_mime
-                      config.Ocsigen_extensions.mime_assoc s }
-            | [] -> config
-            | _ ->
-                bad_config
-                  "Only attribute \"default\" is permitted for option \"contenttype\""
-          in
-          { config with
-            Ocsigen_extensions.mime_assoc =
-              aux config.Ocsigen_extensions.mime_assoc exts })
+        let config =
+          match attrs with
+          | [("default", s)] ->
+              { config with
+                Ocsigen_extensions.mime_assoc =
+                  Ocsigen_charset_mime.set_default_mime
+                    config.Ocsigen_extensions.mime_assoc s }
+          | [] -> config
+          | _ ->
+              bad_config
+                "Only attribute \"default\" is permitted for option \"contenttype\""
+        in
+        { config with
+          Ocsigen_extensions.mime_assoc =
+            aux config.Ocsigen_extensions.mime_assoc exts })
   | Xml.Element ("defaultindex", [], l) ->
       let rec aux indexes = function
         | [] -> List.rev indexes
@@ -177,7 +177,7 @@ let fun_site usermode _ _ _ _ _ = function
               "subtags must be of the form <index>...</index> in option defaultindex"
       in
       gen (fun config ->
-          {config with Ocsigen_extensions.default_directory_index = aux [] l})
+        {config with Ocsigen_extensions.default_directory_index = aux [] l})
   | Xml.Element (("defaultindex" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("hidefile", [], l) -> (
@@ -185,10 +185,10 @@ let fun_site usermode _ _ _ _ _ = function
       try
         check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
         gen (fun config ->
-            { config with
-              Ocsigen_extensions.do_not_serve_404 =
-                Ocsigen_extensions.join_do_not_serve do_not_serve
-                  config.Ocsigen_extensions.do_not_serve_404 })
+          { config with
+            Ocsigen_extensions.do_not_serve_404 =
+              Ocsigen_extensions.join_do_not_serve do_not_serve
+                config.Ocsigen_extensions.do_not_serve_404 })
       with Bad_regexp r ->
         Ocsigen_extensions.badconfig "Invalid regexp %s in %s" r "hidefile")
   | Xml.Element (("hidefile" as s), _, _) ->
@@ -198,10 +198,10 @@ let fun_site usermode _ _ _ _ _ = function
       try
         check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
         gen (fun config ->
-            { config with
-              Ocsigen_extensions.do_not_serve_403 =
-                Ocsigen_extensions.join_do_not_serve do_not_serve
-                  config.Ocsigen_extensions.do_not_serve_403 })
+          { config with
+            Ocsigen_extensions.do_not_serve_403 =
+              Ocsigen_extensions.join_do_not_serve do_not_serve
+                config.Ocsigen_extensions.do_not_serve_403 })
       with Bad_regexp r ->
         Ocsigen_extensions.badconfig "Invalid regexp %s in %s" r "forbidfile")
   | Xml.Element (("forbidfile" as s), _, _) ->

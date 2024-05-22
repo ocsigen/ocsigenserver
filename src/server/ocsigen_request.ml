@@ -29,7 +29,7 @@ let unflatten_get_params l =
   M.bindings
     (List.fold_left
        (fun acc (id, v) ->
-         M.add id (try v :: M.find id acc with Not_found -> [v]) acc)
+          M.add id (try v :: M.find id acc with Not_found -> [v]) acc)
        M.empty l)
 
 let flatten_get_params l =
@@ -226,10 +226,10 @@ let parse_cookies s =
   try
     List.fold_left
       (fun beg a ->
-        try
-          let n, v = Ocsigen_lib.String.sep '=' a in
-          Ocsigen_cookie_map.Map_inner.add n v beg
-        with Not_found -> beg)
+         try
+           let n, v = Ocsigen_lib.String.sep '=' a in
+           Ocsigen_cookie_map.Map_inner.add n v beg
+         with Not_found -> beg)
       Ocsigen_cookie_map.Map_inner.empty splitted
   with _ -> Ocsigen_cookie_map.Map_inner.empty
 

@@ -53,8 +53,8 @@ val update_charset_ext : charset_assoc -> extension -> charset -> charset_assoc
 
 val update_charset_file : charset_assoc -> filename -> charset -> charset_assoc
 
-val update_charset_regexp
-  :  charset_assoc
+val update_charset_regexp :
+   charset_assoc
   -> Re.Pcre.regexp
   -> charset
   -> charset_assoc

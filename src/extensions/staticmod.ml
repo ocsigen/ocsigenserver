@@ -229,43 +229,42 @@ let parse_config userconf _ : Ocsigen_extensions.parse_config_aux =
         [ Configuration.element ~name:"static"
             ~attributes:
               [ Configuration.attribute ~name:"dir" (fun s ->
-                    opt :=
-                      {!opt with opt_dir = Some (rewrite_local_path userconf s)})
+                  opt :=
+                    {!opt with opt_dir = Some (rewrite_local_path userconf s)})
               ; Configuration.attribute ~name:"regexp" (fun s ->
-                    let s =
-                      try Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                      with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
-                        badconfig
-                          "Bad regexp \"%s\" in <static regexp=\"...\" />" s
-                    in
-                    opt := {!opt with opt_regexp = Some s})
+                  let s =
+                    try Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
+                    with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
+                      badconfig "Bad regexp \"%s\" in <static regexp=\"...\" />"
+                        s
+                  in
+                  opt := {!opt with opt_regexp = Some s})
               ; Configuration.attribute ~name:"code" (fun s ->
-                    let c =
-                      try Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                      with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
-                        badconfig "Bad regexp \"%s\" in <static code=\"...\" />"
-                          s
-                    in
-                    opt := {!opt with opt_code = Some c})
+                  let c =
+                    try Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
+                    with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
+                      badconfig "Bad regexp \"%s\" in <static code=\"...\" />" s
+                  in
+                  opt := {!opt with opt_code = Some c})
               ; Configuration.attribute ~name:"dest" (fun s ->
-                    let s =
-                      Some (parse_user_dir (rewrite_local_path userconf s))
-                    in
-                    opt := {!opt with opt_dest = s})
+                  let s =
+                    Some (parse_user_dir (rewrite_local_path userconf s))
+                  in
+                  opt := {!opt with opt_dest = s})
               ; Configuration.attribute ~name:"root" (fun s ->
-                    let s = Some (parse_user_dir s) in
-                    opt := {!opt with opt_root_checks = s})
+                  let s = Some (parse_user_dir s) in
+                  opt := {!opt with opt_root_checks = s})
               ; Configuration.attribute ~name:"cache" (fun s ->
-                    let duration =
-                      match s with
-                      | "no" -> 0
-                      | s -> (
-                        try int_of_string s
-                        with Failure _ ->
-                          badconfig
-                            "Bad integer \"%s\" in <static cache=\"...\" />" s)
-                    in
-                    opt := {!opt with opt_cache = Some duration}) ]
+                  let duration =
+                    match s with
+                    | "no" -> 0
+                    | s -> (
+                      try int_of_string s
+                      with Failure _ ->
+                        badconfig
+                          "Bad integer \"%s\" in <static cache=\"...\" />" s)
+                  in
+                  opt := {!opt with opt_cache = Some duration}) ]
             () ]
       element);
   gen ~usermode:userconf ?cache:!opt.opt_cache
@@ -289,10 +288,10 @@ let root_checks = Ocsigen_server.Site.Config.key ()
 let extension =
   Ocsigen_server.Site.create_extension
     (fun {Ocsigen_server.Site.Config.accessor} ->
-      let kind =
-        kind (accessor dir)
-          (Ocsigen_lib.Option.map Pcre.regexp (accessor regexp))
-          (Ocsigen_lib.Option.map Pcre.regexp (accessor code))
-          (accessor dest) (accessor root_checks)
-      in
-      gen ~usermode:None kind)
+       let kind =
+         kind (accessor dir)
+           (Ocsigen_lib.Option.map Pcre.regexp (accessor regexp))
+           (Ocsigen_lib.Option.map Pcre.regexp (accessor code))
+           (accessor dest) (accessor root_checks)
+       in
+       gen ~usermode:None kind)

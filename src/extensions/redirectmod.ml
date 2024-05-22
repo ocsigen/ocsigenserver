@@ -82,16 +82,16 @@ let parse_config config_elem =
         [ Configuration.element ~name:"redirect"
             ~attributes:
               [ Configuration.attribute ~name:"regexp" (fun s ->
-                    regexp := Some ("^" ^ s ^ "$");
-                    mode := `Maybe)
+                  regexp := Some ("^" ^ s ^ "$");
+                  mode := `Maybe)
               ; Configuration.attribute ~name:"fullurl" (fun s ->
-                    regexp := Some s;
-                    mode := `Yes)
+                  regexp := Some s;
+                  mode := `Yes)
               ; Configuration.attribute ~name:"suburl" (fun s ->
-                    regexp := Some s;
-                    mode := `No)
+                  regexp := Some s;
+                  mode := `No)
               ; Configuration.attribute ~name:"dest" ~obligatory:true (fun s ->
-                    dest := s)
+                  dest := s)
               ; Configuration.attribute ~name:"temporary" (function
                   | "temporary" -> temporary := true
                   | _ -> ()) ]
@@ -113,6 +113,6 @@ let redirection = Ocsigen_server.Site.Config.key ()
 let extension =
   Ocsigen_server.Site.create_extension
     (fun {Ocsigen_server.Site.Config.accessor} ->
-      match accessor redirection with
-      | Some redirection -> gen redirection
-      | None -> failwith "Redirectmod.redirection not set")
+       match accessor redirection with
+       | Some redirection -> gen redirection
+       | None -> failwith "Redirectmod.redirection not set")

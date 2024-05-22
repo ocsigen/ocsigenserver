@@ -44,8 +44,8 @@ end
 module Site : sig
   type t
 
-  val create
-    :  ?config_info:Ocsigen_extensions.config_info
+  val create :
+     ?config_info:Ocsigen_extensions.config_info
     -> ?id:[`Attach of t * Ocsigen_lib.Url.path | `Host of string * int option]
     -> ?charset:Ocsigen_charset_mime.charset
     -> ?auto_load_extensions:bool
@@ -56,20 +56,20 @@ module Site : sig
 
   type extension
 
-  val create_extension
-    :  (Config.accessor -> Ocsigen_extensions.extension)
+  val create_extension :
+     (Config.accessor -> Ocsigen_extensions.extension)
     -> extension
 
   val register : t -> extension -> unit
 
   (**/**)
 
-  val create_extension_intrusive
-    :  (Ocsigen_extensions.virtual_hosts
-        -> Ocsigen_extensions.config_info
-        -> Ocsigen_lib.Url.path
-        -> Config.accessor
-        -> Ocsigen_extensions.extension)
+  val create_extension_intrusive :
+     (Ocsigen_extensions.virtual_hosts
+      -> Ocsigen_extensions.config_info
+      -> Ocsigen_lib.Url.path
+      -> Config.accessor
+      -> Ocsigen_extensions.extension)
     -> extension
   (** Lower-level interface for creating extensions that gives the
       extension more info. To be avoided. Currently used by Eliom. *)

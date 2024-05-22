@@ -18,8 +18,8 @@ val get_number_of_connected : unit -> int
 val shutdown : float option -> unit
 (** Shutdown main loop of server *)
 
-val service
-  :  ?ssl:string * string * (bool -> string) option
+val service :
+   ?ssl:string * string * (bool -> string) option
   -> address:Ocsigen_config.socket_type
   -> port:int
   -> connector:(Ocsigen_request.t -> Ocsigen_response.t Lwt.t)

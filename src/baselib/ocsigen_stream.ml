@@ -59,15 +59,15 @@ let rec get_aux st =
     (Lwt.try_bind
        (fun () -> Lazy.force st.stream)
        (fun e ->
-         Lwt.return
-           (match e with
-           | Cont (s, rem) ->
-               st.stream <- rem;
-               Cont (s, get_aux st)
-           | _ -> e))
+          Lwt.return
+            (match e with
+            | Cont (s, rem) ->
+                st.stream <- rem;
+                Cont (s, get_aux st)
+            | _ -> e))
        (fun e ->
-         st.stream <- lazy (Lwt.fail e);
-         Lwt.fail (Interrupted e)))
+          st.stream <- lazy (Lwt.fail e);
+          Lwt.fail (Interrupted e)))
 
 let get st =
   if st.in_use then raise Already_read;
@@ -141,7 +141,7 @@ let enlarge_stream = function
             else
               let long4 = long3 - max in
               cont (String.sub new_s 0 max) (fun () ->
-                  Lwt.return (Cont (String.sub new_s max long4, ff))))
+                Lwt.return (Cont (String.sub new_s max long4, ff))))
 
 let rec stream_want s len =
   (* returns a stream with at least len bytes read if possible *)
@@ -154,7 +154,7 @@ let rec stream_want s len =
         Lwt.catch
           (fun () -> enlarge_stream s >>= fun r -> Lwt.return (`OK r))
           (function
-            | Stream_too_small -> Lwt.return `Too_small | e -> Lwt.fail e)
+             | Stream_too_small -> Lwt.return `Too_small | e -> Lwt.fail e)
         >>= function
         | `OK r -> stream_want r len
         | `Too_small -> Lwt.return s)
@@ -191,17 +191,16 @@ let substream delim s =
             try
               let p, _ = Ocsigen_lib.Netstring_pcre.search_forward rdelim s 0 in
               cont (String.sub s 0 p) (fun () ->
-                  empty
-                    (Some
-                       (fun () ->
-                         Lwt.return (Cont (String.sub s p (len - p), f)))))
+                empty
+                  (Some
+                     (fun () -> Lwt.return (Cont (String.sub s p (len - p), f)))))
             with Not_found ->
               let pos = len + 1 - ldelim in
               cont (String.sub s 0 pos) (fun () ->
-                  next f >>= function
-                  | Finished _ -> Lwt.fail Stream_too_small
-                  | Cont (s', f') ->
-                      aux (Cont (String.sub s pos (len - pos) ^ s', f'))))
+                next f >>= function
+                | Finished _ -> Lwt.fail Stream_too_small
+                | Cont (s', f') ->
+                    aux (Cont (String.sub s pos (len - pos) ^ s', f'))))
     in
     aux s
 

@@ -23,10 +23,10 @@
 type 'a key = int * 'a option ref
 
 module T = Map.Make (struct
-  type t = int
+    type t = int
 
-  let compare = compare
-end)
+    let compare = compare
+  end)
 
 type t = (unit -> unit) T.t ref
 

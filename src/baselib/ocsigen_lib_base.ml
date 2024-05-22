@@ -220,10 +220,10 @@ end
 
 module Int = struct
   module Table = Map.Make (struct
-    type t = int
+      type t = int
 
-    let compare = compare
-  end)
+      let compare = compare
+    end)
 end
 
 (*****************************************************************************)
@@ -312,8 +312,8 @@ module Url_base = struct
     (if https then "https://" else "http://")
     ^ host
     ^ (if (port = 80 && not https) || (https && port = 443)
-      then ""
-      else ":" ^ string_of_int port)
+       then ""
+       else ":" ^ string_of_int port)
     ^ uri
 
   let remove_dotdot =

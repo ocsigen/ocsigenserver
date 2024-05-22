@@ -31,7 +31,7 @@ exception NotReadableDirectory
 (** The file is a directory which we should not display *)
 
 (*
-(** Default options:
+   (** Default options:
     - never follow symlinks
     - use "index.html" as default index
     - do not list the content of directories
@@ -44,8 +44,8 @@ val default_options : options
     instead of foo *)
 type resolved = RFile of string | RDir of string
 
-val resolve
-  :  ?no_check_for:string
+val resolve :
+   ?no_check_for:string
   -> request:Ocsigen_extensions.request
   -> filename:string
   -> unit

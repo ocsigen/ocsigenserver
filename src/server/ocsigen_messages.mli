@@ -46,8 +46,8 @@ val error_log_path : unit -> string
 
 (**/**)
 
-val open_files
-  :  ?user:string option
+val open_files :
+   ?user:string option
   -> ?group:string option
   -> unit
   -> unit Lwt.t

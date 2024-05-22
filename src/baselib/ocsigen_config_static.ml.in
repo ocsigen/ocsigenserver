@@ -29,8 +29,8 @@ let datadir = ref "_DATADIR_"
 let bindir = ref "_BINDIR_"
 let extdir = ref "_EXTDIR_"
 let command_pipe = ref "_COMMANDPIPE_"
+
 let builtin_packages =
   List.fold_left
     (fun a s -> Ocsigen_lib.String.Set.add s a)
-    Ocsigen_lib.String.Set.empty
-    [_DEPS_]
+    Ocsigen_lib.String.Set.empty [_DEPS_]

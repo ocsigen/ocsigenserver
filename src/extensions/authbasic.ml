@@ -29,7 +29,7 @@ exception Bad_config_tag_for_auth of string
 let register_basic_authentication_method, get_basic_authentication_method =
   let fun_auth =
     ref (fun _config ->
-        raise (Bad_config_tag_for_auth "<unknown basic authentication method>"))
+      raise (Bad_config_tag_for_auth "<unknown basic authentication method>"))
   in
   (* register_basic_authentication_method *)
   ( (fun new_fun_auth ->
@@ -91,7 +91,7 @@ let parse_config element =
         [ Configuration.element ~name:"authbasic"
             ~attributes:
               [ Configuration.attribute ~name:"realm" ~obligatory:true (fun s ->
-                    realm_ref := s) ]
+                  realm_ref := s) ]
             ~other_elements:(fun name attrs content ->
               rest_ref := Xml.Element (name, attrs, content) :: !rest_ref)
             () ]
@@ -116,6 +116,6 @@ let auth = Ocsigen_server.Site.Config.key ()
 let extension =
   Ocsigen_server.Site.create_extension
     (fun {Ocsigen_server.Site.Config.accessor} ->
-      match accessor realm, accessor auth with
-      | Some realm, Some auth -> gen ~realm ~auth
-      | _, _ -> failwith "Authbasic realm and/or auth not set")
+       match accessor realm, accessor auth with
+       | Some realm, Some auth -> gen ~realm ~auth
+       | _, _ -> failwith "Authbasic realm and/or auth not set")

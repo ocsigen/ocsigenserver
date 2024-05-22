@@ -73,26 +73,26 @@ let parse_config config_elem =
         [ Configuration.element ~name:"outputfilter"
             ~attributes:
               [ Configuration.attribute ~name:"header" (fun s ->
-                    header := Some s)
+                  header := Some s)
               ; Configuration.attribute ~name:"regexp" (fun s ->
-                    regexp := Some (Ocsigen_lib.Netstring_pcre.regexp s))
+                  regexp := Some (Ocsigen_lib.Netstring_pcre.regexp s))
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"replace" (fun s ->
-                    try replace := Some (bool_of_string s)
-                    with Invalid_argument _ ->
-                      badconfig
-                        "Wrong value for attribute replace of <outputfilter/>: %s. It should be true or false"
-                        s) ]
+                  try replace := Some (bool_of_string s)
+                  with Invalid_argument _ ->
+                    badconfig
+                      "Wrong value for attribute replace of <outputfilter/>: %s. It should be true or false"
+                      s) ]
             ()
         ; Configuration.element ~name:"sethttpcode"
             ~attributes:
               [ Configuration.attribute ~name:"code" (fun s ->
-                    try
-                      match Cohttp.Code.status_of_code (int_of_string s) with
-                      | #Cohttp.Code.status as status -> code := Some status
-                      | `Code _ -> failwith "Invalid code"
-                    with Failure _ ->
-                      badconfig "Invalid code attribute in <sethttpcode>") ]
+                  try
+                    match Cohttp.Code.status_of_code (int_of_string s) with
+                    | #Cohttp.Code.status as status -> code := Some status
+                    | `Code _ -> failwith "Invalid code"
+                  with Failure _ ->
+                    badconfig "Invalid code attribute in <sethttpcode>") ]
             () ]
       config_elem);
   match !code with
@@ -121,7 +121,7 @@ let mode = Ocsigen_server.Site.Config.key ()
 let extension =
   Ocsigen_server.Site.create_extension
     (fun {Ocsigen_server.Site.Config.accessor} ->
-      match accessor mode with
-      | Some (`Code c) -> gen_code c
-      | Some (#header_filter as f) -> gen f
-      | None -> failwith "Outputfilter.mode not set")
+       match accessor mode with
+       | Some (`Code c) -> gen_code c
+       | Some (#header_filter as f) -> gen f
+       | None -> failwith "Outputfilter.mode not set")
