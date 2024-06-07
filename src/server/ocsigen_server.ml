@@ -295,9 +295,7 @@ let start ?config () =
     in
     let extensions_connector = Ocsigen_extensions.compute_result in
     let run s =
-      let user = Ocsigen_config.get_user ()
-      and group = Ocsigen_config.get_group () in
-      Lwt_main.run (Ocsigen_messages.open_files ~user ~group ());
+      Lwt_main.run (Ocsigen_messages.open_files ());
       let ports = Ocsigen_config.get_ports ()
       and ssl_ports = Ocsigen_config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
@@ -326,25 +324,6 @@ let start ?config () =
         | l, Some (crt, key) -> List.map (fun (a, p) -> a, p, (crt, key)) l
         | _ -> []
       in
-      let current_uid = Unix.getuid () in
-      let gid =
-        match group with
-        | None -> Unix.getgid ()
-        | Some group -> (
-          try (Unix.getgrnam group).Unix.gr_gid
-          with Not_found as e ->
-            Ocsigen_messages.errlog "Error: Wrong group";
-            raise e)
-      in
-      let uid =
-        match user with
-        | None -> current_uid
-        | Some user -> (
-          try (Unix.getpwnam user).Unix.pw_uid
-          with Not_found as e ->
-            Ocsigen_messages.errlog "Error: Wrong user";
-            raise e)
-      in
       (* A pipe to communicate with the server *)
       let commandpipe = Ocsigen_config.get_command_pipe () in
       (try ignore (Unix.stat commandpipe)
@@ -352,20 +331,10 @@ let start ?config () =
          try
            let umask = Unix.umask 0 in
            Unix.mkfifo commandpipe 0o660;
-           Unix.chown commandpipe uid gid;
            ignore (Unix.umask umask);
            Lwt_log.ign_warning ~section "Command pipe created"
          with e ->
            Lwt_log.ign_error ~section ~exn:e "Cannot create the command pipe"));
-      (* I change the user for the process *)
-      (try
-         (if current_uid = 0
-          then
-            match user with None -> () | Some user -> Unix.initgroups user gid);
-         Unix.setgid gid; Unix.setuid uid
-       with (Unix.Unix_error _ | Failure _) as e ->
-         Lwt_log.ign_error ~section "Error: Wrong user or group";
-         raise e);
       let minthreads = Ocsigen_config.get_minthreads ()
       and maxthreads = Ocsigen_config.get_maxthreads () in
       if minthreads > maxthreads
