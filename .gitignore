@@ -9,3 +9,4 @@ doc/api-html
 doc/api-wiki
 _opam
 _build
+.vscode
