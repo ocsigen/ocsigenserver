@@ -599,15 +599,15 @@ let rec parse_ssl l ~certificate ~privatekey ~ciphers ~dhfile ~curve =
   | _ -> raise (Config_file_error "Unexpected content inside <ssl>")
 
 let first_pass c =
-  let rec aux user group ssl ports sslports = function
-    | [] -> (user, group), (ssl, ports, sslports)
+  let rec aux ssl ports sslports = function
+    | [] -> ssl, ports, sslports
     | Element (("logdir" as st), [], p) :: ll ->
         set_logdir (parse_string_tag st p);
-        aux user group ssl ports sslports ll
+        aux ssl ports sslports ll
     | Element (("syslog" as st), [], p) :: ll ->
         let str = String.lowercase_ascii (parse_string_tag st p) in
         set_syslog_facility (Some (parse_facility str));
-        aux user group ssl ports sslports ll
+        aux ssl ports sslports ll
     | Element (("port" as st), atts, p) :: ll -> (
       match atts with
       | [] | [("protocol", "HTTP")] ->
@@ -616,21 +616,21 @@ let first_pass c =
             with Failure _ ->
               raise (Config_file_error "Wrong value for <port> tag")
           in
-          aux user group ssl (po :: ports) sslports ll
+          aux ssl (po :: ports) sslports ll
       | [("protocol", "HTTPS")] ->
           let po =
             try parse_port (parse_string_tag st p)
             with Failure _ ->
               raise (Config_file_error "Wrong value for <port> tag")
           in
-          aux user group ssl ports (po :: sslports) ll
+          aux ssl ports (po :: sslports) ll
       | _ -> raise (Config_file_error "Wrong attribute for <port>"))
     | Element (("minthreads" as st), [], p) :: ll ->
         set_minthreads (int_of_string st (parse_string_tag st p));
-        aux user group ssl ports sslports ll
+        aux ssl ports sslports ll
     | Element (("maxthreads" as st), [], p) :: ll ->
         set_maxthreads (int_of_string st (parse_string_tag st p));
-        aux user group ssl ports sslports ll
+        aux ssl ports sslports ll
     | Element ("ssl", [], p) :: ll -> (
       match ssl with
       | None ->
@@ -642,42 +642,22 @@ let first_pass c =
             and curve = None in
             parse_ssl ~certificate ~privatekey ~ciphers ~dhfile ~curve p
           in
-          aux user group ssl ports sslports ll
+          aux ssl ports sslports ll
       | _ ->
           raise
             (Config_file_error
                "Only one ssl certificate for each server supported for now"))
-    | Element (("user" as st), [], p) :: ll -> (
-      match user with
-      | None -> aux (Some (parse_string_tag st p)) group ssl ports sslports ll
-      | _ ->
-          raise
-            (Config_file_error "Only one <user> tag for each server allowed"))
-    | Element (("group" as st), [], p) :: ll -> (
-      match group with
-      | None -> aux user (Some (parse_string_tag st p)) ssl ports sslports ll
-      | _ ->
-          raise
-            (Config_file_error "Only one <group> tag for each server allowed"))
+    | Element ("user", [], _) :: ll | Element ("group", [], _) :: ll ->
+        Lwt_log.ign_warning ~section
+          "Config file: <user> and <group> deprecated. Please do not launch as root.";
+        aux ssl ports sslports ll
     | Element (("commandpipe" as st), [], p) :: ll ->
         set_command_pipe (parse_string_tag st p);
-        aux user group ssl ports sslports ll
-    | Element _ :: ll -> aux user group ssl ports sslports ll
+        aux ssl ports sslports ll
+    | Element _ :: ll -> aux ssl ports sslports ll
     | _ -> raise (Config_file_error "Syntax error")
   in
-  let (user, group), (si, ports, ssl_ports) = aux None None None [] [] c in
-  let user =
-    match user with
-    | None -> None (* Some (get_default_user ()) *)
-    | Some s -> if s = "" then None else Some s
-  in
-  let group =
-    match group with
-    | None -> None (* Some (get_default_group ()) *)
-    | Some s -> if s = "" then None else Some s
-  in
-  Ocsigen_config.set_user user;
-  Ocsigen_config.set_group group;
+  let si, ports, ssl_ports = aux None [] [] c in
   Ocsigen_config.set_ssl_info si;
   Ocsigen_config.set_ports ports;
   Ocsigen_config.set_ssl_ports ssl_ports;
