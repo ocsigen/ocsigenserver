@@ -29,7 +29,44 @@ val reload : ?file:string -> unit -> unit
 val exec : Xml.xml list list -> unit
 (** Start the server with a configuration file. Never returns. *)
 
-val start : Ocsigen_extensions.host_config list -> unit
+val start :
+   ?ports:(Ocsigen_config.Socket_type.t * int) list
+  -> ?ssl_ports:(Ocsigen_config.Socket_type.t * int) list
+  -> ?ssl_info:Ocsigen_config.ssl_info option
+  -> ?default_charset:string option
+  -> ?logdir:string
+  -> ?datadir:string
+  -> ?uploaddir:string option
+  -> ?maxuploadfilesize:int64 option
+  -> ?syslog_facility:Lwt_log.syslog_facility option
+  -> ?configfile:string
+  -> ?usedefaulthostname:bool
+  -> ?pidfile:string
+  -> ?mimefile:string
+  -> ?verbose:unit
+  -> ?veryverbose:unit
+  -> ?silent:unit
+  -> ?daemon:unit
+  -> ?debug:unit
+  -> ?debugmode:bool
+  -> ?minthreads:int
+  -> ?maxthreads:int
+  -> ?max_number_of_threads_queued:int
+  -> ?max_number_of_connections:int
+  -> ?client_timeout:int
+  -> ?server_timeout:int
+  -> ?shutdown_timeout:float option
+  -> ?filebuffersize:int
+  -> ?maxrequestbodysize:int64 option
+  -> ?maxrequestbodysizeinmemory:int
+  -> ?bindir:string
+  -> ?extdir:string
+  -> ?command_pipe:string
+  -> ?disablepartialrequests:bool
+  -> ?respect_pipeline:unit
+  -> ?maxretries:int
+  -> Ocsigen_extensions.host_config list
+  -> unit
 (** Start the server with some instructions. Never returns. *)
 
 type instruction =
