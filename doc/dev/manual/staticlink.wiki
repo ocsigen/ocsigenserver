@@ -1,4 +1,4 @@
-=Static linking=
+=Using Ocsigen Server as a library=
 
 ==Compiling Ocsigen without native dynlink support
 

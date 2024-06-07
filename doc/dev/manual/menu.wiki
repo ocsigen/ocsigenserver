@@ -3,7 +3,7 @@
 ===[[quickstart|Quick start]]
 ===[[launching|Launching the server]]
 ===[[config|Configuration file]]
-===[[misc|Misc]]
+===[[staticlink|Using as a library]]
 ==Extensions
 ===[[staticmod|Staticmod]]
 ===[[eliom|Eliom]]
@@ -20,8 +20,5 @@
 ===[[comet|Comet]]
 ===[[cors|CORS]]
 ==Developer documentation
-===Developing with the Ocsigen framework
-====[[lwtoc|Cooperative threads]]
-====[[staticlink|Static linking of the Ocsigen server]]
 ===[[extend|Writing an extension]]
 ===[[libraries|Libraries]]
