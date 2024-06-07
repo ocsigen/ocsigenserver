@@ -401,7 +401,53 @@ let exec config =
       Lwt_log.ign_warning ~section "Multiple servers not supported anymore"
 (* Multiple servers not supported any more *)
 
-let start instructions =
+let start ?(ports = [`All, 8080]) ?ssl_ports ?ssl_info ?default_charset ?logdir
+    ?datadir ?uploaddir ?maxuploadfilesize ?syslog_facility ?configfile
+    ?usedefaulthostname ?pidfile ?mimefile ?verbose ?veryverbose ?silent ?daemon
+    ?debug ?debugmode ?minthreads ?maxthreads ?max_number_of_threads_queued
+    ?max_number_of_connections ?client_timeout ?server_timeout ?shutdown_timeout
+    ?filebuffersize ?maxrequestbodysize ?maxrequestbodysizeinmemory ?bindir
+    ?extdir ?command_pipe ?disablepartialrequests ?respect_pipeline ?maxretries
+    instructions
+  =
+  Ocsigen_config.set_ports ports;
+  Option.iter Ocsigen_config.set_ssl_ports ssl_ports;
+  Option.iter Ocsigen_config.set_logdir logdir;
+  Option.iter Ocsigen_config.set_syslog_facility syslog_facility;
+  Option.iter Ocsigen_config.set_uploaddir uploaddir;
+  Option.iter Ocsigen_config.set_maxuploadfilesize maxuploadfilesize;
+  Option.iter Ocsigen_config.set_datadir datadir;
+  Option.iter Ocsigen_config.set_configfile configfile;
+  Option.iter Ocsigen_config.set_pidfile pidfile;
+  Option.iter Ocsigen_config.set_mimefile mimefile;
+  Option.iter Ocsigen_config.set_verbose verbose;
+  Option.iter Ocsigen_config.set_silent silent;
+  Option.iter Ocsigen_config.set_daemon daemon;
+  Option.iter Ocsigen_config.set_veryverbose veryverbose;
+  Option.iter Ocsigen_config.set_debug debug;
+  Option.iter Ocsigen_config.set_minthreads minthreads;
+  Option.iter Ocsigen_config.set_maxthreads maxthreads;
+  Option.iter Ocsigen_config.set_max_number_of_threads_queued
+    max_number_of_threads_queued;
+  Option.iter Ocsigen_config.set_max_number_of_connections
+    max_number_of_connections;
+  Option.iter Ocsigen_config.set_client_timeout client_timeout;
+  Option.iter Ocsigen_config.set_server_timeout server_timeout;
+  Option.iter Ocsigen_config.set_filebuffersize filebuffersize;
+  Option.iter Ocsigen_config.set_maxrequestbodysize maxrequestbodysize;
+  Option.iter Ocsigen_config.set_maxrequestbodysizeinmemory
+    maxrequestbodysizeinmemory;
+  Option.iter Ocsigen_config.set_default_charset default_charset;
+  Option.iter Ocsigen_config.set_bindir bindir;
+  Option.iter Ocsigen_config.set_extdir extdir;
+  Option.iter Ocsigen_config.set_command_pipe command_pipe;
+  Option.iter Ocsigen_config.set_debugmode debugmode;
+  Option.iter Ocsigen_config.set_disablepartialrequests disablepartialrequests;
+  Option.iter Ocsigen_config.set_usedefaulthostname usedefaulthostname;
+  Option.iter Ocsigen_config.set_respect_pipeline respect_pipeline;
+  Option.iter Ocsigen_config.set_maxretries maxretries;
+  Option.iter Ocsigen_config.set_shutdown_timeout shutdown_timeout;
+  Option.iter Ocsigen_config.set_ssl_info ssl_info;
   main (fun () ->
     Ocsigen_extensions.start_initialisation ();
     Ocsigen_extensions.set_hosts instructions)
