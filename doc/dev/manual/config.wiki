@@ -11,19 +11,7 @@ server, the extensions to be loaded, the OCaml libraries you need for
 your Web sites, the configuration of each Web site, etc. One default
 configuration file should be provided by your distribution.
 
-If you compiled Ocsigen yourself, two default configuration files are generated:
-
-* one for "system-wide" use, saved as
-  {{{/etc/ocsigenserver/ocsigenserver.conf.sample}}} (generated only
-  if you did {{{make install}}}),
-* one for testing without system-wide installation, saved as
-  {{{local/etc/ocsigenserver.conf}}} in your compilation
-  directory. You can use it without beeing root (do
-  {{{CAML_LD_LIBRARY_PATH=src/server src/server/ocsigenserver -c local/etc/ocsigenserver.conf}}}
-  or simply {{{make run.local}}}).
-
 ===Basic layout of the configuration file
-
 
 The configuration file is an XML file. Its layout is the following:
 

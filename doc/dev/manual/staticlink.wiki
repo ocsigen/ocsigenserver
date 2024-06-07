@@ -1,31 +1,71 @@
 =Using Ocsigen Server as a library=
 
-==Compiling Ocsigen without native dynlink support
+==Creating and running a statically linked executable==
 
-If Ocaml's native dynamic linking is not supported by your platform (or if you are using caml 3.10), it is possible to build a native code version of Ocsigen without dynlink support, by giving the option {{{--disable-natdynlink}}} to the {{{configure}}} script.
+Instead of using a configuration file, you can use Ocsigen Server as a library
+for your OCaml program.
 
+Call function <<a_api |val Ocsigen_server.start>> like this to run the server:
+<<code language="ocaml"|
+let _ =
+  Ocsigen_server.start
+    [ Ocsigen_server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
+>>
 
-==Creating and running a statically linked executable
-By default, Ocsigen is linking extensions dynamically (and also Eliom modules). From version 1.2, it is also possible to create a standalone program, in which all modules are statically linked. This allows to use native code even on platforms where Ocaml's native dynamic linking is not supported. It also makes possible to create self-contained Ocsigen applications that can be run without needing a full OCaml environment at runtime (with no Ocaml dependencies).
+Have a look at the API documentation for <<a_api |val Ocsigen_server.start>>
+to see how to provide configuration options.
 
+As with the configuration file, you can define several virtual hosts,
+for example for different hostnames. See function 
+<<a_api |val Ocsigen_server.host>> to configure them.
 
-To create a standalone server executable that includes all the extensions you need, use a command like:
+Functions like <<a_api |val Staticmod.run>> are defined by extensions.
+
+Each request received by the server goes through all the instructions given
+in the list. These instructions can be:
+- either input filters that will modify the request
+ (for example [[rewritemod|Rewritemod]])
+- or page generation instructions (for example with [[staticmod|Staticmod]],
+ [[eliom|Eliom]] or [[redirectmod|Redirectmod]])
+- or output filters, that will modify the result (for example
+[[deflatemod|Deflatemod]] or [[cors|CORS]]).
+
+Here is an example of a more complex configuration:
+<<code language="ocaml"|
+let _ =
+  Ocsigen_server.start ~debugmode:true ~veryverbose:()
+    [ Ocsigen_server.host ~re:"foo.com" [Staticmod.run ~dir:"static" ()]
+    ; Ocsigen_server.host ~re:".*"
+        [ Redirectmod.run
+            ~redirection:
+              (Redirectmod.create_redirection ~full_url:`No ~regexp:"^p.*$"
+                 "toto.html")
+            ()
+        ; Authbasic.run ~realm:"pouette"
+            ~auth:(fun _u p -> Lwt.return (p = "mypassword"))
+            ()
+        ; Staticmod.run ~dir:"static" ()
+        ; Eliom.run ()
+        ; Cors.run ~credentials:false ()
+        ; Deflatemod.run ~mode:(`All_but []) () ] ]>>
+
+==Experimental: Using a configuration file with a static executable==
+If you want to use the configuration file with a statically linked executable,
+call
 {{{
-ocamlfind ocamlopt  
-    -package ocsigenserver.server,ocsigenserver.ext.ocsipersist-sqlite  
-    -package eliom,ocsigenserver.ext.staticmod  
-    othermodule.cmx server_main.cmx -o myserver -linkpkg -thread
+Ocsigen_server.exec (Ocsigen_parseconfig.parse_config ())
 }}}
+to launch the server's main loop.
 
-Do not forget to link {{{server_main.cmx}}} to launch the server's main loop.
-
-If you do not want to read the commandline when the server starts, add {{{-predicates nocommandline}}} to this command line. Alternatively, you can provide a package containing the command-line you want to be parsed (with the same signature as {{{baselib/ocsigen_getcommandline.mli}}}), then make the appropriate changes in {{{files/META.in}}}.
+Alternatively, you can link module {{{ocsigenserver.cmx}}}
+to set the default commandline option and launch the main loop.
 
 If you still want to use dynamic linking, add option {{{-linkall}}} while
 compiling, otherwise the compiler may remove some modules from packages
 {{{cma/cmxa}}}.
 
-All statically linked extensions need to be initialized from the configuration file. To do that, replace the lines like:
+All statically linked extensions need to be initialized from the configuration 
+file. To do that, replace the lines like:
 {{{
 <extension module="staticmod.cmxs" />
 }}}
@@ -37,6 +77,9 @@ by
 {{{
 <extension name="staticmod" />
 }}}
-This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.
+This will not load a new module, but merely initializes one which must have been
+linked statically. Thus it is possible to give configuration options to
+extensions as usual.
 
-//Warning:// If you are using Eliom with static linking, the registration of your services must be delayed until the configuration file is read. See how to do that <<a_manual project="eliom" chapter="config" fragment="static_linking"|here>>.
+This is an experimental feature.
+Let us know if you test it (for example by opening an issue on Github).
