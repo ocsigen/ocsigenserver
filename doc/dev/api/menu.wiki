@@ -1,4 +1,18 @@
 =~Ocsigen server ~- ~A~P~I reference
+==Extensions
+===[[Staticmod|Staticmod]]
+===[[Extendconfiguration|Extendconfiguration]]
+===[[Accesscontrol|Accesscontrol]]
+===[[Authbasic|Authbasic]]
+===[[CGImod|CGImod]]
+===[[Deflatemod|Deflatemod]]
+===[[Redirectmod|Redirectmod]]
+===[[Revproxy|Revproxy]]
+===[[Rewritemod|Rewritemod]]
+===[[Outputfilter|Outputfilter]]
+===[[Userconf|Userconf]]
+===[[Comet|Comet]]
+===[[CORS|CORS]]
 ==~Persistent data~, writing in the logs~, configuration file extension~, polymorphic tables
 ===[[Ocsigen_lib|Ocsigen_lib]]
 ===[[Ocsigen_messages|Ocsigen_messages]]
@@ -17,7 +31,6 @@
 ===[[Ocsigen_http_com|Ocsigen_http_com]]
 ===[[Ocsigen_stream|Ocsigen_stream]]
 ===[[Ocsigen_comet|Ocsigen_comet]]
-===[[Authbasic|Authbasic]]
 ==~Indexes
 === <<a_api text="Index of types" | index types >>
 === <<a_api text="Index of exceptions" | index exceptions >>

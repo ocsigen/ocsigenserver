@@ -142,4 +142,4 @@ default).
 If you cannot solve your problem, if you find a bug,
 a mistake in the documentation (even a small one),
 or if you want to make a suggestion,
-[[https://github.com/ocsigen/ocsigenserver|fill a ticket on Github]].
+[[https://github.com/ocsigen/ocsigenserver|open an issue on Github]].

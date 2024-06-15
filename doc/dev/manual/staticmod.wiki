@@ -1,9 +1,15 @@
 =Staticmod=
 Staticmod is a module allowing to serve static pages (files).
-==Configuration
+
+==Using as a library
+Have a look at the <<a_api text="API documentation"|module Staticmod>>
+if you want to use Staticmod as a library for your OCaml programs.
+
+==Configuration file
 ===Basics
 
-To use that extension, first load it from the configuration file:
+To use that extension with Ocsigen Server's configuration file,
+load the extension like this:
 {{{
 <extension findlib-package="ocsigenserver.ext.staticmod"/>
 }}}
