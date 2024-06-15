@@ -1,9 +1,9 @@
-include Makefile.options
 include Makefile.config
+include Makefile.options
 
 ### Building
 
-.PHONY: default all
+.PHONY: default all doc
 default all: build
 
 .PHONY: build
