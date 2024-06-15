@@ -4,7 +4,7 @@
 >>
 
 Ocsigen Server is a powerful and modular generic purpose Web Server.
-It supports static files, redirections, reverse proxy, CORS, CGI,
+It supports static files, redirections, reverse proxy, CORS,
 user pages with local configuration, page compression,
 authentication, etc.
 
@@ -109,8 +109,6 @@ The extensions provided are:
 :for settings CORS options,
 ;<<a_manual chapter="userconf"|Userconf>>
 :for allowing local users to have personal pages,
-;<<a_manual chapter="cgimod"|CGImod>>
-:if you want to use dynamic Web sites written as CGI scripts (for example one way to run PHP pages).
 
 If you are using a configuration, file, use tag 
 {{{<extension/>}}} to load an exetnsion (see examples in the

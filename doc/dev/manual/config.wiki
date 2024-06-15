@@ -538,10 +538,7 @@ Some extensions take parameters between {{{<extension>}}} and {{{</extension>}}}
 
 Example of use:
 
-
-
 {{{
-<extension module="/opt/godi/lib/ocaml/site-lib/ocsigenserver/cgimod.cma"/>
 <extension module="/opt/godi/lib/ocaml/site-lib/ocsigenserver/staticmod.cma"/>
 }}}
 
