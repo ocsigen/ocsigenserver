@@ -1,8 +1,11 @@
 =Module <<a_api_type | module Authbasic >> =
-<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Authbasic>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Authbasic >><<span class="ocsforge_color_keyword"|end>>>>~Module <<span class="odocwiki_inlinecode"|~Authbasic>>~: ~Basic ~H~T~T~P ~Authentication~.
-
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Authbasic>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Authbasic >><<span class="ocsforge_color_keyword"|end>>>>
 ----
+<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|use ~Lwt~_log~.~Section~.set~_level in order to debug
+>>
 
+~Module <<span class="odocwiki_inlinecode"|~Authbasic>>~: ~Basic ~H~T~T~P ~Authentication~.
+<<pre class="ocsforge_color odocwiki_code" id="TYPEauth"|<<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|auth>> <<span class="ocsforge_color_delimiter"|~=>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>>>> >>
 ~This module implements ~Basic ~H~T~T~P ~Authentication as described in
     [[http://www.ietf.org/rfc/rfc2617.txt|~R~F~C ~2~6~1~7]]~.  ~It can be used
     to add an authentication layer to sites with no built~-in
@@ -15,8 +18,12 @@
     and is meant to be extended with various authentication schemes~. ~A
     very naive one ~(authentication with a single user~/password~, given
     in the configuration file~) is provided~.
-<<pre id="VALregister_basic_authentication_method" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|register~_basic~_authentication~_method>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_delimiter"| ( >><<span class="ocsforge_color_uid"|Xml>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>><<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~This function registers an authentication plugin~: it adds a new
+<<pre id="VALregister_basic_authentication_method" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|register~_basic~_authentication~_method>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_delimiter"| ( >><<span class="ocsforge_color_uid"|Xml>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="auth" | type Authbasic.auth >><<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~This function registers an authentication plugin~: it adds a new
     parser to the list of available authentication schemes~.
+
+
+    ~This is only applied if you are running the server with an ~X~M~L
+    configuration file~. ~Use the realm~, auth variables otherwise~.
 
 
     ~A parser takes as argument an ~X~M~L tree ~(corresponding to the
@@ -35,7 +42,6 @@
     from the point of view of plugin developers and is totally
     transparent to the plugin~.
 >>
-<<pre id="VALget_basic_authentication_method" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|get~_basic~_authentication~_method>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_uid"|Xml>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>>>>>><<div class="odocwiki_info"|~This function combines all the parsers registered with
-    <<span class="odocwiki_inlinecode"|register~_basic~_authentication~_method>>~. ~It might be useful for
-    other extensions~. ~Not for the casual user~.
+<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| realm: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| auth: >><<a_api text="auth" | type Authbasic.auth >> <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run ~~realm ~~auth ~(~)>> makes it possible to use this extension without
+    configuration file~.
 >>

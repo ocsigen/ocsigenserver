@@ -48,6 +48,7 @@
     end
   module List :
     sig
+      type 'a t = 'a list = [] | (::) of 'a * 'a list
       val length : 'a list -> int
       val compare_lengths : 'a list -> 'b list -> int
       val compare_length_with : 'a list -> int -> int
@@ -62,11 +63,17 @@
       val rev_append : 'a list -> 'a list -> 'a list
       val concat : 'a list list -> 'a list
       val flatten : 'a list list -> 'a list
+      val equal : ('a -> 'a -> bool) -> 'a list -> 'a list -> bool
+      val compare : ('a -> 'a -> int) -> 'a list -> 'a list -> int
       val iter : ('a -> unit) -> 'a list -> unit
       val iteri : (int -> 'a -> unit) -> 'a list -> unit
       val map : ('a -> 'b) -> 'a list -> 'b list
       val mapi : (int -> 'a -> 'b) -> 'a list -> 'b list
       val rev_map : ('a -> 'b) -> 'a list -> 'b list
+      val filter_map : ('a -> 'b option) -> 'a list -> 'b list
+      val concat_map : ('a -> 'b list) -> 'a list -> 'b list
+      val fold_left_map :
+        ('a -> 'b -> 'a * 'c) -> 'a -> 'b list -> 'a * 'c list
       val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b list -> 'a
       val fold_right : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
       val iter2 : ('a -> 'b -> unit) -> 'a list -> 'b list -> unit
@@ -84,9 +91,13 @@
       val memq : 'a -> 'a list -> bool
       val find : ('a -> bool) -> 'a list -> 'a
       val find_opt : ('a -> bool) -> 'a list -> 'a option
+      val find_map : ('a -> 'b option) -> 'a list -> 'b option
       val filter : ('a -> bool) -> 'a list -> 'a list
       val find_all : ('a -> bool) -> 'a list -> 'a list
+      val filteri : (int -> 'a -> bool) -> 'a list -> 'a list
       val partition : ('a -> bool) -> 'a list -> 'a list * 'a list
+      val partition_map :
+        ('a -> ('b, 'c) Either.t) -> 'a list -> 'b list * 'c list
       val assoc : 'a -> ('a * 'b) list -> 'b
       val assoc_opt : 'a -> ('a * 'b) list -> 'b option
       val assq : 'a -> ('a * 'b) list -> 'b
@@ -102,6 +113,8 @@
       val fast_sort : ('a -> 'a -> int) -> 'a list -> 'a list
       val sort_uniq : ('a -> 'a -> int) -> 'a list -> 'a list
       val merge : ('a -> 'a -> int) -> 'a list -> 'a list -> 'a list
+      val to_seq : 'a list -> 'a Seq.t
+      val of_seq : 'a Seq.t -> 'a list
       val map_filter : ('a -> 'b option) -> 'a list -> 'b list
       val last : 'a list -> 'a
       val assoc_remove : 'a -> ('a * 'b) list -> 'b * ('a * 'b) list
@@ -136,7 +149,7 @@
       module Table :
         sig
           type key = int
-          type +'a t
+          type +!'a t
           val empty : 'a t
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
@@ -155,6 +168,7 @@
           val for_all : (key -> 'a -> bool) -> 'a t -> bool
           val exists : (key -> 'a -> bool) -> 'a t -> bool
           val filter : (key -> 'a -> bool) -> 'a t -> 'a t
+          val filter_map : (key -> 'a -> 'b option) -> 'a t -> 'b t
           val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
@@ -173,50 +187,58 @@
           val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
+          val to_seq : 'a t -> (key * 'a) Seq.t
+          val to_rev_seq : 'a t -> (key * 'a) Seq.t
+          val to_seq_from : key -> 'a t -> (key * 'a) Seq.t
+          val add_seq : (key * 'a) Seq.t -> 'a t -> 'a t
+          val of_seq : (key * 'a) Seq.t -> 'a t
         end
     end
   module String_base :
     sig
-      external length : string -> int = "%string_length"
-      external get : string -> int -> char = "%string_safe_get"
-      external set : bytes -> int -> char -> unit = "%string_safe_set"
-      external create : int -> bytes = "caml_create_string"
+      type t = string
       val make : int -> char -> string
       val init : int -> (int -> char) -> string
-      val copy : string -> string
-      val sub : string -> int -> int -> string
-      val fill : bytes -> int -> int -> char -> unit
-      val blit : string -> int -> bytes -> int -> int -> unit
+      external length : string -> int = "%string_length"
+      external get : string -> int -> char = "%string_safe_get"
       val concat : string -> string list -> string
-      val iter : (char -> unit) -> string -> unit
-      val iteri : (int -> char -> unit) -> string -> unit
+      val equal : t -> t -> bool
+      val compare : t -> t -> int
+      val contains_from : string -> int -> char -> bool
+      val rcontains_from : string -> int -> char -> bool
+      val contains : string -> char -> bool
+      val sub : string -> int -> int -> string
+      val split_on_char : char -> string -> string list
       val map : (char -> char) -> string -> string
       val mapi : (int -> char -> char) -> string -> string
       val trim : string -> string
       val escaped : string -> string
-      val index : string -> char -> int
-      val index_opt : string -> char -> int option
-      val rindex : string -> char -> int
-      val rindex_opt : string -> char -> int option
-      val index_from : string -> int -> char -> int
-      val index_from_opt : string -> int -> char -> int option
-      val rindex_from : string -> int -> char -> int
-      val rindex_from_opt : string -> int -> char -> int option
-      val contains : string -> char -> bool
-      val contains_from : string -> int -> char -> bool
-      val rcontains_from : string -> int -> char -> bool
-      val uppercase : string -> string
-      val lowercase : string -> string
-      val capitalize : string -> string
-      val uncapitalize : string -> string
       val uppercase_ascii : string -> string
       val lowercase_ascii : string -> string
       val capitalize_ascii : string -> string
       val uncapitalize_ascii : string -> string
-      type t = string
-      val compare : t -> t -> int
-      val equal : t -> t -> bool
-      val split_on_char : char -> string -> string list
+      val iter : (char -> unit) -> string -> unit
+      val iteri : (int -> char -> unit) -> string -> unit
+      val index_from : string -> int -> char -> int
+      val index_from_opt : string -> int -> char -> int option
+      val rindex_from : string -> int -> char -> int
+      val rindex_from_opt : string -> int -> char -> int option
+      val index : string -> char -> int
+      val index_opt : string -> char -> int option
+      val rindex : string -> char -> int
+      val rindex_opt : string -> char -> int option
+      val to_seq : t -> char Seq.t
+      val to_seqi : t -> (int * char) Seq.t
+      val of_seq : char Seq.t -> t
+      external create : int -> bytes = "caml_create_string"
+      external set : bytes -> int -> char -> unit = "%string_safe_set"
+      val blit : string -> int -> bytes -> int -> int -> unit
+      val copy : string -> string
+      val fill : bytes -> int -> int -> char -> unit
+      val uppercase : string -> string
+      val lowercase : string -> string
+      val capitalize : string -> string
+      val uncapitalize : string -> string
       external unsafe_get : string -> int -> char = "%string_unsafe_get"
       external unsafe_set : bytes -> int -> char -> unit
         = "%string_unsafe_set"
@@ -234,7 +256,7 @@
       module Table :
         sig
           type key = string
-          type +'a t
+          type +!'a t
           val empty : 'a t
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
@@ -253,6 +275,7 @@
           val for_all : (key -> 'a -> bool) -> 'a t -> bool
           val exists : (key -> 'a -> bool) -> 'a t -> bool
           val filter : (key -> 'a -> bool) -> 'a t -> 'a t
+          val filter_map : (key -> 'a -> 'b option) -> 'a t -> 'b t
           val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
@@ -271,6 +294,11 @@
           val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
+          val to_seq : 'a t -> (key * 'a) Seq.t
+          val to_rev_seq : 'a t -> (key * 'a) Seq.t
+          val to_seq_from : key -> 'a t -> (key * 'a) Seq.t
+          val add_seq : (key * 'a) Seq.t -> 'a t -> 'a t
+          val of_seq : (key * 'a) Seq.t -> 'a t
         end
       module Set :
         sig
@@ -284,6 +312,7 @@
           val remove : elt -> t -> t
           val union : t -> t -> t
           val inter : t -> t -> t
+          val disjoint : t -> t -> bool
           val diff : t -> t -> t
           val compare : t -> t -> int
           val equal : t -> t -> bool
@@ -294,6 +323,7 @@
           val for_all : (elt -> bool) -> t -> bool
           val exists : (elt -> bool) -> t -> bool
           val filter : (elt -> bool) -> t -> t
+          val filter_map : (elt -> elt option) -> t -> t
           val partition : (elt -> bool) -> t -> t * t
           val cardinal : t -> int
           val elements : t -> elt list
@@ -311,11 +341,16 @@
           val find_last : (elt -> bool) -> t -> elt
           val find_last_opt : (elt -> bool) -> t -> elt option
           val of_list : elt list -> t
+          val to_seq_from : elt -> t -> elt Seq.t
+          val to_seq : t -> elt Seq.t
+          val to_rev_seq : t -> elt Seq.t
+          val add_seq : elt Seq.t -> t -> t
+          val of_seq : elt Seq.t -> t
         end
       module Map :
         sig
           type key = string
-          type +'a t
+          type +!'a t
           val empty : 'a t
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
@@ -334,6 +369,7 @@
           val for_all : (key -> 'a -> bool) -> 'a t -> bool
           val exists : (key -> 'a -> bool) -> 'a t -> bool
           val filter : (key -> 'a -> bool) -> 'a t -> 'a t
+          val filter_map : (key -> 'a -> 'b option) -> 'a t -> 'b t
           val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
@@ -352,6 +388,11 @@
           val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
+          val to_seq : 'a t -> (key * 'a) Seq.t
+          val to_rev_seq : 'a t -> (key * 'a) Seq.t
+          val to_seq_from : key -> 'a t -> (key * 'a) Seq.t
+          val add_seq : (key * 'a) Seq.t -> 'a t -> 'a t
+          val of_seq : (key * 'a) Seq.t -> 'a t
         end
     end
   module Url_base :
@@ -370,96 +411,57 @@
       val remove_slash_at_beginning : path -> path
       val is_prefix_skip_end_slash : string list -> string list -> bool
       val split_fragment : string -> string * string option
-    end
-  module Printexc :
-    sig
-      val to_string : exn -> string
-      val print : ('a -> 'b) -> 'a -> 'b
-      val catch : ('a -> 'b) -> 'a -> 'b
-      val print_backtrace : out_channel -> unit
-      val get_backtrace : unit -> string
-      val record_backtrace : bool -> unit
-      val backtrace_status : unit -> bool
-      val register_printer : (exn -> string option) -> unit
-      type raw_backtrace
-      val get_raw_backtrace : unit -> raw_backtrace
-      val print_raw_backtrace : out_channel -> raw_backtrace -> unit
-      val raw_backtrace_to_string : raw_backtrace -> string
-      external raise_with_backtrace : exn -> raw_backtrace -> 'a
-        = "%raise_with_backtrace"
-      val get_callstack : int -> raw_backtrace
-      val set_uncaught_exception_handler :
-        (exn -> raw_backtrace -> unit) -> unit
-      type backtrace_slot
-      val backtrace_slots : raw_backtrace -> backtrace_slot array option
-      type location = {
-        filename : string;
-        line_number : int;
-        start_char : int;
-        end_char : int;
-      }
-      module Slot :
-        sig
-          type t = backtrace_slot
-          val is_raise : t -> bool
-          val is_inline : t -> bool
-          val location : t -> location option
-          val format : int -> t -> string option
-        end
-      type raw_backtrace_slot
-      val raw_backtrace_length : raw_backtrace -> int
-      val get_raw_backtrace_slot : raw_backtrace -> int -> raw_backtrace_slot
-      val convert_raw_backtrace_slot : raw_backtrace_slot -> backtrace_slot
-      val get_raw_backtrace_next_slot :
-        raw_backtrace_slot -> raw_backtrace_slot option
-      val exn_slot_id : exn -> int
-      val exn_slot_name : exn -> string
-      val register_exn_printer : ((exn -> string) -> exn -> string) -> unit
+      val join_path : path -> string
+      val split_path : string -> path
+      val norm_path : path -> path
     end
   val debug : string -> unit
   val make_cryptographic_safe_string : unit -> string
   module String :
     sig
-      external length : string -> int = "%string_length"
-      external get : string -> int -> char = "%string_safe_get"
-      external set : bytes -> int -> char -> unit = "%string_safe_set"
-      external create : int -> bytes = "caml_create_string"
+      type t = string
       val make : int -> char -> string
       val init : int -> (int -> char) -> string
-      val copy : string -> string
-      val sub : string -> int -> int -> string
-      val fill : bytes -> int -> int -> char -> unit
-      val blit : string -> int -> bytes -> int -> int -> unit
+      external length : string -> int = "%string_length"
+      external get : string -> int -> char = "%string_safe_get"
       val concat : string -> string list -> string
-      val iter : (char -> unit) -> string -> unit
-      val iteri : (int -> char -> unit) -> string -> unit
+      val equal : t -> t -> bool
+      val compare : t -> t -> int
+      val contains_from : string -> int -> char -> bool
+      val rcontains_from : string -> int -> char -> bool
+      val contains : string -> char -> bool
+      val sub : string -> int -> int -> string
+      val split_on_char : char -> string -> string list
       val map : (char -> char) -> string -> string
       val mapi : (int -> char -> char) -> string -> string
       val trim : string -> string
       val escaped : string -> string
-      val index : string -> char -> int
-      val index_opt : string -> char -> int option
-      val rindex : string -> char -> int
-      val rindex_opt : string -> char -> int option
-      val index_from : string -> int -> char -> int
-      val index_from_opt : string -> int -> char -> int option
-      val rindex_from : string -> int -> char -> int
-      val rindex_from_opt : string -> int -> char -> int option
-      val contains : string -> char -> bool
-      val contains_from : string -> int -> char -> bool
-      val rcontains_from : string -> int -> char -> bool
-      val uppercase : string -> string
-      val lowercase : string -> string
-      val capitalize : string -> string
-      val uncapitalize : string -> string
       val uppercase_ascii : string -> string
       val lowercase_ascii : string -> string
       val capitalize_ascii : string -> string
       val uncapitalize_ascii : string -> string
-      type t = string
-      val compare : t -> t -> int
-      val equal : t -> t -> bool
-      val split_on_char : char -> string -> string list
+      val iter : (char -> unit) -> string -> unit
+      val iteri : (int -> char -> unit) -> string -> unit
+      val index_from : string -> int -> char -> int
+      val index_from_opt : string -> int -> char -> int option
+      val rindex_from : string -> int -> char -> int
+      val rindex_from_opt : string -> int -> char -> int option
+      val index : string -> char -> int
+      val index_opt : string -> char -> int option
+      val rindex : string -> char -> int
+      val rindex_opt : string -> char -> int option
+      val to_seq : t -> char Seq.t
+      val to_seqi : t -> (int * char) Seq.t
+      val of_seq : char Seq.t -> t
+      external create : int -> bytes = "caml_create_string"
+      external set : bytes -> int -> char -> unit = "%string_safe_set"
+      val blit : string -> int -> bytes -> int -> int -> unit
+      val copy : string -> string
+      val fill : bytes -> int -> int -> char -> unit
+      val uppercase : string -> string
+      val lowercase : string -> string
+      val capitalize : string -> string
+      val uncapitalize : string -> string
       external unsafe_get : string -> int -> char = "%string_unsafe_get"
       external unsafe_set : bytes -> int -> char -> unit
         = "%string_unsafe_set"
@@ -477,7 +479,7 @@
       module Table :
         sig
           type key = string
-          type +'a t
+          type +!'a t
           val empty : 'a t
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
@@ -496,6 +498,7 @@
           val for_all : (key -> 'a -> bool) -> 'a t -> bool
           val exists : (key -> 'a -> bool) -> 'a t -> bool
           val filter : (key -> 'a -> bool) -> 'a t -> 'a t
+          val filter_map : (key -> 'a -> 'b option) -> 'a t -> 'b t
           val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
@@ -514,6 +517,11 @@
           val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
+          val to_seq : 'a t -> (key * 'a) Seq.t
+          val to_rev_seq : 'a t -> (key * 'a) Seq.t
+          val to_seq_from : key -> 'a t -> (key * 'a) Seq.t
+          val add_seq : (key * 'a) Seq.t -> 'a t -> 'a t
+          val of_seq : (key * 'a) Seq.t -> 'a t
         end
       module Set :
         sig
@@ -527,6 +535,7 @@
           val remove : elt -> t -> t
           val union : t -> t -> t
           val inter : t -> t -> t
+          val disjoint : t -> t -> bool
           val diff : t -> t -> t
           val compare : t -> t -> int
           val equal : t -> t -> bool
@@ -537,6 +546,7 @@
           val for_all : (elt -> bool) -> t -> bool
           val exists : (elt -> bool) -> t -> bool
           val filter : (elt -> bool) -> t -> t
+          val filter_map : (elt -> elt option) -> t -> t
           val partition : (elt -> bool) -> t -> t * t
           val cardinal : t -> int
           val elements : t -> elt list
@@ -554,11 +564,16 @@
           val find_last : (elt -> bool) -> t -> elt
           val find_last_opt : (elt -> bool) -> t -> elt option
           val of_list : elt list -> t
+          val to_seq_from : elt -> t -> elt Seq.t
+          val to_seq : t -> elt Seq.t
+          val to_rev_seq : t -> elt Seq.t
+          val add_seq : elt Seq.t -> t -> t
+          val of_seq : elt Seq.t -> t
         end
       module Map :
         sig
           type key = string
-          type +'a t
+          type +!'a t
           val empty : 'a t
           val is_empty : 'a t -> bool
           val mem : key -> 'a t -> bool
@@ -577,6 +592,7 @@
           val for_all : (key -> 'a -> bool) -> 'a t -> bool
           val exists : (key -> 'a -> bool) -> 'a t -> bool
           val filter : (key -> 'a -> bool) -> 'a t -> 'a t
+          val filter_map : (key -> 'a -> 'b option) -> 'a t -> 'b t
           val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
           val cardinal : 'a t -> int
           val bindings : 'a t -> (key * 'a) list
@@ -595,12 +611,18 @@
           val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
           val map : ('a -> 'b) -> 'a t -> 'b t
           val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
+          val to_seq : 'a t -> (key * 'a) Seq.t
+          val to_rev_seq : 'a t -> (key * 'a) Seq.t
+          val to_seq_from : key -> 'a t -> (key * 'a) Seq.t
+          val add_seq : (key * 'a) Seq.t -> 'a t -> 'a t
+          val of_seq : (key * 'a) Seq.t -> 'a t
         end
     end
   module Ip_address :
     sig
       exception No_such_host
       val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr Lwt.t
+      val of_sockaddr : Unix.sockaddr -> Unix.inet_addr
     end
   module Filename :
     sig
@@ -612,11 +634,13 @@
       val is_implicit : string -> bool
       val check_suffix : string -> string -> bool
       val chop_suffix : string -> string -> string
+      val chop_suffix_opt : suffix:string -> string -> string option
       val extension : string -> string
       val remove_extension : string -> string
       val chop_extension : string -> string
       val basename : string -> string
       val dirname : string -> string
+      val null : string
       val temp_file : ?temp_dir:string -> string -> string -> string
       val open_temp_file :
         ?mode:open_flag list ->
@@ -626,6 +650,10 @@
       val set_temp_dir_name : string -> unit
       val temp_dir_name : string
       val quote : string -> string
+      val quote_command :
+        string ->
+        ?stdin:string ->
+        ?stdout:string -> ?stderr:string -> string list -> string
       val extension_no_directory : string -> string
     end
   module Url :
@@ -644,6 +672,9 @@
       val remove_slash_at_beginning : path -> path
       val is_prefix_skip_end_slash : string list -> string list -> bool
       val split_fragment : string -> string * string option
+      val join_path : path -> string
+      val split_path : string -> path
+      val norm_path : path -> path
       val fixup_url_string : t -> t
       val encode : ?plus:bool -> string -> string
       val decode : ?plus:bool -> string -> string
@@ -652,8 +683,20 @@
       val parse :
         t ->
         bool option * string option * int option * string * string list *
-        string option * (string * string) list Lazy.t
-      val split_path : string -> string list
+        string option * (string * string) list Stdlib.Lazy.t
       val prefix_and_path_of_t : string -> string * string list
     end
+  module Netstring_pcre :
+    sig
+      val regexp : string -> Re.Pcre.regexp
+      val matched_group : Re.Pcre.groups -> int -> string -> string
+      val matched_string : Re.Pcre.groups -> string -> string
+      val global_replace : Re.Pcre.regexp -> string -> string -> string
+      val search_forward :
+        Re.Pcre.regexp -> string -> int -> int * Re.Pcre.groups
+      val split : Re.Pcre.regexp -> string -> string list
+      val string_match :
+        Re.Pcre.regexp -> string -> int -> Re.Pcre.groups option
+    end
+  module Date : sig val to_string : float -> string end
 end >>

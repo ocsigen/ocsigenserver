@@ -1,0 +1,13 @@
+<<code language="ocaml" | sig
+  val add :
+    path:Ocsigen_lib_base.Url_base.path ->
+    string ->
+    'a ->
+    'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t ->
+    'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t
+  val remove :
+    path:Ocsigen_lib_base.Url_base.path ->
+    string ->
+    'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t ->
+    'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t
+end >>

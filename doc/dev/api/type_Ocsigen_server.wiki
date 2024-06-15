@@ -1,4 +1,66 @@
 <<code language="ocaml" | sig
+  val section : Lwt_log_core.section
   val reload : ?file:string -> unit -> unit
-  val start_server : unit -> unit
+  val exec : Xml.xml list list -> unit
+  val start :
+    ?ports:(Ocsigen_config.Socket_type.t * int) list ->
+    ?ssl_ports:(Ocsigen_config.Socket_type.t * int) list ->
+    ?ssl_info:Ocsigen_config.ssl_info option ->
+    ?default_charset:string option ->
+    ?logdir:string ->
+    ?datadir:string ->
+    ?uploaddir:string option ->
+    ?maxuploadfilesize:int64 option ->
+    ?syslog_facility:Lwt_log.syslog_facility option ->
+    ?configfile:string ->
+    ?usedefaulthostname:bool ->
+    ?pidfile:string ->
+    ?mimefile:string ->
+    ?verbose:unit ->
+    ?veryverbose:unit ->
+    ?silent:unit ->
+    ?daemon:unit ->
+    ?debug:unit ->
+    ?debugmode:bool ->
+    ?minthreads:int ->
+    ?maxthreads:int ->
+    ?max_number_of_threads_queued:int ->
+    ?max_number_of_connections:int ->
+    ?client_timeout:int ->
+    ?server_timeout:int ->
+    ?shutdown_timeout:float option ->
+    ?filebuffersize:int ->
+    ?maxrequestbodysize:int64 option ->
+    ?maxrequestbodysizeinmemory:int ->
+    ?bindir:string ->
+    ?extdir:string ->
+    ?command_pipe:string ->
+    ?disablepartialrequests:bool ->
+    ?respect_pipeline:unit ->
+    ?maxretries:int -> Ocsigen_extensions.host_config list -> unit
+  type instruction =
+      Ocsigen_extensions.virtual_hosts ->
+      Ocsigen_extensions.config_info ->
+      Ocsigen_lib.Url.path -> Ocsigen_extensions.extension
+  val host :
+    ?re:string ->
+    ?port:int ->
+    ?default_hostname:string ->
+    ?default_httpport:int ->
+    ?default_httpsport:int ->
+    ?default_protocol_is_https:bool ->
+    ?mime_assoc:Ocsigen_charset_mime.mime_assoc ->
+    ?charset_assoc:Ocsigen_charset_mime.charset_assoc ->
+    ?default_directory_index:string list ->
+    ?list_directory_content:bool ->
+    ?follow_symlinks:[ `Always | `No | `Owner_match ] ->
+    ?do_not_serve_404:Ocsigen_extensions.do_not_serve ->
+    ?do_not_serve_403:Ocsigen_extensions.do_not_serve ->
+    ?uploaddir:string option ->
+    ?maxuploadfilesize:int64 option ->
+    Ocsigen_server.instruction list -> Ocsigen_extensions.host_config
+  val site :
+    ?charset:string ->
+    Ocsigen_lib.Url.path ->
+    Ocsigen_server.instruction list -> Ocsigen_server.instruction
 end >>

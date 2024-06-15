@@ -28,4 +28,5 @@
     ?other_elements:(string -> (string * string) list -> Xml.xml list -> unit) ->
     ?init:(unit -> unit) -> Xml.xml list -> unit
   val ignore_blank_pcdata : in_tag:string -> string -> unit
+  val refuse_pcdata : in_tag:string -> string -> unit
 end >>

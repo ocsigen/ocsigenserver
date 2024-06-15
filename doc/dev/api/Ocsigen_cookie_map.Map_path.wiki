@@ -1,0 +1,6 @@
+=Module <<a_api_type | module Ocsigen_cookie_map.Map_path >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Map_path>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Map.S>>>><<span class="odocwiki_type"|  with type key := <<a_api text="Ocsigen_lib_base.Url_base" | module Ocsigen_lib_base.Url_base >>.path>>>>~This type of maps is used to store cookie values for each
+    path~. ~The key has type ~Url~.path option~: it is for the path
+    ~(default~: root of the site~)~.
+
+----

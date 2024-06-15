@@ -41,7 +41,8 @@
   val of_file : string -> string Ocsigen_stream.t
   val of_string : string -> string Ocsigen_stream.t
   val of_lwt_stream : 'a Lwt_stream.t -> 'a Ocsigen_stream.t
-  val to_lwt_stream : 'a Ocsigen_stream.t -> 'a Lwt_stream.t
+  val to_lwt_stream :
+    ?is_empty:('a -> bool) -> 'a Ocsigen_stream.t -> 'a Lwt_stream.t
   module StringStream :
     sig
       type out = string Ocsigen_stream.t
@@ -54,4 +55,5 @@
         Ocsigen_stream.StringStream.m ->
         Ocsigen_stream.StringStream.m -> Ocsigen_stream.StringStream.m
     end
+  val set_net_buffer_size : int -> unit
 end >>

@@ -1,0 +1,14 @@
+=Module <<a_api_type | module Ocsigen_command >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_command>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_command >><<span class="ocsforge_color_keyword"|end>>>>~Extending server commands
+
+----
+<<pre id="EXCEPTIONUnknown_command" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|exception>> <<span class="odocwiki_name"|Unknown_command>>>><<pre id="VALregister_command_function" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|register~_command~_function>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?prefix: >>string <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_delimiter"| ( >>string <<span class="ocsforge_color_delimiter"| -> >> string list <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>><<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~Use a prefix for all your commands when you want to create
+    extension~-specific commands~.
+    ~For example if the prefix is "myextension" and the commande "blah"~,
+    the actual command to be written by the user is "myextension~:blah"~.
+    ~Give as parameter the function that will parse the command and do an action~.
+    ~Its first parameter is the full command as a string~.
+    ~The second one is the command without prefix~, split by word~.
+    ~It must raise <<span class="odocwiki_inlinecode"|ocsigen~_extensions~.~Unknown~_command>> if it does
+    not recognize the command~.
+>>

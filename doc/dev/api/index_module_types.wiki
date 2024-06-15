@@ -1,5 +1,3 @@
 =Index of module types=
 
-|@@ @style="tet-align: left;"@@\\H|
-|@@class="odocwiki_index"@ @@<<a_api text="HTTP_CONTENT"| module type Ocsigen_http_frame.HTTP_CONTENT >> ~[<<a_api | module Ocsigen_http_frame >>~]||
 \\

@@ -1,4 +1,5 @@
 <<code language="ocaml" | sig
+  val section : Lwt_log_core.section
   exception Failed_404
   exception Failed_403
   exception NotReadableDirectory
@@ -7,7 +8,4 @@
     ?no_check_for:string ->
     request:Ocsigen_extensions.request ->
     filename:string -> unit -> Ocsigen_local_files.resolved
-  val content :
-    request:Ocsigen_extensions.request ->
-    file:Ocsigen_local_files.resolved -> Ocsigen_http_frame.result Lwt.t
 end >>

@@ -1,0 +1,9 @@
+<<code language="ocaml" | sig
+  val section : Lwt_log_core.section
+  val run :
+    ?dir:string ->
+    ?regexp:string ->
+    ?dest:string ->
+    ?code:string ->
+    ?cache:int -> ?root:string -> unit -> Ocsigen_server.instruction
+end >>

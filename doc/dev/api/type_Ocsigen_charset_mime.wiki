@@ -8,6 +8,9 @@
   val empty_charset_assoc :
     ?default:Ocsigen_charset_mime.charset ->
     unit -> Ocsigen_charset_mime.charset_assoc
+  val empty_mime_assoc :
+    ?default:Ocsigen_charset_mime.charset ->
+    unit -> Ocsigen_charset_mime.charset_assoc
   val find_charset :
     string ->
     Ocsigen_charset_mime.charset_assoc -> Ocsigen_charset_mime.charset
@@ -26,7 +29,7 @@
     Ocsigen_charset_mime.charset -> Ocsigen_charset_mime.charset_assoc
   val update_charset_regexp :
     Ocsigen_charset_mime.charset_assoc ->
-    Netstring_pcre.regexp ->
+    Re.Pcre.regexp ->
     Ocsigen_charset_mime.charset -> Ocsigen_charset_mime.charset_assoc
   type mime_type = string
   val default_mime_type : Ocsigen_charset_mime.mime_type
@@ -50,6 +53,6 @@
     Ocsigen_charset_mime.mime_type -> Ocsigen_charset_mime.mime_assoc
   val update_mime_regexp :
     Ocsigen_charset_mime.mime_assoc ->
-    Netstring_pcre.regexp ->
+    Re.Pcre.regexp ->
     Ocsigen_charset_mime.mime_type -> Ocsigen_charset_mime.mime_assoc
 end >>

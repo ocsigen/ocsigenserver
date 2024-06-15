@@ -12,6 +12,9 @@
   val remove_slash_at_beginning : path -> path
   val is_prefix_skip_end_slash : string list -> string list -> bool
   val split_fragment : string -> string * string option
+  val join_path : path -> string
+  val split_path : string -> path
+  val norm_path : path -> path
   val fixup_url_string : t -> t
   val encode : ?plus:bool -> string -> string
   val decode : ?plus:bool -> string -> string
@@ -20,7 +23,6 @@
   val parse :
     t ->
     bool option * string option * int option * string * string list *
-    string option * (string * string) list Lazy.t
-  val split_path : string -> string list
+    string option * (string * string) list Stdlib.Lazy.t
   val prefix_and_path_of_t : string -> string * string list
 end >>

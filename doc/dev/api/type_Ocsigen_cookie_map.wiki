@@ -1,0 +1,149 @@
+<<code language="ocaml" | sig
+  module Map_path :
+    sig
+      type +!'a t
+      val empty : 'a t
+      val is_empty : 'a t -> bool
+      val mem : Ocsigen_lib_base.Url_base.path -> 'a t -> bool
+      val add : Ocsigen_lib_base.Url_base.path -> 'a -> 'a t -> 'a t
+      val update :
+        Ocsigen_lib_base.Url_base.path ->
+        ('a option -> 'a option) -> 'a t -> 'a t
+      val singleton : Ocsigen_lib_base.Url_base.path -> 'a -> 'a t
+      val remove : Ocsigen_lib_base.Url_base.path -> 'a t -> 'a t
+      val merge :
+        (Ocsigen_lib_base.Url_base.path ->
+         'a option -> 'b option -> 'c option) ->
+        'a t -> 'b t -> 'c t
+      val union :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> 'a -> 'a option) ->
+        'a t -> 'a t -> 'a t
+      val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+      val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+      val iter :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> unit) -> 'a t -> unit
+      val fold :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> 'b -> 'b) ->
+        'a t -> 'b -> 'b
+      val for_all :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> bool
+      val exists :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> bool
+      val filter :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> 'a t
+      val filter_map :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> 'b option) -> 'a t -> 'b t
+      val partition :
+        (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> 'a t * 'a t
+      val cardinal : 'a t -> int
+      val bindings : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) list
+      val min_binding : 'a t -> Ocsigen_lib_base.Url_base.path * 'a
+      val min_binding_opt :
+        'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
+      val max_binding : 'a t -> Ocsigen_lib_base.Url_base.path * 'a
+      val max_binding_opt :
+        'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
+      val choose : 'a t -> Ocsigen_lib_base.Url_base.path * 'a
+      val choose_opt : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
+      val split :
+        Ocsigen_lib_base.Url_base.path -> 'a t -> 'a t * 'a option * 'a t
+      val find : Ocsigen_lib_base.Url_base.path -> 'a t -> 'a
+      val find_opt : Ocsigen_lib_base.Url_base.path -> 'a t -> 'a option
+      val find_first :
+        (Ocsigen_lib_base.Url_base.path -> bool) ->
+        'a t -> Ocsigen_lib_base.Url_base.path * 'a
+      val find_first_opt :
+        (Ocsigen_lib_base.Url_base.path -> bool) ->
+        'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
+      val find_last :
+        (Ocsigen_lib_base.Url_base.path -> bool) ->
+        'a t -> Ocsigen_lib_base.Url_base.path * 'a
+      val find_last_opt :
+        (Ocsigen_lib_base.Url_base.path -> bool) ->
+        'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
+      val map : ('a -> 'b) -> 'a t -> 'b t
+      val mapi : (Ocsigen_lib_base.Url_base.path -> 'a -> 'b) -> 'a t -> 'b t
+      val to_seq : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) Seq.t
+      val to_rev_seq : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) Seq.t
+      val to_seq_from :
+        Ocsigen_lib_base.Url_base.path ->
+        'a t -> (Ocsigen_lib_base.Url_base.path * 'a) Seq.t
+      val add_seq :
+        (Ocsigen_lib_base.Url_base.path * 'a) Seq.t -> 'a t -> 'a t
+      val of_seq : (Ocsigen_lib_base.Url_base.path * 'a) Seq.t -> 'a t
+    end
+  module Map_inner :
+    sig
+      type +!'a t
+      val empty : 'a t
+      val is_empty : 'a t -> bool
+      val mem : string -> 'a t -> bool
+      val add : string -> 'a -> 'a t -> 'a t
+      val update : string -> ('a option -> 'a option) -> 'a t -> 'a t
+      val singleton : string -> 'a -> 'a t
+      val remove : string -> 'a t -> 'a t
+      val merge :
+        (string -> 'a option -> 'b option -> 'c option) ->
+        'a t -> 'b t -> 'c t
+      val union : (string -> 'a -> 'a -> 'a option) -> 'a t -> 'a t -> 'a t
+      val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+      val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+      val iter : (string -> 'a -> unit) -> 'a t -> unit
+      val fold : (string -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
+      val for_all : (string -> 'a -> bool) -> 'a t -> bool
+      val exists : (string -> 'a -> bool) -> 'a t -> bool
+      val filter : (string -> 'a -> bool) -> 'a t -> 'a t
+      val filter_map : (string -> 'a -> 'b option) -> 'a t -> 'b t
+      val partition : (string -> 'a -> bool) -> 'a t -> 'a t * 'a t
+      val cardinal : 'a t -> int
+      val bindings : 'a t -> (string * 'a) list
+      val min_binding : 'a t -> string * 'a
+      val min_binding_opt : 'a t -> (string * 'a) option
+      val max_binding : 'a t -> string * 'a
+      val max_binding_opt : 'a t -> (string * 'a) option
+      val choose : 'a t -> string * 'a
+      val choose_opt : 'a t -> (string * 'a) option
+      val split : string -> 'a t -> 'a t * 'a option * 'a t
+      val find : string -> 'a t -> 'a
+      val find_opt : string -> 'a t -> 'a option
+      val find_first : (string -> bool) -> 'a t -> string * 'a
+      val find_first_opt : (string -> bool) -> 'a t -> (string * 'a) option
+      val find_last : (string -> bool) -> 'a t -> string * 'a
+      val find_last_opt : (string -> bool) -> 'a t -> (string * 'a) option
+      val map : ('a -> 'b) -> 'a t -> 'b t
+      val mapi : (string -> 'a -> 'b) -> 'a t -> 'b t
+      val to_seq : 'a t -> (string * 'a) Seq.t
+      val to_rev_seq : 'a t -> (string * 'a) Seq.t
+      val to_seq_from : string -> 'a t -> (string * 'a) Seq.t
+      val add_seq : (string * 'a) Seq.t -> 'a t -> 'a t
+      val of_seq : (string * 'a) Seq.t -> 'a t
+    end
+  type cookie = OSet of float option * string * bool | OUnset
+  type t =
+      Ocsigen_cookie_map.cookie Ocsigen_cookie_map.Map_inner.t
+      Ocsigen_cookie_map.Map_path.t
+  val empty : Ocsigen_cookie_map.t
+  val add :
+    path:Ocsigen_lib_base.Url_base.path ->
+    string ->
+    Ocsigen_cookie_map.cookie -> Ocsigen_cookie_map.t -> Ocsigen_cookie_map.t
+  val add_multi :
+    Ocsigen_cookie_map.t -> Ocsigen_cookie_map.t -> Ocsigen_cookie_map.t
+  val remove :
+    path:Ocsigen_lib_base.Url_base.path ->
+    string -> Ocsigen_cookie_map.t -> Ocsigen_cookie_map.t
+  module Poly :
+    sig
+      val add :
+        path:Ocsigen_lib_base.Url_base.path ->
+        string ->
+        'a ->
+        'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t ->
+        'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t
+      val remove :
+        path:Ocsigen_lib_base.Url_base.path ->
+        string ->
+        'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t ->
+        'a Ocsigen_cookie_map.Map_inner.t Ocsigen_cookie_map.Map_path.t
+    end
+end >>

@@ -1,0 +1,4 @@
+<<code language="ocaml" | sig
+  type t = (string * float option) list
+  val parse : string list -> Ocsigen_header.Accept_language.t
+end >>

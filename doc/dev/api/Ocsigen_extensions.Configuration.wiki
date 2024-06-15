@@ -34,3 +34,4 @@
 <<pre id="VALignore_blank_pcdata" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|ignore~_blank~_pcdata>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_label"| in_tag: >>string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~The specification for ignoring blank ~P~C~D~A~T~A ~(~'~\n~'~, ~'~\r~'~, ~' ~'~, ~'~\t~'~) and failing
       otherwise ~(a reasonable default~)~.
 >>
+<<pre id="VALrefuse_pcdata" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|refuse~_pcdata>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_label"| in_tag: >>string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> unit>>>>

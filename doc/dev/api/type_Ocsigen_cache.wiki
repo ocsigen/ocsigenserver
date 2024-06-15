@@ -50,10 +50,16 @@
         'a Ocsigen_cache.Dlist.t -> unit
       val get_finaliser_before :
         'a Ocsigen_cache.Dlist.t -> 'a Ocsigen_cache.Dlist.node -> unit
+      val add_finaliser_before :
+        ('a Ocsigen_cache.Dlist.node -> unit) ->
+        'a Ocsigen_cache.Dlist.t -> unit
       val set_finaliser_after :
         ('a Ocsigen_cache.Dlist.node -> unit) ->
         'a Ocsigen_cache.Dlist.t -> unit
       val get_finaliser_after :
         'a Ocsigen_cache.Dlist.t -> 'a Ocsigen_cache.Dlist.node -> unit
+      val add_finaliser_after :
+        ('a Ocsigen_cache.Dlist.node -> unit) ->
+        'a Ocsigen_cache.Dlist.t -> unit
     end
 end >>

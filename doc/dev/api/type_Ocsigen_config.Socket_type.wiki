@@ -1,0 +1,5 @@
+<<code language="ocaml" | sig
+  type t = [ `All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr ]
+  val to_string : Ocsigen_config.Socket_type.t -> string
+  val to_inet_addr : Ocsigen_config.Socket_type.t -> Unix.inet_addr
+end >>

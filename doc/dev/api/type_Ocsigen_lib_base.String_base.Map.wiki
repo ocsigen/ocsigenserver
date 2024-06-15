@@ -1,6 +1,6 @@
 <<code language="ocaml" | sig
   type key = string
-  type +'a t
+  type +!'a t
   val empty : 'a t
   val is_empty : 'a t -> bool
   val mem : key -> 'a t -> bool
@@ -18,6 +18,7 @@
   val for_all : (key -> 'a -> bool) -> 'a t -> bool
   val exists : (key -> 'a -> bool) -> 'a t -> bool
   val filter : (key -> 'a -> bool) -> 'a t -> 'a t
+  val filter_map : (key -> 'a -> 'b option) -> 'a t -> 'b t
   val partition : (key -> 'a -> bool) -> 'a t -> 'a t * 'a t
   val cardinal : 'a t -> int
   val bindings : 'a t -> (key * 'a) list
@@ -36,4 +37,9 @@
   val find_last_opt : (key -> bool) -> 'a t -> (key * 'a) option
   val map : ('a -> 'b) -> 'a t -> 'b t
   val mapi : (key -> 'a -> 'b) -> 'a t -> 'b t
+  val to_seq : 'a t -> (key * 'a) Seq.t
+  val to_rev_seq : 'a t -> (key * 'a) Seq.t
+  val to_seq_from : key -> 'a t -> (key * 'a) Seq.t
+  val add_seq : (key * 'a) Seq.t -> 'a t -> 'a t
+  val of_seq : (key * 'a) Seq.t -> 'a t
 end >>

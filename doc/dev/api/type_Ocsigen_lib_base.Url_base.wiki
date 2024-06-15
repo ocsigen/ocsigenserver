@@ -21,4 +21,8 @@
     Ocsigen_lib_base.Url_base.path -> Ocsigen_lib_base.Url_base.path
   val is_prefix_skip_end_slash : string list -> string list -> bool
   val split_fragment : string -> string * string option
+  val join_path : Ocsigen_lib_base.Url_base.path -> string
+  val split_path : string -> Ocsigen_lib_base.Url_base.path
+  val norm_path :
+    Ocsigen_lib_base.Url_base.path -> Ocsigen_lib_base.Url_base.path
 end >>

@@ -7,11 +7,13 @@
   val is_implicit : string -> bool
   val check_suffix : string -> string -> bool
   val chop_suffix : string -> string -> string
+  val chop_suffix_opt : suffix:string -> string -> string option
   val extension : string -> string
   val remove_extension : string -> string
   val chop_extension : string -> string
   val basename : string -> string
   val dirname : string -> string
+  val null : string
   val temp_file : ?temp_dir:string -> string -> string -> string
   val open_temp_file :
     ?mode:open_flag list ->
@@ -21,5 +23,9 @@
   val set_temp_dir_name : string -> unit
   val temp_dir_name : string
   val quote : string -> string
+  val quote_command :
+    string ->
+    ?stdin:string ->
+    ?stdout:string -> ?stderr:string -> string list -> string
   val extension_no_directory : string -> string
 end >>

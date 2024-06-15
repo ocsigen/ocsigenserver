@@ -1,0 +1,3 @@
+=Module <<a_api_type | module Extendconfiguration >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Extendconfiguration>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Extendconfiguration >><<span class="ocsforge_color_keyword"|end>>>>
+----

@@ -5,6 +5,27 @@
 
 
 
+==@@id="2_Extensions"@@~Extensions==
+
+
+|<<a_api | module Staticmod >>|<<div class="odocwiki_info"|~Staticmod~: serve static files
+>>
+|
+|<<a_api | module Extendconfiguration >>||
+|<<a_api | module Accesscontrol >>||
+|<<a_api | module Authbasic >>||
+|<<a_api | module Deflatemod >>||
+|<<a_api | module Redirectmod >>||
+|<<a_api | module Revproxy >>||
+|<<a_api | module Rewritemod >>||
+|<<a_api | module Outputfilter >>||
+|<<a_api | module Userconf >>||
+|<<a_api | module Cors >>||
+
+
+
+
+
 ==@@id="2_Persistentdatawritinginthelogsconfigurationfileextensionpolymorphictables"@@~Persistent data~, writing in the logs~, configuration file extension~, polymorphic tables==
 
 
@@ -23,9 +44,6 @@
 |<<a_api | module Ocsigen_cache >>|<<div class="odocwiki_info"|~Cache~.
 >>
 |
-|<<a_api | module Ocsipersist >>|<<div class="odocwiki_info"|~Persistent data on hard disk~.
->>
-|
 |<<a_api | module Ocsigen_config >>|<<div class="odocwiki_info"|~Configuring ~Ocsigen server
 >>
 |
@@ -37,33 +55,12 @@
 ==@@id="2_ExtendingOcsigenServer"@@~Extending ~Ocsigen ~Server==
 
 
-|<<a_api | module Ocsigen_extensions >>|<<div class="odocwiki_info"|~Writing extensions for ~Ocsigen
+|<<a_api | module Ocsigen_extensions >>|<<div class="odocwiki_info"|~Extensions interface for ~Ocsigen ~Server
 >>
 |
-|<<a_api | module Ocsigen_local_files >>|<<div class="odocwiki_info"|~The requested file does not exists
->>
-|
-|<<a_api | module Ocsigen_headers >>|<<div class="odocwiki_info"|~Getting informations from ~H~T~T~P header~.
->>
-|
-|<<a_api | module Ocsigen_senders >>|<<div class="odocwiki_info"|~Functions to create results for various kinds of documents
->>
-|
-|<<a_api | module Ocsigen_http_frame >>||
-|<<a_api | module Ocsigen_http_client >>|<<div class="odocwiki_info"|~Using ~Ocsigen as a ~H~T~T~P client
->>
-|
-|<<a_api | module Ocsigen_http_com >>|<<div class="odocwiki_info"|~Sending and receiving ~H~T~T~P frames
->>
-|
+|<<a_api | module Ocsigen_local_files >>||
 |<<a_api | module Ocsigen_stream >>||
-|<<a_api | module Ocsigen_comet >>|<<div class="odocwiki_info"|~Ocsigen~_comet server extension ~: provides low~-level server to client communication
-    scheme~.
->>
-|
-|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Module <<span class="odocwiki_inlinecode"|~Authbasic>>~: ~Basic ~H~T~T~P ~Authentication~.
->>
-|
+|<<a_api | module Authbasic >>||
 
 
 
@@ -79,5 +76,4 @@
 * <<a_api text="Index of class methods" | index methods >>
 * <<a_api text="Index of classes" | index classes >>
 * <<a_api text="Index of modules" | index modules >>
-* <<a_api text="Index of module types" | index module types >>
 

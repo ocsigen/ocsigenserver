@@ -2,6 +2,8 @@
 <<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_messages>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_messages >><<span class="ocsforge_color_keyword"|end>>>>~Writing messages in the logs
 
 ----
+<<pre id="VALaccess_sect" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|access~_sect>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|use ~Lwt~_log~.~Section~.set~_level in order to debug
+>>
 <<pre id="VALaccesslog" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|accesslog>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~Write a message in access~.log
 >>
 <<pre id="VALerrlog" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|errlog>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_label"| ?section: >><<span class="ocsforge_color_uid"|Lwt_log>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>> <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~Write a message in errors~.log

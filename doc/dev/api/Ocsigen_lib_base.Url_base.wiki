@@ -14,3 +14,4 @@
 >>
 <<pre id="VALsplit_fragment" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|split~_fragment>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> string * string option>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|split~_fragment str>> splits <<span class="odocwiki_inlinecode"|str>> at first ~'~#~'
 >>
+<<pre id="VALjoin_path" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|join~_path>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<a_api text="path" | type Ocsigen_lib_base.Url_base.path >> <<span class="ocsforge_color_delimiter"| -> >> string>>>>

@@ -1,4 +1,5 @@
 <<code language="ocaml" | sig
+  type 'a t = 'a list = [] | (::) of 'a * 'a list
   val length : 'a list -> int
   val compare_lengths : 'a list -> 'b list -> int
   val compare_length_with : 'a list -> int -> int
@@ -13,11 +14,16 @@
   val rev_append : 'a list -> 'a list -> 'a list
   val concat : 'a list list -> 'a list
   val flatten : 'a list list -> 'a list
+  val equal : ('a -> 'a -> bool) -> 'a list -> 'a list -> bool
+  val compare : ('a -> 'a -> int) -> 'a list -> 'a list -> int
   val iter : ('a -> unit) -> 'a list -> unit
   val iteri : (int -> 'a -> unit) -> 'a list -> unit
   val map : ('a -> 'b) -> 'a list -> 'b list
   val mapi : (int -> 'a -> 'b) -> 'a list -> 'b list
   val rev_map : ('a -> 'b) -> 'a list -> 'b list
+  val filter_map : ('a -> 'b option) -> 'a list -> 'b list
+  val concat_map : ('a -> 'b list) -> 'a list -> 'b list
+  val fold_left_map : ('a -> 'b -> 'a * 'c) -> 'a -> 'b list -> 'a * 'c list
   val fold_left : ('a -> 'b -> 'a) -> 'a -> 'b list -> 'a
   val fold_right : ('a -> 'b -> 'b) -> 'a list -> 'b -> 'b
   val iter2 : ('a -> 'b -> unit) -> 'a list -> 'b list -> unit
@@ -33,9 +39,13 @@
   val memq : 'a -> 'a list -> bool
   val find : ('a -> bool) -> 'a list -> 'a
   val find_opt : ('a -> bool) -> 'a list -> 'a option
+  val find_map : ('a -> 'b option) -> 'a list -> 'b option
   val filter : ('a -> bool) -> 'a list -> 'a list
   val find_all : ('a -> bool) -> 'a list -> 'a list
+  val filteri : (int -> 'a -> bool) -> 'a list -> 'a list
   val partition : ('a -> bool) -> 'a list -> 'a list * 'a list
+  val partition_map :
+    ('a -> ('b, 'c) Either.t) -> 'a list -> 'b list * 'c list
   val assoc : 'a -> ('a * 'b) list -> 'b
   val assoc_opt : 'a -> ('a * 'b) list -> 'b option
   val assq : 'a -> ('a * 'b) list -> 'b
@@ -51,6 +61,8 @@
   val fast_sort : ('a -> 'a -> int) -> 'a list -> 'a list
   val sort_uniq : ('a -> 'a -> int) -> 'a list -> 'a list
   val merge : ('a -> 'a -> int) -> 'a list -> 'a list -> 'a list
+  val to_seq : 'a list -> 'a Seq.t
+  val of_seq : 'a Seq.t -> 'a list
   val map_filter : ('a -> 'b option) -> 'a list -> 'b list
   val last : 'a list -> 'a
   val assoc_remove : 'a -> ('a * 'b) list -> 'b * ('a * 'b) list

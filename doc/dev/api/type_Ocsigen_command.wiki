@@ -1,0 +1,7 @@
+<<code language="ocaml" | sig
+  exception Unknown_command
+  val register_command_function :
+    ?prefix:string -> (string -> string list -> unit Lwt.t) -> unit
+  val get_command_function :
+    unit -> ?prefix:string -> string -> string list -> unit Lwt.t
+end >>
