@@ -67,7 +67,15 @@ val start :
   -> ?maxretries:int
   -> Ocsigen_extensions.host_config list
   -> unit
-(** Start the server with some instructions. Never returns. *)
+(** Start the server with some instructions. Never returns. 
+
+@param ports The list of HTTP port you want to listen to. The socket type can be 
+used to filter on some IPV4 or IPV6 subnet (default: [[`All, 8080]])
+
+@param ssl_ports The list of HTTPS port you want to listen to.
+
+
+*)
 
 type instruction =
   Ocsigen_extensions.virtual_hosts

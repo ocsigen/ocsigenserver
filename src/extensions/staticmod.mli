@@ -1,5 +1,13 @@
+(** Staticmod: serve static files *)
+
+(* If you want to use this extension with Ocsigen Server's configuration file, 
+   have a look at the <<a_manual chapter="staticmod"|manual page>>.
+   If you are using Ocsigen Serer as a library, use the interface described
+   here:
+*)
+
 val section : Lwt_log_core.section
-(** use Lwt_log.Section.set_level in order to debug *)
+(** use {!Lwt_log.Section.set_level} in order to debug *)
 
 val run :
    ?dir:string
@@ -11,4 +19,6 @@ val run :
   -> unit
   -> Ocsigen_server.instruction
 (** Run static mod on a specific directory. 
-    Call this if you want to run Ocsigen Server without configuration file. *)
+    Call this if you want to run Ocsigen Server without configuration file.
+    The optional parameter correspond to the options of the configuration
+    file described <<a_manual chapter="staticmod"|here>>.*)
