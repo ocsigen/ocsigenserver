@@ -31,4 +31,4 @@ let () =
       "usage: ocsigenserver [-c configfile]"
   with Arg.Help s -> print_endline s; exit 0
 
-let () = Ocsigen_server.start ~config:(Ocsigen_parseconfig.parse_config ()) ()
+let () = Ocsigen_server.exec (Ocsigen_parseconfig.parse_config ())

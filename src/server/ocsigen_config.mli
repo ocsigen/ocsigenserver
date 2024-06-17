@@ -70,8 +70,6 @@ val set_default_charset : string option -> unit
 val set_datadir : string -> unit
 val set_bindir : string -> unit
 val set_extdir : string -> unit
-val set_user : string option -> unit
-val set_group : string option -> unit
 val set_command_pipe : string -> unit
 val set_debugmode : bool -> unit
 val set_disablepartialrequests : bool -> unit
@@ -92,14 +90,15 @@ val get_silent : unit -> bool
 val get_daemon : unit -> bool
 val get_veryverbose : unit -> bool
 val get_debug : unit -> bool
-val get_default_user : unit -> string
-val get_default_group : unit -> string
 val get_minthreads : unit -> int
 val get_maxthreads : unit -> int
 val get_max_number_of_threads_queued : unit -> int
 val get_max_number_of_connections : unit -> int
 val get_client_timeout : unit -> int
 val get_server_timeout : unit -> int
+
+val has_configuration_file : unit -> bool
+(** returns true if Ocsigen Server is running with a configuration file, *)
 
 (*val get_keepalive_timeout : unit -> int
   val get_keepopen_timeout : unit -> int*)
@@ -110,8 +109,6 @@ val get_default_charset : unit -> string option
 val get_datadir : unit -> string
 val get_bindir : unit -> string
 val get_extdir : unit -> string
-val get_user : unit -> string option
-val get_group : unit -> string option
 val get_command_pipe : unit -> string
 val get_debugmode : unit -> bool
 val get_disablepartialrequests : unit -> bool
@@ -138,12 +135,4 @@ val get_uploaddir : unit -> string option
 (* Same thing for upload size *)
 val set_maxuploadfilesize : int64 option -> unit
 val get_maxuploadfilesize : unit -> int64 option
-
-module Custom : sig
-  type 'a key
-
-  val key : ?preprocess:('a -> 'a) -> unit -> 'a key
-  val find : 'a key -> 'a option
-  val set : 'a key -> 'a -> unit
-  val unset : 'a key -> unit
-end
+val has_config_file : bool ref
