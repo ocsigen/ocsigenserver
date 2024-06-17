@@ -8,7 +8,8 @@ default all: build
 
 .PHONY: build
 build:
-	${MAKE} -C src
+	dune build
+	${MAKE} -C src/server build
 doc:
 	$(MAKE) -C doc
 
@@ -28,13 +29,14 @@ top:
 ### Cleaning ###
 
 clean: clean.local
-	${MAKE} -C src clean
+	${MAKE} -C src/server clean
 
 clean.local:
+	dune clean
 	-rm -f ocsigenserver-*.tar.gz
 
 distclean: clean.local
-	${MAKE} -C src distclean
+	${MAKE} -C src/server distclean
 	-make -C doc clean
 	-rm Makefile.config
 	-rm -f *~ \#* .\#*

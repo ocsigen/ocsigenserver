@@ -26,12 +26,3 @@ INCS=   -I ${BLD}/server/.ocsigenserver.objs/byte \
 SERVER_PACKAGE := lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix,hmap
 
 LIBS := -package ${SERVER_PACKAGE} ${INCS}
-
-INITPACKAGE := \"$(shell ${OCAMLFIND} query -p-format -recursive        \
-				    -separator '\";\"' ${SERVER_PACKAGE})\"; \
-	       \"ocsigenserver.polytables\";   \
-	       \"ocsigenserver.cookies\";      \
-	       \"ocsigenserver.baselib.base\"; \
-	       \"ocsigenserver.baselib\";      \
-	       \"ocsigenserver.http\";         \
-	       \"ocsigenserver\";              \
