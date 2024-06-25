@@ -48,10 +48,15 @@
 *@@class="drawermainmenu-project"@@[[wiki("tyxml"):|Tyxml]]
 *@@class="drawermainmenu-project"@@[[wiki("ocsigen-toolkit"):|Toolkit]]
 *@@class="drawermainmenu-project"@@[[wiki("ocsigen-start"):|Start]]
+*@@class="drawermainmenu-project"@@[[wiki("ocsipersist"):|Ocsipersist]]
+*@@class="drawermainmenu-project"@@[[wiki("html_of_wiki"):|html_of_wiki]]
+*@@class="drawermainmenu-project"@@[[wiki("ocsimore"):|Ocsimore (//deprecated//)]]
 *@@class="drawermainmenu-page"@@[[site:/projects|Other projects]]
 *@@class="drawermainmenu-page"@@[[site:/papers|Research papers]]
 *@@class="drawermainmenu-page"@@[[site:/credits|Who does Ocsigen?]]
+*@@class="drawermainmenu-page"@@[[site:/contributing|Contributing]]
 *@@class="drawermainmenu-page"@@[[site:/blog|Blog]]
+*@@class="drawermainmenu-page"@@[[site:/install|Installation]]
 *@@class="drawermainmenu-page"@@[[https://github.com/ocsigen|Source code]]
 
 <<doctree>>
