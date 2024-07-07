@@ -104,18 +104,11 @@ let parse_config element =
   in
   gen ~realm ~auth
 
-(** Registration of the extension *)
+(** Registration of the extension for the config file: *)
 let () =
   Ocsigen_extensions.register ~name:"authbasic"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let realm = Ocsigen_server.Site.Config.key ()
-let auth = Ocsigen_server.Site.Config.key ()
-
-let extension =
-  Ocsigen_server.Site.create_extension
-    (fun {Ocsigen_server.Site.Config.accessor} ->
-       match accessor realm, accessor auth with
-       | Some realm, Some auth -> gen ~realm ~auth
-       | _, _ -> failwith "Authbasic realm and/or auth not set")
+(** Instruction for static linking without config file: *)
+let run ~realm ~auth () _ _ _ = gen ~realm ~auth

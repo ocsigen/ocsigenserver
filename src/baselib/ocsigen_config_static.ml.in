@@ -22,8 +22,6 @@ let version_number = "_VERSION_"
 let config_file = ref "_CONFIGDIR_/ocsigenserver.conf"
 let is_native = Sys.backend_type = Sys.Native
 let logdir = ref (Some "_LOGDIR_")
-let default_user = ref "_OCSIGENUSER_"
-let default_group = ref "_OCSIGENGROUP_"
 let mimefile = ref "_CONFIGDIR_/mime.types"
 let datadir = ref "_DATADIR_"
 let bindir = ref "_BINDIR_"

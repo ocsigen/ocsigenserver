@@ -30,9 +30,7 @@ let stdout = Lwt_log.channel ~close_mode:`Keep ~channel:Lwt_io.stdout ()
 let loggers = ref []
 let access_logger = ref Lwt_log_core.null
 
-let open_files ?(user = Ocsigen_config.get_user ())
-    ?(group = Ocsigen_config.get_group ()) ()
-  =
+let open_files () =
   (* CHECK: we are closing asynchronously!  That should be ok, though. *)
   List.iter (fun l -> ignore (Lwt_log.close l : unit Lwt.t)) !loggers;
   match Ocsigen_config.get_syslog_facility () with
@@ -75,35 +73,7 @@ let open_files ?(user = Ocsigen_config.get_user ())
                 match lev with
                 | Lwt_log.Warning | Lwt_log.Error | Lwt_log.Fatal -> stderr
                 | _ -> stdout) ];
-      let gid =
-        match group with
-        | None -> Unix.getgid ()
-        | Some group -> (
-          try (Unix.getgrnam group).Unix.gr_gid
-          with Not_found as e ->
-            ignore (Lwt_log.error "Error: Wrong group");
-            raise e)
-      in
-      let uid =
-        match user with
-        | None -> Unix.getuid ()
-        | Some user -> (
-          try (Unix.getpwnam user).Unix.pw_uid
-          with Not_found as e ->
-            ignore (Lwt_log.error "Error: Wrong user");
-            raise e)
-      in
-      Lwt.catch
-        (fun () ->
-           Lwt_unix.chown (full_path access_file) uid gid >>= fun () ->
-           Lwt_unix.chown (full_path warning_file) uid gid >>= fun () ->
-           Lwt_unix.chown (full_path error_file) uid gid)
-        (fun e ->
-           match e with
-           | Unix.Unix_error (Unix.EPERM, _, _) ->
-               (* to allow for symlinks to /dev/null *)
-               Lwt.return_unit
-           | _ -> Lwt.fail e)
+      Lwt.return ()
 
 (****)
 

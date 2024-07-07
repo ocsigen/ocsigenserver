@@ -12,8 +12,6 @@
 
     <logdir>_LOGDIR_</logdir>
     <datadir>_DATADIR_</datadir>
-    <user>_OCSIGENUSER_</user>
-    <group>_OCSIGENGROUP_</group>
     <!-- <commandpipe>_COMMANDPIPE_</commandpipe> -->
     <!-- <mimefile>_MIMEFILE_</mimefile> -->
 

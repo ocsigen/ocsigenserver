@@ -5,7 +5,8 @@ type redirection
 
 val create_redirection :
    ?full_url:[< `Maybe | `No | `Yes > `Yes]
-  -> ?temporary:bool
+  -> ?pipeline:bool
+  -> ?keephost:bool
   -> regexp:string
   -> string
   -> redirection
