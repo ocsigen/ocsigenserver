@@ -216,7 +216,7 @@ let fun_site usermode _ _ _ _ _ = function
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element (("maxuploadfilesize" as tag), [], [Xml.PCData s]) ->
       let s =
-        try Ocsigen_parseconfig.parse_size_tag "uploaddir" s
+        try Ocsigen_parseconfig.parse_size_tag "maxuploadfilesize" s
         with Ocsigen_config.Config_file_error _ ->
           Ocsigen_extensions.badconfig "Bad syntax for tag %s" tag
       in
@@ -231,3 +231,107 @@ let fun_site usermode _ _ _ _ _ = function
            "Unexpected data in config file")
 
 let () = Ocsigen_extensions.register ~name ~fun_site ()
+
+let maxuploadfilesize s _ _ _ =
+  gen @@ fun config -> {config with Ocsigen_extensions.maxuploadfilesize = s}
+
+let uploaddir d _ _ _ =
+  gen @@ fun config -> {config with Ocsigen_extensions.uploaddir = d}
+
+let followsymlinks v _ _ _ =
+  gen @@ fun config -> {config with Ocsigen_extensions.follow_symlinks = v}
+
+let listdirs v _ _ _ =
+  gen @@ fun config ->
+  {config with Ocsigen_extensions.list_directory_content = v}
+
+let forbidfile ?(files = []) ?(extensions = []) ?(regexps = []) () _ _ _ =
+  let do_not_serve =
+    { Ocsigen_extensions.do_not_serve_regexps = regexps
+    ; do_not_serve_files = files
+    ; do_not_serve_extensions = extensions }
+  in
+  check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
+  gen @@ fun config ->
+  { config with
+    Ocsigen_extensions.do_not_serve_403 =
+      Ocsigen_extensions.join_do_not_serve do_not_serve
+        config.Ocsigen_extensions.do_not_serve_403 }
+
+let hidefile ?(files = []) ?(extensions = []) ?(regexps = []) () _ _ _ =
+  let do_not_serve =
+    { Ocsigen_extensions.do_not_serve_regexps = regexps
+    ; do_not_serve_files = files
+    ; do_not_serve_extensions = extensions }
+  in
+  check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
+  gen @@ fun config ->
+  { config with
+    Ocsigen_extensions.do_not_serve_404 =
+      Ocsigen_extensions.join_do_not_serve do_not_serve
+        config.Ocsigen_extensions.do_not_serve_404 }
+
+let defaultindex v _ _ _ =
+  gen @@ fun config ->
+  {config with Ocsigen_extensions.default_directory_index = v}
+
+let contenttype ?default ?(files = []) ?(extensions = []) ?(regexps = []) () _ _
+    _
+  =
+  gen @@ fun config ->
+  let mime_assoc = config.Ocsigen_extensions.mime_assoc in
+  let mime_assoc =
+    match default with
+    | None -> mime_assoc
+    | Some s -> Ocsigen_charset_mime.set_default_mime mime_assoc s
+  in
+  let mime_assoc =
+    List.fold_left
+      (fun ma (file, mime) ->
+         Ocsigen_charset_mime.update_mime_file ma file mime)
+      mime_assoc files
+  in
+  let mime_assoc =
+    List.fold_left
+      (fun ma (ext, mime) -> Ocsigen_charset_mime.update_mime_ext ma ext mime)
+      mime_assoc extensions
+  in
+  let mime_assoc =
+    List.fold_left
+      (fun ma (regexp, mime) ->
+         Ocsigen_charset_mime.update_mime_regexp ma
+           (Ocsigen_lib.Netstring_pcre.regexp regexp)
+           mime)
+      mime_assoc regexps
+  in
+  {config with Ocsigen_extensions.mime_assoc}
+
+let charset ?default ?(files = []) ?(extensions = []) ?(regexps = []) () _ _ _ =
+  gen @@ fun config ->
+  let charset_assoc = config.Ocsigen_extensions.charset_assoc in
+  let charset_assoc =
+    match default with
+    | None -> charset_assoc
+    | Some s -> Ocsigen_charset_mime.set_default_charset charset_assoc s
+  in
+  let charset_assoc =
+    List.fold_left
+      (fun ma (file, charset) ->
+         Ocsigen_charset_mime.update_charset_file ma file charset)
+      charset_assoc files
+  in
+  let charset_assoc =
+    List.fold_left
+      (fun ma (ext, charset) ->
+         Ocsigen_charset_mime.update_charset_ext ma ext charset)
+      charset_assoc extensions
+  in
+  let charset_assoc =
+    List.fold_left
+      (fun ma (regexp, charset) ->
+         Ocsigen_charset_mime.update_charset_regexp ma
+           (Ocsigen_lib.Netstring_pcre.regexp regexp)
+           charset)
+      charset_assoc regexps
+  in
+  {config with Ocsigen_extensions.charset_assoc}
