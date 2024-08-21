@@ -18,10 +18,58 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-(*
-   val parse_condition :
-  Xml.xml -> Ocsigen_extensions.request_info -> bool
+(** Accesscontrol: Conditional access to some sites *)
+
+(** If you want to use this extension with Ocsigen Server's configuration file, 
++   have a look at the <<a_manual chapter="accesscontrol"|manual page>>.
++   If you are using Ocsigen Server as a library, use the interface described
++   here. Each of these functions behaves exactly as its configuration file
+    counterpart. 
++*)
+
+(**
+This module belongs to ocamlfind package
+   [ocsigenserver.ext.accesscontrol].
 *)
 
+type condition
+
+val ip : string -> condition
+val port : int -> condition
+val ssl : condition
+val header : name:string -> regexp:string -> condition
+val method_ : Cohttp.Code.meth -> condition
+val protocol : Cohttp.Code.version -> condition
+val path : regexp:string -> condition
+val and_ : condition list -> condition
+val or_ : condition list -> condition
+val not_ : condition -> condition
+
+val if_ :
+   condition
+  -> Ocsigen_server.instruction list
+  -> Ocsigen_server.instruction list
+  -> Ocsigen_server.instruction
+
+val iffound : Ocsigen_server.instruction list -> Ocsigen_server.instruction
+
+val ifnotfound :
+   ?code:string
+  -> Ocsigen_server.instruction list
+  -> Ocsigen_server.instruction
+
+val notfound : Ocsigen_server.instruction
+val nextsite : Ocsigen_server.instruction
+val nexthost : Ocsigen_server.instruction
+val stop : Ocsigen_server.instruction
+val forbidden : Ocsigen_server.instruction
+
+val allow_forward_for :
+   ?check_equal_ip:bool
+  -> unit
+  -> Ocsigen_server.instruction
+
+val allow_forward_proto : unit -> Ocsigen_server.instruction
+
 val section : Lwt_log_core.section
-(** use Lwt_log.Section.set_level in order to debug *)
+(** Use Lwt_log.Section.set_level in order to change the log level *)
