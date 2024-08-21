@@ -130,7 +130,7 @@ type instruction =
 
 let default_re_string = ".*"
 
-let host ?(re = default_re_string) ?port ?default_hostname ?default_httpport
+let host ?(regexp = default_re_string) ?port ?default_hostname ?default_httpport
     ?default_httpsport ?default_protocol_is_https ?mime_assoc ?charset_assoc
     ?default_directory_index ?list_directory_content ?follow_symlinks
     ?do_not_serve_404 ?do_not_serve_403 ?uploaddir ?maxuploadfilesize
@@ -157,7 +157,7 @@ let host ?(re = default_re_string) ?port ?default_hostname ?default_httpport
     ; uploaddir = default def.uploaddir uploaddir
     ; maxuploadfilesize = default def.maxuploadfilesize maxuploadfilesize }
   in
-  let vh = [re, Ocsigen_lib.Netstring_pcre.regexp re, port] in
+  let vh = [regexp, Ocsigen_lib.Netstring_pcre.regexp regexp, port] in
   ( vh
   , config_info
   , Ocsigen_extensions.compose

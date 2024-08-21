@@ -142,7 +142,8 @@ let rec parse_condition = function
   | Element ("ssl", [], []) -> ssl
   | Element (("ssl" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
-  | Element ("header", [("name", name); ("regexp", re)], []) -> header ~name ~re
+  | Element ("header", [("name", name); ("regexp", regexp)], []) ->
+      header ~name ~regexp
   | Element (("header" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("method", [("value", s)], []) ->

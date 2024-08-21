@@ -84,7 +84,7 @@ type instruction =
   -> Ocsigen_extensions.extension
 
 val host :
-   ?re:string
+   ?regexp:string
   -> ?port:int
   -> ?default_hostname:string
   -> ?default_httpport:int
