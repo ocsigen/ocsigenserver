@@ -18,7 +18,7 @@ val section : Lwt_log_core.section
 type redirection
 
 val create_redirection :
-   ?full_url:[< `Maybe | `No | `Yes > `Yes]
+   ?full_url:bool
   -> ?temporary:bool
   -> regexp:string
   -> string
