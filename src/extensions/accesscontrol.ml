@@ -53,18 +53,18 @@ let ip s =
 let port port ri =
   let r = Ocsigen_request.port ri = port in
   if r
-  then Lwt_log.ign_info_f ~section "PORT: %d accepted" port
+  then Lwt_log.ign_info_f ~section "PORT = %d: true" port
   else
-    Lwt_log.ign_info_f ~section "PORT: %a not accepted (%d expected)"
+    Lwt_log.ign_info_f ~section "PORT = %d: false (it is %a)" port
       (fun () ri -> string_of_int (Ocsigen_request.port ri))
-      ri port;
+      ri;
   r
 
 let ssl ri =
   let r = Ocsigen_request.ssl ri in
   if r
-  then Lwt_log.ign_info ~section "SSL: accepted"
-  else Lwt_log.ign_info ~section "SSL: not accepted";
+  then Lwt_log.ign_info ~section "SSL: true"
+  else Lwt_log.ign_info ~section "SSL: false";
   r
 
 let header ~name ~regexp:re =
