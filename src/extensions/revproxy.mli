@@ -1,5 +1,19 @@
+(** Revproxy: Forward a request to another Web server *)
+
+(** If you want to use this extension with Ocsigen Server's configuration file, 
++   have a look at the {% <<a_manual chapter="revproxy"|manual page>>%}.
++   If you are using Ocsigen Server as a library, use the interface described
++   here. Each of these functions behaves exactly as its configuration file
+    counterpart. 
++*)
+
+(**
+This module belongs to ocamlfind package
+   [ocsigenserver.ext.revproxy].
+*)
+
 val section : Lwt_log_core.section
-(** use Lwt_log.Section.set_level in order to debug *)
+(** use Lwt_log.Section.set_level in order to set the log level *)
 
 type redirection
 
@@ -12,3 +26,5 @@ val create_redirection :
   -> redirection
 
 val run : redirection:redirection -> unit -> Ocsigen_server.instruction
+(** [run ~redirection ()] makes it possible to use this extension without
+    configuration file.  *)

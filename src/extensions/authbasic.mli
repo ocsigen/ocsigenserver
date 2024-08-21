@@ -18,12 +18,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-val section : Lwt_log_core.section
-(** use Lwt_log.Section.set_level in order to debug *)
+(** Authbasic: Basic HTTP authentication *)
 
-(** Module [Authbasic]: Basic HTTP Authentication. *)
+(** If you want to use this extension with Ocsigen Server's configuration file, 
++   have a look at the {% <<a_manual chapter="authbasic"|manual page>>%}.
++   If you are using Ocsigen Server as a library, use the interface described
++   here. Each of these functions behaves exactly as its configuration file
+    counterpart. 
++*)
 
-type auth = string -> string -> bool Lwt.t
+(**
+This module belongs to ocamlfind package
+   [ocsigenserver.ext.authbasic].
+*)
 
 (** This module implements Basic HTTP Authentication as described in
     {{:http://www.ietf.org/rfc/rfc2617.txt}RFC 2617}.  It can be used
@@ -36,6 +43,11 @@ type auth = string -> string -> bool Lwt.t
     and is meant to be extended with various authentication schemes. A
     very naive one (authentication with a single user/password, given
     in the configuration file) is provided. *)
+
+val section : Lwt_log_core.section
+(** use Lwt_log.Section.set_level in order to set the log level *)
+
+type auth = string -> string -> bool Lwt.t
 
 val register_basic_authentication_method : (Xml.xml -> auth) -> unit
 (** This function registers an authentication plugin: it adds a new

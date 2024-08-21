@@ -1,7 +1,7 @@
 (** Extendconfiguration: More configuration options for Ocsigen Server *)
 
 (** If you want to use this extension with Ocsigen Server's configuration file, 
-+   have a look at the <<a_manual chapter="extendconfiguration"|manual page>>.
++   have a look at the {% <<a_manual chapter="extendconfiguration"|manual page>>%}.
 +   If you are using Ocsigen Server as a library, use the interface described
 +   here. Each of these functions behaves exactly as its configuration file
     counterpart. 
