@@ -48,7 +48,7 @@ We are looking for beta-tester and contributors.
   val section : Lwt_log_core.section
   type redirection
   val create_redirection :
-    ?full_url:[&lt; `Maybe | `No | `Yes &gt; `Yes ] -&gt;
+    ?full_url:bool -&gt;
     ?temporary:bool -&gt; regexp:string -&gt; string -&gt; Redirectmod.redirection
   val run :
     redirection:Redirectmod.redirection -&gt; unit -&gt; Ocsigen_server.instruction
