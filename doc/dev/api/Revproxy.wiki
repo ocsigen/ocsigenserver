@@ -1,6 +1,44 @@
 =Module <<a_api_type | module Revproxy >> =
-<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Revproxy>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Revproxy >><<span class="ocsforge_color_keyword"|end>>>>
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Revproxy>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Revproxy >><<span class="ocsforge_color_keyword"|end>>>>~Revproxy~: ~Forward a request to another ~Web server
+
 ----
-<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|use ~Lwt~_log~.~Section~.set~_level in order to debug
+
+~If you want to use this extension with ~Ocsigen ~Server~'s configuration file~,
+    have a look at the <<a_manual chapter="revproxy"|manual page>>~.
+    ~If you are using ~Ocsigen ~Server as a library~, use the interface described
+    here~. ~Each of these functions behaves exactly as its configuration file
+    counterpart~.
+
+~This module belongs to ocamlfind package
+   <<span class="odocwiki_inlinecode"|ocsigenserver~.ext~.revproxy>>~.
+
+~Example of use~. ~Forward all requests to a given directory to the
+same directory of another server running locally on another port~.
+~We are using it in combination with
+<<a_manual chapter="outputfilter"|Outputfilter>> to rewrite redirections~.
+
+
+
+<<code language='ocaml'|let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+       [ Revproxy.run
+           ~redirection:(Revproxy.create_redirection 
+                           ~full_url:false
+                           ~regexp:"(othersite/.* )"
+                           ~keephost:true
+                           "https://localhost:8123/\\1") 
+           ()
+        ; Outputfilter.run 
+            ~mode:(`Rewrite (Ocsigen_header.Name.location,
+                             "http://localhost:8123/(.* )",
+                             "http://my.publicaddress.org/\\1"))
+            ()
+ ]]
 >>
-<<pre class="ocsforge_color odocwiki_code" id="TYPEredirection"|<<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|redirection>>>><<pre id="VALcreate_redirection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|create~_redirection>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?full_url: >>[< `Maybe | `No | `Yes > `Yes ] <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?pipeline: >>bool <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?keephost: >>bool <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_label"| regexp: >>string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="redirection" | type Revproxy.redirection >>>>>><<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_label"| redirection: >><<a_api text="redirection" | type Revproxy.redirection >> <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>>
+
+<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|use ~Lwt~_log~.~Section~.set~_level in order to set the log level
+>>
+<<pre class="ocsforge_color odocwiki_code" id="TYPEredirection"|<<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|redirection>>>><<pre id="VALcreate_redirection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|create~_redirection>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?full_url: >>bool <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?pipeline: >>bool <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?keephost: >>bool <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_label"| regexp: >>string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="redirection" | type Revproxy.redirection >>>>>><<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_label"| redirection: >><<a_api text="redirection" | type Revproxy.redirection >> <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run ~~redirection ~(~)>> makes it possible to use this extension without
+    configuration file~.
+>>

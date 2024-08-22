@@ -11,16 +11,34 @@
 |<<a_api | module Staticmod >>|<<div class="odocwiki_info"|~Staticmod~: serve static files
 >>
 |
-|<<a_api | module Extendconfiguration >>||
-|<<a_api | module Accesscontrol >>||
-|<<a_api | module Authbasic >>||
-|<<a_api | module Deflatemod >>||
-|<<a_api | module Redirectmod >>||
-|<<a_api | module Revproxy >>||
-|<<a_api | module Rewritemod >>||
-|<<a_api | module Outputfilter >>||
+|<<a_api | module Extendconfiguration >>|<<div class="odocwiki_info"|~Extendconfiguration~: ~More configuration options for ~Ocsigen ~Server
+>>
+|
+|<<a_api | module Accesscontrol >>|<<div class="odocwiki_info"|~Accesscontrol~: ~Conditional access to some sites
+>>
+|
+|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Authbasic~: ~Basic ~H~T~T~P authentication
+>>
+|
+|<<a_api | module Deflatemod >>|<<div class="odocwiki_info"|~Deflatemod~: compress output data
+>>
+|
+|<<a_api | module Redirectmod >>|<<div class="odocwiki_info"|~Redirectmod~: ~H~T~T~P redirections
+>>
+|
+|<<a_api | module Revproxy >>|<<div class="odocwiki_info"|~Revproxy~: ~Forward a request to another ~Web server
+>>
+|
+|<<a_api | module Rewritemod >>|<<div class="odocwiki_info"|~Rewrite~: ~Change the request
+>>
+|
+|<<a_api | module Outputfilter >>|<<div class="odocwiki_info"|~Outputfilter~: ~Rewrite some part of the output
+>>
+|
 |<<a_api | module Userconf >>||
-|<<a_api | module Cors >>||
+|<<a_api | module Cors >>|<<div class="odocwiki_info"|~Cross~-~Origin ~Resource ~Sharing
+>>
+|
 
 
 
@@ -60,7 +78,9 @@
 |
 |<<a_api | module Ocsigen_local_files >>||
 |<<a_api | module Ocsigen_stream >>||
-|<<a_api | module Authbasic >>||
+|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Authbasic~: ~Basic ~H~T~T~P authentication
+>>
+|
 
 
 

@@ -2,6 +2,6 @@
   val run :
     mode:[ `Add of Ocsigen_header.Name.t * string * bool option
          | `Code of Cohttp.Code.status
-         | `Rewrite of Ocsigen_header.Name.t * Re.Pcre.regexp * string ] ->
+         | `Rewrite of Ocsigen_header.Name.t * string * string ] ->
     unit -> Ocsigen_server.instruction
 end >>

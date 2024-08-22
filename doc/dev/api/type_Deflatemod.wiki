@@ -1,5 +1,4 @@
 <<code language="ocaml" | sig
-  val section : Lwt_log_core.section
   val set_compress_level : int -> unit
   val set_buffer_size : int -> unit
   type filter =
@@ -8,4 +7,5 @@
     mode:[ `All_but of Deflatemod.filter list
          | `Only of Deflatemod.filter list ] ->
     unit -> Ocsigen_server.instruction
+  val section : Lwt_log_core.section
 end >>

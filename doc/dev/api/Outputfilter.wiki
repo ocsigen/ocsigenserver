@@ -1,4 +1,19 @@
 =Module <<a_api_type | module Outputfilter >> =
-<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Outputfilter>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Outputfilter >><<span class="ocsforge_color_keyword"|end>>>>
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Outputfilter>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Outputfilter >><<span class="ocsforge_color_keyword"|end>>>>~Outputfilter~: ~Rewrite some part of the output
+
 ----
-<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| mode: >>[ `Add of <<a_api text="Ocsigen_header.Name.t" | type Ocsigen_header.Name.t >> * string * bool option\\       | `Code of <<span class="ocsforge_color_uid"|Cohttp>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_uid"|Code>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|status>>\\       | `Rewrite of <<a_api text="Ocsigen_header.Name.t" | type Ocsigen_header.Name.t >> * <<span class="ocsforge_color_uid"|Re>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_uid"|Pcre>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|regexp>> * string ] <<span class="ocsforge_color_delimiter"| -> >>\\  unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>>
+
+~If you want to use this extension with ~Ocsigen ~Server~'s configuration file~,
+    have a look at the <<a_manual chapter="outputfilter"|manual page>>~.
+    ~If you are using ~Ocsigen ~Server as a library~, use the interface described
+    here~. ~Each of these functions behaves exactly as its configuration file
+    counterpart~. 
+~+
+
+~This module belongs to ocamlfind package
+   <<span class="odocwiki_inlinecode"|ocsigenserver~.ext~.outputfilter>>~.
+
+~See an example of use on the ~A~P~I documentation of <<a_api | module Revproxy >>~.
+<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| mode: >>[ `Add of <<a_api text="Ocsigen_header.Name.t" | type Ocsigen_header.Name.t >> * string * bool option\\       | `Code of <<span class="ocsforge_color_uid"|Cohttp>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_uid"|Code>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|status>>\\       | `Rewrite of <<a_api text="Ocsigen_header.Name.t" | type Ocsigen_header.Name.t >> * string * string ] <<span class="ocsforge_color_delimiter"| -> >>\\  unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run ~~mode ~(~)>> makes it possible to use this extension without
+    configuration file~.
+>>

@@ -1,4 +1,36 @@
 =Module <<a_api_type | module Cors >> =
-<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Cors>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Cors >><<span class="ocsforge_color_keyword"|end>>>>
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Cors>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Cors >><<span class="ocsforge_color_keyword"|end>>>>~Cross~-~Origin ~Resource ~Sharing
+
 ----
-<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?credentials: >>bool <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?max_age: >>int <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?exposed_headers: >>string list <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?methods: >><<span class="ocsforge_color_uid"|Cohttp>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_uid"|Code>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|meth>> list <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>>
+
+~If you want to use this extension with ~Ocsigen ~Server~'s configuration file~, 
+    have a look at the <<a_manual chapter="cors"|manual page>>~.
+    ~If you are using ~Ocsigen ~Server as a library~, use the interface described
+    here~. ~Each of these functions behaves exactly as its configuration file
+    counterpart~.
+
+~This module belongs to ocamlfind package
+   <<span class="odocwiki_inlinecode"|ocsigenserver~.ext~.cors>>~.
+
+~Example of use~:
+
+<<code language='ocaml'|let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+       [ Staticmod.run ~dir:"static" ()
+       ; Eliom.run () 
+       ; Cors.run
+          ~max_age:86400
+          ~credentials:true
+          ~methods:[ `POST; `GET; `HEAD ]
+          ~exposed_headers:[ "x-eliom-application"
+                           ; "x-eliom-location"
+                           ; "x-eliom-set-process-cookies"
+                           ; "x-eliom-set-cookie-substitutes" ]
+          () 
+    ]]
+>>
+
+<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?credentials: >>bool <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?max_age: >>int <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?exposed_headers: >>string list <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?methods: >><<span class="ocsforge_color_uid"|Cohttp>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_uid"|Code>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|meth>> list <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run>> makes it possible to use this extension without
+    configuration file~.
+>>

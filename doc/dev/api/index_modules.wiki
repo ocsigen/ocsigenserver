@@ -4,8 +4,12 @@
 |@@class="odocwiki_index"@ @@<<a_api text="Accept"| module Ocsigen_header.Accept >> ~[<<a_api | module Ocsigen_header >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="Accept_encoding"| module Ocsigen_header.Accept_encoding >> ~[<<a_api | module Ocsigen_header >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="Accept_language"| module Ocsigen_header.Accept_language >> ~[<<a_api | module Ocsigen_header >>~]||
-|@@class="odocwiki_index"@ @@<<a_api text="Accesscontrol"| module Accesscontrol >> ||
-|@@class="odocwiki_index"@ @@<<a_api text="Authbasic"| module Authbasic >> ||
+|@@class="odocwiki_index"@ @@<<a_api text="Accesscontrol"| module Accesscontrol >> |<<div class="odocwiki_info"|~Accesscontrol~: ~Conditional access to some sites
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Authbasic"| module Authbasic >> |<<div class="odocwiki_info"|~Authbasic~: ~Basic ~H~T~T~P authentication
+>>
+|
 |@@ @style="tet-align: left;"@@\\C|
 |@@class="odocwiki_index"@ @@<<a_api text="Clist"| module Ocsigen_lib_base.Clist >> ~[<<a_api | module Ocsigen_lib_base >>~]|<<div class="odocwiki_info"|~Circular lists
 >>
@@ -15,15 +19,21 @@
 >>
 |
 |@@class="odocwiki_index"@ @@<<a_api text="Content_type"| module Ocsigen_header.Content_type >> ~[<<a_api | module Ocsigen_header >>~]||
-|@@class="odocwiki_index"@ @@<<a_api text="Cors"| module Cors >> ||
+|@@class="odocwiki_index"@ @@<<a_api text="Cors"| module Cors >> |<<div class="odocwiki_info"|~Cross~-~Origin ~Resource ~Sharing
+>>
+|
 |@@ @style="tet-align: left;"@@\\D|
-|@@class="odocwiki_index"@ @@<<a_api text="Deflatemod"| module Deflatemod >> ||
+|@@class="odocwiki_index"@ @@<<a_api text="Deflatemod"| module Deflatemod >> |<<div class="odocwiki_info"|~Deflatemod~: compress output data
+>>
+|
 |@@class="odocwiki_index"@ @@<<a_api text="Dlist"| module Ocsigen_cache.Dlist >> ~[<<a_api | module Ocsigen_cache >>~]|<<div class="odocwiki_info"|~Doubly~-linked lists with maximum number of entries~,
     and ~(possibly~) limited lifespan for entries~.
 >>
 |
 |@@ @style="tet-align: left;"@@\\E|
-|@@class="odocwiki_index"@ @@<<a_api text="Extendconfiguration"| module Extendconfiguration >> ||
+|@@class="odocwiki_index"@ @@<<a_api text="Extendconfiguration"| module Extendconfiguration >> |<<div class="odocwiki_info"|~Extendconfiguration~: ~More configuration options for ~Ocsigen ~Server
+>>
+|
 |@@ @style="tet-align: left;"@@\\F|
 |@@class="odocwiki_index"@ @@<<a_api text="Filename"| module Ocsigen_lib.Filename >> ~[<<a_api | module Ocsigen_lib >>~]||
 |@@ @style="tet-align: left;"@@\\I|
@@ -87,7 +97,9 @@
 |@@class="odocwiki_index"@ @@<<a_api text="Option"| module Ocsigen_lib_base.Option >> ~[<<a_api | module Ocsigen_lib_base >>~]|<<div class="odocwiki_info"|~Module ~Option to compute type <<span class="odocwiki_inlinecode"|~'a option>>
 >>
 |
-|@@class="odocwiki_index"@ @@<<a_api text="Outputfilter"| module Outputfilter >> ||
+|@@class="odocwiki_index"@ @@<<a_api text="Outputfilter"| module Outputfilter >> |<<div class="odocwiki_info"|~Outputfilter~: ~Rewrite some part of the output
+>>
+|
 |@@ @style="tet-align: left;"@@\\P|
 |@@class="odocwiki_index"@ @@<<a_api text="Poly"| module Ocsigen_cookie_map.Poly >> ~[<<a_api | module Ocsigen_cookie_map >>~]|<<div class="odocwiki_info"|~Polymorphic versions of <<span class="odocwiki_inlinecode"|add>> and <<span class="odocwiki_inlinecode"|remove>> to use when we don~'t need to
     ~O~Unset ~(client~-side~)
@@ -97,9 +109,15 @@
 >>
 |
 |@@ @style="tet-align: left;"@@\\R|
-|@@class="odocwiki_index"@ @@<<a_api text="Redirectmod"| module Redirectmod >> ||
-|@@class="odocwiki_index"@ @@<<a_api text="Revproxy"| module Revproxy >> ||
-|@@class="odocwiki_index"@ @@<<a_api text="Rewritemod"| module Rewritemod >> ||
+|@@class="odocwiki_index"@ @@<<a_api text="Redirectmod"| module Redirectmod >> |<<div class="odocwiki_info"|~Redirectmod~: ~H~T~T~P redirections
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Revproxy"| module Revproxy >> |<<div class="odocwiki_info"|~Revproxy~: ~Forward a request to another ~Web server
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Rewritemod"| module Rewritemod >> |<<div class="odocwiki_info"|~Rewrite~: ~Change the request
+>>
+|
 |@@ @style="tet-align: left;"@@\\S|
 |@@class="odocwiki_index"@ @@<<a_api text="Set"| module Ocsigen_lib_base.String_base.Set >> ~[<<a_api | module Ocsigen_lib_base.String_base >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="Socket_type"| module Ocsigen_config.Socket_type >> ~[<<a_api | module Ocsigen_config >>~]||

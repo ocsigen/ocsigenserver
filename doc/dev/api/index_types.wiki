@@ -14,6 +14,7 @@
 |@@class="odocwiki_index"@ @@<<a_api text="charset_assoc"| type Ocsigen_charset_mime.charset_assoc >> ~[<<a_api | module Ocsigen_charset_mime >>~]|<<div class="odocwiki_info"|~Association between extensions and charset~, with a default value~.
 >>
 |
+|@@class="odocwiki_index"@ @@<<a_api text="condition"| type Accesscontrol.condition >> ~[<<a_api | module Accesscontrol >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="config_info"| type Ocsigen_extensions.config_info >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Configuration options~, passed to ~(and modified by~) extensions
 >>
 |
@@ -42,7 +43,10 @@
 |@@class="odocwiki_index"@ @@<<a_api text="file_info"| type Ocsigen_multipart.file_info >> ~[<<a_api | module Ocsigen_multipart >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="file_info"| type Ocsigen_request.file_info >> ~[<<a_api | module Ocsigen_request >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="filename"| type Ocsigen_charset_mime.filename >> ~[<<a_api | module Ocsigen_charset_mime >>~]||
-|@@class="odocwiki_index"@ @@<<a_api text="filter"| type Deflatemod.filter >> ~[<<a_api | module Deflatemod >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="filter"| type Deflatemod.filter >> ~[<<a_api | module Deflatemod >>~]|<<div class="odocwiki_info"|~Describes the content to deflate~, either using its content type~, 
+   or file extension
+>>
+|
 |@@ @style="tet-align: left;"@@\\I|
 |@@class="odocwiki_index"@ @@<<a_api text="instruction"| type Ocsigen_server.instruction >> ~[<<a_api | module Ocsigen_server >>~]||
 |@@ @style="tet-align: left;"@@\\K|
