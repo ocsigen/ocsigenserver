@@ -1,19 +1,26 @@
 =Accesscontrol=
 
-Accesscontrol is in beta version. Submit your bugs and feature wishes [[https://github.com/ocsigen/ocsigenserver|here]].
-
 = The accesscontrol extension =
 
-If you want to restrict access for some sites, this extension is for you. This is still quite experimental, so don't hesitate to test it and report bugs!
+If you want to restrict access for some sites, this extension is for you.
 
-In order to use it, you must first add the following line to your {{{ocsigen.conf}}}:
+==Loading the extension==
+
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.accesscontrol}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
+
 {{{
 <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
 }}}
 
-Here, we call ''actions'' elements that can be put in a site configuration. Actions include {{{<eliom>}}}, {{{<static>}}}, etc.
 
+Here, we call //actions// elements that can be put in a site configuration. Actions include {{{<eliom>}}}, {{{<static>}}}, etc.
 This extension defines several actions.
+
+This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Accesscontrol>>.
 
 == The {{{<if>}}} action ==
 
@@ -43,10 +50,10 @@ Combining conditions (all their children must be conditions):
  * {{{<forbidden/>}}}: stops immediately (does not try other sites) with a 403 error.
  * {{{<iffound>...</iffound>}}}: tries the enclosed actions if some action has already answered.
  * {{{<ifnotfound code="...">...</ifnotfound>}}}: tries the enclosed actions if noone has answered so far. {{{code}}} is an optional regexp matching the current error code.
- * {{{<nextsite/>}}}: stops parsing current site. If the page has been found, answer. If not, try next site. ''from Ocsigen 1.2''
- * {{{<nexthost/>}}}: stops parsing current host. If the page has been found, answer. If not, try next host. ''from Ocsigen 1.2''
- * {{{<stop/>}}}: stops parsing configuration file (answers now whether the page has been found or not). ''from Ocsigen 1.2''
- * {{{<allow-forward-for/>}}}: if there is an X-Forwarded-For header in the request, the informations of the request are changed to match the announced ip.
+ * {{{<nextsite/>}}}: stops parsing current site. If the page has been found, answer. If not, try next site. //from Ocsigen 1.2//
+ * {{{<nexthost/>}}}: stops parsing current host. If the page has been found, answer. If not, try next host. //from Ocsigen 1.2//
+ * {{{<stop/>}}}: stops parsing configuration file (answers now whether the page has been found or not). //from Ocsigen 1.2//
+ * {{{<allow-forward-for/>}}}: if there is an X-Forwarded-For header in the request, the information of the request is changed to match the announced ip.
  * {{{<allow-forward-proto/>}}}: if the X-Forwarded-Proto header is set to https (http), the connection is considered as secured (unsecure) even if the connection is not in ssl (is in ssl).
 
 == Examples ==
@@ -63,6 +70,14 @@ Combining conditions (all their children must be conditions):
   </then>
 </if>
 }}}
+Or, if you are using Ocsigen Server as a library:
+{{{
+Accesscontrol.(if_ (and_ [(ip "127.0.0.1"); 
+                          (header ~name:"user-agent" ~regexp:".*Konqueror.*")])
+                  [ ... ]
+                  []
+}}}
+
 
  * I want some actions to handle requests that respect at least one of the following conditions:
   * they belong to the subnet 123.123.123.0/24,
@@ -79,6 +94,14 @@ Combining conditions (all their children must be conditions):
     <!-- put your actions here -->
   </then>
 </if>
+}}}
+Or, if you are using Ocsigen Server as a library:
+{{{
+Accesscontrol.(if_ (or_ [(ip "123.123.123.0/24"); 
+                         (path ~regexp:"/c.*");
+                         (not_ (method_ `GET))])
+                  [ ... ]
+                  []
 }}}
 
  * I want to deny access to 192.168.0.0/24 except 192.168.0.42, and to 192.168.99.0/24:

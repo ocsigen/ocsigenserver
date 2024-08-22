@@ -6,13 +6,18 @@ This module allows to transmit some requests to another Web server using the HTT
 
 ===Configuration
 
-To use the reverse proxy, first load the extension from the configuration file:
-
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.revproxy}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 {{{
 <extension findlib-package="ocsigenserver.ext.revproxy"/>
 }}}
 
-Then configure your hosts as in these examples:
+This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Revproxy>>.
+
+Here are some examples of configuration file options:
 
 {{{
 <revproxy suburl="(.*)" dest="http://my.newaddress.org:8080/\1"/>

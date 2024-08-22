@@ -5,13 +5,20 @@ Extendconfiguration allows to configure some options of the server inside a {{{<
 
 ==Loading the extension
 
-To use that extension, first load it from the configuration file:
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.extendconfiguration}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 
 {{{
 <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
 }}}
 
 == Options
+
+This section describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Extendconfiguration>>.
+
 === Following symlinks
 
 For extensions that access files on the filesystem (<<a_manual chapter="staticmod"|staticmod>>,...), you can decide whether symlinks should be followed or not, using the tag
@@ -25,18 +32,19 @@ where {{{VAL}}} can be:
     * {{{always}}} always follows symlinks (more efficient). Note that this setting is not permitted in userconf files
     * {{{ownermatch}}} symlinks are followed only if the owner of the symlink and of the target coincide. (Default value)
 
-Notice that staticmod partially overrides this setting when it not used in a userconf file. When used with the syntax {{{<static dir="dir" />}}}, the checks start only after the directory {{{dir}}}. In regexp mode, the checks only start after the value given by the {{{root}}} attribute. See the documentation of <<a_manual chapter="staticmod"|staticmod>> for details.
+Notice that staticmod partially overrides this setting when it is not used in a userconf file. When used with the syntax {{{<static dir="dir" />}}}, the checks start only after the directory {{{dir}}}. In regexp mode, the checks only start after the value given by the {{{root}}} attribute. See the documentation of <<a_manual chapter="staticmod"|staticmod>> for details.
 
 === Hiding or forbidding local files
 
 Again for extensions that send local files, you can selectively disallow sending some files. The syntax is as such:
-
+{{{
 <hidefile>
   <extension ext="php" />
   <extension ext="cgi" />
   <file file=".htaccess" />
   <regexp regexp=".*hidden_file.*" /> <!-- End the regexp with $ to match the full file name -->
 </hidefile>
+}}}
 
 Using the tag {{{hidefile}}} results in 404 error codes. To have 403 errors, use {{{forbidfile}}} instead.
 

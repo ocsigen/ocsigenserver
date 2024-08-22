@@ -6,10 +6,17 @@ For now it only allows to change or add headers, or to change the HTTP code.
 
 == Configuration
 
-To use this extension, first load it from the configuration file:
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.outputfilter}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 {{{
 <extension findlib-package="ocsigenserver.ext.outputfilter"/>
 }}}
+
+This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Outputfilter>>.
+
 
 === Rewrite headers
 

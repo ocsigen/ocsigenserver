@@ -1,6 +1,5 @@
-=Cross-Origin Resource Sharing=
-
 = The CORS extension =
+//Cross-Origin Resource Sharing//
 
 This extension is used to allow other servers to serve pages
 requesting data on that one using XmlHttpRequest. It adds headers to
@@ -10,11 +9,16 @@ if some client side code has the right to access resources.
 See the [[http://www.w3.org/TR/cors/|CORS specifications]] for more
 informations.
 
-In order to use it, you must first add the following line to your
-{{{ocsigenserver.conf}}}:
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.cors}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 {{{
 <extension findlib-package="ocsigenserver.ext.cors"/>
 }}}
+
+This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Cors>>.
 
 == config ==
 

@@ -2,8 +2,10 @@
 Staticmod is a module allowing to serve static pages (files).
 
 ==Using as a library
-Have a look at the <<a_api text="API documentation"|module Staticmod>>
-if you want to use Staticmod as a library for your OCaml programs.
+To use that extension as a library for your OCaml programs,
+load OCamlfind package {{{ocsigenserver.ext.staticmod}}},
+from your Dune file, and
+have a look at the <<a_api text="API documentation"|module Staticmod>>.
 
 ==Configuration file
 ===Basics

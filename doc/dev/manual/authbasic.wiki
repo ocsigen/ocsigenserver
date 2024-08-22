@@ -15,10 +15,17 @@ A very  naive one is
 provided as an example. See  the developer's documentation if you want
 to make your own one.
 
-In order to use it, you must first add the following line to your ocsigen.conf:
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.authbasic}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 {{{
 <extension findlib-package="ocsigenserver.ext.authbasic"/>
 }}}
+
+This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Authbasic>>.
+
 This extension defines one action, {{{<authbasic>}}},
 and one authentication plugin, {{{<plain>}}}.
 

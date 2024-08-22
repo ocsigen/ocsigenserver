@@ -17,27 +17,16 @@ installation.
 
 === How do I use deflatemod?
 
-First, load the extension in the configuration file:
-
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.deflatemod}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 {{{
 <extension findlib-package="ocsigenserver.ext.deflatemod" />
 }}}
 
-
-Alternatively, if you do not want to use findlib, you need to:
-
-* load camlzip
-
-{{{
-<extension module="/path/to/camlzip.cma" />
-}}}
-
-
-* then load deflatemod
-
-{{{
-<extension module="/path/to/deflatemod.cmo" />
-}}}
+This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Deflatemod>>.
 
 
 === How do I configure deflatemod?
