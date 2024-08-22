@@ -1,24 +1,24 @@
-<html><head><title>Authbasic</title><meta charset="utf8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link rel="stylesheet" href="https://ocsigen.org/css/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script type="text/javascript" src="https://ocsigen.org/js/client.js">
+<html><head><title>Authbasic</title><meta charset="utf8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link rel="stylesheet" href="https://ocsigen.org/css/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script type="application/javascript" src="https://ocsigen.org/js/client.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js">
 //<![CDATA[
 
 //]]>
@@ -55,9 +55,14 @@ be extended with  various authentication plugins.
 </p><p>A very  naive one is
 provided as an example. See  the developer's documentation if you want
 to make your own one.
-</p><p>In order to use it, you must first add the following line to your ocsigen.conf:
+</p><p>To use that extension, load OCamlfind package <span class="teletype">ocsigenserver.ext.authbasic</span>,
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 </p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.authbasic&quot;/&gt;
-</pre><p>This extension defines one action, <span class="teletype">&lt;authbasic&gt;</span>,
+</pre><p>This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <span><a href=".././api/Authbasic">Authbasic</a></span>.
+</p><p>This extension defines one action, <span class="teletype">&lt;authbasic&gt;</span>,
 and one authentication plugin, <span class="teletype">&lt;plain&gt;</span>.
 </p><h2>The <span class="teletype">&lt;authbasic&gt;</span> action</h2><p>To add an authentication layer to a site, add the following lines before the actions defining the restricted part of your site:
 </p><pre>&lt;authbasic realm=&quot;...&quot;&gt;

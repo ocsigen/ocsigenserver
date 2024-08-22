@@ -1,24 +1,24 @@
-<html><head><title>Deflatemod</title><meta charset="utf8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link rel="stylesheet" href="https://ocsigen.org/css/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script type="text/javascript" src="https://ocsigen.org/js/client.js">
+<html><head><title>Deflatemod</title><meta charset="utf8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link rel="stylesheet" href="https://ocsigen.org/css/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script type="application/javascript" src="https://ocsigen.org/js/client.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js">
 //<![CDATA[
 
 //]]>
-</script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js">
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js">
 //<![CDATA[
 
 //]]>
@@ -49,14 +49,14 @@ deflate content, using HTTP/1.1 mechanism. It supports gzip as well as
 deflate.
 </p><h3> What do I need to use deflatemod?</h3><p>You need the camlzip library by Xavier Leroy and a working Ocsigen
 installation.
-</p><h3> How do I use deflatemod?</h3><p>First, load the extension in the configuration file:
+</p><h3> How do I use deflatemod?</h3><p>To use that extension, load OCamlfind package <span class="teletype">ocsigenserver.ext.deflatemod</span>,
+either from your Dune file (if you are using static linking), or
+from the configuration file:
 </p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.deflatemod&quot; /&gt;
-</pre><p>Alternatively, if you do not want to use findlib, you need to:
-</p><ul><li> load camlzip
-</li></ul><pre>&lt;extension module=&quot;/path/to/camlzip.cma&quot; /&gt;
-</pre><ul><li> then load deflatemod
-</li></ul><pre>&lt;extension module=&quot;/path/to/deflatemod.cmo&quot; /&gt;
-</pre><h3> How do I configure deflatemod?</h3><p>Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:
+</pre><p>This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <span><a href=".././api/Deflatemod">Deflatemod</a></span>.
+</p><h3> How do I configure deflatemod?</h3><p>Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:
 </p><ul><li> the compress level: from 0 (no compression) to 9. The higher, the
 better compression rate you achieve. Conversely, the lower, the faster
 it is. Default is 6.
