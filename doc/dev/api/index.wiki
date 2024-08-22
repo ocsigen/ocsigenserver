@@ -3,6 +3,8 @@
 =@@id="1_OcsigenserverAPIreference"@@~Ocsigen server ~- ~A~P~I reference=
 
 
+|<<a_api | module Ocsigen_server >>||
+
 
 
 ==@@id="2_Extensions"@@~Extensions==
@@ -78,9 +80,6 @@
 |
 |<<a_api | module Ocsigen_local_files >>||
 |<<a_api | module Ocsigen_stream >>||
-|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Authbasic~: ~Basic ~H~T~T~P authentication
->>
-|
 
 
 

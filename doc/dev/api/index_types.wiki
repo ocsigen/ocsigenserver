@@ -48,7 +48,9 @@
 >>
 |
 |@@ @style="tet-align: left;"@@\\I|
-|@@class="odocwiki_index"@ @@<<a_api text="instruction"| type Ocsigen_server.instruction >> ~[<<a_api | module Ocsigen_server >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="instruction"| type Ocsigen_server.instruction >> ~[<<a_api | module Ocsigen_server >>~]|<<div class="odocwiki_info"|~The type of instructions to be used inside an host or site~.
+>>
+|
 |@@ @style="tet-align: left;"@@\\K|
 |@@class="odocwiki_index"@ @@<<a_api text="key"| type Polytables.key >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|~The type of key for a piece of data of type ~'a
 >>

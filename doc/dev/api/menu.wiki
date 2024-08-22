@@ -1,5 +1,5 @@
 =~Ocsigen server ~- ~A~P~I reference
-===[[Ocsigen_server|Ocsigen_server]]
+==[[Ocsigen_server|Ocsigen_server]]
 ==~Extensions
 ===[[Staticmod|Staticmod]]
 ===[[Extendconfiguration|Extendconfiguration]]

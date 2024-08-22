@@ -298,7 +298,10 @@
 |@@class="odocwiki_index"@ @@<<a_api text="header_multi"| value Ocsigen_response.header_multi >> ~[<<a_api | module Ocsigen_response >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="header_multi"| value Ocsigen_request.header_multi >> ~[<<a_api | module Ocsigen_request >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="hidefile"| value Extendconfiguration.hidefile >> ~[<<a_api | module Extendconfiguration >>~]||
-|@@class="odocwiki_index"@ @@<<a_api text="host"| value Ocsigen_server.host >> ~[<<a_api | module Ocsigen_server >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="host"| value Ocsigen_server.host >> ~[<<a_api | module Ocsigen_server >>~]|<<div class="odocwiki_info"|~You can define one or several virtual hosts corresponding to a given
+    server name or port~.
+>>
+|
 |@@class="odocwiki_index"@ @@<<a_api text="host"| value Ocsigen_request.host >> ~[<<a_api | module Ocsigen_request >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="host"| value Ocsigen_header.Name.host >> ~[<<a_api | module Ocsigen_header.Name >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="host_match"| value Ocsigen_extensions.host_match >> ~[<<a_api | module Ocsigen_extensions >>~]||
@@ -698,7 +701,10 @@
 |@@class="odocwiki_index"@ @@<<a_api text="set_usedefaulthostname"| value Ocsigen_config.set_usedefaulthostname >> ~[<<a_api | module Ocsigen_config >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="set_verbose"| value Ocsigen_config.set_verbose >> ~[<<a_api | module Ocsigen_config >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="set_veryverbose"| value Ocsigen_config.set_veryverbose >> ~[<<a_api | module Ocsigen_config >>~]||
-|@@class="odocwiki_index"@ @@<<a_api text="site"| value Ocsigen_server.site >> ~[<<a_api | module Ocsigen_server >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="site"| value Ocsigen_server.site >> ~[<<a_api | module Ocsigen_server >>~]|<<div class="odocwiki_info"|~Each host may contain some sub~-sites corresponding to
+    subdirectories in the ~U~R~L~.
+>>
+|
 |@@class="odocwiki_index"@ @@<<a_api text="size"| value Ocsigen_cache.Dlist.size >> ~[<<a_api | module Ocsigen_cache.Dlist >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="skip"| value Ocsigen_stream.skip >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~Skips data~.
 >>
