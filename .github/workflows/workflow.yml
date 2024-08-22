@@ -13,23 +13,15 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - macos-latest
           - ubuntu-latest
+          - windows-latest
         ocaml-compiler:
-          - "4.08"
-          - "4.09"
-          - "4.10"
-          - "4.11"
-          - "4.12"
-          - "4.13"
           - "4.14"
-          - "5.0"
-          - "5.1"
           - "5.2"
         include:
-          - os: macos-latest
-            ocaml-compiler: "4.14"
-          - os: macos-latest
-            ocaml-compiler: "5.2"
+          - os: ubuntu-latest
+            ocaml-compiler: "4.08"
 
     runs-on: ${{ matrix.os }}
 
@@ -42,10 +34,6 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           opam-pin: false
-
-      - name: Re-install OpenSSL on macOS
-        if: runner.os == 'macOS'
-        run: brew update && brew reinstall openssl@3
 
       - run: opam install . --deps-only
 
