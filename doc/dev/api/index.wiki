@@ -79,6 +79,7 @@
 >>
 |
 |<<a_api | module Ocsigen_local_files >>||
+|<<a_api | module Ocsigen_header >>||
 |<<a_api | module Ocsigen_stream >>||
 
 

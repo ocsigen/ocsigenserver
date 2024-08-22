@@ -22,6 +22,7 @@
 ==~Extending ~Ocsigen ~Server
 ===[[Ocsigen_extensions|Ocsigen_extensions]]
 ===[[Ocsigen_local_files|Ocsigen_local_files]]
+===[[Ocsigen_header|Ocsigen_header]]
 ===[[Ocsigen_stream|Ocsigen_stream]]
 ==~Indexes
 === <<a_api text="Index of types" | index types >>
