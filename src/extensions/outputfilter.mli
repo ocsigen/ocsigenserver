@@ -14,7 +14,7 @@ This module belongs to ocamlfind package
 
 val run :
    mode:
-     [ `Rewrite of Ocsigen_header.Name.t * Re.Pcre.regexp * string
+     [ `Rewrite of Ocsigen_header.Name.t * string * string
      | `Add of Ocsigen_header.Name.t * string * bool option
      | `Code of Cohttp.Code.status ]
   -> unit
