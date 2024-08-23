@@ -32,6 +32,23 @@ This module belongs to ocamlfind package
    [ocsigenserver.ext.accesscontrol].
 *)
 
+(** Example of use (with {% <<a_manual chapter="redirectmod"|Redirectmod>>%}):
+{[
+let _ =
+  Ocsigen_server.start
+    [ Ocsigen_server.host ~regexp:".*"
+        [ Accesscontrol.(
+            if_ (not_ ssl)
+              [ Redirectmod.run
+                  ~redirection:
+                    (Redirectmod.create_redirection ~full_url:false
+                       ~regexp:"(.* )" "https://yourdomain.org/\\1")
+                  () ]
+              [ ... ]) ]
+    ]
+]}
+ *)
+
 type condition
 
 val ip : string -> condition

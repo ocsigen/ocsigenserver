@@ -11,6 +11,14 @@
    [ocsigenserver.ext.staticmod].
 *)
 
+(** Example of use:
+{[
+let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
+]}
+ *)
+
 val run :
    ?dir:string
   -> ?regexp:string

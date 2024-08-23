@@ -67,14 +67,11 @@ val start :
   -> ?maxretries:int
   -> Ocsigen_extensions.host_config list
   -> unit
-(** Start the server with some instructions. Never returns. 
+(** Start the server with some instructions. Never returns.
+    It takes as main parameter a list of virtual hosts (see {!host} below). 
 
-@param ports The list of HTTP port you want to listen to. The socket type can be 
-used to filter on some IPV4 or IPV6 subnet (default: [[`All, 8080]])
-
-@param ssl_ports The list of HTTPS port you want to listen to.
-
-
+{% Options behave exactly like their <<a_manual chapter="config"|configuration file>>%}
+counterparts.
 *)
 
 type instruction =
@@ -82,6 +79,8 @@ type instruction =
   -> Ocsigen_extensions.config_info
   -> Ocsigen_lib.Url.path
   -> Ocsigen_extensions.extension
+(** The type of instructions to be used inside an host or site.
+    Instructions are defined by extensions (Staticmod, Eliom, etc.) *)
 
 val host :
    ?regexp:string
@@ -101,9 +100,13 @@ val host :
   -> ?maxuploadfilesize:int64 option
   -> instruction list
   -> Ocsigen_extensions.host_config
+(** You can define one or several virtual hosts corresponding to a given
+    server name or port. *)
 
 val site :
    ?charset:string
   -> Ocsigen_lib.Url.path
   -> instruction list
   -> instruction
+(** Each host may contain some sub-sites corresponding to
+    subdirectories in the URL.*)

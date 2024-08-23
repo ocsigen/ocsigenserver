@@ -12,14 +12,28 @@ This module belongs to ocamlfind package
    [ocsigenserver.ext.revproxy].
 *)
 
-(** Example of use:
+(** Example of use. Forward all requests to a given directory to the
+same directory of another server running locally on another port.
+We are using it in combination with
+{% <<a_manual chapter="outputfilter"|Outputfilter>>%} to rewrite redirections.
+
 {[
 let _ =
    Ocsigen_server.start
      [ Ocsigen_server.host ~regexp:".*"
-       [ Ocsigen_server.site ["blah"]
-        [ Revproxy.run
-            ~redirection:(Revproxy.create_redirection ) ]]]
+       [ Revproxy.run
+           ~redirection:(Revproxy.create_redirection 
+                           ~full_url:false
+                           ~regexp:"(othersite/.* )"
+                           ~keephost:true
+                           "https://localhost:8123/\\1") 
+           ()
+        ; Outputfilter.run 
+            ~mode:(`Rewrite (Ocsigen_header.Name.location,
+                             "http://localhost:8123/(.* )",
+                             "http://my.publicaddress.org/\\1"))
+            ()
+ ]]
 ]}
  *)
 

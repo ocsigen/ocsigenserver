@@ -1,9 +1,9 @@
 (** Extendconfiguration: More configuration options for Ocsigen Server *)
 
-(** If you want to use this extension with Ocsigen Server's configuration file, 
-+   have a look at the {% <<a_manual chapter="extendconfiguration"|manual page>>%}.
-+   If you are using Ocsigen Server as a library, use the interface described
-+   here. Each of these functions behaves exactly as its configuration file
+(** If you want to use this extension with Ocsigen Server's configuration file,
+    have a look at the {% <<a_manual chapter="extendconfiguration"|manual page>>%}.
+    If you are using Ocsigen Server as a library, use the interface described
+    here. Each of these functions behaves exactly as its configuration file
     counterpart. 
 +*)
 
@@ -11,6 +11,18 @@
 This module belongs to ocamlfind package
    [ocsigenserver.ext.extendconfiguration].
 *)
+
+(** Example of use:
+{[
+let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+         [ Extendconfiguration.forbidfile ~extensions:["php"] ()
+         ; Staticmod.run ~dir:"static" ()
+         ]
+     ]
+]}
+ *)
 
 val followsymlinks :
    [`Always | `No | `Owner_match]

@@ -20,17 +20,29 @@
 
 (** Authbasic: Basic HTTP authentication *)
 
-(** If you want to use this extension with Ocsigen Server's configuration file, 
-+   have a look at the {% <<a_manual chapter="authbasic"|manual page>>%}.
-+   If you are using Ocsigen Server as a library, use the interface described
-+   here. Each of these functions behaves exactly as its configuration file
-    counterpart. 
-+*)
+(** If you want to use this extension with Ocsigen Server's configuration file,
+    have a look at the {% <<a_manual chapter="authbasic"|manual page>>%}.
+    If you are using Ocsigen Server as a library, use the interface described
+    here. Each of these functions behaves exactly as its configuration file
+    counterpart.
+*)
 
 (**
 This module belongs to ocamlfind package
    [ocsigenserver.ext.authbasic].
 *)
+
+(** Example of use:
+{[
+let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+       [ Authbasic.run ~realm:"test"
+            ~auth:(fun u p -> Lwt.return (u = "theuser" && p = "thepassword"))
+            () 
+       ; Staticmod.run ~dir:"static" () ]]
+]}
+ *)
 
 (** This module implements Basic HTTP Authentication as described in
     {{:http://www.ietf.org/rfc/rfc2617.txt}RFC 2617}.  It can be used
@@ -45,7 +57,7 @@ This module belongs to ocamlfind package
     in the configuration file) is provided. *)
 
 val section : Lwt_log_core.section
-(** use Lwt_log.Section.set_level in order to set the log level *)
+(** use [Lwt_log.Section.set_level] in order to set the log level *)
 
 type auth = string -> string -> bool Lwt.t
 

@@ -1,5 +1,7 @@
 {1 Ocsigen server - API reference}
-
+{!modules:
+Ocsigen_server
+}
 {2 Extensions}
 {!modules:
 Staticmod
@@ -29,8 +31,8 @@ Ocsigen_config
 {!modules:
 Ocsigen_extensions
 Ocsigen_local_files
+Ocsigen_header
 Ocsigen_stream
-Authbasic
 }
 
 {2 Indexes}

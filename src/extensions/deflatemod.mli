@@ -12,6 +12,25 @@ This module belongs to ocamlfind package
    [ocsigenserver.ext.deflatemod].
 *)
 
+(** Example of use:
+{[
+let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+       [ Staticmod.run ~dir:"static" () 
+       ; Deflatemod.run
+           ~mode:(`Only [ `Type (Some "text", Some "html")
+                        ; `Type (Some "text", Some "javascript")
+                        ; `Type (Some "text", Some "css")
+                        ; `Type (Some "application", Some "javascript")
+                        ; `Type (Some "application", Some "x-javascript")
+                        ; `Type (Some "application", Some "xhtml+xml")
+                        ; `Type (Some "image", Some "svg+xml")
+                        ; `Type (Some "application", Some "x-eliom")]) ()
+        ]]
+]}
+ *)
+
 val set_compress_level : int -> unit
 val set_buffer_size : int -> unit
 
