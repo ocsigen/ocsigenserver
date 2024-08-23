@@ -1,16 +1,27 @@
 (** Revproxy: Forward a request to another Web server *)
 
-(** If you want to use this extension with Ocsigen Server's configuration file, 
-+   have a look at the {% <<a_manual chapter="revproxy"|manual page>>%}.
-+   If you are using Ocsigen Server as a library, use the interface described
-+   here. Each of these functions behaves exactly as its configuration file
-    counterpart. 
-+*)
+(** If you want to use this extension with Ocsigen Server's configuration file,
+    have a look at the {% <<a_manual chapter="revproxy"|manual page>>%}.
+    If you are using Ocsigen Server as a library, use the interface described
+    here. Each of these functions behaves exactly as its configuration file
+    counterpart.
+*)
 
 (**
 This module belongs to ocamlfind package
    [ocsigenserver.ext.revproxy].
 *)
+
+(** Example of use:
+{[
+let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+       [ Ocsigen_server.site ["blah"]
+        [ Revproxy.run
+            ~redirection:(Revproxy.create_redirection ) ]]]
+]}
+ *)
 
 val section : Lwt_log_core.section
 (** use Lwt_log.Section.set_level in order to set the log level *)
@@ -18,7 +29,7 @@ val section : Lwt_log_core.section
 type redirection
 
 val create_redirection :
-   ?full_url:[< `Maybe | `No | `Yes > `Yes]
+   ?full_url:bool
   -> ?pipeline:bool
   -> ?keephost:bool
   -> regexp:string
