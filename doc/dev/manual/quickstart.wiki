@@ -57,7 +57,7 @@ needs.
 == Using Ocsigen Server as a library ==
 
 If you want to include a Web Server in your OCaml app,
-add library {{{ocsigenserver}}} and the extension you need 
+add library {{{ocsigenserver}}} and the extensions you need 
 (here {{{ocsigenserver.ext.staticmod}}}) in your Dune file:
 {{{
 (executable

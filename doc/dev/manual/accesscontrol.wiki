@@ -71,12 +71,12 @@ Combining conditions (all their children must be conditions):
 </if>
 }}}
 Or, if you are using Ocsigen Server as a library:
-{{{
+<<code language="ocaml"|
 Accesscontrol.(if_ (and_ [(ip "127.0.0.1"); 
                           (header ~name:"user-agent" ~regexp:".*Konqueror.*")])
                   [ ... ]
-                  []
-}}}
+                  [])
+>>
 
 
  * I want some actions to handle requests that respect at least one of the following conditions:
@@ -96,13 +96,13 @@ Accesscontrol.(if_ (and_ [(ip "127.0.0.1");
 </if>
 }}}
 Or, if you are using Ocsigen Server as a library:
-{{{
+<<code language="ocaml"|
 Accesscontrol.(if_ (or_ [(ip "123.123.123.0/24"); 
                          (path ~regexp:"/c.*");
                          (not_ (method_ `GET))])
                   [ ... ]
-                  []
-}}}
+                  [])
+>>
 
  * I want to deny access to 192.168.0.0/24 except 192.168.0.42, and to 192.168.99.0/24:
 {{{

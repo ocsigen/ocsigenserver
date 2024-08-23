@@ -55,9 +55,3 @@ Note that if you are using ocsigen behind a reverse proxy handling X-Forward-For
     * The reverse proxy does no caching for now.
     * The reverse proxy does pipeline the requests for server it trusts for pipelining. But current trusting criteria are probably too strong. They will probably evolve soon.
 
-The old syntax was (before 1.2):
-
-{{{
-<revproxy regexp="(.*)" server="my.newaddress.org" port="8080" uri="$1"/>
-<revproxy regexp="dir/(.*)\.html" protocol="https" server="my.newaddress.org" uri="$1.php"/>
-}}}

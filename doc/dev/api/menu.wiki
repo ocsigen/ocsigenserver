@@ -1,4 +1,5 @@
 =~Ocsigen server ~- ~A~P~I reference
+===[[Ocsigen_server|Ocsigen_server]]
 ==~Extensions
 ===[[Staticmod|Staticmod]]
 ===[[Extendconfiguration|Extendconfiguration]]
@@ -22,7 +23,6 @@
 ===[[Ocsigen_extensions|Ocsigen_extensions]]
 ===[[Ocsigen_local_files|Ocsigen_local_files]]
 ===[[Ocsigen_stream|Ocsigen_stream]]
-===[[Authbasic|Authbasic]]
 ==~Indexes
 === <<a_api text="Index of types" | index types >>
 === <<a_api text="Index of exceptions" | index exceptions >>

@@ -22,7 +22,6 @@ Then configure your hosts as in these examples:
 <redirect fullurl="http://(.*).myserver.org/(.*)" dest="http://\1.mynewserver.org/\2"/>
 }}}
 The syntax of regular expression is PCRE's one.
-//Warning: the syntax recently changed from {{{$i}}} to {{{\i}}}.//
 
 According to the RFC of the HTTP protocol, dest must be an absolute URL. By default, the redirection is permanent. For temporary redirection, use:
 {{{
