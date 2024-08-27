@@ -22,3 +22,8 @@
      (select dynlink_wrapper.ml from
        (dynlink -> dynlink_wrapper.natdynlink.ml)
        (_ -> dynlink_wrapper.nonatdynlink.ml))))
+
+(rule
+ (with-stdout-to
+  ocsigen_config_static.ml
+  (run ../files/ocsigenserver.conf/gen.exe static.ml)))

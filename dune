@@ -1,0 +1,19 @@
+(rule
+ (mode
+  (promote (until-clean)))
+ (target ocsigenserver.conf.sample)
+ (action
+  (with-stdout-to
+   %{target}
+   (run src/files/ocsigenserver.conf/gen.exe sample))))
+
+(subdir
+ local/etc
+ (rule
+  (mode
+   (promote (until-clean)))
+  (target ocsigenserver.conf)
+  (action
+   (with-stdout-to
+    %{target}
+    (run ../../src/files/ocsigenserver.conf/gen.exe local)))))
