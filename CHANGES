@@ -1,3 +1,7 @@
+==== 6.0.0 (2024-08-28) ===
+ * Use Ocsigen Server as a library now much easier
+ * Adding programmable configuration options for each extension to use them without configuration file 
+
 ==== 5.0.0 (2021-10-16) ===
  * Completely outsource Ocsipersist into its own project: https://github.com/ocsigen/ocsipersist
 
