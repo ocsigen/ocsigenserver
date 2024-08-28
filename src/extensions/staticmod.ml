@@ -278,20 +278,21 @@ let () =
 
 (* TODO: fix names and types, preprocess as we do for XML *)
 
+(* Registration for static linking: *)
 let preprocess s = "^" ^ s ^ "$"
-let dir = Ocsigen_server.Site.Config.key ()
-let regexp = Ocsigen_server.Site.Config.key ~preprocess ()
-let code = Ocsigen_server.Site.Config.key ~preprocess ()
-let dest = Ocsigen_server.Site.Config.key ()
-let root_checks = Ocsigen_server.Site.Config.key ()
 
-let extension =
-  Ocsigen_server.Site.create_extension
-    (fun {Ocsigen_server.Site.Config.accessor} ->
-       let kind =
-         kind (accessor dir)
-           (Ocsigen_lib.Option.map Pcre.regexp (accessor regexp))
-           (Ocsigen_lib.Option.map Pcre.regexp (accessor code))
-           (accessor dest) (accessor root_checks)
-       in
-       gen ~usermode:None kind)
+let run ?dir ?regexp ?dest ?code ?cache ?root () =
+  let kind =
+    kind dir
+      (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) regexp)
+      (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) code)
+      (Ocsigen_lib.Option.map
+         (fun x ->
+            Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
+         dest)
+      (Ocsigen_lib.Option.map
+         (fun x ->
+            Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
+         root)
+  in
+  fun _ _ _ -> gen ~usermode:None ?cache kind

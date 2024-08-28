@@ -20,10 +20,6 @@
 
 (* This module enables rewritting the server output *)
 
-type header_filter =
-  [ `Rewrite of Ocsigen_header.Name.t * Re.Pcre.regexp * string
-  | `Add of Ocsigen_header.Name.t * string * bool option ]
-
 let gen filter = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
       Lwt.return (Ocsigen_extensions.Ext_next code)
@@ -116,12 +112,9 @@ let () =
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
-let mode = Ocsigen_server.Site.Config.key ()
-
-let extension =
-  Ocsigen_server.Site.create_extension
-    (fun {Ocsigen_server.Site.Config.accessor} ->
-       match accessor mode with
-       | Some (`Code c) -> gen_code c
-       | Some (#header_filter as f) -> gen f
-       | None -> failwith "Outputfilter.mode not set")
+let run ~mode () _ _ _ =
+  match mode with
+  | `Code c -> gen_code c
+  | `Rewrite (header, regexp, dest) ->
+      gen (`Rewrite (header, Re.Pcre.regexp ("^" ^ regexp ^ "$"), dest))
+  | `Add f -> gen (`Add f)

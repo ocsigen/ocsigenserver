@@ -258,9 +258,9 @@ type parse_fun = Xml.xml list -> extension_composite
 type parse_host =
   | Parse_host of (Url.path -> parse_host -> parse_fun -> Xml.xml -> extension)
 
-let hosts : (virtual_hosts * config_info * extension_composite) list ref =
-  ref []
+type host_config = virtual_hosts * config_info * extension_composite
 
+let hosts : host_config list ref = ref []
 let set_hosts v = hosts := v
 let get_hosts () = !hosts
 

@@ -147,7 +147,7 @@ type answer =
   (** Used to modify the request before giving it to next extension.
       The extension returns the request (possibly modified) and a set
       of cookies if it wants to set or cookies
-      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
+      ({!Ocsigen_cookie_map.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}.  The status is
@@ -157,7 +157,7 @@ type answer =
   (** Used to retry all the extensions with a new request.  The
       extension returns the request (possibly modified) and a set of
       cookies if it wants to set or cookies
-      ({!Ocsigen_cookie_set.empty} for no cookies).  You must add
+      ({!Ocsigen_cookie_map.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
       {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
@@ -256,7 +256,7 @@ val register :
     [<extension>] and [</extension>]. This allows to give configuration options
     to extensions. If no function is supplied, the extension is supposed to
     accept no option (and loading will fail if an option is supplied)
-    See <<a_api module="Ocsigen_extensions.Configuration" | val process_elements >> for
+    See {!Configuration.process_elements} for
     the easy construction of such a function.
     - a function [exn_handler] that will create an error message from the
     exceptions that may be raised during the initialisation phase, and raise again
@@ -406,7 +406,9 @@ val site_ext :
   -> Ocsigen_lib.Url.path
   -> extension
 
-val set_hosts : (virtual_hosts * config_info * extension_composite) list -> unit
+type host_config = virtual_hosts * config_info * extension_composite
+
+val set_hosts : host_config list -> unit
 val get_hosts : unit -> (virtual_hosts * config_info * extension_composite) list
 
 val compute_result :
@@ -416,9 +418,9 @@ val compute_result :
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
 
-val get_number_of_connected : unit -> int
-(** Profiling *)
+(** {3 Profiling} *)
 
+val get_number_of_connected : unit -> int
 val during_initialisation : unit -> bool
 val start_initialisation : unit -> unit
 val end_initialisation : unit -> unit

@@ -27,15 +27,19 @@ module Pcre = Re.Pcre
 
 let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
 
-exception Bad_answer_from_http_server
-
-type redir =
+type redirection =
   { regexp : Pcre.regexp
-  ; full_url : Ocsigen_lib.yesnomaybe
+  ; full_url : bool
   ; dest : string
   ; pipeline : bool
   ; keephost : bool }
 (** The table of redirections for each virtual server *)
+
+let create_redirection ?(full_url = true) ?(pipeline = true) ?(keephost = false)
+    ~regexp dest
+  =
+  let regexp = Pcre.regexp ("^" ^ regexp ^ "$") in
+  {regexp; dest; full_url; pipeline; keephost}
 
 (** Generate the pages from the request *)
 let gen dir = function
@@ -48,15 +52,8 @@ let gen dir = function
            (fun () ->
            Lwt_log.ign_info ~section "Is it a redirection?";
            let dest =
-             let fi full =
-               Ocsigen_extensions.find_redirection dir.regexp full dir.dest
-                 request_info
-             in
-             match dir.full_url with
-             | Ocsigen_lib.Yes -> fi true
-             | Ocsigen_lib.No -> fi false
-             | Ocsigen_lib.Maybe -> (
-               try fi false with Ocsigen_extensions.Not_concerned -> fi true)
+             Ocsigen_extensions.find_redirection dir.regexp dir.full_url
+               dir.dest request_info
            in
            let https, host, port, path =
              try
@@ -143,7 +140,7 @@ let gen dir = function
 
 let parse_config config_elem =
   let regexp = ref None in
-  let full_url = ref Ocsigen_lib.Yes in
+  let full_url = ref true in
   let dest = ref None in
   let pipeline = ref true in
   let keephost = ref false in
@@ -153,15 +150,12 @@ let parse_config config_elem =
       ~elements:
         [ Configuration.element ~name:"revproxy"
             ~attributes:
-              [ Configuration.attribute ~name:"regexp" (fun s ->
+              [ Configuration.attribute ~name:"fullurl" (fun s ->
                   regexp := Some s;
-                  full_url := Ocsigen_lib.Yes)
-              ; Configuration.attribute ~name:"fullurl" (fun s ->
-                  regexp := Some s;
-                  full_url := Ocsigen_lib.Yes)
+                  full_url := true)
               ; Configuration.attribute ~name:"suburl" (fun s ->
                   regexp := Some s;
-                  full_url := Ocsigen_lib.No)
+                  full_url := false)
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"keephost" (function
                   | "keephost" -> keephost := true
@@ -191,3 +185,5 @@ let () =
     (* We ask ocsigen to respect pipeline order
                               when sending to extensions! *)
     ()
+
+let run ~redirection () _ _ _ = gen redirection

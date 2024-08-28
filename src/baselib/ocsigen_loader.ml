@@ -96,31 +96,39 @@ let loadfiles pre post force modules =
   aux modules
 
 let set_module_init_function name f =
-  init_functions := M.add name f !init_functions;
-  (* print_endline ("Added init_function for " ^ name); *)
-  (* print_endline ("get_init_on_load: " ^ string_of_bool (get_init_on_load ())); *)
+  init_functions := M.add name [f] !init_functions;
+  if get_init_on_load () then f ()
+
+let add_module_init_function name f =
+  let update = function
+    | None (* no binding so far *) -> Some [f]
+    | Some old -> Some (f :: old)
+  in
+  init_functions := M.update name update !init_functions;
   if get_init_on_load () then f ()
 
 let init_module pre post force name =
   let f =
-    try M.find name !init_functions
-    with Not_found as e -> raise (Dynlink_error ("named module " ^ name, e))
+    try
+      let l = List.rev @@ M.find name !init_functions in
+      fun () -> List.iter (fun f -> f ()) l
+    with Not_found ->
+      Lwt_log.ign_info_f ~section "No init function for named module %s." name;
+      fun () -> ()
   in
-  try
-    if force
-    then (
-      pre ();
-      Lwt_log.ign_info_f ~section
-        "Initializing %s (will be initialized every time)" name;
-      try f (); post () with e -> post (); raise e)
-    else if not (isloaded name)
-    then (
-      pre ();
-      Lwt_log.ign_info_f ~section "Initializing module %s " name;
-      (try f (); post () with e -> post (); raise e);
-      addloaded name)
-    else Lwt_log.ign_info_f ~section "Module %s already initialized." name
-  with e -> raise (Dynlink_error (name, e))
+  if force
+  then (
+    pre ();
+    Lwt_log.ign_info_f ~section
+      "Initializing %s (will be initialized every time)" name;
+    try f (); post () with e -> post (); raise e)
+  else if not (isloaded name)
+  then (
+    pre ();
+    Lwt_log.ign_info_f ~section "Initializing module %s " name;
+    (try f (); post () with e -> post (); raise e);
+    addloaded name)
+  else Lwt_log.ign_info_f ~section "Module %s already initialized." name
 
 (************************************************************************)
 (* Manipulating Findlib's search path *)

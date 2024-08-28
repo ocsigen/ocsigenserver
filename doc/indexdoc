@@ -1,4 +1,21 @@
 {1 Ocsigen server - API reference}
+{!modules:
+Ocsigen_server
+}
+{2 Extensions}
+{!modules:
+Staticmod
+Extendconfiguration
+Accesscontrol
+Authbasic
+Deflatemod
+Redirectmod
+Revproxy
+Rewritemod
+Outputfilter
+Userconf
+Cors
+}
 
 {2 Persistent data, writing in the logs, configuration file extension, polymorphic tables}
 {!modules:
@@ -14,10 +31,8 @@ Ocsigen_config
 {!modules:
 Ocsigen_extensions
 Ocsigen_local_files
-Ocsigen_headers
+Ocsigen_header
 Ocsigen_stream
-Ocsigen_comet
-Authbasic
 }
 
 {2 Indexes}

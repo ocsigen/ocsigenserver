@@ -122,156 +122,64 @@ let _ =
   in
   Ocsigen_command.register_command_function f
 
-type accessor = {accessor : 'a. ('a -> 'a) option * 'a Hmap.key -> 'a option}
+type instruction =
+  Ocsigen_extensions.virtual_hosts
+  -> Ocsigen_extensions.config_info
+  -> Ocsigen_lib.Url.path
+  -> Ocsigen_extensions.extension
 
-module type Hmap_wrapped = sig
-  type t
+let default_re_string = ".*"
 
-  val get : t -> Hmap.t
-  val do_ : t -> (Hmap.t -> Hmap.t) -> unit
-end
+let host ?(regexp = default_re_string) ?port ?default_hostname ?default_httpport
+    ?default_httpsport ?default_protocol_is_https ?mime_assoc ?charset_assoc
+    ?default_directory_index ?list_directory_content ?follow_symlinks
+    ?do_not_serve_404 ?do_not_serve_403 ?uploaddir ?maxuploadfilesize
+    instructions
+  =
+  let def = Ocsigen_extensions.default_config_info () in
+  let default default o = Option.value o ~default in
+  let config_info =
+    { Ocsigen_extensions.default_hostname =
+        default def.default_hostname default_hostname
+    ; default_httpport = default def.default_httpport default_httpport
+    ; default_httpsport = default def.default_httpsport default_httpsport
+    ; default_protocol_is_https =
+        default def.default_protocol_is_https default_protocol_is_https
+    ; mime_assoc = default def.mime_assoc mime_assoc
+    ; charset_assoc = default def.charset_assoc charset_assoc
+    ; default_directory_index =
+        default def.default_directory_index default_directory_index
+    ; list_directory_content =
+        default def.list_directory_content list_directory_content
+    ; follow_symlinks = default def.follow_symlinks follow_symlinks
+    ; do_not_serve_404 = default def.do_not_serve_404 do_not_serve_404
+    ; do_not_serve_403 = default def.do_not_serve_403 do_not_serve_403
+    ; uploaddir = default def.uploaddir uploaddir
+    ; maxuploadfilesize = default def.maxuploadfilesize maxuploadfilesize }
+  in
+  let vh = [regexp, Ocsigen_lib.Netstring_pcre.regexp regexp, port] in
+  ( vh
+  , config_info
+  , Ocsigen_extensions.compose
+      (List.map (fun i -> i vh config_info []) instructions) )
 
-module type Config_nested = sig
-  type t
-  type 'a key
+let site ?charset path instructions vh config_info parent_path =
+  let path = parent_path @ Ocsigen_extensions.preprocess_site_path path in
+  let composite =
+    Ocsigen_extensions.compose
+      (List.map (fun i -> i vh config_info path) instructions)
+  in
+  Ocsigen_extensions.site_ext composite charset path
 
-  val key : ?preprocess:('a -> 'a) -> unit -> 'a key
-  val find : t -> 'a key -> 'a option
-  val set : t -> 'a key -> 'a -> unit
-  val unset : t -> 'a key -> unit
+let main_loop_is_running = ref false
 
-  type accessor = {accessor : 'a. 'a key -> 'a option}
-end
-
-module Make_config_nested (W : Hmap_wrapped) = struct
-  type 'a key = ('a -> 'a) option * 'a Hmap.key
-  type nonrec accessor = accessor = {accessor : 'a. 'a key -> 'a option}
-
-  let key ?preprocess () = preprocess, Hmap.Key.create ()
-  let find w (_, k) = Hmap.find k (W.get w)
-
-  let set w (f, k) v =
-    let v = match f with Some f -> f v | None -> v in
-    W.do_ w (Hmap.add k v)
-
-  let unset w (_, k) = W.do_ w (Hmap.rem k)
-end
-
-module Site = struct
-  type extension_simple = accessor -> Ocsigen_extensions.extension
-
-  type extension =
-    [ `Simple of extension_simple
-    | `Intrusive of
-      Ocsigen_extensions.virtual_hosts
-      -> Ocsigen_extensions.config_info
-      -> Ocsigen_lib.Url.path
-      -> extension_simple ]
-
-  let registered_extensions = ref []
-
-  let create_extension f =
-    let v = `Simple f in
-    registered_extensions := v :: !registered_extensions;
-    v
-
-  let create_extension_intrusive f =
-    let v = `Intrusive f in
-    registered_extensions := v :: !registered_extensions;
-    v
-
-  type t =
-    { s_id :
-        [ `Host of Ocsigen_extensions.virtual_hosts
-        | `Attach of t * Ocsigen_lib.Url.path ]
-    ; s_config_info : Ocsigen_extensions.config_info
-    ; s_charset : Ocsigen_charset_mime.charset option
-    ; mutable s_config_map : Hmap.t
-    ; mutable s_children_l : [`Extension of extension_simple | `Child of t] list
-    }
-
-  let l = ref []
-  let default_re_string = ".*"
-  let default_re = Ocsigen_lib.Netstring_pcre.regexp default_re_string
-
-  let rec path_and_hosts {s_id; _} =
-    match s_id with
-    | `Host hosts -> [], hosts
-    | `Attach (s, path') ->
-        let path, hosts = path_and_hosts s in
-        path @ path', hosts
-
-  let register ({s_config_info; s_children_l; _} as s) = function
-    | `Simple f -> s.s_children_l <- `Extension f :: s_children_l
-    | `Intrusive f ->
-        let path, hosts = path_and_hosts s in
-        s.s_children_l <-
-          `Extension (f hosts s_config_info path) :: s_children_l
-
-  let create ?(config_info = Ocsigen_extensions.default_config_info ())
-      ?(id = `Host (default_re_string, None)) ?charset
-      ?(auto_load_extensions = false) ()
-    =
-    let s_id =
-      match id with
-      | `Host (host_regexp, port) when host_regexp = default_re_string ->
-          `Host [default_re_string, default_re, port]
-      | `Host (host_regexp, port) ->
-          `Host
-            [host_regexp, Ocsigen_lib.Netstring_pcre.regexp host_regexp, port]
-      | `Attach (parent, path) ->
-          `Attach (parent, Ocsigen_extensions.preprocess_site_path path)
-    in
-    let s =
-      { s_id
-      ; s_charset = charset
-      ; s_config_info = config_info
-      ; s_config_map = Hmap.empty
-      ; s_children_l = [] }
-    in
-    (match s_id with
-    | `Host _ -> l := s :: !l
-    | `Attach (parent, _) ->
-        parent.s_children_l <- `Child s :: parent.s_children_l);
-    if auto_load_extensions
-    then List.iter (register s) (List.rev !registered_extensions);
-    s
-
-  let rec dump_host path {s_config_map; s_children_l; _} =
-    let f = function
-      | `Extension f -> f {accessor = (fun (_, k) -> Hmap.find k s_config_map)}
-      | `Child ({s_charset; s_id = `Attach (_, path'); _} as s) ->
-          let path = path @ path' in
-          Ocsigen_extensions.site_ext (dump_host path s) s_charset path
-      | `Child _ -> failwith "Ocsigen_server.dump_host"
-    in
-    Ocsigen_extensions.compose (List.map f s_children_l)
-
-  let dump () =
-    let f acc = function
-      | {s_config_info; s_id = `Host l; s_children_l = _ :: _; _} as s ->
-          (l, s_config_info, dump_host [] s) :: acc
-      | _ -> acc
-    in
-    Ocsigen_extensions.set_hosts (List.fold_left f [] !l)
-
-  module Config = Make_config_nested (struct
-      type nonrec t = t
-
-      let get {s_config_map; _} = s_config_map
-      let do_ ({s_config_map; _} as vh) f = vh.s_config_map <- f s_config_map
-    end)
-end
-
-let start ?config () =
+let main config =
+  if !main_loop_is_running then Lwt_log.ign_fatal "Cannot run main loop twice";
+  main_loop_is_running := true;
   try
     (* initialization functions for modules (Ocsigen extensions or application
        code) loaded from now on will be executed directly. *)
     Ocsigen_loader.set_init_on_load true;
-    (match config with
-    | Some (_ :: _ :: _) ->
-        Lwt_log.ign_warning ~section "Multiple servers not supported anymore"
-    | _ -> ());
     let ask_for_passwd sslports _ =
       print_string
         "Please enter the password for the HTTPS server listening on port(s) ";
@@ -294,10 +202,8 @@ let start ?config () =
         raise exn
     in
     let extensions_connector = Ocsigen_extensions.compute_result in
-    let run s =
-      let user = Ocsigen_config.get_user ()
-      and group = Ocsigen_config.get_group () in
-      Lwt_main.run (Ocsigen_messages.open_files ~user ~group ());
+    let run () =
+      Lwt_main.run (Ocsigen_messages.open_files ());
       let ports = Ocsigen_config.get_ports ()
       and ssl_ports = Ocsigen_config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
@@ -326,46 +232,25 @@ let start ?config () =
         | l, Some (crt, key) -> List.map (fun (a, p) -> a, p, (crt, key)) l
         | _ -> []
       in
-      let current_uid = Unix.getuid () in
-      let gid =
-        match group with
-        | None -> Unix.getgid ()
-        | Some group -> (
-          try (Unix.getgrnam group).Unix.gr_gid
-          with Not_found as e ->
-            Ocsigen_messages.errlog "Error: Wrong group";
-            raise e)
-      in
-      let uid =
-        match user with
-        | None -> current_uid
-        | Some user -> (
-          try (Unix.getpwnam user).Unix.pw_uid
-          with Not_found as e ->
-            Ocsigen_messages.errlog "Error: Wrong user";
-            raise e)
-      in
       (* A pipe to communicate with the server *)
       let commandpipe = Ocsigen_config.get_command_pipe () in
-      (try ignore (Unix.stat commandpipe)
-       with Unix.Unix_error _ -> (
-         try
-           let umask = Unix.umask 0 in
-           Unix.mkfifo commandpipe 0o660;
-           Unix.chown commandpipe uid gid;
-           ignore (Unix.umask umask);
-           Lwt_log.ign_warning ~section "Command pipe created"
-         with e ->
-           Lwt_log.ign_error ~section ~exn:e "Cannot create the command pipe"));
-      (* I change the user for the process *)
-      (try
-         (if current_uid = 0
-          then
-            match user with None -> () | Some user -> Unix.initgroups user gid);
-         Unix.setgid gid; Unix.setuid uid
-       with (Unix.Unix_error _ | Failure _) as e ->
-         Lwt_log.ign_error ~section "Error: Wrong user or group";
-         raise e);
+      let with_commandpipe =
+        try
+          ignore (Unix.stat commandpipe);
+          true
+        with Unix.Unix_error _ -> (
+          try
+            let umask = Unix.umask 0 in
+            Unix.mkfifo commandpipe 0o660;
+            ignore (Unix.umask umask);
+            Lwt_log.ign_warning ~section "Command pipe created";
+            true
+          with e ->
+            Lwt_log.ign_warning_f ~section ~exn:e
+              "Cannot create the command pipe %s. I will continue without."
+              commandpipe;
+            false)
+      in
       let minthreads = Ocsigen_config.get_minthreads ()
       and maxthreads = Ocsigen_config.get_maxthreads () in
       if minthreads > maxthreads
@@ -382,19 +267,8 @@ let start ?config () =
            match e with
            | Unix.Unix_error (Unix.EPIPE, _, _) -> ()
            | _ -> Lwt_log.ign_error ~section ~exn:e "Uncaught Exception");
-      (match s with
-      | Some s ->
-          (* Now I can load the modules *)
-          Dynlink_wrapper.allow_unsafe_modules true;
-          Ocsigen_extensions.start_initialisation ();
-          Ocsigen_parseconfig.later_pass s;
-          (* As libraries are reloaded each time the config file is
-            read, we do not allow to register extensions in
-            libraries. Seems it does not work :-/ *)
-          Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"]
-      | None ->
-          Ocsigen_extensions.start_initialisation ();
-          Site.dump ());
+      (* Now apply host configuration: *)
+      config ();
       if Ocsigen_config.get_silent ()
       then (
         (* Close stderr, stdout stdin if silent *)
@@ -407,37 +281,39 @@ let start ?config () =
       (* detach from the terminal *)
       if Ocsigen_config.get_daemon () then ignore (Unix.setsid ());
       Ocsigen_extensions.end_initialisation ();
-      let pipe =
-        Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
-        |> Lwt_unix.of_unix_file_descr
-        |> Lwt_io.(of_fd ~mode:input)
-      in
-      let rec f () =
-        Lwt_io.read_line pipe >>= fun s ->
-        Ocsigen_messages.warning ("Command received: " ^ s);
-        Lwt.catch
-          (fun () ->
-             let prefix, c =
-               match Ocsigen_lib.String.split ~multisep:true ' ' s with
-               | [] -> raise Ocsigen_command.Unknown_command
-               | a :: l -> (
-                 try
-                   let aa, ab = Ocsigen_lib.String.sep ':' a in
-                   Some aa, ab :: l
-                 with Not_found -> None, a :: l)
-             in
-             Ocsigen_command.get_command_function () ?prefix s c)
-          (function
-             | Ocsigen_command.Unknown_command ->
-                 Lwt_log.ign_warning ~section "Unknown command";
-                 Lwt.return ()
-             | e ->
-                 Lwt_log.ign_error ~section ~exn:e
-                   "Uncaught Exception after command";
-                 Lwt.fail e)
-        >>= f
-      in
-      ignore (f ());
+      (if with_commandpipe
+       then
+         let pipe =
+           Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
+           |> Lwt_unix.of_unix_file_descr
+           |> Lwt_io.(of_fd ~mode:input)
+         in
+         let rec f () =
+           Lwt_io.read_line pipe >>= fun s ->
+           Ocsigen_messages.warning ("Command received: " ^ s);
+           Lwt.catch
+             (fun () ->
+                let prefix, c =
+                  match Ocsigen_lib.String.split ~multisep:true ' ' s with
+                  | [] -> raise Ocsigen_command.Unknown_command
+                  | a :: l -> (
+                    try
+                      let aa, ab = Ocsigen_lib.String.sep ':' a in
+                      Some aa, ab :: l
+                    with Not_found -> None, a :: l)
+                in
+                Ocsigen_command.get_command_function () ?prefix s c)
+             (function
+                | Ocsigen_command.Unknown_command ->
+                    Lwt_log.ign_warning ~section "Unknown command";
+                    Lwt.return ()
+                | e ->
+                    Lwt_log.ign_error ~section ~exn:e
+                      "Uncaught Exception after command";
+                    Lwt.fail e)
+           >>= f
+         in
+         ignore (f ()));
       Lwt_main.run
       @@ Lwt.join
            (List.map
@@ -484,31 +360,94 @@ let start ?config () =
           ignore (Unix.write_substring f spid 0 len);
           Unix.close f
     in
-    let launch h =
-      Ocsigen_lib.Option.iter Ocsigen_parseconfig.first_pass h;
-      (* set_passwd_if_needed sslinfo; *)
-      if Ocsigen_config.get_daemon ()
-      then
-        let pid = Unix.fork () in
-        if pid = 0
-        then run h
-        else (
-          Ocsigen_messages.console (fun () ->
-            "Process " ^ string_of_int pid ^ " detached");
-          write_pid pid)
+    (* set_passwd_if_needed sslinfo; *)
+    if Ocsigen_config.get_daemon ()
+    then
+      let pid = Unix.fork () in
+      if pid = 0
+      then run ()
       else (
-        write_pid (Unix.getpid ());
-        run h)
-    in
-    let launch = function
-      | Some [] -> ()
-      | Some [h] -> launch (Some h)
-      | None -> launch None
-      | Some (_ :: _ :: _) -> ()
-      (* Multiple servers not supported any more *)
-    in
-    launch config
+        Ocsigen_messages.console (fun () ->
+          "Process " ^ string_of_int pid ^ " detached");
+        write_pid pid)
+    else (
+      write_pid (Unix.getpid ());
+      run ())
   with e ->
     let msg, errno = errmsg e in
     Ocsigen_messages.errlog msg;
     exit errno
+
+let exec config =
+  Ocsigen_config.has_config_file := true;
+  match config with
+  | [] -> ()
+  | [h] ->
+      (try Ocsigen_parseconfig.first_pass h
+       with e ->
+         let msg, errno = errmsg e in
+         Ocsigen_messages.errlog msg;
+         exit errno);
+      main (fun () ->
+        (* Now I can load the modules *)
+        Dynlink_wrapper.allow_unsafe_modules true;
+        Ocsigen_extensions.start_initialisation ();
+        Ocsigen_parseconfig.later_pass h;
+        (* As libraries are reloaded each time the config file is
+          read, we do not allow to register extensions in
+          libraries. Seems it does not work :-/ *)
+        Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"])
+  | _ :: _ :: _ ->
+      Lwt_log.ign_warning ~section "Multiple servers not supported anymore"
+(* Multiple servers not supported any more *)
+
+let start ?(ports = [`All, 8080]) ?ssl_ports ?ssl_info ?default_charset ?logdir
+    ?datadir ?uploaddir ?maxuploadfilesize ?syslog_facility ?configfile
+    ?usedefaulthostname ?pidfile ?mimefile ?verbose ?veryverbose ?silent ?daemon
+    ?debug ?debugmode ?minthreads ?maxthreads ?max_number_of_threads_queued
+    ?max_number_of_connections ?client_timeout ?server_timeout ?shutdown_timeout
+    ?filebuffersize ?maxrequestbodysize ?maxrequestbodysizeinmemory ?bindir
+    ?extdir ?command_pipe ?disablepartialrequests ?respect_pipeline ?maxretries
+    instructions
+  =
+  Ocsigen_config.set_ports ports;
+  Option.iter Ocsigen_config.set_ssl_ports ssl_ports;
+  Option.iter Ocsigen_config.set_logdir logdir;
+  Option.iter Ocsigen_config.set_syslog_facility syslog_facility;
+  Option.iter Ocsigen_config.set_uploaddir uploaddir;
+  Option.iter Ocsigen_config.set_maxuploadfilesize maxuploadfilesize;
+  Option.iter Ocsigen_config.set_datadir datadir;
+  Option.iter Ocsigen_config.set_configfile configfile;
+  Option.iter Ocsigen_config.set_pidfile pidfile;
+  Option.iter Ocsigen_config.set_mimefile mimefile;
+  Option.iter Ocsigen_config.set_verbose verbose;
+  Option.iter Ocsigen_config.set_silent silent;
+  Option.iter Ocsigen_config.set_daemon daemon;
+  Option.iter Ocsigen_config.set_veryverbose veryverbose;
+  Option.iter Ocsigen_config.set_debug debug;
+  Option.iter Ocsigen_config.set_minthreads minthreads;
+  Option.iter Ocsigen_config.set_maxthreads maxthreads;
+  Option.iter Ocsigen_config.set_max_number_of_threads_queued
+    max_number_of_threads_queued;
+  Option.iter Ocsigen_config.set_max_number_of_connections
+    max_number_of_connections;
+  Option.iter Ocsigen_config.set_client_timeout client_timeout;
+  Option.iter Ocsigen_config.set_server_timeout server_timeout;
+  Option.iter Ocsigen_config.set_filebuffersize filebuffersize;
+  Option.iter Ocsigen_config.set_maxrequestbodysize maxrequestbodysize;
+  Option.iter Ocsigen_config.set_maxrequestbodysizeinmemory
+    maxrequestbodysizeinmemory;
+  Option.iter Ocsigen_config.set_default_charset default_charset;
+  Option.iter Ocsigen_config.set_bindir bindir;
+  Option.iter Ocsigen_config.set_extdir extdir;
+  Option.iter Ocsigen_config.set_command_pipe command_pipe;
+  Option.iter Ocsigen_config.set_debugmode debugmode;
+  Option.iter Ocsigen_config.set_disablepartialrequests disablepartialrequests;
+  Option.iter Ocsigen_config.set_usedefaulthostname usedefaulthostname;
+  Option.iter Ocsigen_config.set_respect_pipeline respect_pipeline;
+  Option.iter Ocsigen_config.set_maxretries maxretries;
+  Option.iter Ocsigen_config.set_shutdown_timeout shutdown_timeout;
+  Option.iter Ocsigen_config.set_ssl_info ssl_info;
+  main (fun () ->
+    Ocsigen_extensions.start_initialisation ();
+    Ocsigen_extensions.set_hosts instructions)

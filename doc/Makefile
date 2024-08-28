@@ -17,6 +17,7 @@ DOC := baselib/ocsigen_cache.mli          \
        http/ocsigen_header.mli            \
        \
        server/ocsigen_config.mli          \
+       server/ocsigen_command.mli          \
        server/ocsigen_request.mli         \
        server/ocsigen_response.mli        \
        server/ocsigen_messages.mli        \
@@ -26,10 +27,17 @@ DOC := baselib/ocsigen_cache.mli          \
        server/ocsigen_local_files.mli     \
        server/ocsigen_server.mli
 
-PLUGINS_DOC := extensions/accesscontrol.mli extensions/authbasic.mli	\
-	       extensions/outputfilter.mli				\
-	       extensions/redirectmod.mli extensions/staticmod.mli	\
-	       extensions/deflatemod/deflatemod.mli
+PLUGINS_DOC := extensions/accesscontrol.mli \
+           extensions/authbasic.mli	\
+	       extensions/outputfilter.mli \
+	       extensions/extendconfiguration.mli \
+	       extensions/redirectmod.mli \
+	       extensions/rewritemod.mli \
+	       extensions/userconf.mli \
+	       extensions/revproxy.mli \
+	       extensions/staticmod.mli	\
+	       extensions/deflatemod.mli \
+	       extensions/cors.mli
 
 all: doc wikidoc
 

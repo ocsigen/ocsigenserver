@@ -24,8 +24,6 @@ ocsigen_config_static.ml: ocsigen_config_static.ml.in ../../Makefile.config ../.
 	| sed s%_EXTDIR_%$(LIBDIR)/ocsigenserver/extensions%g \
 	| sed s%_STATICPAGESDIR_%$(STATICPAGESDIR)% \
 	| sed s%_UP_%$(UPLOADDIR)%g \
-	| sed s%_OCSIGENUSER_%$(OCSIGENUSER)%g \
-	| sed s%_OCSIGENGROUP_%"$(OCSIGENGROUP)"%g \
 	| sed s%_COMMANDPIPE_%$(COMMANDPIPE)%g \
 	| sed s%_CONFIGDIR_%$(CONFIGDIR)% \
 	| sed s%_ISNATIVE_%$(NATIVECODE_RUNTIME_DETECT)%g \

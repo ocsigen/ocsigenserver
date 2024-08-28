@@ -127,3 +127,11 @@ let () =
   Ocsigen_extensions.register ~name:"rewritemod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
+
+let run ?(continue = false) ?(full_rewrite = false) ~regexp dest () _ _ _ =
+  gen
+    (Regexp
+       ( Ocsigen_lib.Netstring_pcre.regexp ("^" ^ regexp ^ "$")
+       , dest
+       , full_rewrite ))
+    continue

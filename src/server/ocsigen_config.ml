@@ -66,8 +66,6 @@ let maxrequestbodysize = ref (Some (Int64.of_int 8000000))
 let maxrequestbodysizeinmemory = ref 8192
 let maxuploadfilesize = ref (Some (Int64.of_int 2000000))
 let defaultcharset = ref (None : string option)
-let user = ref (Some !default_user)
-let group = ref (Some !default_group)
 let debugmode = ref false
 let disablepartialrequests = ref false
 let usedefaulthostname = ref false
@@ -130,8 +128,6 @@ let set_default_charset o = defaultcharset := o
 let set_datadir o = datadir := o
 let set_bindir o = bindir := o
 let set_extdir o = extdir := o
-let set_user o = user := o
-let set_group o = group := o
 let set_command_pipe s = command_pipe := s
 let set_debugmode s = debugmode := s
 let set_disablepartialrequests s = disablepartialrequests := s
@@ -158,8 +154,6 @@ let get_silent () = !silent
 let get_daemon () = !daemon
 let get_veryverbose () = !veryverbose
 let get_debug () = !debug
-let get_default_user () = !default_user
-let get_default_group () = !default_group
 let get_minthreads () = !minthreads
 let get_maxthreads () = !maxthreads
 
@@ -177,8 +171,6 @@ let get_default_charset () = !defaultcharset
 let get_datadir () = !datadir
 let get_bindir () = !bindir
 let get_extdir () = !extdir
-let get_user () = !user
-let get_group () = !group
 let get_command_pipe () = !command_pipe
 let get_debugmode () = !debugmode
 let get_disablepartialrequests () = !disablepartialrequests
@@ -199,18 +191,5 @@ let display_version () =
   print_newline ();
   exit 0
 
-module Custom = struct
-  let m = ref Hmap.empty
-
-  (* TODO : two type variables? *)
-  type 'a key = ('a -> 'a) option * 'a Hmap.key
-
-  let key ?preprocess () = preprocess, Hmap.Key.create ()
-  let find (_, k) = Hmap.find k !m
-
-  let set (f, k) v =
-    let v = match f with Some f -> f v | None -> v in
-    m := Hmap.add k v !m
-
-  let unset (_, k) = m := Hmap.rem k !m
-end
+let has_config_file = ref false
+let has_configuration_file () = !has_config_file
