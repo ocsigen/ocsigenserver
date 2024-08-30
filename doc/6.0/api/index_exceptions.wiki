@@ -1,0 +1,58 @@
+=Index of exceptions=
+
+|@@ @style="tet-align: left;"@@\\A|
+|@@class="odocwiki_index"@ @@<<a_api text="Already_read"| exception Ocsigen_stream.Already_read >> ~[<<a_api | module Ocsigen_stream >>~]||
+|@@ @style="tet-align: left;"@@\\B|
+|@@class="odocwiki_index"@ @@<<a_api text="Bad_config_tag_for_extension"| exception Ocsigen_extensions.Bad_config_tag_for_extension >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Xml tag not recognized by an extension ~(usually not a real error~)
+>>
+|
+|@@ @style="tet-align: left;"@@\\C|
+|@@class="odocwiki_index"@ @@<<a_api text="Cancelled"| exception Ocsigen_stream.Cancelled >> ~[<<a_api | module Ocsigen_stream >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Config_file_error"| exception Ocsigen_config.Config_file_error >> ~[<<a_api | module Ocsigen_config >>~]||
+|@@ @style="tet-align: left;"@@\\D|
+|@@class="odocwiki_index"@ @@<<a_api text="Dynlink_error"| exception Ocsigen_loader.Dynlink_error >> ~[<<a_api | module Ocsigen_loader >>~]||
+|@@ @style="tet-align: left;"@@\\E|
+|@@class="odocwiki_index"@ @@<<a_api text="Error_in_config_file"| exception Ocsigen_extensions.Error_in_config_file >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Error in a ~<site~> tag inside the main ocsigen~.conf file
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Error_in_user_config_file"| exception Ocsigen_extensions.Error_in_user_config_file >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Option incorrect in a userconf file
+>>
+|
+|@@ @style="tet-align: left;"@@\\F|
+|@@class="odocwiki_index"@ @@<<a_api text="Failed_403"| exception Ocsigen_local_files.Failed_403 >> ~[<<a_api | module Ocsigen_local_files >>~]|<<div class="odocwiki_info"|~The requested file cannot be served~: does not exists~, not
+    enough permissions ~.~.~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Failed_404"| exception Ocsigen_local_files.Failed_404 >> ~[<<a_api | module Ocsigen_local_files >>~]|<<div class="odocwiki_info"|~The requested file does not exists
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Finalized"| exception Ocsigen_stream.Finalized >> ~[<<a_api | module Ocsigen_stream >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Findlib_error"| exception Ocsigen_loader.Findlib_error >> ~[<<a_api | module Ocsigen_loader >>~]||
+|@@ @style="tet-align: left;"@@\\I|
+|@@class="odocwiki_index"@ @@<<a_api text="IncorrectRegexpes"| exception Ocsigen_extensions.IncorrectRegexpes >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Input_is_too_large"| exception Ocsigen_lib_base.Input_is_too_large >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Interrupted"| exception Ocsigen_stream.Interrupted >> ~[<<a_api | module Ocsigen_stream >>~]||
+|@@ @style="tet-align: left;"@@\\N|
+|@@class="odocwiki_index"@ @@<<a_api text="NoSuchUser"| exception Ocsigen_extensions.NoSuchUser >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="No_such_host"| exception Ocsigen_lib.Ip_address.No_such_host >> ~[<<a_api | module Ocsigen_lib.Ip_address >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="NotReadableDirectory"| exception Ocsigen_local_files.NotReadableDirectory >> ~[<<a_api | module Ocsigen_local_files >>~]|<<div class="odocwiki_info"|~The file is a directory which we should not display
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="Not_concerned"| exception Ocsigen_extensions.Not_concerned >> ~[<<a_api | module Ocsigen_extensions >>~]|<<div class="odocwiki_info"|~Regular expressions for redirections
+>>
+|
+|@@ @style="tet-align: left;"@@\\O|
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_Bad_Request"| exception Ocsigen_lib_base.Ocsigen_Bad_Request >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_Internal_Error"| exception Ocsigen_lib_base.Ocsigen_Internal_Error >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_Request_too_long"| exception Ocsigen_lib_base.Ocsigen_Request_too_long >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_http_error"| exception Ocsigen_extensions.Ocsigen_http_error >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Ocsigen_is_dir"| exception Ocsigen_extensions.Ocsigen_is_dir >> ~[<<a_api | module Ocsigen_extensions >>~]||
+|@@ @style="tet-align: left;"@@\\S|
+|@@class="odocwiki_index"@ @@<<a_api text="Stream_error"| exception Ocsigen_stream.Stream_error >> ~[<<a_api | module Ocsigen_stream >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="Stream_too_small"| exception Ocsigen_stream.Stream_too_small >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|possibly with the size of the stream
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="String_too_large"| exception Ocsigen_stream.String_too_large >> ~[<<a_api | module Ocsigen_stream >>~]||
+|@@ @style="tet-align: left;"@@\\U|
+|@@class="odocwiki_index"@ @@<<a_api text="Unknown_command"| exception Ocsigen_command.Unknown_command >> ~[<<a_api | module Ocsigen_command >>~]||
+\\

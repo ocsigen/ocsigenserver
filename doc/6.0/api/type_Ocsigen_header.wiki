@@ -1,0 +1,81 @@
+<<code language="ocaml" | sig
+  type t = Cohttp.Header.t
+  val of_option : Ocsigen_header.t option -> Ocsigen_header.t
+  module Name :
+    sig
+      type t
+      val to_string : Ocsigen_header.Name.t -> string
+      val of_string : string -> Ocsigen_header.Name.t
+      val accept : Ocsigen_header.Name.t
+      val accept_charset : Ocsigen_header.Name.t
+      val accept_encoding : Ocsigen_header.Name.t
+      val accept_language : Ocsigen_header.Name.t
+      val accept_ranges : Ocsigen_header.Name.t
+      val authorization : Ocsigen_header.Name.t
+      val cache_control : Ocsigen_header.Name.t
+      val connection : Ocsigen_header.Name.t
+      val content_disposition : Ocsigen_header.Name.t
+      val content_encoding : Ocsigen_header.Name.t
+      val content_length : Ocsigen_header.Name.t
+      val content_type : Ocsigen_header.Name.t
+      val content_range : Ocsigen_header.Name.t
+      val cookie : Ocsigen_header.Name.t
+      val date : Ocsigen_header.Name.t
+      val etag : Ocsigen_header.Name.t
+      val expect : Ocsigen_header.Name.t
+      val expires : Ocsigen_header.Name.t
+      val host : Ocsigen_header.Name.t
+      val if_match : Ocsigen_header.Name.t
+      val if_modified_since : Ocsigen_header.Name.t
+      val if_none_match : Ocsigen_header.Name.t
+      val if_unmodified_since : Ocsigen_header.Name.t
+      val if_range : Ocsigen_header.Name.t
+      val last_modified : Ocsigen_header.Name.t
+      val location : Ocsigen_header.Name.t
+      val pragma : Ocsigen_header.Name.t
+      val server : Ocsigen_header.Name.t
+      val set_cookie : Ocsigen_header.Name.t
+      val status : Ocsigen_header.Name.t
+      val transfer_encoding : Ocsigen_header.Name.t
+      val user_agent : Ocsigen_header.Name.t
+      val referer : Ocsigen_header.Name.t
+      val range : Ocsigen_header.Name.t
+      val x_forwarded_for : Ocsigen_header.Name.t
+      val x_forwarded_proto : Ocsigen_header.Name.t
+      val origin : Ocsigen_header.Name.t
+      val access_control_request_method : Ocsigen_header.Name.t
+      val access_control_request_headers : Ocsigen_header.Name.t
+      val access_control_allow_origin : Ocsigen_header.Name.t
+      val access_control_allow_credentials : Ocsigen_header.Name.t
+      val access_control_expose_headers : Ocsigen_header.Name.t
+      val access_control_max_age : Ocsigen_header.Name.t
+      val access_control_allow_methods : Ocsigen_header.Name.t
+      val access_control_allow_headers : Ocsigen_header.Name.t
+    end
+  module Mime_type :
+    sig
+      type t = string option * string option
+      val parse : string -> Ocsigen_header.Mime_type.t
+    end
+  module Accept :
+    sig
+      type t =
+          (Ocsigen_header.Mime_type.t * float option * (string * string) list)
+          list
+      val parse : string list -> Ocsigen_header.Accept.t
+    end
+  module Accept_encoding :
+    sig
+      type t = (string option * float option) list
+      val parse : string list -> Ocsigen_header.Accept_encoding.t
+    end
+  module Accept_language :
+    sig
+      type t = (string * float option) list
+      val parse : string list -> Ocsigen_header.Accept_language.t
+    end
+  module Content_type :
+    sig
+      val choose : Ocsigen_header.Accept.t -> string -> string list -> string
+    end
+end >>

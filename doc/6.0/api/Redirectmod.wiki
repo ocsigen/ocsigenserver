@@ -1,0 +1,35 @@
+=Module <<a_api_type | module Redirectmod >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Redirectmod>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Redirectmod >><<span class="ocsforge_color_keyword"|end>>>>~Redirectmod~: ~H~T~T~P redirections
+
+----
+
+~If you want to use this extension with ~Ocsigen ~Server~'s configuration file~,
+    have a look at the <<a_manual chapter="redirectmod"|manual page>>~.
+    ~If you are using ~Ocsigen ~Server as a library~, use the interface described
+    here~. ~Each of these functions behaves exactly as its configuration file
+    counterpart~.
+
+~This module belongs to ocamlfind package
+   <<span class="odocwiki_inlinecode"|ocsigenserver~.ext~.redirectmod>>~.
+
+~Example of use~:
+
+<<code language='ocaml'|let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+       [ Redirectmod.run
+            ~redirection:
+              (Redirectmod.create_redirection
+                ~temporary:false ~full_url:false ~regexp:"^olddir/(.* )$"
+                "https://blahblahblah.org/newdir/\\1")
+              ()
+       ; Staticmod.run ~dir:"static" ()
+       ]
+     ]
+>>
+
+<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|use ~Lwt~_log~.~Section~.set~_level in order to set the log level
+>>
+<<pre class="ocsforge_color odocwiki_code" id="TYPEredirection"|<<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|redirection>>>><<pre id="VALcreate_redirection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|create~_redirection>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?full_url: >>bool <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?temporary: >>bool <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_label"| regexp: >>string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="redirection" | type Redirectmod.redirection >>>>>><<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| redirection: >><<a_api text="redirection" | type Redirectmod.redirection >> <<span class="ocsforge_color_delimiter"| -> >>\\  unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run ~~redirection ~(~)>> makes it possible to use this extension without
+    configuration file~.
+>>

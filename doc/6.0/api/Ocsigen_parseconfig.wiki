@@ -1,0 +1,8 @@
+=Module <<a_api_type | module Ocsigen_parseconfig >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_parseconfig>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_parseconfig >><<span class="ocsforge_color_keyword"|end>>>>~Config file parsing~. ~See also module
+    <<span class="odocwiki_inlinecode"|~Ocsigen~_extensions~.​~Configuration>>
+
+----
+<<pre id="VALparse_config" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|parse~_config>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_label"| ?file: >>string <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_uid"|Xml>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> list list>>>><<div class="odocwiki_info"|~Returns the config file~. ~Use this if you want to read a config file from
+    your own executable~. ~See <<a_api | val Ocsigen_server.exec >>~.
+>>

@@ -1,0 +1,45 @@
+=Redirectmod=
+
+Redirectmod is a module allowing to define HTTP redirections from Ocsigen's configuration file. Submit your bugs and feature wishes (or any enhancement/mistake in the documentation) [[https://github.com/ocsigen/ocsigenserver|here]].
+
+To use that extension, load OCamlfind package {{{ocsigenserver.ext.redirectmod}}},
+either from your Dune file (if you are using static linking), or
+from the configuration file:
+{{{
+<extension findlib-package="ocsigenserver.ext.redirectmod"/>
+}}}
+
+This page describes the configuration file options. If you are building a statically
+linked executable without configuration file, use the corresponding functions from
+module <<a_api|module Redirectmod>>.
+
+
+
+Then configure your hosts as in these examples:
+{{{
+<redirect suburl="(.*)" dest="http://my.newaddress.org/\1"/>
+<redirect suburl="dir/(.*)\.html" dest="http://my.newaddress.org/\1.php"/>
+<redirect fullurl="http://(.*).myserver.org/(.*)" dest="http://\1.mynewserver.org/\2"/>
+}}}
+The syntax of regular expression is PCRE's one.
+
+According to the RFC of the HTTP protocol, dest must be an absolute URL. By default, the redirection is permanent. For temporary redirection, use:
+{{{
+<redirect temporary="temporary" suburl="(.*)" dest="http://www.plopplopplop.com/\1"/>
+}}}
+
+
+Other example:
+redirect {{{https://foobar.org/aaa}}} (and {{{https://foobar.net/aaa}}} etc.)
+to {{{https://www.foobar.org/aaa}}} (and http to https):
+
+{{{
+    <host hostfilter="foobar.org www.foobar.net foobar.net"
+          defaulthostname="www.foobar.org" defaulthttpport="80" defaulthttpsport="443">
+      <redirect suburl="(.*)" dest="https://www.foobar.org/\1"/>
+    </host>
+    <host hostfilter="www.foobar.org"
+          defaulthostname="www.foobar.org" defaulthttpport="80" defaulthttpsport="443">
+       ...
+    </host>
+}}}

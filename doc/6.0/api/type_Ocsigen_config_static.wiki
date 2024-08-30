@@ -1,0 +1,12 @@
+<<code language="ocaml" | sig
+  val version_number : string
+  val config_file : string Stdlib.ref
+  val is_native : bool
+  val logdir : string option Stdlib.ref
+  val mimefile : string Stdlib.ref
+  val datadir : string Stdlib.ref
+  val bindir : string Stdlib.ref
+  val extdir : string Stdlib.ref
+  val command_pipe : string Stdlib.ref
+  val builtin_packages : Ocsigen_lib.String.Set.t
+end >>

@@ -1,0 +1,99 @@
+==
+
+=@@id="1_OcsigenserverAPIreference"@@~Ocsigen server ~- ~A~P~I reference=
+
+
+|<<a_api | module Ocsigen_server >>||
+
+
+
+==@@id="2_Extensions"@@~Extensions==
+
+
+|<<a_api | module Staticmod >>|<<div class="odocwiki_info"|~Staticmod~: serve static files
+>>
+|
+|<<a_api | module Extendconfiguration >>|<<div class="odocwiki_info"|~Extendconfiguration~: ~More configuration options for ~Ocsigen ~Server
+>>
+|
+|<<a_api | module Accesscontrol >>|<<div class="odocwiki_info"|~Accesscontrol~: ~Conditional access to some sites
+>>
+|
+|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Authbasic~: ~Basic ~H~T~T~P authentication
+>>
+|
+|<<a_api | module Deflatemod >>|<<div class="odocwiki_info"|~Deflatemod~: compress output data
+>>
+|
+|<<a_api | module Redirectmod >>|<<div class="odocwiki_info"|~Redirectmod~: ~H~T~T~P redirections
+>>
+|
+|<<a_api | module Revproxy >>|<<div class="odocwiki_info"|~Revproxy~: ~Forward a request to another ~Web server
+>>
+|
+|<<a_api | module Rewritemod >>|<<div class="odocwiki_info"|~Rewrite~: ~Change the request
+>>
+|
+|<<a_api | module Outputfilter >>|<<div class="odocwiki_info"|~Outputfilter~: ~Rewrite some part of the output
+>>
+|
+|<<a_api | module Userconf >>||
+|<<a_api | module Cors >>|<<div class="odocwiki_info"|~Cross~-~Origin ~Resource ~Sharing
+>>
+|
+
+
+
+
+
+==@@id="2_Persistentdatawritinginthelogsconfigurationfileextensionpolymorphictables"@@~Persistent data~, writing in the logs~, configuration file extension~, polymorphic tables==
+
+
+|<<a_api | module Ocsigen_lib >>|<<div class="odocwiki_info"|~This module contains some auxiliaries for the ~Ocsigenserver~.
+>>
+|
+|<<a_api | module Ocsigen_messages >>|<<div class="odocwiki_info"|~Writing messages in the logs
+>>
+|
+|<<a_api | module Ocsigen_parseconfig >>|<<div class="odocwiki_info"|~Config file parsing~.
+>>
+|
+|<<a_api | module Polytables >>|<<div class="odocwiki_info"|~Polymorphic tables ~(using ~Map~)
+>>
+|
+|<<a_api | module Ocsigen_cache >>|<<div class="odocwiki_info"|~Cache~.
+>>
+|
+|<<a_api | module Ocsigen_config >>|<<div class="odocwiki_info"|~Configuring ~Ocsigen server
+>>
+|
+
+
+
+
+
+==@@id="2_ExtendingOcsigenServer"@@~Extending ~Ocsigen ~Server==
+
+
+|<<a_api | module Ocsigen_extensions >>|<<div class="odocwiki_info"|~Extensions interface for ~Ocsigen ~Server
+>>
+|
+|<<a_api | module Ocsigen_local_files >>||
+|<<a_api | module Ocsigen_header >>||
+|<<a_api | module Ocsigen_stream >>||
+
+
+
+
+
+==@@id="2_Indexes"@@~Indexes==
+
+
+
+* <<a_api text="Index of types" | index types >>
+* <<a_api text="Index of exceptions" | index exceptions >>
+* <<a_api text="Index of values" | index values >>
+* <<a_api text="Index of class methods" | index methods >>
+* <<a_api text="Index of classes" | index classes >>
+* <<a_api text="Index of modules" | index modules >>
+

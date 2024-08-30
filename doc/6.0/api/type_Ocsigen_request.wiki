@@ -1,0 +1,79 @@
+<<code language="ocaml" | sig
+  type t
+  type content_type = (string * string) * (string * string) list
+  type file_info =
+    Ocsigen_multipart.file_info = {
+    tmp_filename : string;
+    filesize : int64;
+    raw_original_filename : string;
+    file_content_type : Ocsigen_request.content_type option;
+  }
+  type post_data =
+      (string * string) list * (string * Ocsigen_request.file_info) list
+  val make :
+    ?forward_ip:string list ->
+    ?sub_path:string ->
+    ?original_full_path:string ->
+    ?request_cache:Polytables.t ->
+    ?cookies_override:string Ocsigen_cookie_map.Map_inner.t ->
+    address:Unix.inet_addr ->
+    port:int ->
+    ssl:bool ->
+    filenames:string list Stdlib.ref ->
+    sockaddr:Lwt_unix.sockaddr ->
+    body:Cohttp_lwt.Body.t ->
+    connection_closed:unit Lwt.t -> Cohttp.Request.t -> Ocsigen_request.t
+  val update :
+    ?ssl:bool ->
+    ?forward_ip:string list ->
+    ?remote_ip:string ->
+    ?sub_path:string ->
+    ?meth:Cohttp.Code.meth ->
+    ?get_params_flat:(string * string) list ->
+    ?post_data:Ocsigen_request.post_data option ->
+    ?cookies_override:string Ocsigen_cookie_map.Map_inner.t ->
+    ?full_rewrite:bool ->
+    ?uri:Uri.t -> Ocsigen_request.t -> Ocsigen_request.t
+  val to_cohttp : Ocsigen_request.t -> Cohttp.Request.t
+  val uri : Ocsigen_request.t -> Uri.t
+  val body : Ocsigen_request.t -> Cohttp_lwt.Body.t
+  val address : Ocsigen_request.t -> Unix.inet_addr
+  val host : Ocsigen_request.t -> string option
+  val meth : Ocsigen_request.t -> Cohttp.Code.meth
+  val port : Ocsigen_request.t -> int
+  val ssl : Ocsigen_request.t -> bool
+  val version : Ocsigen_request.t -> Cohttp.Code.version
+  val query : Ocsigen_request.t -> string option
+  val get_params : Ocsigen_request.t -> (string * string list) list
+  val get_params_flat : Ocsigen_request.t -> (string * string) list
+  val path : Ocsigen_request.t -> string list
+  val path_string : Ocsigen_request.t -> string
+  val sub_path : Ocsigen_request.t -> string list
+  val sub_path_string : Ocsigen_request.t -> string
+  val original_full_path : Ocsigen_request.t -> string list
+  val original_full_path_string : Ocsigen_request.t -> string
+  val header : Ocsigen_request.t -> Ocsigen_header.Name.t -> string option
+  val header_multi :
+    Ocsigen_request.t -> Ocsigen_header.Name.t -> string list
+  val add_header :
+    Ocsigen_request.t -> Ocsigen_header.Name.t -> string -> Ocsigen_request.t
+  val cookies : Ocsigen_request.t -> string Ocsigen_cookie_map.Map_inner.t
+  val files :
+    Ocsigen_request.t ->
+    string option ->
+    Stdlib.Int64.t option ->
+    (string * Ocsigen_request.file_info) list Lwt.t option
+  val post_params :
+    Ocsigen_request.t ->
+    string option ->
+    Stdlib.Int64.t option -> (string * string) list Lwt.t option
+  val remote_ip : Ocsigen_request.t -> string
+  val remote_ip_parsed : Ocsigen_request.t -> Ipaddr.t
+  val forward_ip : Ocsigen_request.t -> string list
+  val content_type : Ocsigen_request.t -> Ocsigen_request.content_type option
+  val request_cache : Ocsigen_request.t -> Polytables.t
+  val tries : Ocsigen_request.t -> int
+  val incr_tries : Ocsigen_request.t -> unit
+  val connection_closed : Ocsigen_request.t -> unit Lwt.t
+  val timeofday : Ocsigen_request.t -> float
+end >>

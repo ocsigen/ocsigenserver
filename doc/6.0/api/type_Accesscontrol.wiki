@@ -1,0 +1,30 @@
+<<code language="ocaml" | sig
+  type condition
+  val ip : string -> Accesscontrol.condition
+  val port : int -> Accesscontrol.condition
+  val ssl : Accesscontrol.condition
+  val header : name:string -> regexp:string -> Accesscontrol.condition
+  val method_ : Cohttp.Code.meth -> Accesscontrol.condition
+  val protocol : Cohttp.Code.version -> Accesscontrol.condition
+  val path : regexp:string -> Accesscontrol.condition
+  val and_ : Accesscontrol.condition list -> Accesscontrol.condition
+  val or_ : Accesscontrol.condition list -> Accesscontrol.condition
+  val not_ : Accesscontrol.condition -> Accesscontrol.condition
+  val if_ :
+    Accesscontrol.condition ->
+    Ocsigen_server.instruction list ->
+    Ocsigen_server.instruction list -> Ocsigen_server.instruction
+  val iffound : Ocsigen_server.instruction list -> Ocsigen_server.instruction
+  val ifnotfound :
+    ?code:string ->
+    Ocsigen_server.instruction list -> Ocsigen_server.instruction
+  val notfound : Ocsigen_server.instruction
+  val nextsite : Ocsigen_server.instruction
+  val nexthost : Ocsigen_server.instruction
+  val stop : Ocsigen_server.instruction
+  val forbidden : Ocsigen_server.instruction
+  val allow_forward_for :
+    ?check_equal_ip:bool -> unit -> Ocsigen_server.instruction
+  val allow_forward_proto : unit -> Ocsigen_server.instruction
+  val section : Lwt_log_core.section
+end >>

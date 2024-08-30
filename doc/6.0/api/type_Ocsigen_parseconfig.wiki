@@ -1,0 +1,7 @@
+<<code language="ocaml" | sig
+  val section : Lwt_log_core.section
+  val parse_size_tag : string -> string -> int64 option
+  val first_pass : Xml.xml list -> unit
+  val later_pass : Xml.xml list -> unit
+  val parse_config : ?file:string -> unit -> Xml.xml list list
+end >>

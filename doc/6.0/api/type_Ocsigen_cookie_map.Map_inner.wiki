@@ -1,0 +1,44 @@
+<<code language="ocaml" | sig
+  type +!'a t
+  val empty : 'a t
+  val is_empty : 'a t -> bool
+  val mem : string -> 'a t -> bool
+  val add : string -> 'a -> 'a t -> 'a t
+  val update : string -> ('a option -> 'a option) -> 'a t -> 'a t
+  val singleton : string -> 'a -> 'a t
+  val remove : string -> 'a t -> 'a t
+  val merge :
+    (string -> 'a option -> 'b option -> 'c option) -> 'a t -> 'b t -> 'c t
+  val union : (string -> 'a -> 'a -> 'a option) -> 'a t -> 'a t -> 'a t
+  val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+  val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+  val iter : (string -> 'a -> unit) -> 'a t -> unit
+  val fold : (string -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
+  val for_all : (string -> 'a -> bool) -> 'a t -> bool
+  val exists : (string -> 'a -> bool) -> 'a t -> bool
+  val filter : (string -> 'a -> bool) -> 'a t -> 'a t
+  val filter_map : (string -> 'a -> 'b option) -> 'a t -> 'b t
+  val partition : (string -> 'a -> bool) -> 'a t -> 'a t * 'a t
+  val cardinal : 'a t -> int
+  val bindings : 'a t -> (string * 'a) list
+  val min_binding : 'a t -> string * 'a
+  val min_binding_opt : 'a t -> (string * 'a) option
+  val max_binding : 'a t -> string * 'a
+  val max_binding_opt : 'a t -> (string * 'a) option
+  val choose : 'a t -> string * 'a
+  val choose_opt : 'a t -> (string * 'a) option
+  val split : string -> 'a t -> 'a t * 'a option * 'a t
+  val find : string -> 'a t -> 'a
+  val find_opt : string -> 'a t -> 'a option
+  val find_first : (string -> bool) -> 'a t -> string * 'a
+  val find_first_opt : (string -> bool) -> 'a t -> (string * 'a) option
+  val find_last : (string -> bool) -> 'a t -> string * 'a
+  val find_last_opt : (string -> bool) -> 'a t -> (string * 'a) option
+  val map : ('a -> 'b) -> 'a t -> 'b t
+  val mapi : (string -> 'a -> 'b) -> 'a t -> 'b t
+  val to_seq : 'a t -> (string * 'a) Seq.t
+  val to_rev_seq : 'a t -> (string * 'a) Seq.t
+  val to_seq_from : string -> 'a t -> (string * 'a) Seq.t
+  val add_seq : (string * 'a) Seq.t -> 'a t -> 'a t
+  val of_seq : (string * 'a) Seq.t -> 'a t
+end >>

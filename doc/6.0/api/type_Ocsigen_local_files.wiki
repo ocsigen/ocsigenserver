@@ -1,0 +1,11 @@
+<<code language="ocaml" | sig
+  val section : Lwt_log_core.section
+  exception Failed_404
+  exception Failed_403
+  exception NotReadableDirectory
+  type resolved = RFile of string | RDir of string
+  val resolve :
+    ?no_check_for:string ->
+    request:Ocsigen_extensions.request ->
+    filename:string -> unit -> Ocsigen_local_files.resolved
+end >>

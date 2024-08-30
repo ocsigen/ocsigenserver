@@ -1,0 +1,9 @@
+<<code language="ocaml" | sig
+  val section : Lwt_log_core.section
+  type auth = string -> string -> bool Lwt.t
+  val register_basic_authentication_method :
+    (Xml.xml -> Authbasic.auth) -> unit
+  val run :
+    realm:string -> auth:Authbasic.auth -> unit -> Ocsigen_server.instruction
+  val get_basic_authentication_method : Xml.xml -> Authbasic.auth
+end >>

@@ -1,0 +1,28 @@
+=Module <<a_api_type | module Staticmod >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Staticmod>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Staticmod >><<span class="ocsforge_color_keyword"|end>>>>~Staticmod~: serve static files
+
+----
+
+~If you want to use this extension with ~Ocsigen ~Server~'s configuration file~, 
+   have a look at the <<a_manual chapter="staticmod"|manual page>>~.
+   ~If you are using ~Ocsigen ~Server as a library~, use the interface described
+   here~.
+
+~This module belongs to ocamlfind package
+   <<span class="odocwiki_inlinecode"|ocsigenserver~.ext~.staticmod>>~.
+
+~Example of use~:
+
+<<code language='ocaml'|let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
+>>
+
+<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?dir: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?regexp: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?dest: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?code: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?cache: >>int <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_label"| ?root: >>string <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|~Run static mod on a specific directory~. 
+    ~Call this if you want to run ~Ocsigen ~Server without configuration file~.
+    ~The optional parameter correspond to the options of the configuration
+    file described <<a_manual chapter="staticmod"|here>>~.
+>>
+<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|~Use <<span class="odocwiki_inlinecode"|~Lwt~_log~.~Section~.set~_level>> in order to select the log level for
+   this module
+>>

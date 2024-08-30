@@ -1,0 +1,37 @@
+<<code language="ocaml" | sig
+  type t
+  val make :
+    ?body:Cohttp_lwt.Body.t ->
+    ?cookies:Ocsigen_cookie_map.t -> Cohttp.Response.t -> Ocsigen_response.t
+  val update :
+    ?response:Cohttp.Response.t ->
+    ?body:Cohttp_lwt.Body.t ->
+    ?cookies:Ocsigen_cookie_map.t -> Ocsigen_response.t -> Ocsigen_response.t
+  val of_cohttp :
+    ?cookies:Ocsigen_cookie_map.t ->
+    Cohttp.Response.t * Cohttp_lwt.Body.t -> Ocsigen_response.t
+  val to_cohttp : Ocsigen_response.t -> Cohttp.Response.t * Cohttp_lwt.Body.t
+  val status : Ocsigen_response.t -> Cohttp.Code.status
+  val set_status :
+    Ocsigen_response.t -> Cohttp.Code.status -> Ocsigen_response.t
+  val cookies : Ocsigen_response.t -> Ocsigen_cookie_map.t
+  val add_cookies :
+    Ocsigen_response.t -> Ocsigen_cookie_map.t -> Ocsigen_response.t
+  val header : Ocsigen_response.t -> Ocsigen_header.Name.t -> string option
+  val header_multi :
+    Ocsigen_response.t -> Ocsigen_header.Name.t -> string list
+  val add_header :
+    Ocsigen_response.t ->
+    Ocsigen_header.Name.t -> string -> Ocsigen_response.t
+  val add_header_multi :
+    Ocsigen_response.t ->
+    Ocsigen_header.Name.t -> string list -> Ocsigen_response.t
+  val replace_header :
+    Ocsigen_response.t ->
+    Ocsigen_header.Name.t -> string -> Ocsigen_response.t
+  val replace_headers :
+    Ocsigen_response.t ->
+    (Ocsigen_header.Name.t * string) list -> Ocsigen_response.t
+  val remove_header :
+    Ocsigen_response.t -> Ocsigen_header.Name.t -> Ocsigen_response.t
+end >>

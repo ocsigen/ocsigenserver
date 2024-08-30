@@ -1,0 +1,183 @@
+<<code language="ocaml" | sig
+  val section : Lwt_log_core.section
+  exception Unknown_command
+  val register_command_function :
+    ?prefix:string -> (string -> string list -> unit Lwt.t) -> unit
+  val get_command_function :
+    unit -> ?prefix:string -> string -> string list -> unit Lwt.t
+  exception Ocsigen_http_error of Ocsigen_cookie_map.t * Cohttp.Code.status
+  exception Bad_config_tag_for_extension of string
+  exception Error_in_config_file of string
+  exception Error_in_user_config_file of string
+  type file_info =
+    Ocsigen_multipart.file_info = {
+    tmp_filename : string;
+    filesize : int64;
+    raw_original_filename : string;
+    file_content_type : ((string * string) * (string * string) list) option;
+  }
+  val badconfig : ('a, unit, string, 'b) Stdlib.format4 -> 'a
+  type virtual_hosts = (string * Re.Pcre.regexp * int option) list
+  val hash_virtual_hosts : Ocsigen_extensions.virtual_hosts -> int
+  val equal_virtual_hosts :
+    Ocsigen_extensions.virtual_hosts ->
+    Ocsigen_extensions.virtual_hosts -> bool
+  val host_match :
+    virtual_hosts:Ocsigen_extensions.virtual_hosts ->
+    host:string option -> port:int -> bool
+  type do_not_serve = {
+    do_not_serve_regexps : string list;
+    do_not_serve_files : string list;
+    do_not_serve_extensions : string list;
+  }
+  val serve_everything : Ocsigen_extensions.do_not_serve
+  exception IncorrectRegexpes of Ocsigen_extensions.do_not_serve
+  val do_not_serve_to_regexp :
+    Ocsigen_extensions.do_not_serve -> Re.Pcre.regexp
+  val join_do_not_serve :
+    Ocsigen_extensions.do_not_serve ->
+    Ocsigen_extensions.do_not_serve -> Ocsigen_extensions.do_not_serve
+  type config_info = {
+    default_hostname : string;
+    default_httpport : int;
+    default_httpsport : int;
+    default_protocol_is_https : bool;
+    mime_assoc : Ocsigen_charset_mime.mime_assoc;
+    charset_assoc : Ocsigen_charset_mime.charset_assoc;
+    default_directory_index : string list;
+    list_directory_content : bool;
+    follow_symlinks : [ `Always | `No | `Owner_match ];
+    do_not_serve_404 : Ocsigen_extensions.do_not_serve;
+    do_not_serve_403 : Ocsigen_extensions.do_not_serve;
+    uploaddir : string option;
+    maxuploadfilesize : int64 option;
+  }
+  val default_config_info : unit -> Ocsigen_extensions.config_info
+  type request = {
+    request_info : Ocsigen_request.t;
+    request_config : Ocsigen_extensions.config_info;
+  }
+  exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
+  type answer =
+      Ext_do_nothing
+    | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
+    | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
+    | Ext_next of Cohttp.Code.status
+    | Ext_stop_site of (Ocsigen_cookie_map.t * Cohttp.Code.status)
+    | Ext_stop_host of (Ocsigen_cookie_map.t * Cohttp.Code.status)
+    | Ext_stop_all of (Ocsigen_cookie_map.t * Cohttp.Code.status)
+    | Ext_continue_with of
+        (Ocsigen_extensions.request * Ocsigen_cookie_map.t *
+         Cohttp.Code.status)
+    | Ext_retry_with of Ocsigen_extensions.request * Ocsigen_cookie_map.t
+    | Ext_sub_result of Ocsigen_extensions.extension_composite
+    | Ext_found_continue_with of
+        (unit -> (Ocsigen_response.t * Ocsigen_extensions.request) Lwt.t)
+    | Ext_found_continue_with' of
+        (Ocsigen_response.t * Ocsigen_extensions.request)
+  and request_state =
+      Req_not_found of (Cohttp.Code.status * Ocsigen_extensions.request)
+    | Req_found of (Ocsigen_extensions.request * Ocsigen_response.t)
+  and extension_composite =
+      Ocsigen_cookie_map.t ->
+      Ocsigen_extensions.request_state ->
+      (Ocsigen_extensions.answer * Ocsigen_cookie_map.t) Lwt.t
+  type extension =
+      Ocsigen_extensions.request_state -> Ocsigen_extensions.answer Lwt.t
+  type parse_fun = Xml.xml list -> Ocsigen_extensions.extension_composite
+  type parse_host
+  type userconf_info = { localfiles_root : string; }
+  type parse_config =
+      Ocsigen_extensions.userconf_info option ->
+      Ocsigen_extensions.virtual_hosts ->
+      Ocsigen_extensions.config_info -> Ocsigen_extensions.parse_config_aux
+  and parse_config_aux =
+      Ocsigen_lib.Url.path ->
+      Ocsigen_extensions.parse_host ->
+      Ocsigen_extensions.parse_fun -> Xml.xml -> Ocsigen_extensions.extension
+  val register :
+    name:string ->
+    ?fun_site:Ocsigen_extensions.parse_config ->
+    ?end_init:(unit -> unit) ->
+    ?init_fun:(Xml.xml list -> unit) ->
+    ?exn_handler:(exn -> string) -> ?respect_pipeline:bool -> unit -> unit
+  module Configuration :
+    sig
+      type element
+      type attribute
+      val element :
+        name:string ->
+        ?obligatory:bool ->
+        ?init:(unit -> unit) ->
+        ?elements:Ocsigen_extensions.Configuration.element list ->
+        ?attributes:Ocsigen_extensions.Configuration.attribute list ->
+        ?pcdata:(string -> unit) ->
+        ?other_elements:(string ->
+                         (string * string) list -> Xml.xml list -> unit) ->
+        ?other_attributes:(string -> string -> unit) ->
+        unit -> Ocsigen_extensions.Configuration.element
+      val attribute :
+        name:string ->
+        ?obligatory:bool ->
+        (string -> unit) -> Ocsigen_extensions.Configuration.attribute
+      val process_element :
+        in_tag:string ->
+        elements:Ocsigen_extensions.Configuration.element list ->
+        ?pcdata:(string -> unit) ->
+        ?other_elements:(string ->
+                         (string * string) list -> Xml.xml list -> unit) ->
+        Xml.xml -> unit
+      val process_elements :
+        in_tag:string ->
+        elements:Ocsigen_extensions.Configuration.element list ->
+        ?pcdata:(string -> unit) ->
+        ?other_elements:(string ->
+                         (string * string) list -> Xml.xml list -> unit) ->
+        ?init:(unit -> unit) -> Xml.xml list -> unit
+      val ignore_blank_pcdata : in_tag:string -> string -> unit
+      val refuse_pcdata : in_tag:string -> string -> unit
+    end
+  val get_hostname : Ocsigen_extensions.request -> string
+  val get_port : Ocsigen_extensions.request -> int
+  val new_url_of_directory_request :
+    Ocsigen_extensions.request -> Ocsigen_request.t -> Uri.t
+  exception NoSuchUser
+  type ud_string
+  val parse_user_dir : string -> Ocsigen_extensions.ud_string
+  val replace_user_dir :
+    Re.Pcre.regexp -> Ocsigen_extensions.ud_string -> string -> string
+  exception Not_concerned
+  val find_redirection :
+    Re.Pcre.regexp -> bool -> string -> Ocsigen_request.t -> string
+  val preprocess_site_path : Ocsigen_lib.Url.path -> Ocsigen_lib.Url.path
+  val compose :
+    Ocsigen_extensions.extension list ->
+    Ocsigen_extensions.extension_composite
+  val make_parse_config :
+    Ocsigen_lib.Url.path ->
+    Ocsigen_extensions.parse_config_aux -> Ocsigen_extensions.parse_fun
+  val parse_config_item : Ocsigen_extensions.parse_config
+  val site_ext :
+    Ocsigen_extensions.extension_composite ->
+    Ocsigen_charset_mime.charset option ->
+    Ocsigen_lib.Url.path -> Ocsigen_extensions.extension
+  type host_config =
+      Ocsigen_extensions.virtual_hosts * Ocsigen_extensions.config_info *
+      Ocsigen_extensions.extension_composite
+  val set_hosts : Ocsigen_extensions.host_config list -> unit
+  val get_hosts :
+    unit ->
+    (Ocsigen_extensions.virtual_hosts * Ocsigen_extensions.config_info *
+     Ocsigen_extensions.extension_composite)
+    list
+  val compute_result :
+    ?previous_cookies:Ocsigen_cookie_map.t ->
+    Ocsigen_request.t -> Ocsigen_response.t Lwt.t
+  val get_number_of_connected : unit -> int
+  val during_initialisation : unit -> bool
+  val start_initialisation : unit -> unit
+  val end_initialisation : unit -> unit
+  val get_numberofreloads : unit -> int
+  val get_init_exn_handler : unit -> exn -> string
+  val set_config : Xml.xml list -> unit
+end >>

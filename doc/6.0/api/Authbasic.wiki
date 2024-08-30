@@ -1,0 +1,67 @@
+=Module <<a_api_type | module Authbasic >> =
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Authbasic>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Authbasic >><<span class="ocsforge_color_keyword"|end>>>>~Authbasic~: ~Basic ~H~T~T~P authentication
+
+----
+
+~If you want to use this extension with ~Ocsigen ~Server~'s configuration file~,
+    have a look at the <<a_manual chapter="authbasic"|manual page>>~.
+    ~If you are using ~Ocsigen ~Server as a library~, use the interface described
+    here~. ~Each of these functions behaves exactly as its configuration file
+    counterpart~.
+
+~This module belongs to ocamlfind package
+   <<span class="odocwiki_inlinecode"|ocsigenserver~.ext~.authbasic>>~.
+
+~Example of use~:
+
+<<code language='ocaml'|let _ =
+   Ocsigen_server.start
+     [ Ocsigen_server.host ~regexp:".*"
+       [ Authbasic.run ~realm:"test"
+            ~auth:(fun u p -> Lwt.return (u = "theuser" && p = "thepassword"))
+            () 
+       ; Staticmod.run ~dir:"static" () ]]
+>>
+
+
+~This module implements ~Basic ~H~T~T~P ~Authentication as described in
+    [[http://www.ietf.org/rfc/rfc2617.txt|~R~F~C ~2~6~1~7]]~.  ~It can be used
+    to add an authentication layer to sites with no built~-in
+    authentication ~(e~.g~. static files~)~. ~Beware~, passwords are
+    transmitted in cleartext with this scheme~, so the medium should be
+    secured somehow ~(by e~.g~. ~S~S~L~)~.
+
+
+    ~This module implements only the ~H~T~T~P~-related part of the protocol~,
+    and is meant to be extended with various authentication schemes~. ~A
+    very naive one ~(authentication with a single user~/password~, given
+    in the configuration file~) is provided~.
+<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|use <<span class="odocwiki_inlinecode"|~Lwt~_log~.~Section~.set~_level>> in order to set the log level
+>>
+<<pre class="ocsforge_color odocwiki_code" id="TYPEauth"|<<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|auth>> <<span class="ocsforge_color_delimiter"|~=>> <<span class="odocwiki_type"|string <<span class="ocsforge_color_delimiter"| -> >> string <<span class="ocsforge_color_delimiter"| -> >> bool <<span class="ocsforge_color_uid"|Lwt>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|t>>>> >><<pre id="VALregister_basic_authentication_method" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|register~_basic~_authentication~_method>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_delimiter"| ( >><<span class="ocsforge_color_uid"|Xml>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|xml>> <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="auth" | type Authbasic.auth >><<span class="ocsforge_color_delimiter"| ) >> <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<div class="odocwiki_info"|~This function registers an authentication plugin~: it adds a new
+    parser to the list of available authentication schemes~.
+
+
+    ~This is only applied if you are running the server with an ~X~M~L
+    configuration file~. ~Use the realm~, auth variables otherwise~.
+
+
+    ~A parser takes as argument an ~X~M~L tree ~(corresponding to the
+    first son of an ~<authbasic~> element in the configuration
+    file~) and returns an authentication function <<span class="odocwiki_inlinecode"|f>>~. <<span class="odocwiki_inlinecode"|f>> will be
+    called for each request with the supplied user and password and
+    should return ~(cooperatively~) a boolean telling whether access
+    is granted or not~. ~Exceptions are handled the same way as for
+    extension parsers~.
+
+
+    ~The ~<authbasic~> element must have a //realm// attribute~,
+    giving some identifier to the resource which is protected
+    ~(several resources on the same hostname can share the same
+    realm~)~. ~This gives a general customization scheme "for free"
+    from the point of view of plugin developers and is totally
+    transparent to the plugin~.
+>>
+<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| realm: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| auth: >><<a_api text="auth" | type Authbasic.auth >> <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run ~~realm ~~auth ~(~)>> makes it possible to use this extension without
+    configuration file~.
+>>
