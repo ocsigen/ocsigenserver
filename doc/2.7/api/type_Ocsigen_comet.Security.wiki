@@ -1,6 +1,0 @@
-<<code language="ocaml" | sig
-  val set_timeout : ?reset:bool -> float -> unit
-  val deactivate : unit -> unit
-  val activate : unit -> unit
-  val activated : unit -> bool
-end >>

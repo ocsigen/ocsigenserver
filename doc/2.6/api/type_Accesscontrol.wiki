@@ -1,4 +1,0 @@
-<<code language="ocaml" | sig
-  val parse_condition :
-    Simplexmlparser.xml -> Ocsigen_extensions.request_info -> bool
-end >>

@@ -1,5 +1,0 @@
-<<code language="ocaml" | sig
-  val fst : 'a * 'b * 'c -> 'a
-  val snd : 'a * 'b * 'c -> 'b
-  val thd : 'a * 'b * 'c -> 'c
-end >>

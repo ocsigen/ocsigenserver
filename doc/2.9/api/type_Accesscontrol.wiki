@@ -1,3 +1,0 @@
-<<code language="ocaml" | sig
-  val parse_condition : Xml.xml -> Ocsigen_extensions.request_info -> bool
-end >>

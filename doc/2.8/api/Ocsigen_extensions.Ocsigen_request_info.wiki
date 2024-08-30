@@ -1,3 +1,0 @@
-=Module <<a_api_type | module Ocsigen_extensions.Ocsigen_request_info >> =
-<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_request_info>>>> <<span class="ocsforge_color_delimiter"|~:>> \\  <<span class="odocwiki_type"|module type of Ocsigen_request_info>><<span class="odocwiki_type"| \\                                with type request_info = Ocsigen_request_info.request_info\\                                 and type file_info = Ocsigen_request_info.file_info\\                                 and type ifrange = Ocsigen_request_info.ifrange>>>>
-----

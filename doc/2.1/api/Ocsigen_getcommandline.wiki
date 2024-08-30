@@ -1,6 +1,0 @@
-=Module <<a_api_type | module Ocsigen_getcommandline >> =
-<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Ocsigen_getcommandline>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Ocsigen_getcommandline >><<span class="ocsforge_color_keyword"|end>>>>~Contains the command line that will be parsed by the server
-    when ~Ocsigen~_commandline is linked
-
-----
-<<pre id="VALcommandline" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|commandline>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|string array>>>>
