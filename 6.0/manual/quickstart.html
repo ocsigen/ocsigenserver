@@ -1,0 +1,149 @@
+<html><head><title> Ocsigen Server </title><meta charset="utf8"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link rel="stylesheet" href="https://ocsigen.org/css/style.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/themes/prism.min.css"/><script type="application/javascript" src="https://ocsigen.org/js/client.js">
+//<![CDATA[
+
+//]]>
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-core.min.js">
+//<![CDATA[
+
+//]]>
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-ocaml.min.js">
+//<![CDATA[
+
+//]]>
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-clike.min.js">
+//<![CDATA[
+
+//]]>
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-reason.min.js">
+//<![CDATA[
+
+//]]>
+</script><script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.9.0/components/prism-javascript.min.js">
+//<![CDATA[
+
+//]]>
+</script></head><body class="quickstart ocsigenserver"><div class="project-page"><div class="page-header"><p class="logo-ocsigen"><a href=".././../../" class="ocsimore_phrasing_link"><img src=".././../../img/ocsigen-white.svg" alt="Ocsigen"/></a>
+</p><p class="logo-subproject">Server</p><div class="mainmenu"><p class="mainmenu-home"><a href=".././../../" class="ocsimore_phrasing_link">Home</a></p><p class="mainmenu-doc"><a href=".././../../tuto/" class="ocsimore_phrasing_link">Doc</a></p><p><a href=".././../../eliom/" class="ocsimore_phrasing_link">Eliom</a></p><p><a href=".././../../js_of_ocaml/" class="ocsimore_phrasing_link">Js_of_ocaml</a></p><p class="mainmenu-current"><a href=".././../../ocsigenserver/" class="ocsimore_phrasing_link">Server</a></p><p><a href=".././../../lwt/" class="ocsimore_phrasing_link">Lwt</a></p><p><a href=".././../../tyxml/" class="ocsimore_phrasing_link">Tyxml</a></p><p><a href=".././../../ocsigen-start/" class="ocsimore_phrasing_link">Start</a></p></div><form id="googlesearch" action="https://google.com/search"><input name="q" id="gsearch-box" placeholder="Search using Google"/><label for="gsearch-box"><img src="/img/search.svg" alt="" id="gsearch-icon"/></label><input type="submit" id="gsearch-submit" onclick="document.getElementById('gsearch-box').value += ' site:ocsigen.org';"/></form><aside class="how-drawer"><input id="how-drawer-toggle" type="checkbox"/><label for="how-drawer-toggle" id="how-drawer-label"><span class="how-drawer-icon"></span></label><nav class="how-drawer-content"><ul class="drawermainmenu"><li class="drawermainmenu-home"><a href=".././../../" class="ocsimore_phrasing_link">Home</a>
+</li><li class="drawermainmenu-doc"><a href=".././../../tuto/" class="ocsimore_phrasing_link">Doc</a>
+</li><li class="drawermainmenu-project"><a href=".././../../eliom/" class="ocsimore_phrasing_link">Eliom</a>
+</li><li class="drawermainmenu-project"><a href=".././../../js_of_ocaml/" class="ocsimore_phrasing_link">Js_of_ocaml</a>
+</li><li class="drawermainmenu-project"><a href=".././../../ocsigenserver/" class="ocsimore_phrasing_link">Server</a>
+</li><li class="drawermainmenu-project"><a href=".././../../lwt/" class="ocsimore_phrasing_link">Lwt</a>
+</li><li class="drawermainmenu-project"><a href=".././../../tyxml/" class="ocsimore_phrasing_link">Tyxml</a>
+</li><li class="drawermainmenu-project"><a href=".././../../ocsigen-toolkit/" class="ocsimore_phrasing_link">Toolkit</a>
+</li><li class="drawermainmenu-project"><a href=".././../../ocsigen-start/" class="ocsimore_phrasing_link">Start</a>
+</li><li class="drawermainmenu-project"><a href=".././../../ocsipersist/" class="ocsimore_phrasing_link">Ocsipersist</a>
+</li><li class="drawermainmenu-project"><a href=".././../../html_of_wiki/" class="ocsimore_phrasing_link">html_of_wiki</a>
+</li><li class="drawermainmenu-project"><a href=".././../../ocsimore/" class="ocsimore_phrasing_link">Ocsimore (<em>deprecated</em>)</a>
+</li><li class="drawermainmenu-page"><a href=".././../../projects" class="ocsimore_phrasing_link">Other projects</a>
+</li><li class="drawermainmenu-page"><a href=".././../../papers" class="ocsimore_phrasing_link">Research papers</a>
+</li><li class="drawermainmenu-page"><a href=".././../../credits" class="ocsimore_phrasing_link">Who does Ocsigen?</a>
+</li><li class="drawermainmenu-page"><a href=".././../../contributing" class="ocsimore_phrasing_link">Contributing</a>
+</li><li class="drawermainmenu-page"><a href=".././../../blog" class="ocsimore_phrasing_link">Blog</a>
+</li><li class="drawermainmenu-page"><a href=".././../../install" class="ocsimore_phrasing_link">Installation</a>
+</li><li class="drawermainmenu-page"><a href="https://github.com/ocsigen" class="ocsimore_phrasing_link">Source code</a>
+</li></ul><nav class="how-doctree"><h1>Ocsigen server</h1><h2>Usage</h2><h3><a href="quickstart" class="ocsimore_phrasing_link">Quick start</a></h3><h3><a href="launching" class="ocsimore_phrasing_link">Launching the server</a></h3><h3><a href="config" class="ocsimore_phrasing_link">Configuration file</a></h3><h3><a href="staticlink" class="ocsimore_phrasing_link">Using as a library</a></h3><h2>Extensions</h2><h3><a href="staticmod" class="ocsimore_phrasing_link">Staticmod</a></h3><h3><a href="eliom" class="ocsimore_phrasing_link">Eliom</a></h3><h3><a href="extendconfiguration" class="ocsimore_phrasing_link">Extendconfiguration</a></h3><h3><a href="accesscontrol" class="ocsimore_phrasing_link">Accesscontrol</a></h3><h3><a href="authbasic" class="ocsimore_phrasing_link">Authbasic</a></h3><h3><a href="deflatemod" class="ocsimore_phrasing_link">Deflatemod</a></h3><h3><a href="redirectmod" class="ocsimore_phrasing_link">Redirectmod</a></h3><h3><a href="revproxy" class="ocsimore_phrasing_link">Revproxy</a></h3><h3><a href="rewritemod" class="ocsimore_phrasing_link">Rewritemod</a></h3><h3><a href="outputfilter" class="ocsimore_phrasing_link">Outputfilter</a></h3><h3><a href="userconf" class="ocsimore_phrasing_link">Userconf</a></h3><h3><a href="cors" class="ocsimore_phrasing_link">CORS</a></h3><h2>Developer documentation</h2><h3><a href="extend" class="ocsimore_phrasing_link">Writing an extension</a></h3><h1>Ocsigen server - API reference</h1><h2><a href=".././api/Ocsigen_server" class="ocsimore_phrasing_link">Ocsigen_server</a></h2><h2>Extensions</h2><h3><a href=".././api/Staticmod" class="ocsimore_phrasing_link">Staticmod</a></h3><h3><a href=".././api/Extendconfiguration" class="ocsimore_phrasing_link">Extendconfiguration</a></h3><h3><a href=".././api/Accesscontrol" class="ocsimore_phrasing_link">Accesscontrol</a></h3><h3><a href=".././api/Authbasic" class="ocsimore_phrasing_link">Authbasic</a></h3><h3><a href=".././api/Deflatemod" class="ocsimore_phrasing_link">Deflatemod</a></h3><h3><a href=".././api/Redirectmod" class="ocsimore_phrasing_link">Redirectmod</a></h3><h3><a href=".././api/Revproxy" class="ocsimore_phrasing_link">Revproxy</a></h3><h3><a href=".././api/Rewritemod" class="ocsimore_phrasing_link">Rewritemod</a></h3><h3><a href=".././api/Outputfilter" class="ocsimore_phrasing_link">Outputfilter</a></h3><h3><a href=".././api/Userconf" class="ocsimore_phrasing_link">Userconf</a></h3><h3><a href=".././api/Cors" class="ocsimore_phrasing_link">Cors</a></h3><h2>Persistent data, writing in the logs, configuration file extension, polymorphic tables</h2><h3><a href=".././api/Ocsigen_lib" class="ocsimore_phrasing_link">Ocsigen_lib</a></h3><h3><a href=".././api/Ocsigen_messages" class="ocsimore_phrasing_link">Ocsigen_messages</a></h3><h3><a href=".././api/Ocsigen_parseconfig" class="ocsimore_phrasing_link">Ocsigen_parseconfig</a></h3><h3><a href=".././api/Polytables" class="ocsimore_phrasing_link">Polytables</a></h3><h3><a href=".././api/Ocsigen_cache" class="ocsimore_phrasing_link">Ocsigen_cache</a></h3><h3><a href=".././api/Ocsigen_config" class="ocsimore_phrasing_link">Ocsigen_config</a></h3><h2>Extending Ocsigen Server</h2><h3><a href=".././api/Ocsigen_extensions" class="ocsimore_phrasing_link">Ocsigen_extensions</a></h3><h3><a href=".././api/Ocsigen_local_files" class="ocsimore_phrasing_link">Ocsigen_local_files</a></h3><h3><a href=".././api/Ocsigen_header" class="ocsimore_phrasing_link">Ocsigen_header</a></h3><h3><a href=".././api/Ocsigen_stream" class="ocsimore_phrasing_link">Ocsigen_stream</a></h3><h2>Indexes</h2><h3> <span><a href=".././api/index_types">Index of types</a></span></h3><h3> <span><a href=".././api/index_exceptions">Index of exceptions</a></span></h3><h3> <span><a href=".././api/index_values">Index of values</a></span></h3><h3> <span><a href=".././api/index_methods">Index of class methods</a></span></h3><h3> <span><a href=".././api/index_classes">Index of classes</a></span></h3><h3> <span><a href=".././api/index_modules">Index of modules</a></span></h3></nav></nav></aside></div><p class="reasonwarning">Warning: Reason support is experimental.
+We are looking for beta-tester and contributors.
+</p><button id="reason">Switch to </button><div class="twocols"><nav class="leftcol">Version <select class="how-versions" onchange="location = this.value;"><option value=".././../dev/manual/quickstart">dev</option><option value=".././../6.0/manual/quickstart" selected="selected">6.0</option></select><nav class="how-doctree"><h1>Ocsigen server</h1><h2>Usage</h2><h3><a href="quickstart" class="ocsimore_phrasing_link">Quick start</a></h3><h3><a href="launching" class="ocsimore_phrasing_link">Launching the server</a></h3><h3><a href="config" class="ocsimore_phrasing_link">Configuration file</a></h3><h3><a href="staticlink" class="ocsimore_phrasing_link">Using as a library</a></h3><h2>Extensions</h2><h3><a href="staticmod" class="ocsimore_phrasing_link">Staticmod</a></h3><h3><a href="eliom" class="ocsimore_phrasing_link">Eliom</a></h3><h3><a href="extendconfiguration" class="ocsimore_phrasing_link">Extendconfiguration</a></h3><h3><a href="accesscontrol" class="ocsimore_phrasing_link">Accesscontrol</a></h3><h3><a href="authbasic" class="ocsimore_phrasing_link">Authbasic</a></h3><h3><a href="deflatemod" class="ocsimore_phrasing_link">Deflatemod</a></h3><h3><a href="redirectmod" class="ocsimore_phrasing_link">Redirectmod</a></h3><h3><a href="revproxy" class="ocsimore_phrasing_link">Revproxy</a></h3><h3><a href="rewritemod" class="ocsimore_phrasing_link">Rewritemod</a></h3><h3><a href="outputfilter" class="ocsimore_phrasing_link">Outputfilter</a></h3><h3><a href="userconf" class="ocsimore_phrasing_link">Userconf</a></h3><h3><a href="cors" class="ocsimore_phrasing_link">CORS</a></h3><h2>Developer documentation</h2><h3><a href="extend" class="ocsimore_phrasing_link">Writing an extension</a></h3><h1>Ocsigen server - API reference</h1><h2><a href=".././api/Ocsigen_server" class="ocsimore_phrasing_link">Ocsigen_server</a></h2><h2>Extensions</h2><h3><a href=".././api/Staticmod" class="ocsimore_phrasing_link">Staticmod</a></h3><h3><a href=".././api/Extendconfiguration" class="ocsimore_phrasing_link">Extendconfiguration</a></h3><h3><a href=".././api/Accesscontrol" class="ocsimore_phrasing_link">Accesscontrol</a></h3><h3><a href=".././api/Authbasic" class="ocsimore_phrasing_link">Authbasic</a></h3><h3><a href=".././api/Deflatemod" class="ocsimore_phrasing_link">Deflatemod</a></h3><h3><a href=".././api/Redirectmod" class="ocsimore_phrasing_link">Redirectmod</a></h3><h3><a href=".././api/Revproxy" class="ocsimore_phrasing_link">Revproxy</a></h3><h3><a href=".././api/Rewritemod" class="ocsimore_phrasing_link">Rewritemod</a></h3><h3><a href=".././api/Outputfilter" class="ocsimore_phrasing_link">Outputfilter</a></h3><h3><a href=".././api/Userconf" class="ocsimore_phrasing_link">Userconf</a></h3><h3><a href=".././api/Cors" class="ocsimore_phrasing_link">Cors</a></h3><h2>Persistent data, writing in the logs, configuration file extension, polymorphic tables</h2><h3><a href=".././api/Ocsigen_lib" class="ocsimore_phrasing_link">Ocsigen_lib</a></h3><h3><a href=".././api/Ocsigen_messages" class="ocsimore_phrasing_link">Ocsigen_messages</a></h3><h3><a href=".././api/Ocsigen_parseconfig" class="ocsimore_phrasing_link">Ocsigen_parseconfig</a></h3><h3><a href=".././api/Polytables" class="ocsimore_phrasing_link">Polytables</a></h3><h3><a href=".././api/Ocsigen_cache" class="ocsimore_phrasing_link">Ocsigen_cache</a></h3><h3><a href=".././api/Ocsigen_config" class="ocsimore_phrasing_link">Ocsigen_config</a></h3><h2>Extending Ocsigen Server</h2><h3><a href=".././api/Ocsigen_extensions" class="ocsimore_phrasing_link">Ocsigen_extensions</a></h3><h3><a href=".././api/Ocsigen_local_files" class="ocsimore_phrasing_link">Ocsigen_local_files</a></h3><h3><a href=".././api/Ocsigen_header" class="ocsimore_phrasing_link">Ocsigen_header</a></h3><h3><a href=".././api/Ocsigen_stream" class="ocsimore_phrasing_link">Ocsigen_stream</a></h3><h2>Indexes</h2><h3> <span><a href=".././api/index_types">Index of types</a></span></h3><h3> <span><a href=".././api/index_exceptions">Index of exceptions</a></span></h3><h3> <span><a href=".././api/index_values">Index of values</a></span></h3><h3> <span><a href=".././api/index_methods">Index of class methods</a></span></h3><h3> <span><a href=".././api/index_classes">Index of classes</a></span></h3><h3> <span><a href=".././api/index_modules">Index of modules</a></span></h3></nav></nav><article class="rightcol"><header><h1> Ocsigen Server </h1><div id="overview" class="ocsimore_outline"></div><script>
+//<![CDATA[
+window.addEventListener("load", function(){ outline([0,-515484383,0,0,[0,"nav",[0,"aside",0]],"overview",1]); }, false); 
+//]]>
+</script></header><p>Ocsigen Server is a powerful and modular generic purpose Web Server.
+It supports static files, redirections, reverse proxy, CORS,
+user pages with local configuration, page compression,
+authentication, etc.
+</p><p>Ocsigen Server can be used:
+</p><ul><li> as an executable: it reads its configuration from a file and dynamically loads
+the extensions and libraries you need for your sites, 
+</li><li> or as a library: build your own executable and statically link your the
+modules you need for your pages.
+</li></ul><p>It is written in OCaml and uses the
+<a href="https://github.com/mirage/ocaml-cohttp" class="ocsimore_phrasing_link">Cohttp</a> library.
+</p><h2> Installation </h2><p>The easier way to install Ocsigenserver is to use the <span class="teletype">opam</span> package 
+manager. Ocsigen Server is also available in Linux distributions.
+</p><h2> Using Ocsigen Server as an executable </h2><p>Create your configuration file. You can take this one as an example:
+</p><pre>&lt;ocsigen&gt;
+  &lt;server&gt;
+    &lt;port&gt;8080&lt;/port&gt;
+
+    &lt;logdir&gt;local/var/log/mysite&lt;/logdir&gt;
+    &lt;datadir&gt;local/var/data/mysite&lt;/datadir&gt;
+    &lt;charset&gt;utf-8&lt;/charset&gt;
+
+    &lt;commandpipe&gt;local/var/run/mysite-cmd&lt;/commandpipe&gt;
+    &lt;extension findlib-package=&quot;ocsigenserver.ext.staticmod&quot;/&gt;
+    &lt;host hostfilter=&quot;*&quot;&gt;
+      &lt;static dir=&quot;local/var/www/mysite/&quot; /&gt;
+    &lt;/host&gt;
+  &lt;/server&gt;
+&lt;/ocsigen&gt;
+</pre><p>Update the paths to match your configuration and create the missing directories.
+Then run:
+</p><pre>ocsigenserver -c &lt;name of your configuration file&gt;
+</pre><h3> Personalising your configuration </h3><p>Have a look at the page <span><a href=".././manual/config">Configuration</a></span> to
+learn how to personalise the configuration file and adapt it to your
+needs.
+</p><h2> Using Ocsigen Server as a library </h2><p>If you want to include a Web Server in your OCaml app,
+add library <span class="teletype">ocsigenserver</span> and the extensions you need 
+(here <span class="teletype">ocsigenserver.ext.staticmod</span>) in your Dune file:
+</p><pre>(executable
+ (public_name myapp)
+ (name main)
+ (libraries
+  ocsigenserver
+  ocsigenserver.ext.staticmod))
+</pre><p>Call function <span><a href=".././api/Ocsigen_server#VALstart">Ocsigen_server.start</a></span> like this to run the server:
+</p><pre class=""><code class="language-ocaml translatable">let _ =
+  Ocsigen_server.start
+    [ Ocsigen_server.host [Staticmod.run ~dir:&quot;local/var/www/mysite/&quot; ()]]</code></pre><p>The server runs on port 8080 by default.
+Customise this using optional parameters of function
+<span><a href=".././api/Ocsigen_server#VALstart">Ocsigen_server.start</a></span>
+</p><h2> Extensions </h2><p>Depending on the features you need, you can extend the server by loading
+some modules.
+</p><p>The extensions provided are:
+</p><dl><dt><span><a href=".././manual/staticmod">Staticmod</a></span>
+</dt><dd>for serving static pages,
+</dd><dt><span><a href=".././manual/accesscontrol">Accesscontrol</a></span>
+</dt><dd>if you need to restrict the access to the sites,
+</dd><dt><span><a href=".././manual/eliom">Eliom</a></span>
+</dt><dd>if you want to use dynamic Web and mobile applications written in OCaml with Eliom,
+</dd><dt><span><a href=".././manual/revproxy">Revproxy</a></span>
+</dt><dd>if you want to redirect some requests to another Web server,.
+</dd><dt><span><a href=".././manual/redirectmod">Redirectmod</a></span>
+</dt><dd>if you want to define some HTTP redirections,
+</dd><dt><span><a href=".././manual/deflatemod">Deflatemod</a></span>
+</dt><dd>if you want to compress the content before sending your pages,
+</dd><dt><span><a href=".././manual/outputfilter">Outputfilter</a></span>
+</dt><dd>allows to change the header of the HTTP response,
+</dd><dt><span><a href=".././manual/rewritemod">Rewritemod</a></span>
+</dt><dd>allows to rewrite the request before continuing,
+</dd><dt><span><a href=".././manual/extendconfiguration">Extendconfiguration</a></span>
+</dt><dd>adds many useful configuration options,
+</dd><dt><span><a href=".././manual/authbasic">Authbasic</a></span>
+</dt><dd>for basic HTTP authentication,
+</dd><dt><span><a href=".././manual/cors">CORS</a></span>
+</dt><dd>for settings CORS options,
+</dd><dt><span><a href=".././manual/userconf">Userconf</a></span>
+</dt><dd>for allowing local users to have personal pages,
+</dd></dl><p>If you are using a configuration, file, use tag 
+<span class="teletype">&lt;extension/&gt;</span> to load an exetnsion (see examples in the
+manual of each extension). Most extension have configuration
+options, and define new tags for the configuration file.
+</p><p>If you are building a static executable, load the extensions
+as any library from your Dune file. Have a look at the API
+documentation of each documentation to see the functions
+it defines and the configuration options.
+</p><h2> Running on port 80 or 443 </h2><p>It is not recommended to run a Web server as root.
+If you want to use priviledged ports (port numbers less than 1024), like 80 or
+443, you can add the capability to ocsigenserver with:
+</p><pre>setcap 'cap_net_bind_service=+ep' &lt;path to the server executable&gt;
+</pre><h2> If something goes wrong </h2><p>If something goes wrong, first have a look in the logs to see if there
+is an error message. The directory of logs is set in the configuration
+file or through option <span class="teletype">?logdir</span> of function
+<span><a href=".././api/Ocsigen_server#VALstart">Ocsigen_server.start</a></span>
+(<span class="teletype">$OPAM_SWITCH_PREFIX/lib/ocsigenserver/var/log/ocsigenserver</span> by 
+default).
+</p><p>If you cannot solve your problem, if you find a bug,
+a mistake in the documentation (even a small one),
+or if you want to make a suggestion,
+<a href="https://github.com/ocsigen/ocsigenserver" class="ocsimore_phrasing_link">open an issue on Github</a>.</p></article></div></div></body></html>
