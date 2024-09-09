@@ -58,13 +58,13 @@ for example for different hostnames. See function
 </p><p>The programming interface follows exactly the structure of the configuration file:
 Each request received by the server goes through all the instructions given
 in the list. These instructions can be:
-- either input filters that will modify the request
+</p><ul><li> either input filters that will modify the request
 (for example <a href="rewritemod" class="ocsimore_phrasing_link">Rewritemod</a>)
-- or page generation instructions (for example with <a href="staticmod" class="ocsimore_phrasing_link">Staticmod</a>,
+</li><li> or page generation instructions (for example with <a href="staticmod" class="ocsimore_phrasing_link">Staticmod</a>,
 <a href="eliom" class="ocsimore_phrasing_link">Eliom</a> or <a href="redirectmod" class="ocsimore_phrasing_link">Redirectmod</a>)
-- or output filters, that will modify the result (for example
+</li><li> or output filters, that will modify the result (for example
 <a href="deflatemod" class="ocsimore_phrasing_link">Deflatemod</a> or <a href="cors" class="ocsimore_phrasing_link">CORS</a>).
-</p><p>Here is an example of a more complex configuration:
+</li></ul><p>Here is an example of a more complex configuration:
 </p><pre class=""><code class="language-ocaml translatable">let _ =
   Ocsigen_server.start
     ~ports:[`All, 8080]
