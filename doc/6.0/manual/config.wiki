@@ -27,10 +27,6 @@ The configuration file is an XML file. Its layout is the following:
     <datadir>...</datadir>
     <commandpipe>...</commandpipe>
 
-    <user>...</user>
-    <group>...</group>
-
-
     <!-- Extensions to be loaded: -->
     <extension module=.../>
     <extension module=...>

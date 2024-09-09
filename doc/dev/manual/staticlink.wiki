@@ -21,33 +21,161 @@ for example for different hostnames. See function
 
 Functions like <<a_api |val Staticmod.run>> are defined by extensions.
 
+The programming interface follows exactly the structure of the configuration file:
 Each request received by the server goes through all the instructions given
 in the list. These instructions can be:
-- either input filters that will modify the request
- (for example [[rewritemod|Rewritemod]])
-- or page generation instructions (for example with [[staticmod|Staticmod]],
- [[eliom|Eliom]] or [[redirectmod|Redirectmod]])
-- or output filters, that will modify the result (for example
-[[deflatemod|Deflatemod]] or [[cors|CORS]]).
+* either input filters that will modify the request
+  (for example [[rewritemod|Rewritemod]])
+* or page generation instructions (for example with [[staticmod|Staticmod]],
+  [[eliom|Eliom]] or [[redirectmod|Redirectmod]])
+* or output filters, that will modify the result (for example
+  [[deflatemod|Deflatemod]] or [[cors|CORS]]).
 
 Here is an example of a more complex configuration:
 <<code language="ocaml"|
 let _ =
-  Ocsigen_server.start ~debugmode:true ~veryverbose:()
-    [ Ocsigen_server.host ~re:"foo.com" [Staticmod.run ~dir:"static" ()]
-    ; Ocsigen_server.host ~re:".*"
-        [ Redirectmod.run
+  Ocsigen_server.start
+    ~ports:[`All, 8080]
+    ~command_pipe:"local/var/run/mysite-cmd"
+    ~logdir:"local/var/log/mysite"
+    ~datadir:"local/var/data/mysite"
+    ~default_charset:(Some "utf-8")
+    [ Ocsigen_server.host
+        ~regexp:"mydomain.com"
+        [ Ocsigen_server.site ["subsite"]
+            [ Accesscontrol.(
+                if_
+                  (and_
+                     [ ip "122.122.122.122"
+                     ; header ~name:"user-agent" ~regexp:".*FooBar.*"
+                     ; method_ `POST ])
+                  [forbidden] [])
+            ; Authbasic.run ~realm:"myrealm"
+                ~auth:(fun _u p -> Lwt.return (p = "toto"))
+                ()
+            ; Staticmod.run ~dir:"local/var/www/otherdir" () ]
+        ; Ocsigen_server.site ["othersubsite"]
+            [ Revproxy.run
+                ~redirection:
+                  (Revproxy.create_redirection ~full_url:false ~regexp:"(.*)"
+                     ~keephost:true "http://localhost:8888/\\1")
+                () ]
+        ; Redirectmod.run
             ~redirection:
-              (Redirectmod.create_redirection ~full_url:`No ~regexp:"^p.*$"
-                 "toto.html")
+              (Redirectmod.create_redirection ~full_url:false ~regexp:"old(.*)"
+                 "new\\1")
             ()
-        ; Authbasic.run ~realm:"pouette"
-            ~auth:(fun _u p -> Lwt.return (p = "mypassword"))
+        ; Staticmod.run ~dir:"local/var/www/staticdir" ()
+        ; Cors.run ~max_age:86400 ~credentials:true ~methods:[`POST; `GET; `HEAD]
+            ~exposed_headers:
+              [ "x-eliom-application"
+              ; "x-eliom-location"
+              ; "x-eliom-set-process-cookies"
+              ; "x-eliom-set-cookie-substitutes" ]
             ()
-        ; Staticmod.run ~dir:"static" ()
-        ; Eliom.run ()
-        ; Cors.run ~credentials:false ()
-        ; Deflatemod.run ~mode:(`All_but []) () ] ]>>
+        ; Deflatemod.run
+            ~mode:
+              (`Only
+                [ `Type (Some "text", Some "html")
+                ; `Type (Some "text", Some "javascript")
+                ; `Type (Some "text", Some "css")
+                ; `Type (Some "application", Some "javascript")
+                ; `Type (Some "application", Some "x-javascript")
+                ; `Type (Some "application", Some "xhtml+xml")
+                ; `Type (Some "image", Some "svg+xml")
+                ; `Type (Some "application", Some "x-eliom") ])
+            () ] ]
+>>
+In this example, the server defines one virtual host for domain {{{mydomain.com}}}.
+It will first check whether it is a request for directory {{{subsite/}}}, and if yes, will reject the request
+with {{{403 Forbidden}}} if it is a POST request coming from user-agent {{{FooBar}}} at IP 122.122.122.122.
+If not, it will ask for a password before serving files from directory {{{local/var/www/otherdir}}}.\\
+Then we define another subsite othersubsite for which the requests will be transfered to another Web server
+running locally on port 8888, then rewrite the answer location header accordingly.
+Then, if the page is still not generated, the server will send a redirection if URLs starts with “old”.
+Otherwise, it will try to serve files from directory {{{local/var/www/staticdir}}}.
+If the page has still not been found, a {{{404 Not found}}} will be sent, otherwise, some CORS headers will
+be added, and the result will be compressed before being sent.
+
+Compile this example with the following dune file:
+{{{
+(executable
+ (public_name myserver)
+ (name main)
+ (libraries
+  ocsigenserver
+  ocsigenserver.ext.staticmod
+  ocsigenserver.ext.authbasic
+  ocsigenserver.ext.extendconfiguration
+  ocsigenserver.ext.outputfilter
+  ocsigenserver.ext.cors
+  ocsigenserver.ext.accesscontrol
+  ocsigenserver.ext.deflatemod
+  ocsigenserver.ext.redirectmod
+  ocsigenserver.ext.revproxy
+ ))
+}}}
+
+This program corresponds to the following configuration file:
+{{{
+<ocsigen>
+  <server>
+    <port>8080</port>
+    <commandpipe>local/var/run/mysite-cmd</commandpipe>
+    <logdir>local/var/log/mysite</logdir>
+    <datadir>local/var/data/mysite</datadir>
+    <charset>utf-8</charset>
+    <debugmode/>
+    <extension findlib-package="ocsigenserver.ext.staticmod"/>
+    <extension findlib-package="ocsigenserver.ext.authbasic"/>
+    <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
+    <extension findlib-package="ocsigenserver.ext.outputfilter"/>
+    <extension findlib-package="ocsigenserver.ext.cors"/>
+    <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
+    <extension findlib-package="ocsigenserver.ext.deflatemod"/>
+    <extension findlib-package="ocsigenserver.ext.redirectmod"/>
+    <extension findlib-package="ocsigenserver.ext.revproxy"/>
+    <host hostfilter="mydomain.com">
+      <site dir="subsite">
+        <if>
+          <and>
+            <ip value="122.122.122.122"/>
+            <header name="user-agent" regexp=".*FooBar.*"/>
+            <method value="POST"/>
+          </and>
+          <then>
+            <forbidden/>
+          </then>
+        </if>
+        <authbasic realm="myrealm">
+          <plain login="" password="toto"/>
+        </authbasic>
+        <static dir="local/var/www/otherdir"/>
+      </site>
+      <site dir="othersite">
+        <revproxy suburl="(.*)" keephost="true" dest="http://localhost:8888/otherdir/\\1"/>
+        <outputfilter header="location" regexp="http://localhost:8888/(.* )" dest="http://mydomain.com/\\1"/>
+      </site>
+      <redirect suburl="old(.*)" dest="http://mydomain.org/new\\1"/>
+      <static dir="local/var/www/staticdir"/>
+      <cors max_age="86400"
+       credentials="true"
+       methods="POST,GET,HEAD"
+       exposed_headers="x-eliom-application,x-eliom-location,x-eliom-set-process-cookies,x-eliom-set-cookie-substitutes"/>
+      <deflate compress="only">
+        <type>text/html</type>
+        <type>text/javascript</type>
+        <type>text/css</type>
+        <type>application/javascript</type>
+        <type>application/x-javascript</type>
+        <type>application/xhtml+xml</type>
+        <type>image/svg+xml</type>
+        <type>application/x-eliom</type>
+      </deflate>
+    </host>
+  </server>
+</ocsigen>
+}}}
 
 ==Experimental: Using a configuration file with a static executable==
 If you want to use the configuration file with a statically linked executable,
