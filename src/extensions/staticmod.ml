@@ -116,6 +116,82 @@ let find_static_page ~request ~usermode ~dir ~(err : Cohttp.Code.status)
       (Ocsigen_extensions.Error_in_user_config_file
          "Staticmod: cannot use '..' in user paths")
 
+(* Borrowed from TyXML:lib/xml_print.ml (and wrapped) to avoid the dependency *)
+let html_of_string s =
+  let is_control c =
+    let cc = Char.code c in
+    cc <= 8 || cc = 11 || cc = 12 || (14 <= cc && cc <= 31) || cc = 127
+  in
+  let add_unsafe_char b = function
+    | '<' -> Buffer.add_string b "&lt;"
+    | '>' -> Buffer.add_string b "&gt;"
+    | '"' -> Buffer.add_string b "&quot;"
+    | '&' -> Buffer.add_string b "&amp;"
+    | c when is_control c ->
+        Buffer.add_string b "&#";
+        Buffer.add_string b (string_of_int (Char.code c));
+        Buffer.add_string b ";"
+    | c -> Buffer.add_char b c
+  in
+  let encode_unsafe_char s =
+    let b = Buffer.create (String.length s) in
+    String.iter (add_unsafe_char b) s;
+    Buffer.contents b
+  in
+  encode_unsafe_char s
+(* End of borrowed code *)
+
+let respond_dir relpath dname : (Cohttp.Response.t * Cohttp_lwt.Body.t) Lwt.t =
+  let readsortdir =
+    (* Read a complete directory and sort its entries *)
+    let chunk_size = 1024 in
+    let rec aux entries dir =
+      Lwt_unix.readdir_n dir chunk_size >>= fun chunk ->
+      let entries = chunk :: entries in
+      if Array.length chunk < chunk_size
+      then Lwt.return entries
+      else aux entries dir
+    in
+    Lwt_unix.opendir dname >>= fun dir ->
+    Lwt.finalize
+      (fun () ->
+         aux [] dir >|= fun entries ->
+         List.sort compare (List.concat_map Array.to_list entries))
+      (fun () -> Lwt_unix.closedir dir)
+  in
+  Lwt.catch
+    (fun () ->
+       readsortdir >>= fun entries ->
+       let title = html_of_string ("Directory listing for /" ^ relpath) in
+       let entries =
+         List.filter_map
+           (function
+             | "." | ".." -> None
+             | e ->
+                 Some
+                   (Printf.sprintf "<li><a href=\"%t\">%t</a></li>"
+                      (fun () -> Ocsigen_lib.Url.encode ~plus:false e)
+                      (fun () -> html_of_string e)))
+           entries
+       in
+       (* Chunks of [html (head (title x) []) (body [h1 [x]; ul y])] *)
+       let chunk1 =
+         {|<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>|}
+       and chunk2 = {|</title></head><body><h1>|}
+       and chunk3 = {|</h1><ul>|}
+       and chunkend = {|</ul></body></html>|} in
+       let doc =
+         chunk1 :: title :: chunk2 :: title :: chunk3 :: (entries @ [chunkend])
+       in
+       let headers = Cohttp.Header.init_with "content-type" "text/html" in
+       Lwt.return
+         ( Cohttp.Response.make ~status:`OK ~headers ()
+         , Cohttp_lwt.Body.of_string_list doc ))
+    (function
+      | Unix.Unix_error _ -> Cohttp_lwt_unix.Server.respond_not_found ()
+      | exn -> Lwt.fail exn)
+
 let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found _ ->
       Lwt.return Ocsigen_extensions.Ext_do_nothing
@@ -123,20 +199,18 @@ let gen ~usermode ?cache dir = function
       (err, ({Ocsigen_extensions.request_info; _} as request)) ->
       let try_block () =
         Lwt_log.ign_info ~section "Is it a static file?";
+        let pathstring =
+          Ocsigen_lib.Url.string_of_url_path ~encode:false
+            (Ocsigen_request.sub_path request_info)
+        in
         let status_filter, page =
-          let pathstring =
-            Ocsigen_lib.Url.string_of_url_path ~encode:false
-              (Ocsigen_request.sub_path request_info)
-          in
           find_static_page ~request ~usermode ~dir ~err ~pathstring
         in
-        let fname =
-          match page with
-          | Ocsigen_local_files.RFile fname -> fname
-          | Ocsigen_local_files.RDir _ ->
-              failwith "FIXME: staticmod dirs not implemented"
-        in
-        Cohttp_lwt_unix.Server.respond_file ~fname () >>= fun answer ->
+        (match page with
+          | Ocsigen_local_files.RFile fname ->
+              Cohttp_lwt_unix.Server.respond_file ~fname ()
+          | Ocsigen_local_files.RDir dname -> respond_dir pathstring dname)
+        >>= fun answer ->
         let answer = Ocsigen_response.of_cohttp answer in
         let answer =
           if not status_filter
