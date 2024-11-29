@@ -116,6 +116,55 @@ let find_static_page ~request ~usermode ~dir ~(err : Cohttp.Code.status)
       (Ocsigen_extensions.Error_in_user_config_file
          "Staticmod: cannot use '..' in user paths")
 
+let respond_dir relpath dname : (Cohttp.Response.t * Cohttp_lwt.Body.t) Lwt.t =
+  let readsortdir =
+    (* Read a complete directory and sort its entries *)
+    let chunk_size = 1024 in
+    let rec aux entries dir =
+      Lwt_unix.readdir_n dir chunk_size >>= fun chunk ->
+      let entries = chunk :: entries in
+      if Array.length chunk < chunk_size
+      then Lwt.return entries
+      else aux entries dir
+    in
+    Lwt_unix.opendir dname >>= fun dir ->
+    Lwt.finalize
+      (fun () ->
+         aux [] dir >|= fun entries ->
+         List.sort compare (List.concat_map Array.to_list entries))
+      (fun () -> Lwt_unix.closedir dir)
+  in
+  Lwt.catch
+    (fun () ->
+       readsortdir >>= fun entries ->
+       let render e = Format.asprintf "%a" (Tyxml.Html.pp_elt ()) e in
+       let t = render (Tyxml.Html.txt ("Directory listing for " ^ relpath)) in
+       let entries =
+         let open Tyxml.Html in
+         List.filter_map
+           (function
+              | "." | ".." -> None
+              | e -> Some (render (li [a ~a:[a_href e] [txt e]])))
+           entries
+       in
+       (* Chunks of [html (head (title t) []) (body [h1 [t]; ul entries])] *)
+       let chunk1 =
+         {|<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>|}
+       and chunk2 = {|</title></head><body><h1>|}
+       and chunk3 = {|</h1><ul>|}
+       and chunkend = {|</ul></body></html>|} in
+       let doc =
+         chunk1 :: t :: chunk2 :: t :: chunk3 :: (entries @ [chunkend])
+       in
+       let headers = Cohttp.Header.init_with "content-type" "text/html" in
+       Lwt.return
+         ( Cohttp.Response.make ~status:`OK ~headers ()
+         , Cohttp_lwt.Body.of_string_list doc ))
+    (function
+       | Unix.Unix_error _ -> Cohttp_lwt_unix.Server.respond_not_found ()
+       | exn -> Lwt.fail exn)
+
 let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_found _ ->
       Lwt.return Ocsigen_extensions.Ext_do_nothing
@@ -123,20 +172,18 @@ let gen ~usermode ?cache dir = function
       (err, ({Ocsigen_extensions.request_info; _} as request)) ->
       let try_block () =
         Lwt_log.ign_info ~section "Is it a static file?";
+        let pathstring =
+          Ocsigen_lib.Url.string_of_url_path ~encode:false
+            (Ocsigen_request.sub_path request_info)
+        in
         let status_filter, page =
-          let pathstring =
-            Ocsigen_lib.Url.string_of_url_path ~encode:false
-              (Ocsigen_request.sub_path request_info)
-          in
           find_static_page ~request ~usermode ~dir ~err ~pathstring
         in
-        let fname =
-          match page with
-          | Ocsigen_local_files.RFile fname -> fname
-          | Ocsigen_local_files.RDir _ ->
-              failwith "FIXME: staticmod dirs not implemented"
-        in
-        Cohttp_lwt_unix.Server.respond_file ~fname () >>= fun answer ->
+        (match page with
+          | Ocsigen_local_files.RFile fname ->
+              Cohttp_lwt_unix.Server.respond_file ~fname ()
+          | Ocsigen_local_files.RDir dname -> respond_dir pathstring dname)
+        >>= fun answer ->
         let answer = Ocsigen_response.of_cohttp answer in
         let answer =
           if not status_filter
