@@ -26,6 +26,13 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - name: Set git to use LF
+        if: matrix.os == 'windows-latest'
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+          git config --global core.ignorecase false
+
       - name: Checkout tree
         uses: actions/checkout@v4
 
@@ -37,6 +44,6 @@ jobs:
 
       - run: opam install . --deps-only
 
-      - run: opam exec -- ./configure
+      - run: opam exec -- bash ./configure
 
       - run: opam exec -- make all
