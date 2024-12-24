@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Extensions interface for Ocsigen Server *)
 
@@ -91,16 +91,16 @@ type config_info =
   ; mime_assoc : Ocsigen_charset_mime.mime_assoc
   ; charset_assoc : Ocsigen_charset_mime.charset_assoc
   ; default_directory_index : string list
-  (** Default name to use as index file when a directory is requested.
+    (** Default name to use as index file when a directory is requested.
       Use [None] if no index should be tried. The various indexes are
       tried in the given order. If no index is specified, or the index
       does not exists, the content of the directory might be listed,
       according to [list_directory_content] *)
   ; list_directory_content : bool
-  (** Should the list of files in a directory be displayed if there is
+    (** Should the list of files in a directory be displayed if there is
       no index in this directory ? *)
   ; follow_symlinks : [`No | `Owner_match | `Always]
-  (** Should symlinks be followed when accessing a local file? *)
+    (** Should symlinks be followed when accessing a local file? *)
   ; do_not_serve_404 : do_not_serve
   ; do_not_serve_403 : do_not_serve
   ; uploaddir : string option

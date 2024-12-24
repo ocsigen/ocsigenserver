@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 open Ocsigen_lib
 
@@ -154,7 +154,7 @@ let rec stream_want s len =
         Lwt.catch
           (fun () -> enlarge_stream s >>= fun r -> Lwt.return (`OK r))
           (function
-             | Stream_too_small -> Lwt.return `Too_small | e -> Lwt.fail e)
+            | Stream_too_small -> Lwt.return `Too_small | e -> Lwt.fail e)
         >>= function
         | `OK r -> stream_want r len
         | `Too_small -> Lwt.return s)

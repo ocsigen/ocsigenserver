@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (* Rewrite URLs in the configuration file *)
 
@@ -99,8 +99,8 @@ let parse_config element =
       ~elements:
         [ Configuration.element ~name:"rewrite"
             ~attributes:
-              [ Configuration.attribute ~name:"regexp" ~obligatory:true
-                  (fun s -> regexp := s)
+              [ Configuration.attribute ~name:"regexp" ~obligatory:true (fun s ->
+                  regexp := s)
               ; Configuration.attribute ~name:"url" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"fullrewrite" (fun s ->

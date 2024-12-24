@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Reverse proxy for Ocsigen
 
@@ -35,8 +35,12 @@ type redirection =
   ; keephost : bool }
 (** The table of redirections for each virtual server *)
 
-let create_redirection ?(full_url = true) ?(pipeline = true) ?(keephost = false)
-    ~regexp dest
+let create_redirection
+      ?(full_url = true)
+      ?(pipeline = true)
+      ?(keephost = false)
+      ~regexp
+      dest
   =
   let regexp = Pcre.regexp ("^" ^ regexp ^ "$") in
   {regexp; dest; full_url; pipeline; keephost}
@@ -49,7 +53,7 @@ let gen dir = function
     ->
       Lwt.catch
         (* Is it a redirection? *)
-           (fun () ->
+        (fun () ->
            Lwt_log.ign_info ~section "Is it a redirection?";
            let dest =
              Ocsigen_extensions.find_redirection dir.regexp dir.full_url
@@ -134,9 +138,9 @@ let gen dir = function
            @@ Ocsigen_extensions.Ext_found
                 (fun () -> do_request () >|= Ocsigen_response.of_cohttp))
         (function
-           | Ocsigen_extensions.Not_concerned ->
-               Lwt.return (Ocsigen_extensions.Ext_next err)
-           | e -> Lwt.fail e)
+          | Ocsigen_extensions.Not_concerned ->
+              Lwt.return (Ocsigen_extensions.Ext_next err)
+          | e -> Lwt.fail e)
 
 let parse_config config_elem =
   let regexp = ref None in

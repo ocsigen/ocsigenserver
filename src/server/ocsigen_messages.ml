@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (** Writing messages in the logs *)
 
@@ -47,12 +47,12 @@ let open_files () =
         Lwt.catch
           (fun () -> Lwt_log.file ~file_name:path ())
           (function
-             | Unix.Unix_error (error, _, _) ->
-                 Lwt.fail
-                   (Ocsigen_config.Config_file_error
-                      (Printf.sprintf "can't open log file %s: %s" path
-                         (Unix.error_message error)))
-             | exn -> Lwt.fail exn)
+            | Unix.Unix_error (error, _, _) ->
+                Lwt.fail
+                  (Ocsigen_config.Config_file_error
+                     (Printf.sprintf "can't open log file %s: %s" path
+                        (Unix.error_message error)))
+            | exn -> Lwt.fail exn)
       in
       open_log access_file >>= fun acc ->
       access_logger := acc;

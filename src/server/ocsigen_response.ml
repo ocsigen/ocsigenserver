@@ -3,8 +3,10 @@ type t =
   ; a_body : Cohttp_lwt.Body.t
   ; a_cookies : Ocsigen_cookie_map.t }
 
-let make ?(body = Cohttp_lwt.Body.empty) ?(cookies = Ocsigen_cookie_map.empty)
-    a_response
+let make
+      ?(body = Cohttp_lwt.Body.empty)
+      ?(cookies = Ocsigen_cookie_map.empty)
+      a_response
   =
   {a_response; a_body = body; a_cookies = cookies}
 
@@ -48,7 +50,9 @@ let header_multi {a_response; _} id =
   Cohttp.Header.get_multi h (Ocsigen_header.Name.to_string id)
 
 let add_header
-    ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a) id v
+      ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
+      id
+      v
   =
   { a with
     a_response =
@@ -57,7 +61,9 @@ let add_header
           Cohttp.Header.add headers (Ocsigen_header.Name.to_string id) v } }
 
 let add_header_multi
-    ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a) id l
+      ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
+      id
+      l
   =
   let id = Ocsigen_header.Name.to_string id in
   let headers =
@@ -66,7 +72,9 @@ let add_header_multi
   {a with a_response = {a_response with Cohttp.Response.headers}}
 
 let replace_header
-    ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a) id v
+      ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
+      id
+      v
   =
   { a with
     a_response =

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 let name = "extendconfiguration"
 let bad_config s = raise (Ocsigen_extensions.Error_in_config_file s)
@@ -275,8 +275,15 @@ let defaultindex v _ _ _ =
   gen @@ fun config ->
   {config with Ocsigen_extensions.default_directory_index = v}
 
-let contenttype ?default ?(files = []) ?(extensions = []) ?(regexps = []) () _ _
-    _
+let contenttype
+      ?default
+      ?(files = [])
+      ?(extensions = [])
+      ?(regexps = [])
+      ()
+      _
+      _
+      _
   =
   gen @@ fun config ->
   let mime_assoc = config.Ocsigen_extensions.mime_assoc in

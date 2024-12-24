@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (* Display of a local file or directory. Currently used in staticmod
    and eliom_predefmod *)
@@ -40,8 +40,10 @@ let follow_symlinks_if_owner_match : symlink_policy =
    of calling [stat] and [lstat] on filenam.
    If supplied, [stat] must be the result of calling [Unix.stat] on
    [filename] *)
-let check_symlinks_aux filename ?(stat = Unix.LargeFile.stat filename)
-    (policy : symlink_policy)
+let check_symlinks_aux
+      filename
+      ?(stat = Unix.LargeFile.stat filename)
+      (policy : symlink_policy)
   =
   let lstat = Unix.LargeFile.lstat filename in
   if lstat.Unix.LargeFile.st_kind = Unix.S_LNK
@@ -50,8 +52,10 @@ let check_symlinks_aux filename ?(stat = Unix.LargeFile.stat filename)
 
 (* Check that there are no invalid symlinks in the directories leading to
    [filename]. Paths upwards [no_check_for] are not checked. *)
-let rec check_symlinks_parent_directories ~filename ~no_check_for
-    (policy : symlink_policy)
+let rec check_symlinks_parent_directories
+          ~filename
+          ~no_check_for
+          (policy : symlink_policy)
   =
   if filename = "/" || filename = "." || Some filename = no_check_for
   then true
@@ -141,8 +145,11 @@ type resolved = RFile of string | RDir of string
    - otherwise returns [filename]
 *)
 (* See also module Files in eliom.ml *)
-let resolve ?no_check_for
-    ~request:({Ocsigen_extensions.request_config; _} as request) ~filename ()
+let resolve
+      ?no_check_for
+      ~request:({Ocsigen_extensions.request_config; _} as request)
+      ~filename
+      ()
   =
   (* We only accept absolute filenames in daemon mode,
      as we do not really know what is the current directory *)
@@ -193,8 +200,9 @@ let resolve ?no_check_for
       Lwt_log.ign_info_f ~section "Filenames cannot contain .. as in \"%s\"."
         filename;
       raise Failed_403)
-    else if check_symlinks ~filename ~no_check_for
-              request_config.Ocsigen_extensions.follow_symlinks
+    else if
+      check_symlinks ~filename ~no_check_for
+        request_config.Ocsigen_extensions.follow_symlinks
     then (
       can_send filename request_config;
       (* If the previous function did not fail, we are authorized to

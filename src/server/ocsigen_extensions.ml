@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 let section = Lwt_log.Section.make "ocsigen:ext"
 
@@ -133,7 +133,7 @@ type config_info =
   ; mime_assoc : Ocsigen_charset_mime.mime_assoc
   ; charset_assoc : Ocsigen_charset_mime.charset_assoc
   ; default_directory_index : string list
-  (** Default name to use as index file
+    (** Default name to use as index file
                                               when a directory is requested.
                                               Use [None] if no index should be
                                               tried. The various indexes are
@@ -144,11 +144,11 @@ type config_info =
                                               according to
                                               [list_directry_content] *)
   ; list_directory_content : bool
-  (** Should the list of files in a directory be
+    (** Should the list of files in a directory be
                                     displayed if there is no index in this
                                     directory ? *)
   ; follow_symlinks : [`No | `Owner_match | `Always]
-  (** Should symlinks be
+    (** Should symlinks be
                                                       followed when accessign a
                                                       local file? *)
   ; do_not_serve_404 : do_not_serve
@@ -279,7 +279,7 @@ let get_hostname {request_info; request_config = {default_hostname; _}; _} =
    - or the port in the Host header
    - or the default port set in the configuration file. *)
 let get_port
-    {request_info; request_config = {default_httpport; default_httpsport; _}}
+      {request_info; request_config = {default_httpport; default_httpsport; _}}
   =
   if Ocsigen_config.get_usedefaulthostname ()
   then
@@ -496,8 +496,13 @@ let preprocess_site_path p =
 
 (* Implements only <site> parsing. Uses parse_host to recursively
    parse children of <site>. *)
-let default_parse_config _userconf_info (_host : virtual_hosts) _config_info
-    prevpath (Parse_host parse_host) (_parse_fun : parse_fun)
+let default_parse_config
+      _userconf_info
+      (_host : virtual_hosts)
+      _config_info
+      prevpath
+      (Parse_host parse_host)
+      (_parse_fun : parse_fun)
   = function
   | Xml.Element ("site", atts, l) ->
       let charset, dir = parse_site_attrs (None, None) atts in
@@ -562,8 +567,14 @@ let default_parse_extension ext_name = function
               "Unexpected content found in configuration of extension %s: %s does not accept options"
               ext_name ext_name))
 
-let register ~name ?fun_site ?end_init ?init_fun ?exn_handler ?respect_pipeline
-    ()
+let register
+      ~name
+      ?fun_site
+      ?end_init
+      ?init_fun
+      ?exn_handler
+      ?respect_pipeline
+      ()
   =
   Ocsigen_loader.set_module_init_function name (fun () ->
     (match init_fun with
@@ -589,8 +600,16 @@ module Configuration = struct
 
   and element = string * element'
 
-  let element ~name ?(obligatory = false) ?(init = ignore) ?(elements = [])
-      ?(attributes = []) ?pcdata ?other_elements ?other_attributes () : element
+  let element
+        ~name
+        ?(obligatory = false)
+        ?(init = ignore)
+        ?(elements = [])
+        ?(attributes = [])
+        ?pcdata
+        ?other_elements
+        ?other_attributes
+        () : element
     =
     ( name
     , { obligatory
@@ -638,8 +657,11 @@ module Configuration = struct
                ("Obligatory element " ^ name ^ " not in tag " ^ in_tag))
     | _ -> ()
 
-  let process_attribute ~in_tag ~attributes:spec_attributes
-      ?other_attributes:spec_other_attributes (attribute, value)
+  let process_attribute
+        ~in_tag
+        ~attributes:spec_attributes
+        ?other_attributes:spec_other_attributes
+        (attribute, value)
     =
     try (List.assoc attribute spec_attributes).attribute_value_func value
     with Not_found -> (
@@ -650,8 +672,11 @@ module Configuration = struct
             (Error_in_user_config_file
                ("Unexpected attribute " ^ attribute ^ " in tag " ^ in_tag)))
 
-  let rec process_element ~in_tag ~elements:spec_elements ?pcdata:spec_pcdata
-      ?other_elements:spec_other_elements
+  let rec process_element
+            ~in_tag
+            ~elements:spec_elements
+            ?pcdata:spec_pcdata
+            ?other_elements:spec_other_elements
     = function
     | Xml.PCData str ->
         let spec_pcdata =
@@ -685,8 +710,13 @@ module Configuration = struct
               (Error_in_config_file ("Unknown tag " ^ name ^ " in tag " ^ in_tag)))
       )
 
-  let process_elements ~in_tag ~elements:spec_elements ?pcdata ?other_elements
-      ?(init = ignore) elements
+  let process_elements
+        ~in_tag
+        ~elements:spec_elements
+        ?pcdata
+        ?other_elements
+        ?(init = ignore)
+        elements
     =
     List.iter (check_element_occurrence ~in_tag elements) spec_elements;
     init ();

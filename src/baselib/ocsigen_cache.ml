@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 (**
    Cache.
 
@@ -124,9 +124,9 @@ end = struct
     ; mutable maxsize : int
     ; mutable finaliser_before : 'a node -> unit
     ; mutable finaliser_after : 'a node -> unit
-    ; (*   *) time_bound : time_bound option }
+    ; time_bound : time_bound option }
 
-  and time_bound = {(*   *) timer : float; mutable collector : unit Lwt.t option}
+  and time_bound = {timer : float; mutable collector : unit Lwt.t option}
 
   (* Checks (by BY):
 
@@ -435,7 +435,7 @@ functor
       ; mutable table : (A.value * A.key Dlist.node) H.t
       ; finder : A.key -> A.value Lwt.t
       ; clear : unit -> unit
-      (* This function clears the cache. It is put inside the
+        (* This function clears the cache. It is put inside the
                                cache structure so that it is garbage-collected only when the cache
                                is no longer referenced, as the functions themselves are put inside
                                a weak hash table *)

@@ -27,8 +27,13 @@ let header_unstripped_re = S.regexp "([^ \t\r\n:]+):([ \t]*.*\n([ \t].*\n)*)"
 let empty_line_re = S.regexp "\013?\n"
 let end_of_header_re = S.regexp "\n\013?\n"
 
-let scan_header ?(downcase = true) ?(unfold = true) ?(strip = false) parstr
-    ~start_pos ~end_pos
+let scan_header
+      ?(downcase = true)
+      ?(unfold = true)
+      ?(strip = false)
+      parstr
+      ~start_pos
+      ~end_pos
   =
   let header_re =
     if unfold || strip then header_stripped_re else header_unstripped_re
@@ -72,12 +77,12 @@ let read_header ?downcase ?unfold ?strip s =
              Lwt.return
                (s, match_end (snd (S.search_forward end_of_header_re b 0))))
       (function
-         | Not_found -> (
-             Ocsigen_stream.enlarge_stream s >>= function
-             | Ocsigen_stream.Finished _ ->
-                 Lwt.fail Ocsigen_stream.Stream_too_small
-             | Ocsigen_stream.Cont _ as s -> find_end_of_header s)
-         | e -> Lwt.fail e)
+        | Not_found -> (
+            Ocsigen_stream.enlarge_stream s >>= function
+            | Ocsigen_stream.Finished _ ->
+                Lwt.fail Ocsigen_stream.Stream_too_small
+            | Ocsigen_stream.Cont _ as s -> find_end_of_header s)
+        | e -> Lwt.fail e)
   in
   find_end_of_header s >>= fun (s, end_pos) ->
   let b = Ocsigen_stream.current_buffer s in
@@ -101,11 +106,11 @@ let search_end_of_line s k =
     (fun () ->
        search_window s lf_re k >>= fun (s, x) -> Lwt.return (s, match_end x))
     (function
-       | Not_found ->
-           Lwt.fail
-             (Multipart_error
-                "read_multipart_body: MIME boundary without line end")
-       | e -> Lwt.fail e)
+      | Not_found ->
+          Lwt.fail
+            (Multipart_error
+               "read_multipart_body: MIME boundary without line end")
+      | e -> Lwt.fail e)
 
 let search_first_boundary ~boundary s =
   (* Search boundary per regexp; return the position of the
@@ -180,10 +185,10 @@ let read_multipart_body ~boundary ~decode_part s =
          (* Begin with first part: *)
          parse_parts ~boundary ~decode_part s uses_crlf)
       (function
-         | Not_found ->
-             (* No boundary at all, empty body *)
-             Lwt.return []
-         | e -> Lwt.fail e)
+        | Not_found ->
+            (* No boundary at all, empty body *)
+            Lwt.return []
+        | e -> Lwt.fail e)
 
 let empty_stream =
   Ocsigen_stream.get (Ocsigen_stream.make (fun () -> Ocsigen_stream.empty None))
@@ -197,9 +202,10 @@ let decode_part ~max_size ~create ~add ~stop stream =
     | Ocsigen_stream.Cont (stri, f) ->
         let long = String.length stri in
         let size2 = Int64.add size (Int64.of_int long) in
-        if match max_size with
-           | None -> false
-           | Some m -> Int64.compare size2 m > 0
+        if
+          match max_size with
+          | None -> false
+          | Some m -> Int64.compare size2 m > 0
         then Lwt.fail Ocsigen_lib.Ocsigen_Request_too_long
         else if stri = ""
         then Ocsigen_stream.next f >>= while_stream size
@@ -220,9 +226,9 @@ let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
        Ocsigen_stream.next s >>= fun s ->
        read_multipart_body ~boundary ~decode_part s >>= fun _ -> Lwt.return ())
     (function
-       | Ocsigen_stream.Stream_too_small ->
-           Lwt.fail Ocsigen_lib.Ocsigen_Bad_Request
-       | e -> Lwt.fail e)
+      | Ocsigen_stream.Stream_too_small ->
+          Lwt.fail Ocsigen_lib.Ocsigen_Bad_Request
+      | e -> Lwt.fail e)
 
 let get_boundary ctparams = List.assoc "boundary" ctparams
 
@@ -280,9 +286,9 @@ let post_params_form_urlencoded body_gen _ _ =
        in
        Lwt.return (l, []))
     (function
-       | Ocsigen_stream.String_too_large ->
-           Lwt.fail Ocsigen_lib.Input_is_too_large
-       | e -> Lwt.fail e)
+      | Ocsigen_stream.String_too_large ->
+          Lwt.fail Ocsigen_lib.Input_is_too_large
+      | e -> Lwt.fail e)
 
 let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
   (* Same question here, should this stream be consumed after an

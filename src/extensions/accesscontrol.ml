@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (* Filtering requests via the configuration file *)
 
@@ -368,10 +368,11 @@ let parse_config parse_fun = function
       | Ocsigen_extensions.Req_found (_, r) ->
           Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return r))
       | Ocsigen_extensions.Req_not_found (err, _ri) ->
-          if let err =
-               string_of_int Cohttp.Code.(code_of_status (err :> status_code))
-             in
-             Netstring_pcre.string_match re err 0 <> None
+          if
+            let err =
+              string_of_int Cohttp.Code.(code_of_status (err :> status_code))
+            in
+            Netstring_pcre.string_match re err 0 <> None
           then Lwt.return (Ocsigen_extensions.Ext_sub_result ext)
           else Lwt.return (Ocsigen_extensions.Ext_next err))
   | Element (("ifnotfound" as s), _, _) ->
@@ -433,10 +434,11 @@ let ifnotfound ?code instrs vh ci p =
           (Ocsigen_extensions.Ext_sub_result
              (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) instrs)))
     | Some re ->
-        if let err =
-             string_of_int Cohttp.Code.(code_of_status (err :> status_code))
-           in
-           Netstring_pcre.string_match re err 0 <> None
+        if
+          let err =
+            string_of_int Cohttp.Code.(code_of_status (err :> status_code))
+          in
+          Netstring_pcre.string_match re err 0 <> None
         then
           Lwt.return
             (Ocsigen_extensions.Ext_sub_result

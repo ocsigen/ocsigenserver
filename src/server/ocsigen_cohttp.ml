@@ -187,13 +187,13 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
             in
             Lwt.return (response, body))
          (function
-            | Ocsigen_is_dir fun_request ->
-                let headers =
-                  fun_request request |> Uri.to_string
-                  |> Cohttp.Header.init_with "location"
-                and status = `Moved_permanently in
-                Cohttp_lwt_unix.Server.respond ~headers ~status ~body:`Empty ()
-            | exn -> handle_error exn))
+           | Ocsigen_is_dir fun_request ->
+               let headers =
+                 fun_request request |> Uri.to_string
+                 |> Cohttp.Header.init_with "location"
+               and status = `Moved_permanently in
+               Cohttp_lwt_unix.Server.respond ~headers ~status ~body:`Empty ()
+           | exn -> handle_error exn))
     (fun () ->
        if !filenames <> []
        then

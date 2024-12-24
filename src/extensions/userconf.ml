@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (* Local (users) config files *)
 
@@ -156,12 +156,9 @@ let parse_config _ hostpattern _ path _ _ config_elem =
       ~elements:
         [ Configuration.element ~name:"userconf"
             ~attributes:
-              [ Configuration.attribute ~name:"regexp" ~obligatory:true
-                  (fun s ->
-                     let s =
-                       Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                     in
-                     regexp := Some s)
+              [ Configuration.attribute ~name:"regexp" ~obligatory:true (fun s ->
+                  let s = Ocsigen_lib.Netstring_pcre.regexp ("^" ^ s ^ "$") in
+                  regexp := Some s)
               ; Configuration.attribute ~name:"conf" ~obligatory:true (fun s ->
                   let s = Ocsigen_extensions.parse_user_dir s in
                   conf := Some s)

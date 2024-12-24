@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 open Lwt.Infix
 module Pcre = Re.Pcre
@@ -71,8 +71,12 @@ let correct_user_local_file =
    If the parameter [usermode] is true, we check that the path
    is valid.
 *)
-let find_static_page ~request ~usermode ~dir ~(err : Cohttp.Code.status)
-    ~pathstring
+let find_static_page
+      ~request
+      ~usermode
+      ~dir
+      ~(err : Cohttp.Code.status)
+      ~pathstring
   =
   let status_filter, filename, root =
     match dir with

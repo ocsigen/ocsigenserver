@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 include Ocsigen_lib_base
 module String = String_base
@@ -69,8 +69,9 @@ module Filename = struct
       then String.sub filename (pos + 1) (String.length filename - pos - 1)
       else (* Dot before a directory separator *)
         raise Not_found
-    with Not_found -> (* No dot in filename *)
-                      raise Not_found
+    with Not_found ->
+      (* No dot in filename *)
+      raise Not_found
 end
 
 (*****************************************************************************)
@@ -399,7 +400,6 @@ module Url = struct
             https, host, port, path, query
       in
       (* Note that the fragment (string after #) is not sent by browsers *)
-
       (*20110707 ' ' is encoded to '+' in queries, but not in paths.
         Warning: if we write the URL manually, we must encode ' ' to '+' manually
         (not done by the browser).
