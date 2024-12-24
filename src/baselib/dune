@@ -12,8 +12,13 @@
  (wrapped false)
  (flags
   (:standard -no-keep-locs))
- (modules dynlink_wrapper ocsigen_cache ocsigen_config_static ocsigen_lib
-   ocsigen_loader ocsigen_stream)
+ (modules
+  dynlink_wrapper
+  ocsigen_cache
+  ocsigen_config_static
+  ocsigen_lib
+  ocsigen_loader
+  ocsigen_stream)
  (libraries
   str
   findlib

@@ -1,11 +1,13 @@
-name: Main workflow
+name: Builds, tests & co
 
 on:
-  pull_request:
   push:
+  pull_request:
   schedule:
     # Prime the caches every Monday
     - cron: 0 1 * * MON
+
+permissions: read-all
 
 jobs:
   build:
@@ -13,12 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-latest
           - ubuntu-latest
+          - macos-latest
           - windows-latest
         ocaml-compiler:
-          - "4.14"
-          - "5.2"
+          - 5
+          - 4
         include:
           - os: ubuntu-latest
             ocaml-compiler: "4.08"
@@ -40,10 +42,51 @@ jobs:
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
-          opam-pin: false
 
       - run: opam install . --deps-only
 
       - run: opam exec -- bash ./configure
 
       - run: opam exec -- make all
+
+  # lint-doc:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout tree
+  #       uses: actions/checkout@v4
+  #     - name: Set-up OCaml
+  #       uses: ocaml/setup-ocaml@v3
+  #       with:
+  #         ocaml-compiler: 5
+  #     - run: opam install . --deps-only
+  #     - run: opam exec -- bash ./configure
+  #     - run: opam exec -- make all
+  #     - uses: ocaml/setup-ocaml/lint-doc@v3
+
+  lint-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+      - run: opam install . --deps-only
+      - run: opam exec -- bash ./configure
+      - run: opam exec -- make all
+      - uses: ocaml/setup-ocaml/lint-fmt@v3
+
+  # lint-opam:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout tree
+  #       uses: actions/checkout@v4
+  #     - name: Set-up OCaml
+  #       uses: ocaml/setup-ocaml@v3
+  #       with:
+  #         ocaml-compiler: 5
+  #     - run: opam install . --deps-only
+  #     - run: opam exec -- bash ./configure
+  #     - run: opam exec -- make all
+  #     - uses: ocaml/setup-ocaml/lint-opam@v3
