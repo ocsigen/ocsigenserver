@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 module Map_path : Map.S with type key := Ocsigen_lib_base.Url_base.path
 (** This type of maps is used to store cookie values for each

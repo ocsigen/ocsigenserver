@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 (******************************************************************)
 (** Config file parsing *)
@@ -245,7 +245,12 @@ let get_defaulthostname ~defaulthostname ~host =
         raise (Ocsigen_config.Config_file_error ("Incorrect hostname " ^ host))
 
 let later_pass_host_attr
-    (name, charset, defaulthostname, defaulthttpport, defaulthttpsport, ishttps)
+      ( name
+      , charset
+      , defaulthostname
+      , defaulthttpport
+      , defaulthttpsport
+      , ishttps )
   = function
   | "hostfilter", s -> (
     match name with

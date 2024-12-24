@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 exception Unknown_command
 
@@ -30,9 +30,9 @@ let register_command_function, get_command_function =
           Lwt.catch
             (fun () -> old_command_function ?prefix s c)
             (function
-               | Unknown_command ->
-                   if prefix = prefix' then f s c else Lwt.fail Unknown_command
-               | e -> Lwt.fail e))
+              | Unknown_command ->
+                  if prefix = prefix' then f s c else Lwt.fail Unknown_command
+              | e -> Lwt.fail e))
   , fun () -> !command_function )
 
 let () =

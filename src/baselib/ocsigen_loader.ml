@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 open Ocsigen_lib
 
@@ -33,18 +33,19 @@ let translate =
   if Ocsigen_config_static.is_native
   then
     fun filename ->
-    if Filename.check_suffix filename ".cmo"
-       || Filename.check_suffix filename ".cma"
-    then Filename.chop_extension filename ^ ".cmxs"
-    else filename
+      if
+        Filename.check_suffix filename ".cmo"
+        || Filename.check_suffix filename ".cma"
+      then Filename.chop_extension filename ^ ".cmxs"
+      else filename
   else
     fun filename ->
-    if Filename.check_suffix filename ".cmxs"
-    then
-      let filename = Filename.chop_extension filename in
-      let cma = filename ^ ".cma" in
-      if Sys.file_exists cma then cma else filename ^ ".cmo"
-    else filename
+      if Filename.check_suffix filename ".cmxs"
+      then
+        let filename = Filename.chop_extension filename in
+        let cma = filename ^ ".cma" in
+        if Sys.file_exists cma then cma else filename ^ ".cmo"
+      else filename
 
 (************************************************************************)
 (* Loading files *)

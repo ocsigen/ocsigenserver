@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *)
+*)
 
 open Lwt.Infix
 
@@ -130,11 +130,23 @@ type instruction =
 
 let default_re_string = ".*"
 
-let host ?(regexp = default_re_string) ?port ?default_hostname ?default_httpport
-    ?default_httpsport ?default_protocol_is_https ?mime_assoc ?charset_assoc
-    ?default_directory_index ?list_directory_content ?follow_symlinks
-    ?do_not_serve_404 ?do_not_serve_403 ?uploaddir ?maxuploadfilesize
-    instructions
+let host
+      ?(regexp = default_re_string)
+      ?port
+      ?default_hostname
+      ?default_httpport
+      ?default_httpsport
+      ?default_protocol_is_https
+      ?mime_assoc
+      ?charset_assoc
+      ?default_directory_index
+      ?list_directory_content
+      ?follow_symlinks
+      ?do_not_serve_404
+      ?do_not_serve_403
+      ?uploaddir
+      ?maxuploadfilesize
+      instructions
   =
   let def = Ocsigen_extensions.default_config_info () in
   let default default o = Option.value o ~default in
@@ -304,13 +316,13 @@ let main config =
                 in
                 Ocsigen_command.get_command_function () ?prefix s c)
              (function
-                | Ocsigen_command.Unknown_command ->
-                    Lwt_log.ign_warning ~section "Unknown command";
-                    Lwt.return ()
-                | e ->
-                    Lwt_log.ign_error ~section ~exn:e
-                      "Uncaught Exception after command";
-                    Lwt.fail e)
+               | Ocsigen_command.Unknown_command ->
+                   Lwt_log.ign_warning ~section "Unknown command";
+                   Lwt.return ()
+               | e ->
+                   Lwt_log.ign_error ~section ~exn:e
+                     "Uncaught Exception after command";
+                   Lwt.fail e)
            >>= f
          in
          ignore (f ()));
@@ -401,14 +413,43 @@ let exec config =
       Lwt_log.ign_warning ~section "Multiple servers not supported anymore"
 (* Multiple servers not supported any more *)
 
-let start ?(ports = [`All, 8080]) ?ssl_ports ?ssl_info ?default_charset ?logdir
-    ?datadir ?uploaddir ?maxuploadfilesize ?syslog_facility ?configfile
-    ?usedefaulthostname ?pidfile ?mimefile ?verbose ?veryverbose ?silent ?daemon
-    ?debug ?debugmode ?minthreads ?maxthreads ?max_number_of_threads_queued
-    ?max_number_of_connections ?client_timeout ?server_timeout ?shutdown_timeout
-    ?filebuffersize ?maxrequestbodysize ?maxrequestbodysizeinmemory ?bindir
-    ?extdir ?command_pipe ?disablepartialrequests ?respect_pipeline ?maxretries
-    instructions
+let start
+      ?(ports = [`All, 8080])
+      ?ssl_ports
+      ?ssl_info
+      ?default_charset
+      ?logdir
+      ?datadir
+      ?uploaddir
+      ?maxuploadfilesize
+      ?syslog_facility
+      ?configfile
+      ?usedefaulthostname
+      ?pidfile
+      ?mimefile
+      ?verbose
+      ?veryverbose
+      ?silent
+      ?daemon
+      ?debug
+      ?debugmode
+      ?minthreads
+      ?maxthreads
+      ?max_number_of_threads_queued
+      ?max_number_of_connections
+      ?client_timeout
+      ?server_timeout
+      ?shutdown_timeout
+      ?filebuffersize
+      ?maxrequestbodysize
+      ?maxrequestbodysizeinmemory
+      ?bindir
+      ?extdir
+      ?command_pipe
+      ?disablepartialrequests
+      ?respect_pipeline
+      ?maxretries
+      instructions
   =
   Ocsigen_config.set_ports ports;
   Option.iter Ocsigen_config.set_ssl_ports ssl_ports;

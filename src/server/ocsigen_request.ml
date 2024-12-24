@@ -71,9 +71,20 @@ type t =
   ; r_connection_closed : unit Lwt.t
   ; r_timeofday : float }
 
-let make ?(forward_ip = []) ?sub_path ?original_full_path
-    ?(request_cache = Polytables.create ()) ?cookies_override ~address ~port
-    ~ssl ~filenames ~sockaddr ~body ~connection_closed request
+let make
+      ?(forward_ip = [])
+      ?sub_path
+      ?original_full_path
+      ?(request_cache = Polytables.create ())
+      ?cookies_override
+      ~address
+      ~port
+      ~ssl
+      ~filenames
+      ~sockaddr
+      ~body
+      ~connection_closed
+      request
   =
   let r_remote_ip =
     lazy
@@ -107,19 +118,28 @@ let make ?(forward_ip = []) ?sub_path ?original_full_path
 let path_string {r_uri = {u_path_string; _}; _} = Lazy.force u_path_string
 let path {r_uri = {u_path; _}; _} = Lazy.force u_path
 
-let update ?ssl ?forward_ip ?remote_ip ?sub_path ?meth ?get_params_flat
-    ?post_data ?cookies_override ?(full_rewrite = false) ?uri
-    ({ r_ssl
-     ; r_uri = {u_uri; _} as r_uri
-     ; r_meth
-     ; r_forward_ip
-     ; r_remote_ip
-     ; r_remote_ip_parsed
-     ; r_cookies_override
-     ; r_body
-     ; r_sub_path
-     ; r_original_full_path
-     ; _ } as r)
+let update
+      ?ssl
+      ?forward_ip
+      ?remote_ip
+      ?sub_path
+      ?meth
+      ?get_params_flat
+      ?post_data
+      ?cookies_override
+      ?(full_rewrite = false)
+      ?uri
+      ({ r_ssl
+       ; r_uri = {u_uri; _} as r_uri
+       ; r_meth
+       ; r_forward_ip
+       ; r_remote_ip
+       ; r_remote_ip_parsed
+       ; r_cookies_override
+       ; r_body
+       ; r_sub_path
+       ; r_original_full_path
+       ; _ } as r)
   =
   let r_ssl = match ssl with Some ssl -> ssl | None -> r_ssl
   and r_forward_ip =
