@@ -60,9 +60,8 @@ depends: [
   "cohttp-lwt-unix" {>= "5.0.0" & < "6.0"}
   "conduit-lwt-unix" {>= "2.0.0" & < "7.0"}
   "xml-light"
-  "camlzip"
+  "camlzip" {>= "1.04"}
 ]
 conflicts: [
-  "camlzip" {< "1.04"}
   "pgocaml" {< "2.2"}
 ]
