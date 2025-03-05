@@ -50,6 +50,8 @@ jobs:
 
       - run: opam exec -- make all
 
+      - run: opam install .
+
   # lint-doc:
   #   runs-on: ubuntu-latest
   #   steps:
