@@ -41,16 +41,17 @@ let conf_in =
 </ocsigen>|}
 
 let conf_ml =
-  {|
-let version_number = "_VERSION_"
-let config_file = ref "_CONFIGDIR_/ocsigenserver.conf"
+  {|(* Warning: this file has been generated - DO NOT MODIFY! *)
+
+let version_number = _VERSION_
+let config_file = ref _CONFIGFILE_
 let is_native = Sys.backend_type = Sys.Native
-let logdir = ref (Some "_LOGDIR_")
-let mimefile = ref "_CONFIGDIR_/mime.types"
-let datadir = ref "_DATADIR_"
-let bindir = ref "_BINDIR_"
-let extdir = ref "_EXTDIR_"
-let command_pipe = ref "_COMMANDPIPE_"
+let logdir = ref (Some _LOGDIR_)
+let mimefile = ref _MIMEFILE_
+let datadir = ref _DATADIR_
+let bindir = ref _BINDIR_
+let extdir = ref _EXTDIR_
+let command_pipe = ref _COMMANDPIPE_
 let builtin_packages =
   List.fold_left
     (fun a s -> Ocsigen_lib.String.Set.add s a)
@@ -97,17 +98,22 @@ let deps () =
   ignore (Unix.close_process_in inp);
   !deps @ extra_deps
 
+(* Encode a string as a string literal that can be included in an ocaml file. *)
+let str = Printf.sprintf "%S"
+let ( // ) = Filename.concat
+
 let static_options = function
-  | "VERSION" -> version
-  | "WARNING" -> "Warning: this file has been generated - DO NOT MODIFY!"
-  | "LOGDIR" -> logdir
-  | "DATADIR" -> datadir
-  | "BINDIR" -> bindir
-  | "EXTDIR" -> libdir () ^ "/ocsigenserver/extensions"
-  | "STATICPAGESDIR" -> staticpagesdir
-  | "UP" -> uploaddir
-  | "COMMANDPIPE" -> commandpipe
-  | "CONFIGDIR" -> configdir
+  | "VERSION" -> str version
+  | "LOGDIR" -> str logdir
+  | "DATADIR" -> str datadir
+  | "BINDIR" -> str bindir
+  | "EXTDIR" -> str (libdir () // "ocsigenserver" // "extensions")
+  | "STATICPAGESDIR" -> str staticpagesdir
+  | "UP" -> str uploaddir
+  | "COMMANDPIPE" -> str commandpipe
+  | "CONFIGDIR" -> str configdir
+  | "CONFIGFILE" -> str (configdir // "ocsigenserver.conf")
+  | "MIMEFILE" -> str (configdir // "mime.types")
   | "DEPS" -> String.concat ";" (List.map (Format.asprintf "%S") (deps ()))
   | _ as s -> failwith s
 
