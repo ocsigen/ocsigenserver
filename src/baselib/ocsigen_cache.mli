@@ -125,12 +125,6 @@ module Dlist : sig
   (** fold over the elements from the cache starting from the oldest
       to the newest *)
 
-  val lwt_fold : ('b -> 'a -> 'b Lwt.t) -> 'b -> 'a t -> 'b Lwt.t
-  (** lwt version of fold *)
-
-  val lwt_fold_back : ('b -> 'a -> 'b Lwt.t) -> 'b -> 'a t -> 'b Lwt.t
-  (** lwt version of fold_back *)
-
   val move : 'a node -> 'a t -> 'a option
   (** Move a node from one dlist to another one, without finalizing.
       If one value is removed from the destination list (because its
