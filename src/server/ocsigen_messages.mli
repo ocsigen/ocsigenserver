@@ -18,16 +18,16 @@
 
 (** Writing messages in the logs *)
 
-val access_sect : Lwt_log_core.section
+val access_sect : Logs.src
 (** use Lwt_log.Section.set_level in order to debug *)
 
 val accesslog : string -> unit
 (** Write a message in access.log *)
 
-val errlog : ?section:Lwt_log.section -> string -> unit
+val errlog : ?section:Logs.src -> string -> unit
 (** Write a message in errors.log *)
 
-val warning : ?section:Lwt_log.section -> string -> unit
+val warning : ?section:Logs.src -> string -> unit
 (** Write a message in warnings.log *)
 
 val console : (unit -> string) -> unit

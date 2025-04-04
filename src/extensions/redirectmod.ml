@@ -22,7 +22,7 @@
 
 module Pcre = Re.Pcre
 
-let section = Lwt_log.Section.make "ocsigen:ext:redirectmod"
+let section = Logs.Src.create "ocsigen:ext:redirectmod"
 
 (* The table of redirections for each virtual server *)
 type redirection =
@@ -33,11 +33,12 @@ let create_redirection ?(full_url = true) ?(temporary = false) ~regexp r_dest =
   {r_regexp; r_dest; r_full = full_url; r_temp = temporary}
 
 let attempt_redir {r_regexp; r_dest; r_full; r_temp} _err ri () =
-  Lwt_log.ign_info ~section "Is it a redirection?";
+  Logs.info ~src:section (fun fmt -> fmt "Is it a redirection?");
   let redir = Ocsigen_extensions.find_redirection r_regexp r_full r_dest ri in
-  Lwt_log.ign_info_f ~section "YES! %s redirection to: %s"
-    (if r_temp then "Temporary " else "Permanent ")
-    redir;
+  Logs.info ~src:section (fun fmt ->
+    fmt "YES! %s redirection to: %s"
+      (if r_temp then "Temporary " else "Permanent ")
+      redir);
   Lwt.return
   @@ Ocsigen_extensions.Ext_found
        (fun () ->

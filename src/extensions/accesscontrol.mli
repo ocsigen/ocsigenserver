@@ -88,5 +88,5 @@ val allow_forward_for :
 
 val allow_forward_proto : unit -> Ocsigen_server.instruction
 
-val section : Lwt_log_core.section
+val section : Logs.src
 (** Use Lwt_log.Section.set_level in order to change the log level *)

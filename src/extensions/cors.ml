@@ -20,7 +20,7 @@
 
 (** Handle Cross-Origin Resource Sharing (CORS) headers *)
 
-let section = Lwt_log.Section.make "ocsigen:ext:cors"
+let section = Logs.Src.create "ocsigen:ext:cors"
 
 (*** MAIN FUNCTION ***)
 
@@ -40,7 +40,7 @@ let add_headers config r response =
   match Ocsigen_request.header r Ocsigen_header.Name.origin with
   | None -> Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Some origin ->
-      Lwt_log.ign_info_f ~section "request with origin: %s" origin;
+      Logs.info ~src:section (fun fmt -> fmt "request with origin: %s" origin);
       let l = [Ocsigen_header.Name.access_control_allow_origin, origin] in
       let l =
         if config.credentials
@@ -65,7 +65,7 @@ let add_headers config r response =
               (Ocsigen_header.Name.access_control_allow_methods, request_method)
               :: l
             else (
-              Lwt_log.ign_info ~section "Method refused";
+              Logs.info ~src:section (fun fmt -> fmt "Method refused");
               raise Refused)
         | None -> l
       in
@@ -103,15 +103,15 @@ let main config = function
     -> (
     match Ocsigen_request.meth request_info with
     | `OPTIONS -> (
-        Lwt_log.ign_info ~section "OPTIONS request";
+        Logs.info ~src:section (fun fmt -> fmt "OPTIONS request");
         try add_headers config request_info (default_frame ())
         with Refused ->
-          Lwt_log.ign_info ~section "Refused request";
+          Logs.info ~src:section (fun fmt -> fmt "Refused request");
           Lwt.return Ocsigen_extensions.Ext_do_nothing)
     | _ -> Lwt.return Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_found ({Ocsigen_extensions.request_info; _}, response)
     ->
-      Lwt_log.ign_info ~section "answered request";
+      Logs.info ~src:section (fun fmt -> fmt "answered request");
       add_headers config request_info response
 
 (* Register extension *)

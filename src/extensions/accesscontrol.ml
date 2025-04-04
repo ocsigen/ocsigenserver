@@ -23,7 +23,7 @@
 open Ocsigen_lib
 open Xml
 
-let section = Lwt_log.Section.make "ocsigen:ext:access-control"
+let section = Logs.Src.create "ocsigen:ext:access-control"
 
 type condition = Ocsigen_request.t -> bool
 
@@ -41,30 +41,28 @@ let ip s =
     let r = Ipaddr.Prefix.mem (Ocsigen_request.remote_ip_parsed ri) prefix in
     if r
     then
-      Lwt_log.ign_info_f ~section "IP: %a matches %s"
-        (fun () -> Ocsigen_request.remote_ip)
-        ri s
+      Logs.info ~src:section (fun fmt ->
+        fmt "IP: %s matches %s" (Ocsigen_request.remote_ip ri) s)
     else
-      Lwt_log.ign_info_f ~section "IP: %a does not match %s"
-        (fun () -> Ocsigen_request.remote_ip)
-        ri s;
+      Logs.info ~src:section (fun fmt ->
+        fmt "IP: %s does not match %s" (Ocsigen_request.remote_ip ri) s);
     r
 
 let port port ri =
   let r = Ocsigen_request.port ri = port in
   if r
-  then Lwt_log.ign_info_f ~section "PORT = %d: true" port
+  then Logs.info ~src:section (fun fmt -> fmt "PORT = %d: true" port)
   else
-    Lwt_log.ign_info_f ~section "PORT = %d: false (it is %a)" port
-      (fun () ri -> string_of_int (Ocsigen_request.port ri))
-      ri;
+    Logs.info ~src:section (fun fmt ->
+      fmt "PORT = %d: false (it is %s)" port
+        (string_of_int (Ocsigen_request.port ri)));
   r
 
 let ssl ri =
   let r = Ocsigen_request.ssl ri in
   if r
-  then Lwt_log.ign_info ~section "SSL: true"
-  else Lwt_log.ign_info ~section "SSL: false";
+  then Logs.info ~src:section (fun fmt -> fmt "SSL: true")
+  else Logs.info ~src:section (fun fmt -> fmt "SSL: false");
   r
 
 let header ~name ~regexp:re =
@@ -79,12 +77,15 @@ let header ~name ~regexp:re =
       List.exists
         (fun a ->
            let r = Netstring_pcre.string_match regexp a 0 <> None in
-           if r then Lwt_log.ign_info_f "HEADER: header %s matches %S" name re;
+           if r
+           then
+             Logs.info (fun fmt -> fmt "HEADER: header %s matches %S" name re);
            r)
         (Ocsigen_request.header_multi ri (Ocsigen_header.Name.of_string name))
     in
     if not r
-    then Lwt_log.ign_info_f "HEADER: header %s does not match %S" name re;
+    then
+      Logs.info (fun fmt -> fmt "HEADER: header %s does not match %S" name re);
     r
 
 let method_ m ri =
@@ -93,8 +94,9 @@ let method_ m ri =
   let s' = Cohttp.Code.string_of_method m' in
   let r = m = m' in
   if r
-  then Lwt_log.ign_info_f ~section "METHOD: %s matches %s" s' s
-  else Lwt_log.ign_info_f ~section "METHOD: %s does not match %s" s' s;
+  then Logs.info ~src:section (fun fmt -> fmt "METHOD: %s matches %s" s' s)
+  else
+    Logs.info ~src:section (fun fmt -> fmt "METHOD: %s does not match %s" s' s);
   r
 
 let protocol v ri =
@@ -103,8 +105,10 @@ let protocol v ri =
   let s' = Cohttp.Code.string_of_version v' in
   let r = v = v' in
   if r
-  then Lwt_log.ign_info_f ~section "PROTOCOL: %s matches %s" s' s
-  else Lwt_log.ign_info_f ~section "PROTOCOL: %s does not match %s" s' s;
+  then Logs.info ~src:section (fun fmt -> fmt "PROTOCOL: %s matches %s" s' s)
+  else
+    Logs.info ~src:section (fun fmt ->
+      fmt "PROTOCOL: %s does not match %s" s' s);
   r
 
 let path ~regexp:s =
@@ -118,8 +122,10 @@ let path ~regexp:s =
     let sps = Ocsigen_request.sub_path_string ri in
     let r = Netstring_pcre.string_match regexp sps 0 <> None in
     if r
-    then Lwt_log.ign_info_f ~section "PATH: \"%s\" matches %S" sps s
-    else Lwt_log.ign_info_f ~section "PATH: \"%s\" does not match %S" sps s;
+    then Logs.info ~src:section (fun fmt -> fmt "PATH: \"%s\" matches %S" sps s)
+    else
+      Logs.info ~src:section (fun fmt ->
+        fmt "PATH: \"%s\" does not match %S" sps s);
     r
 
 let and_ sub ri = List.for_all (fun cond -> cond ri) sub
@@ -167,8 +173,12 @@ let rec parse_condition = function
         let sps = Ocsigen_request.sub_path_string ri in
         let r = Netstring_pcre.string_match regexp sps 0 <> None in
         if r
-        then Lwt_log.ign_info_f ~section "PATH: \"%s\" matches %S" sps s
-        else Lwt_log.ign_info_f ~section "PATH: \"%s\" does not match %S" sps s;
+        then
+          Logs.info ~src:section (fun fmt ->
+            fmt "PATH: \"%s\" matches %S" sps s)
+        else
+          Logs.info ~src:section (fun fmt ->
+            fmt "PATH: \"%s\" does not match %S" sps s);
         r
   | Element (("path" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
@@ -192,11 +202,11 @@ let rec parse_condition = function
 (*****************************************************************************)
 (* Parsing filters *)
 
-let comma_space_regexp = Netstring_pcre.regexp "\ *,\ *"
+let comma_space_regexp = Netstring_pcre.regexp " *, *"
 
 let allow_forward_for_handler ?(check_equal_ip = false) () =
   let apply ({Ocsigen_extensions.request_info; _} as request) code =
-    Lwt_log.ign_info ~section "Allowed proxy";
+    Logs.info ~src:section (fun fmt -> fmt "Allowed proxy");
     let request =
       let header =
         Ocsigen_request.header request_info Ocsigen_header.Name.x_forwarded_for
@@ -218,14 +228,15 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
                     ~remote_ip:original_ip request_info }
             else (
               (* the announced ip of the proxy is not its real ip *)
-              Lwt_log.ign_warning_f ~section
-                "X-Forwarded-For: host ip (%s) does not match the header (%s)"
-                (Ocsigen_request.remote_ip request_info)
-                header;
+              Logs.warn ~src:section (fun fmt ->
+                fmt
+                  "X-Forwarded-For: host ip (%s) does not match the header (%s)"
+                  (Ocsigen_request.remote_ip request_info)
+                  header);
               request)
         | _ ->
-            Lwt_log.ign_info_f ~section "Malformed X-Forwarded-For field: %s"
-              header;
+            Logs.info ~src:section (fun fmt ->
+              fmt "Malformed X-Forwarded-For field: %s" header);
             request)
       | None -> request
     in
@@ -240,7 +251,7 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
 
 let allow_forward_proto_handler =
   let apply ({Ocsigen_extensions.request_info; _} as request) code =
-    Lwt_log.ign_info ~section "Allowed proxy for ssl";
+    Logs.info ~src:section (fun fmt -> fmt "Allowed proxy for ssl");
     let request_info =
       let header =
         Ocsigen_request.header request_info
@@ -252,8 +263,8 @@ let allow_forward_proto_handler =
         | "http" -> Ocsigen_request.update ~ssl:false request_info
         | "https" -> Ocsigen_request.update ~ssl:true request_info
         | _ ->
-            Lwt_log.ign_info_f ~section "Malformed X-Forwarded-Proto field: %s"
-              header;
+            Logs.info ~src:section (fun fmt ->
+              fmt "Malformed X-Forwarded-Proto field: %s" header);
             request_info)
       | None -> request_info
     in
@@ -292,17 +303,19 @@ let parse_config parse_fun = function
           Lwt.return
             (if condition ri.Ocsigen_extensions.request_info
              then (
-               Lwt_log.ign_info ~section "COND: going into <then> branch";
+               Logs.info ~src:section (fun fmt ->
+                 fmt "COND: going into <then> branch");
                Ocsigen_extensions.Ext_sub_result ithen)
              else (
-               Lwt_log.ign_info ~section
-                 "COND: going into <else> branch, if any";
+               Logs.info ~src:section (fun fmt ->
+                 fmt "COND: going into <else> branch, if any");
                Ocsigen_extensions.Ext_sub_result ielse)))
   | Element (("if" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("notfound", [], []) ->
       fun _rs ->
-        Lwt_log.ign_info ~section "NOT_FOUND: taking in charge 404";
+        Logs.info ~src:section (fun fmt ->
+          fmt "NOT_FOUND: taking in charge 404");
         Lwt.return
           (Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found))
   | Element (("notfound" as s), _, _) ->
@@ -340,7 +353,8 @@ let parse_config parse_fun = function
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("forbidden", [], []) ->
       fun _rs ->
-        Lwt_log.ign_info ~section "FORBIDDEN: taking in charge 403";
+        Logs.info ~src:section (fun fmt ->
+          fmt "FORBIDDEN: taking in charge 403");
         Lwt.return
           (Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Forbidden))
   | Element (("forbidden" as s), _, _) ->

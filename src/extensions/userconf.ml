@@ -24,7 +24,7 @@ open Lwt.Infix
 
 exception NoConfFile
 
-let section = Lwt_log.Section.make "ocsigen:ext:userconf"
+let section = Logs.Src.create "ocsigen:ext:userconf"
 
 let err_500 =
   Ocsigen_extensions.Ext_stop_site
@@ -32,16 +32,16 @@ let err_500 =
 
 let handle_parsing_error {Ocsigen_extensions.request_info; _} = function
   | Ocsigen_extensions.Error_in_config_file s ->
-      Lwt_log.ign_error_f ~section
-        "Syntax error in userconf configuration file for url %s: %s"
-        (Uri.to_string (Ocsigen_request.uri request_info))
-        s;
+      Logs.err ~src:section (fun fmt ->
+        fmt "Syntax error in userconf configuration file for url %s: %s"
+          (Uri.to_string (Ocsigen_request.uri request_info))
+          s);
       Lwt.return err_500
   | Ocsigen_extensions.Error_in_user_config_file s ->
-      Lwt_log.ign_error_f ~section
-        "Unauthorized option in user configuration for url %s: %s"
-        (Uri.to_string (Ocsigen_request.uri request_info))
-        s;
+      Logs.err ~src:section (fun fmt ->
+        fmt "Unauthorized option in user configuration for url %s: %s"
+          (Uri.to_string (Ocsigen_request.uri request_info))
+          s);
       Lwt.return err_500
   | e -> Lwt.fail e
 
@@ -110,7 +110,7 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
       | None -> Lwt.return (Ocsigen_extensions.Ext_next previous_err)
       | Some _ -> (
         try
-          Lwt_log.ign_info ~section "Using user configuration";
+          Logs.info ~src:section (fun fmt -> fmt "Using user configuration");
           let conf0 = Ocsigen_extensions.replace_user_dir regexp conf path in
           let uri =
             Uri.of_string

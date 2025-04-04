@@ -23,7 +23,7 @@ open Ocsigen_lib
 exception Dynlink_error of string * exn
 exception Findlib_error of string * exn
 
-let section = Lwt_log.Section.make "ocsigen:dynlink"
+let section = Logs.Src.create "ocsigen:dynlink"
 
 (************************************************************************)
 
@@ -68,8 +68,8 @@ let loadfile pre post force file =
     if force
     then (
       pre ();
-      Lwt_log.ign_info_f ~section "Loading %s (will be reloaded every times)"
-        file;
+      Logs.info ~src:section (fun fmt ->
+        fmt "Loading %s (will be reloaded every times)" file);
       try
         Dynlink_wrapper.loadfile file;
         post ()
@@ -77,13 +77,14 @@ let loadfile pre post force file =
     else if not (isloaded file)
     then (
       pre ();
-      Lwt_log.ign_info_f ~section "Loading extension %s" file;
+      Logs.info ~src:section (fun fmt -> fmt "Loading extension %s" file);
       (try
          Dynlink_wrapper.loadfile file;
          post ()
        with e -> post (); raise e);
       addloaded file)
-    else Lwt_log.ign_info_f ~section "Extension %s already loaded" file
+    else
+      Logs.info ~src:section (fun fmt -> fmt "Extension %s already loaded" file)
   with e -> raise (Dynlink_error (file, e))
 
 let id () = ()
@@ -114,22 +115,25 @@ let init_module pre post force name =
       let l = List.rev @@ M.find name !init_functions in
       fun () -> List.iter (fun f -> f ()) l
     with Not_found ->
-      Lwt_log.ign_info_f ~section "No init function for named module %s." name;
+      Logs.info ~src:section (fun fmt ->
+        fmt "No init function for named module %s." name);
       fun () -> ()
   in
   if force
   then (
     pre ();
-    Lwt_log.ign_info_f ~section
-      "Initializing %s (will be initialized every time)" name;
+    Logs.info ~src:section (fun fmt ->
+      fmt "Initializing %s (will be initialized every time)" name);
     try f (); post () with e -> post (); raise e)
   else if not (isloaded name)
   then (
     pre ();
-    Lwt_log.ign_info_f ~section "Initializing module %s " name;
+    Logs.info ~src:section (fun fmt -> fmt "Initializing module %s " name);
     (try f (); post () with e -> post (); raise e);
     addloaded name)
-  else Lwt_log.ign_info_f ~section "Module %s already initialized." name
+  else
+    Logs.info ~src:section (fun fmt ->
+      fmt "Module %s already initialized." name)
 
 (************************************************************************)
 (* Manipulating Findlib's search path *)
@@ -170,8 +174,8 @@ let findfiles =
              not @@ String.Set.mem a Ocsigen_config_static.builtin_packages)
           (Findlib.package_deep_ancestors preds [package])
       in
-      Lwt_log.ign_info_f ~section "Dependencies of %s: %s" package
-        (String.concat ", " deps);
+      Logs.info ~src:section (fun fmt ->
+        fmt "Dependencies of %s: %s" package (String.concat ", " deps));
       let rec aux = function
         | [] -> []
         | a :: q ->
@@ -189,7 +193,8 @@ let findfiles =
             List.map (Findlib.resolve_path ~base) mods @ aux q
       in
       let res = aux deps in
-      Lwt_log.ign_info_f ~section "Needed: %s" (String.concat ", " res);
+      Logs.info ~src:section (fun fmt ->
+        fmt "Needed: %s" (String.concat ", " res));
       res
     with e -> raise (Findlib_error (package, e))
 

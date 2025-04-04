@@ -23,7 +23,7 @@
 
 (**/**)
 
-val section : Lwt_log_core.section
+val section : Logs.src
 (** use Lwt_log.Section.set_level in order to debug *)
 
 val parse_size_tag : string -> string -> int64 option

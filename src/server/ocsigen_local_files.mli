@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-val section : Lwt_log_core.section
+val section : Logs.src
 (** use Lwt_log.Section.set_level in order to debug *)
 
 exception Failed_404

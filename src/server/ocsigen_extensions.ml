@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-let section = Lwt_log.Section.make "ocsigen:ext"
+let section = Logs.Src.create "ocsigen:ext"
 
 open Lwt.Infix
 module Pcre = Re.Pcre
@@ -119,7 +119,8 @@ let do_not_serve_to_regexp d =
       else Printf.sprintf "^(%s)$" (paren l)
     in
     try
-      Lwt_log.ign_info_f ~section "Compiling exclusion regexp %s" regexp;
+      Logs.info ~src:section (fun fmt ->
+        fmt "Compiling exclusion regexp %s" regexp);
       let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
       Hashtbl.add hash_consed_do_not_serve d r;
       r
@@ -289,7 +290,7 @@ let get_port
   else Ocsigen_request.port request_info
 
 let new_url_of_directory_request request ri =
-  Lwt_log.ign_info ~section "Sending 301 Moved permanently";
+  Logs.info ~src:section (fun fmt -> fmt "Sending 301 Moved permanently");
   let ssl = Ocsigen_request.ssl ri in
   let scheme = if ssl then "https" else "http"
   and host = get_hostname request
@@ -448,22 +449,18 @@ let site_ext ext_of_children charset path cookies_to_set = function
       in
       match site_match oldri path (Ocsigen_request.path oldri.request_info) with
       | None ->
-          Lwt_log.ign_info_f ~section "site \"%a\" does not match url \"%a\"."
-            (fun () path -> Url.string_of_url_path ~encode:true path)
-            path
-            (fun () oldri ->
-               Url.string_of_url_path ~encode:true
-                 (Ocsigen_request.path oldri.request_info))
-            oldri;
+          Logs.info ~src:section (fun fmt ->
+            fmt "site \"%s\" does not match url \"%s\"."
+              (Url.string_of_url_path ~encode:true path)
+              (Url.string_of_url_path ~encode:true
+                 (Ocsigen_request.path oldri.request_info)));
           Lwt.return (Ext_next e, cookies_to_set)
       | Some sub_path -> (
-          Lwt_log.ign_info_f ~section "site found: url \"%a\" matches \"%a\"."
-            (fun () oldri ->
-               Url.string_of_url_path ~encode:true
+          Logs.info ~src:section (fun fmt ->
+            fmt "site found: url \"%s\" matches \"%s\"."
+              (Url.string_of_url_path ~encode:true
                  (Ocsigen_request.path oldri.request_info))
-            oldri
-            (fun () path -> Url.string_of_url_path ~encode:true path)
-            path;
+              (Url.string_of_url_path ~encode:true path));
           let ri =
             { oldri with
               request_info =
@@ -774,11 +771,10 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
     | [] -> Lwt.fail (Ocsigen_http_error (cookies_to_set, prev_err))
     | (virtual_hosts, request_config, host_function) :: l
       when host_match ~virtual_hosts ~host ~port -> (
-        Lwt_log.ign_info_f ~section "host found! %a matches %a"
-          (fun () -> string_of_host_option)
-          host
-          (fun () -> string_of_host)
-          virtual_hosts;
+        Logs.info ~src:section (fun fmt ->
+          fmt "host found! %s matches %s"
+            (string_of_host_option host)
+            (string_of_host virtual_hosts));
         host_function cookies_to_set
           (Req_not_found (prev_err, {request_info; request_config}))
         >>= fun (res_ext, cookies_to_set) ->
@@ -812,11 +808,10 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
         (* retry all *)
         | Ext_sub_result _sr -> assert false)
     | (h, _, _) :: l ->
-        Lwt_log.ign_info_f ~section "host = %a does not match %a"
-          (fun () -> string_of_host_option)
-          host
-          (fun () -> string_of_host)
-          h;
+        Logs.info ~src:section (fun fmt ->
+          fmt "host = %s does not match %s"
+            (string_of_host_option host)
+            (string_of_host h));
         fold_hosts request_info prev_err cookies_to_set l
   and fold_hosts_limited sites cookies_to_set request_info =
     Ocsigen_request.incr_tries request_info;
@@ -853,10 +848,10 @@ let replace_user_dir regexp dest pathstring =
       let u = Ocsigen_lib.Netstring_pcre.global_replace regexp u pathstring in
       let s2 = Ocsigen_lib.Netstring_pcre.global_replace regexp s2 pathstring in
       let userdir = (Unix.getpwnam u).Unix.pw_dir in
-      Lwt_log.ign_info_f ~section "User %s" u;
+      Logs.info ~src:section (fun fmt -> fmt "User %s" u);
       s1 ^ userdir ^ s2
     with Not_found ->
-      Lwt_log.ign_info_f ~section "No such user %s" u;
+      Logs.info ~src:section (fun fmt -> fmt "No such user %s" u);
       raise NoSuchUser)
 
 exception Not_concerned

@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-val section : Lwt_log_core.section
+val section : Logs.src
 (** use Lwt_log.Section.set_level in order to debug *)
 
 val reload : ?file:string -> unit -> unit
@@ -38,7 +38,7 @@ val start :
   -> ?datadir:string
   -> ?uploaddir:string option
   -> ?maxuploadfilesize:int64 option
-  -> ?syslog_facility:Lwt_log.syslog_facility option
+  -> ?syslog_facility:Syslog_message.facility option
   -> ?configfile:string
   -> ?usedefaulthostname:bool
   -> ?pidfile:string

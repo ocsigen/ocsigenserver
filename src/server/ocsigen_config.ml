@@ -55,7 +55,7 @@ let server_name = "Ocsigen"
 let full_server_name = server_name ^ "/" ^ version_number
 let native_ext = if is_native then ".exe" else ".bc"
 let (uploaddir : string option ref) = ref None
-let syslog_facility = ref (None : Lwt_log.syslog_facility option)
+let syslog_facility = ref None
 let minthreads = ref 10
 let maxthreads = ref 30
 let max_number_of_connections = ref 350
@@ -85,11 +85,12 @@ let set_syslog_facility f =
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
 let set_mimefile s = mimefile := s
-let () = Lwt_log.add_rule "ocsigen:*" Lwt_log.Warning (* without --verbose *)
+let () = Logs.set_level ~all:true (Some Logs.Warning)
+(* without --verbose *)
 
 let set_verbose () =
   verbose := true;
-  Lwt_log.add_rule "ocsigen:*" Lwt_log.Notice
+  Logs.set_level ~all:true None
 
 let set_silent () = silent := true
 
@@ -100,13 +101,13 @@ let set_daemon () =
 let set_veryverbose () =
   verbose := true;
   veryverbose := true;
-  Lwt_log.add_rule "ocsigen:*" Lwt_log.Info
+  Logs.set_level ~all:true (Some Logs.Info)
 
 let set_debug () =
   verbose := true;
   veryverbose := true;
   debug := true;
-  Lwt_log.add_rule "ocsigen:*" Lwt_log.Debug
+  Logs.set_level ~all:true (Some Logs.Debug)
 
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i

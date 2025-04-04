@@ -45,5 +45,5 @@ val run :
 (** [run ~mode ()] makes it possible to use this extension without
     configuration file.  *)
 
-val section : Lwt_log_core.section
+val section : Logs.src
 (** Use Lwt_log.Section.set_level in order to change the log level *)
