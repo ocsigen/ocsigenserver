@@ -78,9 +78,9 @@ install.files:
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
 	 ## Configuration files
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
-	${INSTALL} -m ${INSTALL_MOD_644} ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
+	${INSTALL} -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
 	[ -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf ] || \
-	  { $(INSTALL) -m ${INSTALL_MOD_644} ocsigenserver.conf.sample \
+	  { $(INSTALL) -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample \
 		$(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory
