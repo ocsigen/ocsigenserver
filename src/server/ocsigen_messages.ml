@@ -25,14 +25,42 @@ let access_sect = Logs.Src.create "ocsigen:access"
 let full_path f = Filename.concat (Ocsigen_config.get_logdir ()) f
 let error_log_path () = full_path error_file
 
-let stderr =
-  let logs_formatter = Format.formatter_of_out_channel stderr in
-  Logs.format_reporter ~app:logs_formatter ~dst:logs_formatter ()
+(* This is the date format inherited from [Lwt_log]. *)
+let pp_date ppf =
+  let time = Unix.gettimeofday () in
+  let tm = Unix.localtime time in
+  let month_string =
+    match tm.Unix.tm_mon with
+    | 0 -> "Jan"
+    | 1 -> "Feb"
+    | 2 -> "Mar"
+    | 3 -> "Apr"
+    | 4 -> "May"
+    | 5 -> "Jun"
+    | 6 -> "Jul"
+    | 7 -> "Aug"
+    | 8 -> "Sep"
+    | 9 -> "Oct"
+    | 10 -> "Nov"
+    | 11 -> "Dec"
+    | _ -> ""
+  in
+  Format.fprintf ppf "%s %2d %02d:%02d:%02d" month_string tm.Unix.tm_mday
+    tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec
 
-let stdout =
-  let logs_formatter = Format.formatter_of_out_channel stdout in
-  Logs.format_reporter ~app:logs_formatter ~dst:logs_formatter ()
+let make_reporter out_channel =
+  let ppf = Format.formatter_of_out_channel out_channel in
+  let report src level ~over k msgf =
+    let k _ = over (); k () in
+    msgf @@ fun ?header ?tags:_ fmt ->
+    Format.kfprintf k ppf
+      ("%t: %s: %a @[" ^^ fmt ^^ "@]@.")
+      pp_date (Logs.Src.name src) Logs.pp_header (level, header)
+  in
+  {Logs.report}
 
+let stderr = make_reporter stderr
+let stdout = make_reporter stdout
 let close_loggers = ref []
 
 let open_files () =
@@ -77,8 +105,7 @@ let open_files () =
       in
       let open_log path =
         let channel, close = open_channel path in
-        let logs_formatter = Format.formatter_of_out_channel channel in
-        Logs.format_reporter ~app:logs_formatter ~dst:logs_formatter (), close
+        make_reporter channel, close
       in
       let acc = open_log access_file in
       let war = open_log warning_file in
