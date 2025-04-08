@@ -8,7 +8,7 @@ default all: build
 
 .PHONY: build
 build:
-	dune build
+	dune build -p ocsigenserver
 	${MAKE} -C src/server build
 doc:
 	$(MAKE) -C doc
