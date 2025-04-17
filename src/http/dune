@@ -5,7 +5,7 @@
  (libraries ocsigen_lib_base))
 
 (library
- (name http)
+ (name ocsigen_http)
  (public_name ocsigenserver.http)
  (wrapped false)
  (modules ocsigen_charset_mime ocsigen_header)
