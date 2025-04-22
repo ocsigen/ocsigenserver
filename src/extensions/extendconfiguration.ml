@@ -59,7 +59,7 @@ let check_regexp_list =
   try Hashtbl.find hashtbl r
   with Not_found -> (
     try
-      ignore (Ocsigen_lib.Netstring_pcre.regexp r);
+      ignore (Ocsigen_lib.Netstring_pcre.regexp r : Re.re);
       Hashtbl.add hashtbl r ()
     with _ -> raise (Bad_regexp r))
 

@@ -280,7 +280,7 @@ let parse_config parse_fun = function
         | Element ("then", [], ithen) :: q -> parse_fun ithen, q
         | _ -> Ocsigen_extensions.badconfig "Bad <then> branch in <if>"
       in
-      let ielse, _sub =
+      let ielse, (_sub : _ list) =
         match sub with
         | Element ("else", [], ielse) :: ([] as q) -> parse_fun ielse, q
         | [] -> parse_fun [], []

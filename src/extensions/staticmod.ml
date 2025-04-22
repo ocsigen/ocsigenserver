@@ -59,7 +59,9 @@ let correct_user_local_file =
   let regexp = Ocsigen_lib.Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
   fun path ->
     try
-      ignore (Ocsigen_lib.Netstring_pcre.search_forward regexp path 0);
+      ignore
+        (Ocsigen_lib.Netstring_pcre.search_forward regexp path 0
+         : int * Pcre.substrings);
       false
     with Not_found -> true
 

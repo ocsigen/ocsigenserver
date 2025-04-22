@@ -291,7 +291,7 @@ end = struct
       | Some n when node == n -> ()
       | _ ->
           remove' node l;
-          ignore (add_node node l))
+          ignore (add_node node l : _ node option))
 
   (* assertion: = None *)
   (* we must not change the physical address => use add_node *)
@@ -440,7 +440,7 @@ functor
 
     let remove cache k =
       try
-        let _v, node = H.find cache.table k in
+        let (_v : A.value), node = H.find cache.table k in
         assert (
           match Dlist.list_of node with
           | None -> false
@@ -451,7 +451,7 @@ functor
     (* Add in a cache, under the hypothesis that the value is
        not already in the cache *)
     let add_no_remove cache k v =
-      ignore (Dlist.add k cache.pointers);
+      ignore (Dlist.add k cache.pointers : A.key option);
       match Dlist.newest cache.pointers with
       | None -> assert false
       | Some n -> H.add cache.table k (v, n)
@@ -465,7 +465,7 @@ functor
         cache.finder k >>= fun r ->
         (try
            (* it may have been added during cache.finder *)
-           ignore (find_in_cache cache k)
+           ignore (find_in_cache cache k : A.value)
          with Not_found -> add_no_remove cache k r);
         Lwt.return r
 

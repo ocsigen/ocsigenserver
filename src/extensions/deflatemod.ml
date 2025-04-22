@@ -86,7 +86,7 @@ let rec output oz f buf pos len =
   else if len = 0
   then next_cont oz f
   else
-    let _, used_in, used_out =
+    let (_ : bool), used_in, used_out =
       try
         Zlib.deflate oz.stream
           (Bytes.unsafe_of_string buf)
@@ -133,7 +133,7 @@ and next_cont oz stream =
         else
           (* no more input, deflates only what were left because output buffer
            * was full *)
-          let finished, _, used_out =
+          let finished, (_ : int), used_out =
             Zlib.deflate oz.stream oz.buf 0 0 oz.buf oz.pos oz.avail
               Zlib.Z_FINISH
           in
