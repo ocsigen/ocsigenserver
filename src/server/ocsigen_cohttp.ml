@@ -22,29 +22,10 @@ let _print_request fmt request =
 
 let connections = Hashtbl.create 256
 
-let ( get_number_of_connected
-    , incr_connected
-    , decr_connected
-    , _wait_fewer_connected )
-  =
+let get_number_of_connected, incr_connected, decr_connected =
+  (* TODO: Use Atomic once the 4.12 dependency is acceptable. *)
   let connected = ref 0 in
-  let maxr = ref (-1000) in
-  let mvar = Lwt_mvar.create_empty () in
-  ( (fun () -> !connected)
-  , (fun n -> connected := !connected + n)
-  , (fun () ->
-      let c = !connected in
-      connected := c - 1;
-      if !connected < 0 then exit 1;
-      if c = !maxr
-      then (
-        Lwt_log.ign_warning ~section "Number of connections now ok";
-        maxr := -1000;
-        Lwt_mvar.put mvar ())
-      else Lwt.return ())
-  , fun max ->
-      maxr := max;
-      Lwt_mvar.take mvar )
+  (fun () -> !connected), (fun () -> incr connected), fun () -> decr connected
 
 exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
 
@@ -116,7 +97,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
     with Not_found ->
       let ((connection_closed, _) as p) = Lwt.wait () in
       Hashtbl.add connections conn p;
-      incr_connected 1;
+      incr_connected ();
       connection_closed
   in
   let handle_error exn =
@@ -212,7 +193,7 @@ let conn_closed (_flow, conn) =
       (Cohttp.Connection.to_string conn);
     Lwt.wakeup (snd (Hashtbl.find connections conn)) ();
     Hashtbl.remove connections conn;
-    Lwt.async decr_connected
+    decr_connected ()
   with Not_found -> ()
 
 let stop, stop_wakener = Lwt.wait ()
