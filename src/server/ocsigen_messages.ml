@@ -18,7 +18,8 @@
 
 (** Writing messages in the logs *)
 
-let ( >>= ) = Lwt.bind
+open Lwt.Infix
+
 let access_file = "access.log"
 let warning_file = "warnings.log"
 let error_file = "errors.log"

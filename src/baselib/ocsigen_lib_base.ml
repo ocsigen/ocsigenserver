@@ -23,8 +23,8 @@ exception Ocsigen_Request_too_long
 
 external id : 'a -> 'a = "%identity"
 
-let ( >>= ) = Lwt.bind
-let ( >|= ) = Lwt.( >|= )
+include Lwt.Infix
+
 let ( !! ) = Lazy.force
 let ( |> ) x f = f x
 let ( @@ ) f x = f x
@@ -62,17 +62,6 @@ module Option = struct
   let return x = Some x
   let bind opt k = match opt with Some x -> k x | None -> None
   let to_list = function None -> [] | Some v -> [v]
-
-  module Lwt = struct
-    let map f = function
-      | Some x -> f x >>= fun v -> Lwt.return (Some v)
-      | None -> Lwt.return None
-
-    let get f = function Some x -> Lwt.return x | None -> f ()
-    let get' a = function Some x -> Lwt.return x | None -> a
-    let iter f = function Some x -> f x | None -> Lwt.return ()
-    let bind opt k = match opt with Some x -> k x | None -> Lwt.return None
-  end
 end
 
 module List = struct
