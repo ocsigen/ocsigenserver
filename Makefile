@@ -8,7 +8,8 @@ default all: build
 
 .PHONY: build
 build:
-	${MAKE} -C src
+	dune build -p ocsigenserver
+	${MAKE} -C src/server build
 doc:
 	$(MAKE) -C doc
 
@@ -28,13 +29,14 @@ top:
 ### Cleaning ###
 
 clean: clean.local
-	${MAKE} -C src clean
+	${MAKE} -C src/server clean
 
 clean.local:
+	dune clean
 	-rm -f ocsigenserver-*.tar.gz
 
 distclean: clean.local
-	${MAKE} -C src distclean
+	${MAKE} -C src/server distclean
 	-make -C doc clean
 	-rm Makefile.config
 	-rm -f *~ \#* .\#*
@@ -76,9 +78,9 @@ install.files:
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
 	 ## Configuration files
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
-	${INSTALL} -m ${INSTALL_MOD_644} ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
+	${INSTALL} -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
 	[ -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf ] || \
-	  { $(INSTALL) -m ${INSTALL_MOD_644} ocsigenserver.conf.sample \
+	  { $(INSTALL) -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample \
 		$(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory

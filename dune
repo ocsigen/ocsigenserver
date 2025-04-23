@@ -2,3 +2,26 @@
  (_
   (flags
    (:standard -w -69))))
+
+(rule
+ (target ocsigenserver.conf.sample)
+ (action
+  (with-stdout-to
+   %{target}
+   (run src/files/ocsigenserver.conf/gen.exe sample))))
+
+(install
+ (files ocsigenserver.conf.sample)
+ (section etc)
+ (package ocsigenserver))
+
+(subdir
+ local/etc
+ (rule
+  (mode
+   (promote (until-clean)))
+  (target ocsigenserver.conf)
+  (action
+   (with-stdout-to
+    %{target}
+    (run ../../src/files/ocsigenserver.conf/gen.exe local)))))
