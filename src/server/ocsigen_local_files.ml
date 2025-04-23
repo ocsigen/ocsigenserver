@@ -102,7 +102,7 @@ let check_dotdot =
     try
       ignore
         (Ocsigen_lib.Netstring_pcre.search_forward regexp filename 0
-         : int * Re.Group.t);
+         : int * 'groups);
       false
     with Not_found -> true
 

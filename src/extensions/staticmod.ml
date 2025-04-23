@@ -61,7 +61,7 @@ let correct_user_local_file =
     try
       ignore
         (Ocsigen_lib.Netstring_pcre.search_forward regexp path 0
-         : int * Pcre.substrings);
+         : int * 'groups);
       false
     with Not_found -> true
 

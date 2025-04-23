@@ -189,7 +189,7 @@ let substream delim s =
           then enlarge_stream stre >>= aux
           else
             try
-              let p, (_ : Re.Group.t) =
+              let p, (_ : 'groups) =
                 Ocsigen_lib.Netstring_pcre.search_forward rdelim s 0
               in
               cont (String.sub s 0 p) (fun () ->
