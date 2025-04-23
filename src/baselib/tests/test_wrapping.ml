@@ -1,5 +1,5 @@
 (* ocamlfind ocamlopt -linkpkg -package react -g -I ../ ../wrapping.cmxa test_wrapping.ml -o test_wrapping *)
-let _ = Printexc.record_backtrace true
+let () = Printexc.record_backtrace true
 
 (*** simple wrap test ***)
 

@@ -636,12 +636,12 @@ module Configuration = struct
     raise (Error_in_user_config_file ("No PCDATA allowed in tag " ^ in_tag))
 
   let check_attribute_occurrence ~in_tag attributes = function
-    | name, {attribute_obligatory = true; _} -> (
-      try ignore (List.assoc name attributes)
-      with Not_found ->
-        raise
-          (Error_in_user_config_file
-             ("Obligatory attribute " ^ name ^ " not in tag " ^ in_tag)))
+    | name, {attribute_obligatory = true; _} ->
+        if not (List.mem_assoc name attributes)
+        then
+          raise
+            (Error_in_user_config_file
+               ("Obligatory attribute " ^ name ^ " not in tag " ^ in_tag))
     | _ -> ()
 
   let check_element_occurrence ~in_tag elements = function

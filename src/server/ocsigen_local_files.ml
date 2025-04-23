@@ -100,7 +100,9 @@ let check_dotdot =
        In URLs, .. have already been removed by the server,
        but the filename may come from somewhere else than URLs ... *)
     try
-      ignore (Ocsigen_lib.Netstring_pcre.search_forward regexp filename 0);
+      ignore
+        (Ocsigen_lib.Netstring_pcre.search_forward regexp filename 0
+         : int * 'groups);
       false
     with Not_found -> true
 

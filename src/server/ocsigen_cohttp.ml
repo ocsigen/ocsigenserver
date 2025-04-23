@@ -204,7 +204,7 @@ let shutdown timeout =
     | Some f -> fun () -> Lwt_unix.sleep f
     | None -> fun () -> Lwt.return ()
   in
-  ignore (Lwt.pick [process (); stop] >>= fun () -> exit 0)
+  ignore (Lwt.pick [process (); stop] >>= fun () -> exit 0 : unit Lwt.t)
 
 let service ?ssl ~address ~port ~connector () =
   let tls_own_key =

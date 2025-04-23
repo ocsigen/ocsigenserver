@@ -130,11 +130,11 @@ module Netstring_pcre = struct
 
   let matched_group result n _ =
     if n < 0 || n >= Re.Group.nb_groups result then raise Not_found;
-    ignore (Pcre.get_substring_ofs result n);
+    ignore (Pcre.get_substring_ofs result n : int * int);
     Pcre.get_substring result n
 
   let matched_string result _ =
-    ignore (Pcre.get_substring_ofs result 0);
+    ignore (Pcre.get_substring_ofs result 0 : int * int);
     Pcre.get_substring result 0
 
   let global_replace pat templ s = Re.replace pat ~f:(tr_templ templ) s
@@ -427,7 +427,9 @@ module Url = struct
       https, host, port, uri_string, path, query, get_params
 
   let prefix_and_path_of_t url =
-    let https, host, port, _, path, _, _ = parse url in
+    let https, host, port, (_ : uri), path, (_ : uri option), (_ : _ Lazy.t) =
+      parse url
+    in
     let https_str =
       match https with
       | None -> ""

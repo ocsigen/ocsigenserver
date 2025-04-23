@@ -86,7 +86,9 @@ let read_header ?downcase ?unfold ?strip s =
   in
   find_end_of_header s >>= fun (s, end_pos) ->
   let b = Ocsigen_stream.current_buffer s in
-  let h, _ = scan_header ?downcase ?unfold ?strip b ~start_pos:0 ~end_pos in
+  let h, (_ : int) =
+    scan_header ?downcase ?unfold ?strip b ~start_pos:0 ~end_pos
+  in
   Ocsigen_stream.skip s (Int64.of_int end_pos) >>= fun s -> Lwt.return (s, h)
 
 let lf_re = S.regexp "[\n]"
@@ -239,7 +241,7 @@ let counter =
     !c
 
 let field field content_disp =
-  let _, res =
+  let (_ : int), res =
     S.search_forward (S.regexp (field ^ "=.([^\"]*).;?")) content_disp 0
   in
   S.matched_group res 1 content_disp

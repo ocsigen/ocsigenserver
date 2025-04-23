@@ -24,14 +24,14 @@ let () = Random.self_init ()
 
 (* Without the following line, it stops with "Broken Pipe" without
    raising an exception ... *)
-let _ = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
+let () = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
 
 (* Exit gracefully on SIGINT so that profiling will work *)
-let _ = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
+let () = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
 let section = Lwt_log.Section.make "ocsigen:main"
 
 (* Initialize exception handler for Lwt timeouts: *)
-let _ =
+let () =
   Lwt_timeout.set_exn_handler (fun e ->
     Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt timeout")
 
@@ -97,7 +97,7 @@ let reload ?file () =
    with e -> Lwt_log.ign_error ~section (fst (errmsg e)));
   Lwt_log.ign_warning ~section "Config file reloaded"
 
-let _ =
+let () =
   let f _s = function
     | ["reopen_logs"] ->
         Ocsigen_messages.open_files () >>= fun () ->
@@ -248,13 +248,13 @@ let main config =
       let commandpipe = Ocsigen_config.get_command_pipe () in
       let with_commandpipe =
         try
-          ignore (Unix.stat commandpipe);
+          ignore (Unix.stat commandpipe : Unix.stats);
           true
         with Unix.Unix_error _ -> (
           try
             let umask = Unix.umask 0 in
             Unix.mkfifo commandpipe 0o660;
-            ignore (Unix.umask umask);
+            ignore (Unix.umask umask : int);
             Lwt_log.ign_warning ~section "Command pipe created";
             true
           with e ->
@@ -270,9 +270,8 @@ let main config =
         raise
           (Ocsigen_config.Config_file_error
              "maxthreads should be greater than minthreads");
-      ignore
-        (Lwt_preemptive.init minthreads maxthreads (fun s ->
-           Lwt_log.ign_error ~section s));
+      Lwt_preemptive.init minthreads maxthreads (fun s ->
+        Lwt_log.ign_error ~section s);
       (Lwt.async_exception_hook :=
          fun e ->
            (* replace the default "exit 2" behaviour *)
@@ -291,7 +290,7 @@ let main config =
         Unix.close devnull;
         Unix.close Unix.stdin);
       (* detach from the terminal *)
-      if Ocsigen_config.get_daemon () then ignore (Unix.setsid ());
+      if Ocsigen_config.get_daemon () then ignore (Unix.setsid () : int);
       Ocsigen_extensions.end_initialisation ();
       (if with_commandpipe
        then
@@ -325,7 +324,7 @@ let main config =
                    Lwt.fail e)
            >>= f
          in
-         ignore (f ()));
+         ignore (f () : 'a Lwt.t));
       Lwt_main.run
       @@ Lwt.join
            (List.map
@@ -369,7 +368,7 @@ let main config =
           let f =
             Unix.openfile p [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC] 0o640
           in
-          ignore (Unix.write_substring f spid 0 len);
+          ignore (Unix.write_substring f spid 0 len : int);
           Unix.close f
     in
     (* set_passwd_if_needed sslinfo; *)

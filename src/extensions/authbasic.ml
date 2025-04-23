@@ -42,7 +42,7 @@ let register_basic_authentication_method, get_basic_authentication_method =
     fun config -> !fun_auth config )
 
 (* Basic authentication with a predefined login/password (example) *)
-let _ =
+let () =
   let open Xml in
   register_basic_authentication_method @@ function
   | Element ("plain", [("login", login); ("password", password)], _) ->
