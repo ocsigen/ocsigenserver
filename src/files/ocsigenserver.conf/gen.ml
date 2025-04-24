@@ -86,17 +86,17 @@ let deps () =
   let packages =
     "lwt_ssl,bytes,lwt.unix,logs,logs-syslog.unix,syslog-message,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix"
   in
-  let inp =
-    Unix.open_process_in ("ocamlfind query -p-format -recursive " ^ packages)
-  in
   let deps = ref [] in
+  let cmd = "ocamlfind query -p-format -recursive " ^ packages in
+  let inp = Unix.open_process_in cmd in
   (try
      while true do
        deps := input_line inp :: !deps
      done
    with End_of_file -> ());
-  ignore (Unix.close_process_in inp);
-  !deps @ extra_deps
+  match Unix.close_process_in inp with
+  | WEXITED 0 -> !deps @ extra_deps
+  | _ -> failwith ("Command failed: " ^ cmd)
 
 (* Encode a string as a string literal that can be included in an ocaml file. *)
 let str = Printf.sprintf "%S"
