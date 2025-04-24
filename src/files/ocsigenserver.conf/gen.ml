@@ -84,7 +84,7 @@ let deps () =
     ; "ocsigenserver" ]
   in
   let packages =
-    "lwt_ssl,bytes,lwt.unix,lwt_log,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix,hmap"
+    "lwt_ssl,bytes,lwt.unix,logs,logs-syslog.unix,syslog-message,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix"
   in
   let inp =
     Unix.open_process_in ("ocamlfind query -p-format -recursive " ^ packages)
