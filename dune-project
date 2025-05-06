@@ -23,13 +23,15 @@
   cryptokit
   (ipaddr (>= 2.1))
   (lwt (>= 3.0))
-  lwt_log
   lwt_react
   lwt_ssl
   ocamlfind
   (re (>= 1.11))
   react
   (ssl (>= 0.5.8))
-  xml-light)
+  xml-light
+  logs
+  logs-syslog
+  syslog-message)
  (conflicts
   (pgocaml (< 2.2))))

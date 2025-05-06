@@ -22,11 +22,11 @@
  (libraries
   str
   findlib
-  lwt_log
   lwt.unix
   cryptokit
   re
   ocsigen_lib_base
+  logs
   (select
    dynlink_wrapper.ml
    from

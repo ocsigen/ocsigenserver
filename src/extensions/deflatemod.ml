@@ -22,7 +22,7 @@
 
 open Lwt.Infix
 
-let section = Lwt_log.Section.make "ocsigen:ext:deflate"
+let section = Logs.Src.create "ocsigen:ext:deflate"
 
 (* Content-type *)
 type filter = [`Type of string option * string option | `Extension of string]
@@ -81,7 +81,8 @@ let rec output oz f buf pos len =
   if oz.avail = 0
   then (
     let cont () = output oz f buf pos len in
-    Lwt_log.ign_info ~section "Flushing because output buffer is full";
+    Logs.info ~src:section (fun fmt ->
+      fmt "Flushing because output buffer is full");
     flush oz cont)
   else if len = 0
   then next_cont oz f
@@ -115,7 +116,7 @@ and flush oz cont =
       then Bytes.to_string oz.buf
       else Bytes.sub_string oz.buf 0 len
     in
-    Lwt_log.ign_info ~section "Flushing!";
+    Logs.info ~src:section (fun fmt -> fmt "Flushing!");
     oz.pos <- 0;
     oz.avail <- buf_len;
     Ocsigen_stream.cont s cont
@@ -124,7 +125,8 @@ and next_cont oz stream =
   Ocsigen_stream.next (stream : string Ocsigen_stream.stream) >>= fun e ->
   match e with
   | Ocsigen_stream.Finished None ->
-      Lwt_log.ign_info ~section "End of stream: big cleaning for zlib";
+      Logs.info ~src:section (fun fmt ->
+        fmt "End of stream: big cleaning for zlib");
       (* loop until there is nothing left to compress and flush *)
       let rec finish () =
         (* buffer full *)
@@ -145,7 +147,8 @@ and next_cont oz stream =
         then flush oz write_trailer
         else (
           if oz.add_trailer then (write_int32 oz oz.crc; write_int32 oz oz.size);
-          Lwt_log.ign_info ~section "Zlib.deflate finished, last flush";
+          Logs.info ~src:section (fun fmt ->
+            fmt "Zlib.deflate finished, last flush");
           flush oz (fun () -> Ocsigen_stream.empty None))
       in
       finish ()
@@ -162,7 +165,7 @@ let compress deflate stream : string Ocsigen_stream.t =
      (* ignore errors, deflate_end cleans everything anyway *)
      | Zlib.Error _ ->
        ());
-    Lwt.return (Lwt_log.ign_info ~section "Zlib stream closed")
+    Lwt.return (Logs.info ~src:section (fun fmt -> fmt "Zlib stream closed"))
   in
   let oz =
     let buffer_size = !buffer_size in
@@ -175,7 +178,7 @@ let compress deflate stream : string Ocsigen_stream.t =
     ; add_trailer = not deflate }
   in
   let new_stream () = next_cont oz (Ocsigen_stream.get stream) in
-  Lwt_log.ign_info ~section "Zlib stream initialized";
+  Logs.info ~src:section (fun fmt -> fmt "Zlib stream initialized");
   if deflate
   then Ocsigen_stream.make ~finalize new_stream
   else

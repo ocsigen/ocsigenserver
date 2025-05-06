@@ -45,7 +45,7 @@ val is_native : bool
 val native_ext : string
 val builtin_packages : String.Set.t
 val set_logdir : string -> unit
-val set_syslog_facility : Lwt_log.syslog_facility option -> unit
+val set_syslog_facility : Syslog_message.facility option -> unit
 val set_configfile : string -> unit
 val set_pidfile : string -> unit
 val set_mimefile : string -> unit
@@ -81,7 +81,7 @@ val set_ssl_info : ssl_info option -> unit
 val set_ports : (socket_type * int) list -> unit
 val set_ssl_ports : (socket_type * int) list -> unit
 val get_logdir : unit -> string
-val get_syslog_facility : unit -> Lwt_log.syslog_facility option
+val get_syslog_facility : unit -> Syslog_message.facility option
 val get_config_file : unit -> string
 val get_pidfile : unit -> string option
 val get_mimefile : unit -> string

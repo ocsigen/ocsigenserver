@@ -33,6 +33,4 @@ val run :
     The optional parameter correspond to the options of the configuration
     file described {% <<a_manual chapter="staticmod"|here>>%}.*)
 
-val section : Lwt_log_core.section
-(** Use {!Lwt_log.Section.set_level} in order to select the log level for
-   this module *)
+val section : Logs.src

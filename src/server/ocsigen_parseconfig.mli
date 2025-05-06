@@ -23,8 +23,7 @@
 
 (**/**)
 
-val section : Lwt_log_core.section
-(** use Lwt_log.Section.set_level in order to debug *)
+val section : Logs.src
 
 val parse_size_tag : string -> string -> int64 option
 (** [parse_size_tag tag s] parses a size.

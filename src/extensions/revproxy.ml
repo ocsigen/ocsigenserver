@@ -25,7 +25,7 @@
 open Lwt.Infix
 module Pcre = Re.Pcre
 
-let section = Lwt_log.Section.make "ocsigen:ext:revproxy"
+let section = Logs.Src.create "ocsigen:ext:revproxy"
 
 type redirection =
   { regexp : Pcre.regexp
@@ -54,7 +54,7 @@ let gen dir = function
       Lwt.catch
         (* Is it a redirection? *)
         (fun () ->
-           Lwt_log.ign_info ~section "Is it a redirection?";
+           Logs.info ~src:section (fun fmt -> fmt "Is it a redirection?");
            let dest =
              Ocsigen_extensions.find_redirection dir.regexp dir.full_url
                dir.dest request_info
@@ -82,9 +82,10 @@ let gen dir = function
                     ("Revproxy : error in destination URL " ^ dest ^ " - "
                    ^ Printexc.to_string e))
            in
-           Lwt_log.ign_info_f ~section "YES! Redirection to http%s://%s:%d/%s"
-             (if https then "s" else "")
-             host port path;
+           Logs.info ~src:section (fun fmt ->
+             fmt "YES! Redirection to http%s://%s:%d/%s"
+               (if https then "s" else "")
+               host port path);
            Ocsigen_lib.Ip_address.get_inet_addr host >>= fun _inet_addr ->
            (* It is now safe to start processing next request.
 

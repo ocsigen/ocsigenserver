@@ -20,7 +20,7 @@
 
 open Lwt.Infix
 
-let section = Lwt_log.Section.make "ocsigen:ext:access-control"
+let section = Logs.Src.create "ocsigen:ext:access-control"
 
 type auth = string -> string -> bool Lwt.t
 
@@ -56,10 +56,10 @@ let gen ~realm ~auth rs =
       Cohttp.Header.init_with "WWW-Authenticate"
         (Printf.sprintf "Basic realm=\"%s\"" realm)
     in
-    Lwt_log.ign_info ~section "AUTH: invalid credentials!";
+    Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid credentials!");
     Lwt.fail (Ocsigen_cohttp.Ext_http_error (`Unauthorized, None, Some h))
   and invalid_header () =
-    Lwt_log.ign_info ~section "AUTH: invalid Authorization header";
+    Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid Authorization header");
     Lwt.fail
       (Ocsigen_cohttp.Ocsigen_http_error (Ocsigen_cookie_map.empty, `Bad_request))
   in

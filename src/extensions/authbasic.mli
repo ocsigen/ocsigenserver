@@ -56,8 +56,7 @@ let _ =
     very naive one (authentication with a single user/password, given
     in the configuration file) is provided. *)
 
-val section : Lwt_log_core.section
-(** use [Lwt_log.Section.set_level] in order to set the log level *)
+val section : Logs.src
 
 type auth = string -> string -> bool Lwt.t
 

@@ -25,7 +25,7 @@ open Xml
 open Ocsigen_config
 module Netstring_pcre = Ocsigen_lib.Netstring_pcre
 
-let section = Lwt_log.Section.make "ocsigen:config"
+let section = Logs.Src.create "ocsigen:config"
 
 let blah_of_string f tag s =
   try f (Ocsigen_lib.String.remove_spaces s 0 (String.length s - 1))
@@ -46,9 +46,10 @@ let default_default_hostname =
           [Unix.AI_CANONNAME; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]))
       .Unix.ai_canonname
   with Failure _ ->
-    Lwt_log.ign_warning_f ~section
-      "Cannot determine default host name. Will use \"%s\" to create absolute links or redirections dynamically if you do not set <host defaulthostname=\"...\" ...> in config file."
-      hostname;
+    Logs.warn ~src:section (fun fmt ->
+      fmt
+        "Cannot determine default host name. Will use \"%s\" to create absolute links or redirections dynamically if you do not set <host defaulthostname=\"...\" ...> in config file."
+        hostname);
     (*VVV Is it the right behaviour? *)
     hostname
 
@@ -153,8 +154,9 @@ let parser_config =
         (match ll with
         | [] -> ()
         | _ ->
-            Lwt_log.ign_warning ~section
-              "At most one <server> tag possible in config file. Ignoring trailing data.");
+            Logs.warn ~src:section (fun fmt ->
+              fmt
+                "At most one <server> tag possible in config file. Ignoring trailing data."));
         parse_servers (n @ [nouveau]) []
         (* ll *)
         (* Multiple server not supported any more *)
@@ -236,9 +238,10 @@ let get_defaulthostname ~defaulthostname ~host =
         | _ :: q -> aux q
       in
       let host = aux host in
-      Lwt_log.ign_warning_f ~section
-        "While parsing config file, tag <host>: No defaulthostname, assuming it is \"%s\""
-        host;
+      Logs.warn ~src:section (fun fmt ->
+        fmt
+          "While parsing config file, tag <host>: No defaulthostname, assuming it is \"%s\""
+          host);
       if correct_hostname host
       then host
       else
@@ -397,11 +400,14 @@ let rec later_pass_extconf dir =
       match
         let filename = dir ^ "/" ^ s in
         try
-          Lwt_log.ign_info_f ~section "Parsing configuration file %s" filename;
+          Logs.info ~src:section (fun fmt ->
+            fmt "Parsing configuration file %s" filename);
           parse_ext filename
         with e ->
-          Lwt_log.ign_error_f ~section ~exn:e
-            "Error while loading configuration file %s (ignored)" filename;
+          Logs.err ~src:section (fun fmt ->
+            fmt
+              ("Error while loading configuration file %s (ignored)" ^^ "@\n%s")
+              filename (Printexc.to_string e));
           []
       with
       | [] -> acc
@@ -412,8 +418,10 @@ let rec later_pass_extconf dir =
     let files = Sys.readdir dir in
     Array.sort compare files; Array.fold_left f [] files
   with Sys_error _ as e ->
-    Lwt_log.ign_error ~section ~exn:e
-      "Error while loading configuration file (ignored)";
+    Logs.err ~src:section (fun fmt ->
+      fmt
+        ("Error while loading configuration file (ignored)" ^^ "@\n%s")
+        (Printexc.to_string e));
     []
 
 (* Config file is parsed twice. This is the second parsing (site
@@ -537,7 +545,7 @@ let parse_port =
               , int_of_string "port" (get r 2) )
           | None -> `All, int_of_string "port" s)))
 
-let parse_facility = function
+let parse_lwt_log_facility = function
   | "auth" -> `Auth
   | "authpriv" -> `Authpriv
   | "console" -> `Console
@@ -562,6 +570,39 @@ let parse_facility = function
   | "uucp" -> `UUCP
   | "user" -> `User
   | t -> raise (Config_file_error ("Unknown " ^ t ^ " facility in <syslog>"))
+
+let parse_facility s =
+  (* Translating from [Lwt_log] facility type to [Syslog_message]. *)
+  let facility_code = function
+    | `Kernel -> 0
+    | `User -> 1
+    | `Mail -> 2
+    | `Daemon -> 3
+    | `Auth -> 4
+    | `Syslog -> 5
+    | `LPR -> 6
+    | `News -> 7
+    | `UUCP -> 8
+    | `Cron -> 9
+    | `Authpriv -> 10
+    | `FTP -> 11
+    | `NTP -> 12
+    | `Security -> 13
+    | `Console -> 14
+    | `Local0 -> 16
+    | `Local1 -> 17
+    | `Local2 -> 18
+    | `Local3 -> 19
+    | `Local4 -> 20
+    | `Local5 -> 21
+    | `Local6 -> 22
+    | `Local7 -> 23
+  in
+  match
+    Syslog_message.facility_of_int (facility_code (parse_lwt_log_facility s))
+  with
+  | Some s -> s
+  | None -> raise (Config_file_error ("Unknown " ^ s ^ " facility in <syslog>"))
 
 (* First parsing of config file *)
 
@@ -653,8 +694,9 @@ let first_pass c =
             (Config_file_error
                "Only one ssl certificate for each server supported for now"))
     | Element ("user", [], _) :: ll | Element ("group", [], _) :: ll ->
-        Lwt_log.ign_warning ~section
-          "Config file: <user> and <group> deprecated. Please do not launch as root.";
+        Logs.warn ~src:section (fun fmt ->
+          fmt
+            "Config file: <user> and <group> deprecated. Please do not launch as root.");
         aux ssl ports sslports ll
     | Element (("commandpipe" as st), [], p) :: ll ->
         set_command_pipe (parse_string_tag st p);

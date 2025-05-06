@@ -8,7 +8,7 @@ open Lwt.Infix
 module S = Ocsigen_lib.Netstring_pcre
 module Pcre = Re.Pcre
 
-let section = Lwt_log.Section.make "ocsigen:server:multipart"
+let section = Logs.Src.create "ocsigen:server:multipart"
 
 exception Multipart_error of string
 exception Ocsigen_upload_forbidden
@@ -332,7 +332,8 @@ let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
               [Unix.O_CREAT; Unix.O_TRUNC; Unix.O_WRONLY; Unix.O_NONBLOCK]
               0o666
           in
-          Lwt_log.ign_info ~section ("Upload file opened: " ^ fname);
+          Logs.info ~src:section (fun fmt ->
+            fmt "%s" ("Upload file opened: " ^ fname));
           filenames := fname :: !filenames;
           p_name, `Some_file (fname, store, fd, content_type)
       | None -> raise Ocsigen_upload_forbidden

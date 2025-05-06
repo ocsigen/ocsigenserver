@@ -28,24 +28,27 @@ let () = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
 
 (* Exit gracefully on SIGINT so that profiling will work *)
 let () = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
-let section = Lwt_log.Section.make "ocsigen:main"
+let section = Logs.Src.create "ocsigen:main"
 
 (* Initialize exception handler for Lwt timeouts: *)
 let () =
   Lwt_timeout.set_exn_handler (fun e ->
-    Lwt_log.ign_error ~section ~exn:e "Uncaught Exception after lwt timeout")
+    Logs.err ~src:section (fun fmt ->
+      fmt
+        ("Uncaught Exception after lwt timeout" ^^ "@\n%s")
+        (Printexc.to_string e)))
 
 let _warn sockaddr s =
-  Lwt_log.ign_warning_f ~section "While talking to %a:%s"
-    (fun () sockaddr ->
-       Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
-    sockaddr s
+  Logs.warn ~src:section (fun fmt ->
+    fmt "While talking to %s:%s"
+      (Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
+      s)
 
 let _dbg sockaddr s =
-  Lwt_log.ign_info_f ~section "While talking to %a:%s"
-    (fun () sockaddr ->
-       Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
-    sockaddr s
+  Logs.info ~src:section (fun fmt ->
+    fmt "While talking to %s:%s"
+      (Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
+      s)
 
 (* fatal errors messages *)
 let errmsg = function
@@ -79,12 +82,12 @@ let reload_conf s =
     Ocsigen_extensions.end_initialisation ()
   with e ->
     Ocsigen_extensions.end_initialisation ();
-    Lwt_log.ign_error ~section (fst (errmsg e))
+    Logs.err ~src:section (fun fmt -> fmt "%s" (fst (errmsg e)))
 
 (* reloading the config file *)
 let reload ?file () =
   (* That function cannot be interrupted??? *)
-  Lwt_log.ign_warning ~section "Reloading config file";
+  Logs.warn ~src:section (fun fmt -> fmt "Reloading config file");
   (try
      match Ocsigen_parseconfig.parse_config ?file () with
      | [] -> ()
@@ -94,14 +97,14 @@ let reload ?file () =
      match Ocsigen_parseconfig.parse_config ?file () with
      | [] -> ()
      | s :: _ -> reload_conf s
-   with e -> Lwt_log.ign_error ~section (fst (errmsg e)));
-  Lwt_log.ign_warning ~section "Config file reloaded"
+   with e -> Logs.err ~src:section (fun fmt -> fmt "%s" (fst (errmsg e))));
+  Logs.warn ~src:section (fun fmt -> fmt "Config file reloaded")
 
 let () =
   let f _s = function
     | ["reopen_logs"] ->
         Ocsigen_messages.open_files () >>= fun () ->
-        Lwt_log.ign_warning ~section "Log files reopened";
+        Logs.warn ~src:section (fun fmt -> fmt "Log files reopened");
         Lwt.return ()
     | ["reload"] -> reload (); Lwt.return ()
     | ["reload"; file] -> reload ~file (); Lwt.return ()
@@ -113,7 +116,8 @@ let () =
         Lwt.return ()
     | ["gc"] ->
         Gc.compact ();
-        Lwt_log.ign_warning ~section "Heap compaction requested by user";
+        Logs.warn ~src:section (fun fmt ->
+          fmt "Heap compaction requested by user");
         Lwt.return ()
     | ["clearcache"] ->
         Ocsigen_cache.clear_all_caches ();
@@ -186,7 +190,8 @@ let site ?charset path instructions vh config_info parent_path =
 let main_loop_is_running = ref false
 
 let main config =
-  if !main_loop_is_running then Lwt_log.ign_fatal "Cannot run main loop twice";
+  if !main_loop_is_running
+  then Logs.err (fun fmt -> fmt "Cannot run main loop twice");
   main_loop_is_running := true;
   try
     (* initialization functions for modules (Ocsigen extensions or application
@@ -255,12 +260,14 @@ let main config =
             let umask = Unix.umask 0 in
             Unix.mkfifo commandpipe 0o660;
             ignore (Unix.umask umask : int);
-            Lwt_log.ign_warning ~section "Command pipe created";
+            Logs.warn ~src:section (fun fmt -> fmt "Command pipe created");
             true
           with e ->
-            Lwt_log.ign_warning_f ~section ~exn:e
-              "Cannot create the command pipe %s. I will continue without."
-              commandpipe;
+            Logs.warn ~src:section (fun fmt ->
+              fmt
+                ("Cannot create the command pipe %s. I will continue without."
+               ^^ "@\n%s")
+                commandpipe (Printexc.to_string e));
             false)
       in
       let minthreads = Ocsigen_config.get_minthreads ()
@@ -271,13 +278,15 @@ let main config =
           (Ocsigen_config.Config_file_error
              "maxthreads should be greater than minthreads");
       Lwt_preemptive.init minthreads maxthreads (fun s ->
-        Lwt_log.ign_error ~section s);
+        Logs.err ~src:section (fun fmt -> fmt "%s" s));
       (Lwt.async_exception_hook :=
          fun e ->
            (* replace the default "exit 2" behaviour *)
            match e with
            | Unix.Unix_error (Unix.EPIPE, _, _) -> ()
-           | _ -> Lwt_log.ign_error ~section ~exn:e "Uncaught Exception");
+           | _ ->
+               Logs.err ~src:section (fun fmt ->
+                 fmt ("Uncaught Exception" ^^ "@\n%s") (Printexc.to_string e)));
       (* Now apply host configuration: *)
       config ();
       if Ocsigen_config.get_silent ()
@@ -316,11 +325,13 @@ let main config =
                 Ocsigen_command.get_command_function () ?prefix s c)
              (function
                | Ocsigen_command.Unknown_command ->
-                   Lwt_log.ign_warning ~section "Unknown command";
+                   Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
                    Lwt.return ()
                | e ->
-                   Lwt_log.ign_error ~section ~exn:e
-                     "Uncaught Exception after command";
+                   Logs.err ~src:section (fun fmt ->
+                     fmt
+                       ("Uncaught Exception after command" ^^ "@\n%s")
+                       (Printexc.to_string e));
                    Lwt.fail e)
            >>= f
          in
@@ -409,7 +420,8 @@ let exec config =
           libraries. Seems it does not work :-/ *)
         Dynlink_wrapper.prohibit ["Ocsigen_extensions.R"])
   | _ :: _ :: _ ->
-      Lwt_log.ign_warning ~section "Multiple servers not supported anymore"
+      Logs.warn ~src:section (fun fmt ->
+        fmt "Multiple servers not supported anymore")
 (* Multiple servers not supported any more *)
 
 let start

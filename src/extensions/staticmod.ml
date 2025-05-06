@@ -22,7 +22,7 @@ open Lwt.Infix
 module Pcre = Re.Pcre
 
 let name = "staticmod"
-let section = Lwt_log.Section.make "ocsigen:ext:staticmod"
+let section = Logs.Src.create "ocsigen:ext:staticmod"
 
 exception Not_concerned
 
@@ -128,7 +128,7 @@ let gen ~usermode ?cache dir = function
   | Ocsigen_extensions.Req_not_found
       (err, ({Ocsigen_extensions.request_info; _} as request)) ->
       let try_block () =
-        Lwt_log.ign_info ~section "Is it a static file?";
+        Logs.info ~src:section (fun fmt -> fmt "Is it a static file?");
         let status_filter, page =
           let pathstring =
             Ocsigen_lib.Url.string_of_url_path ~encode:false

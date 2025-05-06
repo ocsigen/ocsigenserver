@@ -20,7 +20,7 @@
 (* Display of a local file or directory. Currently used in staticmod
    and eliom_predefmod *)
 
-let section = Lwt_log.Section.make "ocsigen:local-file"
+let section = Logs.Src.create "ocsigen:local-file"
 
 exception Failed_403
 exception Failed_404
@@ -111,7 +111,8 @@ let can_send filename request =
     Ocsigen_lib.Url.split_path filename
     |> Ocsigen_lib.Url.norm_path |> Ocsigen_lib.Url.join_path
   in
-  Lwt_log.ign_info_f ~section "checking if file %s can be sent" filename;
+  Logs.info ~src:section (fun fmt ->
+    fmt "checking if file %s can be sent" filename);
   let matches arg =
     Ocsigen_lib.Netstring_pcre.string_match
       (Ocsigen_extensions.do_not_serve_to_regexp arg)
@@ -120,11 +121,11 @@ let can_send filename request =
   in
   if matches request.Ocsigen_extensions.do_not_serve_403
   then (
-    Lwt_log.ign_info ~section "this file is forbidden";
+    Logs.info ~src:section (fun fmt -> fmt "this file is forbidden");
     raise Failed_403)
   else if matches request.Ocsigen_extensions.do_not_serve_404
   then (
-    Lwt_log.ign_info ~section "this file must be hidden";
+    Logs.info ~src:section (fun fmt -> fmt "this file must be hidden");
     raise Failed_404)
 
 (* Return type of a request for a local file. The string argument
@@ -161,17 +162,19 @@ let resolve
     else filename
   in
   try
-    Lwt_log.ign_info_f ~section "Testing \"%s\"." filename;
+    Logs.info ~src:section (fun fmt -> fmt "Testing \"%s\"." filename);
     let stat = Unix.LargeFile.stat filename in
     let filename, stat =
       if stat.Unix.LargeFile.st_kind = Unix.S_DIR
       then
         if filename.[String.length filename - 1] <> '/'
         then (
-          (* In this case, [filename] is a directory but this is not visible in
+          Logs.info
+            ~src:
+              (* In this case, [filename] is a directory but this is not visible in
              its name as there is no final slash. We signal this fact to
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
-          Lwt_log.ign_info_f ~section "LocalFiles: %s is a directory" filename;
+              section (fun fmt -> fmt "LocalFiles: %s is a directory" filename);
           raise
             (Ocsigen_extensions.Ocsigen_is_dir
                (Ocsigen_extensions.new_url_of_directory_request request)))
@@ -181,16 +184,19 @@ let resolve
                 (* No suitable index, we try to list the directory *)
                 if request_config.Ocsigen_extensions.list_directory_content
                 then (
-                  Lwt_log.ign_info ~section "Displaying directory content";
+                  Logs.info ~src:section (fun fmt ->
+                    fmt "Displaying directory content");
                   filename, stat)
                 else (
-                  (* No suitable index *)
-                  Lwt_log.ign_info ~section "No index and no listing";
+                  Logs.info
+                    ~src:
+                      (* No suitable index *)
+                      section (fun fmt -> fmt "No index and no listing");
                   raise NotReadableDirectory)
             | e :: q -> (
                 let index = filename ^ e in
-                Lwt_log.ign_info_f ~section "Testing \"%s\" as possible index."
-                  index;
+                Logs.info ~src:section (fun fmt ->
+                  fmt "Testing \"%s\" as possible index." index);
                 try index, Unix.LargeFile.stat index
                 with Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q)
           in
@@ -199,8 +205,8 @@ let resolve
     in
     if not (check_dotdot ~filename)
     then (
-      Lwt_log.ign_info_f ~section "Filenames cannot contain .. as in \"%s\"."
-        filename;
+      Logs.info ~src:section (fun fmt ->
+        fmt "Filenames cannot contain .. as in \"%s\"." filename);
       raise Failed_403)
     else if
       check_symlinks ~filename ~no_check_for
@@ -209,16 +215,18 @@ let resolve
       can_send filename request_config;
       (* If the previous function did not fail, we are authorized to
          send this file *)
-      Lwt_log.ign_info_f ~section "Returning \"%s\"." filename;
+      Logs.info ~src:section (fun fmt -> fmt "Returning \"%s\"." filename);
       if stat.Unix.LargeFile.st_kind = Unix.S_REG
       then RFile filename
       else if stat.Unix.LargeFile.st_kind = Unix.S_DIR
       then RDir filename
       else raise Failed_404)
     else (
-      (* [filename] is accessed through as symlink which we should not
+      Logs.info
+        ~src:
+          (* [filename] is accessed through as symlink which we should not
          follow according to the current policy *)
-      Lwt_log.ign_info_f ~section "Failed symlink check for \"%s\"." filename;
+          section (fun fmt -> fmt "Failed symlink check for \"%s\"." filename);
       raise Failed_403)
   with
   (* We can get an EACCESS here, if are missing some rights on a directory *)

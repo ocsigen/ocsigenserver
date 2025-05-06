@@ -31,7 +31,7 @@ module Pcre = Re.Pcre
 
    This is probably NOT what we want... *)
 
-let section = Lwt_log.Section.make "ocsigen:ext:rewritemod"
+let section = Logs.Src.create "ocsigen:ext:rewritemod"
 
 exception Not_concerned
 
@@ -52,7 +52,7 @@ let gen regexp continue = function
       Lwt.return Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, ri) ->
       let try_block () =
-        Lwt_log.ign_info ~section "Is it a rewrite?";
+        Logs.info ~src:section (fun fmt -> fmt "Is it a rewrite?");
         let redir, full_rewrite =
           let ri = ri.Ocsigen_extensions.request_info in
           find_rewrite regexp
@@ -60,7 +60,7 @@ let gen regexp continue = function
             | None -> Ocsigen_request.sub_path_string ri
             | Some g -> Ocsigen_request.sub_path_string ri ^ "?" ^ g)
         in
-        Lwt_log.ign_info_f ~section "YES! rewrite to: %s" redir;
+        Logs.info ~src:section (fun fmt -> fmt "YES! rewrite to: %s" redir);
         if continue
         then
           Lwt.return
