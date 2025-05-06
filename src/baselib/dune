@@ -22,7 +22,6 @@
  (libraries
   str
   findlib
-  lwt_log
   lwt.unix
   cryptokit
   re
