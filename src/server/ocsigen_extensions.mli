@@ -21,7 +21,6 @@
 (** Extensions interface for Ocsigen Server *)
 
 val section : Logs.src
-(** use Lwt_log.Section.set_level in order to debug *)
 
 include module type of Ocsigen_command
 

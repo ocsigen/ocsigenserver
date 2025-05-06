@@ -19,7 +19,6 @@
 *)
 
 val section : Logs.src
-(** use Lwt_log.Section.set_level in order to debug *)
 
 val reload : ?file:string -> unit -> unit
 (** Reload the configuration of the server. The optional parameter

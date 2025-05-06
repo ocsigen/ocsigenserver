@@ -18,7 +18,6 @@
 *)
 
 val section : Logs.src
-(** use Lwt_log.Section.set_level in order to debug *)
 
 exception Failed_404
 (** The requested file does not exists *)

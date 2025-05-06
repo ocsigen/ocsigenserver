@@ -1,5 +1,4 @@
 val section : Logs.src
-(** use Lwt_log.Section.set_level in order to debug *)
 
 exception Ocsigen_http_error of Ocsigen_cookie_map.t * Cohttp.Code.status
 

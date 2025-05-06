@@ -46,4 +46,3 @@ val run :
     configuration file.  *)
 
 val section : Logs.src
-(** Use Lwt_log.Section.set_level in order to change the log level *)

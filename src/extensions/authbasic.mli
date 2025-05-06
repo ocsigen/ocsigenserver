@@ -57,7 +57,6 @@ let _ =
     in the configuration file) is provided. *)
 
 val section : Logs.src
-(** use [Lwt_log.Section.set_level] in order to set the log level *)
 
 type auth = string -> string -> bool Lwt.t
 

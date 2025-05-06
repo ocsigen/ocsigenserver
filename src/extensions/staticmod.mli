@@ -34,5 +34,3 @@ val run :
     file described {% <<a_manual chapter="staticmod"|here>>%}.*)
 
 val section : Logs.src
-(** Use {!Lwt_log.Section.set_level} in order to select the log level for
-   this module *)

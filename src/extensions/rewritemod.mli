@@ -13,7 +13,6 @@ This module belongs to ocamlfind package
 *)
 
 val section : Logs.src
-(** use Lwt_log.Section.set_level in order to set the log level *)
 
 val run :
    ?continue:bool
