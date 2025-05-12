@@ -4,6 +4,7 @@ module Body : sig
   type t
 
   val empty : t
+  val of_string : string -> t
 
   val make :
      Cohttp.Transfer.encoding
@@ -47,9 +48,11 @@ val of_cohttp :
 val to_response_expert :
    t
   -> Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
-(** Response for [Cohttp_lwt_unix.Server.make_expert]. *)
+(** Response for [Cohttp_lwt_unix.Server.make_expert]. Set cookie headers. *)
 
 val response : t -> Cohttp.Response.t
+(** Raw response without cookie headers set. *)
+
 val body : t -> Body.t
 val status : t -> Cohttp.Code.status
 val set_status : t -> Cohttp.Code.status -> t

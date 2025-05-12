@@ -1,8 +1,13 @@
 module Body = struct
   type t = ((string -> unit Lwt.t) -> unit Lwt.t) * Cohttp.Transfer.encoding
 
-  let empty : t = (fun _write -> Lwt.return_unit), Fixed 0L
-  let make encoding writer = writer, encoding
+  let make encoding writer : t = writer, encoding
+  let empty = make (Fixed 0L) (fun _write -> Lwt.return_unit)
+
+  let of_string s =
+    make
+      (Cohttp.Transfer.Fixed (Int64.of_int (String.length s)))
+      (fun write -> write s)
 
   let of_cohttp body =
     ( (fun write -> Cohttp_lwt.Body.write_body write body)
