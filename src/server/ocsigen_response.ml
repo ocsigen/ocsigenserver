@@ -1,14 +1,36 @@
+module Body = struct
+  type t = ((string -> unit Lwt.t) -> unit Lwt.t) * Cohttp.Transfer.encoding
+
+  let empty : t = (fun _write -> Lwt.return_unit), Fixed 0L
+  let make encoding writer = writer, encoding
+
+  let of_cohttp body =
+    ( (fun write -> Cohttp_lwt.Body.write_body write body)
+    , Cohttp_lwt.Body.transfer_encoding body )
+
+  let write (w, _) = w
+  let transfer_encoding = snd
+end
+
 type t =
   { a_response : Cohttp.Response.t
-  ; a_body : Cohttp_lwt.Body.t
+  ; a_body : Body.t
   ; a_cookies : Ocsigen_cookie_map.t }
 
-let make
-      ?(body = Cohttp_lwt.Body.empty)
-      ?(cookies = Ocsigen_cookie_map.empty)
-      a_response
-  =
+let make ?(body = Body.empty) ?(cookies = Ocsigen_cookie_map.empty) a_response =
   {a_response; a_body = body; a_cookies = cookies}
+
+let respond ?headers ~status ?(body = Body.empty) () =
+  let encoding =
+    match headers with
+    | None -> Body.transfer_encoding body
+    | Some headers -> (
+      match Cohttp.Header.get_transfer_encoding headers with
+      | Cohttp.Transfer.Unknown -> Body.transfer_encoding body
+      | t -> t)
+  in
+  let response = Cohttp.Response.make ~status ~encoding ?headers () in
+  make ~body response
 
 let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   let a_response =
@@ -19,10 +41,53 @@ let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   in
   {a_response; a_body; a_cookies}
 
-let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) (a_response, a_body) =
+let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) (a_response, body) =
+  let a_body = Body.of_cohttp body in
   {a_response; a_body; a_cookies = cookies}
 
-let to_cohttp {a_response; a_body; _} = a_response, a_body
+(* FIXME: secure *)
+let make_cookies_header path exp name c _secure =
+  Format.sprintf "%s=%s%s%s" name c
+    (*VVV encode = true? *)
+    ("; path=/" ^ Ocsigen_lib.Url.string_of_url_path ~encode:true path)
+    (* (if secure && slot.sl_ssl then "; secure" else "")^ *)
+    ""
+  ^
+  match exp with
+  | Some s -> "; expires=" ^ Ocsigen_lib.Date.to_string s
+  | None -> ""
+
+let make_cookies_headers path t hds =
+  Ocsigen_cookie_map.Map_inner.fold
+    (fun name c h ->
+       let open Ocsigen_cookie_map in
+       let exp, v, secure =
+         match c with
+         | OUnset -> Some 0., "", false
+         | OSet (t, v, secure) -> t, v, secure
+       in
+       Cohttp.Header.add h
+         Ocsigen_header.Name.(to_string set_cookie)
+         (make_cookies_header path exp name v secure))
+    t hds
+
+let to_cohttp_response {a_response; a_cookies; _} =
+  let headers =
+    Cohttp.Header.add_unless_exists
+      (Cohttp.Header.add_unless_exists
+         (Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
+            (Cohttp.Response.headers a_response))
+         "server" Ocsigen_config.server_name)
+      "date"
+      (Ocsigen_lib.Date.to_string (Unix.time ()))
+  in
+  {a_response with Cohttp.Response.headers}
+
+let to_response_expert t =
+  to_cohttp_response t, fun _ic oc -> fst t.a_body (Lwt_io.write oc)
+
+let response t = t.a_response
+let body t = t.a_body
 
 let status {a_response = {Cohttp.Response.status; _}; _} =
   match status with

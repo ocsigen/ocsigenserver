@@ -54,32 +54,6 @@ module Cookie = struct
     Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
 end
 
-(* FIXME: secure *)
-let make_cookies_header path exp name c _secure =
-  Format.sprintf "%s=%s%s%s" name c
-    (*VVV encode = true? *)
-    ("; path=/" ^ Ocsigen_lib.Url.string_of_url_path ~encode:true path)
-    (* (if secure && slot.sl_ssl then "; secure" else "")^ *)
-    ""
-  ^
-  match exp with
-  | Some s -> "; expires=" ^ Ocsigen_lib.Date.to_string s
-  | None -> ""
-
-let make_cookies_headers path t hds =
-  Ocsigen_cookie_map.Map_inner.fold
-    (fun name c h ->
-       let open Ocsigen_cookie_map in
-       let exp, v, secure =
-         match c with
-         | OUnset -> Some 0., "", false
-         | OSet (t, v, secure) -> t, v, secure
-       in
-       Cohttp.Header.add h
-         Ocsigen_header.Name.(to_string set_cookie)
-         (make_cookies_header path exp name v secure))
-    t hds
-
 let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
@@ -133,6 +107,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
     Cohttp_lwt_unix.Server.respond_error ?headers
       ~status:(ret_code :> Cohttp.Code.status_code)
       ~body ()
+    >>= fun resp -> Lwt.return (Ocsigen_response.of_cohttp resp)
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
@@ -155,32 +130,17 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
                   Ocsigen_header.Name.x_forwarded_for))
             (Uri.path (Ocsigen_request.uri request)));
        Lwt.catch
-         (fun () ->
-            connector request >>= fun response ->
-            let response, body = Ocsigen_response.to_cohttp response
-            and cookies = Ocsigen_response.cookies response in
-            let response =
-              let headers =
-                Cohttp.Header.add_unless_exists
-                  (Cohttp.Header.add_unless_exists
-                     (Ocsigen_cookie_map.Map_path.fold make_cookies_headers
-                        cookies
-                        (Cohttp.Response.headers response))
-                     "server" Ocsigen_config.server_name)
-                  "date"
-                  (Ocsigen_lib.Date.to_string (Unix.time ()))
-              in
-              {response with Cohttp.Response.headers}
-            in
-            Lwt.return (response, body))
+         (fun () -> connector request)
          (function
            | Ocsigen_is_dir fun_request ->
                let headers =
                  fun_request request |> Uri.to_string
                  |> Cohttp.Header.init_with "location"
                and status = `Moved_permanently in
-               Cohttp_lwt_unix.Server.respond ~headers ~status ~body:`Empty ()
-           | exn -> handle_error exn))
+               Lwt.return (Ocsigen_response.respond ~headers ~status ())
+           | exn -> handle_error exn)
+       >>= fun response ->
+       Lwt.return (Ocsigen_response.to_response_expert response))
     (fun () ->
        if !filenames <> []
        then
@@ -236,7 +196,7 @@ let service ?ssl ~address ~port ~connector () =
     let ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in
-  let config = Cohttp_lwt_unix.Server.make ~conn_closed ~callback () in
+  let config = Cohttp_lwt_unix.Server.make_expert ~conn_closed ~callback () in
   let mode =
     match address, tls_own_key with
     | `Unix f, _ -> `Unix_domain_socket (`File f)
