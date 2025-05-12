@@ -59,131 +59,77 @@ let gzip_header =
 type output_buffer =
   { stream : Zlib.stream
   ; buf : bytes
-  ; mutable pos : int
-  ; mutable avail : int
+  ; flush : string -> unit Lwt.t
   ; mutable size : int32
-  ; mutable crc : int32
-  ; mutable add_trailer : bool }
+  ; mutable crc : int32 }
 
-let write_int32 oz n =
+let write_int32 buf offset n =
   for i = 0 to 3 do
-    Bytes.set oz.buf (oz.pos + i)
+    Bytes.set buf (offset + i)
       (Char.chr (Int32.to_int (Int32.shift_right_logical n (8 * i)) land 0xff))
-  done;
-  oz.pos <- oz.pos + 4;
-  oz.avail <- oz.avail - 4;
-  assert (oz.avail >= 0)
+  done
 
-(* puts in oz the content of buf, from pos to pos + len ;
- * f is the continuation of the current stream *)
-let rec output oz f buf pos len =
-  assert (pos >= 0 && len >= 0 && pos + len <= String.length buf);
-  if oz.avail = 0
-  then (
-    let cont () = output oz f buf pos len in
-    Logs.info ~src:section (fun fmt ->
-      fmt "Flushing because output buffer is full");
-    flush oz cont)
-  else if len = 0
-  then next_cont oz f
+let compress_flush oz used_out = oz.flush (Bytes.sub_string oz.buf 0 used_out)
+
+(* gzip trailer *)
+let write_trailer oz =
+  write_int32 oz.buf 0 oz.crc;
+  write_int32 oz.buf 4 oz.size;
+  compress_flush oz 8
+
+(* puts in oz the content of buf, from pos to pos + len ; *)
+let rec compress_output oz inbuf pos len =
+  if len = 0
+  then Lwt.return_unit
   else
     let (_ : bool), used_in, used_out =
       try
-        Zlib.deflate oz.stream
-          (Bytes.unsafe_of_string buf)
-          pos len oz.buf oz.pos oz.avail Zlib.Z_NO_FLUSH
+        Zlib.deflate_string oz.stream inbuf pos len oz.buf 0
+          (Bytes.length oz.buf) Zlib.Z_NO_FLUSH
       with Zlib.Error (s, s') ->
         raise
           (Ocsigen_stream.Stream_error
              ("Error during compression: " ^ s ^ " " ^ s'))
     in
-    oz.pos <- oz.pos + used_out;
-    oz.avail <- oz.avail - used_out;
-    oz.size <- Int32.add oz.size (Int32.of_int used_in);
-    oz.crc <- Zlib.update_crc_string oz.crc buf pos used_in;
-    output oz f buf (pos + used_in) (len - used_in)
+    compress_flush oz used_out >>= fun () ->
+    compress_output oz inbuf (pos + used_in) (len - used_in)
 
-(* Flush oz, ie. produces a new_stream with the content of oz, cleans it
- * and returns the continuation of the stream *)
-and flush oz cont =
-  let len = oz.pos in
-  if len = 0
-  then cont ()
-  else
-    let buf_len = Bytes.length oz.buf in
-    let s =
-      if len = buf_len
-      then Bytes.to_string oz.buf
-      else Bytes.sub_string oz.buf 0 len
-    in
-    Logs.info ~src:section (fun fmt -> fmt "Flushing!");
-    oz.pos <- 0;
-    oz.avail <- buf_len;
-    Ocsigen_stream.cont s cont
-
-and next_cont oz stream =
-  Ocsigen_stream.next (stream : string Ocsigen_stream.stream) >>= fun e ->
-  match e with
-  | Ocsigen_stream.Finished None ->
-      Logs.info ~src:section (fun fmt ->
-        fmt "End of stream: big cleaning for zlib");
-      (* loop until there is nothing left to compress and flush *)
-      let rec finish () =
-        (* buffer full *)
-        if oz.avail = 0
-        then flush oz finish
-        else
-          (* no more input, deflates only what were left because output buffer
-           * was full *)
-          let finished, (_ : int), used_out =
-            Zlib.deflate oz.stream oz.buf 0 0 oz.buf oz.pos oz.avail
-              Zlib.Z_FINISH
-          in
-          oz.pos <- oz.pos + used_out;
-          oz.avail <- oz.avail - used_out;
-          if not finished then finish () else write_trailer ()
-      and write_trailer () =
-        if oz.add_trailer && oz.avail < 8
-        then flush oz write_trailer
-        else (
-          if oz.add_trailer then (write_int32 oz oz.crc; write_int32 oz oz.size);
-          Logs.info ~src:section (fun fmt ->
-            fmt "Zlib.deflate finished, last flush");
-          flush oz (fun () -> Ocsigen_stream.empty None))
-      in
-      finish ()
-  | Ocsigen_stream.Finished (Some s) -> next_cont oz s
-  | Ocsigen_stream.Cont (s, f) -> output oz f s 0 (String.length s)
+let rec compress_finish oz =
+  (* loop until there is nothing left to compress and flush *)
+  let finished, (_ : int), used_out =
+    Zlib.deflate oz.stream oz.buf 0 0 oz.buf 0 (Bytes.length oz.buf)
+      Zlib.Z_FINISH
+  in
+  compress_flush oz used_out >>= fun () ->
+  if not finished then compress_finish oz else Lwt.return_unit
 
 (* deflate param : true = deflate ; false = gzip (no header in this case) *)
-let compress deflate stream : string Ocsigen_stream.t =
+let compress_body deflate body =
+ fun flush ->
   let zstream = Zlib.deflate_init !compress_level deflate in
-  let finalize status =
-    Ocsigen_stream.finalize stream status >>= fun _e ->
-    (try Zlib.deflate_end zstream
-     with
-     (* ignore errors, deflate_end cleans everything anyway *)
-     | Zlib.Error _ ->
-       ());
-    Lwt.return (Logs.info ~src:section (fun fmt -> fmt "Zlib stream closed"))
-  in
   let oz =
     let buffer_size = !buffer_size in
     { stream = zstream
     ; buf = Bytes.create buffer_size
-    ; pos = 0
-    ; avail = buffer_size
+    ; flush
     ; size = 0l
-    ; crc = 0l
-    ; add_trailer = not deflate }
+    ; crc = 0l }
   in
-  let new_stream () = next_cont oz (Ocsigen_stream.get stream) in
-  Logs.info ~src:section (fun fmt -> fmt "Zlib stream initialized");
-  if deflate
-  then Ocsigen_stream.make ~finalize new_stream
-  else
-    Ocsigen_stream.make ~finalize (fun () ->
-      Ocsigen_stream.cont gzip_header new_stream)
+  (if deflate then Lwt.return_unit else flush gzip_header) >>= fun () ->
+  body (fun inbuf ->
+    let len = String.length inbuf in
+    oz.size <- Int32.add oz.size (Int32.of_int len);
+    oz.crc <- Zlib.update_crc_string oz.crc inbuf 0 len;
+    compress_output oz inbuf 0 len)
+  >>= fun () ->
+  compress_finish oz >>= fun () ->
+  (if deflate then Lwt.return_unit else write_trailer oz) >>= fun () ->
+  (try Zlib.deflate_end zstream
+   with
+   (* ignore errors, deflate_end cleans everything anyway *)
+   | Zlib.Error _ ->
+     ());
+  Lwt.return_unit
 
 (* We implement Content-Encoding, not Transfer-Encoding *)
 type encoding = Deflate | Gzip | Id | Star | Not_acceptable
@@ -252,8 +198,8 @@ let stream_filter contentencoding url deflate choice res =
                match Ocsigen_header.Mime_type.parse contenttype with
                | None, _ | _, None -> Lwt.return res
                | Some a, Some b when should_compress (a, b) url choice ->
-                   let response, body = Ocsigen_response.to_cohttp res in
                    let response =
+                     let response = Ocsigen_response.response res in
                      let headers = Cohttp.Response.headers response in
                      let headers =
                        let name = Ocsigen_header.Name.(to_string etag) in
@@ -273,10 +219,10 @@ let stream_filter contentencoding url deflate choice res =
                        Cohttp.Response.headers
                      ; Cohttp.Response.encoding = Cohttp.Transfer.Chunked }
                    and body =
-                     Cohttp_lwt.Body.to_stream body
-                     |> Ocsigen_stream.of_lwt_stream |> compress deflate
-                     |> Ocsigen_stream.to_lwt_stream
-                     |> Cohttp_lwt.Body.of_stream
+                     Ocsigen_response.Body.make Cohttp.Transfer.Chunked
+                       (compress_body deflate
+                          (Ocsigen_response.Body.write
+                             (Ocsigen_response.body res)))
                    in
                    Lwt.return (Ocsigen_response.update res ~body ~response)
                | _ -> Lwt.return res)
