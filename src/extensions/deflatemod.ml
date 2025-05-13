@@ -69,7 +69,9 @@ let write_int32 buf offset n =
       (Char.chr (Int32.to_int (Int32.shift_right_logical n (8 * i)) land 0xff))
   done
 
-let compress_flush oz used_out = oz.flush (Bytes.sub_string oz.buf 0 used_out)
+let compress_flush oz used_out =
+  Logs.debug ~src:section (fun fmt -> fmt "Flushing %d bytes" used_out);
+  oz.flush (Bytes.sub_string oz.buf 0 used_out)
 
 (* gzip trailer *)
 let write_trailer oz =
@@ -95,6 +97,7 @@ let rec compress_output oz inbuf pos len =
     compress_output oz inbuf (pos + used_in) (len - used_in)
 
 let rec compress_finish oz =
+  Logs.debug ~src:section (fun fmt -> fmt "Finishing");
   (* loop until there is nothing left to compress and flush *)
   let finished, (_ : int), used_out =
     Zlib.deflate oz.stream oz.buf 0 0 oz.buf 0 (Bytes.length oz.buf)
@@ -124,6 +127,7 @@ let compress_body deflate body =
   >>= fun () ->
   compress_finish oz >>= fun () ->
   (if deflate then Lwt.return_unit else write_trailer oz) >>= fun () ->
+  Logs.debug ~src:section (fun fmt -> fmt "Close stream");
   (try Zlib.deflate_end zstream
    with
    (* ignore errors, deflate_end cleans everything anyway *)
