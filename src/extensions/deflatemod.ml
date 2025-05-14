@@ -71,7 +71,9 @@ let write_int32 buf offset n =
 
 let compress_flush oz used_out =
   Logs.debug ~src:section (fun fmt -> fmt "Flushing %d bytes" used_out);
-  oz.flush (Bytes.sub_string oz.buf 0 used_out)
+  if used_out > 0
+  then oz.flush (Bytes.sub_string oz.buf 0 used_out)
+  else Lwt.return_unit
 
 (* gzip trailer *)
 let write_trailer oz =
