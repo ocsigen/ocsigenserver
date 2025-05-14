@@ -49,7 +49,7 @@ let make_uri u =
   {u_uri; u_get_params; u_get_params_flat; u_path; u_path_string}
 
 type t =
-  { r_address : Unix.inet_addr
+  { r_address : Ocsigen_config.Socket_type.t
   ; r_port : int
   ; r_ssl : bool
   ; r_filenames : string list ref

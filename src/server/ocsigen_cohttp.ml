@@ -224,22 +224,24 @@ let service ?ssl ~address ~port ~connector () =
     | None -> `None
   in
   (* We create a specific context for Conduit and Cohttp. *)
-  Conduit_lwt_unix.init
-    ~src:(Ocsigen_config.Socket_type.to_string address)
-    ~tls_own_key ()
-  >>= fun conduit_ctx ->
+  let src =
+    match address with
+    | `File _ -> None
+    | _ -> Some (Ocsigen_config.Socket_type.to_string address)
+  in
+  Conduit_lwt_unix.init ?src ~tls_own_key () >>= fun conduit_ctx ->
   Lwt.return (Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
   (* We catch the INET_ADDR of the server *)
   let callback =
-    let address = Ocsigen_config.Socket_type.to_inet_addr address
-    and ssl = match ssl with Some _ -> true | None -> false in
+    let ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in
   let config = Cohttp_lwt_unix.Server.make ~conn_closed ~callback () in
   let mode =
-    match tls_own_key with
-    | `None -> `TCP (`Port port)
-    | `TLS (crt, key, pass) -> `OpenSSL (crt, key, pass, `Port port)
+    match address, tls_own_key with
+    | (`File _ as s), _ -> `Unix_domain_socket s
+    | _, `None -> `TCP (`Port port)
+    | _, `TLS (crt, key, pass) -> `OpenSSL (crt, key, pass, `Port port)
   in
   Cohttp_lwt_unix.Server.create ~stop ~ctx ~mode config >>= fun () ->
   Lwt.return (Lwt.wakeup stop_wakener ())

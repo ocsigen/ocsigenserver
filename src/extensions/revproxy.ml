@@ -105,7 +105,7 @@ let gen dir = function
                let h =
                  let forward =
                    let address =
-                     Unix.string_of_inet_addr
+                     Ocsigen_config.Socket_type.to_string
                        (Ocsigen_request.address request_info)
                    in
                    String.concat ", "
