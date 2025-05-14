@@ -75,7 +75,7 @@ val post_params :
   -> (string * string) list Lwt.t option
 
 val remote_ip : t -> string
-val remote_ip_parsed : t -> Ipaddr.t
+val remote_ip_parsed : t -> [`Ip of Ipaddr.t | `File of string]
 val forward_ip : t -> string list
 val content_type : t -> content_type option
 val request_cache : t -> Polytables.t

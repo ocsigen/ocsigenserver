@@ -55,7 +55,7 @@ type t =
   ; r_filenames : string list ref
   ; r_sockaddr : Lwt_unix.sockaddr
   ; r_remote_ip : string Lazy.t
-  ; r_remote_ip_parsed : Ipaddr.t Lazy.t
+  ; r_remote_ip_parsed : [`Ip of Ipaddr.t | `File of string] Lazy.t
   ; r_forward_ip : string list
   ; r_uri : uri
   ; r_meth : Cohttp.Code.meth
@@ -88,10 +88,16 @@ let make
   =
   let r_remote_ip =
     lazy
-      (Unix.string_of_inet_addr (Ocsigen_lib.Ip_address.of_sockaddr sockaddr))
+      (match sockaddr with
+      | Unix.ADDR_INET (ip, _port) -> Unix.string_of_inet_addr ip
+      | ADDR_UNIX f -> f)
   in
   let r_remote_ip_parsed =
-    lazy (Ipaddr.of_string_exn (Lazy.force r_remote_ip))
+    lazy
+      (match sockaddr with
+      | Unix.ADDR_INET (ip, _port) ->
+          `Ip (Ipaddr.of_string_exn (Unix.string_of_inet_addr ip))
+      | ADDR_UNIX f -> `File f)
   in
   { r_address = address
   ; r_port = port
@@ -146,7 +152,8 @@ let update
     match forward_ip with Some forward_ip -> forward_ip | None -> r_forward_ip
   and r_remote_ip, r_remote_ip_parsed =
     match remote_ip with
-    | Some remote_ip -> lazy remote_ip, lazy (Ipaddr.of_string_exn remote_ip)
+    | Some remote_ip ->
+        lazy remote_ip, lazy (`Ip (Ipaddr.of_string_exn remote_ip))
     | None -> r_remote_ip, r_remote_ip_parsed
   and r_sub_path = match sub_path with Some _ -> sub_path | None -> r_sub_path
   and r_body =
