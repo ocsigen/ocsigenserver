@@ -1,0 +1,7 @@
+(subdir
+ extensions
+ (cram
+  (package ocsigenserver)
+  (deps
+   ../server-test-helpers.sh
+   (package ocsigenserver))))
