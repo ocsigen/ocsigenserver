@@ -28,10 +28,10 @@ type ssl_info =
   ; ssl_curve : string option }
 
 module Socket_type : sig
-  type t = [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr]
+  type t =
+    [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr | `File of string]
 
   val to_string : t -> string
-  val to_inet_addr : t -> Unix.inet_addr
 end
 
 type socket_type = Socket_type.t
