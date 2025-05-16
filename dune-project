@@ -20,6 +20,7 @@
   (camlzip (>= 1.04))
   (cohttp-lwt-unix (and (>= 5.0) (< 6.0)))
   (conduit-lwt-unix (and (>= 2.0) (< 7.0)))
+  http
   cryptokit
   (ipaddr (>= 2.1))
   (lwt (>= 3.0))
