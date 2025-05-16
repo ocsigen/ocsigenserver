@@ -1,12 +1,15 @@
+open Cohttp
+open Lwt.Syntax
+
 module Body = struct
-  type t = ((string -> unit Lwt.t) -> unit Lwt.t) * Cohttp.Transfer.encoding
+  type t = ((string -> unit Lwt.t) -> unit Lwt.t) * Transfer.encoding
 
   let make encoding writer : t = writer, encoding
   let empty = make (Fixed 0L) (fun _write -> Lwt.return_unit)
 
   let of_string s =
     make
-      (Cohttp.Transfer.Fixed (Int64.of_int (String.length s)))
+      (Transfer.Fixed (Int64.of_int (String.length s)))
       (fun write -> write s)
 
   let of_cohttp body =
@@ -18,9 +21,7 @@ module Body = struct
 end
 
 type t =
-  { a_response : Cohttp.Response.t
-  ; a_body : Body.t
-  ; a_cookies : Ocsigen_cookie_map.t }
+  {a_response : Response.t; a_body : Body.t; a_cookies : Ocsigen_cookie_map.t}
 
 let make ?(body = Body.empty) ?(cookies = Ocsigen_cookie_map.empty) a_response =
   {a_response; a_body = body; a_cookies = cookies}
@@ -76,20 +77,30 @@ let make_cookies_headers path t hds =
          (make_cookies_header path exp name v secure))
     t hds
 
-let to_cohttp_response {a_response; a_cookies; _} =
+let to_cohttp_response {a_response; a_cookies; a_body = _} =
   let headers =
-    Cohttp.Header.add_unless_exists
-      (Cohttp.Header.add_unless_exists
-         (Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
-            (Cohttp.Response.headers a_response))
-         "server" Ocsigen_config.server_name)
-      "date"
-      (Ocsigen_lib.Date.to_string (Unix.time ()))
+    let add name value headers = Header.add_unless_exists headers name value in
+    Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
+      (Response.headers a_response)
+    |> add "server" Ocsigen_config.server_name
+    |> add "date" (Ocsigen_lib.Date.to_string (Unix.time ()))
   in
-  {a_response with Cohttp.Response.headers}
+  {a_response with Response.headers}
 
 let to_response_expert t =
-  to_cohttp_response t, fun _ic oc -> fst t.a_body (Lwt_io.write oc)
+  let module R = Cohttp_lwt_unix.Response in
+  let write_footer {R.encoding; _} oc =
+    (* Copied from [cohttp/response.ml]. *)
+    match encoding with
+    | Transfer.Chunked -> Lwt_io.write oc "0\r\n\r\n"
+    | Transfer.Fixed _ | Transfer.Unknown -> Lwt.return_unit
+  in
+  let res = to_cohttp_response t in
+  ( res
+  , fun _ic oc ->
+      let writer = R.make_body_writer ~flush:false res oc in
+      let* () = fst t.a_body (R.write_body writer) in
+      write_footer res oc )
 
 let response t = t.a_response
 let body t = t.a_body
