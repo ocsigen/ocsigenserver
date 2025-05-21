@@ -33,6 +33,25 @@ val respond :
 (** Like [make] but with an interface similar to
     [Cohttp_lwt_unix.Server.respond]. *)
 
+val respond_string :
+   ?headers:Cohttp.Header.t
+  -> status:Http.Status.t
+  -> body:string
+  -> unit
+  -> t
+(** Like [respond] but with a fixed string body. *)
+
+val respond_error :
+   ?headers:Cohttp.Header.t
+  -> ?status:Http.Status.t
+  -> body:string
+  -> unit
+  -> t
+(** Like [respond_string] with ["Error: "] appended to the body. The default
+    status is [`Internal_server_error].
+
+    @deprecated Use [respond_string] with a [~status] argument instead. *)
+
 val update :
    ?response:Cohttp.Response.t
   -> ?body:Body.t
