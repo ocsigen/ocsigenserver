@@ -38,6 +38,15 @@ let respond ?headers ~status ?(body = Body.empty) () =
   let response = Cohttp.Response.make ~status ~encoding ?headers () in
   make ~body response
 
+let respond_string ?headers ~status ~body () =
+  let encoding = Transfer.Fixed (Int64.of_int (String.length body)) in
+  let response = Response.make ~status ~encoding ?headers () in
+  let body = Body.of_string body in
+  make ~body response
+
+let respond_error ?headers ?(status = `Internal_server_error) ~body () =
+  respond_string ?headers ~status ~body:("Error: " ^ body) ()
+
 let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   let a_response =
     match response with Some response -> response | None -> a_response

@@ -104,10 +104,9 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       | `Not_found -> "Not Found"
       | _ -> Printexc.to_string exn
     in
-    Cohttp_lwt_unix.Server.respond_error ?headers
+    Ocsigen_response.respond_error ?headers
       ~status:(ret_code :> Cohttp.Code.status_code)
       ~body ()
-    >>= fun resp -> Lwt.return (Ocsigen_response.of_cohttp resp)
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
@@ -137,8 +136,9 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
                  fun_request request |> Uri.to_string
                  |> Cohttp.Header.init_with "location"
                and status = `Moved_permanently in
-               Lwt.return (Ocsigen_response.respond ~headers ~status ())
-           | exn -> handle_error exn)
+               Lwt.return
+                 (Ocsigen_response.respond_string ~headers ~status ~body:"" ())
+           | exn -> Lwt.return (handle_error exn))
        >>= fun response ->
        Lwt.return (Ocsigen_response.to_response_expert response))
     (fun () ->
