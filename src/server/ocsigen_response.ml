@@ -12,9 +12,8 @@ module Body = struct
       (Transfer.Fixed (Int64.of_int (String.length s)))
       (fun write -> write s)
 
-  let of_cohttp body =
-    ( (fun write -> Cohttp_lwt.Body.write_body write body)
-    , Cohttp_lwt.Body.transfer_encoding body )
+  let of_cohttp ~encoding body =
+    (fun write -> Cohttp_lwt.Body.write_body write body), encoding
 
   let write (w, _) = w
   let transfer_encoding = snd
@@ -26,16 +25,16 @@ type t =
 let make ?(body = Body.empty) ?(cookies = Ocsigen_cookie_map.empty) a_response =
   {a_response; a_body = body; a_cookies = cookies}
 
-let respond ?headers ~status ?(body = Body.empty) () =
+let respond ?headers ~status ~encoding ?(body = Body.empty) () =
   let encoding =
     match headers with
-    | None -> Body.transfer_encoding body
+    | None -> encoding
     | Some headers -> (
       match Cohttp.Header.get_transfer_encoding headers with
-      | Cohttp.Transfer.Unknown -> Body.transfer_encoding body
+      | Cohttp.Transfer.Unknown -> encoding
       | t -> t)
   in
-  let response = Cohttp.Response.make ~status ~encoding ?headers () in
+  let response = Response.make ~status ~encoding ?headers () in
   make ~body response
 
 let respond_string ?headers ~status ~body () =
@@ -57,7 +56,8 @@ let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   {a_response; a_body; a_cookies}
 
 let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) (a_response, body) =
-  let a_body = Body.of_cohttp body in
+  let encoding = Response.encoding a_response in
+  let a_body = Body.of_cohttp ~encoding body in
   {a_response; a_body; a_cookies = cookies}
 
 (* FIXME: secure *)
