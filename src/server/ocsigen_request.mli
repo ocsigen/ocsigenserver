@@ -31,7 +31,7 @@ val make :
   -> ssl:bool
   -> filenames:string list ref
   -> client_conn:client_conn
-  -> body:Cohttp_lwt.Body.t
+  -> body:Cohttp_eio.Body.t
   -> connection_closed:unit Promise.t
   -> Cohttp.Request.t
   -> t
@@ -52,7 +52,7 @@ val update :
 
 val to_cohttp : t -> Cohttp.Request.t
 val uri : t -> Uri.t
-val body : t -> Cohttp_lwt.Body.t
+val body : t -> Cohttp_eio.Body.t
 val address : t -> Ocsigen_config.Socket_type.t
 val host : t -> string option
 val meth : t -> Cohttp.Code.meth
@@ -77,13 +77,13 @@ val files :
    t
   -> string option
   -> Int64.t option
-  -> (string * file_info) list Promise.t option
+  -> (string * file_info) list option
 
 val post_params :
    t
   -> string option
   -> Int64.t option
-  -> (string * string) list Promise.t option
+  -> (string * string) list option
 
 val client_conn : t -> client_conn
 (** The way the client connects to the server (for example, its IP address if

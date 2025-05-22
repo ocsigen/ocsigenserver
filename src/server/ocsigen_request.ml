@@ -12,7 +12,7 @@ type file_info = Ocsigen_multipart.file_info =
   ; file_content_type : content_type option }
 
 type post_data = Ocsigen_multipart.post_data
-type body = [`Unparsed of Cohttp_lwt.Body.t | `Parsed of post_data Promise.t]
+type body = [`Unparsed of Cohttp_eio.Body.t | `Parsed of post_data]
 
 (* Wrapper around Uri providing our derived fields.
 
@@ -289,5 +289,8 @@ let forward_ip {r_forward_ip; _} = r_forward_ip
 let request_cache {r_request_cache; _} = r_request_cache
 let tries {r_tries; _} = r_tries
 let incr_tries r = r.r_tries <- r.r_tries + 1
-let connection_closed {r_connection_closed; _} = r_connection_closed
+
+let connection_closed {r_connection_closed; _} =
+  Promise.await r_connection_closed
+
 let timeofday {r_timeofday; _} = r_timeofday

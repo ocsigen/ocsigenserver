@@ -29,6 +29,9 @@ include
    and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
    and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
 
+val current_switch : Eio.Switch.t Eio.Fiber.key
+val env : Eio_unix.Stdenv.base Eio.Fiber.key
+
 val make_cryptographic_safe_string : unit -> string
 (** Generate an unique and cryptographically safe random string.
     It is impossible to guess for other people and
@@ -39,7 +42,7 @@ module String : module type of String_base
 module Ip_address : sig
   exception No_such_host
 
-  val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr
+  val get_inet_addr : ?v6:bool -> string -> string
 end
 
 module Filename : sig

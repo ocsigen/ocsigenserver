@@ -22,6 +22,7 @@
 
     The reverse proxy is still experimental. *)
 
+open Eio.Std
 module Pcre = Re.Pcre
 
 let section = Logs.Src.create "ocsigen:ext:revproxy"
@@ -128,7 +129,13 @@ let gen dir = function
           Uri.make ~scheme ~host ~port ~path ()
         and body = Ocsigen_request.body request_info
         and meth = Ocsigen_request.meth request_info in
-        Cohttp_lwt_unix.Client.call ~headers ~body meth uri
+        let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
+        let env = Stdlib.Option.get (Fiber.get Ocsigen_lib.env) in
+        let client =
+          (* TODO: Https not supported out of the box in [Cohttp_eio]. *)
+          Cohttp_eio.Client.make ~https:None env#net
+        in
+        Cohttp_eio.Client.call client ~sw ~headers ~body meth uri
       in
       Ocsigen_extensions.Ext_found
         (fun () -> Ocsigen_response.of_cohttp (do_request ()))

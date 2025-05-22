@@ -22,6 +22,7 @@ val service :
   -> address:Ocsigen_config.socket_type
   -> port:int
   -> connector:(Ocsigen_request.t -> Ocsigen_response.t)
+  -> on_error:(exn -> unit)
   -> unit
   -> unit
 (** initialize a main loop of http server *)
