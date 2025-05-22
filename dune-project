@@ -18,12 +18,12 @@
  (depends
   (ocaml (>= 4.08.1))
   (camlzip (>= 1.04))
-  (cohttp-lwt-unix (>= 6.0))
-  conduit-lwt-unix
+  cohttp-eio
   http
   cryptokit
   (ipaddr (>= 2.1))
-  (lwt (>= 3.0))
+  eio
+  eio_main
   lwt_react
   lwt_ssl
   ocamlfind

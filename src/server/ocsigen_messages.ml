@@ -158,8 +158,7 @@ let errlog ?section s = Logs.err ?src:section (fun fmt -> fmt "%s" s)
 let warning ?section s = Logs.warn ?src:section (fun fmt -> fmt "%s" s)
 
 let unexpected_exception e s =
-  Logs.warn (fun fmt ->
-    fmt ("Unexpected exception in %s" ^^ "@\n%s") s (Printexc.to_string e))
+  Logs.warn (fun fmt -> fmt "Unexpected exception in %s@\n%a" s Eio.Exn.pp e)
 
 (****)
 

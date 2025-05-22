@@ -120,7 +120,8 @@ end = struct
     ; mutable finaliser_after : 'a node -> unit
     ; time_bound : time_bound option }
 
-  and time_bound = {timer : float; mutable collector : unit Promise.t option}
+  and time_bound =
+    {timer : float; mutable collector : (unit, exn) result Promise.t option}
 
   (* Checks (by BY):
 
@@ -227,10 +228,13 @@ end = struct
       | Some n ->
           t.collector <-
             Some
-              (sleep_until n.collection;
-               collect r n;
-               t.collector <- None;
-               update_collector r))
+              (Fiber.fork_promise
+                 ~sw:(Option.get (Fiber.get Ocsigen_lib.current_switch))
+                 (fun () ->
+                    sleep_until n.collection;
+                    collect r n;
+                    t.collector <- None;
+                    update_collector r)))
 
   (* Add a node that do not belong to any list to a list.
      The fields [succ] and [prev] are overridden.

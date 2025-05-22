@@ -106,8 +106,8 @@ val of_file : string -> string t
 val of_string : string -> string t
 (** returns a stream containing a string. *)
 
-val of_cohttp_body : Cohttp_lwt.Body.t -> string t
-(** Convert a {!Lwt_stream.t} to an {!Ocsigen_stream.t}. *)
+val of_cohttp_body : Cohttp_eio.Body.t -> string t
+(** Convert the body of a request to a {!Ocsigen_stream}. *)
 
 module StringStream : sig
   type out = string t

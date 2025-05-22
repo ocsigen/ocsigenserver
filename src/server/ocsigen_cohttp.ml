@@ -54,34 +54,33 @@ module Cookie = struct
     Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
 end
 
-let handler ~ssl ~address ~port ~connector (flow, conn) request body =
+(* TODO: Use [_conn_sw] for nested concurrency *)
+let handler
+      ~ssl
+      ~address
+      ~port
+      ~connector
+      ((_conn_sw, eio_stream), conn)
+      request
+      body
+  =
   let filenames = ref [] in
-  let edn = Conduit_lwt_unix.endp_of_flow flow in
-  let getsockname = function
-    | `TCP (ip, port) | `TLS (_, `TCP (ip, port)) ->
-        Unix.ADDR_INET (Ipaddr_unix.to_inet_addr ip, port)
-    | `Unix_domain_socket path | `TLS (_, `Unix_domain_socket path) ->
-        Unix.ADDR_UNIX path
-    | _ -> raise (Failure "resolution failed")
+  let sockaddr =
+    match eio_stream with
+    | `Unix s -> Unix.ADDR_UNIX s
+    | `Tcp (ip, port) ->
+        Unix.ADDR_INET
+          (Unix.inet_addr_of_string (ip : _ Eio.Net.Ipaddr.t :> string), port)
   in
-  let sockaddr = getsockname edn in
   let connection_closed =
     try fst (Hashtbl.find connections conn)
     with Not_found ->
-      let ((connection_closed, _) as p)
-            (* TODO: lwt-to-direct-style: Translation is incomplete, [Promise.await] must be called on the promise when it's part of control-flow. *)
-        =
-        Promise.create ()
-      in
+      let ((connection_closed, _) as p) = Promise.create () in
       Hashtbl.add connections conn p;
       incr_connected ();
       connection_closed
   in
   let handle_error exn =
-    Logs.debug ~src:section (fun fmt ->
-      fmt
-        ("Got exception while handling request." ^^ "@\n%s")
-        (Printexc.to_string exn));
     let headers, ret_code =
       match exn with
       | Ocsigen_http_error (cookies_to_set, code) ->
@@ -97,9 +96,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       | Ocsigen_lib.Ocsigen_Request_too_long -> None, `Request_entity_too_large
       | exn ->
           Logs.err ~src:section (fun fmt ->
-            fmt
-              ("Error while handling request." ^^ "@\n%s")
-              (Printexc.to_string exn));
+            fmt "Error while handling request.@\n%a" Eio.Exn.pp exn);
           None, `Internal_server_error
     in
     let body =
@@ -125,9 +122,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
              try Unix.unlink a
              with Unix.Unix_error _ as exn ->
                Logs.warn ~src:section (fun fmt ->
-                 fmt
-                   ("Error while removing file %s" ^^ "@\n%s")
-                   a (Printexc.to_string exn)))
+                 fmt "Error while removing file %s@\n%a" a Eio.Exn.pp exn))
           !filenames)
     (fun () ->
        Ocsigen_messages.accesslog
@@ -162,10 +157,7 @@ let conn_closed (_flow, conn) =
     decr_connected ()
   with Not_found -> ()
 
-let stop, stop_wakener
-      (* TODO: lwt-to-direct-style: Translation is incomplete, [Promise.await] must be called on the promise when it's part of control-flow. *)
-  =
-  Promise.create ()
+let stop, stop_wakener = Promise.create ()
 
 let shutdown timeout =
   let process =
@@ -174,16 +166,11 @@ let shutdown timeout =
     | None -> fun () -> ()
   in
   ignore
-    (Fiber.any
-       [ process
-       ; (fun () ->
-           stop
-           (* TODO: lwt-to-direct-style: This computation might not be suspended correctly. *))
-       ];
+    (Fiber.any [process; (fun () -> Promise.await stop)];
      exit 0
      : unit Promise.t)
 
-let service ?ssl ~address ~port ~connector () =
+let service ?ssl ~address ~port ~connector ~on_error () =
   let tls_own_key =
     match ssl with
     | Some (crt, key, Some password) ->
@@ -192,25 +179,23 @@ let service ?ssl ~address ~port ~connector () =
         `TLS (`Crt_file_path crt, `Key_file_path key, `No_password)
     | None -> `None
   in
-  (* We create a specific context for Conduit and Cohttp. *)
-  let src =
-    match address with
-    | `Unix _ -> None
-    | _ -> Some (Ocsigen_config.Socket_type.to_string address)
-  in
-  let conduit_ctx = Conduit_lwt_unix.init ?src ~tls_own_key () in
-  let ctx = Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx () in
   (* We catch the INET_ADDR of the server *)
   let callback =
     let ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in
-  let config = Cohttp_lwt_unix.Server.make_expert ~conn_closed ~callback () in
-  let mode =
+  let config = Cohttp_eio.Server.make_expert ~conn_closed ~callback () in
+  let sockaddr =
     match address, tls_own_key with
-    | `Unix f, _ -> `Unix_domain_socket (`File f)
-    | _, `None -> `TCP (`Port port)
-    | _, `TLS (crt, key, pass) -> `OpenSSL (crt, key, pass, `Port port)
+    | (`Unix _ as a), _ -> a
+    | `All, `None -> `Tcp (Eio.Net.Ipaddr.V4.any, port)
+    | `IPv4 ip, `None ->
+        `Tcp (Eio.Net.Ipaddr.of_raw (Unix.string_of_inet_addr ip), port)
+    | _, `None -> `Tcp (Eio.Net.Ipaddr.V4.any, port)
+    | _, `TLS (_crt, _key, _pass) -> failwith "TLS is not supported"
   in
-  Cohttp_lwt_unix.Server.create ~stop ~ctx ~mode config;
+  let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
+  let env = Stdlib.Option.get (Fiber.get Ocsigen_lib.env) in
+  let listening_socket = Eio.Net.listen ~sw ~backlog:100 env#net sockaddr in
+  Cohttp_eio.Server.run ~stop ~on_error listening_socket config;
   Promise.resolve stop_wakener ()
