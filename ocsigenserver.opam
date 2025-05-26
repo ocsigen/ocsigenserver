@@ -10,7 +10,7 @@ license: "LGPL-2.1-only WITH OCaml-LGPL-linking-exception"
 homepage: "http://ocsigen.org/ocsigenserver"
 bug-reports: "https://github.com/ocsigen/ocsigenserver/issues"
 depends: [
-  "dune" {>= "3.18"}
+  "dune" {>= "3.19"}
   "ocaml" {>= "4.08.1"}
   "camlzip" {>= "1.04"}
   "cohttp-lwt-unix" {>= "5.0" & < "6.0"}
