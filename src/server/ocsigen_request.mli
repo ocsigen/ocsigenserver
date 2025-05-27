@@ -15,7 +15,7 @@ val make :
   -> ?original_full_path:string
   -> ?request_cache:Polytables.t
   -> ?cookies_override:string Ocsigen_cookie_map.Map_inner.t
-  -> address:Unix.inet_addr
+  -> address:Ocsigen_config.Socket_type.t
   -> port:int
   -> ssl:bool
   -> filenames:string list ref
@@ -42,7 +42,7 @@ val update :
 val to_cohttp : t -> Cohttp.Request.t
 val uri : t -> Uri.t
 val body : t -> Cohttp_lwt.Body.t
-val address : t -> Unix.inet_addr
+val address : t -> Ocsigen_config.Socket_type.t
 val host : t -> string option
 val meth : t -> Cohttp.Code.meth
 val port : t -> int
@@ -75,7 +75,7 @@ val post_params :
   -> (string * string) list Lwt.t option
 
 val remote_ip : t -> string
-val remote_ip_parsed : t -> Ipaddr.t
+val remote_ip_parsed : t -> [`Ip of Ipaddr.t | `Unix of string]
 val forward_ip : t -> string list
 val content_type : t -> content_type option
 val request_cache : t -> Polytables.t
