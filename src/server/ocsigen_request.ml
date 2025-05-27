@@ -55,7 +55,7 @@ type t =
   ; r_filenames : string list ref
   ; r_sockaddr : Lwt_unix.sockaddr
   ; r_remote_ip : string Lazy.t
-  ; r_remote_ip_parsed : [`Ip of Ipaddr.t | `File of string] Lazy.t
+  ; r_remote_ip_parsed : [`Ip of Ipaddr.t | `Unix of string] Lazy.t
   ; r_forward_ip : string list
   ; r_uri : uri
   ; r_meth : Cohttp.Code.meth
@@ -97,7 +97,7 @@ let make
       (match sockaddr with
       | Unix.ADDR_INET (ip, _port) ->
           `Ip (Ipaddr.of_string_exn (Unix.string_of_inet_addr ip))
-      | ADDR_UNIX f -> `File f)
+      | ADDR_UNIX f -> `Unix f)
   in
   { r_address = address
   ; r_port = port

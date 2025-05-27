@@ -41,7 +41,7 @@ let ip s =
     let r =
       match Ocsigen_request.remote_ip_parsed ri with
       | `Ip ip -> Ipaddr.Prefix.mem ip prefix
-      | `File _ -> false
+      | `Unix _ -> false
     in
     if r
     then
@@ -224,7 +224,7 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
             let equal_ip =
               match Ocsigen_request.remote_ip_parsed request_info with
               | `Ip r_ip -> Ipaddr.compare proxy_ip r_ip = 0
-              | `File _ -> false
+              | `Unix _ -> false
             in
             if equal_ip || not check_equal_ip
             then

@@ -29,7 +29,7 @@ type ssl_info =
 
 module Socket_type : sig
   type t =
-    [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr | `File of string]
+    [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr | `Unix of string]
 
   val to_string : t -> string
 end

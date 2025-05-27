@@ -29,13 +29,13 @@ type ssl_info =
 
 module Socket_type = struct
   type t =
-    [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr | `File of string]
+    [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr | `Unix of string]
 
   let to_string = function
     | `All -> Unix.string_of_inet_addr Unix.inet_addr_any
     | `IPv4 u -> Unix.string_of_inet_addr u
     | `IPv6 u -> Unix.string_of_inet_addr u
-    | `File s -> s
+    | `Unix s -> s
 end
 
 type socket_type = Socket_type.t

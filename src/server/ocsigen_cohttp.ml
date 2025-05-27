@@ -226,7 +226,7 @@ let service ?ssl ~address ~port ~connector () =
   (* We create a specific context for Conduit and Cohttp. *)
   let src =
     match address with
-    | `File _ -> None
+    | `Unix _ -> None
     | _ -> Some (Ocsigen_config.Socket_type.to_string address)
   in
   Conduit_lwt_unix.init ?src ~tls_own_key () >>= fun conduit_ctx ->
@@ -239,7 +239,7 @@ let service ?ssl ~address ~port ~connector () =
   let config = Cohttp_lwt_unix.Server.make ~conn_closed ~callback () in
   let mode =
     match address, tls_own_key with
-    | (`File _ as s), _ -> `Unix_domain_socket s
+    | `Unix f, _ -> `Unix_domain_socket (`File f)
     | _, `None -> `TCP (`Port port)
     | _, `TLS (crt, key, pass) -> `OpenSSL (crt, key, pass, `Port port)
   in
