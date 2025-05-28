@@ -220,7 +220,7 @@ let main config =
     in
     let extensions_connector = Ocsigen_extensions.compute_result in
     let run () =
-      Lwt_main.run (Ocsigen_messages.open_files ());
+      Ocsigen_messages.open_files () >>= fun () ->
       let ports = Ocsigen_config.get_ports ()
       and ssl_ports = Ocsigen_config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
@@ -336,18 +336,17 @@ let main config =
            >>= f
          in
          ignore (f () : 'a Lwt.t));
-      Lwt_main.run
-      @@ Lwt.join
-           (List.map
-              (fun (address, port) ->
-                 Ocsigen_cohttp.service ~address ~port
-                   ~connector:extensions_connector ())
-              connection
-           @ (List.map (fun (address, port, (crt, key)) ->
-                Ocsigen_cohttp.service
-                  ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-                  ~address ~port ~connector:extensions_connector ()))
-               ssl_connection)
+      Lwt.join
+        (List.map
+           (fun (address, port) ->
+              Ocsigen_cohttp.service ~address ~port
+                ~connector:extensions_connector ())
+           connection
+        @ (List.map (fun (address, port, (crt, key)) ->
+             Ocsigen_cohttp.service
+               ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+               ~address ~port ~connector:extensions_connector ()))
+            ssl_connection)
       (*
          Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
 
@@ -387,14 +386,14 @@ let main config =
     then
       let pid = Unix.fork () in
       if pid = 0
-      then run ()
+      then Lwt_main.run (run ())
       else (
         Ocsigen_messages.console (fun () ->
           "Process " ^ string_of_int pid ^ " detached");
         write_pid pid)
     else (
       write_pid (Unix.getpid ());
-      run ())
+      Lwt_main.run (run ()))
   with e ->
     let msg, errno = errmsg e in
     Ocsigen_messages.errlog msg;
