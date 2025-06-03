@@ -445,10 +445,6 @@ and later_pass = function
       later_pass ll
   | Element ("minthreads", [], _p) :: ll -> later_pass ll
   | Element ("maxthreads", [], _p) :: ll -> later_pass ll
-  | Element (("maxdetachedcomputationsqueued" as st), [], p) :: ll ->
-      set_max_number_of_threads_queued
-        (int_of_string st (parse_string_tag st p));
-      later_pass ll
   | Element (("maxconnected" as st), [], p) :: ll ->
       set_max_number_of_connections (int_of_string st (parse_string_tag st p));
       later_pass ll

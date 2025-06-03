@@ -56,7 +56,6 @@ val set_veryverbose : unit -> unit
 val set_debug : unit -> unit
 val set_minthreads : int -> unit
 val set_maxthreads : int -> unit
-val set_max_number_of_threads_queued : int -> unit
 val set_max_number_of_connections : int -> unit
 val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
@@ -92,7 +91,6 @@ val get_veryverbose : unit -> bool
 val get_debug : unit -> bool
 val get_minthreads : unit -> int
 val get_maxthreads : unit -> int
-val get_max_number_of_threads_queued : unit -> int
 val get_max_number_of_connections : unit -> int
 val get_client_timeout : unit -> int
 val get_server_timeout : unit -> int
