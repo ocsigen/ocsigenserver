@@ -38,7 +38,11 @@ let ip s =
         Ocsigen_extensions.badconfig "Bad ip/netmask [%s] in <ip> condition" s)
   in
   fun ri ->
-    let r = Ipaddr.Prefix.mem (Ocsigen_request.remote_ip_parsed ri) prefix in
+    let r =
+      match Ocsigen_request.remote_ip_parsed ri with
+      | `Ip ip -> Ipaddr.Prefix.mem ip prefix
+      | `Unix _ -> false
+    in
     if r
     then
       Logs.info ~src:section (fun fmt ->
@@ -218,7 +222,9 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
             let last_proxy = List.last proxies in
             let proxy_ip = Ipaddr.of_string_exn last_proxy in
             let equal_ip =
-              proxy_ip = Ocsigen_request.remote_ip_parsed request_info
+              match Ocsigen_request.remote_ip_parsed request_info with
+              | `Ip r_ip -> Ipaddr.compare proxy_ip r_ip = 0
+              | `Unix _ -> false
             in
             if equal_ip || not check_equal_ip
             then

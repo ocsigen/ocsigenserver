@@ -28,17 +28,14 @@ type ssl_info =
   ; ssl_curve : string option }
 
 module Socket_type = struct
-  type t = [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr]
+  type t =
+    [`All | `IPv4 of Unix.inet_addr | `IPv6 of Unix.inet_addr | `Unix of string]
 
   let to_string = function
     | `All -> Unix.string_of_inet_addr Unix.inet_addr_any
     | `IPv4 u -> Unix.string_of_inet_addr u
     | `IPv6 u -> Unix.string_of_inet_addr u
-
-  let to_inet_addr = function
-    | `All -> Unix.inet_addr_any
-    | `IPv4 u -> u
-    | `IPv6 u -> u
+    | `Unix s -> s
 end
 
 type socket_type = Socket_type.t

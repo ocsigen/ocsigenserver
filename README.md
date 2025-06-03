@@ -24,6 +24,16 @@ Build instructions:
 Local testings:
 ===============
 
+To run the automated tests, do:
+
+ * dune runtest --auto-promote
+
+ * this will update the files at test/extensions/*/run.t to reflect the
+   behavior of ocsigenserver. The test files don't change if the server did not
+   change behavior. Use Git to see the eventual changes.
+
+Alternatively, you can also test the 'ocsigenserver' program using a config file:
+
  * run "make run.local" or "make run.opt.local"
    in the ocsigen source directory.
 
@@ -31,6 +41,8 @@ Local testings:
 
  * if it does not work, look at the logs (see 'local/var/log/' in the
    ocsgigen source directory) or run ocsigen with options -v.
+
+ * this will use the config file at 'local/etc/ocsigenserver.conf'.
 
 ------------------------------------------------------------------
 
