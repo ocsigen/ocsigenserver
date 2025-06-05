@@ -108,10 +108,6 @@ let set_debug () =
 
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i
-
-let set_max_number_of_threads_queued =
-  Lwt_preemptive.set_max_number_of_threads_queued
-
 let set_max_number_of_connections i = max_number_of_connections := i
 let set_client_timeout i = silent_client_timeout := i
 let set_server_timeout i = silent_server_timeout := i
@@ -154,10 +150,6 @@ let get_veryverbose () = !veryverbose
 let get_debug () = !debug
 let get_minthreads () = !minthreads
 let get_maxthreads () = !maxthreads
-
-let get_max_number_of_threads_queued =
-  Lwt_preemptive.get_max_number_of_threads_queued
-
 let get_max_number_of_connections () = !max_number_of_connections
 let get_client_timeout () = !silent_client_timeout
 let get_server_timeout () = !silent_server_timeout

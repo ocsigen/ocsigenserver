@@ -50,7 +50,6 @@ val start :
   -> ?debugmode:bool
   -> ?minthreads:int
   -> ?maxthreads:int
-  -> ?max_number_of_threads_queued:int
   -> ?max_number_of_connections:int
   -> ?client_timeout:int
   -> ?server_timeout:int

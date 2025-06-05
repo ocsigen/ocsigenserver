@@ -278,8 +278,6 @@ let main config =
         raise
           (Ocsigen_config.Config_file_error
              "maxthreads should be greater than minthreads");
-      Lwt_preemptive.init minthreads maxthreads (fun s ->
-        Logs.err ~src:section (fun fmt -> fmt "%s" s));
       (Lwt.async_exception_hook :=
          fun e ->
            (* replace the default "exit 2" behaviour *)
@@ -446,7 +444,6 @@ let start
       ?debugmode
       ?minthreads
       ?maxthreads
-      ?max_number_of_threads_queued
       ?max_number_of_connections
       ?client_timeout
       ?server_timeout
@@ -479,8 +476,6 @@ let start
   Option.iter Ocsigen_config.set_debug debug;
   Option.iter Ocsigen_config.set_minthreads minthreads;
   Option.iter Ocsigen_config.set_maxthreads maxthreads;
-  Option.iter Ocsigen_config.set_max_number_of_threads_queued
-    max_number_of_threads_queued;
   Option.iter Ocsigen_config.set_max_number_of_connections
     max_number_of_connections;
   Option.iter Ocsigen_config.set_client_timeout client_timeout;
