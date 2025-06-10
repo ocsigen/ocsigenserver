@@ -239,22 +239,7 @@ let of_lwt_stream stream =
   in
   make aux
 
-(** Convert an {!Ocsigen_stream.t} into a {!Lwt_stream.t}.
-    @param is_empty function to skip empty chunk.
-*)
-let to_lwt_stream ?(is_empty = fun _ -> false) o_stream =
-  let stream = ref (get o_stream) in
-  let rec wrap () =
-    next !stream >>= function
-    | Finished None -> o_stream.finalizer `Success >>= fun () -> Lwt.return None
-    | Finished (Some next) ->
-        stream := next;
-        wrap ()
-    | Cont (value, next) ->
-        stream := next;
-        if is_empty value then wrap () else Lwt.return (Some value)
-  in
-  Lwt_stream.from wrap
+let of_cohttp_body body = Cohttp_lwt.Body.to_stream body |> of_lwt_stream
 
 module StringStream = struct
   type out = string t
