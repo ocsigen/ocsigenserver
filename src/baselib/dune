@@ -26,6 +26,7 @@
   cryptokit
   re
   ocsigen_lib_base
+  cohttp-lwt
   logs
   (select
    dynlink_wrapper.ml
