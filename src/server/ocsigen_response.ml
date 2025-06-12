@@ -2,6 +2,10 @@ open Cohttp
 open Lwt.Syntax
 
 module Body = struct
+  (* TODO: Avoid copies by passing buffers directly. This API was choosen
+     because it is closer to [Lwt_stream] which was used before. This type
+     forces data to be copied from buffers (usually [bytes]) to immutable
+     strings, which is unecessary. *)
   type t = ((string -> unit Lwt.t) -> unit Lwt.t) * Transfer.encoding
 
   let make encoding writer : t = writer, encoding
