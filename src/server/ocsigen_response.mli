@@ -53,6 +53,14 @@ val respond_error :
 
     @deprecated Use [respond_string] with a [~status] argument instead. *)
 
+val respond_file :
+   ?headers:Cohttp.Header.t
+  -> ?status:Http.Status.t
+  -> string
+  -> t Lwt.t
+(** Respond with the content of a file. The content type is guessed using
+    [Magic_mime]. *)
+
 val update :
    ?response:Cohttp.Response.t
   -> ?body:Body.t

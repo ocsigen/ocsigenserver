@@ -50,6 +50,63 @@ let respond_string ?headers ~status ~body () =
 let respond_error ?headers ?(status = `Internal_server_error) ~body () =
   respond_string ?headers ~status ~body:("Error: " ^ body) ()
 
+let respond_not_found ?uri () =
+  let body =
+    match uri with
+    | None -> "Not found"
+    | Some uri -> "Not found: " ^ Uri.to_string uri
+  in
+  respond_string ~status:`Not_found ~body ()
+
+let respond_file ?headers ?(status = `OK) fname =
+  let exception Isnt_a_file in
+  (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
+  Lwt.catch
+    (fun () ->
+       (* Check this isn't a directory first *)
+       let* () =
+         let* s = Lwt_unix.stat fname in
+         if Unix.(s.st_kind <> S_REG)
+         then raise Isnt_a_file
+         else Lwt.return_unit
+       in
+       let count = 16384 in
+       let* ic =
+         Lwt_io.open_file ~buffer:(Lwt_bytes.create count) ~mode:Lwt_io.input
+           fname
+       in
+       let* len = Lwt_io.length ic in
+       let encoding = Http.Transfer.Fixed len in
+       let stream write =
+         let rec cat_loop () =
+           Lwt.bind (Lwt_io.read ~count ic) (function
+             | "" -> Lwt.return_unit
+             | buf -> Lwt.bind (write buf) cat_loop)
+         in
+         let* () =
+           Lwt.catch cat_loop (fun exn ->
+             Logs.warn (fun m ->
+               m "Error resolving file %s (%s)" fname (Printexc.to_string exn));
+             Lwt.return_unit)
+         in
+         Lwt.catch
+           (fun () -> Lwt_io.close ic)
+           (fun e ->
+              Logs.warn (fun f ->
+                f "Closing channel failed: %s" (Printexc.to_string e));
+              Lwt.return_unit)
+       in
+       let body = Body.make encoding stream in
+       let mime_type = Magic_mime.lookup fname in
+       let headers =
+         Http.Header.add_opt_unless_exists headers "content-type" mime_type
+       in
+       Lwt.return (respond ~headers ~status ~encoding ~body ()))
+    (function
+      | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
+          Lwt.return (respond_not_found ())
+      | exn -> Lwt.reraise exn)
+
 let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   let a_response =
     match response with Some response -> response | None -> a_response
