@@ -50,10 +50,68 @@ let respond_string ?headers ~status ~body () =
 let respond_error ?headers ?(status = `Internal_server_error) ~body () =
   respond_string ?headers ~status ~body:("Error: " ^ body) ()
 
+let respond_not_found ?uri () =
+  let body =
+    match uri with
+    | None -> "Not found"
+    | Some uri -> "Not found: " ^ Uri.to_string uri
+  in
+  respond_string ~status:`Not_found ~body ()
+
+let respond_file ?headers ?(status = `OK) fname =
+  let exception Isnt_a_file in
+  (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
+  Lwt.catch
+    (fun () ->
+       (* Check this isn't a directory first *)
+       let* () =
+         let* s = Lwt_unix.stat fname in
+         if Unix.(s.st_kind <> S_REG)
+         then raise Isnt_a_file
+         else Lwt.return_unit
+       in
+       let count = 16384 in
+       let* ic =
+         Lwt_io.open_file ~buffer:(Lwt_bytes.create count) ~mode:Lwt_io.input
+           fname
+       in
+       let* len = Lwt_io.length ic in
+       let encoding = Http.Transfer.Fixed len in
+       let stream write =
+         let rec cat_loop () =
+           Lwt.bind (Lwt_io.read ~count ic) (function
+             | "" -> Lwt.return_unit
+             | buf -> Lwt.bind (write buf) cat_loop)
+         in
+         let* () =
+           Lwt.catch cat_loop (fun exn ->
+             Logs.warn (fun m ->
+               m "Error resolving file %s (%s)" fname (Printexc.to_string exn));
+             Lwt.return_unit)
+         in
+         Lwt.catch
+           (fun () -> Lwt_io.close ic)
+           (fun e ->
+              Logs.warn (fun f ->
+                f "Closing channel failed: %s" (Printexc.to_string e));
+              Lwt.return_unit)
+       in
+       let body = Body.make encoding stream in
+       let mime_type = Magic_mime.lookup fname in
+       let headers =
+         Http.Header.add_opt_unless_exists headers "content-type" mime_type
+       in
+       Lwt.return (respond ~headers ~status ~encoding ~body ()))
+    (function
+      | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
+          Lwt.return (respond_not_found ())
+      | exn -> Lwt.reraise exn)
+
 let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   let a_response =
     match response with Some response -> response | None -> a_response
-  and a_body = match body with Some body -> body | None -> a_body
+  in
+  let a_body = match body with Some body -> body | None -> a_body
   and a_cookies =
     match cookies with Some cookies -> cookies | None -> a_cookies
   in
@@ -90,19 +148,25 @@ let make_cookies_headers path t hds =
          (make_cookies_header path exp name v secure))
     t hds
 
-let to_cohttp_response {a_response; a_cookies; a_body = _} =
+let to_cohttp_response {a_response; a_cookies; a_body = _, encoding} =
   let headers =
     let add name value headers = Header.add_unless_exists headers name value in
+    let add_transfer_encoding h =
+      match encoding with
+      | Transfer.Chunked -> add "transfer-encoding" "chunked" h
+      | _ -> h
+    in
     Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
       (Response.headers a_response)
     |> add "server" Ocsigen_config.server_name
     |> add "date" (Ocsigen_lib.Date.to_string (Unix.time ()))
+    |> add_transfer_encoding
   in
   {a_response with Response.headers}
 
 let to_response_expert t =
   let module R = Cohttp_lwt_unix.Response in
-  let write_footer {R.encoding; _} oc =
+  let write_footer encoding oc =
     (* Copied from [cohttp/response.ml]. *)
     match encoding with
     | Transfer.Chunked -> Lwt_io.write oc "0\r\n\r\n"
@@ -112,8 +176,9 @@ let to_response_expert t =
   ( res
   , fun _ic oc ->
       let writer = R.make_body_writer ~flush:false res oc in
-      let* () = fst t.a_body (R.write_body writer) in
-      write_footer res oc )
+      let body, encoding = t.a_body in
+      let* () = body (R.write_body writer) in
+      write_footer encoding oc )
 
 let response t = t.a_response
 let body t = t.a_body
