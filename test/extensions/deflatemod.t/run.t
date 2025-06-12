@@ -21,8 +21,8 @@ First response is not compressed:
   $ curl_ "index.html"
   HTTP/1.1 200 OK
   content-type: text/html
-  server: Ocsigen
   content-length: 12
+  server: Ocsigen
   
   Hello world
 
@@ -31,6 +31,7 @@ Second response is compressed:
   $ curl_ "index.html" --compressed
   HTTP/1.1 200 OK
   content-type: text/html
+  content-length: 12
   content-encoding: gzip
   server: Ocsigen
   transfer-encoding: chunked
