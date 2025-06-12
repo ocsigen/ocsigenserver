@@ -18,8 +18,8 @@
  (depends
   (ocaml (>= 4.08.1))
   (camlzip (>= 1.04))
-  (cohttp-lwt-unix (and (>= 5.0) (< 6.0)))
-  (conduit-lwt-unix (and (>= 2.0) (< 7.0)))
+  (cohttp-lwt-unix (>= 6.0))
+  conduit-lwt-unix
   http
   cryptokit
   (ipaddr (>= 2.1))
