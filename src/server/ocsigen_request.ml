@@ -1,4 +1,4 @@
-open Lwt.Infix
+open Eio.Std
 
 let post_data_of_body ~content_type b =
   Ocsigen_multipart.post_params ~content_type b
@@ -12,7 +12,7 @@ type file_info = Ocsigen_multipart.file_info =
   ; file_content_type : content_type option }
 
 type post_data = Ocsigen_multipart.post_data
-type body = [`Unparsed of Cohttp_lwt.Body.t | `Parsed of post_data Lwt.t]
+type body = [`Unparsed of Cohttp_lwt.Body.t | `Parsed of post_data Promise.t]
 
 (* Wrapper around Uri providing our derived fields.
 
@@ -53,7 +53,7 @@ type t =
   ; r_port : int
   ; r_ssl : bool
   ; r_filenames : string list ref
-  ; r_sockaddr : Lwt_unix.sockaddr
+  ; r_sockaddr : Unix.sockaddr
   ; r_remote_ip : string Lazy.t
   ; r_remote_ip_parsed : [`Ip of Ipaddr.t | `Unix of string] Lazy.t
   ; r_forward_ip : string list
@@ -68,7 +68,7 @@ type t =
   ; r_cookies_override : string Ocsigen_cookie_map.Map_inner.t option
   ; mutable r_request_cache : Polytables.t
   ; mutable r_tries : int
-  ; r_connection_closed : unit Lwt.t
+  ; r_connection_closed : unit Promise.t
   ; r_timeofday : float }
 
 let make
@@ -158,8 +158,8 @@ let update
   and r_sub_path = match sub_path with Some _ -> sub_path | None -> r_sub_path
   and r_body =
     match post_data with
-    | Some (Some post_data) -> ref (`Parsed (Lwt.return post_data))
-    | Some None -> ref (`Parsed (Lwt.return ([], [])))
+    | Some (Some post_data) -> ref (`Parsed post_data)
+    | Some None -> ref (`Parsed ([], []))
     | None -> r_body
   and r_cookies_override =
     match cookies_override with
@@ -287,10 +287,10 @@ let force_post_data ({r_body; _} as r) s i =
     | None -> None)
 
 let post_params r s i =
-  match force_post_data r s i with Some v -> Some (v >|= fst) | None -> None
+  match force_post_data r s i with Some v -> Some (fst v) | None -> None
 
 let files r s i =
-  match force_post_data r s i with Some v -> Some (v >|= snd) | None -> None
+  match force_post_data r s i with Some v -> Some (snd v) | None -> None
 
 let remote_ip {r_remote_ip; _} = Lazy.force r_remote_ip
 let remote_ip_parsed {r_remote_ip_parsed; _} = Lazy.force r_remote_ip_parsed

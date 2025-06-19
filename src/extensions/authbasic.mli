@@ -58,7 +58,7 @@ let _ =
 
 val section : Logs.src
 
-type auth = string -> string -> bool Lwt.t
+type auth = string -> string -> bool
 
 val register_basic_authentication_method : (Xml.xml -> auth) -> unit
 (** This function registers an authentication plugin: it adds a new

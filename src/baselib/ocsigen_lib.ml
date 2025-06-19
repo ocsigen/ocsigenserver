@@ -26,17 +26,18 @@ module Ip_address = struct
 
   let get_inet_addr ?(v6 = false) host =
     let rec aux = function
-      | [] -> Lwt.fail No_such_host
-      | {Unix.ai_addr = Unix.ADDR_INET (inet_addr, _); _} :: _ ->
-          Lwt.return inet_addr
+      | [] -> raise No_such_host
+      | {Unix.ai_addr = Unix.ADDR_INET (inet_addr, _); _} :: _ -> inet_addr
       | _ :: l -> aux l
     in
     let options =
-      [ (if v6
-         then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6
-         else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET) ]
+      [ (if v6 then Unix.AI_FAMILY Unix.PF_INET6 else Unix.AI_FAMILY Unix.PF_INET)
+      ]
     in
-    Lwt.bind (Lwt_unix.getaddrinfo host "" options) aux
+    aux
+      (Unix.getaddrinfo
+         (* TODO: lwt-to-direct-style: This call to [Unix.getaddrinfo] was [Lwt_unix.getaddrinfo] before the rewrite. *)
+         host "" options)
 end
 
 (*****************************************************************************)

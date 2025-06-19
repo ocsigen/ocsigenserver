@@ -20,8 +20,6 @@
 
 (* Compress output sent by the server *)
 
-open Lwt.Infix
-
 let section = Logs.Src.create "ocsigen:ext:deflate"
 
 (* Content-type *)
@@ -59,7 +57,7 @@ let gzip_header =
 type output_buffer =
   { stream : Zlib.stream
   ; buf : bytes
-  ; flush : string -> unit Lwt.t
+  ; flush : string -> unit
   ; mutable size : int32
   ; mutable crc : int32 }
 
@@ -71,9 +69,7 @@ let write_int32 buf offset n =
 
 let compress_flush oz used_out =
   Logs.debug ~src:section (fun fmt -> fmt "Flushing %d bytes" used_out);
-  if used_out > 0
-  then oz.flush (Bytes.sub_string oz.buf 0 used_out)
-  else Lwt.return_unit
+  if used_out > 0 then oz.flush (Bytes.sub_string oz.buf 0 used_out) else ()
 
 (* gzip trailer *)
 let write_trailer oz =
@@ -84,7 +80,7 @@ let write_trailer oz =
 (* puts in oz the content of buf, from pos to pos + len ; *)
 let rec compress_output oz inbuf pos len =
   if len = 0
-  then Lwt.return_unit
+  then ()
   else
     let (_ : bool), used_in, used_out =
       try
@@ -95,7 +91,7 @@ let rec compress_output oz inbuf pos len =
           (Ocsigen_stream.Stream_error
              ("Error during compression: " ^ s ^ " " ^ s'))
     in
-    compress_flush oz used_out >>= fun () ->
+    compress_flush oz used_out;
     compress_output oz inbuf (pos + used_in) (len - used_in)
 
 let rec compress_finish oz =
@@ -105,8 +101,8 @@ let rec compress_finish oz =
     Zlib.deflate oz.stream oz.buf 0 0 oz.buf 0 (Bytes.length oz.buf)
       Zlib.Z_FINISH
   in
-  compress_flush oz used_out >>= fun () ->
-  if not finished then compress_finish oz else Lwt.return_unit
+  compress_flush oz used_out;
+  if not finished then compress_finish oz else ()
 
 (* deflate param : true = deflate ; false = gzip (no header in this case) *)
 let compress_body deflate body =
@@ -120,22 +116,20 @@ let compress_body deflate body =
     ; size = 0l
     ; crc = 0l }
   in
-  (if deflate then Lwt.return_unit else flush gzip_header) >>= fun () ->
+  if deflate then () else flush gzip_header;
   body (fun inbuf ->
     let len = String.length inbuf in
     oz.size <- Int32.add oz.size (Int32.of_int len);
     oz.crc <- Zlib.update_crc_string oz.crc inbuf 0 len;
-    compress_output oz inbuf 0 len)
-  >>= fun () ->
-  compress_finish oz >>= fun () ->
-  (if deflate then Lwt.return_unit else write_trailer oz) >>= fun () ->
+    compress_output oz inbuf 0 len);
+  compress_finish oz;
+  if deflate then () else write_trailer oz;
   Logs.debug ~src:section (fun fmt -> fmt "Close stream");
-  (try Zlib.deflate_end zstream
-   with
-   (* ignore errors, deflate_end cleans everything anyway *)
-   | Zlib.Error _ ->
-     ());
-  Lwt.return_unit
+  try Zlib.deflate_end zstream
+  with
+  (* ignore errors, deflate_end cleans everything anyway *)
+  | Zlib.Error _ ->
+    ()
 
 (* We implement Content-Encoding, not Transfer-Encoding *)
 type encoding = Deflate | Gzip | Id | Star | Not_acceptable
@@ -188,54 +182,50 @@ let select_encoding accept_header =
 (* deflate = true -> mode deflate
    deflate = false -> mode gzip *)
 let stream_filter contentencoding url deflate choice res =
-  Lwt.return
-    (Ocsigen_extensions.Ext_found
-       (fun () ->
-         try
-           match
-             Ocsigen_response.header res Ocsigen_header.Name.content_type
-           with
-           | None -> Lwt.return res
-           | Some contenttype -> (
-               let contenttype =
-                 try String.sub contenttype 0 (String.index contenttype ';')
-                 with Not_found -> contenttype
-               in
-               match Ocsigen_header.Mime_type.parse contenttype with
-               | None, _ | _, None -> Lwt.return res
-               | Some a, Some b when should_compress (a, b) url choice ->
-                   let response =
-                     let {Http.Response.headers; status; version} =
-                       Ocsigen_response.response res
-                     in
-                     let headers =
-                       let name = Ocsigen_header.Name.(to_string etag) in
-                       match Cohttp.Header.get headers name with
-                       | Some e ->
-                           Cohttp.Header.replace headers name
-                             ((if deflate then "Ddeflatemod" else "Gdeflatemod")
-                             ^ e)
-                       | None -> headers
-                     in
-                     let headers =
-                       Http.Header.replace headers
-                         Ocsigen_header.Name.(to_string content_encoding)
-                         contentencoding
-                     in
-                     Http.Response.make ~headers ~status ~version ()
-                   and body =
-                     Ocsigen_response.Body.make Cohttp.Transfer.Chunked
-                       (compress_body deflate
-                          (Ocsigen_response.Body.write
-                             (Ocsigen_response.body res)))
-                   in
-                   Lwt.return (Ocsigen_response.update res ~body ~response)
-               | _ -> Lwt.return res)
-         with Not_found -> Lwt.return res))
+  Ocsigen_extensions.Ext_found
+    (fun () ->
+      try
+        match Ocsigen_response.header res Ocsigen_header.Name.content_type with
+        | None -> res
+        | Some contenttype -> (
+            let contenttype =
+              try String.sub contenttype 0 (String.index contenttype ';')
+              with Not_found -> contenttype
+            in
+            match Ocsigen_header.Mime_type.parse contenttype with
+            | None, _ | _, None -> res
+            | Some a, Some b when should_compress (a, b) url choice ->
+                let response =
+                  let {Http.Response.headers; status; version} =
+                    Ocsigen_response.response res
+                  in
+                  let headers =
+                    let name = Ocsigen_header.Name.(to_string etag) in
+                    match Cohttp.Header.get headers name with
+                    | Some e ->
+                        Cohttp.Header.replace headers name
+                          ((if deflate then "Ddeflatemod" else "Gdeflatemod")
+                          ^ e)
+                    | None -> headers
+                  in
+                  let headers =
+                    Http.Header.replace headers
+                      Ocsigen_header.Name.(to_string content_encoding)
+                      contentencoding
+                  in
+                  Http.Response.make ~headers ~status ~version ()
+                and body =
+                  Ocsigen_response.Body.make Cohttp.Transfer.Chunked
+                    (compress_body deflate
+                       (Ocsigen_response.Body.write (Ocsigen_response.body res)))
+                in
+                Ocsigen_response.update res ~body ~response
+            | _ -> res)
+      with Not_found -> res)
 
 let filter choice_list = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
-      Lwt.return (Ocsigen_extensions.Ext_next code)
+      Ocsigen_extensions.Ext_next code
   | Ocsigen_extensions.Req_found ({Ocsigen_extensions.request_info = ri; _}, res)
     -> (
     match
@@ -250,12 +240,10 @@ let filter choice_list = function
         stream_filter "gzip"
           (Ocsigen_request.sub_path_string ri)
           false choice_list res
-    | Id | Star ->
-        Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return res))
+    | Id | Star -> Ocsigen_extensions.Ext_found (fun () -> res)
     | Not_acceptable ->
-        Lwt.return
-          (Ocsigen_extensions.Ext_stop_all
-             (Ocsigen_response.cookies res, `Not_acceptable)))
+        Ocsigen_extensions.Ext_stop_all
+          (Ocsigen_response.cookies res, `Not_acceptable))
 
 let rec parse_global_config = function
   | [] -> ()

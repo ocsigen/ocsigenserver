@@ -39,7 +39,7 @@ module String : module type of String_base
 module Ip_address : sig
   exception No_such_host
 
-  val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr Lwt.t
+  val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr
 end
 
 module Filename : sig
