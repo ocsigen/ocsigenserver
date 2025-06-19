@@ -393,15 +393,13 @@ check_ocamlversion
 check_binary ocamlfind "See: http://projects.camlcity.org/projects/findlib.html"
 
 check_library cohttp "See: https://github.com/mirage/ocaml-cohttp"
-check_library cohttp-lwt-unix "Missing support for 'lwt' in cohttp."
+check_library cohttp-eio "Missing support for 'eio' in cohttp."
 check_library react "See: http://erratique.ch/software/react"
 check_library ssl "See: http://sourceforge.net/projects/savonet/files/ocaml-ssl"
 check_library http ""
 
-check_library lwt "See: http://ocsigen.org/lwt"
-check_library lwt.unix  "Missing support for 'unix' in lwt."
-check_library lwt_react   "See: http://ocsigen.org/lwt"
-check_library lwt_ssl   "See: http://ocsigen.org/lwt"
+check_library eio ""
+check_library eio_unix ""
 check_library logs ""
 check_library logs-syslog "Missing syslog support."
 
