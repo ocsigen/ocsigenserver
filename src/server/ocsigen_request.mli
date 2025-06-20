@@ -19,7 +19,7 @@ val make :
   -> port:int
   -> ssl:bool
   -> filenames:string list ref
-  -> sockaddr:Lwt_unix.sockaddr
+  -> sockaddr:string
   -> body:Cohttp_lwt.Body.t
   -> connection_closed:unit Lwt.t
   -> Cohttp.Request.t
