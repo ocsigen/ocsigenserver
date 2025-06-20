@@ -33,6 +33,7 @@
   xml-light
   logs
   logs-syslog
-  syslog-message)
+  syslog-message
+  magic-mime)
  (conflicts
   (pgocaml (< 2.2))))
