@@ -84,7 +84,7 @@ let deps () =
     ; "ocsigenserver" ]
   in
   let packages =
-    "lwt_ssl,bytes,lwt.unix,logs,logs-syslog.unix,syslog-message,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-eio,http"
+    "bytes,logs,logs-syslog.unix,syslog-message,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-eio,http,eio,eio_main,ipaddr.unix,magic-mime"
   in
   let deps = ref [] in
   let cmd = "ocamlfind query -p-format -recursive " ^ packages in
