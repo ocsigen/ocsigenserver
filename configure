@@ -399,7 +399,7 @@ check_library ssl "See: http://sourceforge.net/projects/savonet/files/ocaml-ssl"
 check_library http ""
 
 check_library eio ""
-check_library eio_unix ""
+check_library eio_main ""
 check_library logs ""
 check_library logs-syslog "Missing syslog support."
 
