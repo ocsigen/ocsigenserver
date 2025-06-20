@@ -37,6 +37,7 @@ curl_ ()
 {
   local path=$1; shift
   # Remove the 'date' header, which is unreproducible
-  curl --unix-socket ./local.sock -s -i "$@" "http://local-test/$path" | \
+  curl --unix-socket ./local.sock --user-agent "" -s -i \
+    "$@" "http://local-test/$path" | \
     grep -v "^date: "
 }
