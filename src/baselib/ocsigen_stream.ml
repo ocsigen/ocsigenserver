@@ -219,7 +219,7 @@ let of_file filename =
     (Eio_unix.Net.import_socket_stream
        ~sw:(Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch))
        ~close_unix:true fd
-     : [`R | `Flow | `Close] r)
+      :> [`R | `Flow | `Close] r)
   in
   let buf = Cstruct.create 1024 in
   let rec aux () =
