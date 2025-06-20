@@ -57,11 +57,11 @@ end
 let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
-  let rec getsockname = function
-    | `TCP (ip, _port) -> Ipaddr.to_string ip
-    | `Unix_domain_socket path -> "unix://" ^ path
-    | `TLS (_, edn) -> getsockname edn
-    | `Unknown _ | `Vchan_direct _ | `Vchan_domain_socket _ -> "unknown"
+  let getsockname = function
+    | `TCP (ip, _) | `TLS (_, `TCP (ip, _)) -> Ipaddr.to_string ip
+    | `Unix_domain_socket path | `TLS (_, `Unix_domain_socket path) ->
+        "unix://" ^ path
+    | _ -> "unknown"
   in
   let sockaddr = getsockname edn in
   let connection_closed =
@@ -155,8 +155,6 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
 
 let conn_closed (_flow, conn) =
   try
-    Logs.debug ~src:section (fun fmt ->
-      fmt "Connection closed:\n%s" (Cohttp.Connection.to_string conn));
     Lwt.wakeup (snd (Hashtbl.find connections conn)) ();
     Hashtbl.remove connections conn;
     decr_connected ()
