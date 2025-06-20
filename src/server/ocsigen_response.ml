@@ -73,7 +73,7 @@ let respond_file ?headers ?(status = `OK) fname =
     let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
     let env = Stdlib.Option.get (Fiber.get Ocsigen_lib.env) in
     (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
-    let file_path = Eio.Path.( / ) env#cwd fname in
+    let file_path = Eio.Path.( / ) env#fs fname in
     let file_size =
       (* Check this isn't a directory first *)
       let s = Eio.Path.stat ~follow:true file_path in
