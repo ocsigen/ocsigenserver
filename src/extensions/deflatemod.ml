@@ -205,8 +205,9 @@ let stream_filter contentencoding url deflate choice res =
                | None, _ | _, None -> Lwt.return res
                | Some a, Some b when should_compress (a, b) url choice ->
                    let response =
-                     let response = Ocsigen_response.response res in
-                     let headers = Cohttp.Response.headers response in
+                     let {Http.Response.headers; status; version} =
+                       Ocsigen_response.response res
+                     in
                      let headers =
                        let name = Ocsigen_header.Name.(to_string etag) in
                        match Cohttp.Header.get headers name with
@@ -217,13 +218,11 @@ let stream_filter contentencoding url deflate choice res =
                        | None -> headers
                      in
                      let headers =
-                       Cohttp.Header.replace headers
+                       Http.Header.replace headers
                          Ocsigen_header.Name.(to_string content_encoding)
                          contentencoding
                      in
-                     { response with
-                       Cohttp.Response.headers
-                     ; Cohttp.Response.encoding = Cohttp.Transfer.Chunked }
+                     Http.Response.make ~headers ~status ~version ()
                    and body =
                      Ocsigen_response.Body.make Cohttp.Transfer.Chunked
                        (compress_body deflate
