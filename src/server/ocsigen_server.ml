@@ -273,7 +273,7 @@ let main config =
            |> fun x1 ->
            Eio.Buf_read.of_flow ~max_size:1_000_000
              (Eio_unix.Net.import_socket_stream ~sw ~close_unix:true x1
-              : [`R | `Flow | `Close] r)
+               :> [`R | `Flow | `Close] r)
          in
          let rec f () =
            let s = Eio.Buf_read.line pipe in
@@ -349,7 +349,7 @@ let main config =
     let run () =
       Eio_main.run (fun env ->
         Fiber.with_binding Ocsigen_lib.env env (fun () ->
-          Switch.run ~name:"main" (fun sw ->
+          Switch.run (fun sw ->
             Fiber.with_binding Ocsigen_lib.current_switch sw run)))
     in
     (* set_passwd_if_needed sslinfo; *)

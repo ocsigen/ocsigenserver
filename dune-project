@@ -18,11 +18,11 @@
  (depends
   (ocaml (>= 4.08.1))
   (camlzip (>= 1.04))
-  cohttp-eio
+  (cohttp-eio (>= 6.0.0))
   http
   cryptokit
   (ipaddr (>= 2.1))
-  eio
+  (eio (>= 0.13))
   eio_main
   lwt_react
   lwt_ssl
