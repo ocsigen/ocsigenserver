@@ -30,6 +30,7 @@ depends: [
   "logs-syslog"
   "syslog-message"
   "odoc" {with-doc}
+  "magic-mime"
 ]
 conflicts: [
   "pgocaml" {< "2.2"}
