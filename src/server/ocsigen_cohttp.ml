@@ -67,10 +67,8 @@ let handler
   let filenames = ref [] in
   let sockaddr =
     match eio_stream with
-    | `Unix s -> Unix.ADDR_UNIX s
-    | `Tcp (ip, port) ->
-        Unix.ADDR_INET
-          (Unix.inet_addr_of_string (ip : _ Eio.Net.Ipaddr.t :> string), port)
+    | `Unix s -> "unix://" ^ s
+    | `Tcp (ip, _port) -> (ip : _ Eio.Net.Ipaddr.t :> string)
   in
   let connection_closed =
     try fst (Hashtbl.find connections conn)

@@ -21,7 +21,7 @@ val make :
   -> port:int
   -> ssl:bool
   -> filenames:string list ref
-  -> sockaddr:Unix.sockaddr
+  -> sockaddr:string
   -> body:Cohttp_eio.Body.t
   -> connection_closed:unit Promise.t
   -> Cohttp.Request.t

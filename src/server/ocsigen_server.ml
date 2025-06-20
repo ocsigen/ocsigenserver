@@ -34,19 +34,6 @@ let log_uncaught_exception exn =
   Logs.err ~src:section (fun fmt ->
     fmt "Uncaught Exception@\n%a" Eio.Exn.pp exn)
 
-let pp_sockaddr ppf = function
-  | Unix.ADDR_INET (ip, _port) ->
-      Format.fprintf ppf "%s" (Unix.string_of_inet_addr ip)
-  | ADDR_UNIX f -> Format.fprintf ppf "%s" f
-
-let _warn sockaddr s =
-  Logs.warn ~src:section (fun fmt ->
-    fmt "While talking to %a:%s" pp_sockaddr sockaddr s)
-
-let _dbg sockaddr s =
-  Logs.info ~src:section (fun fmt ->
-    fmt "While talking to %a:%s" pp_sockaddr sockaddr s)
-
 (* fatal errors messages *)
 let errmsg = function
   | Dynlink_wrapper.Error e ->
