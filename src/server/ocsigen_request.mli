@@ -1,3 +1,5 @@
+open Eio.Std
+
 type t
 type content_type = (string * string) * (string * string) list
 
@@ -19,9 +21,9 @@ val make :
   -> port:int
   -> ssl:bool
   -> filenames:string list ref
-  -> sockaddr:Lwt_unix.sockaddr
-  -> body:Cohttp_lwt.Body.t
-  -> connection_closed:unit Lwt.t
+  -> sockaddr:string
+  -> body:Cohttp_eio.Body.t
+  -> connection_closed:unit Promise.t
   -> Cohttp.Request.t
   -> t
 
@@ -41,7 +43,7 @@ val update :
 
 val to_cohttp : t -> Cohttp.Request.t
 val uri : t -> Uri.t
-val body : t -> Cohttp_lwt.Body.t
+val body : t -> Cohttp_eio.Body.t
 val address : t -> Ocsigen_config.Socket_type.t
 val host : t -> string option
 val meth : t -> Cohttp.Code.meth
@@ -66,13 +68,13 @@ val files :
    t
   -> string option
   -> Int64.t option
-  -> (string * file_info) list Lwt.t option
+  -> (string * file_info) list option
 
 val post_params :
    t
   -> string option
   -> Int64.t option
-  -> (string * string) list Lwt.t option
+  -> (string * string) list option
 
 val remote_ip : t -> string
 val remote_ip_parsed : t -> [`Ip of Ipaddr.t | `Unix of string]
@@ -81,5 +83,5 @@ val content_type : t -> content_type option
 val request_cache : t -> Polytables.t
 val tries : t -> int
 val incr_tries : t -> unit
-val connection_closed : t -> unit Lwt.t
+val connection_closed : t -> unit
 val timeofday : t -> float

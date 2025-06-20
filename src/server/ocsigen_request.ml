@@ -1,4 +1,4 @@
-open Lwt.Infix
+open Eio.Std
 
 let post_data_of_body ~content_type b =
   Ocsigen_multipart.post_params ~content_type b
@@ -12,7 +12,7 @@ type file_info = Ocsigen_multipart.file_info =
   ; file_content_type : content_type option }
 
 type post_data = Ocsigen_multipart.post_data
-type body = [`Unparsed of Cohttp_lwt.Body.t | `Parsed of post_data Lwt.t]
+type body = [`Unparsed of Cohttp_eio.Body.t | `Parsed of post_data]
 
 (* Wrapper around Uri providing our derived fields.
 
@@ -53,9 +53,7 @@ type t =
   ; r_port : int
   ; r_ssl : bool
   ; r_filenames : string list ref
-  ; r_sockaddr : Lwt_unix.sockaddr
-  ; r_remote_ip : string Lazy.t
-  ; r_remote_ip_parsed : [`Ip of Ipaddr.t | `Unix of string] Lazy.t
+  ; r_remote_ip : string
   ; r_forward_ip : string list
   ; r_uri : uri
   ; r_meth : Cohttp.Code.meth
@@ -68,7 +66,7 @@ type t =
   ; r_cookies_override : string Ocsigen_cookie_map.Map_inner.t option
   ; mutable r_request_cache : Polytables.t
   ; mutable r_tries : int
-  ; r_connection_closed : unit Lwt.t
+  ; r_connection_closed : unit Promise.t
   ; r_timeofday : float }
 
 let make
@@ -86,26 +84,11 @@ let make
       ~connection_closed
       request
   =
-  let r_remote_ip =
-    lazy
-      (match sockaddr with
-      | Unix.ADDR_INET (ip, _port) -> Unix.string_of_inet_addr ip
-      | ADDR_UNIX f -> f)
-  in
-  let r_remote_ip_parsed =
-    lazy
-      (match sockaddr with
-      | Unix.ADDR_INET (ip, _port) ->
-          `Ip (Ipaddr.of_string_exn (Unix.string_of_inet_addr ip))
-      | ADDR_UNIX f -> `Unix f)
-  in
   { r_address = address
   ; r_port = port
   ; r_ssl = ssl
   ; r_filenames = filenames
-  ; r_sockaddr = sockaddr
-  ; r_remote_ip
-  ; r_remote_ip_parsed
+  ; r_remote_ip = sockaddr
   ; r_forward_ip = forward_ip
   ; r_uri = make_uri (Cohttp.Request.uri request)
   ; r_encoding = Cohttp.Request.encoding request
@@ -140,7 +123,6 @@ let update
        ; r_meth
        ; r_forward_ip
        ; r_remote_ip
-       ; r_remote_ip_parsed
        ; r_cookies_override
        ; r_body
        ; r_sub_path
@@ -150,16 +132,13 @@ let update
   let r_ssl = match ssl with Some ssl -> ssl | None -> r_ssl
   and r_forward_ip =
     match forward_ip with Some forward_ip -> forward_ip | None -> r_forward_ip
-  and r_remote_ip, r_remote_ip_parsed =
-    match remote_ip with
-    | Some remote_ip ->
-        lazy remote_ip, lazy (`Ip (Ipaddr.of_string_exn remote_ip))
-    | None -> r_remote_ip, r_remote_ip_parsed
+  and r_remote_ip =
+    match remote_ip with Some remote_ip -> remote_ip | None -> r_remote_ip
   and r_sub_path = match sub_path with Some _ -> sub_path | None -> r_sub_path
   and r_body =
     match post_data with
-    | Some (Some post_data) -> ref (`Parsed (Lwt.return post_data))
-    | Some None -> ref (`Parsed (Lwt.return ([], [])))
+    | Some (Some post_data) -> ref (`Parsed post_data)
+    | Some None -> ref (`Parsed ([], []))
     | None -> r_body
   and r_cookies_override =
     match cookies_override with
@@ -193,7 +172,6 @@ let update
   ; r_meth
   ; r_forward_ip
   ; r_remote_ip
-  ; r_remote_ip_parsed
   ; r_body
   ; r_cookies_override
   ; r_sub_path
@@ -287,16 +265,30 @@ let force_post_data ({r_body; _} as r) s i =
     | None -> None)
 
 let post_params r s i =
-  match force_post_data r s i with Some v -> Some (v >|= fst) | None -> None
+  match force_post_data r s i with Some v -> Some (fst v) | None -> None
 
 let files r s i =
-  match force_post_data r s i with Some v -> Some (v >|= snd) | None -> None
+  match force_post_data r s i with Some v -> Some (snd v) | None -> None
 
-let remote_ip {r_remote_ip; _} = Lazy.force r_remote_ip
-let remote_ip_parsed {r_remote_ip_parsed; _} = Lazy.force r_remote_ip_parsed
+let remote_ip {r_remote_ip; _} = r_remote_ip
+
+let remote_ip_parsed {r_remote_ip; _} =
+  let is_prefix prefix s =
+    (* TODO: Naive version to be swapped with [String.starts_with ~prefix s]
+       when the dependency on OCaml >= 4.13 is acceptable. *)
+    let plen = String.length prefix in
+    String.length s >= plen && String.sub s 0 plen = prefix
+  in
+  if is_prefix "unix://" r_remote_ip
+  then `Unix r_remote_ip
+  else `Ip (Ipaddr.of_string_exn r_remote_ip)
+
 let forward_ip {r_forward_ip; _} = r_forward_ip
 let request_cache {r_request_cache; _} = r_request_cache
 let tries {r_tries; _} = r_tries
 let incr_tries r = r.r_tries <- r.r_tries + 1
-let connection_closed {r_connection_closed; _} = r_connection_closed
+
+let connection_closed {r_connection_closed; _} =
+  Promise.await r_connection_closed
+
 let timeofday {r_timeofday; _} = r_timeofday

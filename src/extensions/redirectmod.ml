@@ -39,25 +39,22 @@ let attempt_redir {r_regexp; r_dest; r_full; r_temp} _err ri () =
     fmt "YES! %s redirection to: %s"
       (if r_temp then "Temporary " else "Permanent ")
       redir);
-  Lwt.return
-  @@ Ocsigen_extensions.Ext_found
-       (fun () ->
-         Lwt.return @@ Ocsigen_response.make
-         @@
-         let headers = Cohttp.Header.(init_with "Location" redir)
-         and status = if r_temp then `Found else `Moved_permanently in
-         Cohttp.Response.make ~status ~headers ())
+  Ocsigen_extensions.Ext_found
+    (fun () ->
+      Ocsigen_response.make
+      @@
+      let headers = Cohttp.Header.(init_with "Location" redir)
+      and status = if r_temp then `Found else `Moved_permanently in
+      Cohttp.Response.make ~status ~headers ())
 
 (** The function that will generate the pages from the request *)
 let gen dir = function
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+  | Ocsigen_extensions.Req_found _ -> Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found (err, {Ocsigen_extensions.request_info; _})
     -> (
-      Lwt.catch (attempt_redir dir err request_info) @@ function
-      | Ocsigen_extensions.Not_concerned ->
-          Lwt.return (Ocsigen_extensions.Ext_next err)
-      | e -> Lwt.fail e)
+    try (attempt_redir dir err request_info) () with
+    | Ocsigen_extensions.Not_concerned -> Ocsigen_extensions.Ext_next err
+    | e -> raise e)
 
 let parse_config config_elem =
   let regexp = ref None

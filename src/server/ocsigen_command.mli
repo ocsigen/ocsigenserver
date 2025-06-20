@@ -24,7 +24,7 @@ exception Unknown_command
 
 val register_command_function :
    ?prefix:string
-  -> (string -> string list -> unit Lwt.t)
+  -> (string -> string list -> unit)
   -> unit
 (** Use a prefix for all your commands when you want to create
     extension-specific commands.
@@ -44,4 +44,4 @@ val get_command_function :
   -> ?prefix:string
   -> string
   -> string list
-  -> unit Lwt.t
+  -> unit

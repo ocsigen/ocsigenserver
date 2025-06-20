@@ -16,8 +16,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
+open Eio.Std
 include Ocsigen_lib_base
 module String = String_base
+
+let current_switch = Eio.Fiber.create_key ()
+let env = Eio.Fiber.create_key ()
 
 (*****************************************************************************)
 
@@ -26,17 +30,16 @@ module Ip_address = struct
 
   let get_inet_addr ?(v6 = false) host =
     let rec aux = function
-      | [] -> Lwt.fail No_such_host
-      | {Unix.ai_addr = Unix.ADDR_INET (inet_addr, _); _} :: _ ->
-          Lwt.return inet_addr
+      | [] -> raise No_such_host
+      | `Tcp (ipv4v6, _port) :: tl ->
+          Eio.Net.Ipaddr.fold
+            ~v4:(fun ip -> if v6 then aux tl else ip)
+            ~v6:(fun ip -> if v6 then ip else aux tl)
+            ipv4v6
       | _ :: l -> aux l
     in
-    let options =
-      [ (if v6
-         then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6
-         else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET) ]
-    in
-    Lwt.bind (Lwt_unix.getaddrinfo host "" options) aux
+    let env = Stdlib.Option.get (Fiber.get env) in
+    (aux (Eio.Net.getaddrinfo env#net host) : _ Eio.Net.Ipaddr.t :> string)
 end
 
 (*****************************************************************************)

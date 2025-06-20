@@ -405,9 +405,8 @@ let rec later_pass_extconf dir =
           parse_ext filename
         with e ->
           Logs.err ~src:section (fun fmt ->
-            fmt
-              ("Error while loading configuration file %s (ignored)" ^^ "@\n%s")
-              filename (Printexc.to_string e));
+            fmt "Error while loading configuration file %s (ignored)@\n%a"
+              filename Eio.Exn.pp e);
           []
       with
       | [] -> acc
@@ -419,9 +418,7 @@ let rec later_pass_extconf dir =
     Array.sort compare files; Array.fold_left f [] files
   with Sys_error _ as e ->
     Logs.err ~src:section (fun fmt ->
-      fmt
-        ("Error while loading configuration file (ignored)" ^^ "@\n%s")
-        (Printexc.to_string e));
+      fmt "Error while loading configuration file (ignored)@\n%a" Eio.Exn.pp e);
     []
 
 (* Config file is parsed twice. This is the second parsing (site

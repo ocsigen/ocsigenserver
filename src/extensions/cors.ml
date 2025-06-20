@@ -38,7 +38,7 @@ exception Refused
 
 let add_headers config r response =
   match Ocsigen_request.header r Ocsigen_header.Name.origin with
-  | None -> Lwt.return Ocsigen_extensions.Ext_do_nothing
+  | None -> Ocsigen_extensions.Ext_do_nothing
   | Some origin ->
       Logs.info ~src:section (fun fmt -> fmt "request with origin: %s" origin);
       let l = [Ocsigen_header.Name.access_control_allow_origin, origin] in
@@ -94,9 +94,8 @@ let add_headers config r response =
             , String.concat ", " exposed_headers )
             :: l
       in
-      Lwt.return
-        (Ocsigen_extensions.Ext_found
-           (fun () -> Lwt.return @@ Ocsigen_response.replace_headers response l))
+      Ocsigen_extensions.Ext_found
+        (fun () -> Ocsigen_response.replace_headers response l)
 
 let main config = function
   | Ocsigen_extensions.Req_not_found (_, {Ocsigen_extensions.request_info; _})
@@ -107,8 +106,8 @@ let main config = function
         try add_headers config request_info (default_frame ())
         with Refused ->
           Logs.info ~src:section (fun fmt -> fmt "Refused request");
-          Lwt.return Ocsigen_extensions.Ext_do_nothing)
-    | _ -> Lwt.return Ocsigen_extensions.Ext_do_nothing)
+          Ocsigen_extensions.Ext_do_nothing)
+    | _ -> Ocsigen_extensions.Ext_do_nothing)
   | Ocsigen_extensions.Req_found ({Ocsigen_extensions.request_info; _}, response)
     ->
       Logs.info ~src:section (fun fmt -> fmt "answered request");
