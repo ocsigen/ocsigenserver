@@ -106,13 +106,8 @@ val of_file : string -> string t
 val of_string : string -> string t
 (** returns a stream containing a string. *)
 
-val of_lwt_stream : 'a Lwt_stream.t -> 'a t
+val of_cohttp_body : Cohttp_lwt.Body.t -> string t
 (** Convert a {!Lwt_stream.t} to an {!Ocsigen_stream.t}. *)
-
-val to_lwt_stream : ?is_empty:('a -> bool) -> 'a t -> 'a Lwt_stream.t
-(** Convert an {!Ocsigen_stream.t} into a {!Lwt_stream.t}.
-    @param is_empty function to skip empty chunk.
-*)
 
 module StringStream : sig
   type out = string t

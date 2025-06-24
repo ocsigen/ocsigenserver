@@ -365,10 +365,10 @@ let post_params ~content_type body_gen =
   match String.lowercase_ascii ct, String.lowercase_ascii cst with
   | "application", "x-www-form-urlencoded" ->
       Some
-        (body_gen |> Cohttp_lwt.Body.to_stream |> Ocsigen_stream.of_lwt_stream
+        (body_gen |> Ocsigen_stream.of_cohttp_body
        |> post_params_form_urlencoded)
   | "multipart", "form-data" ->
       Some
-        (body_gen |> Cohttp_lwt.Body.to_stream |> Ocsigen_stream.of_lwt_stream
+        (body_gen |> Ocsigen_stream.of_cohttp_body
         |> post_params_multipart_form_data ctparams)
   | _ -> None
