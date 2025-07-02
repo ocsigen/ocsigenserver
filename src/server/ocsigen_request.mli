@@ -9,6 +9,15 @@ type file_info = Ocsigen_multipart.file_info =
 
 type post_data = (string * string) list * (string * file_info) list
 
+type client_conn =
+  [ `Inet of Ipaddr.t * int
+  | `Unix of string
+  | `Forwarded_for of string
+  | `Unknown ]
+(** Type of connection used by the client. [`Inet] means the client connected
+    through the Internet. [`Forwarded_for] means that the client connected
+    through a proxy and carries the IP address reported in the HTTP headers. *)
+
 val make :
    ?forward_ip:string list
   -> ?sub_path:string
@@ -19,7 +28,7 @@ val make :
   -> port:int
   -> ssl:bool
   -> filenames:string list ref
-  -> sockaddr:Lwt_unix.sockaddr
+  -> client_conn:client_conn
   -> body:Cohttp_lwt.Body.t
   -> connection_closed:unit Lwt.t
   -> Cohttp.Request.t
@@ -28,7 +37,7 @@ val make :
 val update :
    ?ssl:bool
   -> ?forward_ip:string list
-  -> ?remote_ip:string
+  -> ?client_conn:client_conn
   -> ?sub_path:string
   -> ?meth:Cohttp.Code.meth
   -> ?get_params_flat:(string * string) list
@@ -74,8 +83,13 @@ val post_params :
   -> Int64.t option
   -> (string * string) list Lwt.t option
 
-val remote_ip : t -> string
-val remote_ip_parsed : t -> [`Ip of Ipaddr.t | `Unix of string]
+val client_conn : t -> client_conn
+(** The way the client connects to the server (for example, its IP address if
+    connected over the internet). *)
+
+val client_conn_to_string : t -> string
+(** A textual representation of [client_conn] suitable for use in logs. *)
+
 val forward_ip : t -> string list
 val content_type : t -> content_type option
 val request_cache : t -> Polytables.t
