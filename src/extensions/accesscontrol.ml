@@ -39,17 +39,19 @@ let ip s =
   in
   fun ri ->
     let r =
-      match Ocsigen_request.remote_ip_parsed ri with
-      | `Ip ip -> Ipaddr.Prefix.mem ip prefix
-      | `Unix _ -> false
+      match Ocsigen_request.client_conn ri with
+      | `Inet (ip, _) -> Ipaddr.Prefix.mem ip prefix
+      | _ -> false
     in
     if r
     then
       Logs.info ~src:section (fun fmt ->
-        fmt "IP: %s matches %s" (Ocsigen_request.remote_ip ri) s)
+        fmt "IP: %s matches %s" (Ocsigen_request.client_conn_to_string ri) s)
     else
       Logs.info ~src:section (fun fmt ->
-        fmt "IP: %s does not match %s" (Ocsigen_request.remote_ip ri) s);
+        fmt "IP: %s does not match %s"
+          (Ocsigen_request.client_conn_to_string ri)
+          s);
     r
 
 let port port ri =
@@ -222,22 +224,22 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
             let last_proxy = List.last proxies in
             let proxy_ip = Ipaddr.of_string_exn last_proxy in
             let equal_ip =
-              match Ocsigen_request.remote_ip_parsed request_info with
-              | `Ip r_ip -> Ipaddr.compare proxy_ip r_ip = 0
-              | `Unix _ -> false
+              match Ocsigen_request.client_conn request_info with
+              | `Inet (r_ip, _) -> Ipaddr.compare proxy_ip r_ip = 0
+              | _ -> false
             in
             if equal_ip || not check_equal_ip
             then
               { request with
                 Ocsigen_extensions.request_info =
                   Ocsigen_request.update ~forward_ip:proxies
-                    ~remote_ip:original_ip request_info }
+                    ~client_conn:(`Forwarded_for original_ip) request_info }
             else (
               (* the announced ip of the proxy is not its real ip *)
               Logs.warn ~src:section (fun fmt ->
                 fmt
                   "X-Forwarded-For: host ip (%s) does not match the header (%s)"
-                  (Ocsigen_request.remote_ip request_info)
+                  (Ocsigen_request.client_conn_to_string request_info)
                   header);
               request)
         | _ ->
