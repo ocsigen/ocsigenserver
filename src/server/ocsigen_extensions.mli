@@ -114,7 +114,7 @@ exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
 
 type answer =
   | Ext_do_nothing  (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found of (unit -> Ocsigen_response.t)
   (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
@@ -124,7 +124,7 @@ type answer =
       handled in different order. (for example revproxy.ml starts its
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
-  | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found_stop of (unit -> Ocsigen_response.t)
   (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
   (** Page not found. Try next extension. The status is usually
@@ -166,7 +166,7 @@ type answer =
       parsing the configuration file, call the parsing function (of
       type [parse_fun]), that will return something of type
       [extension_composite]. *)
-  | Ext_found_continue_with of (unit -> (Ocsigen_response.t * request) Lwt.t)
+  | Ext_found_continue_with of (unit -> Ocsigen_response.t * request)
   (** Same as [Ext_found] but may modify the request. *)
   | Ext_found_continue_with' of (Ocsigen_response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
@@ -178,9 +178,9 @@ and request_state =
   | Req_found of (request * Ocsigen_response.t)
 
 and extension_composite =
-  Ocsigen_cookie_map.t -> request_state -> (answer * Ocsigen_cookie_map.t) Lwt.t
+  Ocsigen_cookie_map.t -> request_state -> answer * Ocsigen_cookie_map.t
 
-type extension = request_state -> answer Lwt.t
+type extension = request_state -> answer
 (** For each <site> tag in the configuration file,
     you can set the extensions you want.
     Each extension is implemented as a function, taking
@@ -413,7 +413,7 @@ val get_hosts : unit -> (virtual_hosts * config_info * extension_composite) list
 val compute_result :
    ?previous_cookies:Ocsigen_cookie_map.t
   -> Ocsigen_request.t
-  -> Ocsigen_response.t Lwt.t
+  -> Ocsigen_response.t
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
 

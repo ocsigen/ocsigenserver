@@ -48,9 +48,8 @@ let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
 
 (* The function that will generate the pages from the request *)
 let gen regexp continue = function
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found (err, ri) ->
+  | Ocsigen_extensions.Req_found _ -> Ocsigen_extensions.Ext_do_nothing
+  | Ocsigen_extensions.Req_not_found (err, ri) -> (
       let try_block () =
         Logs.info ~src:section (fun fmt -> fmt "Is it a rewrite?");
         let redir, full_rewrite =
@@ -63,30 +62,27 @@ let gen regexp continue = function
         Logs.info ~src:section (fun fmt -> fmt "YES! rewrite to: %s" redir);
         if continue
         then
-          Lwt.return
-          @@ Ocsigen_extensions.Ext_continue_with
-               ( { ri with
-                   Ocsigen_extensions.request_info =
-                     Ocsigen_request.update ~full_rewrite
-                       ~uri:(Uri.of_string redir)
-                       ri.Ocsigen_extensions.request_info }
-               , Ocsigen_cookie_map.empty
-               , err )
+          Ocsigen_extensions.Ext_continue_with
+            ( { ri with
+                Ocsigen_extensions.request_info =
+                  Ocsigen_request.update ~full_rewrite
+                    ~uri:(Uri.of_string redir)
+                    ri.Ocsigen_extensions.request_info }
+            , Ocsigen_cookie_map.empty
+            , err )
         else
-          Lwt.return
-          @@ Ocsigen_extensions.Ext_retry_with
-               ( { ri with
-                   Ocsigen_extensions.request_info =
-                     Ocsigen_request.update ~full_rewrite
-                       ~uri:(Uri.of_string redir)
-                       ri.Ocsigen_extensions.request_info }
-               , Ocsigen_cookie_map.empty )
+          Ocsigen_extensions.Ext_retry_with
+            ( { ri with
+                Ocsigen_extensions.request_info =
+                  Ocsigen_request.update ~full_rewrite
+                    ~uri:(Uri.of_string redir)
+                    ri.Ocsigen_extensions.request_info }
+            , Ocsigen_cookie_map.empty )
       and catch_block = function
-        | Ocsigen_extensions.Not_concerned ->
-            Lwt.return (Ocsigen_extensions.Ext_next err)
-        | e -> Lwt.fail e
+        | Ocsigen_extensions.Not_concerned -> Ocsigen_extensions.Ext_next err
+        | e -> raise e
       in
-      Lwt.catch try_block catch_block
+      try try_block () with v -> catch_block v)
 
 let parse_config element =
   let regexp = ref "" in

@@ -22,8 +22,7 @@ let name = "extendconfiguration"
 let bad_config s = raise (Ocsigen_extensions.Error_in_config_file s)
 
 let gen configfun = function
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+  | Ocsigen_extensions.Req_found _ -> Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found
       (err, ({Ocsigen_extensions.request_config; _} as request)) ->
       Logs.info (fun fmt -> fmt "Updating configuration");
@@ -31,9 +30,8 @@ let gen configfun = function
         { request with
           Ocsigen_extensions.request_config = configfun request_config }
       in
-      Lwt.return
-        (Ocsigen_extensions.Ext_continue_with
-           (request, Ocsigen_cookie_map.empty, err))
+      Ocsigen_extensions.Ext_continue_with
+        (request, Ocsigen_cookie_map.empty, err)
 
 let gather_do_not_serve_files tag =
   let rec aux (regexps, files, extensions) = function

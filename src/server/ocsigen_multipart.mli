@@ -4,10 +4,10 @@ val scan_multipart_body_from_stream :
    ?max_size:Int64.t
   -> boundary:string
   -> create:((string * string) list -> 'a)
-  -> add:('a -> string -> unit Lwt.t)
-  -> stop:(int64 -> 'a -> 'b Lwt.t)
+  -> add:('a -> string -> unit)
+  -> stop:(int64 -> 'a -> 'b)
   -> string Ocsigen_stream.stream
-  -> unit Lwt.t
+  -> unit
 
 type content_type = (string * string) * (string * string) list
 
@@ -21,7 +21,7 @@ type post_data = (string * string) list * (string * file_info) list
 
 val post_params :
    content_type:content_type
-  -> Cohttp_lwt.Body.t
-  -> (string option -> Int64.t option -> post_data Lwt.t) option
+  -> Cohttp_eio.Body.t
+  -> (string option -> Int64.t option -> post_data) option
 
 val parse_content_type : string -> content_type option

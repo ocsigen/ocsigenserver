@@ -82,8 +82,7 @@ let open_files () =
              (fun src level ~over k msgf ->
                List.fold_left
                  (fun k r () -> r.Logs.report src level ~over k msgf)
-                 k broadcast_reporters ()) });
-      Lwt.return ()
+                 k broadcast_reporters ()) })
   | None ->
       (* log to files *)
       let open_channel path =
@@ -150,8 +149,7 @@ let open_files () =
              (fun src level ~over k msgf ->
                List.fold_left
                  (fun k r () -> r.Logs.report src level ~over k msgf)
-                 k broadcast_reporters ()) });
-      Lwt.return ()
+                 k broadcast_reporters ()) })
 
 (****)
 
@@ -160,8 +158,7 @@ let errlog ?section s = Logs.err ?src:section (fun fmt -> fmt "%s" s)
 let warning ?section s = Logs.warn ?src:section (fun fmt -> fmt "%s" s)
 
 let unexpected_exception e s =
-  Logs.warn (fun fmt ->
-    fmt ("Unexpected exception in %s" ^^ "@\n%s") s (Printexc.to_string e))
+  Logs.warn (fun fmt -> fmt "Unexpected exception in %s@\n%a" s Eio.Exn.pp e)
 
 (****)
 
@@ -185,15 +182,13 @@ let command_f exc _ = function
        if a section with the same name
        already exists, it is returned. *)
       let sect = Logs.Src.create sect_name in
-      Logs.Src.set_level sect None;
-      Lwt.return_unit
-  | [sect_name; level_name] ->
+      Logs.Src.set_level sect None
+  | [sect_name; level_name] -> (
       (* Lwt_log.Section.make :
        if a section with the same name
        already exists, it is returned. *)
       let sect = Logs.Src.create sect_name in
-      (match level_of_string (String.lowercase_ascii level_name) with
+      match level_of_string (String.lowercase_ascii level_name) with
       | None -> Logs.Src.set_level sect None
-      | Some l -> Logs.Src.set_level sect (Some l));
-      Lwt.return ()
-  | _ -> Lwt.fail exc
+      | Some l -> Logs.Src.set_level sect (Some l))
+  | _ -> raise exc

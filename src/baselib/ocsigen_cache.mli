@@ -53,8 +53,8 @@ module Make : functor
         Using [timer] allow one to create a cache
         bounded both in space and time. It is to be noted that real lifespan
         of values is always slightly greater than [timer]. *)
-  class cache : (A.key -> A.value Lwt.t) -> ?timer:float -> int -> object
-    method find : A.key -> A.value Lwt.t
+  class cache : (A.key -> A.value) -> ?timer:float -> int -> object
+    method find : A.key -> A.value
     (** Find the cached value associated to the key, or binds this
             value in the cache using the function [finder] passed as argument
             to [create], and returns this value *)
