@@ -65,10 +65,10 @@ let handler
       body
   =
   let filenames = ref [] in
-  let sockaddr =
+  let client_conn =
     match eio_stream with
-    | `Unix s -> "unix://" ^ s
-    | `Tcp (ip, _port) -> (ip : _ Eio.Net.Ipaddr.t :> string)
+    | `Tcp (ip, port) -> `Inet (ip, port)
+    | `Unix _ as p -> p
   in
   let connection_closed =
     try fst (Hashtbl.find connections conn)
@@ -108,7 +108,7 @@ let handler
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
-    Ocsigen_request.make ~address ~port ~ssl ~filenames ~sockaddr ~body
+    Ocsigen_request.make ~address ~port ~ssl ~filenames ~client_conn ~body
       ~connection_closed request
   in
   Fun.protect
@@ -128,7 +128,7 @@ let handler
             (match Ocsigen_request.host request with
             | None -> "<host not specified in the request>"
             | Some h -> h)
-            (Ocsigen_request.remote_ip request)
+            (Ocsigen_request.client_conn_to_string request)
             (Option.value ~default:""
                (Ocsigen_request.header request Ocsigen_header.Name.user_agent))
             (Option.fold ~none:""
