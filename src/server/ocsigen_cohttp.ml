@@ -57,15 +57,13 @@ end
 let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
-  let rec getsockname = function
-    | `TCP (ip, port) -> Unix.ADDR_INET (Ipaddr_unix.to_inet_addr ip, port)
-    | `Unix_domain_socket path -> Unix.ADDR_UNIX path
-    | `TLS (_, edn) -> getsockname edn
-    | `Unknown err -> raise (Failure ("resolution failed: " ^ err))
-    | `Vchan_direct _ -> raise (Failure "VChan not supported")
-    | `Vchan_domain_socket _ -> raise (Failure "VChan not supported")
+  let client_conn =
+    match edn with
+    | `TCP (ip, port) | `TLS (_, `TCP (ip, port)) -> `Inet (ip, port)
+    | `Unix_domain_socket path | `TLS (_, `Unix_domain_socket path) ->
+        `Unix path
+    | _ -> `Unknown
   in
-  let sockaddr = getsockname edn in
   let connection_closed =
     try fst (Hashtbl.find connections conn)
     with Not_found ->
@@ -110,7 +108,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
-    Ocsigen_request.make ~address ~port ~ssl ~filenames ~sockaddr ~body
+    Ocsigen_request.make ~address ~port ~ssl ~filenames ~client_conn ~body
       ~connection_closed request
   in
   Lwt.finalize
@@ -120,7 +118,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
             (match Ocsigen_request.host request with
             | None -> "<host not specified in the request>"
             | Some h -> h)
-            (Ocsigen_request.remote_ip request)
+            (Ocsigen_request.client_conn_to_string request)
             (Option.value ~default:""
                (Ocsigen_request.header request Ocsigen_header.Name.user_agent))
             (Option.fold ~none:""

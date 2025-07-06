@@ -109,7 +109,7 @@ let gen dir = function
                        (Ocsigen_request.address request_info)
                    in
                    String.concat ", "
-                     (Ocsigen_request.remote_ip request_info
+                     (Ocsigen_request.client_conn_to_string request_info
                       :: Ocsigen_request.forward_ip request_info
                      @ [address])
                  in
