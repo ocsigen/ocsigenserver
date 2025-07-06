@@ -48,12 +48,18 @@ let make_uri u =
   and u_get_params_flat = lazy (flatten_get_params (Lazy.force u_get_params)) in
   {u_uri; u_get_params; u_get_params_flat; u_path; u_path_string}
 
+type client_conn =
+  [ `Inet of Ipaddr.t * int
+  | `Unix of string
+  | `Forwarded_for of string
+  | `Unknown ]
+
 type t =
   { r_address : Ocsigen_config.Socket_type.t
   ; r_port : int
   ; r_ssl : bool
   ; r_filenames : string list ref
-  ; r_remote_ip : string
+  ; r_client_conn : client_conn
   ; r_forward_ip : string list
   ; r_uri : uri
   ; r_meth : Cohttp.Code.meth
@@ -79,7 +85,7 @@ let make
       ~port
       ~ssl
       ~filenames
-      ~sockaddr
+      ~client_conn
       ~body
       ~connection_closed
       request
@@ -88,7 +94,7 @@ let make
   ; r_port = port
   ; r_ssl = ssl
   ; r_filenames = filenames
-  ; r_remote_ip = sockaddr
+  ; r_client_conn = client_conn
   ; r_forward_ip = forward_ip
   ; r_uri = make_uri (Cohttp.Request.uri request)
   ; r_encoding = Cohttp.Request.encoding request
@@ -110,7 +116,7 @@ let path {r_uri = {u_path; _}; _} = Lazy.force u_path
 let update
       ?ssl
       ?forward_ip
-      ?remote_ip
+      ?client_conn
       ?sub_path
       ?meth
       ?get_params_flat
@@ -122,7 +128,7 @@ let update
        ; r_uri = {u_uri; _} as r_uri
        ; r_meth
        ; r_forward_ip
-       ; r_remote_ip
+       ; r_client_conn
        ; r_cookies_override
        ; r_body
        ; r_sub_path
@@ -132,8 +138,8 @@ let update
   let r_ssl = match ssl with Some ssl -> ssl | None -> r_ssl
   and r_forward_ip =
     match forward_ip with Some forward_ip -> forward_ip | None -> r_forward_ip
-  and r_remote_ip =
-    match remote_ip with Some remote_ip -> remote_ip | None -> r_remote_ip
+  and r_client_conn =
+    match client_conn with Some c -> c | None -> r_client_conn
   and r_sub_path = match sub_path with Some _ -> sub_path | None -> r_sub_path
   and r_body =
     match post_data with
@@ -171,7 +177,7 @@ let update
   ; r_uri
   ; r_meth
   ; r_forward_ip
-  ; r_remote_ip
+  ; r_client_conn
   ; r_body
   ; r_cookies_override
   ; r_sub_path
@@ -270,18 +276,14 @@ let post_params r s i =
 let files r s i =
   match force_post_data r s i with Some v -> Some (v >|= snd) | None -> None
 
-let remote_ip {r_remote_ip; _} = r_remote_ip
+let client_conn {r_client_conn = c; _} = c
 
-let remote_ip_parsed {r_remote_ip; _} =
-  let is_prefix prefix s =
-    (* TODO: Naive version to be swapped with [String.starts_with ~prefix s]
-       when the dependency on OCaml >= 4.13 is acceptable. *)
-    let plen = String.length prefix in
-    String.length s >= plen && String.sub s 0 plen = prefix
-  in
-  if is_prefix "unix://" r_remote_ip
-  then `Unix r_remote_ip
-  else `Ip (Ipaddr.of_string_exn r_remote_ip)
+let client_conn_to_string {r_client_conn = c; _} =
+  match c with
+  | `Inet (ip, _) -> Ipaddr.to_string ip
+  | `Unix path -> "unix:" ^ path
+  | `Forwarded_for ip -> "forwarded:" ^ ip
+  | `Unknown -> "unknown"
 
 let forward_ip {r_forward_ip; _} = r_forward_ip
 let request_cache {r_request_cache; _} = r_request_cache

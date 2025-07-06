@@ -1,14 +1,14 @@
   $ source ../../server-test-helpers.sh
   $ run_server ./test.exe
   ocsigen:main: [WARNING] Command pipe created
-  ocsigen:access:  connection for local-test from unix:// (): /index.html
+  ocsigen:access:  connection for local-test from unix: (): /index.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./index.html".
   ocsigen:local-file: [INFO] checking if file index.html can be sent
   ocsigen:ext: [INFO] Compiling exclusion regexp $^
   ocsigen:local-file: [INFO] Returning "./index.html".
-  ocsigen:access:  connection for local-test from unix:// (): /index.html
+  ocsigen:access:  connection for local-test from unix: (): /index.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./index.html".
