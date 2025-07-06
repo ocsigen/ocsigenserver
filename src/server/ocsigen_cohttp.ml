@@ -155,8 +155,6 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
 
 let conn_closed (_flow, conn) =
   try
-    Logs.debug ~src:section (fun fmt ->
-      fmt "Connection closed:\n%s" (Cohttp.Connection.to_string conn));
     Lwt.wakeup (snd (Hashtbl.find connections conn)) ();
     Hashtbl.remove connections conn;
     decr_connected ()

@@ -53,7 +53,8 @@ let respond_error ?headers ?(status = `Internal_server_error) ~body () =
 let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   let a_response =
     match response with Some response -> response | None -> a_response
-  and a_body = match body with Some body -> body | None -> a_body
+  in
+  let a_body = match body with Some body -> body | None -> a_body
   and a_cookies =
     match cookies with Some cookies -> cookies | None -> a_cookies
   in
@@ -90,19 +91,25 @@ let make_cookies_headers path t hds =
          (make_cookies_header path exp name v secure))
     t hds
 
-let to_cohttp_response {a_response; a_cookies; a_body = _} =
+let to_cohttp_response {a_response; a_cookies; a_body = _, encoding} =
   let headers =
     let add name value headers = Header.add_unless_exists headers name value in
+    let add_transfer_encoding h =
+      match encoding with
+      | Transfer.Chunked -> add "transfer-encoding" "chunked" h
+      | _ -> h
+    in
     Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
       (Response.headers a_response)
     |> add "server" Ocsigen_config.server_name
     |> add "date" (Ocsigen_lib.Date.to_string (Unix.time ()))
+    |> add_transfer_encoding
   in
   {a_response with Response.headers}
 
 let to_response_expert t =
   let module R = Cohttp_lwt_unix.Response in
-  let write_footer {R.encoding; _} oc =
+  let write_footer encoding oc =
     (* Copied from [cohttp/response.ml]. *)
     match encoding with
     | Transfer.Chunked -> Lwt_io.write oc "0\r\n\r\n"
@@ -112,8 +119,9 @@ let to_response_expert t =
   ( res
   , fun _ic oc ->
       let writer = R.make_body_writer ~flush:false res oc in
-      let* () = fst t.a_body (R.write_body writer) in
-      write_footer res oc )
+      let body, encoding = t.a_body in
+      let* () = body (R.write_body writer) in
+      write_footer encoding oc )
 
 let response t = t.a_response
 let body t = t.a_body
