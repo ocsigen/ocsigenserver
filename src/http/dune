@@ -9,4 +9,4 @@
  (public_name ocsigenserver.http)
  (wrapped false)
  (modules ocsigen_charset_mime ocsigen_header)
- (libraries cohttp-lwt-unix baselib logs))
+ (libraries cohttp-eio baselib logs))

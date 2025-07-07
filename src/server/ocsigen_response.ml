@@ -1,24 +1,33 @@
+open Eio.Std
 open Cohttp
-open Lwt.Syntax
 
 module Body = struct
   (* TODO: Avoid copies by passing buffers directly. This API was choosen
      because it is closer to [Lwt_stream] which was used before. This type
      forces data to be copied from buffers (usually [bytes]) to immutable
      strings, which is unecessary. *)
-  type t = ((string -> unit Lwt.t) -> unit Lwt.t) * Transfer.encoding
+  type t = ((string -> unit) -> unit) * Transfer.encoding
 
   let make encoding writer : t = writer, encoding
-  let empty = make (Fixed 0L) (fun _write -> Lwt.return_unit)
+  let empty = make (Fixed 0L) (fun _write -> ())
 
   let of_string s =
     make
       (Transfer.Fixed (Int64.of_int (String.length s)))
       (fun write -> write s)
 
-  let of_cohttp ~encoding body =
-    (fun write -> Cohttp_lwt.Body.write_body write body), encoding
+  let copy_body_to_t body write =
+    let buf = Cstruct.create 4096 in
+    let rec aux () =
+      match Eio.Flow.single_read body buf with
+      | len ->
+          write (Cstruct.to_string ~len buf);
+          aux ()
+      | exception End_of_file -> ()
+    in
+    aux ()
 
+  let of_cohttp ~encoding body = copy_body_to_t body, encoding
   let write (w, _) = w
   let transfer_encoding = snd
 end
@@ -60,52 +69,47 @@ let respond_not_found ?uri () =
 
 let respond_file ?headers ?(status = `OK) fname =
   let exception Isnt_a_file in
-  (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
-  Lwt.catch
-    (fun () ->
-       (* Check this isn't a directory first *)
-       let* () =
-         let* s = Lwt_unix.stat fname in
-         if Unix.(s.st_kind <> S_REG)
-         then raise Isnt_a_file
-         else Lwt.return_unit
-       in
-       let count = 16384 in
-       let* ic =
-         Lwt_io.open_file ~buffer:(Lwt_bytes.create count) ~mode:Lwt_io.input
-           fname
-       in
-       let* len = Lwt_io.length ic in
-       let encoding = Http.Transfer.Fixed len in
-       let stream write =
-         let rec cat_loop () =
-           Lwt.bind (Lwt_io.read ~count ic) (function
-             | "" -> Lwt.return_unit
-             | buf -> Lwt.bind (write buf) cat_loop)
-         in
-         let* () =
-           Lwt.catch cat_loop (fun exn ->
-             Logs.warn (fun m ->
-               m "Error resolving file %s (%s)" fname (Printexc.to_string exn));
-             Lwt.return_unit)
-         in
-         Lwt.catch
-           (fun () -> Lwt_io.close ic)
-           (fun e ->
-              Logs.warn (fun f ->
-                f "Closing channel failed: %s" (Printexc.to_string e));
-              Lwt.return_unit)
-       in
-       let body = Body.make encoding stream in
-       let mime_type = Magic_mime.lookup fname in
-       let headers =
-         Http.Header.add_opt_unless_exists headers "content-type" mime_type
-       in
-       Lwt.return (respond ~headers ~status ~encoding ~body ()))
-    (function
-      | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
-          Lwt.return (respond_not_found ())
-      | exn -> Lwt.reraise exn)
+  try
+    let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
+    let env = Stdlib.Option.get (Fiber.get Ocsigen_lib.env) in
+    (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
+    let file_path = Eio.Path.( / ) env#fs fname in
+    let file_size =
+      (* Check this isn't a directory first *)
+      let s = Eio.Path.stat ~follow:true file_path in
+      if s.Eio.File.Stat.kind <> `Regular_file
+      then raise Isnt_a_file
+      else s.size
+    in
+    let ic = Eio.Path.open_in ~sw file_path in
+    let encoding = Http.Transfer.Fixed (Optint.Int63.to_int64 file_size) in
+    let stream write =
+      let buf = Cstruct.create 16384 in
+      let rec cat_loop () =
+        match Eio.Flow.single_read ic buf with
+        | len ->
+            write (Cstruct.to_string ~len buf);
+            cat_loop ()
+        | exception End_of_file -> ()
+      in
+      let () =
+        try cat_loop ()
+        with exn ->
+          Logs.warn (fun m ->
+            m "Error resolving file %s@\n%a" fname Eio.Exn.pp exn)
+      in
+      try Eio.Resource.close ic
+      with e ->
+        Logs.warn (fun f -> f "Closing channel failed:@\n%a" Eio.Exn.pp e)
+    in
+    let body = Body.make encoding stream in
+    let mime_type = Magic_mime.lookup fname in
+    let headers =
+      Http.Header.add_opt_unless_exists headers "content-type" mime_type
+    in
+    respond ~headers ~status ~encoding ~body ()
+  with Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
+    respond_not_found ()
 
 let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   let a_response =
@@ -164,20 +168,24 @@ let to_cohttp_response {a_response; a_cookies; a_body = _, encoding} =
   in
   {a_response with Response.headers}
 
+module Response_io = Cohttp.Response.Make (Cohttp_eio.Server.IO)
+[@alert "-deprecated"]
+
 let to_response_expert t =
-  let module R = Cohttp_lwt_unix.Response in
+  let module R = Response_io in
   let write_footer encoding oc =
-    (* Copied from [cohttp/response.ml]. *)
     match encoding with
-    | Transfer.Chunked -> Lwt_io.write oc "0\r\n\r\n"
-    | Transfer.Fixed _ | Transfer.Unknown -> Lwt.return_unit
+    (* Copied from [cohttp/response.ml]. *)
+    | Transfer.Chunked -> Eio.Buf_write.string oc "0\r\n\r\n"
+    | Transfer.Fixed _ | Transfer.Unknown -> ()
   in
   let res = to_cohttp_response t in
   ( res
   , fun _ic oc ->
+      (* TODO: Use [Cohttp_eio.Server.respond] instead of internal APIs. This requires turning [Body.t] into a [Eio.Flow]. *)
       let writer = R.make_body_writer ~flush:false res oc in
       let body, encoding = t.a_body in
-      let* () = body (R.write_body writer) in
+      let () = body (R.write_body writer) in
       write_footer encoding oc )
 
 let response t = t.a_response

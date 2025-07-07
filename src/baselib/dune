@@ -4,7 +4,7 @@
  (flags
   (:standard -no-keep-locs))
  (modules ocsigen_lib_base)
- (libraries lwt))
+ (libraries eio eio.unix))
 
 (library
  (name baselib)
@@ -22,11 +22,12 @@
  (libraries
   str
   findlib
-  lwt.unix
+  eio
   cryptokit
   re
   ocsigen_lib_base
-  cohttp-lwt
+  cohttp
+  cohttp-eio
   logs
   (select
    dynlink_wrapper.ml

@@ -1,3 +1,5 @@
+open Eio.Std
+
 (* Ocsigen
  * http://www.ocsigen.org
  * Copyright (C) 2005
@@ -18,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Lwt.Infix
-
 let () = Random.self_init ()
 
 (* Without the following line, it stops with "Broken Pipe" without
@@ -30,20 +30,15 @@ let () = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
 let () = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
 let section = Logs.Src.create "ocsigen:main"
 
-(* Initialize exception handler for Lwt timeouts: *)
-let () =
-  Lwt_timeout.set_exn_handler (fun e ->
-    Logs.err ~src:section (fun fmt ->
-      fmt
-        ("Uncaught Exception after lwt timeout" ^^ "@\n%s")
-        (Printexc.to_string e)))
+let log_uncaught_exception exn =
+  Logs.err ~src:section (fun fmt ->
+    fmt "Uncaught Exception@\n%a" Eio.Exn.pp exn)
 
 (* fatal errors messages *)
 let errmsg = function
   | Dynlink_wrapper.Error e ->
       "Fatal - Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
   | Unix.Unix_error _ as e -> "Fatal - " ^ Printexc.to_string e, 9
-  | Ssl.Private_key_error msg -> "Fatal - bad password: " ^ msg, 10
   | Ocsigen_config.Config_file_error msg
   | Ocsigen_extensions.Error_in_config_file msg ->
       "Fatal - Error in configuration file: " ^ msg, 50
@@ -91,26 +86,18 @@ let reload ?file () =
 let () =
   let f _s = function
     | ["reopen_logs"] ->
-        Ocsigen_messages.open_files () >>= fun () ->
-        Logs.warn ~src:section (fun fmt -> fmt "Log files reopened");
-        Lwt.return ()
-    | ["reload"] -> reload (); Lwt.return ()
-    | ["reload"; file] -> reload ~file (); Lwt.return ()
-    | ["shutdown"] ->
-        Ocsigen_cohttp.shutdown None;
-        Lwt.return ()
-    | ["shutdown"; f] ->
-        Ocsigen_cohttp.shutdown (Some (float_of_string f));
-        Lwt.return ()
+        Ocsigen_messages.open_files ();
+        Logs.warn ~src:section (fun fmt -> fmt "Log files reopened")
+    | ["reload"] -> reload ()
+    | ["reload"; file] -> reload ~file ()
+    | ["shutdown"] -> Ocsigen_cohttp.shutdown None
+    | ["shutdown"; f] -> Ocsigen_cohttp.shutdown (Some (float_of_string f))
     | ["gc"] ->
         Gc.compact ();
         Logs.warn ~src:section (fun fmt ->
-          fmt "Heap compaction requested by user");
-        Lwt.return ()
-    | ["clearcache"] ->
-        Ocsigen_cache.clear_all_caches ();
-        Lwt.return ()
-    | _ -> Lwt.fail Ocsigen_command.Unknown_command
+          fmt "Heap compaction requested by user")
+    | ["clearcache"] -> Ocsigen_cache.clear_all_caches ()
+    | _ -> raise Ocsigen_command.Unknown_command
   in
   Ocsigen_command.register_command_function f
 
@@ -208,7 +195,8 @@ let main config =
     in
     let extensions_connector = Ocsigen_extensions.compute_result in
     let run () =
-      Ocsigen_messages.open_files () >>= fun () ->
+      let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
+      Ocsigen_messages.open_files ();
       let ports = Ocsigen_config.get_ports ()
       and ssl_ports = Ocsigen_config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
@@ -253,9 +241,8 @@ let main config =
           with e ->
             Logs.warn ~src:section (fun fmt ->
               fmt
-                ("Cannot create the command pipe %s. I will continue without."
-               ^^ "@\n%s")
-                commandpipe (Printexc.to_string e));
+                "Cannot create the command pipe %s. I will continue without.@\n%a"
+                commandpipe Eio.Exn.pp e);
             false)
       in
       let minthreads = Ocsigen_config.get_minthreads ()
@@ -265,14 +252,6 @@ let main config =
         raise
           (Ocsigen_config.Config_file_error
              "maxthreads should be greater than minthreads");
-      (Lwt.async_exception_hook :=
-         fun e ->
-           (* replace the default "exit 2" behaviour *)
-           match e with
-           | Unix.Unix_error (Unix.EPIPE, _, _) -> ()
-           | _ ->
-               Logs.err ~src:section (fun fmt ->
-                 fmt ("Uncaught Exception" ^^ "@\n%s") (Printexc.to_string e)));
       (* Now apply host configuration: *)
       config ();
       if Ocsigen_config.get_silent ()
@@ -291,14 +270,16 @@ let main config =
        then
          let pipe =
            Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
-           |> Lwt_unix.of_unix_file_descr
-           |> Lwt_io.(of_fd ~mode:input)
+           |> fun x1 ->
+           Eio.Buf_read.of_flow ~max_size:1_000_000
+             (Eio_unix.Net.import_socket_stream ~sw ~close_unix:true x1
+               :> [`R | `Flow | `Close] r)
          in
          let rec f () =
-           Lwt_io.read_line pipe >>= fun s ->
+           let s = Eio.Buf_read.line pipe in
            Ocsigen_messages.warning ("Command received: " ^ s);
-           Lwt.catch
-             (fun () ->
+           f
+             (try
                 let prefix, c =
                   match Ocsigen_lib.String.split ~multisep:true ' ' s with
                   | [] -> raise Ocsigen_command.Unknown_command
@@ -308,30 +289,28 @@ let main config =
                       Some aa, ab :: l
                     with Not_found -> None, a :: l)
                 in
-                Ocsigen_command.get_command_function () ?prefix s c)
-             (function
-               | Ocsigen_command.Unknown_command ->
-                   Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
-                   Lwt.return ()
-               | e ->
-                   Logs.err ~src:section (fun fmt ->
-                     fmt
-                       ("Uncaught Exception after command" ^^ "@\n%s")
-                       (Printexc.to_string e));
-                   Lwt.fail e)
-           >>= f
+                Ocsigen_command.get_command_function () ?prefix s c
+              with
+             | Ocsigen_command.Unknown_command ->
+                 Logs.warn ~src:section (fun fmt -> fmt "Unknown command")
+             | e ->
+                 Logs.err ~src:section (fun fmt ->
+                   fmt "Uncaught Exception after command@\n%a" Eio.Exn.pp e);
+                 raise e)
          in
-         ignore (f () : 'a Lwt.t));
-      Lwt.join
+         Fiber.fork_daemon ~sw f);
+      Fiber.all
         (List.map
-           (fun (address, port) ->
+           (fun (address, port) () ->
               Ocsigen_cohttp.service ~address ~port
-                ~connector:extensions_connector ())
+                ~connector:extensions_connector ~on_error:log_uncaught_exception
+                ())
            connection
         @ (List.map (fun (address, port, (crt, key)) ->
              Ocsigen_cohttp.service
                ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-               ~address ~port ~connector:extensions_connector ()))
+               ~address ~port ~connector:extensions_connector
+               ~on_error:log_uncaught_exception))
             ssl_connection)
       (*
          Ocsigen_messages.warning "Ocsigen has been launched (initialisations ok)";
@@ -367,19 +346,25 @@ let main config =
           ignore (Unix.write_substring f spid 0 len : int);
           Unix.close f
     in
+    let run () =
+      Eio_main.run (fun env ->
+        Fiber.with_binding Ocsigen_lib.env env (fun () ->
+          Switch.run (fun sw ->
+            Fiber.with_binding Ocsigen_lib.current_switch sw run)))
+    in
     (* set_passwd_if_needed sslinfo; *)
     if Ocsigen_config.get_daemon ()
     then
       let pid = Unix.fork () in
       if pid = 0
-      then Lwt_main.run (run ())
+      then run ()
       else (
         Ocsigen_messages.console (fun () ->
           "Process " ^ string_of_int pid ^ " detached");
         write_pid pid)
     else (
       write_pid (Unix.getpid ());
-      Lwt_main.run (run ()))
+      run ())
   with e ->
     let msg, errno = errmsg e in
     Ocsigen_messages.errlog msg;

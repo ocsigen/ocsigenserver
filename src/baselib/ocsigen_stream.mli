@@ -35,39 +35,39 @@ type 'a step = private Finished of 'a stream option | Cont of 'a * 'a stream
 type 'a t
 type outcome = [`Success | `Failure]
 
-val make : ?finalize:(outcome -> unit Lwt.t) -> (unit -> 'a step Lwt.t) -> 'a t
+val make : ?finalize:(outcome -> unit) -> (unit -> 'a step) -> 'a t
 (** creates a new stream *)
 
 val get : 'a t -> 'a stream
 (** call this function if you decide to start reading a stream.
     @raise Already_read if the stream has already been read. *)
 
-val next : 'a stream -> 'a step Lwt.t
+val next : 'a stream -> 'a step
 (** get the next step of a stream.
     Fails with [Interrupted e] if reading the thread failed with exception [e],
     and with [Cancelled] if the thread has been cancelled. *)
 
-val empty : (unit -> 'a step Lwt.t) option -> 'a step Lwt.t
+val empty : (unit -> 'a step) option -> 'a step
 (** creates an empty step. The parameter is the following substream, if any. *)
 
-val cont : 'a -> (unit -> 'a step Lwt.t) -> 'a step Lwt.t
+val cont : 'a -> (unit -> 'a step) -> 'a step
 (** creates a non empty step. *)
 
-val add_finalizer : 'a t -> (outcome -> unit Lwt.t) -> unit
+val add_finalizer : 'a t -> (outcome -> unit) -> unit
 (** Add a finalizer function. In the current version,
     finalizers must be called manually. *)
 
-val finalize : 'a t -> outcome -> unit Lwt.t
+val finalize : 'a t -> outcome -> unit
 (** Finalize the stream. This function must be called explicitly after reading
     the stream, otherwise finalizers won't be called. *)
 
-val cancel : 'a t -> unit Lwt.t
+val cancel : 'a t -> unit
 (** Cancel the stream, i.e. read the stream until the end, without decoding.
     Further tries to read on the stream will fail with exception
     {!Ocsigen_stream.Cancelled}
 *)
 
-val consume : 'a t -> unit Lwt.t
+val consume : 'a t -> unit
 (** Consume without cancelling.
     Read the stream until the end, without decoding. *)
 
@@ -77,25 +77,25 @@ exception Stream_too_small
 exception Stream_error of string
 exception String_too_large
 
-val string_of_stream : int -> string stream -> string Lwt.t
+val string_of_stream : int -> string stream -> string
 (** Creates a string from a stream. The first argument is the upper limit of the
     string length *)
 
-val enlarge_stream : string step -> string step Lwt.t
+val enlarge_stream : string step -> string step
 (** Read more data in the buffer *)
 
-val stream_want : string step -> int -> string step Lwt.t
+val stream_want : string step -> int -> string step
 (** [stream_want s len] Returns a stream with at least len
     bytes in the buffer if possible *)
 
 val current_buffer : string step -> string
 (** Returns the value of the current buffer *)
 
-val skip : string step -> int64 -> string step Lwt.t
+val skip : string step -> int64 -> string step
 (** Skips data. Raises [Stream_too_small (Some size)]
     if the stream is too small, where [size] is the size of the stream. *)
 
-val substream : string -> string step -> string step Lwt.t
+val substream : string -> string step -> string step
 (** Cut the stream at the position given by a string delimiter *)
 
 val of_file : string -> string t
@@ -106,8 +106,8 @@ val of_file : string -> string t
 val of_string : string -> string t
 (** returns a stream containing a string. *)
 
-val of_cohttp_body : Cohttp_lwt.Body.t -> string t
-(** Convert a {!Lwt_stream.t} to an {!Ocsigen_stream.t}. *)
+val of_cohttp_body : Cohttp_eio.Body.t -> string t
+(** Convert the body of a request to a {!Ocsigen_stream}. *)
 
 module StringStream : sig
   type out = string t

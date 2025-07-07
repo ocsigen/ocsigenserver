@@ -20,8 +20,6 @@
 
 (* Local (users) config files *)
 
-open Lwt.Infix
-
 exception NoConfFile
 
 let section = Logs.Src.create "ocsigen:ext:userconf"
@@ -36,57 +34,53 @@ let handle_parsing_error {Ocsigen_extensions.request_info; _} = function
         fmt "Syntax error in userconf configuration file for url %s: %s"
           (Uri.to_string (Ocsigen_request.uri request_info))
           s);
-      Lwt.return err_500
+      err_500
   | Ocsigen_extensions.Error_in_user_config_file s ->
       Logs.err ~src:section (fun fmt ->
         fmt "Unauthorized option in user configuration for url %s: %s"
           (Uri.to_string (Ocsigen_request.uri request_info))
           s);
-      Lwt.return err_500
-  | e -> Lwt.fail e
+      err_500
+  | e -> raise e
 
 (* Answer returned by userconf when the url matches *)
 let subresult new_req user_parse_site conf previous_err req req_state =
   Ocsigen_extensions.Ext_sub_result
     (fun cookies_to_set _rs ->
-      (* XXX why is rs above never used ?? *)
-      Lwt.catch
-        (fun () ->
-           user_parse_site conf cookies_to_set
-             (Ocsigen_extensions.Req_not_found (previous_err, new_req))
-           >>= fun (answer, cookies) ->
-           (* If the request is not satisfied by userconf, the
+      try
+        let answer, cookies =
+          (* XXX why is rs above never used ?? *)
+          user_parse_site conf cookies_to_set
+            (Ocsigen_extensions.Req_not_found (previous_err, new_req))
+        in
+        (* If the request is not satisfied by userconf, the
             changes in configuration (in request_config) are
             preserved for the remainder of the enclosing <site> (in
             the Ext_continue and Ext_found_continue cases below) *)
-           let rec aux ((answer, cts) as r) =
-             match answer with
-             | Ocsigen_extensions.Ext_sub_result sr ->
-                 (* XXX Are these the good cookies ?? *)
-                 sr cookies_to_set req_state >>= aux
-             | Ocsigen_extensions.Ext_continue_with
-                 ({Ocsigen_extensions.request_config; _}, cookies, err) ->
-                 Lwt.return
-                   ( Ocsigen_extensions.Ext_continue_with
-                       ( {req with Ocsigen_extensions.request_config}
-                       , cookies
-                       , err )
-                   , cts )
-             | Ocsigen_extensions.Ext_found_continue_with r ->
-                 (* We keep config information outside userconf! *)
-                 Lwt.return
-                   ( Ocsigen_extensions.Ext_found_continue_with
-                       (fun () ->
-                         r ()
-                         >|= fun (r, {Ocsigen_extensions.request_config; _}) ->
-                         r, {req with Ocsigen_extensions.request_config})
-                   , cts )
-             | _ -> Lwt.return r
-           in
-           aux (answer, cookies))
-        (fun e ->
-           handle_parsing_error req e >>= fun answer ->
-           Lwt.return (answer, Ocsigen_cookie_map.empty)))
+        let rec aux ((answer, cts) as r) =
+          match answer with
+          | Ocsigen_extensions.Ext_sub_result sr ->
+              aux
+                (* XXX Are these the good cookies ?? *)
+                (sr cookies_to_set req_state)
+          | Ocsigen_extensions.Ext_continue_with
+              ({Ocsigen_extensions.request_config; _}, cookies, err) ->
+              ( Ocsigen_extensions.Ext_continue_with
+                  ({req with Ocsigen_extensions.request_config}, cookies, err)
+              , cts )
+          | Ocsigen_extensions.Ext_found_continue_with r ->
+              (* We keep config information outside userconf! *)
+              ( Ocsigen_extensions.Ext_found_continue_with
+                  (fun () ->
+                    let r, {Ocsigen_extensions.request_config; _} = r () in
+                    r, {req with Ocsigen_extensions.request_config})
+              , cts )
+          | _ -> r
+        in
+        aux (answer, cookies)
+      with e ->
+        let answer = handle_parsing_error req e in
+        answer, Ocsigen_cookie_map.empty)
 
 let conf_to_xml conf =
   try [Xml.parse_file conf] with
@@ -101,13 +95,13 @@ let conf_to_xml conf =
 let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
   | Ocsigen_extensions.Req_found _ ->
       (* We do not allow setting filters through userconf files right now *)
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+      Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found
       (previous_err, ({Ocsigen_extensions.request_info; request_config} as req))
     as req_state -> (
       let path = Ocsigen_request.sub_path_string request_info in
       match Ocsigen_lib.Netstring_pcre.string_match regexp path 0 with
-      | None -> Lwt.return (Ocsigen_extensions.Ext_next previous_err)
+      | None -> Ocsigen_extensions.Ext_next previous_err
       | Some _ -> (
         try
           Logs.info ~src:section (fun fmt -> fmt "Using user configuration");
@@ -135,13 +129,12 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
               Ocsigen_extensions.request_info =
                 Ocsigen_request.update ~uri request_info }
           in
-          Lwt.return
-            (subresult req user_parse_site conf previous_err req req_state)
+          subresult req user_parse_site conf previous_err req req_state
         with
         | Ocsigen_extensions.NoSuchUser | NoConfFile
         | Unix.Unix_error (Unix.EACCES, _, _)
         | Unix.Unix_error (Unix.ENOENT, _, _) ->
-            Lwt.return (Ocsigen_extensions.Ext_next previous_err)
+            Ocsigen_extensions.Ext_next previous_err
         | e -> handle_parsing_error req e))
 
 let parse_config _ hostpattern _ path _ _ config_elem =

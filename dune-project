@@ -18,12 +18,12 @@
  (depends
   (ocaml (>= 4.08.1))
   (camlzip (>= 1.04))
-  (cohttp-lwt-unix (>= 6.0))
-  conduit-lwt-unix
+  (cohttp-eio (>= 6.0.0))
   http
   cryptokit
   (ipaddr (>= 2.1))
-  (lwt (>= 3.0))
+  (eio (>= 0.13))
+  eio_main
   lwt_react
   lwt_ssl
   ocamlfind
@@ -33,6 +33,7 @@
   xml-light
   logs
   logs-syslog
-  syslog-message)
+  syslog-message
+  magic-mime)
  (conflicts
   (pgocaml (< 2.2))))
