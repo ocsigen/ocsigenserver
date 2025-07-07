@@ -1,6 +1,7 @@
   $ source ../../server-test-helpers.sh
   $ run_server ./test.exe
   ocsigen:main: [WARNING] Command pipe created
+  cohttp.eio: [INFO] unix:: accept connection
   ocsigen:access:  connection for local-test from unix: (): /index.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
@@ -8,26 +9,34 @@
   ocsigen:local-file: [INFO] checking if file index.html can be sent
   ocsigen:ext: [INFO] Compiling exclusion regexp $^
   ocsigen:local-file: [INFO] Returning "./index.html".
+  cohttp.eio: [INFO] unix:: disconnected
+  cohttp.eio: [INFO] unix:: accept connection
   ocsigen:access:  connection for local-test from unix: (): /index.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./index.html".
   ocsigen:local-file: [INFO] checking if file index.html can be sent
   ocsigen:local-file: [INFO] Returning "./index.html".
-  ocsigen:access:  connection for local-test from unix:// (): /empty_dir/
+  cohttp.eio: [INFO] unix:: disconnected
+  cohttp.eio: [INFO] unix:: accept connection
+  ocsigen:access:  connection for local-test from unix: (): /empty_dir/
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./empty_dir/".
   ocsigen:local-file: [INFO] Testing "./empty_dir/index.html" as possible index.
   ocsigen:local-file: [INFO] No index and no listing
-  ocsigen:access:  connection for local-test from unix:// (): /doesnt_exists.html
+  cohttp.eio: [INFO] unix:: disconnected
+  cohttp.eio: [INFO] unix:: accept connection
+  ocsigen:access:  connection for local-test from unix: (): /doesnt_exists.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./doesnt_exists.html".
+  cohttp.eio: [INFO] unix:: disconnected
   application: [WARNING] Command received: shutdown
 
 First response is not compressed:
 
+  $ echo "Hello world" > index.html
   $ curl_ "index.html"
   HTTP/1.1 200 OK
   content-type: text/html

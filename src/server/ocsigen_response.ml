@@ -70,23 +70,18 @@ let respond_not_found ?uri () =
 let respond_file ?headers ?(status = `OK) fname =
   let exception Isnt_a_file in
   try
+    let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
+    let env = Stdlib.Option.get (Fiber.get Ocsigen_lib.env) in
     (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
+    let file_path = Eio.Path.( / ) env#cwd fname in
     let file_size =
       (* Check this isn't a directory first *)
-      let s =
-        Eio.Path.stat ~follow:true
-          (Eio.Path.( / ) (Stdlib.Option.get (Fiber.get Ocsigen_lib.env))#cwd
-             fname)
-      in
+      let s = Eio.Path.stat ~follow:true file_path in
       if s.Eio.File.Stat.kind <> `Regular_file
       then raise Isnt_a_file
       else s.size
     in
-    let ic =
-      let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
-      let env = Stdlib.Option.get (Fiber.get Ocsigen_lib.env) in
-      Eio.Path.(open_in ~sw (env#cwd / fname))
-    in
+    let ic = Eio.Path.open_in ~sw file_path in
     let encoding = Http.Transfer.Fixed (Optint.Int63.to_int64 file_size) in
     let stream write =
       let buf = Cstruct.create 16384 in
