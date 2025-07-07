@@ -18,11 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Lwt.Infix
-
 let section = Logs.Src.create "ocsigen:ext:access-control"
 
-type auth = string -> string -> bool Lwt.t
+type auth = string -> string -> bool
 
 exception Bad_config_tag_for_auth of string
 
@@ -46,7 +44,7 @@ let () =
   let open Xml in
   register_basic_authentication_method @@ function
   | Element ("plain", [("login", login); ("password", password)], _) ->
-      fun l p -> Lwt.return (login = l && password = p)
+      fun l p -> login = l && password = p
   | _ ->
       raise (Ocsigen_extensions.Bad_config_tag_for_extension "not for htpasswd")
 
@@ -57,17 +55,17 @@ let gen ~realm ~auth rs =
         (Printf.sprintf "Basic realm=\"%s\"" realm)
     in
     Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid credentials!");
-    Lwt.fail (Ocsigen_cohttp.Ext_http_error (`Unauthorized, None, Some h))
+    raise (Ocsigen_cohttp.Ext_http_error (`Unauthorized, None, Some h))
   and invalid_header () =
     Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid Authorization header");
-    Lwt.fail
+    raise
       (Ocsigen_cohttp.Ocsigen_http_error (Ocsigen_cookie_map.empty, `Bad_request))
   in
   let validate ~err s =
     match Cohttp.Auth.credential_of_string s with
     | `Basic (user, pass) ->
-        auth user pass >>= fun b ->
-        if b then Lwt.return (Ocsigen_extensions.Ext_next err) else reject ()
+        let b = auth user pass in
+        if b then Ocsigen_extensions.Ext_next err else reject ()
     | `Other _s -> invalid_header ()
   in
   match rs with
@@ -78,8 +76,7 @@ let gen ~realm ~auth rs =
     with
     | Some s -> validate ~err s
     | None -> reject ())
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+  | Ocsigen_extensions.Req_found _ -> Ocsigen_extensions.Ext_do_nothing
 
 let parse_config element =
   let realm_ref = ref "" in

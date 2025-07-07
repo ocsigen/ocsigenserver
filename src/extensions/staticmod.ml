@@ -18,7 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Lwt.Infix
 module Pcre = Re.Pcre
 
 let name = "staticmod"
@@ -123,10 +122,9 @@ let find_static_page
          "Staticmod: cannot use '..' in user paths")
 
 let gen ~usermode ?cache dir = function
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+  | Ocsigen_extensions.Req_found _ -> Ocsigen_extensions.Ext_do_nothing
   | Ocsigen_extensions.Req_not_found
-      (err, ({Ocsigen_extensions.request_info; _} as request)) ->
+      (err, ({Ocsigen_extensions.request_info; _} as request)) -> (
       let try_block () =
         Logs.info ~src:section (fun fmt -> fmt "Is it a static file?");
         let status_filter, page =
@@ -142,7 +140,7 @@ let gen ~usermode ?cache dir = function
           | Ocsigen_local_files.RDir _ ->
               failwith "FIXME: staticmod dirs not implemented"
         in
-        Ocsigen_response.respond_file fname >>= fun answer ->
+        let answer = Ocsigen_response.respond_file fname in
         let answer =
           if not status_filter
           then answer
@@ -164,20 +162,20 @@ let gen ~usermode ?cache dir = function
                 [ Ocsigen_header.Name.cache_control, cache_control
                 ; Ocsigen_header.Name.expires, expires ]
         in
-        Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return answer))
+        Ocsigen_extensions.Ext_found (fun () -> answer)
       and catch_block = function
         | Ocsigen_local_files.Failed_403 ->
-            Lwt.return (Ocsigen_extensions.Ext_next `Forbidden)
+            Ocsigen_extensions.Ext_next `Forbidden
         (* XXX We should try to leave an information about this error
          for later *)
         | Ocsigen_local_files.NotReadableDirectory ->
-            Lwt.return (Ocsigen_extensions.Ext_next err)
+            Ocsigen_extensions.Ext_next err
         | Ocsigen_extensions.NoSuchUser | Ocsigen_extensions.Not_concerned
         | Ocsigen_local_files.Failed_404 ->
-            Lwt.return (Ocsigen_extensions.Ext_next err)
-        | e -> Lwt.fail e
+            Ocsigen_extensions.Ext_next err
+        | e -> raise e
       in
-      Lwt.catch try_block catch_block
+      try try_block () with v -> catch_block v)
 
 (*****************************************************************************)
 (** Parsing of config file *)

@@ -1,4 +1,4 @@
-open Lwt.Infix
+open Eio.Std
 
 let section = Logs.Src.create "ocsigen:cohttp"
 
@@ -67,7 +67,11 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   let connection_closed =
     try fst (Hashtbl.find connections conn)
     with Not_found ->
-      let ((connection_closed, _) as p) = Lwt.wait () in
+      let ((connection_closed, _) as p)
+            (* TODO: lwt-to-direct-style: Translation is incomplete, [Promise.await] must be called on the promise when it's part of control-flow. *)
+        =
+        Promise.create ()
+      in
       Hashtbl.add connections conn p;
       incr_connected ();
       connection_closed
@@ -111,7 +115,19 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
     Ocsigen_request.make ~address ~port ~ssl ~filenames ~client_conn ~body
       ~connection_closed request
   in
-  Lwt.finalize
+  Fun.protect
+    ~finally:(fun () ->
+      if !filenames <> []
+      then
+        List.iter
+          (fun a ->
+             try Unix.unlink a
+             with Unix.Unix_error _ as exn ->
+               Logs.warn ~src:section (fun fmt ->
+                 fmt
+                   ("Error while removing file %s" ^^ "@\n%s")
+                   a (Printexc.to_string exn)))
+          !filenames)
     (fun () ->
        Ocsigen_messages.accesslog
          (Format.sprintf "connection for %s from %s (%s)%s: %s"
@@ -126,49 +142,45 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
                (Ocsigen_request.header request
                   Ocsigen_header.Name.x_forwarded_for))
             (Uri.path (Ocsigen_request.uri request)));
-       Lwt.catch
-         (fun () -> connector request)
-         (function
-           | Ocsigen_is_dir fun_request ->
-               let headers =
-                 fun_request request |> Uri.to_string
-                 |> Cohttp.Header.init_with "location"
-               and status = `Moved_permanently in
-               Lwt.return
-                 (Ocsigen_response.respond_string ~headers ~status ~body:"" ())
-           | exn -> Lwt.return (handle_error exn))
-       >>= fun response ->
-       Lwt.return (Ocsigen_response.to_response_expert response))
-    (fun () ->
-       if !filenames <> []
-       then
-         List.iter
-           (fun a ->
-              try Unix.unlink a
-              with Unix.Unix_error _ as exn ->
-                Logs.warn ~src:section (fun fmt ->
-                  fmt
-                    ("Error while removing file %s" ^^ "@\n%s")
-                    a (Printexc.to_string exn)))
-           !filenames;
-       Lwt.return_unit)
+       let response =
+         try connector request with
+         | Ocsigen_is_dir fun_request ->
+             let headers =
+               fun_request request |> Uri.to_string
+               |> Cohttp.Header.init_with "location"
+             and status = `Moved_permanently in
+             Ocsigen_response.respond_string ~headers ~status ~body:"" ()
+         | exn -> handle_error exn
+       in
+       Ocsigen_response.to_response_expert response)
 
 let conn_closed (_flow, conn) =
   try
-    Lwt.wakeup (snd (Hashtbl.find connections conn)) ();
+    Promise.resolve (snd (Hashtbl.find connections conn)) ();
     Hashtbl.remove connections conn;
     decr_connected ()
   with Not_found -> ()
 
-let stop, stop_wakener = Lwt.wait ()
+let stop, stop_wakener
+      (* TODO: lwt-to-direct-style: Translation is incomplete, [Promise.await] must be called on the promise when it's part of control-flow. *)
+  =
+  Promise.create ()
 
 let shutdown timeout =
   let process =
     match timeout with
-    | Some f -> fun () -> Lwt_unix.sleep f
-    | None -> fun () -> Lwt.return ()
+    | Some f -> fun () -> Eio_unix.sleep f
+    | None -> fun () -> ()
   in
-  ignore (Lwt.pick [process (); stop] >>= fun () -> exit 0 : unit Lwt.t)
+  ignore
+    (Fiber.any
+       [ process
+       ; (fun () ->
+           stop
+           (* TODO: lwt-to-direct-style: This computation might not be suspended correctly. *))
+       ];
+     exit 0
+     : unit Promise.t)
 
 let service ?ssl ~address ~port ~connector () =
   let tls_own_key =
@@ -185,8 +197,8 @@ let service ?ssl ~address ~port ~connector () =
     | `Unix _ -> None
     | _ -> Some (Ocsigen_config.Socket_type.to_string address)
   in
-  Conduit_lwt_unix.init ?src ~tls_own_key () >>= fun conduit_ctx ->
-  Lwt.return (Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
+  let conduit_ctx = Conduit_lwt_unix.init ?src ~tls_own_key () in
+  let ctx = Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx () in
   (* We catch the INET_ADDR of the server *)
   let callback =
     let ssl = match ssl with Some _ -> true | None -> false in
@@ -199,5 +211,5 @@ let service ?ssl ~address ~port ~connector () =
     | _, `None -> `TCP (`Port port)
     | _, `TLS (crt, key, pass) -> `OpenSSL (crt, key, pass, `Port port)
   in
-  Cohttp_lwt_unix.Server.create ~stop ~ctx ~mode config >>= fun () ->
-  Lwt.return (Lwt.wakeup stop_wakener ())
+  Cohttp_lwt_unix.Server.create ~stop ~ctx ~mode config;
+  Promise.resolve stop_wakener ()

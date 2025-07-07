@@ -1,3 +1,5 @@
+open Eio.Std
+
 (* Ocsigen
  * http://www.ocsigen.org
  * Copyright (C) 2005
@@ -17,8 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
-
-open Lwt.Infix
 
 let () = Random.self_init ()
 
@@ -91,26 +91,18 @@ let reload ?file () =
 let () =
   let f _s = function
     | ["reopen_logs"] ->
-        Ocsigen_messages.open_files () >>= fun () ->
-        Logs.warn ~src:section (fun fmt -> fmt "Log files reopened");
-        Lwt.return ()
-    | ["reload"] -> reload (); Lwt.return ()
-    | ["reload"; file] -> reload ~file (); Lwt.return ()
-    | ["shutdown"] ->
-        Ocsigen_cohttp.shutdown None;
-        Lwt.return ()
-    | ["shutdown"; f] ->
-        Ocsigen_cohttp.shutdown (Some (float_of_string f));
-        Lwt.return ()
+        Ocsigen_messages.open_files ();
+        Logs.warn ~src:section (fun fmt -> fmt "Log files reopened")
+    | ["reload"] -> reload ()
+    | ["reload"; file] -> reload ~file ()
+    | ["shutdown"] -> Ocsigen_cohttp.shutdown None
+    | ["shutdown"; f] -> Ocsigen_cohttp.shutdown (Some (float_of_string f))
     | ["gc"] ->
         Gc.compact ();
         Logs.warn ~src:section (fun fmt ->
-          fmt "Heap compaction requested by user");
-        Lwt.return ()
-    | ["clearcache"] ->
-        Ocsigen_cache.clear_all_caches ();
-        Lwt.return ()
-    | _ -> Lwt.fail Ocsigen_command.Unknown_command
+          fmt "Heap compaction requested by user")
+    | ["clearcache"] -> Ocsigen_cache.clear_all_caches ()
+    | _ -> raise Ocsigen_command.Unknown_command
   in
   Ocsigen_command.register_command_function f
 
@@ -208,7 +200,7 @@ let main config =
     in
     let extensions_connector = Ocsigen_extensions.compute_result in
     let run () =
-      Ocsigen_messages.open_files () >>= fun () ->
+      Ocsigen_messages.open_files ();
       let ports = Ocsigen_config.get_ports ()
       and ssl_ports = Ocsigen_config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
@@ -291,14 +283,18 @@ let main config =
        then
          let pipe =
            Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
-           |> Lwt_unix.of_unix_file_descr
-           |> Lwt_io.(of_fd ~mode:input)
+           |> fun x1 ->
+           Eio.Buf_read.of_flow ~max_size:1_000_000
+             (Eio_unix.Net.import_socket_stream
+                ~sw:(Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch))
+                ~close_unix:true x1
+              : [`R | `Flow | `Close] r)
          in
          let rec f () =
-           Lwt_io.read_line pipe >>= fun s ->
+           let s = Eio.Buf_read.line pipe in
            Ocsigen_messages.warning ("Command received: " ^ s);
-           Lwt.catch
-             (fun () ->
+           f
+             (try
                 let prefix, c =
                   match Ocsigen_lib.String.split ~multisep:true ' ' s with
                   | [] -> raise Ocsigen_command.Unknown_command
@@ -308,22 +304,21 @@ let main config =
                       Some aa, ab :: l
                     with Not_found -> None, a :: l)
                 in
-                Ocsigen_command.get_command_function () ?prefix s c)
-             (function
-               | Ocsigen_command.Unknown_command ->
-                   Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
-                   Lwt.return ()
-               | e ->
-                   Logs.err ~src:section (fun fmt ->
-                     fmt
-                       ("Uncaught Exception after command" ^^ "@\n%s")
-                       (Printexc.to_string e));
-                   Lwt.fail e)
-           >>= f
+                Ocsigen_command.get_command_function () ?prefix s c
+              with
+             | Ocsigen_command.Unknown_command ->
+                 Logs.warn ~src:section (fun fmt -> fmt "Unknown command")
+             | e ->
+                 Logs.err ~src:section (fun fmt ->
+                   fmt
+                     ("Uncaught Exception after command" ^^ "@\n%s")
+                     (Printexc.to_string e));
+                 raise e)
          in
-         ignore (f () : 'a Lwt.t));
-      Lwt.join
-        (List.map
+         ignore (f () : 'a Promise.t));
+      Fiber.all
+        ((* TODO: lwt-to-direct-style: This expression is a ['a Lwt.t list] but a [(unit -> 'a) list] is expected. *)
+         List.map
            (fun (address, port) ->
               Ocsigen_cohttp.service ~address ~port
                 ~connector:extensions_connector ())
@@ -372,14 +367,25 @@ let main config =
     then
       let pid = Unix.fork () in
       if pid = 0
-      then Lwt_main.run (run ())
+      then
+        Eio_main.run (fun env ->
+          Fiber.with_binding Ocsigen_lib.env env (fun () ->
+            Switch.run ~name:"main" (fun sw ->
+              Fiber.with_binding Ocsigen_lib.current_switch sw (fun () ->
+                (* TODO: lwt-to-direct-style: [Eio_main.run] argument used to be a [Lwt] promise and is now a [fun]. Make sure no asynchronous or IO calls are done outside of this [fun]. *)
+                run ()))))
       else (
         Ocsigen_messages.console (fun () ->
           "Process " ^ string_of_int pid ^ " detached");
         write_pid pid)
     else (
       write_pid (Unix.getpid ());
-      Lwt_main.run (run ()))
+      Eio_main.run (fun env ->
+        Fiber.with_binding Ocsigen_lib.env env (fun () ->
+          Switch.run ~name:"main" (fun sw ->
+            Fiber.with_binding Ocsigen_lib.current_switch sw (fun () ->
+              (* TODO: lwt-to-direct-style: [Eio_main.run] argument used to be a [Lwt] promise and is now a [fun]. Make sure no asynchronous or IO calls are done outside of this [fun]. *)
+              run ())))))
   with e ->
     let msg, errno = errmsg e in
     Ocsigen_messages.errlog msg;

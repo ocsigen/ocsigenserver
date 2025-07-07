@@ -248,9 +248,8 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
             request)
       | None -> request
     in
-    Lwt.return
-      (Ocsigen_extensions.Ext_continue_with
-         (request, Ocsigen_cookie_map.empty, code))
+    Ocsigen_extensions.Ext_continue_with
+      (request, Ocsigen_cookie_map.empty, code)
   in
   function
   | Ocsigen_extensions.Req_found (request, resp) ->
@@ -276,11 +275,10 @@ let allow_forward_proto_handler =
             request_info)
       | None -> request_info
     in
-    Lwt.return
-      (Ocsigen_extensions.Ext_continue_with
-         ( {request with Ocsigen_extensions.request_info}
-         , Ocsigen_cookie_map.empty
-         , code ))
+    Ocsigen_extensions.Ext_continue_with
+      ( {request with Ocsigen_extensions.request_info}
+      , Ocsigen_cookie_map.empty
+      , code )
   in
   function
   | Ocsigen_extensions.Req_found (request, resp) ->
@@ -308,95 +306,86 @@ let parse_config parse_fun = function
       function
       | Ocsigen_extensions.Req_found (ri, _)
       | Ocsigen_extensions.Req_not_found (_, ri) ->
-          Lwt.return
-            (if condition ri.Ocsigen_extensions.request_info
-             then (
-               Logs.info ~src:section (fun fmt ->
-                 fmt "COND: going into <then> branch");
-               Ocsigen_extensions.Ext_sub_result ithen)
-             else (
-               Logs.info ~src:section (fun fmt ->
-                 fmt "COND: going into <else> branch, if any");
-               Ocsigen_extensions.Ext_sub_result ielse)))
+          if condition ri.Ocsigen_extensions.request_info
+          then (
+            Logs.info ~src:section (fun fmt ->
+              fmt "COND: going into <then> branch");
+            Ocsigen_extensions.Ext_sub_result ithen)
+          else (
+            Logs.info ~src:section (fun fmt ->
+              fmt "COND: going into <else> branch, if any");
+            Ocsigen_extensions.Ext_sub_result ielse))
   | Element (("if" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("notfound", [], []) ->
       fun _rs ->
         Logs.info ~src:section (fun fmt ->
           fmt "NOT_FOUND: taking in charge 404");
-        Lwt.return
-          (Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found))
+        Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found)
   | Element (("notfound" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("nextsite", [], []) -> (
       function
       | Ocsigen_extensions.Req_found (_, r) ->
-          Lwt.return
-            (Ocsigen_extensions.Ext_found_stop (fun () -> Lwt.return r))
+          Ocsigen_extensions.Ext_found_stop (fun () -> r)
       | Ocsigen_extensions.Req_not_found _ ->
-          Lwt.return
-            (Ocsigen_extensions.Ext_stop_site
-               (Ocsigen_cookie_map.empty, `Not_found)))
+          Ocsigen_extensions.Ext_stop_site (Ocsigen_cookie_map.empty, `Not_found)
+      )
   | Element ("nexthost", [], []) -> (
       function
       | Ocsigen_extensions.Req_found (_, r) ->
-          Lwt.return
-            (Ocsigen_extensions.Ext_found_stop (fun () -> Lwt.return r))
+          Ocsigen_extensions.Ext_found_stop (fun () -> r)
       | Ocsigen_extensions.Req_not_found _ ->
-          Lwt.return
-            (Ocsigen_extensions.Ext_stop_host
-               (Ocsigen_cookie_map.empty, `Not_found)))
+          Ocsigen_extensions.Ext_stop_host (Ocsigen_cookie_map.empty, `Not_found)
+      )
   | Element (("nextsite" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("stop", [], []) -> (
       function
       | Ocsigen_extensions.Req_found (_, r) ->
-          Lwt.return
-            (Ocsigen_extensions.Ext_found_stop (fun () -> Lwt.return r))
+          Ocsigen_extensions.Ext_found_stop (fun () -> r)
       | Ocsigen_extensions.Req_not_found _ ->
-          Lwt.return
-            (Ocsigen_extensions.Ext_stop_all
-               (Ocsigen_cookie_map.empty, `Not_found)))
+          Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found)
+      )
   | Element (("stop" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("forbidden", [], []) ->
       fun _rs ->
         Logs.info ~src:section (fun fmt ->
           fmt "FORBIDDEN: taking in charge 403");
-        Lwt.return
-          (Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Forbidden))
+        Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Forbidden)
   | Element (("forbidden" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("iffound", [], sub) -> (
       let ext = parse_fun sub in
       function
       | Ocsigen_extensions.Req_found (_, _) ->
-          Lwt.return (Ocsigen_extensions.Ext_sub_result ext)
+          Ocsigen_extensions.Ext_sub_result ext
       | Ocsigen_extensions.Req_not_found (err, _ri) ->
-          Lwt.return (Ocsigen_extensions.Ext_next err))
+          Ocsigen_extensions.Ext_next err)
   | Element (("iffound" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("ifnotfound", [], sub) -> (
       let ext = parse_fun sub in
       function
       | Ocsigen_extensions.Req_found (_, r) ->
-          Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return r))
+          Ocsigen_extensions.Ext_found (fun () -> r)
       | Ocsigen_extensions.Req_not_found _ ->
-          Lwt.return (Ocsigen_extensions.Ext_sub_result ext))
+          Ocsigen_extensions.Ext_sub_result ext)
   | Element ("ifnotfound", [("code", s)], sub) -> (
       let ext = parse_fun sub in
       let re = Netstring_pcre.regexp ("^" ^ s ^ "$") in
       function
       | Ocsigen_extensions.Req_found (_, r) ->
-          Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return r))
+          Ocsigen_extensions.Ext_found (fun () -> r)
       | Ocsigen_extensions.Req_not_found (err, _ri) ->
           if
             let err =
               string_of_int Cohttp.Code.(code_of_status (err :> status_code))
             in
             Netstring_pcre.string_match re err 0 <> None
-          then Lwt.return (Ocsigen_extensions.Ext_sub_result ext)
-          else Lwt.return (Ocsigen_extensions.Ext_next err))
+          then Ocsigen_extensions.Ext_sub_result ext
+          else Ocsigen_extensions.Ext_next err)
   | Element (("ifnotfound" as s), _, _) ->
       Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
   | Element ("allow-forward-for", param, _) ->
@@ -427,34 +416,31 @@ let () =
 let if_ condition ithen ielse vh ci p = function
   | Ocsigen_extensions.Req_found (ri, _)
   | Ocsigen_extensions.Req_not_found (_, ri) ->
-      Lwt.return
-        (if condition ri.Ocsigen_extensions.request_info
-         then
-           Ocsigen_extensions.Ext_sub_result
-             (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) ithen))
-         else
-           Ocsigen_extensions.Ext_sub_result
-             (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) ielse)))
+      if condition ri.Ocsigen_extensions.request_info
+      then
+        Ocsigen_extensions.Ext_sub_result
+          (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) ithen))
+      else
+        Ocsigen_extensions.Ext_sub_result
+          (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) ielse))
 
 let iffound instrs vh ci p = function
   | Ocsigen_extensions.Req_found (_, _) ->
-      Lwt.return
-        (Ocsigen_extensions.Ext_sub_result
-           (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) instrs)))
+      Ocsigen_extensions.Ext_sub_result
+        (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) instrs))
   | Ocsigen_extensions.Req_not_found (err, _ri) ->
-      Lwt.return (Ocsigen_extensions.Ext_next err)
+      Ocsigen_extensions.Ext_next err
 
 let ifnotfound ?code instrs vh ci p =
   let re = Option.map (fun s -> Netstring_pcre.regexp ("^" ^ s ^ "$")) code in
   function
   | Ocsigen_extensions.Req_found (_, r) ->
-      Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return r))
+      Ocsigen_extensions.Ext_found (fun () -> r)
   | Ocsigen_extensions.Req_not_found (err, _) -> (
     match re with
     | None ->
-        Lwt.return
-          (Ocsigen_extensions.Ext_sub_result
-             (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) instrs)))
+        Ocsigen_extensions.Ext_sub_result
+          (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) instrs))
     | Some re ->
         if
           let err =
@@ -462,40 +448,33 @@ let ifnotfound ?code instrs vh ci p =
           in
           Netstring_pcre.string_match re err 0 <> None
         then
-          Lwt.return
-            (Ocsigen_extensions.Ext_sub_result
-               (Ocsigen_extensions.compose
-                  (List.map (fun i -> i vh ci p) instrs)))
-        else Lwt.return (Ocsigen_extensions.Ext_next err))
+          Ocsigen_extensions.Ext_sub_result
+            (Ocsigen_extensions.compose (List.map (fun i -> i vh ci p) instrs))
+        else Ocsigen_extensions.Ext_next err)
 
 let notfound _ _ _ _ =
-  Lwt.return
-    (Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found))
+  Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found)
 
 let nextsite _ _ _ = function
   | Ocsigen_extensions.Req_found (_, r) ->
-      Lwt.return (Ocsigen_extensions.Ext_found_stop (fun () -> Lwt.return r))
+      Ocsigen_extensions.Ext_found_stop (fun () -> r)
   | Ocsigen_extensions.Req_not_found _ ->
-      Lwt.return
-        (Ocsigen_extensions.Ext_stop_site (Ocsigen_cookie_map.empty, `Not_found))
+      Ocsigen_extensions.Ext_stop_site (Ocsigen_cookie_map.empty, `Not_found)
 
 let nexthost _ _ _ = function
   | Ocsigen_extensions.Req_found (_, r) ->
-      Lwt.return (Ocsigen_extensions.Ext_found_stop (fun () -> Lwt.return r))
+      Ocsigen_extensions.Ext_found_stop (fun () -> r)
   | Ocsigen_extensions.Req_not_found _ ->
-      Lwt.return
-        (Ocsigen_extensions.Ext_stop_host (Ocsigen_cookie_map.empty, `Not_found))
+      Ocsigen_extensions.Ext_stop_host (Ocsigen_cookie_map.empty, `Not_found)
 
 let stop _ _ _ = function
   | Ocsigen_extensions.Req_found (_, r) ->
-      Lwt.return (Ocsigen_extensions.Ext_found_stop (fun () -> Lwt.return r))
+      Ocsigen_extensions.Ext_found_stop (fun () -> r)
   | Ocsigen_extensions.Req_not_found _ ->
-      Lwt.return
-        (Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found))
+      Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Not_found)
 
 let forbidden _ _ _ _ =
-  Lwt.return
-    (Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Forbidden))
+  Ocsigen_extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Forbidden)
 
 let allow_forward_for ?check_equal_ip () _ _ _ =
   allow_forward_for_handler ?check_equal_ip ()

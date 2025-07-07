@@ -22,39 +22,35 @@
 
 let gen filter = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
-      Lwt.return (Ocsigen_extensions.Ext_next code)
+      Ocsigen_extensions.Ext_next code
   | Ocsigen_extensions.Req_found (_ri, res) ->
-      Lwt.return
-      @@ Ocsigen_extensions.Ext_found
-           (fun () ->
-             Lwt.return
-             @@
-             match filter with
-             | `Rewrite (header, regexp, dest) -> (
-               try
-                 let l =
-                   List.map
-                     (Ocsigen_lib.Netstring_pcre.global_replace regexp dest)
-                     (Ocsigen_response.header_multi res header)
-                 and a = Ocsigen_response.remove_header res header in
-                 Ocsigen_response.add_header_multi a header l
-               with Not_found -> res)
-             | `Add (header, dest, replace) -> (
-               match replace with
-               | None -> (
-                 match Ocsigen_response.header res header with
-                 | Some _ -> res
-                 | None -> Ocsigen_response.add_header res header dest)
-               | Some false -> Ocsigen_response.add_header res header dest
-               | Some true -> Ocsigen_response.replace_header res header dest))
+      Ocsigen_extensions.Ext_found
+        (fun () ->
+          match filter with
+          | `Rewrite (header, regexp, dest) -> (
+            try
+              let l =
+                List.map
+                  (Ocsigen_lib.Netstring_pcre.global_replace regexp dest)
+                  (Ocsigen_response.header_multi res header)
+              and a = Ocsigen_response.remove_header res header in
+              Ocsigen_response.add_header_multi a header l
+            with Not_found -> res)
+          | `Add (header, dest, replace) -> (
+            match replace with
+            | None -> (
+              match Ocsigen_response.header res header with
+              | Some _ -> res
+              | None -> Ocsigen_response.add_header res header dest)
+            | Some false -> Ocsigen_response.add_header res header dest
+            | Some true -> Ocsigen_response.replace_header res header dest))
 
 let gen_code code = function
   | Ocsigen_extensions.Req_not_found (code, _) ->
-      Lwt.return (Ocsigen_extensions.Ext_next code)
+      Ocsigen_extensions.Ext_next code
   | Ocsigen_extensions.Req_found (_ri, res) ->
-      Lwt.return
-      @@ Ocsigen_extensions.Ext_found
-           (fun () -> Lwt.return (Ocsigen_response.set_status res code))
+      Ocsigen_extensions.Ext_found
+        (fun () -> Ocsigen_response.set_status res code)
 
 let parse_config config_elem =
   let header = ref None in

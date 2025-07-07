@@ -20,7 +20,6 @@
 
 let section = Logs.Src.create "ocsigen:ext"
 
-open Lwt.Infix
 module Pcre = Re.Pcre
 module Url = Ocsigen_lib.Url
 include Ocsigen_command
@@ -187,7 +186,7 @@ exception Ocsigen_is_dir = Ocsigen_cohttp.Ocsigen_is_dir
 
 type answer =
   | Ext_do_nothing  (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found of (unit -> Ocsigen_response.t)
   (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
@@ -197,7 +196,7 @@ type answer =
       handled in different order. (for example revproxy.ml starts its
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
-  | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found_stop of (unit -> Ocsigen_response.t)
   (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
   (** Page not found. Try next extension. The status is usually
@@ -239,7 +238,7 @@ type answer =
       parsing the configuration file, call the parsing function (of
       type [parse_fun]), that will return something of type
       [extension_composite]. *)
-  | Ext_found_continue_with of (unit -> (Ocsigen_response.t * request) Lwt.t)
+  | Ext_found_continue_with of (unit -> Ocsigen_response.t * request)
   (** Same as [Ext_found] but may modify the request. *)
   | Ext_found_continue_with' of (Ocsigen_response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
@@ -251,9 +250,9 @@ and request_state =
   | Req_found of (request * Ocsigen_response.t)
 
 and extension_composite =
-  Ocsigen_cookie_map.t -> request_state -> (answer * Ocsigen_cookie_map.t) Lwt.t
+  Ocsigen_cookie_map.t -> request_state -> answer * Ocsigen_cookie_map.t
 
-type extension = request_state -> answer Lwt.t
+type extension = request_state -> answer
 type parse_fun = Xml.xml list -> extension_composite
 
 type parse_host =
@@ -324,20 +323,18 @@ let site_match request (site_path : string list) url =
 
 let default_extension_composite : extension_composite =
  fun cookies_to_set -> function
-  | Req_found (ri, res) ->
-      Lwt.return (Ext_found_continue_with' (res, ri), cookies_to_set)
+  | Req_found (ri, res) -> Ext_found_continue_with' (res, ri), cookies_to_set
   | Req_not_found (e, ri) ->
-      Lwt.return
-        (Ext_continue_with (ri, Ocsigen_cookie_map.empty, e), cookies_to_set)
+      Ext_continue_with (ri, Ocsigen_cookie_map.empty, e), cookies_to_set
 
 let compose_step (f : extension) (g : extension_composite) : extension_composite
   =
  fun cookies_to_set req_state ->
-  f req_state >>= fun res ->
+  let res = f req_state in
   let rec aux cookies_to_set = function
     | Ext_do_nothing -> g cookies_to_set req_state
     | Ext_found r ->
-        r () >>= fun r' ->
+        let r' = r () in
         let ri =
           match req_state with
           | Req_found (ri, _) -> ri
@@ -346,7 +343,7 @@ let compose_step (f : extension) (g : extension_composite) : extension_composite
         g Ocsigen_cookie_map.empty
           (Req_found (ri, Ocsigen_response.add_cookies r' cookies_to_set))
     | Ext_found_continue_with r ->
-        r () >>= fun (r', req) ->
+        let r', req = r () in
         g Ocsigen_cookie_map.empty
           (Req_found (req, Ocsigen_response.add_cookies r' cookies_to_set))
     | Ext_found_continue_with' (r', req) ->
@@ -365,9 +362,9 @@ let compose_step (f : extension) (g : extension_composite) : extension_composite
           (Req_not_found (e, ri))
     | ( Ext_found_stop _ | Ext_stop_site _ | Ext_stop_host _ | Ext_stop_all _
       | Ext_retry_with _ ) as res ->
-        Lwt.return (res, cookies_to_set)
+        res, cookies_to_set
     | Ext_sub_result sr ->
-        sr cookies_to_set req_state >>= fun (res, cookies_to_set) ->
+        let res, cookies_to_set = sr cookies_to_set req_state in
         aux cookies_to_set res
   in
   aux cookies_to_set res
@@ -433,8 +430,7 @@ let make_parse_config path parse_host l : extension_composite =
   !fun_end (); r
 
 let site_ext ext_of_children charset path cookies_to_set = function
-  | Req_found (ri, res) ->
-      Lwt.return (Ext_found_continue_with' (res, ri), cookies_to_set)
+  | Req_found (ri, res) -> Ext_found_continue_with' (res, ri), cookies_to_set
   | Req_not_found (e, oldri) -> (
       let oldri =
         match charset with
@@ -454,7 +450,7 @@ let site_ext ext_of_children charset path cookies_to_set = function
               (Url.string_of_url_path ~encode:true path)
               (Url.string_of_url_path ~encode:true
                  (Ocsigen_request.path oldri.request_info)));
-          Lwt.return (Ext_next e, cookies_to_set)
+          Ext_next e, cookies_to_set
       | Some sub_path -> (
           Logs.info ~src:section (fun fmt ->
             fmt "site found: url \"%s\" matches \"%s\"."
@@ -467,26 +463,24 @@ let site_ext ext_of_children charset path cookies_to_set = function
                 Ocsigen_request.update oldri.request_info
                   ~sub_path:(Url.string_of_url_path ~encode:true sub_path) }
           in
-          ext_of_children cookies_to_set (Req_not_found (e, ri)) >>= function
+          match ext_of_children cookies_to_set (Req_not_found (e, ri)) with
           (* After a site, we turn back to old ri *)
           | Ext_stop_site (cs, err), cookies_to_set
           | Ext_continue_with (_, cs, err), cookies_to_set ->
-              Lwt.return (Ext_continue_with (oldri, cs, err), cookies_to_set)
+              Ext_continue_with (oldri, cs, err), cookies_to_set
           | Ext_found_continue_with r, cookies_to_set ->
-              r () >>= fun (r', _req) ->
-              Lwt.return (Ext_found_continue_with' (r', oldri), cookies_to_set)
+              let r', _req = r () in
+              Ext_found_continue_with' (r', oldri), cookies_to_set
           | Ext_found_continue_with' (r, _req), cookies_to_set ->
-              Lwt.return (Ext_found_continue_with' (r, oldri), cookies_to_set)
+              Ext_found_continue_with' (r, oldri), cookies_to_set
           | Ext_do_nothing, cookies_to_set ->
-              Lwt.return
-                ( Ext_continue_with (oldri, Ocsigen_cookie_map.empty, e)
-                , cookies_to_set )
-          | r -> Lwt.return r))
+              ( Ext_continue_with (oldri, Ocsigen_cookie_map.empty, e)
+              , cookies_to_set )
+          | r -> r))
 
 let site_ext ext_of_children charset path : extension = function
-  | Req_found (ri, r) -> Lwt.return (Ext_found_continue_with' (r, ri))
-  | Req_not_found _ ->
-      Lwt.return (Ext_sub_result (site_ext ext_of_children charset path))
+  | Req_found (ri, r) -> Ext_found_continue_with' (r, ri)
+  | Req_not_found _ -> Ext_sub_result (site_ext ext_of_children charset path)
 
 let preprocess_site_path p =
   Url.(remove_dotdot p |> remove_slash_at_beginning |> remove_slash_at_end)
@@ -768,26 +762,27 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
   in
   let rec fold_hosts request_info (prev_err : Cohttp.Code.status) cookies_to_set
     = function
-    | [] -> Lwt.fail (Ocsigen_http_error (cookies_to_set, prev_err))
+    | [] -> raise (Ocsigen_http_error (cookies_to_set, prev_err))
     | (virtual_hosts, request_config, host_function) :: l
       when host_match ~virtual_hosts ~host ~port -> (
         Logs.info ~src:section (fun fmt ->
           fmt "host found! %s matches %s"
             (string_of_host_option host)
             (string_of_host virtual_hosts));
-        host_function cookies_to_set
-          (Req_not_found (prev_err, {request_info; request_config}))
-        >>= fun (res_ext, cookies_to_set) ->
+        let res_ext, cookies_to_set =
+          host_function cookies_to_set
+            (Req_not_found (prev_err, {request_info; request_config}))
+        in
         match res_ext with
         | Ext_found r | Ext_found_stop r ->
-            r () >>= fun r' ->
-            Lwt.return (Ocsigen_response.add_cookies r' cookies_to_set)
+            let r' = r () in
+            Ocsigen_response.add_cookies r' cookies_to_set
         | Ext_do_nothing -> fold_hosts request_info prev_err cookies_to_set l
         | Ext_found_continue_with r ->
-            r () >>= fun (r', _) ->
-            Lwt.return (Ocsigen_response.add_cookies r' cookies_to_set)
+            let r', _ = r () in
+            Ocsigen_response.add_cookies r' cookies_to_set
         | Ext_found_continue_with' (r, _) ->
-            Lwt.return (Ocsigen_response.add_cookies r cookies_to_set)
+            Ocsigen_response.add_cookies r cookies_to_set
         | Ext_next e -> fold_hosts request_info e cookies_to_set l
         (* try next site *)
         | Ext_stop_host (cook, e) | Ext_stop_site (cook, e) ->
@@ -796,7 +791,7 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
               l
         (* try next site *)
         | Ext_stop_all (_cook, e) ->
-            Lwt.fail (Ocsigen_http_error (cookies_to_set, e))
+            raise (Ocsigen_http_error (cookies_to_set, e))
         | Ext_continue_with (_, cook, e) ->
             fold_hosts request_info e
               (Ocsigen_cookie_map.add_multi cook cookies_to_set)
@@ -816,7 +811,7 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
   and fold_hosts_limited sites cookies_to_set request_info =
     Ocsigen_request.incr_tries request_info;
     if Ocsigen_request.tries request_info > Ocsigen_config.get_maxretries ()
-    then Lwt.fail Ocsigen_Looping_request
+    then raise Ocsigen_Looping_request
     else fold_hosts request_info `Not_found cookies_to_set sites
   in
   fold_hosts_limited (get_hosts ()) previous_cookies request_info

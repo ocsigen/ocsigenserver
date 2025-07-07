@@ -1,3 +1,5 @@
+open Eio.Std
+
 type t
 type content_type = (string * string) * (string * string) list
 
@@ -30,7 +32,7 @@ val make :
   -> filenames:string list ref
   -> client_conn:client_conn
   -> body:Cohttp_lwt.Body.t
-  -> connection_closed:unit Lwt.t
+  -> connection_closed:unit Promise.t
   -> Cohttp.Request.t
   -> t
 
@@ -75,13 +77,13 @@ val files :
    t
   -> string option
   -> Int64.t option
-  -> (string * file_info) list Lwt.t option
+  -> (string * file_info) list Promise.t option
 
 val post_params :
    t
   -> string option
   -> Int64.t option
-  -> (string * string) list Lwt.t option
+  -> (string * string) list Promise.t option
 
 val client_conn : t -> client_conn
 (** The way the client connects to the server (for example, its IP address if
@@ -95,5 +97,5 @@ val content_type : t -> content_type option
 val request_cache : t -> Polytables.t
 val tries : t -> int
 val incr_tries : t -> unit
-val connection_closed : t -> unit Lwt.t
+val connection_closed : t -> unit
 val timeofday : t -> float

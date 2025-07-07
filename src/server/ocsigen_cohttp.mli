@@ -21,7 +21,7 @@ val service :
    ?ssl:string * string * (bool -> string) option
   -> address:Ocsigen_config.socket_type
   -> port:int
-  -> connector:(Ocsigen_request.t -> Ocsigen_response.t Lwt.t)
+  -> connector:(Ocsigen_request.t -> Ocsigen_response.t)
   -> unit
-  -> unit Lwt.t
+  -> unit
 (** initialize a main loop of http server *)

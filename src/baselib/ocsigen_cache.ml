@@ -1,3 +1,5 @@
+open Eio.Std
+
 (* Ocsigen
  * Copyright (C) 2009
  *
@@ -21,8 +23,6 @@
    @author Vincent Balat
    @author Raphaël Proust (adding timers)
 *)
-
-open Lwt.Infix
 
 module Dlist : sig
   type 'a t
@@ -120,7 +120,7 @@ end = struct
     ; mutable finaliser_after : 'a node -> unit
     ; time_bound : time_bound option }
 
-  and time_bound = {timer : float; mutable collector : unit Lwt.t option}
+  and time_bound = {timer : float; mutable collector : unit Promise.t option}
 
   (* Checks (by BY):
 
@@ -214,7 +214,7 @@ end = struct
     | None -> assert false (* collection is set to None and collector to Some *)
     | Some t ->
         let duration = t -. Unix.gettimeofday () in
-        if duration <= 0. then Lwt.return () else Lwt_unix.sleep duration
+        if duration <= 0. then () else Eio_unix.sleep duration
 
   (* a function to set the collector. *)
   let rec update_collector r =
@@ -227,11 +227,10 @@ end = struct
       | Some n ->
           t.collector <-
             Some
-              ( sleep_until n.collection >>= fun () ->
-                collect r n;
-                t.collector <- None;
-                update_collector r;
-                Lwt.return () ))
+              (sleep_until n.collection;
+               collect r n;
+               t.collector <- None;
+               update_collector r))
 
   (* Add a node that do not belong to any list to a list.
      The fields [succ] and [prev] are overridden.
@@ -399,7 +398,7 @@ functor
     type t =
       { mutable pointers : A.key Dlist.t
       ; mutable table : (A.value * A.key Dlist.node) H.t
-      ; finder : A.key -> A.value Lwt.t
+      ; finder : A.key -> A.value
       ; clear : unit -> unit
         (* This function clears the cache. It is put inside the
                                cache structure so that it is garbage-collected only when the cache
@@ -460,14 +459,14 @@ functor
     let size c = Dlist.size c.pointers
 
     let find cache k =
-      try Lwt.return (find_in_cache cache k)
+      try find_in_cache cache k
       with Not_found ->
-        cache.finder k >>= fun r ->
+        let r = cache.finder k in
         (try
            (* it may have been added during cache.finder *)
            ignore (find_in_cache cache k : A.value)
          with Not_found -> add_no_remove cache k r);
-        Lwt.return r
+        r
 
     class cache f ?timer size_c =
       let c = create f ?timer size_c in
