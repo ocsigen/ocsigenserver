@@ -26,24 +26,26 @@ end
 type t =
   {a_response : Response.t; a_body : Body.t; a_cookies : Ocsigen_cookie_map.t}
 
+let remove_header_if_equal_to (resp : Response.t) header equals_to =
+  match Header.get resp.headers header with
+  | Some v when String.equal v equals_to ->
+      {resp with headers = Header.remove resp.headers header}
+  | _ -> resp
+
 let make ?(body = Body.empty) ?(cookies = Ocsigen_cookie_map.empty) a_response =
+  (* Remove the erroneous [transfer-encoding] set by default. *)
+  (* TODO: Deprecate usages of [Cohttp.Response.t] exposed by this API. *)
+  let a_response =
+    remove_header_if_equal_to a_response "transfer-encoding" "chunked"
+  in
   {a_response; a_body = body; a_cookies = cookies}
 
-let respond ?headers ~status ~encoding ?(body = Body.empty) () =
-  let encoding =
-    match headers with
-    | None -> encoding
-    | Some headers -> (
-      match Cohttp.Header.get_transfer_encoding headers with
-      | Cohttp.Transfer.Unknown -> encoding
-      | t -> t)
-  in
-  let response = Response.make ~status ~encoding ?headers () in
+let respond ?headers ~status ?(body = Body.empty) () =
+  let response = Response.make ~status ?headers () in
   make ~body response
 
 let respond_string ?headers ~status ~body () =
-  let encoding = Transfer.Fixed (Int64.of_int (String.length body)) in
-  let response = Response.make ~status ~encoding ?headers () in
+  let response = Response.make ~status ?headers () in
   let body = Body.of_string body in
   make ~body response
 
@@ -101,7 +103,7 @@ let respond_file ?headers ?(status = `OK) fname =
        let headers =
          Http.Header.add_opt_unless_exists headers "content-type" mime_type
        in
-       Lwt.return (respond ~headers ~status ~encoding ~body ()))
+       Lwt.return (respond ~headers ~status ~body ()))
     (function
       | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
           Lwt.return (respond_not_found ())
@@ -148,16 +150,14 @@ let make_cookies_headers path t hds =
          (make_cookies_header path exp name v secure))
     t hds
 
-let to_cohttp_response {a_response; a_cookies; a_body = _, encoding} =
+let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
   let headers =
     let add name value headers = Header.add_unless_exists headers name value in
     let add_transfer_encoding h =
-      match encoding with
-      | Transfer.Chunked -> add "transfer-encoding" "chunked" h
-      | _ -> h
+      Header.add_transfer_encoding h body_encoding
     in
-    Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
-      (Response.headers a_response)
+    Response.headers a_response
+    |> Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
     |> add "server" Ocsigen_config.server_name
     |> add "date" (Ocsigen_lib.Date.to_string (Unix.time ()))
     |> add_transfer_encoding

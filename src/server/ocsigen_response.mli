@@ -23,11 +23,15 @@ val make :
   -> ?cookies:Ocsigen_cookie_map.t
   -> Cohttp.Response.t
   -> t
+(** Make a response from a [Cohttp.Response.t]. Note that the
+    [transfer-encoding] header is not taken into account if it is set to
+    [chunked], use {!add_header}. This is because [Cohttp.Response.make] sets
+    this header by default, which interferes with the transfer-encoding carried
+    by the [body]. *)
 
 val respond :
    ?headers:Cohttp.Header.t
   -> status:Http.Status.t
-  -> encoding:Cohttp.Transfer.encoding
   -> ?body:Body.t
   -> unit
   -> t
