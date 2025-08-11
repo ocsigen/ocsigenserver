@@ -37,7 +37,7 @@ jobs:
           git config --global core.ignorecase false
 
       - name: Checkout tree
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set-up OCaml
         uses: ocaml/setup-ocaml@v3
@@ -54,7 +54,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout tree
-  #       uses: actions/checkout@v4
+  #       uses: actions/checkout@v5
   #     - name: Set-up OCaml
   #       uses: ocaml/setup-ocaml@v3
   #       with:
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tree
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set-up OCaml
         uses: ocaml/setup-ocaml@v3
         with:
@@ -82,7 +82,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout tree
-  #       uses: actions/checkout@v4
+  #       uses: actions/checkout@v5
   #     - name: Set-up OCaml
   #       uses: ocaml/setup-ocaml@v3
   #       with:
