@@ -49,7 +49,7 @@ let make_uri u =
   {u_uri; u_get_params; u_get_params_flat; u_path; u_path_string}
 
 type client_conn =
-  [ `Inet of Ipaddr.t * int
+  [ `Inet of Eio.Net.Ipaddr.v4v6 * int
   | `Unix of string
   | `Forwarded_for of string
   | `Unknown ]
@@ -280,7 +280,7 @@ let client_conn {r_client_conn = c; _} = c
 
 let client_conn_to_string {r_client_conn = c; _} =
   match c with
-  | `Inet (ip, _) -> Ipaddr.to_string ip
+  | `Inet (ip, _) -> Format.asprintf "%a" Eio.Net.Ipaddr.pp ip
   | `Unix path -> "unix:" ^ path
   | `Forwarded_for ip -> "forwarded:" ^ ip
   | `Unknown -> "unknown"

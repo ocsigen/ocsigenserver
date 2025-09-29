@@ -68,8 +68,7 @@ let handler
   let client_conn =
     match eio_stream with
     | `Unix _ as s -> s
-    | `Tcp (ip, port) ->
-        `Inet (Ipaddr.of_string_exn (ip : Eio.Net.Ipaddr.v4v6 :> string), port)
+    | `Tcp (ip, port) -> `Inet (ip, port)
   in
   let connection_closed =
     try fst (Hashtbl.find connections conn)

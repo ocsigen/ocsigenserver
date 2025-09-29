@@ -40,7 +40,8 @@ let ip s =
   fun ri ->
     let r =
       match Ocsigen_request.client_conn ri with
-      | `Inet (ip, _) -> Ipaddr.Prefix.mem ip prefix
+      | `Inet (eio_ip, _) ->
+          Ipaddr.Prefix.mem (Ipaddr.of_octets_exn (eio_ip :> string)) prefix
       | _ -> false
     in
     if r
@@ -225,7 +226,10 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
             let proxy_ip = Ipaddr.of_string_exn last_proxy in
             let equal_ip =
               match Ocsigen_request.client_conn request_info with
-              | `Inet (r_ip, _) -> Ipaddr.compare proxy_ip r_ip = 0
+              | `Inet (r_ip, _) ->
+                  Ipaddr.compare proxy_ip
+                    (Ipaddr.of_octets_exn (r_ip :> string))
+                  = 0
               | _ -> false
             in
             if equal_ip || not check_equal_ip

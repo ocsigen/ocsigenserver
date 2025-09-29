@@ -12,7 +12,7 @@ type file_info = Ocsigen_multipart.file_info =
 type post_data = (string * string) list * (string * file_info) list
 
 type client_conn =
-  [ `Inet of Ipaddr.t * int
+  [ `Inet of Eio.Net.Ipaddr.v4v6 * int
   | `Unix of string
   | `Forwarded_for of string
   | `Unknown ]
