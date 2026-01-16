@@ -194,6 +194,6 @@ let service ?ssl ~address ~port ~connector ~on_error () =
   in
   let sw = Stdlib.Option.get (Fiber.get Ocsigen_lib.current_switch) in
   let env = Stdlib.Option.get (Fiber.get Ocsigen_lib.env) in
-  let listening_socket = Eio.Net.listen ~sw ~backlog:100 env#net sockaddr in
+  let listening_socket = Eio.Net.listen ~sw ~backlog:100 ~reuse_addr:true env#net sockaddr in
   Cohttp_eio.Server.run ~stop ~on_error listening_socket config;
   Promise.resolve stop_wakener ()
