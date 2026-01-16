@@ -3,8 +3,7 @@
  (public_name ocsigenserver.baselib.base)
  (flags
   (:standard -no-keep-locs))
- (modules ocsigen_lib_base)
- (libraries eio eio.unix))
+ (modules ocsigen_lib_base))
 
 (library
  (name baselib)
@@ -23,6 +22,7 @@
   str
   findlib
   eio
+  eio.unix
   cryptokit
   re
   ocsigen_lib_base
