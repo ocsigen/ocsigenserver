@@ -775,8 +775,7 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
         in
         match res_ext with
         | Ext_found r | Ext_found_stop r ->
-            let r' = r () in
-            Ocsigen_response.add_cookies r' cookies_to_set
+            Ocsigen_response.add_cookies (r ()) cookies_to_set
         | Ext_do_nothing -> fold_hosts request_info prev_err cookies_to_set l
         | Ext_found_continue_with r ->
             let r', _ = r () in

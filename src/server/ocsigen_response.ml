@@ -173,20 +173,22 @@ module Response_io = Cohttp.Response.Make (Cohttp_eio.Server.IO)
 
 let to_response_expert t =
   let module R = Response_io in
-  let write_footer encoding oc =
-    match encoding with
+  let res = to_cohttp_response t in
+  (* Use the response's encoding (what we tell the client), not the body's encoding *)
+  let response_encoding = Response.encoding res in
+  let write_footer oc =
+    match response_encoding with
     (* Copied from [cohttp/response.ml]. *)
     | Transfer.Chunked -> Eio.Buf_write.string oc "0\r\n\r\n"
     | Transfer.Fixed _ | Transfer.Unknown -> ()
   in
-  let res = to_cohttp_response t in
   ( res
   , fun _ic oc ->
       (* TODO: Use [Cohttp_eio.Server.respond] instead of internal APIs. This requires turning [Body.t] into a [Eio.Flow]. *)
       let writer = R.make_body_writer ~flush:false res oc in
-      let body, encoding = t.a_body in
+      let body, _ = t.a_body in
       let () = body (R.write_body writer) in
-      write_footer encoding oc )
+      write_footer oc; Eio.Buf_write.flush oc )
 
 let response t = t.a_response
 let body t = t.a_body
