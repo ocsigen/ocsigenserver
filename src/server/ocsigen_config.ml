@@ -87,7 +87,7 @@ let () = Logs.set_level ~all:true (Some Logs.Warning)
 
 let set_verbose () =
   verbose := true;
-  Logs.set_level ~all:true None
+  Logs.set_level ~all:true (Some Logs.Warning)
 
 let set_silent () = silent := true
 
