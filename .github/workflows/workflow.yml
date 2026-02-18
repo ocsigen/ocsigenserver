@@ -2,6 +2,8 @@ name: Builds, tests & co
 
 on:
   push:
+    branches:
+      - master
   pull_request:
   schedule:
     # Prime the caches every Monday
@@ -49,6 +51,8 @@ jobs:
       - run: opam exec -- bash ./configure
 
       - run: opam exec -- make all
+
+      - run: opam install .
 
   # lint-doc:
   #   runs-on: ubuntu-latest
