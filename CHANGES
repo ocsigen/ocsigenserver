@@ -1,3 +1,9 @@
+==== 7.0.0 (2026-02-18) ===
+ * Use Log instead og Lwt_logs (by Jules Aguillon)
+ * Test suite (by Jules Aguillon)
+ * Code change to prepare an Eio version (by Jules Aguillon) 
+ * Restore dirlist feature (by Samuel Hym)
+
 ==== 6.0.0 (2024-08-28) ===
  * Use Ocsigen Server as a library now much easier
  * Adding programmable configuration options for each extension to use them without configuration file 
