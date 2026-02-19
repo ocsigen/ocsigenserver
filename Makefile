@@ -96,7 +96,7 @@ install.files:
 	$(INSTALL) -m ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
 	  local/var/www/ocsigenstuff/*.png local/var/www/ocsigenstuff/*.css \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
-	$(INSTALL) -d -m ${INSTALL_MOD_755} $(TEMPROOT)$(MANDIR)
+	mkdir -p $(TEMPROOT)$(MANDIR)
 	$(INSTALL) -m ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
 
 uninstall:
