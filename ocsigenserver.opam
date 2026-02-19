@@ -11,14 +11,14 @@ homepage: "http://ocsigen.org/ocsigenserver"
 bug-reports: "https://github.com/ocsigen/ocsigenserver/issues"
 depends: [
   "dune" {>= "3.19"}
-  "ocaml" {>= "4.08.1"}
+  "ocaml" {>= "4.10"}
   "camlzip" {>= "1.04"}
   "cohttp-lwt-unix" {>= "6.0"}
   "conduit-lwt-unix"
   "http"
   "cryptokit"
   "ipaddr" {>= "2.1"}
-  "lwt" {>= "3.0"}
+  "lwt" {>= "5.7.0"}
   "lwt_react"
   "lwt_ssl"
   "ocamlfind"
@@ -28,7 +28,7 @@ depends: [
   "xml-light"
   "logs"
   "logs-syslog"
-  "syslog-message"
+  "syslog-message" {>= "1.1.0"}
   "odoc" {with-doc}
 ]
 conflicts: [
