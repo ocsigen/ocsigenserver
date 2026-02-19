@@ -12,7 +12,7 @@ bug-reports: "https://github.com/ocsigen/ocsigenserver/issues"
 depends: [
   "dune" {>= "3.19"}
   "ocaml" {>= "4.10"}
-  "camlzip" {>= "1.04"}
+  "camlzip" {>= "1.08"}
   "cohttp-lwt-unix" {>= "6.0"}
   "conduit-lwt-unix"
   "http"
