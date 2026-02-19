@@ -36,6 +36,7 @@ conflicts: [
 ]
 dev-repo: "git+https://github.com/ocsigen/ocsigenserver.git"
 x-maintenance-intent: ["(latest)"]
+available: os != "win32"
 build: [
   [
     "sh"
