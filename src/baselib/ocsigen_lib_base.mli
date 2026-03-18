@@ -29,8 +29,6 @@ exception Ocsigen_Request_too_long
 include module type of Lwt.Infix
 
 val ( !! ) : 'a Lazy.t -> 'a
-val ( |> ) : 'a -> ('a -> 'b) -> 'b
-val ( @@ ) : ('a -> 'b) -> 'a -> 'b
 external id : 'a -> 'a = "%identity"
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
@@ -48,7 +46,7 @@ val to_poly : 'a -> poly
 val from_poly : poly -> 'a
 
 type yesnomaybe = Yes | No | Maybe
-type ('a, 'b) leftright = Left of 'a | Right of 'b
+type ('a, 'b) leftright = ('a, 'b) Either.t
 
 val advert : string
 
