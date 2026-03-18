@@ -50,14 +50,6 @@ See http://ocsigen.org/ and http://caml.inria.fr/ for information"
 
 (*****************************************************************************)
 
-module Option = struct
-  include Option
-
-  let get f = function Some x -> x | None -> f ()
-  let get' default opt = value opt ~default
-  let return x = Some x
-end
-
 module List = struct
   include List
 

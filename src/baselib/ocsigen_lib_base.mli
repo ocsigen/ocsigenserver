@@ -50,19 +50,6 @@ type ('a, 'b) leftright = ('a, 'b) Either.t
 
 val advert : string
 
-(** Module Option to compute type ['a option] *)
-module Option : sig
-  type 'a t = 'a option
-
-  val map : ('a -> 'b) -> 'a t -> 'b t
-  val get : (unit -> 'a) -> 'a t -> 'a
-  val get' : 'a -> 'a t -> 'a
-  val iter : ('a -> unit) -> 'a t -> unit
-  val return : 'a -> 'a t
-  val bind : 'a t -> ('a -> 'b t) -> 'b t
-  val to_list : 'a t -> 'a list
-end
-
 (** Improvement of module List *)
 module List : sig
   include module type of List
