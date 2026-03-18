@@ -29,7 +29,10 @@ exception Ocsigen_Request_too_long
 include module type of Lwt.Infix
 
 val ( !! ) : 'a Lazy.t -> 'a
+
 external id : 'a -> 'a = "%identity"
+[@@deprecated "Use Sys.opaque_identity instead."]
+
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
 val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
@@ -46,7 +49,9 @@ val to_poly : 'a -> poly
 val from_poly : poly -> 'a
 
 type yesnomaybe = Yes | No | Maybe
+
 type ('a, 'b) leftright = ('a, 'b) Either.t
+[@@deprecated "Use Either.t instead."]
 
 val advert : string
 
@@ -55,6 +60,8 @@ module List : sig
   include module type of List
 
   val map_filter : ('a -> 'b option) -> 'a list -> 'b list
+  [@@deprecated "Use List.filter_map instead."]
+
   val last : 'a list -> 'a
   val assoc_remove : 'a -> ('a * 'b) list -> 'b * ('a * 'b) list
   val remove_first_if_any : 'a -> 'a list -> 'a list
@@ -66,7 +73,10 @@ module List : sig
   val remove_all_assoc : 'a -> ('a * 'b) list -> ('a * 'b) list
   val remove_all_assoc_q : 'a -> ('a * 'b) list -> ('a * 'b) list
   val is_prefix : 'a list -> 'a list -> bool
+
   val chop : int -> 'a list -> 'a list
+  (** Equivalent to [List.drop] from OCaml 5.3. *)
+
   val split_at : int -> 'a list -> 'a list * 'a list
 end
 
