@@ -38,6 +38,11 @@ type socket_type = Socket_type.t
 
 exception Config_file_error of string
 
+val set_global_log_level : Logs.level option -> unit
+(** Set the log level for all Ocsigen log sources. Using this function is
+    preferable to using [Logs.set_level] directly to avoid the excessive logging
+    from Cohttp and let you use a different log level for your application. *)
+
 val server_name : string
 val full_server_name : string
 val version_number : string

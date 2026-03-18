@@ -1,6 +1,5 @@
 let () =
-  Logs.Src.set_level Deflatemod.section (Some Logs.Debug);
-  Logs.set_level ~all:true (Some Logs.Debug);
+  Ocsigen_config.set_global_log_level (Some Logs.Debug);
   Ocsigen_server.start
     ~ports:[ (`Unix "./local.sock", 0) ]
     ~veryverbose:() ~debugmode:true ~logdir:"log" ~datadir:"data"
