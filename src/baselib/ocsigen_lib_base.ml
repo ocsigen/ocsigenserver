@@ -285,6 +285,19 @@ module String_base = struct
       else n
     with Invalid_argument _ -> n
 
+  (* Copied from the stdlib. TODO: Remove once the minimum OCaml version is at
+     least 4.13. *)
+  let starts_with ~prefix s =
+    let len_s = length s and len_pre = length prefix in
+    let rec aux i =
+      if i = len_pre
+      then true
+      else if unsafe_get s i <> unsafe_get prefix i
+      then false
+      else aux (i + 1)
+    in
+    len_s >= len_pre && aux 0
+
   module Table = Map.Make (String)
   module Set = Set.Make (String)
   module Map = Map.Make (String)
