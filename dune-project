@@ -17,7 +17,7 @@
   "Ocsigen Server is a Web Server that can be used either as a library for OCaml or as an executable (taking its configuration from a file). It has a very powerful extension mechanism that makes it very easy to plug your own OCaml modules for generating pages. Many extensions are already implemented, like a reverse proxy, content compression, access control, authentication, etc.")
  (maintenance_intent "(latest)")
  (depends
-  (ocaml (>= 4.10))
+  (ocaml (>= 4.14))
   (camlzip (>= 1.08))
   (cohttp-lwt-unix (>= 6.0))
   conduit-lwt-unix
