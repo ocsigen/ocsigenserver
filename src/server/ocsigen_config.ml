@@ -40,6 +40,14 @@ end
 
 type socket_type = Socket_type.t
 
+let set_global_log_level lvl =
+  let open Logs.Src in
+  List.iter
+    (fun src ->
+       if String.starts_with ~prefix:"ocsigen:" (name src)
+       then set_level src lvl)
+    (list ())
+
 (* General config *)
 let verbose = ref false
 let silent = ref false
@@ -82,12 +90,12 @@ let set_syslog_facility f =
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
 let set_mimefile s = mimefile := s
-let () = Logs.set_level ~all:true (Some Logs.Warning)
+let () = set_global_log_level (Some Logs.Warning)
 (* without --verbose *)
 
 let set_verbose () =
   verbose := true;
-  Logs.set_level ~all:true (Some Logs.Warning)
+  set_global_log_level (Some Logs.Warning)
 
 let set_silent () = silent := true
 
@@ -98,13 +106,13 @@ let set_daemon () =
 let set_veryverbose () =
   verbose := true;
   veryverbose := true;
-  Logs.set_level ~all:true (Some Logs.Info)
+  set_global_log_level (Some Logs.Info)
 
 let set_debug () =
   verbose := true;
   veryverbose := true;
   debug := true;
-  Logs.set_level ~all:true (Some Logs.Debug)
+  set_global_log_level (Some Logs.Debug)
 
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i

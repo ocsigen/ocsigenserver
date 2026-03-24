@@ -129,6 +129,9 @@ module String_base : sig
       removing spaces.
       For ex "azert,   sdfmlskdf,    dfdsfs". *)
 
+  val starts_with : prefix:string -> string -> bool
+  (** Same as {!Stdlib.String.starts_with}. *)
+
   val may_append : string -> sep:string -> string -> string
   (* WAS add_to_string *)
 
