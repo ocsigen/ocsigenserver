@@ -18,7 +18,7 @@ let _ =
    Ocsigen_server.start
      [ Ocsigen_server.host ~regexp:".*"
        [ Staticmod.run ~dir:"static" ()
-       ; Eliom.run () 
+       ; Eliom.App.run () 
        ; Cors.run
           ~max_age:86400
           ~credentials:true
