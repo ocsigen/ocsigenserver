@@ -17,7 +17,7 @@
 *)
 
 (** This module just contains only extensions of the standard library and very
-    basic Ocsigen values and exceptions. Cf. {!Ocsigen_lib} for functionality
+    basic Ocsigen values and exceptions. Cf. {!Lib} for functionality
     which depends on specific external libraries.
 *)
 

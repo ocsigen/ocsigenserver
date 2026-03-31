@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-(** Module [Ocsigen_loader]: Dynamic loading for Ocsigen. *)
+(** Module [Loader]: Dynamic loading for Ocsigen. *)
 
 (** Notes about Findlib usage:
     - Findlib is called with predicates "plugin", "mt". Moreover, the

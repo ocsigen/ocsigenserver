@@ -7,4 +7,4 @@ val datadir : string ref
 val bindir : string ref
 val extdir : string ref
 val command_pipe : string ref
-val builtin_packages : Ocsigen_lib.String.Set.t
+val builtin_packages : Lib.String.Set.t

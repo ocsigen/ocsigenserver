@@ -37,4 +37,4 @@ let register_command_function, get_command_function =
 
 let () =
   register_command_function ~prefix:"logs"
-    (Ocsigen_messages.command_f Unknown_command)
+    (Messages.command_f Unknown_command)

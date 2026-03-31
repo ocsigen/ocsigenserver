@@ -15,8 +15,8 @@ This module belongs to ocamlfind package
 (** Example of use:
 {[
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Redirectmod.run
             ~redirection:
               (Redirectmod.create_redirection
@@ -40,6 +40,6 @@ val create_redirection :
   -> string
   -> redirection
 
-val run : redirection:redirection -> unit -> Ocsigen_server.instruction
+val run : redirection:redirection -> unit -> Ocsigen.Server.instruction
 (** [run ~redirection ()] makes it possible to use this extension without
     configuration file.  *)

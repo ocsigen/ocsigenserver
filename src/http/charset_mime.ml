@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Ocsigen_lib
+open Ocsigen_base.Lib
 module MapString = Map.Make (String)
 
 type extension = string
@@ -142,7 +142,7 @@ let default_mime_assoc () =
   let parsed = ref None in
   match !parsed with
   | None ->
-      let filename = !Ocsigen_config_static.mimefile in
+      let filename = !Ocsigen_base.Config_static.mimefile in
       Logs.info ~src:section (fun fmt ->
         fmt "Loading mime types in '%s'" filename);
       let map = parse_mime_types ~filename in

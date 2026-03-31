@@ -1,17 +1,17 @@
 open Lwt.Infix
 
 let post_data_of_body ~content_type b =
-  Ocsigen_multipart.post_params ~content_type b
+  Multipart.post_params ~content_type b
 
-type content_type = Ocsigen_multipart.content_type
+type content_type = Multipart.content_type
 
-type file_info = Ocsigen_multipart.file_info =
+type file_info = Multipart.file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
   ; file_content_type : content_type option }
 
-type post_data = Ocsigen_multipart.post_data
+type post_data = Multipart.post_data
 type body = [`Unparsed of Cohttp_lwt.Body.t | `Parsed of post_data Lwt.t]
 
 (* Wrapper around Uri providing our derived fields.
@@ -25,7 +25,7 @@ type uri =
   ; u_path : string list Lazy.t }
 
 let unflatten_get_params l =
-  let module M = Ocsigen_lib.String.Table in
+  let module M = Ocsigen_base.Lib.String.Table in
   M.bindings
     (List.fold_left
        (fun acc (id, v) ->
@@ -44,7 +44,7 @@ let make_uri u =
   let u_uri = lazy u
   and u_get_params = lazy (Uri.query u)
   and u_path_string = lazy (remove_trailing_slash_string (Uri.path u)) in
-  let u_path = lazy (Ocsigen_lib.Url.split_path (Lazy.force u_path_string))
+  let u_path = lazy (Ocsigen_base.Lib.Url.split_path (Lazy.force u_path_string))
   and u_get_params_flat = lazy (flatten_get_params (Lazy.force u_get_params)) in
   {u_uri; u_get_params; u_get_params_flat; u_path; u_path_string}
 
@@ -55,7 +55,7 @@ type client_conn =
   | `Unknown ]
 
 type t =
-  { r_address : Ocsigen_config.Socket_type.t
+  { r_address : Config.Socket_type.t
   ; r_port : int
   ; r_ssl : bool
   ; r_filenames : string list ref
@@ -191,7 +191,7 @@ let to_cohttp ({r_meth; r_encoding; r_version; r_headers; _} as r) =
 
 let body = function
   | {r_body = {contents = `Unparsed body; _}; _} -> body
-  | _ -> failwith "Ocsigen_request.body: body has already been parsed"
+  | _ -> failwith "Request.body: body has already been parsed"
 
 let address {r_address; _} = r_address
 let host {r_uri = {u_uri; _}; _} = Uri.host (Lazy.force u_uri)
@@ -211,7 +211,7 @@ let sub_path_string req =
     | {r_sub_path = Some r_sub_path; _} -> r_sub_path
     | r -> path_string r)
 
-let sub_path r = Ocsigen_lib.Url.split_path (sub_path_string r)
+let sub_path r = Ocsigen_base.Lib.Url.split_path (sub_path_string r)
 
 let original_full_path_string = function
   | {r_original_full_path = Some r_original_full_path; _} ->
@@ -219,26 +219,26 @@ let original_full_path_string = function
   | r -> path_string r
 
 let original_full_path r =
-  Ocsigen_lib.Url.split_path (original_full_path_string r)
+  Ocsigen_base.Lib.Url.split_path (original_full_path_string r)
 
 let header {r_headers; _} id =
-  Cohttp.Header.get r_headers (Ocsigen_header.Name.to_string id)
+  Cohttp.Header.get r_headers (Ocsigen_http.Header.Name.to_string id)
 
 let header_multi {r_headers; _} id =
-  Cohttp.Header.get_multi r_headers (Ocsigen_header.Name.to_string id)
+  Cohttp.Header.get_multi r_headers (Ocsigen_http.Header.Name.to_string id)
 
 let add_header ({r_headers; _} as r) id v =
   { r with
-    r_headers = Cohttp.Header.add r_headers (Ocsigen_header.Name.to_string id) v
+    r_headers = Cohttp.Header.add r_headers (Ocsigen_http.Header.Name.to_string id) v
   }
 
 let parse_cookies s =
-  let splitted = Ocsigen_lib.String.split ';' s in
+  let splitted = Ocsigen_base.Lib.String.split ';' s in
   try
     List.fold_left
       (fun beg a ->
          try
-           let n, v = Ocsigen_lib.String.sep '=' a in
+           let n, v = Ocsigen_base.Lib.String.sep '=' a in
            Ocsigen_cookie_map.Map_inner.add n v beg
          with Not_found -> beg)
       Ocsigen_cookie_map.Map_inner.empty splitted
@@ -247,13 +247,13 @@ let parse_cookies s =
 let cookies = function
   | {r_cookies_override = Some cookies; _} -> cookies
   | r -> (
-    match header r Ocsigen_header.Name.cookie with
+    match header r Ocsigen_http.Header.Name.cookie with
     | Some cookies -> parse_cookies cookies
     | None -> Ocsigen_cookie_map.Map_inner.empty)
 
 let content_type r =
-  match header r Ocsigen_header.Name.content_type with
-  | Some content_type -> Ocsigen_multipart.parse_content_type content_type
+  match header r Ocsigen_http.Header.Name.content_type with
+  | Some content_type -> Multipart.parse_content_type content_type
   | None -> None
 
 let force_post_data ({r_body; _} as r) s i =

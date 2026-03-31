@@ -16,7 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Ocsigen_lib
+open Lib
 
 exception Interrupted of exn
 exception Cancelled
@@ -190,7 +190,7 @@ let substream delim s =
           else
             try
               let p, (_ : 'groups) =
-                Ocsigen_lib.Netstring_pcre.search_forward rdelim s 0
+                Lib.Netstring_pcre.search_forward rdelim s 0
               in
               cont (String.sub s 0 p) (fun () ->
                 empty

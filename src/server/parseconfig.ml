@@ -22,16 +22,16 @@
 (** Config file parsing *)
 
 open Xml
-open Ocsigen_config
-module Netstring_pcre = Ocsigen_lib.Netstring_pcre
+open Config
+module Netstring_pcre = Ocsigen_base.Lib.Netstring_pcre
 
 let section = Logs.Src.create "ocsigen:config"
 
 let blah_of_string f tag s =
-  try f (Ocsigen_lib.String.remove_spaces s 0 (String.length s - 1))
+  try f (Ocsigen_base.Lib.String.remove_spaces s 0 (String.length s - 1))
   with Failure _ ->
     raise
-      (Ocsigen_config.Config_file_error
+      (Config.Config_file_error
          ("While parsing <" ^ tag ^ "> - " ^ s ^ " is not a valid value."))
 
 let int_of_string = blah_of_string int_of_string
@@ -64,10 +64,10 @@ let parse_size =
   let tebi = Int64.mul mebi mebi in
   fun s ->
     let l = String.length s in
-    let s = Ocsigen_lib.String.remove_spaces s 0 (l - 1) in
+    let s = Ocsigen_base.Lib.String.remove_spaces s 0 (l - 1) in
     let v l =
       try Int64.of_string (String.sub s 0 l)
-      with Failure _ -> failwith "Ocsigen_parseconfig.parse_size"
+      with Failure _ -> failwith "Parseconfig.parse_size"
     in
     let o l =
       let l1 = l - 1 in
@@ -129,7 +129,7 @@ let parse_size_tag tag s =
   try parse_size s
   with Failure _ ->
     raise
-      (Ocsigen_config.Config_file_error
+      (Config.Config_file_error
          ("While parsing <" ^ tag ^ "> - " ^ s ^ " is not a valid size."))
 
 let rec parse_string = function
@@ -141,7 +141,7 @@ let parse_string_tag tag s =
   try parse_string s
   with Failure _ ->
     raise
-      (Ocsigen_config.Config_file_error
+      (Config.Config_file_error
          ("While parsing <" ^ tag ^ "> - String expected."))
 
 let parser_config =
@@ -168,8 +168,8 @@ let parser_config =
   | _ -> raise (Config_file_error "<ocsigen> tag expected")
 
 let parse_ext file = parser_config (Xml.parse_file file)
-let preloadfile config () = Ocsigen_extensions.set_config config
-let postloadfile () = Ocsigen_extensions.set_config []
+let preloadfile config () = Extensions.set_config config
+let postloadfile () = Extensions.set_config []
 
 (* Checking hostnames.  We make only make looze efforts.
    See RFC 921 and 952 for further details *)
@@ -222,7 +222,7 @@ let parse_host_field =
             List.map parse_one_host (Str.split (Str.regexp "[ \t]+") s)
       in
       Hashtbl.add h hostfilter r;
-      (r : Ocsigen_extensions.virtual_hosts)
+      (r : Extensions.virtual_hosts)
 
 (* Extract a default hostname from the "host" field if no default is
    provided *)
@@ -245,7 +245,7 @@ let get_defaulthostname ~defaulthostname ~host =
       if correct_hostname host
       then host
       else
-        raise (Ocsigen_config.Config_file_error ("Incorrect hostname " ^ host))
+        raise (Config.Config_file_error ("Incorrect hostname " ^ host))
 
 let later_pass_host_attr
       ( name
@@ -266,7 +266,7 @@ let later_pass_host_attr
         , ishttps )
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error "Duplicate attribute name in <host>")
+          (Config.Config_file_error "Duplicate attribute name in <host>")
     )
   | "charset", s -> (
     match charset with
@@ -279,7 +279,7 @@ let later_pass_host_attr
         , ishttps )
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error
+          (Config.Config_file_error
              "Duplicate attribute charset in <host>"))
   | "defaulthostname", s -> (
     match defaulthostname with
@@ -287,24 +287,24 @@ let later_pass_host_attr
         if correct_hostname s
         then name, charset, Some s, defaulthttpport, defaulthttpsport, ishttps
         else
-          raise (Ocsigen_config.Config_file_error ("Incorrect hostname " ^ s))
+          raise (Config.Config_file_error ("Incorrect hostname " ^ s))
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error
+          (Config.Config_file_error
              "Duplicate attribute defaulthostname in <host>"))
   | "defaulthttpport", s -> (
     match defaulthttpport with
     | None -> name, charset, defaulthostname, Some s, defaulthttpsport, ishttps
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error
+          (Config.Config_file_error
              "Duplicate attribute defaulthttpport in <host>"))
   | "defaulthttpsport", s -> (
     match defaulthttpsport with
     | None -> name, charset, defaulthostname, defaulthttpport, Some s, ishttps
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error
+          (Config.Config_file_error
              "Duplicate attribute defaulthttpsport in <host>"))
   | "defaultprotocol", s -> (
     match ishttps with
@@ -317,11 +317,11 @@ let later_pass_host_attr
         , Some s )
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error
+          (Config.Config_file_error
              "Duplicate attribute defaultprotocol in <host>"))
   | attr, _ ->
       raise
-        (Ocsigen_config.Config_file_error ("Wrong attribute for <host>: " ^ attr))
+        (Config.Config_file_error ("Wrong attribute for <host>: " ^ attr))
 
 let later_pass_host attrs l =
   let ( host
@@ -337,42 +337,42 @@ let later_pass_host attrs l =
   in
   let host = parse_host_field host in
   let charset =
-    match charset, Ocsigen_config.get_default_charset () with
+    match charset, Config.get_default_charset () with
     | Some charset, _ | None, Some charset -> charset
     | None, None -> "utf-8"
   and defaulthttpport =
     match defaulthttpport with
-    | None -> Ocsigen_config.get_default_port ()
+    | None -> Config.get_default_port ()
     | Some p -> int_of_string "host" p
   and defaulthostname = get_defaulthostname ~defaulthostname ~host
   and defaulthttpsport =
     match defaulthttpsport with
-    | None -> Ocsigen_config.get_default_sslport ()
+    | None -> Config.get_default_sslport ()
     | Some p -> int_of_string "host" p
   and serve_everything =
-    { Ocsigen_extensions.do_not_serve_regexps = []
+    { Extensions.do_not_serve_regexps = []
     ; do_not_serve_files = []
     ; do_not_serve_extensions = [] }
   in
   let conf =
-    { Ocsigen_extensions.default_hostname = defaulthostname
+    { Extensions.default_hostname = defaulthostname
     ; default_httpport = defaulthttpport
     ; default_httpsport = defaulthttpsport
     ; default_protocol_is_https = defaultprotocol = Some "https"
-    ; mime_assoc = Ocsigen_charset_mime.default_mime_assoc ()
+    ; mime_assoc = Ocsigen_http.Charset_mime.default_mime_assoc ()
     ; charset_assoc =
-        Ocsigen_charset_mime.empty_charset_assoc ~default:charset ()
+        Ocsigen_http.Charset_mime.empty_charset_assoc ~default:charset ()
     ; default_directory_index = ["index.html"]
     ; list_directory_content = false
     ; follow_symlinks = `Owner_match
     ; do_not_serve_404 = serve_everything
     ; do_not_serve_403 = serve_everything
-    ; uploaddir = Ocsigen_config.get_uploaddir ()
-    ; maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize () }
+    ; uploaddir = Config.get_uploaddir ()
+    ; maxuploadfilesize = Config.get_maxuploadfilesize () }
   in
   let parse_config =
-    Ocsigen_extensions.make_parse_config []
-      (Ocsigen_extensions.parse_config_item None host conf)
+    Extensions.make_parse_config []
+      (Extensions.parse_config_item None host conf)
   in
   (* default site for host *)
   host, conf, parse_config l
@@ -385,12 +385,12 @@ let later_pass_extension tag attrs l =
         (Config_file_error
            ("missing module, name or findlib-package attribute in " ^ tag))
   | [("name", s)] ->
-      Ocsigen_loader.init_module (preloadfile l) postloadfile false s
+      Ocsigen_base.Loader.init_module (preloadfile l) postloadfile false s
   | [("module", s)] ->
-      Ocsigen_loader.loadfiles (preloadfile l) postloadfile false [s]
+      Ocsigen_base.Loader.loadfiles (preloadfile l) postloadfile false [s]
   | [("findlib-package", s)] ->
-      Ocsigen_loader.loadfiles (preloadfile l) postloadfile false
-        (Ocsigen_loader.findfiles s)
+      Ocsigen_base.Loader.loadfiles (preloadfile l) postloadfile false
+        (Ocsigen_base.Loader.findfiles s)
   | _ -> raise (Config_file_error ("Wrong attribute for " ^ tag))
 
 let rec later_pass_extconf dir =
@@ -449,7 +449,7 @@ and later_pass = function
       set_max_number_of_connections (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("mimefile" as st), [], p) :: ll ->
-      Ocsigen_config.set_mimefile (parse_string_tag st p);
+      Config.set_mimefile (parse_string_tag st p);
       later_pass ll
   | Element (("maxretries" as st), [], p) :: ll ->
       set_maxretries (int_of_string st (parse_string_tag st p));
@@ -462,7 +462,7 @@ and later_pass = function
       set_server_timeout (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("netbuffersize" as st), [], p) :: ll ->
-      Ocsigen_stream.set_net_buffer_size
+      Ocsigen_base.Ocsigen_stream.set_net_buffer_size
         (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("filebuffersize" as st), [], p) :: ll ->
@@ -493,7 +493,7 @@ and later_pass = function
   | Element ("respectpipeline", [], []) :: ll ->
       set_respect_pipeline (); later_pass ll
   | Element ("findlib", [("path", p)], []) :: ll ->
-      Ocsigen_loader.add_ocamlpath p;
+      Ocsigen_base.Loader.add_ocamlpath p;
       later_pass ll
   | Element ("require", atts, l) :: ll | Element ("extension", atts, l) :: ll ->
       later_pass_extension "<extension>" atts l;
@@ -513,7 +513,7 @@ and later_pass = function
       raise (Config_file_error ("tag <" ^ tag ^ "> unexpected inside <server>"))
   | _ -> raise (Config_file_error "Syntax error")
 
-let later_pass l = Ocsigen_extensions.set_hosts (later_pass l)
+let later_pass l = Extensions.set_hosts (later_pass l)
 
 (* Parsing <port> tags *)
 let parse_port =
@@ -607,7 +607,7 @@ let config_error_for_some s = function
   | _ -> raise (Config_file_error s)
 
 let make_ssl_info ~certificate ~privatekey ~ciphers ~dhfile ~curve =
-  { Ocsigen_config.ssl_certificate = certificate
+  { Config.ssl_certificate = certificate
   ; ssl_privatekey = privatekey
   ; ssl_ciphers = ciphers
   ; ssl_dhfile = dhfile
@@ -701,13 +701,13 @@ let first_pass c =
     | _ -> raise (Config_file_error "Syntax error")
   in
   let si, ports, ssl_ports = aux None [] [] c in
-  Ocsigen_config.set_ssl_info si;
-  Ocsigen_config.set_ports ports;
-  Ocsigen_config.set_ssl_ports ssl_ports;
+  Config.set_ssl_info si;
+  Config.set_ports ports;
+  Config.set_ssl_ports ssl_ports;
   ()
 
 let parse_config ?file () =
   let file =
-    match file with None -> Ocsigen_config.get_config_file () | Some f -> f
+    match file with None -> Config.get_config_file () | Some f -> f
   in
   parser_config (Xml.parse_file file)

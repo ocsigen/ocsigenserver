@@ -8,7 +8,7 @@ exception
     possible to pass the code of the error, an optional comment, and
     optionally some headers. *)
 
-exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
+exception Ocsigen_is_dir of (Request.t -> Uri.t)
 (** compute a redirection if path links to a directory *)
 
 val get_number_of_connected : unit -> int
@@ -19,9 +19,9 @@ val shutdown : float option -> unit
 
 val service :
    ?ssl:string * string * (bool -> string) option
-  -> address:Ocsigen_config.socket_type
+  -> address:Config.socket_type
   -> port:int
-  -> connector:(Ocsigen_request.t -> Ocsigen_response.t Lwt.t)
+  -> connector:(Request.t -> Response.t Lwt.t)
   -> unit
   -> unit Lwt.t
 (** initialize a main loop of http server *)

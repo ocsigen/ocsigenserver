@@ -15,8 +15,8 @@ This module belongs to ocamlfind package
 (** Example of use:
 {[
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
          [ Extendconfiguration.forbidfile ~extensions:["php"] ()
          ; Staticmod.run ~dir:"static" ()
          ]
@@ -26,27 +26,27 @@ let _ =
 
 val followsymlinks :
    [`Always | `No | `Owner_match]
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction
 
-val maxuploadfilesize : int64 option -> Ocsigen_server.instruction
-val uploaddir : string option -> Ocsigen_server.instruction
-val listdirs : bool -> Ocsigen_server.instruction
+val maxuploadfilesize : int64 option -> Ocsigen.Server.instruction
+val uploaddir : string option -> Ocsigen.Server.instruction
+val listdirs : bool -> Ocsigen.Server.instruction
 
 val forbidfile :
    ?files:string list
   -> ?extensions:string list
   -> ?regexps:string list
   -> unit
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction
 
 val hidefile :
    ?files:string list
   -> ?extensions:string list
   -> ?regexps:string list
   -> unit
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction
 
-val defaultindex : string list -> Ocsigen_server.instruction
+val defaultindex : string list -> Ocsigen.Server.instruction
 
 val contenttype :
    ?default:string
@@ -54,7 +54,7 @@ val contenttype :
   -> ?extensions:(string * string) list
   -> ?regexps:(string * string) list
   -> unit
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction
 
 val charset :
    ?default:string
@@ -62,4 +62,4 @@ val charset :
   -> ?extensions:(string * string) list
   -> ?regexps:(string * string) list
   -> unit
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction

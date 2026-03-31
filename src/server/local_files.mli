@@ -45,7 +45,7 @@ type resolved = RFile of string | RDir of string
 
 val resolve :
    ?no_check_for:string
-  -> request:Ocsigen_extensions.request
+  -> request:Extensions.request
   -> filename:string
   -> unit
   -> resolved

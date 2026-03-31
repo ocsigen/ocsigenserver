@@ -54,8 +54,8 @@ let extdir = ref _EXTDIR_
 let command_pipe = ref _COMMANDPIPE_
 let builtin_packages =
   List.fold_left
-    (fun a s -> Ocsigen_lib.String.Set.add s a)
-    Ocsigen_lib.String.Set.empty
+    (fun a s -> Lib.String.Set.add s a)
+    Lib.String.Set.empty
     [_DEPS_]|}
 
 let interpolate f s =

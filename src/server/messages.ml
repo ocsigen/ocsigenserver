@@ -22,7 +22,7 @@ let access_file = "access.log"
 let warning_file = "warnings.log"
 let error_file = "errors.log"
 let access_sect = Logs.Src.create "ocsigen:access"
-let full_path f = Filename.concat (Ocsigen_config.get_logdir ()) f
+let full_path f = Filename.concat (Config.get_logdir ()) f
 let error_log_path () = full_path error_file
 
 (* This is the date format inherited from [Lwt_log]. *)
@@ -67,7 +67,7 @@ let open_files () =
   (* CHECK: we are closing asynchronously! That should be ok, though. *)
   List.iter (fun close -> close ()) !close_loggers;
   close_loggers := [];
-  match Ocsigen_config.get_syslog_facility () with
+  match Config.get_syslog_facility () with
   | Some facility ->
       (* log to syslog *)
       (* Syslog reporter cannot be closed *)
@@ -98,7 +98,7 @@ let open_files () =
         with
         | Unix.Unix_error (error, _, _) ->
             raise
-              (Ocsigen_config.Config_file_error
+              (Config.Config_file_error
                  (Printf.sprintf "can't open log file %s: %s" path
                     (Unix.error_message error)))
         | exn -> raise exn
@@ -134,7 +134,7 @@ let open_files () =
               })
            ; (let dispatch_f =
                fun _sect lev ->
-                if Ocsigen_config.get_silent ()
+                if Config.get_silent ()
                 then Logs.nop_reporter
                 else
                   match lev with
@@ -166,7 +166,7 @@ let unexpected_exception e s =
 (****)
 
 let console =
-  if not (Ocsigen_config.get_silent ())
+  if not (Config.get_silent ())
   then fun s -> print_endline (s ())
   else fun _s -> ()
 

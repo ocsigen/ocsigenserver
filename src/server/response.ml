@@ -128,12 +128,12 @@ let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) (a_response, body) =
 let make_cookies_header path exp name c _secure =
   Format.sprintf "%s=%s%s%s" name c
     (*VVV encode = true? *)
-    ("; path=/" ^ Ocsigen_lib.Url.string_of_url_path ~encode:true path)
+    ("; path=/" ^ Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
     (* (if secure && slot.sl_ssl then "; secure" else "")^ *)
     ""
   ^
   match exp with
-  | Some s -> "; expires=" ^ Ocsigen_lib.Date.to_string s
+  | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
   | None -> ""
 
 let make_cookies_headers path t hds =
@@ -146,7 +146,7 @@ let make_cookies_headers path t hds =
          | OSet (t, v, secure) -> t, v, secure
        in
        Cohttp.Header.add h
-         Ocsigen_header.Name.(to_string set_cookie)
+         Ocsigen_http.Header.Name.(to_string set_cookie)
          (make_cookies_header path exp name v secure))
     t hds
 
@@ -158,8 +158,8 @@ let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
     in
     Response.headers a_response
     |> Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
-    |> add "server" Ocsigen_config.server_name
-    |> add "date" (Ocsigen_lib.Date.to_string (Unix.time ()))
+    |> add "server" Config.server_name
+    |> add "date" (Ocsigen_base.Lib.Date.to_string (Unix.time ()))
     |> add_transfer_encoding
   in
   {a_response with Response.headers}
@@ -202,11 +202,11 @@ let add_cookies ({a_cookies; _} as a) cookies =
 
 let header {a_response; _} id =
   let h = Cohttp.Response.headers a_response in
-  Cohttp.Header.get h (Ocsigen_header.Name.to_string id)
+  Cohttp.Header.get h (Ocsigen_http.Header.Name.to_string id)
 
 let header_multi {a_response; _} id =
   let h = Cohttp.Response.headers a_response in
-  Cohttp.Header.get_multi h (Ocsigen_header.Name.to_string id)
+  Cohttp.Header.get_multi h (Ocsigen_http.Header.Name.to_string id)
 
 let add_header
       ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
@@ -217,14 +217,14 @@ let add_header
     a_response =
       { a_response with
         Cohttp.Response.headers =
-          Cohttp.Header.add headers (Ocsigen_header.Name.to_string id) v } }
+          Cohttp.Header.add headers (Ocsigen_http.Header.Name.to_string id) v } }
 
 let add_header_multi
       ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
       id
       l
   =
-  let id = Ocsigen_header.Name.to_string id in
+  let id = Ocsigen_http.Header.Name.to_string id in
   let headers =
     List.fold_left (fun headers -> Cohttp.Header.add headers id) headers l
   in
@@ -239,7 +239,7 @@ let replace_header
     a_response =
       { a_response with
         Cohttp.Response.headers =
-          Cohttp.Header.replace headers (Ocsigen_header.Name.to_string id) v }
+          Cohttp.Header.replace headers (Ocsigen_http.Header.Name.to_string id) v }
   }
 
 let replace_headers ({a_response; _} as a) l =
@@ -247,7 +247,7 @@ let replace_headers ({a_response; _} as a) l =
     List.fold_left
       (fun headers (id, content) ->
          Cohttp.Header.replace headers
-           (Ocsigen_header.Name.to_string id)
+           (Ocsigen_http.Header.Name.to_string id)
            content)
       (Cohttp.Response.headers a_response)
       l
@@ -256,6 +256,6 @@ let replace_headers ({a_response; _} as a) l =
 
 let remove_header ({a_response; _} as a) id =
   let headers = Cohttp.Response.headers a_response
-  and id = Ocsigen_header.Name.to_string id in
+  and id = Ocsigen_http.Header.Name.to_string id in
   let headers = Cohttp.Header.remove headers id in
   {a with a_response = {a_response with Cohttp.Response.headers}}

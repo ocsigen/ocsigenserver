@@ -69,7 +69,7 @@ type mime_assoc
 
 val default_mime_assoc : unit -> mime_assoc
 (** Default values, obtained by reading the file specified by
-    [Ocsigen_config_static.get_mimefile] *)
+    [Ocsigen_base.Config_static.get_mimefile] *)
 
 val parse_mime_types : filename:string -> mime_assoc
 (** Parsing of a file containing mime associations, such as /etc/mime-types *)

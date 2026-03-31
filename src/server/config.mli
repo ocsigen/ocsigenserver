@@ -18,7 +18,7 @@
 
 (** Configuring Ocsigen server *)
 
-open Ocsigen_lib
+open Ocsigen_base.Lib
 
 type ssl_info =
   { ssl_certificate : string option

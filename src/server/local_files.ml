@@ -94,36 +94,36 @@ let check_symlinks ~no_check_for ~filename policy =
   | `Owner_match -> aux follow_symlinks_if_owner_match
 
 let check_dotdot =
-  let regexp = Ocsigen_lib.Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
+  let regexp = Ocsigen_base.Lib.Netstring_pcre.regexp "(/\\.\\./)|(/\\.\\.$)" in
   fun ~filename ->
     (* We always reject .. in filenames.
        In URLs, .. have already been removed by the server,
        but the filename may come from somewhere else than URLs ... *)
     try
       ignore
-        (Ocsigen_lib.Netstring_pcre.search_forward regexp filename 0
+        (Ocsigen_base.Lib.Netstring_pcre.search_forward regexp filename 0
          : int * 'groups);
       false
     with Not_found -> true
 
 let can_send filename request =
   let filename =
-    Ocsigen_lib.Url.split_path filename
-    |> Ocsigen_lib.Url.norm_path |> Ocsigen_lib.Url.join_path
+    Ocsigen_base.Lib.Url.split_path filename
+    |> Ocsigen_base.Lib.Url.norm_path |> Ocsigen_base.Lib.Url.join_path
   in
   Logs.info ~src:section (fun fmt ->
     fmt "checking if file %s can be sent" filename);
   let matches arg =
-    Ocsigen_lib.Netstring_pcre.string_match
-      (Ocsigen_extensions.do_not_serve_to_regexp arg)
+    Ocsigen_base.Lib.Netstring_pcre.string_match
+      (Extensions.do_not_serve_to_regexp arg)
       filename 0
     <> None
   in
-  if matches request.Ocsigen_extensions.do_not_serve_403
+  if matches request.Extensions.do_not_serve_403
   then (
     Logs.info ~src:section (fun fmt -> fmt "this file is forbidden");
     raise Failed_403)
-  else if matches request.Ocsigen_extensions.do_not_serve_404
+  else if matches request.Extensions.do_not_serve_404
   then (
     Logs.info ~src:section (fun fmt -> fmt "this file must be hidden");
     raise Failed_404)
@@ -150,14 +150,14 @@ type resolved = RFile of string | RDir of string
 (* See also module Files in eliom.ml *)
 let resolve
       ?no_check_for
-      ~request:({Ocsigen_extensions.request_config; _} as request)
+      ~request:({Extensions.request_config; _} as request)
       ~filename
       ()
   =
   (* We only accept absolute filenames in daemon mode,
      as we do not really know what is the current directory *)
   let filename =
-    if Filename.is_relative filename && Ocsigen_config.get_daemon ()
+    if Filename.is_relative filename && Config.get_daemon ()
     then "/" ^ filename
     else filename
   in
@@ -176,13 +176,13 @@ let resolve
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
               section (fun fmt -> fmt "LocalFiles: %s is a directory" filename);
           raise
-            (Ocsigen_extensions.Ocsigen_is_dir
-               (Ocsigen_extensions.new_url_of_directory_request request)))
+            (Extensions.Ocsigen_is_dir
+               (Extensions.new_url_of_directory_request request)))
         else
           let rec find_index = function
             | [] ->
                 (* No suitable index, we try to list the directory *)
-                if request_config.Ocsigen_extensions.list_directory_content
+                if request_config.Extensions.list_directory_content
                 then (
                   Logs.info ~src:section (fun fmt ->
                     fmt "Displaying directory content");
@@ -200,7 +200,7 @@ let resolve
                 try index, Unix.LargeFile.stat index
                 with Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q)
           in
-          find_index request_config.Ocsigen_extensions.default_directory_index
+          find_index request_config.Extensions.default_directory_index
       else filename, stat
     in
     if not (check_dotdot ~filename)
@@ -210,7 +210,7 @@ let resolve
       raise Failed_403)
     else if
       check_symlinks ~filename ~no_check_for
-        request_config.Ocsigen_extensions.follow_symlinks
+        request_config.Extensions.follow_symlinks
     then (
       can_send filename request_config;
       (* If the previous function did not fail, we are authorized to

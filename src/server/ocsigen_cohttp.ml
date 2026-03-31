@@ -27,15 +27,15 @@ let get_number_of_connected, incr_connected, decr_connected =
   let connected = ref 0 in
   (fun () -> !connected), (fun () -> incr connected), fun () -> decr connected
 
-exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
+exception Ocsigen_is_dir of (Request.t -> Uri.t)
 
 module Cookie = struct
   let serialize_cookie_raw path exp name c secure =
     Format.sprintf "%s=%s; path=/%s%s%s" name c
-      (Ocsigen_lib.Url.string_of_url_path ~encode:true path)
+      (Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
       (if secure then "; secure" else "")
       (match exp with
-      | Some s -> "; expires=" ^ Ocsigen_lib.Date.to_string s
+      | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
       | None -> "")
 
   let serialize_cookies path =
@@ -47,7 +47,7 @@ module Cookie = struct
       | OSet (t, v, secure) -> t, v, secure
     in
     Cohttp.Header.add h
-      Ocsigen_header.Name.(to_string set_cookie)
+      Ocsigen_http.Header.Name.(to_string set_cookie)
       (serialize_cookie_raw path exp name v secure)
 
   let serialize cookies headers =
@@ -84,12 +84,12 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
             Cookie.serialize cookies_to_set (Cohttp.Header.init ())
           in
           Some headers, code
-      | Ocsigen_stream.Interrupted Ocsigen_stream.Already_read ->
+      | Ocsigen_base.Ocsigen_stream.Interrupted Ocsigen_base.Ocsigen_stream.Already_read ->
           None, `Internal_server_error
       | Unix.Unix_error (Unix.EACCES, _, _) -> None, `Forbidden
       | Ext_http_error (code, _, headers) -> headers, code
-      | Ocsigen_lib.Ocsigen_Bad_Request -> None, `Bad_request
-      | Ocsigen_lib.Ocsigen_Request_too_long -> None, `Request_entity_too_large
+      | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request
+      | Ocsigen_base.Lib.Ocsigen_Request_too_long -> None, `Request_entity_too_large
       | exn ->
           Logs.err ~src:section (fun fmt ->
             fmt
@@ -102,30 +102,30 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       | `Not_found -> "Not Found"
       | _ -> Printexc.to_string exn
     in
-    Ocsigen_response.respond_error ?headers
+    Response.respond_error ?headers
       ~status:(ret_code :> Cohttp.Code.status_code)
       ~body ()
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
-    Ocsigen_request.make ~address ~port ~ssl ~filenames ~client_conn ~body
+    Request.make ~address ~port ~ssl ~filenames ~client_conn ~body
       ~connection_closed request
   in
   Lwt.finalize
     (fun () ->
-       Ocsigen_messages.accesslog
+       Messages.accesslog
          (Format.sprintf "connection for %s from %s (%s)%s: %s"
-            (match Ocsigen_request.host request with
+            (match Request.host request with
             | None -> "<host not specified in the request>"
             | Some h -> h)
-            (Ocsigen_request.client_conn_to_string request)
+            (Request.client_conn_to_string request)
             (Option.value ~default:""
-               (Ocsigen_request.header request Ocsigen_header.Name.user_agent))
+               (Request.header request Ocsigen_http.Header.Name.user_agent))
             (Option.fold ~none:""
                ~some:(fun s -> " X-Forwarded-For: " ^ s)
-               (Ocsigen_request.header request
-                  Ocsigen_header.Name.x_forwarded_for))
-            (Uri.path (Ocsigen_request.uri request)));
+               (Request.header request
+                  Ocsigen_http.Header.Name.x_forwarded_for))
+            (Uri.path (Request.uri request)));
        Lwt.catch
          (fun () -> connector request)
          (function
@@ -135,10 +135,10 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
                  |> Cohttp.Header.init_with "location"
                and status = `Moved_permanently in
                Lwt.return
-                 (Ocsigen_response.respond_string ~headers ~status ~body:"" ())
+                 (Response.respond_string ~headers ~status ~body:"" ())
            | exn -> Lwt.return (handle_error exn))
        >>= fun response ->
-       Lwt.return (Ocsigen_response.to_response_expert response))
+       Lwt.return (Response.to_response_expert response))
     (fun () ->
        if !filenames <> []
        then
@@ -183,7 +183,7 @@ let service ?ssl ~address ~port ~connector () =
   let src =
     match address with
     | `Unix _ -> None
-    | _ -> Some (Ocsigen_config.Socket_type.to_string address)
+    | _ -> Some (Config.Socket_type.to_string address)
   in
   Conduit_lwt_unix.init ?src ~tls_own_key () >>= fun conduit_ctx ->
   Lwt.return (Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx ()) >>= fun ctx ->

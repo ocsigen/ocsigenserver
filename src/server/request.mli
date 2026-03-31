@@ -1,7 +1,7 @@
 type t
 type content_type = (string * string) * (string * string) list
 
-type file_info = Ocsigen_multipart.file_info =
+type file_info = Multipart.file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
@@ -24,7 +24,7 @@ val make :
   -> ?original_full_path:string
   -> ?request_cache:Polytables.t
   -> ?cookies_override:string Ocsigen_cookie_map.Map_inner.t
-  -> address:Ocsigen_config.Socket_type.t
+  -> address:Config.Socket_type.t
   -> port:int
   -> ssl:bool
   -> filenames:string list ref
@@ -51,7 +51,7 @@ val update :
 val to_cohttp : t -> Cohttp.Request.t
 val uri : t -> Uri.t
 val body : t -> Cohttp_lwt.Body.t
-val address : t -> Ocsigen_config.Socket_type.t
+val address : t -> Config.Socket_type.t
 val host : t -> string option
 val meth : t -> Cohttp.Code.meth
 val port : t -> int
@@ -66,9 +66,9 @@ val sub_path : t -> string list
 val sub_path_string : t -> string
 val original_full_path : t -> string list
 val original_full_path_string : t -> string
-val header : t -> Ocsigen_header.Name.t -> string option
-val header_multi : t -> Ocsigen_header.Name.t -> string list
-val add_header : t -> Ocsigen_header.Name.t -> string -> t
+val header : t -> Ocsigen_http.Header.Name.t -> string option
+val header_multi : t -> Ocsigen_http.Header.Name.t -> string list
+val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
 val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
 
 val files :
