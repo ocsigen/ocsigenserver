@@ -1,10 +1,10 @@
 <<code language="ocaml" | sig
-  val section : Lwt_log_core.section
+  val section : Logs.src
   type redirection
   val create_redirection :
     ?full_url:bool ->
     ?pipeline:bool ->
     ?keephost:bool -> regexp:string -> string -> Revproxy.redirection
   val run :
-    redirection:Revproxy.redirection -> unit -> Ocsigen_server.instruction
+    redirection:Revproxy.redirection -> unit -> Ocsigen.Server.instruction
 end >>

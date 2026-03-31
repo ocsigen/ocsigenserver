@@ -4,6 +4,6 @@
     ?regexp:string ->
     ?dest:string ->
     ?code:string ->
-    ?cache:int -> ?root:string -> unit -> Ocsigen_server.instruction
-  val section : Lwt_log_core.section
+    ?cache:int -> ?root:string -> unit -> Ocsigen.Server.instruction
+  val section : Logs.src
 end >>

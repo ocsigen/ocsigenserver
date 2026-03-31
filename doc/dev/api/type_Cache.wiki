@@ -1,0 +1,52 @@
+<<code language="ocaml" | sig
+  module Make :
+    (A : sig type key type value end) ->
+      sig
+        class cache :
+          (A.key -> A.value Lwt.t) ->
+          ?timer:float ->
+          int ->
+          object
+            method add : A.key -> A.value -> unit
+            method clear : unit -> unit
+            method find : A.key -> A.value Lwt.t
+            method find_in_cache : A.key -> A.value
+            method remove : A.key -> unit
+            method size : int
+          end
+      end
+  val clear_all_caches : unit -> unit
+  module Dlist :
+    sig
+      type 'a t
+      type 'a node
+      val create : ?timer:float -> int -> 'a Cache.Dlist.t
+      val add : 'a -> 'a Cache.Dlist.t -> 'a option
+      val remove : 'a Cache.Dlist.node -> unit
+      val up : 'a Cache.Dlist.node -> unit
+      val newest : 'a Cache.Dlist.t -> 'a Cache.Dlist.node option
+      val oldest : 'a Cache.Dlist.t -> 'a Cache.Dlist.node option
+      val size : 'a Cache.Dlist.t -> int
+      val maxsize : 'a Cache.Dlist.t -> int
+      val value : 'a Cache.Dlist.node -> 'a
+      val get_timer : 'a Cache.Dlist.t -> float option
+      val list_of : 'a Cache.Dlist.node -> 'a Cache.Dlist.t option
+      val remove_n_oldest : 'a Cache.Dlist.t -> int -> 'a list
+      val fold : ('b -> 'a -> 'b) -> 'b -> 'a Cache.Dlist.t -> 'b
+      val fold_back : ('b -> 'a -> 'b) -> 'b -> 'a Cache.Dlist.t -> 'b
+      val move : 'a Cache.Dlist.node -> 'a Cache.Dlist.t -> 'a option
+      val set_maxsize : 'a Cache.Dlist.t -> int -> 'a list
+      val set_finaliser_before :
+        ('a Cache.Dlist.node -> unit) -> 'a Cache.Dlist.t -> unit
+      val get_finaliser_before :
+        'a Cache.Dlist.t -> 'a Cache.Dlist.node -> unit
+      val add_finaliser_before :
+        ('a Cache.Dlist.node -> unit) -> 'a Cache.Dlist.t -> unit
+      val set_finaliser_after :
+        ('a Cache.Dlist.node -> unit) -> 'a Cache.Dlist.t -> unit
+      val get_finaliser_after :
+        'a Cache.Dlist.t -> 'a Cache.Dlist.node -> unit
+      val add_finaliser_after :
+        ('a Cache.Dlist.node -> unit) -> 'a Cache.Dlist.t -> unit
+    end
+end >>

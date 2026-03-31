@@ -1,0 +1,4 @@
+<<code language="ocaml" | sig
+  type t = string option * string option
+  val parse : string -> Header.Mime_type.t
+end >>

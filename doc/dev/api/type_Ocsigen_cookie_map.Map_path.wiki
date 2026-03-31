@@ -1,9 +1,9 @@
 <<code language="ocaml" | sig
   type +!'a t
   val empty : 'a t
-  val is_empty : 'a t -> bool
-  val mem : Ocsigen_lib_base.Url_base.path -> 'a t -> bool
   val add : Ocsigen_lib_base.Url_base.path -> 'a -> 'a t -> 'a t
+  val add_to_list :
+    Ocsigen_lib_base.Url_base.path -> 'a -> 'a list t -> 'a list t
   val update :
     Ocsigen_lib_base.Url_base.path ->
     ('a option -> 'a option) -> 'a t -> 'a t
@@ -15,19 +15,6 @@
   val union :
     (Ocsigen_lib_base.Url_base.path -> 'a -> 'a -> 'a option) ->
     'a t -> 'a t -> 'a t
-  val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
-  val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
-  val iter : (Ocsigen_lib_base.Url_base.path -> 'a -> unit) -> 'a t -> unit
-  val fold :
-    (Ocsigen_lib_base.Url_base.path -> 'a -> 'b -> 'b) -> 'a t -> 'b -> 'b
-  val for_all :
-    (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> bool
-  val exists : (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> bool
-  val filter : (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> 'a t
-  val filter_map :
-    (Ocsigen_lib_base.Url_base.path -> 'a -> 'b option) -> 'a t -> 'b t
-  val partition :
-    (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> 'a t * 'a t
   val cardinal : 'a t -> int
   val bindings : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) list
   val min_binding : 'a t -> Ocsigen_lib_base.Url_base.path * 'a
@@ -36,8 +23,6 @@
   val max_binding_opt : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
   val choose : 'a t -> Ocsigen_lib_base.Url_base.path * 'a
   val choose_opt : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
-  val split :
-    Ocsigen_lib_base.Url_base.path -> 'a t -> 'a t * 'a option * 'a t
   val find : Ocsigen_lib_base.Url_base.path -> 'a t -> 'a
   val find_opt : Ocsigen_lib_base.Url_base.path -> 'a t -> 'a option
   val find_first :
@@ -52,8 +37,28 @@
   val find_last_opt :
     (Ocsigen_lib_base.Url_base.path -> bool) ->
     'a t -> (Ocsigen_lib_base.Url_base.path * 'a) option
+  val iter : (Ocsigen_lib_base.Url_base.path -> 'a -> unit) -> 'a t -> unit
+  val fold :
+    (Ocsigen_lib_base.Url_base.path -> 'a -> 'acc -> 'acc) ->
+    'a t -> 'acc -> 'acc
   val map : ('a -> 'b) -> 'a t -> 'b t
   val mapi : (Ocsigen_lib_base.Url_base.path -> 'a -> 'b) -> 'a t -> 'b t
+  val filter : (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> 'a t
+  val filter_map :
+    (Ocsigen_lib_base.Url_base.path -> 'a -> 'b option) -> 'a t -> 'b t
+  val partition :
+    (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> 'a t * 'a t
+  val split :
+    Ocsigen_lib_base.Url_base.path -> 'a t -> 'a t * 'a option * 'a t
+  val is_empty : 'a t -> bool
+  val mem : Ocsigen_lib_base.Url_base.path -> 'a t -> bool
+  val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+  val compare : ('a -> 'a -> int) -> 'a t -> 'a t -> int
+  val for_all :
+    (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> bool
+  val exists : (Ocsigen_lib_base.Url_base.path -> 'a -> bool) -> 'a t -> bool
+  val to_list : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) list
+  val of_list : (Ocsigen_lib_base.Url_base.path * 'a) list -> 'a t
   val to_seq : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) Seq.t
   val to_rev_seq : 'a t -> (Ocsigen_lib_base.Url_base.path * 'a) Seq.t
   val to_seq_from :

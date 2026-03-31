@@ -1,7 +1,7 @@
 <<code language="ocaml" | sig
   val run :
-    mode:[ `Add of Ocsigen_header.Name.t * string * bool option
+    mode:[ `Add of Ocsigen_http.Header.Name.t * string * bool option
          | `Code of Cohttp.Code.status
-         | `Rewrite of Ocsigen_header.Name.t * string * string ] ->
-    unit -> Ocsigen_server.instruction
+         | `Rewrite of Ocsigen_http.Header.Name.t * string * string ] ->
+    unit -> Ocsigen.Server.instruction
 end >>

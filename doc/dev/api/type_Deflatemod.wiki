@@ -6,6 +6,6 @@
   val run :
     mode:[ `All_but of Deflatemod.filter list
          | `Only of Deflatemod.filter list ] ->
-    unit -> Ocsigen_server.instruction
-  val section : Lwt_log_core.section
+    unit -> Ocsigen.Server.instruction
+  val section : Logs.src
 end >>

@@ -1,0 +1,4 @@
+<<code language="ocaml" | sig
+  type t = (Header.Mime_type.t * float option * (string * string) list) list
+  val parse : string list -> Header.Accept.t
+end >>

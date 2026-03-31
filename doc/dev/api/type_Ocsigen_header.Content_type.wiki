@@ -1,3 +1,0 @@
-<<code language="ocaml" | sig
-  val choose : Ocsigen_header.Accept.t -> string -> string list -> string
-end >>

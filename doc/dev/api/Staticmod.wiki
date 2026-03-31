@@ -14,15 +14,13 @@
 ~Example of use~:
 
 <<code language='ocaml'|let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
 >>
 
-<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?dir: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?regexp: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?dest: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?code: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?cache: >>int <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_label"| ?root: >>string <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|~Run static mod on a specific directory~. 
+<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| ?dir: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?regexp: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?dest: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?code: >>string <<span class="ocsforge_color_delimiter"| -> >>\\  <<span class="ocsforge_color_label"| ?cache: >>int <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_label"| ?root: >>string <<span class="ocsforge_color_delimiter"| -> >> unit <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_uid"|Ocsigen>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_uid"|Server>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|instruction>>>>>><<div class="odocwiki_info"|~Run static mod on a specific directory~. 
     ~Call this if you want to run ~Ocsigen ~Server without configuration file~.
     ~The optional parameter correspond to the options of the configuration
     file described <<a_manual chapter="staticmod"|here>>~.
 >>
-<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|~Use <<span class="odocwiki_inlinecode"|~Lwt~_log~.~Section~.set~_level>> in order to select the log level for
-   this module
->>
+<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Logs>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|src>>>>>>

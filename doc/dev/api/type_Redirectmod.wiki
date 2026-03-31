@@ -1,9 +1,9 @@
 <<code language="ocaml" | sig
-  val section : Lwt_log_core.section
+  val section : Logs.src
   type redirection
   val create_redirection :
     ?full_url:bool ->
     ?temporary:bool -> regexp:string -> string -> Redirectmod.redirection
   val run :
-    redirection:Redirectmod.redirection -> unit -> Ocsigen_server.instruction
+    redirection:Redirectmod.redirection -> unit -> Ocsigen.Server.instruction
 end >>

@@ -1,0 +1,1 @@
+<<code language="ocaml" | sig val choose : Header.Accept.t -> string -> string list -> string end >>

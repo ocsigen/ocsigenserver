@@ -1,0 +1,59 @@
+<<code language="ocaml" | sig
+  type t
+  module Body :
+    sig
+      type t
+      val empty : Response.Body.t
+      val of_string : string -> Response.Body.t
+      val make :
+        Cohttp.Transfer.encoding ->
+        ((string -> unit Lwt.t) -> unit Lwt.t) -> Response.Body.t
+      val of_cohttp :
+        encoding:Cohttp.Transfer.encoding ->
+        Cohttp_lwt.Body.t -> Response.Body.t
+      val write : Response.Body.t -> (string -> unit Lwt.t) -> unit Lwt.t
+      val transfer_encoding : Response.Body.t -> Cohttp.Transfer.encoding
+    end
+  val make :
+    ?body:Response.Body.t ->
+    ?cookies:Ocsigen_cookie_map.t -> Cohttp.Response.t -> Response.t
+  val respond :
+    ?headers:Cohttp.Header.t ->
+    status:Http.Status.t -> ?body:Response.Body.t -> unit -> Response.t
+  val respond_string :
+    ?headers:Cohttp.Header.t ->
+    status:Http.Status.t -> body:string -> unit -> Response.t
+  val respond_error :
+    ?headers:Cohttp.Header.t ->
+    ?status:Http.Status.t -> body:string -> unit -> Response.t
+  val respond_file :
+    ?headers:Cohttp.Header.t ->
+    ?status:Http.Status.t -> string -> Response.t Lwt.t
+  val update :
+    ?response:Cohttp.Response.t ->
+    ?body:Response.Body.t ->
+    ?cookies:Ocsigen_cookie_map.t -> Response.t -> Response.t
+  val of_cohttp :
+    ?cookies:Ocsigen_cookie_map.t ->
+    Cohttp.Response.t * Cohttp_lwt.Body.t -> Response.t
+  val to_response_expert :
+    Response.t ->
+    Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
+  val response : Response.t -> Cohttp.Response.t
+  val body : Response.t -> Response.Body.t
+  val status : Response.t -> Cohttp.Code.status
+  val set_status : Response.t -> Cohttp.Code.status -> Response.t
+  val cookies : Response.t -> Ocsigen_cookie_map.t
+  val add_cookies : Response.t -> Ocsigen_cookie_map.t -> Response.t
+  val header : Response.t -> Ocsigen_http.Header.Name.t -> string option
+  val header_multi : Response.t -> Ocsigen_http.Header.Name.t -> string list
+  val add_header :
+    Response.t -> Ocsigen_http.Header.Name.t -> string -> Response.t
+  val add_header_multi :
+    Response.t -> Ocsigen_http.Header.Name.t -> string list -> Response.t
+  val replace_header :
+    Response.t -> Ocsigen_http.Header.Name.t -> string -> Response.t
+  val replace_headers :
+    Response.t -> (Ocsigen_http.Header.Name.t * string) list -> Response.t
+  val remove_header : Response.t -> Ocsigen_http.Header.Name.t -> Response.t
+end >>

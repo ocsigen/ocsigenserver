@@ -1,0 +1,50 @@
+<<code language="ocaml" | sig
+  type t
+  val to_string : Header.Name.t -> string
+  val of_string : string -> Header.Name.t
+  val accept : Header.Name.t
+  val accept_charset : Header.Name.t
+  val accept_encoding : Header.Name.t
+  val accept_language : Header.Name.t
+  val accept_ranges : Header.Name.t
+  val authorization : Header.Name.t
+  val cache_control : Header.Name.t
+  val connection : Header.Name.t
+  val content_disposition : Header.Name.t
+  val content_encoding : Header.Name.t
+  val content_length : Header.Name.t
+  val content_type : Header.Name.t
+  val content_range : Header.Name.t
+  val cookie : Header.Name.t
+  val date : Header.Name.t
+  val etag : Header.Name.t
+  val expect : Header.Name.t
+  val expires : Header.Name.t
+  val host : Header.Name.t
+  val if_match : Header.Name.t
+  val if_modified_since : Header.Name.t
+  val if_none_match : Header.Name.t
+  val if_unmodified_since : Header.Name.t
+  val if_range : Header.Name.t
+  val last_modified : Header.Name.t
+  val location : Header.Name.t
+  val pragma : Header.Name.t
+  val server : Header.Name.t
+  val set_cookie : Header.Name.t
+  val status : Header.Name.t
+  val transfer_encoding : Header.Name.t
+  val user_agent : Header.Name.t
+  val referer : Header.Name.t
+  val range : Header.Name.t
+  val x_forwarded_for : Header.Name.t
+  val x_forwarded_proto : Header.Name.t
+  val origin : Header.Name.t
+  val access_control_request_method : Header.Name.t
+  val access_control_request_headers : Header.Name.t
+  val access_control_allow_origin : Header.Name.t
+  val access_control_allow_credentials : Header.Name.t
+  val access_control_expose_headers : Header.Name.t
+  val access_control_max_age : Header.Name.t
+  val access_control_allow_methods : Header.Name.t
+  val access_control_allow_headers : Header.Name.t
+end >>

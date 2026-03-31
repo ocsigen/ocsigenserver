@@ -1,0 +1,50 @@
+<<code language="ocaml" | sig
+  type extension = string
+  type file = string
+  type filename = string
+  type charset = string
+  val no_charset : Charset_mime.charset
+  type charset_assoc
+  val empty_charset_assoc :
+    ?default:Charset_mime.charset -> unit -> Charset_mime.charset_assoc
+  val empty_mime_assoc :
+    ?default:Charset_mime.charset -> unit -> Charset_mime.charset_assoc
+  val find_charset :
+    string -> Charset_mime.charset_assoc -> Charset_mime.charset
+  val default_charset : Charset_mime.charset_assoc -> Charset_mime.charset
+  val set_default_charset :
+    Charset_mime.charset_assoc ->
+    Charset_mime.charset -> Charset_mime.charset_assoc
+  val update_charset_ext :
+    Charset_mime.charset_assoc ->
+    Charset_mime.extension ->
+    Charset_mime.charset -> Charset_mime.charset_assoc
+  val update_charset_file :
+    Charset_mime.charset_assoc ->
+    Charset_mime.filename ->
+    Charset_mime.charset -> Charset_mime.charset_assoc
+  val update_charset_regexp :
+    Charset_mime.charset_assoc ->
+    Re.Pcre.regexp -> Charset_mime.charset -> Charset_mime.charset_assoc
+  type mime_type = string
+  val default_mime_type : Charset_mime.mime_type
+  type mime_assoc
+  val default_mime_assoc : unit -> Charset_mime.mime_assoc
+  val parse_mime_types : filename:string -> Charset_mime.mime_assoc
+  val find_mime : Charset_mime.file -> Charset_mime.mime_assoc -> string
+  val default_mime : Charset_mime.mime_assoc -> Charset_mime.mime_type
+  val set_default_mime :
+    Charset_mime.mime_assoc ->
+    Charset_mime.mime_type -> Charset_mime.mime_assoc
+  val update_mime_ext :
+    Charset_mime.mime_assoc ->
+    Charset_mime.extension ->
+    Charset_mime.mime_type -> Charset_mime.mime_assoc
+  val update_mime_file :
+    Charset_mime.mime_assoc ->
+    Charset_mime.filename ->
+    Charset_mime.mime_type -> Charset_mime.mime_assoc
+  val update_mime_regexp :
+    Charset_mime.mime_assoc ->
+    Re.Pcre.regexp -> Charset_mime.mime_type -> Charset_mime.mime_assoc
+end >>

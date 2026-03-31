@@ -17,8 +17,8 @@
 ~Example of use~:
 
 <<code language='ocaml'|let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Staticmod.run ~dir:"static" () 
        ; Deflatemod.run
            ~mode:(`Only [ `Type (Some "text", Some "html")
@@ -35,8 +35,7 @@
 <<pre id="VALset_compress_level" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|set~_compress~_level>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|int <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<pre id="VALset_buffer_size" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|set~_buffer~_size>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|int <<span class="ocsforge_color_delimiter"| -> >> unit>>>><<pre class="ocsforge_color odocwiki_code" id="TYPEfilter"|<<span class="ocsforge_color_keyword"|type>> <<span class="odocwiki_name"|filter>> <<span class="ocsforge_color_delimiter"|~=>> <<span class="odocwiki_type"|[ `Extension of string | `Type of string option * string option ]>> >><<div class="odocwiki_info"|~Describes the content to deflate~, either using its content type~, 
    or file extension
 >>
-<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| mode: >>[ `All_but of <<a_api text="filter" | type Deflatemod.filter >> list\\       | `Only of <<a_api text="filter" | type Deflatemod.filter >> list ] <<span class="ocsforge_color_delimiter"| -> >>\\  unit <<span class="ocsforge_color_delimiter"| -> >> <<a_api text="Ocsigen_server.instruction" | type Ocsigen_server.instruction >>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run ~~mode ~(~)>> makes it possible to use this extension without
+<<pre id="VALrun" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|run>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|\\  <<span class="ocsforge_color_label"| mode: >>[ `All_but of <<a_api text="filter" | type Deflatemod.filter >> list\\       | `Only of <<a_api text="filter" | type Deflatemod.filter >> list ] <<span class="ocsforge_color_delimiter"| -> >>\\  unit <<span class="ocsforge_color_delimiter"| -> >> <<span class="ocsforge_color_uid"|Ocsigen>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_uid"|Server>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|instruction>>>>>><<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|run ~~mode ~(~)>> makes it possible to use this extension without
     configuration file~.
 >>
-<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Lwt_log_core>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|section>>>>>><<div class="odocwiki_info"|~Use ~Lwt~_log~.~Section~.set~_level in order to change the log level
->>
+<<pre id="VALsection" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|section>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|<<span class="ocsforge_color_uid"|Logs>><<span class="ocsforge_color_delimiter"| . >><<span class="ocsforge_color_lid"|src>>>>>>
