@@ -1,7 +1,6 @@
 open Lwt.Infix
 
-let post_data_of_body ~content_type b =
-  Multipart.post_params ~content_type b
+let post_data_of_body ~content_type b = Multipart.post_params ~content_type b
 
 type content_type = Multipart.content_type
 
@@ -229,8 +228,8 @@ let header_multi {r_headers; _} id =
 
 let add_header ({r_headers; _} as r) id v =
   { r with
-    r_headers = Cohttp.Header.add r_headers (Ocsigen_http.Header.Name.to_string id) v
-  }
+    r_headers =
+      Cohttp.Header.add r_headers (Ocsigen_http.Header.Name.to_string id) v }
 
 let parse_cookies s =
   let splitted = Ocsigen_base.Lib.String.split ';' s in

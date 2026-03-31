@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 let name = "extendconfiguration"
 let bad_config s = raise (Ocsigen.Extensions.Error_in_config_file s)
@@ -99,8 +99,8 @@ let fun_site usermode _ _ _ _ _ = function
         | Xml.Element ("extension", [("ext", extension); ("value", charset)], [])
           :: q ->
             aux
-              (Ocsigen_http.Charset_mime.update_charset_ext charset_assoc extension
-                 charset)
+              (Ocsigen_http.Charset_mime.update_charset_ext charset_assoc
+                 extension charset)
               q
         | Xml.Element ("file", [("file", file); ("value", charset)], []) :: q ->
             aux
@@ -140,15 +140,20 @@ let fun_site usermode _ _ _ _ _ = function
         | Xml.Element ("extension", [("ext", extension); ("value", mime)], [])
           :: q ->
             aux
-              (Ocsigen_http.Charset_mime.update_mime_ext mime_assoc extension mime)
+              (Ocsigen_http.Charset_mime.update_mime_ext mime_assoc extension
+                 mime)
               q
         | Xml.Element ("file", [("file", file); ("value", mime)], []) :: q ->
-            aux (Ocsigen_http.Charset_mime.update_mime_file mime_assoc file mime) q
+            aux
+              (Ocsigen_http.Charset_mime.update_mime_file mime_assoc file mime)
+              q
         | Xml.Element ("regexp", [("regexp", regexp); ("value", mime)], []) :: q
           -> (
           try
             let r = Ocsigen_base.Lib.Netstring_pcre.regexp regexp in
-            aux (Ocsigen_http.Charset_mime.update_mime_regexp mime_assoc r mime) q
+            aux
+              (Ocsigen_http.Charset_mime.update_mime_regexp mime_assoc r mime)
+              q
           with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
         | _ :: _ -> bad_config "invalid subtag in option mime"
       in
@@ -300,7 +305,8 @@ let contenttype
   in
   let mime_assoc =
     List.fold_left
-      (fun ma (ext, mime) -> Ocsigen_http.Charset_mime.update_mime_ext ma ext mime)
+      (fun ma (ext, mime) ->
+         Ocsigen_http.Charset_mime.update_mime_ext ma ext mime)
       mime_assoc extensions
   in
   let mime_assoc =

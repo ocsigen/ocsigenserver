@@ -96,7 +96,9 @@ let find_static_page
       when http_status_match status_filter err ->
         let status_filter = status_filter <> None
         and file =
-          match Ocsigen_base.Lib.Netstring_pcre.string_match source pathstring 0 with
+          match
+            Ocsigen_base.Lib.Netstring_pcre.string_match source pathstring 0
+          with
           | None -> raise Not_concerned
           | Some _ -> Ocsigen.Extensions.replace_user_dir source dest pathstring
         and root_checks =
@@ -277,7 +279,8 @@ let kind dir regexp code dest root_checks =
   | None, None, None, _, _ ->
       Ocsigen.Extensions.badconfig
         "Missing attribute dir, regexp, or code for <static>"
-  | Some d, None, None, None, None -> Dir (Ocsigen_base.Lib.Url.remove_end_slash d)
+  | Some d, None, None, None, None ->
+      Dir (Ocsigen_base.Lib.Url.remove_end_slash d)
   | None, Some r, code, Some t, rc ->
       Regexp
         { source_regexp = r

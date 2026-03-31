@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 let section = Logs.Src.create "ocsigen:ext"
 
@@ -283,10 +283,7 @@ let get_port
       {request_info; request_config = {default_httpport; default_httpsport; _}}
   =
   if Config.get_usedefaulthostname ()
-  then
-    if Request.ssl request_info
-    then default_httpsport
-    else default_httpport
+  then if Request.ssl request_info then default_httpsport else default_httpport
   else Request.port request_info
 
 let new_url_of_directory_request request ri =
@@ -382,27 +379,20 @@ let fun_exn = ref (fun exn : string -> raise exn)
 let rec parse_site_attrs (enc, dir) = function
   | [] -> (
     match dir with
-    | None ->
-        raise
-          (Config.Config_file_error "Missing dir attribute in <site>")
+    | None -> raise (Config.Config_file_error "Missing dir attribute in <site>")
     | Some s -> enc, s)
   | ("path", s) :: rest | ("dir", s) :: rest -> (
     match dir with
     | None -> parse_site_attrs (enc, Some s) rest
-    | _ ->
-        raise
-          (Config.Config_file_error "Duplicate attribute dir in <site>")
-    )
+    | _ -> raise (Config.Config_file_error "Duplicate attribute dir in <site>"))
   | ("charset", s) :: rest -> (
     match enc with
     | None -> parse_site_attrs (Some s, dir) rest
     | _ ->
-        raise
-          (Config.Config_file_error
-             "Duplicate attribute charset in <site>"))
+        raise (Config.Config_file_error "Duplicate attribute charset in <site>")
+    )
   | (s, _) :: _ ->
-      raise
-        (Config.Config_file_error ("Wrong attribute for <site>: " ^ s))
+      raise (Config.Config_file_error ("Wrong attribute for <site>: " ^ s))
 
 let make_parse_config path parse_host l : extension_composite =
   let f = parse_host path (Parse_host parse_host) in
@@ -507,9 +497,7 @@ let default_parse_config
       let ext_of_children = make_parse_config path parse_host l in
       site_ext ext_of_children charset path
   | Xml.Element (tag, _, _) -> raise (Bad_config_tag_for_extension tag)
-  | _ ->
-      raise
-        (Config.Config_file_error "Unexpected content inside <host>")
+  | _ -> raise (Config.Config_file_error "Unexpected content inside <host>")
 
 type userconf_info = {localfiles_root : string}
 
@@ -757,8 +745,7 @@ let string_of_host (h : virtual_hosts) =
   List.fold_left (fun d arg -> d ^ aux1 arg ^ " ") "" h
 
 let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
-  let host = Request.host request_info
-  and port = Request.port request_info in
+  let host = Request.host request_info and port = Request.port request_info in
   let string_of_host_option = function
     | None -> "<no host>:" ^ string_of_int port
     | Some h -> h ^ ":" ^ string_of_int port
@@ -841,9 +828,15 @@ let replace_user_dir regexp dest pathstring =
       Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest pathstring
   | Withdir (s1, u, s2) -> (
     try
-      let s1 = Ocsigen_base.Lib.Netstring_pcre.global_replace regexp s1 pathstring in
-      let u = Ocsigen_base.Lib.Netstring_pcre.global_replace regexp u pathstring in
-      let s2 = Ocsigen_base.Lib.Netstring_pcre.global_replace regexp s2 pathstring in
+      let s1 =
+        Ocsigen_base.Lib.Netstring_pcre.global_replace regexp s1 pathstring
+      in
+      let u =
+        Ocsigen_base.Lib.Netstring_pcre.global_replace regexp u pathstring
+      in
+      let s2 =
+        Ocsigen_base.Lib.Netstring_pcre.global_replace regexp s2 pathstring
+      in
       let userdir = (Unix.getpwnam u).Unix.pw_dir in
       Logs.info ~src:section (fun fmt -> fmt "User %s" u);
       s1 ^ userdir ^ s2
@@ -866,8 +859,8 @@ let find_redirection regexp full_url dest r =
       | Some g -> full_path ^ "?" ^ g
     in
     let path =
-      Url.make_absolute_url ~https:(Request.ssl r) ~host
-        ~port:(Request.port r) ("/" ^ path)
+      Url.make_absolute_url ~https:(Request.ssl r) ~host ~port:(Request.port r)
+        ("/" ^ path)
     in
     Ocsigen_base.Lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->
     (* Matching regexp found! *)

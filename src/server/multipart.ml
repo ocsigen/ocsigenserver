@@ -89,17 +89,23 @@ let read_header ?downcase ?unfold ?strip s =
   let h, (_ : int) =
     scan_header ?downcase ?unfold ?strip b ~start_pos:0 ~end_pos
   in
-  Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int end_pos) >>= fun s -> Lwt.return (s, h)
+  Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int end_pos) >>= fun s ->
+  Lwt.return (s, h)
 
 let lf_re = S.regexp "[\n]"
 
 let rec search_window s re start =
   try
     Lwt.return
-      (s, snd (S.search_forward re (Ocsigen_base.Ocsigen_stream.current_buffer s) start))
+      ( s
+      , snd
+          (S.search_forward re
+             (Ocsigen_base.Ocsigen_stream.current_buffer s)
+             start) )
   with Not_found -> (
     Ocsigen_base.Ocsigen_stream.enlarge_stream s >>= function
-    | Ocsigen_base.Ocsigen_stream.Finished _ -> Lwt.fail Ocsigen_base.Ocsigen_stream.Stream_too_small
+    | Ocsigen_base.Ocsigen_stream.Finished _ ->
+        Lwt.fail Ocsigen_base.Ocsigen_stream.Stream_too_small
     | Ocsigen_base.Ocsigen_stream.Cont _ as s -> search_window s re start)
 
 let search_end_of_line s k =
@@ -125,7 +131,8 @@ let check_beginning_is_boundary ~boundary s =
   let del = "--" ^ boundary in
   let ldel = String.length del in
   Ocsigen_base.Ocsigen_stream.stream_want s (ldel + 2) >>= function
-  | Ocsigen_base.Ocsigen_stream.Finished _ as str2 -> Lwt.return (str2, false, false)
+  | Ocsigen_base.Ocsigen_stream.Finished _ as str2 ->
+      Lwt.return (str2, false, false)
   | Ocsigen_base.Ocsigen_stream.Cont (ss, _f) as str2 ->
       let long = String.length ss in
       let isdelim = long >= ldel && String.sub ss 0 ldel = del in
@@ -171,7 +178,9 @@ let read_multipart_body ~boundary ~decode_part s =
   then
     (* Move to the beginning of the next line *)
     search_end_of_line s 0 >>= fun (s, k_eol) ->
-    let uses_crlf = (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r' in
+    let uses_crlf =
+      (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r'
+    in
     Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
     (* Begin with first part: *)
     parse_parts ~boundary ~decode_part s uses_crlf
@@ -181,7 +190,9 @@ let read_multipart_body ~boundary ~decode_part s =
       (fun () ->
          search_first_boundary ~boundary s >>= fun (s, k_eob) ->
          search_end_of_line s k_eob >>= fun (s, k_eol) ->
-         let uses_crlf = (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r' in
+         let uses_crlf =
+           (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r'
+         in
          (* Printf.printf "k_eol=%d\n" k_eol; *)
          Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
          (* Begin with first part: *)
@@ -193,13 +204,16 @@ let read_multipart_body ~boundary ~decode_part s =
         | e -> Lwt.fail e)
 
 let empty_stream =
-  Ocsigen_base.Ocsigen_stream.get (Ocsigen_base.Ocsigen_stream.make (fun () -> Ocsigen_base.Ocsigen_stream.empty None))
+  Ocsigen_base.Ocsigen_stream.get
+    (Ocsigen_base.Ocsigen_stream.make (fun () ->
+       Ocsigen_base.Ocsigen_stream.empty None))
 
 let decode_part ~max_size ~create ~add ~stop stream =
   read_header stream >>= fun (s, header) ->
   let p = create header in
   let rec while_stream size = function
-    | Ocsigen_base.Ocsigen_stream.Finished None -> Lwt.return (size, empty_stream)
+    | Ocsigen_base.Ocsigen_stream.Finished None ->
+        Lwt.return (size, empty_stream)
     | Ocsigen_base.Ocsigen_stream.Finished (Some ss) -> Lwt.return (size, ss)
     | Ocsigen_base.Ocsigen_stream.Cont (stri, f) ->
         let long = String.length stri in
@@ -212,7 +226,8 @@ let decode_part ~max_size ~create ~add ~stop stream =
         else if stri = ""
         then Ocsigen_base.Ocsigen_stream.next f >>= while_stream size
         else
-          add p stri >>= fun () -> Ocsigen_base.Ocsigen_stream.next f >>= while_stream size2
+          add p stri >>= fun () ->
+          Ocsigen_base.Ocsigen_stream.next f >>= while_stream size2
   in
   Lwt.catch
     (fun () ->
@@ -358,7 +373,8 @@ let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
   (*VVV Does scan_multipart_body_from_stream read until the end or
     only what it needs?  If we do not consume here, the following
     request will be read only when this one is finished ...  *)
-  Ocsigen_base.Ocsigen_stream.consume body_gen >>= fun () -> Lwt.return (!params, !files)
+  Ocsigen_base.Ocsigen_stream.consume body_gen >>= fun () ->
+  Lwt.return (!params, !files)
 
 let post_params ~content_type body_gen =
   let (ct, cst), ctparams = content_type in

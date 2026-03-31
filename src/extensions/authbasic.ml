@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 open Lwt.Infix
 
@@ -57,11 +57,13 @@ let gen ~realm ~auth rs =
         (Printf.sprintf "Basic realm=\"%s\"" realm)
     in
     Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid credentials!");
-    Lwt.fail (Ocsigen.Ocsigen_cohttp.Ext_http_error (`Unauthorized, None, Some h))
+    Lwt.fail
+      (Ocsigen.Ocsigen_cohttp.Ext_http_error (`Unauthorized, None, Some h))
   and invalid_header () =
     Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid Authorization header");
     Lwt.fail
-      (Ocsigen.Ocsigen_cohttp.Ocsigen_http_error (Ocsigen_cookie_map.empty, `Bad_request))
+      (Ocsigen.Ocsigen_cohttp.Ocsigen_http_error
+         (Ocsigen_cookie_map.empty, `Bad_request))
   in
   let validate ~err s =
     match Cohttp.Auth.credential_of_string s with

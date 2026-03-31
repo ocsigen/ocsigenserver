@@ -1,7 +1,8 @@
 (library
  (name ocsigenserver)
  (public_name ocsigenserver)
- (wrapped (module_name Ocsigen))
+ (wrapped
+  (module_name Ocsigen))
  (libraries
   xml-light
   cohttp-lwt-unix

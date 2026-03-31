@@ -217,7 +217,8 @@ let add_header
     a_response =
       { a_response with
         Cohttp.Response.headers =
-          Cohttp.Header.add headers (Ocsigen_http.Header.Name.to_string id) v } }
+          Cohttp.Header.add headers (Ocsigen_http.Header.Name.to_string id) v }
+  }
 
 let add_header_multi
       ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
@@ -239,8 +240,9 @@ let replace_header
     a_response =
       { a_response with
         Cohttp.Response.headers =
-          Cohttp.Header.replace headers (Ocsigen_http.Header.Name.to_string id) v }
-  }
+          Cohttp.Header.replace headers
+            (Ocsigen_http.Header.Name.to_string id)
+            v } }
 
 let replace_headers ({a_response; _} as a) l =
   let headers =
