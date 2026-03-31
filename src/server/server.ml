@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 open Lwt.Infix
 
@@ -41,11 +41,12 @@ let () =
 (* fatal errors messages *)
 let errmsg = function
   | Ocsigen_base.Dynlink_wrapper.Error e ->
-      "Fatal - Dynamic linking error: " ^ Ocsigen_base.Dynlink_wrapper.error_message e, 6
+      ( "Fatal - Dynamic linking error: "
+        ^ Ocsigen_base.Dynlink_wrapper.error_message e
+      , 6 )
   | Unix.Unix_error _ as e -> "Fatal - " ^ Printexc.to_string e, 9
   | Ssl.Private_key_error msg -> "Fatal - bad password: " ^ msg, 10
-  | Config.Config_file_error msg
-  | Extensions.Error_in_config_file msg ->
+  | Config.Config_file_error msg | Extensions.Error_in_config_file msg ->
       "Fatal - Error in configuration file: " ^ msg, 50
   | Xml.Error (s, loc) ->
       let begin_char, end_char = Xml.range loc and line = Xml.line loc in
@@ -57,7 +58,8 @@ let errmsg = function
       "Fatal - While loading " ^ s ^ ": " ^ Dynlink.error_message err, 52
   | Ocsigen_base.Loader.Dynlink_error (s, exn) ->
       "Fatal - While loading " ^ s ^ ": " ^ Printexc.to_string exn, 52
-  | Ocsigen_base.Loader.Findlib_error _ as e -> "Fatal - " ^ Printexc.to_string e, 53
+  | Ocsigen_base.Loader.Findlib_error _ as e ->
+      "Fatal - " ^ Printexc.to_string e, 53
   | exn -> (
     try Extensions.get_init_exn_handler () exn, 20
     with exn -> "Fatal - Uncaught exception: " ^ Printexc.to_string exn, 100)
@@ -143,8 +145,7 @@ let host
   let def = Extensions.default_config_info () in
   let default default o = Option.value o ~default in
   let config_info =
-    { Extensions.default_hostname =
-        default def.default_hostname default_hostname
+    { Extensions.default_hostname = default def.default_hostname default_hostname
     ; default_httpport = default def.default_httpport default_httpport
     ; default_httpsport = default def.default_httpsport default_httpsport
     ; default_protocol_is_https =
@@ -164,14 +165,12 @@ let host
   let vh = [regexp, Ocsigen_base.Lib.Netstring_pcre.regexp regexp, port] in
   ( vh
   , config_info
-  , Extensions.compose
-      (List.map (fun i -> i vh config_info []) instructions) )
+  , Extensions.compose (List.map (fun i -> i vh config_info []) instructions) )
 
 let site ?charset path instructions vh config_info parent_path =
   let path = parent_path @ Extensions.preprocess_site_path path in
   let composite =
-    Extensions.compose
-      (List.map (fun i -> i vh config_info path) instructions)
+    Extensions.compose (List.map (fun i -> i vh config_info path) instructions)
   in
   Extensions.site_ext composite charset path
 
@@ -209,17 +208,14 @@ let main config =
     let extensions_connector = Extensions.compute_result in
     let run () =
       Messages.open_files () >>= fun () ->
-      let ports = Config.get_ports ()
-      and ssl_ports = Config.get_ssl_ports () in
+      let ports = Config.get_ports () and ssl_ports = Config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
       let ssl_connection =
         let ssl =
           match Config.get_ssl_info () with
           | None
-          | Some
-              { Config.ssl_certificate = None
-              ; Config.ssl_privatekey = None
-              ; _ } ->
+          | Some {Config.ssl_certificate = None; Config.ssl_privatekey = None; _}
+            ->
               None
           | Some
               { Config.ssl_certificate = Some crt
@@ -229,8 +225,7 @@ let main config =
           | Some {Config.ssl_privatekey = None; _} ->
               raise (Config.Config_file_error "SSL key is missing")
           | Some {Config.ssl_certificate = None; _} ->
-              raise
-                (Config.Config_file_error "SSL certificate is missing")
+              raise (Config.Config_file_error "SSL certificate is missing")
         in
         match ssl_ports, ssl with
         | [], Some (crt, key) -> [`All, 443, (crt, key)]
@@ -382,8 +377,7 @@ let main config =
       Lwt_main.run (run ()))
   with e ->
     let msg, errno = errmsg e in
-    Messages.errlog msg;
-    exit errno
+    Messages.errlog msg; exit errno
 
 let exec config =
   Config.has_config_file := true;
@@ -393,8 +387,7 @@ let exec config =
       (try Parseconfig.first_pass h
        with e ->
          let msg, errno = errmsg e in
-         Messages.errlog msg;
-         exit errno);
+         Messages.errlog msg; exit errno);
       main (fun () ->
         (* Now I can load the modules *)
         Ocsigen_base.Dynlink_wrapper.allow_unsafe_modules true;
@@ -463,14 +456,12 @@ let start
   Option.iter Config.set_debug debug;
   Option.iter Config.set_minthreads minthreads;
   Option.iter Config.set_maxthreads maxthreads;
-  Option.iter Config.set_max_number_of_connections
-    max_number_of_connections;
+  Option.iter Config.set_max_number_of_connections max_number_of_connections;
   Option.iter Config.set_client_timeout client_timeout;
   Option.iter Config.set_server_timeout server_timeout;
   Option.iter Config.set_filebuffersize filebuffersize;
   Option.iter Config.set_maxrequestbodysize maxrequestbodysize;
-  Option.iter Config.set_maxrequestbodysizeinmemory
-    maxrequestbodysizeinmemory;
+  Option.iter Config.set_maxrequestbodysizeinmemory maxrequestbodysizeinmemory;
   Option.iter Config.set_default_charset default_charset;
   Option.iter Config.set_bindir bindir;
   Option.iter Config.set_extdir extdir;

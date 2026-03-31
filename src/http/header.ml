@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 type t = Cohttp.Header.t
 
@@ -104,7 +104,9 @@ module Accept = struct
     try
       let a, b = Ocsigen_base.Lib.String.sep ';' s in
       ( parse_name a
-      , List.map (Ocsigen_base.Lib.String.sep '=') (Ocsigen_base.Lib.String.split ';' b) )
+      , List.map
+          (Ocsigen_base.Lib.String.sep '=')
+          (Ocsigen_base.Lib.String.split ';' b) )
     with _ -> parse_name s, []
 
   let parse_list_with_extensions parse_name s =

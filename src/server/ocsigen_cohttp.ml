@@ -84,12 +84,14 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
             Cookie.serialize cookies_to_set (Cohttp.Header.init ())
           in
           Some headers, code
-      | Ocsigen_base.Ocsigen_stream.Interrupted Ocsigen_base.Ocsigen_stream.Already_read ->
+      | Ocsigen_base.Ocsigen_stream.Interrupted
+          Ocsigen_base.Ocsigen_stream.Already_read ->
           None, `Internal_server_error
       | Unix.Unix_error (Unix.EACCES, _, _) -> None, `Forbidden
       | Ext_http_error (code, _, headers) -> headers, code
       | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request
-      | Ocsigen_base.Lib.Ocsigen_Request_too_long -> None, `Request_entity_too_large
+      | Ocsigen_base.Lib.Ocsigen_Request_too_long ->
+          None, `Request_entity_too_large
       | exn ->
           Logs.err ~src:section (fun fmt ->
             fmt
@@ -123,8 +125,7 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
                (Request.header request Ocsigen_http.Header.Name.user_agent))
             (Option.fold ~none:""
                ~some:(fun s -> " X-Forwarded-For: " ^ s)
-               (Request.header request
-                  Ocsigen_http.Header.Name.x_forwarded_for))
+               (Request.header request Ocsigen_http.Header.Name.x_forwarded_for))
             (Uri.path (Request.uri request)));
        Lwt.catch
          (fun () -> connector request)
@@ -134,11 +135,9 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
                  fun_request request |> Uri.to_string
                  |> Cohttp.Header.init_with "location"
                and status = `Moved_permanently in
-               Lwt.return
-                 (Response.respond_string ~headers ~status ~body:"" ())
+               Lwt.return (Response.respond_string ~headers ~status ~body:"" ())
            | exn -> Lwt.return (handle_error exn))
-       >>= fun response ->
-       Lwt.return (Response.to_response_expert response))
+       >>= fun response -> Lwt.return (Response.to_response_expert response))
     (fun () ->
        if !filenames <> []
        then

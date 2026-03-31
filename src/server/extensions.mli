@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (** Extensions interface for Ocsigen Server *)
 
@@ -385,18 +385,21 @@ val replace_user_dir : Re.Pcre.regexp -> ud_string -> string -> string
 exception Not_concerned
 (** {3 Regular expressions for redirections} *)
 
-val find_redirection :
-   Re.Pcre.regexp
-  -> bool
-  -> string
-  -> Request.t
-  -> string
+val find_redirection : Re.Pcre.regexp -> bool -> string -> Request.t -> string
 
 (**/**)
 
-val preprocess_site_path : Ocsigen_base.Lib.Url.path -> Ocsigen_base.Lib.Url.path
+val preprocess_site_path :
+   Ocsigen_base.Lib.Url.path
+  -> Ocsigen_base.Lib.Url.path
+
 val compose : extension list -> extension_composite
-val make_parse_config : Ocsigen_base.Lib.Url.path -> parse_config_aux -> parse_fun
+
+val make_parse_config :
+   Ocsigen_base.Lib.Url.path
+  -> parse_config_aux
+  -> parse_fun
+
 val parse_config_item : parse_config
 
 val site_ext :

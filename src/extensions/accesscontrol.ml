@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (* Filtering requests via the configuration file *)
 
@@ -87,7 +87,8 @@ let header ~name ~regexp:re =
            then
              Logs.info (fun fmt -> fmt "HEADER: header %s matches %S" name re);
            r)
-        (Ocsigen.Request.header_multi ri (Ocsigen_http.Header.Name.of_string name))
+        (Ocsigen.Request.header_multi ri
+           (Ocsigen_http.Header.Name.of_string name))
     in
     if not r
     then
@@ -215,11 +216,14 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
     Logs.info ~src:section (fun fmt -> fmt "Allowed proxy");
     let request =
       let header =
-        Ocsigen.Request.header request_info Ocsigen_http.Header.Name.x_forwarded_for
+        Ocsigen.Request.header request_info
+          Ocsigen_http.Header.Name.x_forwarded_for
       in
       match header with
       | Some header -> (
-        match Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header with
+        match
+          Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header
+        with
         | original_ip :: proxies ->
             let last_proxy = List.last proxies in
             let proxy_ip = Ipaddr.of_string_exn last_proxy in

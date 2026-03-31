@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 open Lib
 
@@ -164,14 +164,11 @@ let findfiles =
   fun package ->
     try
       let preds =
-        [ (if Config_static.is_native then "native" else "byte")
-        ; "plugin"
-        ; "mt" ]
+        [(if Config_static.is_native then "native" else "byte"); "plugin"; "mt"]
       in
       let deps =
         List.filter
-          (fun a ->
-             not @@ String.Set.mem a Config_static.builtin_packages)
+          (fun a -> not @@ String.Set.mem a Config_static.builtin_packages)
           (Findlib.package_deep_ancestors preds [package])
       in
       Logs.info ~src:section (fun fmt ->
@@ -183,9 +180,7 @@ let findfiles =
               try
                 let raw = Findlib.package_property preds a "archive" in
                 (* Replacing .cmx/.cmxa by .cmxs *)
-                let raw =
-                  Lib.Netstring_pcre.global_replace cmx ".cmxs " raw
-                in
+                let raw = Lib.Netstring_pcre.global_replace cmx ".cmxs " raw in
                 List.filter (( <> ) "") (String.split ~multisep:true ' ' raw)
               with Not_found -> []
             in

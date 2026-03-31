@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (** Handle Cross-Origin Resource Sharing (CORS) headers *)
 
@@ -44,7 +44,9 @@ let add_headers config r response =
       let l = [Ocsigen_http.Header.Name.access_control_allow_origin, origin] in
       let l =
         if config.credentials
-        then (Ocsigen_http.Header.Name.access_control_allow_credentials, "true") :: l
+        then
+          (Ocsigen_http.Header.Name.access_control_allow_credentials, "true")
+          :: l
         else l
       in
       let l =
@@ -62,7 +64,8 @@ let add_headers config r response =
             in
             if methods
             then
-              (Ocsigen_http.Header.Name.access_control_allow_methods, request_method)
+              ( Ocsigen_http.Header.Name.access_control_allow_methods
+              , request_method )
               :: l
             else (
               Logs.info ~src:section (fun fmt -> fmt "Method refused");
@@ -75,14 +78,16 @@ let add_headers config r response =
             Ocsigen_http.Header.Name.access_control_request_headers
         with
         | Some request_headers ->
-            (Ocsigen_http.Header.Name.access_control_allow_headers, request_headers)
+            ( Ocsigen_http.Header.Name.access_control_allow_headers
+            , request_headers )
             :: l
         | None -> l
       in
       let l =
         match config.max_age with
         | Some max_age ->
-            (Ocsigen_http.Header.Name.access_control_max_age, string_of_int max_age)
+            ( Ocsigen_http.Header.Name.access_control_max_age
+            , string_of_int max_age )
             :: l
         | None -> l
       in

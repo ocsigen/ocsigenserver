@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (******************************************************************)
 (** Config file parsing *)
@@ -244,8 +244,7 @@ let get_defaulthostname ~defaulthostname ~host =
           host);
       if correct_hostname host
       then host
-      else
-        raise (Config.Config_file_error ("Incorrect hostname " ^ host))
+      else raise (Config.Config_file_error ("Incorrect hostname " ^ host))
 
 let later_pass_host_attr
       ( name
@@ -264,9 +263,7 @@ let later_pass_host_attr
         , defaulthttpport
         , defaulthttpsport
         , ishttps )
-    | _ ->
-        raise
-          (Config.Config_file_error "Duplicate attribute name in <host>")
+    | _ -> raise (Config.Config_file_error "Duplicate attribute name in <host>")
     )
   | "charset", s -> (
     match charset with
@@ -278,16 +275,14 @@ let later_pass_host_attr
         , defaulthttpsport
         , ishttps )
     | _ ->
-        raise
-          (Config.Config_file_error
-             "Duplicate attribute charset in <host>"))
+        raise (Config.Config_file_error "Duplicate attribute charset in <host>")
+    )
   | "defaulthostname", s -> (
     match defaulthostname with
     | None ->
         if correct_hostname s
         then name, charset, Some s, defaulthttpport, defaulthttpsport, ishttps
-        else
-          raise (Config.Config_file_error ("Incorrect hostname " ^ s))
+        else raise (Config.Config_file_error ("Incorrect hostname " ^ s))
     | _ ->
         raise
           (Config.Config_file_error
@@ -320,8 +315,7 @@ let later_pass_host_attr
           (Config.Config_file_error
              "Duplicate attribute defaultprotocol in <host>"))
   | attr, _ ->
-      raise
-        (Config.Config_file_error ("Wrong attribute for <host>: " ^ attr))
+      raise (Config.Config_file_error ("Wrong attribute for <host>: " ^ attr))
 
 let later_pass_host attrs l =
   let ( host
