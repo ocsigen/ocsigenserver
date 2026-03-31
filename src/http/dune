@@ -7,6 +7,6 @@
 (library
  (name ocsigen_http)
  (public_name ocsigenserver.http)
- (wrapped false)
- (modules ocsigen_charset_mime ocsigen_header)
+ (wrapped (module_name Ocsigen_http))
+ (modules charset_mime header)
  (libraries cohttp-lwt-unix baselib logs))

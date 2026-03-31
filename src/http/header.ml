@@ -84,8 +84,8 @@ let parse_star a = if a = "*" then None else Some a
 
 let parse_quality f s =
   try
-    let a, b = Ocsigen_lib.String.sep ';' s in
-    let q, qv = Ocsigen_lib.String.sep '=' b in
+    let a, b = Ocsigen_base.Lib.String.sep ';' s in
+    let q, qv = Ocsigen_base.Lib.String.sep '=' b in
     if q = "q" then f a, Some (float_of_string qv) else failwith "Parse error"
   with _ -> f s, None
 
@@ -93,7 +93,7 @@ module Mime_type = struct
   type t = string option * string option
 
   let parse a =
-    let b, c = Ocsigen_lib.String.sep '/' a in
+    let b, c = Ocsigen_base.Lib.String.sep '/' a in
     parse_star b, parse_star c
 end
 
@@ -102,13 +102,13 @@ module Accept = struct
 
   let parse_extensions parse_name s =
     try
-      let a, b = Ocsigen_lib.String.sep ';' s in
+      let a, b = Ocsigen_base.Lib.String.sep ';' s in
       ( parse_name a
-      , List.map (Ocsigen_lib.String.sep '=') (Ocsigen_lib.String.split ';' b) )
+      , List.map (Ocsigen_base.Lib.String.sep '=') (Ocsigen_base.Lib.String.split ';' b) )
     with _ -> parse_name s, []
 
   let parse_list_with_extensions parse_name s =
-    List.map (Ocsigen_lib.String.split ',') s
+    List.map (Ocsigen_base.Lib.String.split ',') s
     |> List.flatten
     |> List.map (parse_extensions parse_name)
 
@@ -117,7 +117,7 @@ module Accept = struct
       let l = parse_list_with_extensions Mime_type.parse s in
       let change_quality (a, l) =
         try
-          let q, ll = Ocsigen_lib.List.assoc_remove "q" l in
+          let q, ll = Ocsigen_base.Lib.List.assoc_remove "q" l in
           a, Some (float_of_string q), ll
         with _ -> a, None, l
       in
@@ -130,7 +130,7 @@ module Accept_encoding = struct
 
   let parse s =
     try
-      List.map (Ocsigen_lib.String.split ',') s
+      List.map (Ocsigen_base.Lib.String.split ',') s
       |> List.flatten
       |> List.map (parse_quality parse_star)
     with _ -> []
@@ -141,7 +141,7 @@ module Accept_language = struct
 
   let parse s =
     try
-      List.map (Ocsigen_lib.String.split ',') s
+      List.map (Ocsigen_base.Lib.String.split ',') s
       |> List.flatten
       |> List.map (parse_quality (fun x -> x))
     with _ -> []

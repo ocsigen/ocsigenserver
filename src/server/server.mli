@@ -29,9 +29,9 @@ val exec : Xml.xml list list -> unit
 (** Start the server with a configuration file. Never returns. *)
 
 val start :
-   ?ports:(Ocsigen_config.Socket_type.t * int) list
-  -> ?ssl_ports:(Ocsigen_config.Socket_type.t * int) list
-  -> ?ssl_info:Ocsigen_config.ssl_info option
+   ?ports:(Config.Socket_type.t * int) list
+  -> ?ssl_ports:(Config.Socket_type.t * int) list
+  -> ?ssl_info:Config.ssl_info option
   -> ?default_charset:string option
   -> ?logdir:string
   -> ?datadir:string
@@ -63,7 +63,7 @@ val start :
   -> ?disablepartialrequests:bool
   -> ?respect_pipeline:unit
   -> ?maxretries:int
-  -> Ocsigen_extensions.host_config list
+  -> Extensions.host_config list
   -> unit
 (** Start the server with some instructions. Never returns.
     It takes as main parameter a list of virtual hosts (see {!host} below). 
@@ -73,10 +73,10 @@ counterparts.
 *)
 
 type instruction =
-  Ocsigen_extensions.virtual_hosts
-  -> Ocsigen_extensions.config_info
-  -> Ocsigen_lib.Url.path
-  -> Ocsigen_extensions.extension
+  Extensions.virtual_hosts
+  -> Extensions.config_info
+  -> Ocsigen_base.Lib.Url.path
+  -> Extensions.extension
 (** The type of instructions to be used inside an host or site.
     Instructions are defined by extensions (Staticmod, Eliom, etc.) *)
 
@@ -87,23 +87,23 @@ val host :
   -> ?default_httpport:int
   -> ?default_httpsport:int
   -> ?default_protocol_is_https:bool
-  -> ?mime_assoc:Ocsigen_charset_mime.mime_assoc
-  -> ?charset_assoc:Ocsigen_charset_mime.charset_assoc
+  -> ?mime_assoc:Ocsigen_http.Charset_mime.mime_assoc
+  -> ?charset_assoc:Ocsigen_http.Charset_mime.charset_assoc
   -> ?default_directory_index:string list
   -> ?list_directory_content:bool
   -> ?follow_symlinks:[`Always | `No | `Owner_match]
-  -> ?do_not_serve_404:Ocsigen_extensions.do_not_serve
-  -> ?do_not_serve_403:Ocsigen_extensions.do_not_serve
+  -> ?do_not_serve_404:Extensions.do_not_serve
+  -> ?do_not_serve_403:Extensions.do_not_serve
   -> ?uploaddir:string option
   -> ?maxuploadfilesize:int64 option
   -> instruction list
-  -> Ocsigen_extensions.host_config
+  -> Extensions.host_config
 (** You can define one or several virtual hosts corresponding to a given
     server name or port. *)
 
 val site :
    ?charset:string
-  -> Ocsigen_lib.Url.path
+  -> Ocsigen_base.Lib.Url.path
   -> instruction list
   -> instruction
 (** Each host may contain some sub-sites corresponding to

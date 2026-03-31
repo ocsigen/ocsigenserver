@@ -92,7 +92,7 @@ let rec compress_output oz inbuf pos len =
           (Bytes.length oz.buf) Zlib.Z_NO_FLUSH
       with Zlib.Error (s, s') ->
         raise
-          (Ocsigen_stream.Stream_error
+          (Ocsigen_base.Ocsigen_stream.Stream_error
              ("Error during compression: " ^ s ^ " " ^ s'))
     in
     compress_flush oz used_out >>= fun () ->
@@ -189,11 +189,11 @@ let select_encoding accept_header =
    deflate = false -> mode gzip *)
 let stream_filter contentencoding url deflate choice res =
   Lwt.return
-    (Ocsigen_extensions.Ext_found
+    (Ocsigen.Extensions.Ext_found
        (fun () ->
          try
            match
-             Ocsigen_response.header res Ocsigen_header.Name.content_type
+             Ocsigen.Response.header res Ocsigen_http.Header.Name.content_type
            with
            | None -> Lwt.return res
            | Some contenttype -> (
@@ -201,15 +201,15 @@ let stream_filter contentencoding url deflate choice res =
                  try String.sub contenttype 0 (String.index contenttype ';')
                  with Not_found -> contenttype
                in
-               match Ocsigen_header.Mime_type.parse contenttype with
+               match Ocsigen_http.Header.Mime_type.parse contenttype with
                | None, _ | _, None -> Lwt.return res
                | Some a, Some b when should_compress (a, b) url choice ->
                    let response =
                      let {Http.Response.headers; status; version} =
-                       Ocsigen_response.response res
+                       Ocsigen.Response.response res
                      in
                      let headers =
-                       let name = Ocsigen_header.Name.(to_string etag) in
+                       let name = Ocsigen_http.Header.Name.(to_string etag) in
                        match Cohttp.Header.get headers name with
                        | Some e ->
                            Cohttp.Header.replace headers name
@@ -219,43 +219,43 @@ let stream_filter contentencoding url deflate choice res =
                      in
                      let headers =
                        Http.Header.replace headers
-                         Ocsigen_header.Name.(to_string content_encoding)
+                         Ocsigen_http.Header.Name.(to_string content_encoding)
                          contentencoding
                      in
                      Http.Response.make ~headers ~status ~version ()
                    and body =
-                     Ocsigen_response.Body.make Cohttp.Transfer.Chunked
+                     Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
                        (compress_body deflate
-                          (Ocsigen_response.Body.write
-                             (Ocsigen_response.body res)))
+                          (Ocsigen.Response.Body.write
+                             (Ocsigen.Response.body res)))
                    in
-                   Lwt.return (Ocsigen_response.update res ~body ~response)
+                   Lwt.return (Ocsigen.Response.update res ~body ~response)
                | _ -> Lwt.return res)
          with Not_found -> Lwt.return res))
 
 let filter choice_list = function
-  | Ocsigen_extensions.Req_not_found (code, _) ->
-      Lwt.return (Ocsigen_extensions.Ext_next code)
-  | Ocsigen_extensions.Req_found ({Ocsigen_extensions.request_info = ri; _}, res)
+  | Ocsigen.Extensions.Req_not_found (code, _) ->
+      Lwt.return (Ocsigen.Extensions.Ext_next code)
+  | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info = ri; _}, res)
     -> (
     match
-      Ocsigen_request.header_multi ri Ocsigen_header.Name.accept_encoding
-      |> Ocsigen_header.Accept_encoding.parse |> select_encoding
+      Ocsigen.Request.header_multi ri Ocsigen_http.Header.Name.accept_encoding
+      |> Ocsigen_http.Header.Accept_encoding.parse |> select_encoding
     with
     | Deflate ->
         stream_filter "deflate"
-          (Ocsigen_request.sub_path_string ri)
+          (Ocsigen.Request.sub_path_string ri)
           true choice_list res
     | Gzip ->
         stream_filter "gzip"
-          (Ocsigen_request.sub_path_string ri)
+          (Ocsigen.Request.sub_path_string ri)
           false choice_list res
     | Id | Star ->
-        Lwt.return (Ocsigen_extensions.Ext_found (fun () -> Lwt.return res))
+        Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return res))
     | Not_acceptable ->
         Lwt.return
-          (Ocsigen_extensions.Ext_stop_all
-             (Ocsigen_response.cookies res, `Not_acceptable)))
+          (Ocsigen.Extensions.Ext_stop_all
+             (Ocsigen.Response.cookies res, `Not_acceptable)))
 
 let rec parse_global_config = function
   | [] -> ()
@@ -264,7 +264,7 @@ let rec parse_global_config = function
         try int_of_string i
         with Failure _ ->
           raise
-            (Ocsigen_extensions.Error_in_config_file
+            (Ocsigen.Extensions.Error_in_config_file
                "Compress level should be an integer between 0 and 9")
       in
       set_compress_level i; parse_global_config ll
@@ -273,19 +273,19 @@ let rec parse_global_config = function
         try int_of_string s
         with Failure _ ->
           raise
-            (Ocsigen_extensions.Error_in_config_file
+            (Ocsigen.Extensions.Error_in_config_file
                "Buffer size should be a positive integer")
       in
       set_buffer_size s; parse_global_config ll
   | _ ->
       raise
-        (Ocsigen_extensions.Error_in_config_file
+        (Ocsigen.Extensions.Error_in_config_file
            "Unexpected content inside deflatemod config")
 
 let parse_config config_elem =
   let mode = ref `Only in
   let pages = ref [] in
-  Ocsigen_extensions.(
+  Ocsigen.Extensions.(
     Configuration.process_element ~in_tag:"host"
       ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:
@@ -301,7 +301,7 @@ let parse_config config_elem =
             ~elements:
               [ Configuration.element ~name:"type"
                   ~pcdata:(fun s ->
-                    let a, b = Ocsigen_header.Mime_type.parse s in
+                    let a, b = Ocsigen_http.Header.Mime_type.parse s in
                     pages := `Type (a, b) :: !pages)
                   ()
               ; Configuration.element ~name:"extension"
@@ -311,12 +311,12 @@ let parse_config config_elem =
       config_elem);
   match !pages with
   | [] ->
-      Ocsigen_extensions.badconfig
+      Ocsigen.Extensions.badconfig
         "Unexpected element inside contenttype (should be <type> or <extension>)"
   | l -> filter (match !mode with `Only -> `Only l | `All_but -> `All_but l)
 
 let () =
-  Ocsigen_extensions.register ~name:"deflatemod"
+  Ocsigen.Extensions.register ~name:"deflatemod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ~init_fun:parse_global_config ()
 

@@ -6,7 +6,7 @@ val scan_multipart_body_from_stream :
   -> create:((string * string) list -> 'a)
   -> add:('a -> string -> unit Lwt.t)
   -> stop:(int64 -> 'a -> 'b Lwt.t)
-  -> string Ocsigen_stream.stream
+  -> string Ocsigen_base.Ocsigen_stream.stream
   -> unit Lwt.t
 
 type content_type = (string * string) * (string * string) list

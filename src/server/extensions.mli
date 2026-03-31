@@ -22,7 +22,7 @@
 
 val section : Logs.src
 
-include module type of Ocsigen_command
+include module type of Command
 
 exception Ocsigen_http_error of Ocsigen_cookie_map.t * Cohttp.Code.status
 
@@ -35,7 +35,7 @@ exception Error_in_config_file of string
 exception Error_in_user_config_file of string
 (** Option incorrect in a userconf file *)
 
-type file_info = Ocsigen_multipart.file_info =
+type file_info = Multipart.file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
@@ -87,8 +87,8 @@ type config_info =
   ; default_httpport : int
   ; default_httpsport : int
   ; default_protocol_is_https : bool
-  ; mime_assoc : Ocsigen_charset_mime.mime_assoc
-  ; charset_assoc : Ocsigen_charset_mime.charset_assoc
+  ; mime_assoc : Ocsigen_http.Charset_mime.mime_assoc
+  ; charset_assoc : Ocsigen_http.Charset_mime.charset_assoc
   ; default_directory_index : string list
     (** Default name to use as index file when a directory is requested.
       Use [None] if no index should be tried. The various indexes are
@@ -108,13 +108,13 @@ type config_info =
 
 val default_config_info : unit -> config_info
 
-type request = {request_info : Ocsigen_request.t; request_config : config_info}
+type request = {request_info : Request.t; request_config : config_info}
 
-exception Ocsigen_is_dir of (Ocsigen_request.t -> Uri.t)
+exception Ocsigen_is_dir of (Request.t -> Uri.t)
 
 type answer =
   | Ext_do_nothing  (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found of (unit -> Response.t Lwt.t)
   (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
@@ -124,7 +124,7 @@ type answer =
       handled in different order. (for example revproxy.ml starts its
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
-  | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found_stop of (unit -> Response.t Lwt.t)
   (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
   (** Page not found. Try next extension. The status is usually
@@ -166,16 +166,16 @@ type answer =
       parsing the configuration file, call the parsing function (of
       type [parse_fun]), that will return something of type
       [extension_composite]. *)
-  | Ext_found_continue_with of (unit -> (Ocsigen_response.t * request) Lwt.t)
+  | Ext_found_continue_with of (unit -> (Response.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of (Ocsigen_response.t * request)
+  | Ext_found_continue_with' of (Response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it, but
       for output filters. *)
 
 and request_state =
   | Req_not_found of (Cohttp.Code.status * request)
-  | Req_found of (request * Ocsigen_response.t)
+  | Req_found of (request * Response.t)
 
 and extension_composite =
   Ocsigen_cookie_map.t -> request_state -> (answer * Ocsigen_cookie_map.t) Lwt.t
@@ -232,7 +232,7 @@ type parse_config =
 *)
 
 and parse_config_aux =
-  Ocsigen_lib.Url.path -> parse_host -> parse_fun -> Xml.xml -> extension
+  Ocsigen_base.Lib.Url.path -> parse_host -> parse_fun -> Xml.xml -> extension
 
 val register :
    name:string
@@ -362,7 +362,7 @@ val get_port : request -> int
     - or the port in the Host header
     - or the default port set in the configuration file. *)
 
-val new_url_of_directory_request : request -> Ocsigen_request.t -> Uri.t
+val new_url_of_directory_request : request -> Request.t -> Uri.t
 (** new_url_of_directory_request create a redirection and generating a new url
     for the client (depending on the server configuration and request)
     @param request configuration of the server
@@ -389,20 +389,20 @@ val find_redirection :
    Re.Pcre.regexp
   -> bool
   -> string
-  -> Ocsigen_request.t
+  -> Request.t
   -> string
 
 (**/**)
 
-val preprocess_site_path : Ocsigen_lib.Url.path -> Ocsigen_lib.Url.path
+val preprocess_site_path : Ocsigen_base.Lib.Url.path -> Ocsigen_base.Lib.Url.path
 val compose : extension list -> extension_composite
-val make_parse_config : Ocsigen_lib.Url.path -> parse_config_aux -> parse_fun
+val make_parse_config : Ocsigen_base.Lib.Url.path -> parse_config_aux -> parse_fun
 val parse_config_item : parse_config
 
 val site_ext :
    extension_composite
-  -> Ocsigen_charset_mime.charset option
-  -> Ocsigen_lib.Url.path
+  -> Ocsigen_http.Charset_mime.charset option
+  -> Ocsigen_base.Lib.Url.path
   -> extension
 
 type host_config = virtual_hosts * config_info * extension_composite
@@ -412,8 +412,8 @@ val get_hosts : unit -> (virtual_hosts * config_info * extension_composite) list
 
 val compute_result :
    ?previous_cookies:Ocsigen_cookie_map.t
-  -> Ocsigen_request.t
-  -> Ocsigen_response.t Lwt.t
+  -> Request.t
+  -> Response.t Lwt.t
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
 

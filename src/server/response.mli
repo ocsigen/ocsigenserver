@@ -90,10 +90,10 @@ val status : t -> Cohttp.Code.status
 val set_status : t -> Cohttp.Code.status -> t
 val cookies : t -> Ocsigen_cookie_map.t
 val add_cookies : t -> Ocsigen_cookie_map.t -> t
-val header : t -> Ocsigen_header.Name.t -> string option
-val header_multi : t -> Ocsigen_header.Name.t -> string list
-val add_header : t -> Ocsigen_header.Name.t -> string -> t
-val add_header_multi : t -> Ocsigen_header.Name.t -> string list -> t
-val replace_header : t -> Ocsigen_header.Name.t -> string -> t
-val replace_headers : t -> (Ocsigen_header.Name.t * string) list -> t
-val remove_header : t -> Ocsigen_header.Name.t -> t
+val header : t -> Ocsigen_http.Header.Name.t -> string option
+val header_multi : t -> Ocsigen_http.Header.Name.t -> string list
+val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
+val add_header_multi : t -> Ocsigen_http.Header.Name.t -> string list -> t
+val replace_header : t -> Ocsigen_http.Header.Name.t -> string -> t
+val replace_headers : t -> (Ocsigen_http.Header.Name.t * string) list -> t
+val remove_header : t -> Ocsigen_http.Header.Name.t -> t

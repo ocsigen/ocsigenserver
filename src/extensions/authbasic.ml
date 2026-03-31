@@ -48,7 +48,7 @@ let () =
   | Element ("plain", [("login", login); ("password", password)], _) ->
       fun l p -> Lwt.return (login = l && password = p)
   | _ ->
-      raise (Ocsigen_extensions.Bad_config_tag_for_extension "not for htpasswd")
+      raise (Ocsigen.Extensions.Bad_config_tag_for_extension "not for htpasswd")
 
 let gen ~realm ~auth rs =
   let reject () =
@@ -57,34 +57,34 @@ let gen ~realm ~auth rs =
         (Printf.sprintf "Basic realm=\"%s\"" realm)
     in
     Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid credentials!");
-    Lwt.fail (Ocsigen_cohttp.Ext_http_error (`Unauthorized, None, Some h))
+    Lwt.fail (Ocsigen.Ocsigen_cohttp.Ext_http_error (`Unauthorized, None, Some h))
   and invalid_header () =
     Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid Authorization header");
     Lwt.fail
-      (Ocsigen_cohttp.Ocsigen_http_error (Ocsigen_cookie_map.empty, `Bad_request))
+      (Ocsigen.Ocsigen_cohttp.Ocsigen_http_error (Ocsigen_cookie_map.empty, `Bad_request))
   in
   let validate ~err s =
     match Cohttp.Auth.credential_of_string s with
     | `Basic (user, pass) ->
         auth user pass >>= fun b ->
-        if b then Lwt.return (Ocsigen_extensions.Ext_next err) else reject ()
+        if b then Lwt.return (Ocsigen.Extensions.Ext_next err) else reject ()
     | `Other _s -> invalid_header ()
   in
   match rs with
-  | Ocsigen_extensions.Req_not_found (err, ri) -> (
+  | Ocsigen.Extensions.Req_not_found (err, ri) -> (
     match
-      Ocsigen_request.header ri.Ocsigen_extensions.request_info
-        Ocsigen_header.Name.authorization
+      Ocsigen.Request.header ri.Ocsigen.Extensions.request_info
+        Ocsigen_http.Header.Name.authorization
     with
     | Some s -> validate ~err s
     | None -> reject ())
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
+  | Ocsigen.Extensions.Req_found _ ->
+      Lwt.return Ocsigen.Extensions.Ext_do_nothing
 
 let parse_config element =
   let realm_ref = ref "" in
   let rest_ref = ref [] in
-  Ocsigen_extensions.(
+  Ocsigen.Extensions.(
     Configuration.process_element ~in_tag:"host"
       ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:
@@ -100,13 +100,13 @@ let parse_config element =
   let auth =
     match !rest_ref with
     | [x] -> get_basic_authentication_method x
-    | _ -> Ocsigen_extensions.badconfig "Bad syntax for tag authbasic"
+    | _ -> Ocsigen.Extensions.badconfig "Bad syntax for tag authbasic"
   in
   gen ~realm ~auth
 
 (** Registration of the extension for the config file: *)
 let () =
-  Ocsigen_extensions.register ~name:"authbasic"
+  Ocsigen.Extensions.register ~name:"authbasic"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 

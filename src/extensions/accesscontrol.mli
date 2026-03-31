@@ -35,8 +35,8 @@ This module belongs to ocamlfind package
 (** Example of use (with {{!page-"redirectmod"}Redirectmod}):
 {[
 let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host ~regexp:".*"
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host ~regexp:".*"
         [ Accesscontrol.(
             if_ (not_ ssl)
               [ Redirectmod.run
@@ -64,27 +64,27 @@ val not_ : condition -> condition
 
 val if_ :
    condition
-  -> Ocsigen_server.instruction list
-  -> Ocsigen_server.instruction list
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction list
+  -> Ocsigen.Server.instruction list
+  -> Ocsigen.Server.instruction
 
-val iffound : Ocsigen_server.instruction list -> Ocsigen_server.instruction
+val iffound : Ocsigen.Server.instruction list -> Ocsigen.Server.instruction
 
 val ifnotfound :
    ?code:string
-  -> Ocsigen_server.instruction list
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction list
+  -> Ocsigen.Server.instruction
 
-val notfound : Ocsigen_server.instruction
-val nextsite : Ocsigen_server.instruction
-val nexthost : Ocsigen_server.instruction
-val stop : Ocsigen_server.instruction
-val forbidden : Ocsigen_server.instruction
+val notfound : Ocsigen.Server.instruction
+val nextsite : Ocsigen.Server.instruction
+val nexthost : Ocsigen.Server.instruction
+val stop : Ocsigen.Server.instruction
+val forbidden : Ocsigen.Server.instruction
 
 val allow_forward_for :
    ?check_equal_ip:bool
   -> unit
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction
 
-val allow_forward_proto : unit -> Ocsigen_server.instruction
+val allow_forward_proto : unit -> Ocsigen.Server.instruction
 val section : Logs.src

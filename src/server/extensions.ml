@@ -22,8 +22,8 @@ let section = Logs.Src.create "ocsigen:ext"
 
 open Lwt.Infix
 module Pcre = Re.Pcre
-module Url = Ocsigen_lib.Url
-include Ocsigen_command
+module Url = Ocsigen_base.Lib.Url
+include Command
 
 exception Ocsigen_http_error = Ocsigen_cohttp.Ocsigen_http_error
 exception Ocsigen_Looping_request
@@ -37,7 +37,7 @@ exception Error_in_config_file of string
 exception Error_in_user_config_file of string
 (** Option incorrect in a userconf file *)
 
-type file_info = Ocsigen_multipart.file_info =
+type file_info = Multipart.file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
@@ -121,7 +121,7 @@ let do_not_serve_to_regexp d =
     try
       Logs.info ~src:section (fun fmt ->
         fmt "Compiling exclusion regexp %s" regexp);
-      let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
+      let r = Ocsigen_base.Lib.Netstring_pcre.regexp regexp in
       Hashtbl.add hash_consed_do_not_serve d r;
       r
     with _ -> raise (IncorrectRegexpes d))
@@ -131,8 +131,8 @@ type config_info =
   ; default_httpport : int
   ; default_httpsport : int
   ; default_protocol_is_https : bool
-  ; mime_assoc : Ocsigen_charset_mime.mime_assoc
-  ; charset_assoc : Ocsigen_charset_mime.charset_assoc
+  ; mime_assoc : Ocsigen_http.Charset_mime.mime_assoc
+  ; charset_assoc : Ocsigen_http.Charset_mime.charset_assoc
   ; default_directory_index : string list
     (** Default name to use as index file
                                               when a directory is requested.
@@ -164,30 +164,30 @@ let default_config_info () =
     ; do_not_serve_extensions = [] }
   in
   { default_hostname = Unix.gethostname ()
-  ; default_httpport = Ocsigen_config.get_default_port ()
-  ; default_httpsport = Ocsigen_config.get_default_sslport ()
+  ; default_httpport = Config.get_default_port ()
+  ; default_httpsport = Config.get_default_sslport ()
   ; default_protocol_is_https = false
-  ; mime_assoc = Ocsigen_charset_mime.default_mime_assoc ()
+  ; mime_assoc = Ocsigen_http.Charset_mime.default_mime_assoc ()
   ; charset_assoc =
-      Ocsigen_charset_mime.empty_charset_assoc
-        ?default:(Ocsigen_config.get_default_charset ())
+      Ocsigen_http.Charset_mime.empty_charset_assoc
+        ?default:(Config.get_default_charset ())
         ()
   ; default_directory_index = ["index.html"]
   ; list_directory_content = false
   ; follow_symlinks = `Owner_match
   ; do_not_serve_404
   ; do_not_serve_403 = do_not_serve_404
-  ; uploaddir = Ocsigen_config.get_uploaddir ()
-  ; maxuploadfilesize = Ocsigen_config.get_maxuploadfilesize () }
+  ; uploaddir = Config.get_uploaddir ()
+  ; maxuploadfilesize = Config.get_maxuploadfilesize () }
 
 (* Requests *)
-type request = {request_info : Ocsigen_request.t; request_config : config_info}
+type request = {request_info : Request.t; request_config : config_info}
 
 exception Ocsigen_is_dir = Ocsigen_cohttp.Ocsigen_is_dir
 
 type answer =
   | Ext_do_nothing  (** I don't want to do anything *)
-  | Ext_found of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found of (unit -> Response.t Lwt.t)
   (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
@@ -197,7 +197,7 @@ type answer =
       handled in different order. (for example revproxy.ml starts its
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
-  | Ext_found_stop of (unit -> Ocsigen_response.t Lwt.t)
+  | Ext_found_stop of (unit -> Response.t Lwt.t)
   (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
   (** Page not found. Try next extension. The status is usually
@@ -239,16 +239,16 @@ type answer =
       parsing the configuration file, call the parsing function (of
       type [parse_fun]), that will return something of type
       [extension_composite]. *)
-  | Ext_found_continue_with of (unit -> (Ocsigen_response.t * request) Lwt.t)
+  | Ext_found_continue_with of (unit -> (Response.t * request) Lwt.t)
   (** Same as [Ext_found] but may modify the request. *)
-  | Ext_found_continue_with' of (Ocsigen_response.t * request)
+  | Ext_found_continue_with' of (Response.t * request)
   (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it, but
       for output filters. *)
 
 and request_state =
   | Req_not_found of (Cohttp.Code.status * request)
-  | Req_found of (request * Ocsigen_response.t)
+  | Req_found of (request * Response.t)
 
 and extension_composite =
   Ocsigen_cookie_map.t -> request_state -> (answer * Ocsigen_cookie_map.t) Lwt.t
@@ -268,10 +268,10 @@ let get_hosts () = !hosts
 (* Default hostname is either the Host header or the hostname set in
    the configuration file. *)
 let get_hostname {request_info; request_config = {default_hostname; _}; _} =
-  if Ocsigen_config.get_usedefaulthostname ()
+  if Config.get_usedefaulthostname ()
   then default_hostname
   else
-    match Ocsigen_request.host request_info with
+    match Request.host request_info with
     | None -> default_hostname
     | Some host -> host
 
@@ -282,25 +282,25 @@ let get_hostname {request_info; request_config = {default_hostname; _}; _} =
 let get_port
       {request_info; request_config = {default_httpport; default_httpsport; _}}
   =
-  if Ocsigen_config.get_usedefaulthostname ()
+  if Config.get_usedefaulthostname ()
   then
-    if Ocsigen_request.ssl request_info
+    if Request.ssl request_info
     then default_httpsport
     else default_httpport
-  else Ocsigen_request.port request_info
+  else Request.port request_info
 
 let new_url_of_directory_request request ri =
   Logs.info ~src:section (fun fmt -> fmt "Sending 301 Moved permanently");
-  let ssl = Ocsigen_request.ssl ri in
+  let ssl = Request.ssl ri in
   let scheme = if ssl then "https" else "http"
   and host = get_hostname request
   and port =
     let port = get_port request in
     if port = if ssl then 443 else 80 then None else Some port
   and path =
-    let path = Ocsigen_request.path_string ri in
+    let path = Request.path_string ri in
     if path.[String.length path - 1] = '/' then path else path ^ "/"
-  and query = Ocsigen_request.get_params ri in
+  and query = Request.get_params ri in
   Uri.make ~scheme ~host ?port ~path ~query ()
 
 (* To give parameters to extensions: *)
@@ -344,14 +344,14 @@ let compose_step (f : extension) (g : extension_composite) : extension_composite
           | Req_not_found (_, ri) -> ri
         in
         g Ocsigen_cookie_map.empty
-          (Req_found (ri, Ocsigen_response.add_cookies r' cookies_to_set))
+          (Req_found (ri, Response.add_cookies r' cookies_to_set))
     | Ext_found_continue_with r ->
         r () >>= fun (r', req) ->
         g Ocsigen_cookie_map.empty
-          (Req_found (req, Ocsigen_response.add_cookies r' cookies_to_set))
+          (Req_found (req, Response.add_cookies r' cookies_to_set))
     | Ext_found_continue_with' (r', req) ->
         g Ocsigen_cookie_map.empty
-          (Req_found (req, Ocsigen_response.add_cookies r' cookies_to_set))
+          (Req_found (req, Response.add_cookies r' cookies_to_set))
     | Ext_next e ->
         let ri =
           match req_state with
@@ -384,25 +384,25 @@ let rec parse_site_attrs (enc, dir) = function
     match dir with
     | None ->
         raise
-          (Ocsigen_config.Config_file_error "Missing dir attribute in <site>")
+          (Config.Config_file_error "Missing dir attribute in <site>")
     | Some s -> enc, s)
   | ("path", s) :: rest | ("dir", s) :: rest -> (
     match dir with
     | None -> parse_site_attrs (enc, Some s) rest
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error "Duplicate attribute dir in <site>")
+          (Config.Config_file_error "Duplicate attribute dir in <site>")
     )
   | ("charset", s) :: rest -> (
     match enc with
     | None -> parse_site_attrs (Some s, dir) rest
     | _ ->
         raise
-          (Ocsigen_config.Config_file_error
+          (Config.Config_file_error
              "Duplicate attribute charset in <site>"))
   | (s, _) :: _ ->
       raise
-        (Ocsigen_config.Config_file_error ("Wrong attribute for <site>: " ^ s))
+        (Config.Config_file_error ("Wrong attribute for <site>: " ^ s))
 
 let make_parse_config path parse_host l : extension_composite =
   let f = parse_host path (Parse_host parse_host) in
@@ -444,27 +444,27 @@ let site_ext ext_of_children charset path cookies_to_set = function
               request_config =
                 { oldri.request_config with
                   charset_assoc =
-                    Ocsigen_charset_mime.set_default_charset
+                    Ocsigen_http.Charset_mime.set_default_charset
                       oldri.request_config.charset_assoc charset } }
       in
-      match site_match oldri path (Ocsigen_request.path oldri.request_info) with
+      match site_match oldri path (Request.path oldri.request_info) with
       | None ->
           Logs.info ~src:section (fun fmt ->
             fmt "site \"%s\" does not match url \"%s\"."
               (Url.string_of_url_path ~encode:true path)
               (Url.string_of_url_path ~encode:true
-                 (Ocsigen_request.path oldri.request_info)));
+                 (Request.path oldri.request_info)));
           Lwt.return (Ext_next e, cookies_to_set)
       | Some sub_path -> (
           Logs.info ~src:section (fun fmt ->
             fmt "site found: url \"%s\" matches \"%s\"."
               (Url.string_of_url_path ~encode:true
-                 (Ocsigen_request.path oldri.request_info))
+                 (Request.path oldri.request_info))
               (Url.string_of_url_path ~encode:true path));
           let ri =
             { oldri with
               request_info =
-                Ocsigen_request.update oldri.request_info
+                Request.update oldri.request_info
                   ~sub_path:(Url.string_of_url_path ~encode:true sub_path) }
           in
           ext_of_children cookies_to_set (Req_not_found (e, ri)) >>= function
@@ -509,7 +509,7 @@ let default_parse_config
   | Xml.Element (tag, _, _) -> raise (Bad_config_tag_for_extension tag)
   | _ ->
       raise
-        (Ocsigen_config.Config_file_error "Unexpected content inside <host>")
+        (Config.Config_file_error "Unexpected content inside <host>")
 
 type userconf_info = {localfiles_root : string}
 
@@ -531,7 +531,7 @@ let register, parse_config_item, get_init_exn_handler =
       ?(exn_handler = raise)
       ?(respect_pipeline = false)
       () ->
-      if respect_pipeline then Ocsigen_config.set_respect_pipeline ();
+      if respect_pipeline then Config.set_respect_pipeline ();
       (match fun_site with
       | None -> ()
       | Some fun_site -> (
@@ -548,7 +548,7 @@ let register, parse_config_item, get_init_exn_handler =
                   with Bad_config_tag_for_extension _c ->
                     newf parse_config config_tag));
       (match end_init with
-      | Some end_init -> fun_end := Ocsigen_lib.comp end_init !fun_end
+      | Some end_init -> fun_end := Ocsigen_base.Lib.comp end_init !fun_end
       | None -> ());
       let curexnfun = !fun_exn in
       fun_exn := fun e -> try curexnfun e with e -> exn_handler e)
@@ -573,7 +573,7 @@ let register
       ?respect_pipeline
       ()
   =
-  Ocsigen_loader.set_module_init_function name (fun () ->
+  Ocsigen_base.Loader.set_module_init_function name (fun () ->
     (match init_fun with
     | None -> default_parse_extension name (get_config ())
     | Some f -> f (get_config ()));
@@ -741,7 +741,7 @@ let host_match ~(virtual_hosts : virtual_hosts) ~host ~port =
      we take the first one, even if it doesn't match!  *)
   | Some host ->
       let host_match regexp =
-        Ocsigen_lib.Netstring_pcre.string_match regexp host 0 <> None
+        Ocsigen_base.Lib.Netstring_pcre.string_match regexp host 0 <> None
       in
       let rec aux = function
         | [] -> false
@@ -757,8 +757,8 @@ let string_of_host (h : virtual_hosts) =
   List.fold_left (fun d arg -> d ^ aux1 arg ^ " ") "" h
 
 let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
-  let host = Ocsigen_request.host request_info
-  and port = Ocsigen_request.port request_info in
+  let host = Request.host request_info
+  and port = Request.port request_info in
   let string_of_host_option = function
     | None -> "<no host>:" ^ string_of_int port
     | Some h -> h ^ ":" ^ string_of_int port
@@ -778,13 +778,13 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
         match res_ext with
         | Ext_found r | Ext_found_stop r ->
             r () >>= fun r' ->
-            Lwt.return (Ocsigen_response.add_cookies r' cookies_to_set)
+            Lwt.return (Response.add_cookies r' cookies_to_set)
         | Ext_do_nothing -> fold_hosts request_info prev_err cookies_to_set l
         | Ext_found_continue_with r ->
             r () >>= fun (r', _) ->
-            Lwt.return (Ocsigen_response.add_cookies r' cookies_to_set)
+            Lwt.return (Response.add_cookies r' cookies_to_set)
         | Ext_found_continue_with' (r, _) ->
-            Lwt.return (Ocsigen_response.add_cookies r cookies_to_set)
+            Lwt.return (Response.add_cookies r cookies_to_set)
         | Ext_next e -> fold_hosts request_info e cookies_to_set l
         (* try next site *)
         | Ext_stop_host (cook, e) | Ext_stop_site (cook, e) ->
@@ -811,8 +811,8 @@ let compute_result ?(previous_cookies = Ocsigen_cookie_map.empty) request_info =
             (string_of_host h));
         fold_hosts request_info prev_err cookies_to_set l
   and fold_hosts_limited sites cookies_to_set request_info =
-    Ocsigen_request.incr_tries request_info;
-    if Ocsigen_request.tries request_info > Ocsigen_config.get_maxretries ()
+    Request.incr_tries request_info;
+    if Request.tries request_info > Config.get_maxretries ()
     then Lwt.fail Ocsigen_Looping_request
     else fold_hosts request_info `Not_found cookies_to_set sites
   in
@@ -827,7 +827,7 @@ exception NoSuchUser
 type ud_string = Nodir of string | Withdir of string * string * string
 
 let user_dir_regexp =
-  Ocsigen_lib.Netstring_pcre.regexp "(.*)\\$u\\(([^\\)]*)\\)(.*)"
+  Ocsigen_base.Lib.Netstring_pcre.regexp "(.*)\\$u\\(([^\\)]*)\\)(.*)"
 
 let parse_user_dir s =
   match Pcre.full_split ~rex:user_dir_regexp ~max:(-1) s with
@@ -838,12 +838,12 @@ let parse_user_dir s =
 let replace_user_dir regexp dest pathstring =
   match dest with
   | Nodir dest ->
-      Ocsigen_lib.Netstring_pcre.global_replace regexp dest pathstring
+      Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest pathstring
   | Withdir (s1, u, s2) -> (
     try
-      let s1 = Ocsigen_lib.Netstring_pcre.global_replace regexp s1 pathstring in
-      let u = Ocsigen_lib.Netstring_pcre.global_replace regexp u pathstring in
-      let s2 = Ocsigen_lib.Netstring_pcre.global_replace regexp s2 pathstring in
+      let s1 = Ocsigen_base.Lib.Netstring_pcre.global_replace regexp s1 pathstring in
+      let u = Ocsigen_base.Lib.Netstring_pcre.global_replace regexp u pathstring in
+      let s2 = Ocsigen_base.Lib.Netstring_pcre.global_replace regexp s2 pathstring in
       let userdir = (Unix.getpwnam u).Unix.pw_dir in
       Logs.info ~src:section (fun fmt -> fmt "User %s" u);
       s1 ^ userdir ^ s2
@@ -858,27 +858,27 @@ let ( >|! ) v f = match v with None -> raise Not_concerned | Some v -> f v
 let find_redirection regexp full_url dest r =
   if full_url
   then
-    Ocsigen_request.host r >|! fun host ->
+    Request.host r >|! fun host ->
     let path =
-      let full_path = Ocsigen_request.path_string r in
-      match Ocsigen_request.query r with
+      let full_path = Request.path_string r in
+      match Request.query r with
       | None -> full_path
       | Some g -> full_path ^ "?" ^ g
     in
     let path =
-      Url.make_absolute_url ~https:(Ocsigen_request.ssl r) ~host
-        ~port:(Ocsigen_request.port r) ("/" ^ path)
+      Url.make_absolute_url ~https:(Request.ssl r) ~host
+        ~port:(Request.port r) ("/" ^ path)
     in
-    Ocsigen_lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->
+    Ocsigen_base.Lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->
     (* Matching regexp found! *)
-    Ocsigen_lib.Netstring_pcre.global_replace regexp dest path
+    Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest path
   else
     let path =
-      let sub_path = Ocsigen_request.sub_path_string r in
-      match Ocsigen_request.query r with
+      let sub_path = Request.sub_path_string r in
+      match Request.query r with
       | None -> sub_path
       | Some g -> sub_path ^ "?" ^ g
     in
-    Ocsigen_lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->
+    Ocsigen_base.Lib.Netstring_pcre.string_match regexp path 0 >|! fun _ ->
     (* Matching regexp found! *)
-    Ocsigen_lib.Netstring_pcre.global_replace regexp dest path
+    Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest path

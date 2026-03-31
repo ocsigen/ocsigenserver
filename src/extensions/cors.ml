@@ -25,7 +25,7 @@ let section = Logs.Src.create "ocsigen:ext:cors"
 (*** MAIN FUNCTION ***)
 
 let default_frame () =
-  Ocsigen_response.make (Cohttp.Response.make ~status:`OK ())
+  Ocsigen.Response.make (Cohttp.Response.make ~status:`OK ())
 
 type config =
   { methods : Cohttp.Code.meth list option
@@ -37,20 +37,20 @@ type config =
 exception Refused
 
 let add_headers config r response =
-  match Ocsigen_request.header r Ocsigen_header.Name.origin with
-  | None -> Lwt.return Ocsigen_extensions.Ext_do_nothing
+  match Ocsigen.Request.header r Ocsigen_http.Header.Name.origin with
+  | None -> Lwt.return Ocsigen.Extensions.Ext_do_nothing
   | Some origin ->
       Logs.info ~src:section (fun fmt -> fmt "request with origin: %s" origin);
-      let l = [Ocsigen_header.Name.access_control_allow_origin, origin] in
+      let l = [Ocsigen_http.Header.Name.access_control_allow_origin, origin] in
       let l =
         if config.credentials
-        then (Ocsigen_header.Name.access_control_allow_credentials, "true") :: l
+        then (Ocsigen_http.Header.Name.access_control_allow_credentials, "true") :: l
         else l
       in
       let l =
         match
-          Ocsigen_request.header r
-            Ocsigen_header.Name.access_control_request_method
+          Ocsigen.Request.header r
+            Ocsigen_http.Header.Name.access_control_request_method
         with
         | Some request_method ->
             let methods =
@@ -62,7 +62,7 @@ let add_headers config r response =
             in
             if methods
             then
-              (Ocsigen_header.Name.access_control_allow_methods, request_method)
+              (Ocsigen_http.Header.Name.access_control_allow_methods, request_method)
               :: l
             else (
               Logs.info ~src:section (fun fmt -> fmt "Method refused");
@@ -71,18 +71,18 @@ let add_headers config r response =
       in
       let l =
         match
-          Ocsigen_request.header r
-            Ocsigen_header.Name.access_control_request_headers
+          Ocsigen.Request.header r
+            Ocsigen_http.Header.Name.access_control_request_headers
         with
         | Some request_headers ->
-            (Ocsigen_header.Name.access_control_allow_headers, request_headers)
+            (Ocsigen_http.Header.Name.access_control_allow_headers, request_headers)
             :: l
         | None -> l
       in
       let l =
         match config.max_age with
         | Some max_age ->
-            (Ocsigen_header.Name.access_control_max_age, string_of_int max_age)
+            (Ocsigen_http.Header.Name.access_control_max_age, string_of_int max_age)
             :: l
         | None -> l
       in
@@ -90,26 +90,26 @@ let add_headers config r response =
         match config.exposed_headers with
         | [] -> l
         | exposed_headers ->
-            ( Ocsigen_header.Name.access_control_expose_headers
+            ( Ocsigen_http.Header.Name.access_control_expose_headers
             , String.concat ", " exposed_headers )
             :: l
       in
       Lwt.return
-        (Ocsigen_extensions.Ext_found
-           (fun () -> Lwt.return @@ Ocsigen_response.replace_headers response l))
+        (Ocsigen.Extensions.Ext_found
+           (fun () -> Lwt.return @@ Ocsigen.Response.replace_headers response l))
 
 let main config = function
-  | Ocsigen_extensions.Req_not_found (_, {Ocsigen_extensions.request_info; _})
+  | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
     -> (
-    match Ocsigen_request.meth request_info with
+    match Ocsigen.Request.meth request_info with
     | `OPTIONS -> (
         Logs.info ~src:section (fun fmt -> fmt "OPTIONS request");
         try add_headers config request_info (default_frame ())
         with Refused ->
           Logs.info ~src:section (fun fmt -> fmt "Refused request");
-          Lwt.return Ocsigen_extensions.Ext_do_nothing)
-    | _ -> Lwt.return Ocsigen_extensions.Ext_do_nothing)
-  | Ocsigen_extensions.Req_found ({Ocsigen_extensions.request_info; _}, response)
+          Lwt.return Ocsigen.Extensions.Ext_do_nothing)
+    | _ -> Lwt.return Ocsigen.Extensions.Ext_do_nothing)
+  | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info; _}, response)
     ->
       Logs.info ~src:section (fun fmt -> fmt "answered request");
       add_headers config request_info response
@@ -117,14 +117,14 @@ let main config = function
 (* Register extension *)
 
 let comma_space_regexp =
-  Ocsigen_lib.Netstring_pcre.regexp "[[:blank:]\n]*,[[:blank:]\n]*"
+  Ocsigen_base.Lib.Netstring_pcre.regexp "[[:blank:]\n]*,[[:blank:]\n]*"
 
 let parse_config _ _ _parse_fun config_elem =
   let config =
     ref
       {methods = None; credentials = false; max_age = None; exposed_headers = []}
   in
-  Ocsigen_extensions.(
+  Ocsigen.Extensions.(
     Configuration.process_element ~in_tag:"host"
       ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:
@@ -138,12 +138,12 @@ let parse_config _ _ _parse_fun config_elem =
                   config := {!config with max_age = s})
               ; Configuration.attribute ~name:"exposed_headers" (fun s ->
                   let s =
-                    Ocsigen_lib.Netstring_pcre.split comma_space_regexp s
+                    Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp s
                   in
                   config := {!config with exposed_headers = s})
               ; Configuration.attribute ~name:"methods" (fun s ->
                   let s =
-                    Ocsigen_lib.Netstring_pcre.split comma_space_regexp s
+                    Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp s
                   in
                   let s = Some (List.map Cohttp.Code.method_of_string s) in
                   config := {!config with methods = s}) ]
@@ -152,7 +152,7 @@ let parse_config _ _ _parse_fun config_elem =
   main !config
 
 let () =
-  Ocsigen_extensions.register ~name:"CORS"
+  Ocsigen.Extensions.register ~name:"CORS"
     ~fun_site:(fun _ _ _ -> parse_config)
     ()
 

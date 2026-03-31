@@ -19,7 +19,7 @@
 *)
 
 (** Config file parsing. See also module
-    {! Ocsigen_extensions.​Configuration } *)
+    {! Extensions.​Configuration } *)
 
 (**/**)
 
@@ -31,12 +31,12 @@ val parse_size_tag : string -> string -> int64 option
     The size can be either "infinity" or use SI or binary units, e.g.,
     10 10B 10o 10ko 10kB 10kiB 10MiB 10TB ... .
 
-    In case of error, raises [Ocsigen_config.Config_file_error m]
+    In case of error, raises [Config.Config_file_error m]
     where [m] is an error message explaining that a size was expected
     in tag [<tag>]. *)
 
 val first_pass : Xml.xml list -> unit
-(** Extracts (and stores via Ocsigen_config) the following information:
+(** Extracts (and stores via Config) the following information:
     {ul
     {- user to execute OcsigenServer (ex: www-data) }
     {- group to execute OcsigenServer (ex: www-data) }
@@ -46,7 +46,7 @@ val first_pass : Xml.xml list -> unit
     {- list of HTTPS port to listen on (ex: 443) }
     {- minimum and maximum number of threads }
     }
-    To be called early by [Ocsigen_server].
+    To be called early by [Server].
 *)
 
 val later_pass : Xml.xml list -> unit
@@ -55,4 +55,4 @@ val later_pass : Xml.xml list -> unit
 
 val parse_config : ?file:string -> unit -> Xml.xml list list
 (** Returns the config file. Use this if you want to read a config file from
-    your own executable. See {!Ocsigen_server.exec}.*)
+    your own executable. See {!Server.exec}.*)

@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *)
 
-open Ocsigen_lib
+open Lib
 
 exception Dynlink_error of string * exn
 exception Findlib_error of string * exn
@@ -30,7 +30,7 @@ let section = Logs.Src.create "ocsigen:dynlink"
 (* Translate .cmo/.cma extensions to .cmxs in native mode, and .cmxs
    to .cmo (.cma if the file exists) in bytecode mode. *)
 let translate =
-  if Ocsigen_config_static.is_native
+  if Config_static.is_native
   then
     fun filename ->
       if
@@ -164,14 +164,14 @@ let findfiles =
   fun package ->
     try
       let preds =
-        [ (if Ocsigen_config_static.is_native then "native" else "byte")
+        [ (if Config_static.is_native then "native" else "byte")
         ; "plugin"
         ; "mt" ]
       in
       let deps =
         List.filter
           (fun a ->
-             not @@ String.Set.mem a Ocsigen_config_static.builtin_packages)
+             not @@ String.Set.mem a Config_static.builtin_packages)
           (Findlib.package_deep_ancestors preds [package])
       in
       Logs.info ~src:section (fun fmt ->
@@ -184,7 +184,7 @@ let findfiles =
                 let raw = Findlib.package_property preds a "archive" in
                 (* Replacing .cmx/.cmxa by .cmxs *)
                 let raw =
-                  Ocsigen_lib.Netstring_pcre.global_replace cmx ".cmxs " raw
+                  Lib.Netstring_pcre.global_replace cmx ".cmxs " raw
                 in
                 List.filter (( <> ) "") (String.split ~multisep:true ' ' raw)
               with Not_found -> []

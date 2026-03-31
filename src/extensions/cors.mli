@@ -15,8 +15,8 @@ This module belongs to ocamlfind package
 (** Example of use:
 {[
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Staticmod.run ~dir:"static" ()
        ; Eliom.App.run () 
        ; Cors.run
@@ -38,6 +38,6 @@ val run :
   -> ?exposed_headers:string list
   -> ?methods:Cohttp.Code.meth list
   -> unit
-  -> Ocsigen_server.instruction
+  -> Ocsigen.Server.instruction
 (** [run] makes it possible to use this extension without
     configuration file.  *)

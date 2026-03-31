@@ -39,51 +39,51 @@ exception Not_concerned
 type assockind = Regexp of Pcre.regexp * string * bool
 
 let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
-  ( (match Ocsigen_lib.Netstring_pcre.string_match regexp suburl 0 with
+  ( (match Ocsigen_base.Lib.Netstring_pcre.string_match regexp suburl 0 with
     | None -> raise Not_concerned
     | Some _ ->
         (* Matching regexp found! *)
-        Ocsigen_lib.Netstring_pcre.global_replace regexp dest suburl)
+        Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest suburl)
   , fullrewrite )
 
 (* The function that will generate the pages from the request *)
 let gen regexp continue = function
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found (err, ri) ->
+  | Ocsigen.Extensions.Req_found _ ->
+      Lwt.return Ocsigen.Extensions.Ext_do_nothing
+  | Ocsigen.Extensions.Req_not_found (err, ri) ->
       let try_block () =
         Logs.info ~src:section (fun fmt -> fmt "Is it a rewrite?");
         let redir, full_rewrite =
-          let ri = ri.Ocsigen_extensions.request_info in
+          let ri = ri.Ocsigen.Extensions.request_info in
           find_rewrite regexp
-            (match Ocsigen_request.query ri with
-            | None -> Ocsigen_request.sub_path_string ri
-            | Some g -> Ocsigen_request.sub_path_string ri ^ "?" ^ g)
+            (match Ocsigen.Request.query ri with
+            | None -> Ocsigen.Request.sub_path_string ri
+            | Some g -> Ocsigen.Request.sub_path_string ri ^ "?" ^ g)
         in
         Logs.info ~src:section (fun fmt -> fmt "YES! rewrite to: %s" redir);
         if continue
         then
           Lwt.return
-          @@ Ocsigen_extensions.Ext_continue_with
+          @@ Ocsigen.Extensions.Ext_continue_with
                ( { ri with
-                   Ocsigen_extensions.request_info =
-                     Ocsigen_request.update ~full_rewrite
+                   Ocsigen.Extensions.request_info =
+                     Ocsigen.Request.update ~full_rewrite
                        ~uri:(Uri.of_string redir)
-                       ri.Ocsigen_extensions.request_info }
+                       ri.Ocsigen.Extensions.request_info }
                , Ocsigen_cookie_map.empty
                , err )
         else
           Lwt.return
-          @@ Ocsigen_extensions.Ext_retry_with
+          @@ Ocsigen.Extensions.Ext_retry_with
                ( { ri with
-                   Ocsigen_extensions.request_info =
-                     Ocsigen_request.update ~full_rewrite
+                   Ocsigen.Extensions.request_info =
+                     Ocsigen.Request.update ~full_rewrite
                        ~uri:(Uri.of_string redir)
-                       ri.Ocsigen_extensions.request_info }
+                       ri.Ocsigen.Extensions.request_info }
                , Ocsigen_cookie_map.empty )
       and catch_block = function
-        | Ocsigen_extensions.Not_concerned ->
-            Lwt.return (Ocsigen_extensions.Ext_next err)
+        | Ocsigen.Extensions.Not_concerned ->
+            Lwt.return (Ocsigen.Extensions.Ext_next err)
         | e -> Lwt.fail e
       in
       Lwt.catch try_block catch_block
@@ -93,7 +93,7 @@ let parse_config element =
   let dest = ref None in
   let fullrewrite = ref false in
   let continue = ref false in
-  Ocsigen_extensions.(
+  Ocsigen.Extensions.(
     Configuration.process_element ~in_tag:"host"
       ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:
@@ -112,26 +112,26 @@ let parse_config element =
   match !dest with
   | None ->
       raise
-        (Ocsigen_extensions.Error_in_config_file
+        (Ocsigen.Extensions.Error_in_config_file
            "url attribute expected for <rewrite>")
   | Some dest ->
       gen
         (Regexp
-           ( Ocsigen_lib.Netstring_pcre.regexp ("^" ^ !regexp ^ "$")
+           ( Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ !regexp ^ "$")
            , dest
            , !fullrewrite ))
         !continue
 
 (** Registration of the extension *)
 let () =
-  Ocsigen_extensions.register ~name:"rewritemod"
+  Ocsigen.Extensions.register ~name:"rewritemod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 
 let run ?(continue = false) ?(full_rewrite = false) ~regexp dest () _ _ _ =
   gen
     (Regexp
-       ( Ocsigen_lib.Netstring_pcre.regexp ("^" ^ regexp ^ "$")
+       ( Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ regexp ^ "$")
        , dest
        , full_rewrite ))
     continue
