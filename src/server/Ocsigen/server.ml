@@ -40,9 +40,9 @@ let () =
 
 (* fatal errors messages *)
 let errmsg = function
-  | Ocsigen_base.Dynlink_wrapper.Error e ->
+  | Dynlink_wrapper.Error e ->
       ( "Fatal - Dynamic linking error: "
-        ^ Ocsigen_base.Dynlink_wrapper.error_message e
+        ^ Dynlink_wrapper.error_message e
       , 6 )
   | Unix.Unix_error _ as e -> "Fatal - " ^ Printexc.to_string e, 9
   | Ssl.Private_key_error msg -> "Fatal - bad password: " ^ msg, 10
@@ -390,13 +390,13 @@ let exec config =
          Messages.errlog msg; exit errno);
       main (fun () ->
         (* Now I can load the modules *)
-        Ocsigen_base.Dynlink_wrapper.allow_unsafe_modules true;
+        Dynlink_wrapper.allow_unsafe_modules true;
         Extensions.start_initialisation ();
         Parseconfig.later_pass h;
         (* As libraries are reloaded each time the config file is
           read, we do not allow to register extensions in
           libraries. Seems it does not work :-/ *)
-        Ocsigen_base.Dynlink_wrapper.prohibit ["Extensions.R"])
+        Dynlink_wrapper.prohibit ["Extensions.R"])
   | _ :: _ :: _ ->
       Logs.warn ~src:section (fun fmt ->
         fmt "Multiple servers not supported anymore")
