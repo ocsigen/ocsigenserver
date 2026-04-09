@@ -1,8 +1,9 @@
+(include_subdirs qualified)
+
 (library
  (name ocsigenserver)
  (public_name ocsigenserver)
- (wrapped
-  (module_name Ocsigen))
+ (wrapped false)
  (libraries
   xml-light
   cohttp-lwt-unix
