@@ -1,0 +1,9 @@
+(include_subdirs no)
+
+(library
+ (name ocsigenserver_compat_http)
+ (public_name ocsigenserver-compat.http)
+ (synopsis "Backward-compatible Ocsigen_xxx module names (http)")
+ (wrapped false)
+ (flags (:standard -w -70))
+ (libraries ocsigenserver.http))
