@@ -37,3 +37,11 @@
   (syslog-message (>= 1.1.0)))
  (conflicts
   (pgocaml (< 2.2))))
+
+(package
+ (name ocsigenserver-compat)
+ (synopsis "Backward-compatible Ocsigen_xxx module names for ocsigenserver")
+ (description
+  "Provides the old Ocsigen_xxx module names (e.g. Ocsigen_extensions, Ocsigen_config, Ocsigen_lib) as aliases to the new Ocsigen.Xxx / Ocsigen_base.Xxx / Ocsigen_http.Xxx modules. Use this package to ease migration of existing code.")
+ (depends
+  ocsigenserver))
