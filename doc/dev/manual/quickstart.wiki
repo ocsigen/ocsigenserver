@@ -67,16 +67,16 @@ add library {{{ocsigenserver}}} and the extensions you need
   ocsigenserver
   ocsigenserver.ext.staticmod))
 }}}
-Call function <<a_api |val Ocsigen_server.start>> like this to run the server:
+Call function <<a_api |val Ocsigen.Server.start>> like this to run the server:
 <<code language="ocaml"|
 let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
 >>
 
 The server runs on port 8080 by default.
 Customise this using optional parameters of function
-<<a_api |val Ocsigen_server.start>>
+<<a_api |val Ocsigen.Server.start>>
 
 == Extensions ==
 
@@ -133,7 +133,7 @@ setcap 'cap_net_bind_service=+ep' <path to the server executable>
 If something goes wrong, first have a look in the logs to see if there
 is an error message. The directory of logs is set in the configuration
 file or through option {{{?logdir}}} of function
-<<a_api|val Ocsigen_server.start>>
+<<a_api|val Ocsigen.Server.start>>
 ({{{$OPAM_SWITCH_PREFIX/lib/ocsigenserver/var/log/ocsigenserver}}} by 
 default).
 
