@@ -1,7 +1,57 @@
 =Index of types=
 
+|@@ @style="tet-align: left;"@@\\A|
+|@@class="odocwiki_index"@ @@<<a_api text="answer"| type Extensions.answer >> ~[<<a_api | module Extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="attribute"| type Extensions.Configuration.attribute >> ~[<<a_api | module Extensions.Configuration >>~]|<<div class="odocwiki_info"|~Specification of a ~X~M~L attribute~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="auth"| type Authbasic.auth >> ~[<<a_api | module Authbasic >>~]||
 |@@ @style="tet-align: left;"@@\\C|
+|@@class="odocwiki_index"@ @@<<a_api text="charset"| type Charset_mime.charset >> ~[<<a_api | module Charset_mime >>~]|<<div class="odocwiki_info"|~By convention~, "no specified charset" is represented by the empty
+    string
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="charset_assoc"| type Charset_mime.charset_assoc >> ~[<<a_api | module Charset_mime >>~]|<<div class="odocwiki_info"|~Association between extensions and charset~, with a default value~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="client_conn"| type Request.client_conn >> ~[<<a_api | module Request >>~]|<<div class="odocwiki_info"|~Type of connection used by the client~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="condition"| type Accesscontrol.condition >> ~[<<a_api | module Accesscontrol >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="config_info"| type Extensions.config_info >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|~Configuration options~, passed to ~(and modified by~) extensions
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="content_type"| type Request.content_type >> ~[<<a_api | module Request >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="content_type"| type Multipart.content_type >> ~[<<a_api | module Multipart >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="cookie"| type Ocsigen_cookie_map.cookie >> ~[<<a_api | module Ocsigen_cookie_map >>~]|<<div class="odocwiki_info"|~Type used for cookies to set~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\D|
+|@@class="odocwiki_index"@ @@<<a_api text="do_not_serve"| type Extensions.do_not_serve >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|~Configuration to hide~/forbid local files
+>>
+|
+|@@ @style="tet-align: left;"@@\\E|
+|@@class="odocwiki_index"@ @@<<a_api text="element"| type Extensions.Configuration.element >> ~[<<a_api | module Extensions.Configuration >>~]|<<div class="odocwiki_info"|~Specification of a ~X~M~L element~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="extension"| type Extensions.extension >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|~For each ~<site~> tag in the configuration file~,
+    you can set the extensions you want~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="extension"| type Charset_mime.extension >> ~[<<a_api | module Charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="extension_composite"| type Extensions.extension_composite >> ~[<<a_api | module Extensions >>~]||
+|@@ @style="tet-align: left;"@@\\F|
+|@@class="odocwiki_index"@ @@<<a_api text="file"| type Charset_mime.file >> ~[<<a_api | module Charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="file_info"| type Request.file_info >> ~[<<a_api | module Request >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="file_info"| type Multipart.file_info >> ~[<<a_api | module Multipart >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="file_info"| type Extensions.file_info >> ~[<<a_api | module Extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="filename"| type Charset_mime.filename >> ~[<<a_api | module Charset_mime >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="filter"| type Deflatemod.filter >> ~[<<a_api | module Deflatemod >>~]|<<div class="odocwiki_info"|~Describes the content to deflate~, either using its content type~, 
+   or file extension
+>>
+|
+|@@ @style="tet-align: left;"@@\\I|
+|@@class="odocwiki_index"@ @@<<a_api text="instruction"| type Server.instruction >> ~[<<a_api | module Server >>~]|<<div class="odocwiki_info"|~The type of instructions to be used inside an host or site~.
 >>
 |
 |@@ @style="tet-align: left;"@@\\K|
@@ -10,21 +60,84 @@
 |
 |@@ @style="tet-align: left;"@@\\L|
 |@@class="odocwiki_index"@ @@<<a_api text="leftright"| type Ocsigen_lib_base.leftright >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@ @style="tet-align: left;"@@\\M|
+|@@class="odocwiki_index"@ @@<<a_api text="m"| type Ocsigen_stream.StringStream.m >> ~[<<a_api | module Ocsigen_stream.StringStream >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="mime_assoc"| type Charset_mime.mime_assoc >> ~[<<a_api | module Charset_mime >>~]|<<div class="odocwiki_info"|association between extensions and mime types~, with default value
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="mime_type"| type Charset_mime.mime_type >> ~[<<a_api | module Charset_mime >>~]|<<div class="odocwiki_info"|~M~I~M~E types~; the default value is <<span class="odocwiki_inlinecode"|"application~/octet~-stream">>
+>>
+|
 |@@ @style="tet-align: left;"@@\\N|
 |@@class="odocwiki_index"@ @@<<a_api text="node"| type Ocsigen_lib_base.Clist.node >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="node"| type Cache.Dlist.node >> ~[<<a_api | module Cache.Dlist >>~]||
+|@@ @style="tet-align: left;"@@\\O|
+|@@class="odocwiki_index"@ @@<<a_api text="out"| type Ocsigen_stream.StringStream.out >> ~[<<a_api | module Ocsigen_stream.StringStream >>~]|<<div class="odocwiki_info"|~Interface for stream creation ~(for tyxml~)
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="outcome"| type Ocsigen_stream.outcome >> ~[<<a_api | module Ocsigen_stream >>~]||
 |@@ @style="tet-align: left;"@@\\P|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_config"| type Extensions.parse_config >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|<<span class="odocwiki_inlinecode"|parse~_config>> is the type of the functions parsing a ~<site~> tag
+    ~(and returning an extension~)~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="parse_config_aux"| type Extensions.parse_config_aux >> ~[<<a_api | module Extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse_fun"| type Extensions.parse_fun >> ~[<<a_api | module Extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="parse_host"| type Extensions.parse_host >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|~Type of the functions parsing the content of a ~<host~> tag
+>>
+|
 |@@class="odocwiki_index"@ @@<<a_api text="path"| type Ocsigen_lib_base.Url_base.path >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="poly"| type Ocsigen_lib_base.poly >> ~[<<a_api | module Ocsigen_lib_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="post_data"| type Request.post_data >> ~[<<a_api | module Request >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="post_data"| type Multipart.post_data >> ~[<<a_api | module Multipart >>~]||
+|@@ @style="tet-align: left;"@@\\R|
+|@@class="odocwiki_index"@ @@<<a_api text="redirection"| type Revproxy.redirection >> ~[<<a_api | module Revproxy >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="redirection"| type Redirectmod.redirection >> ~[<<a_api | module Redirectmod >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="request"| type Extensions.request >> ~[<<a_api | module Extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="request_state"| type Extensions.request_state >> ~[<<a_api | module Extensions >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="resolved"| type Local_files.resolved >> ~[<<a_api | module Local_files >>~]|<<div class="odocwiki_info"|~Local file corresponding to a request~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\S|
+|@@class="odocwiki_index"@ @@<<a_api text="socket_type"| type Config.socket_type >> ~[<<a_api | module Config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="ssl_info"| type Config.ssl_info >> ~[<<a_api | module Config >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="step"| type Ocsigen_stream.step >> ~[<<a_api | module Ocsigen_stream >>~]|<<div class="odocwiki_info"|~A stream may be composed by several substreams~.
+>>
+|
+|@@class="odocwiki_index"@ @@<<a_api text="stream"| type Ocsigen_stream.stream >> ~[<<a_api | module Ocsigen_stream >>~]||
 |@@ @style="tet-align: left;"@@\\T|
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Response.Body.t >> ~[<<a_api | module Response.Body >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Response.t >> ~[<<a_api | module Response >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Request.t >> ~[<<a_api | module Request >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="t"| type Polytables.t >> ~[<<a_api | module Polytables >>~]|<<div class="odocwiki_info"|~The type of tables
 >>
 |
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Ocsigen_stream.t >> ~[<<a_api | module Ocsigen_stream >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="t"| type Ocsigen_lib_base.Url_base.t >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="t"| type Ocsigen_lib_base.Clist.t >> ~[<<a_api | module Ocsigen_lib_base.Clist >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="t"| type Ocsigen_lib_base.Option.t >> ~[<<a_api | module Ocsigen_lib_base.Option >>~]||
 |@@class="odocwiki_index"@ @@<<a_api text="t"| type Ocsigen_cookie_map.t >> ~[<<a_api | module Ocsigen_cookie_map >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Header.Accept_language.t >> ~[<<a_api | module Header.Accept_language >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Header.Accept_encoding.t >> ~[<<a_api | module Header.Accept_encoding >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Header.Accept.t >> ~[<<a_api | module Header.Accept >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Header.Mime_type.t >> ~[<<a_api | module Header.Mime_type >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Header.Name.t >> ~[<<a_api | module Header.Name >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Header.t >> ~[<<a_api | module Header >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Config.Socket_type.t >> ~[<<a_api | module Config.Socket_type >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="t"| type Cache.Dlist.t >> ~[<<a_api | module Cache.Dlist >>~]||
 |@@ @style="tet-align: left;"@@\\U|
+|@@class="odocwiki_index"@ @@<<a_api text="ud_string"| type Extensions.ud_string >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|~The type for string that may contain a ~$u~(~.~.~.~)
+>>
+|
 |@@class="odocwiki_index"@ @@<<a_api text="uri"| type Ocsigen_lib_base.Url_base.uri >> ~[<<a_api | module Ocsigen_lib_base.Url_base >>~]||
+|@@class="odocwiki_index"@ @@<<a_api text="userconf_info"| type Extensions.userconf_info >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|~Information received by extensions accepting userconf files~.
+>>
+|
+|@@ @style="tet-align: left;"@@\\V|
+|@@class="odocwiki_index"@ @@<<a_api text="virtual_hosts"| type Extensions.virtual_hosts >> ~[<<a_api | module Extensions >>~]|<<div class="odocwiki_info"|~Type of the result of parsing the field <<span class="odocwiki_inlinecode"|hostfiler>> in the configuration
+    file~.
+>>
+|
 |@@ @style="tet-align: left;"@@\\Y|
 |@@class="odocwiki_index"@ @@<<a_api text="yesnomaybe"| type Ocsigen_lib_base.yesnomaybe >> ~[<<a_api | module Ocsigen_lib_base >>~]||
 \\
