@@ -15,8 +15,6 @@ Build instructions:
  * [optional] run "make logrotate" as root to install logrotate
               configuration files in /etc/logrotate.d
 
- * [optional] run "make doc" to build the ocamldoc
-
  * run "make purge" to uninstall everything (even configuration files)
 
 ------------------------------------------------------------------
