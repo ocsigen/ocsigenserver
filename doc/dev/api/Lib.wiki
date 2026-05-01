@@ -1,10 +1,10 @@
 =Module <<a_api_type | module Lib >> =
 <<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|module>> <<span class="ocsforge_color_uid"|<<span class="ocsforge_color_uid"|Lib>>>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="ocsforge_color_keyword"|sig>><<a_api text=".." | module Lib >><<span class="ocsforge_color_keyword"|end>>>>~This module contains some auxiliaries for the ~Ocsigenserver~. ~In contrast to
-    <<a_api | module Ocsigen_lib_base >>~, the function may also refer to libraries other than the
+    <<span class="odocwiki_inlinecode"|~Ocsigen~_lib~_base>>~, the function may also refer to libraries other than the
     standard library~.
 
 ----
-<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|include>> <<a_api | module Ocsigen_lib_base >>>>
+<<pre class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|include>> Ocsigen_lib_base>>
 <<pre id="VALmake_cryptographic_safe_string" class="ocsforge_color odocwiki_code"|<<span class="ocsforge_color_keyword"|val>> <<span class="odocwiki_name"|make~_cryptographic~_safe~_string>> <<span class="ocsforge_color_delimiter"|~:>> <<span class="odocwiki_type"|unit <<span class="ocsforge_color_delimiter"| -> >> string>>>><<div class="odocwiki_info"|~Generate an unique and cryptographically safe random string~.
     ~It is impossible to guess for other people and
     will never return twice the same value ~(with very good probabilities~)~.

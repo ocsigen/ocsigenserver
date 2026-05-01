@@ -2,81 +2,14 @@
 * <<a_api text="Index of types" | index types >>
 * <<a_api text="Index of exceptions" | index exceptions >>
 * <<a_api text="Index of values" | index values >>
-* <<a_api text="Index of class methods" | index methods >>
-* <<a_api text="Index of classes" | index classes >>
 * <<a_api text="Index of modules" | index modules >>
 \
-|<<a_api | module Accesscontrol >>|<<div class="odocwiki_info"|~Accesscontrol~: ~Conditional access to some sites
->>
-|
-|<<a_api | module Authbasic >>|<<div class="odocwiki_info"|~Authbasic~: ~Basic ~H~T~T~P authentication
->>
-|
-|<<a_api | module Cache >>|<<div class="odocwiki_info"|~Cache~.
->>
-|
-|<<a_api | module Charset_mime >>||
-|<<a_api | module Command >>|<<div class="odocwiki_info"|~Extending server commands
->>
-|
-|<<a_api | module Config >>|<<div class="odocwiki_info"|~Configuring ~Ocsigen server
->>
-|
-|<<a_api | module Config_static >>||
-|<<a_api | module Cors >>|<<div class="odocwiki_info"|~Cross~-~Origin ~Resource ~Sharing
->>
-|
-|<<a_api | module Deflatemod >>|<<div class="odocwiki_info"|~Deflatemod~: compress output data
->>
-|
-|<<a_api | module Extendconfiguration >>|<<div class="odocwiki_info"|~Extendconfiguration~: ~More configuration options for ~Ocsigen ~Server
->>
-|
-|<<a_api | module Extensions >>|<<div class="odocwiki_info"|~Extensions interface for ~Ocsigen ~Server
->>
-|
-|<<a_api | module Header >>||
-|<<a_api | module Lib >>|<<div class="odocwiki_info"|~This module contains some auxiliaries for the ~Ocsigenserver~.
->>
-|
-|<<a_api | module Loader >>|<<div class="odocwiki_info"|~Module <<span class="odocwiki_inlinecode"|~Loader>>~: ~Dynamic loading for ~Ocsigen~.
->>
-|
-|<<a_api | module Local_files >>||
-|<<a_api | module Messages >>|<<div class="odocwiki_info"|~Writing messages in the logs
->>
-|
-|<<a_api | module Multipart >>||
-|<<a_api | module Ocsigen_cohttp >>||
 |<<a_api | module Ocsigen_cookie_map >>||
 |<<a_api | module Ocsigen_lib_base >>|<<div class="odocwiki_info"|~This module just contains only extensions of the standard library and very
     basic ~Ocsigen values and exceptions~.
 >>
 |
-|<<a_api | module Ocsigen_stream >>||
-|<<a_api | module Outputfilter >>|<<div class="odocwiki_info"|~Outputfilter~: ~Rewrite some part of the output
->>
-|
-|<<a_api | module Parseconfig >>|<<div class="odocwiki_info"|~Config file parsing~.
->>
-|
 |<<a_api | module Polytables >>|<<div class="odocwiki_info"|~Polymorphic tables ~(using ~Map~)
 >>
 |
-|<<a_api | module Redirectmod >>|<<div class="odocwiki_info"|~Redirectmod~: ~H~T~T~P redirections
->>
-|
-|<<a_api | module Request >>||
-|<<a_api | module Response >>||
-|<<a_api | module Revproxy >>|<<div class="odocwiki_info"|~Revproxy~: ~Forward a request to another ~Web server
->>
-|
-|<<a_api | module Rewritemod >>|<<div class="odocwiki_info"|~Rewrite~: ~Change the request
->>
-|
-|<<a_api | module Server >>||
-|<<a_api | module Staticmod >>|<<div class="odocwiki_info"|~Staticmod~: serve static files
->>
-|
-|<<a_api | module Userconf >>||
 

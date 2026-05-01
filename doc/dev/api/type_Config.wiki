@@ -17,6 +17,7 @@
     end
   type socket_type = Config.Socket_type.t
   exception Config_file_error of string
+  val set_global_log_level : Logs.level option -> unit
   val server_name : string
   val full_server_name : string
   val version_number : string
