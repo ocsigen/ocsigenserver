@@ -5,8 +5,6 @@ src/baselib/ocsigen_config_static.ml
 ocsigenserver.conf.sample
 ocsigenserver.conf.opt.sample
 local
-doc/api-html
-doc/api-wiki
 _opam
 _build
 .vscode

@@ -1,6 +1,6 @@
 {1 Ocsigen server - API reference}
 {!modules:
-Ocsigen_server
+Server
 }
 {2 Extensions}
 {!modules:
@@ -19,19 +19,19 @@ Cors
 
 {2 Persistent data, writing in the logs, configuration file extension, polymorphic tables}
 {!modules:
-Ocsigen_lib
-Ocsigen_messages
-Ocsigen_parseconfig
+Lib
+Messages
+Parseconfig
 Polytables
-Ocsigen_cache
-Ocsigen_config
+Cache
+Config
 }
 
 {2 Extending Ocsigen Server}
 {!modules:
-Ocsigen_extensions
-Ocsigen_local_files
-Ocsigen_header
+Extensions
+Local_files
+Header
 Ocsigen_stream
 }
 

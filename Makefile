@@ -3,15 +3,18 @@ include Makefile.options
 
 ### Building
 
-.PHONY: default all doc
+.PHONY: default all wikidoc
 default all: build
 
 .PHONY: build
 build:
 	dune build -p ocsigenserver
 	${MAKE} -C src/server build
-doc:
-	$(MAKE) -C doc
+
+# Wiki API documentation (output: _build/doc/dev/api/).
+# To publish, copy the generated wikis to doc/dev/api/ on the wikidoc branch.
+wikidoc:
+	bash build/gen_wikidoc.sh
 
 ### Testing : local execution and toplevel ###
 
@@ -37,7 +40,6 @@ clean.local:
 
 distclean: clean.local
 	${MAKE} -C src/server distclean
-	-make -C doc clean
 	-rm Makefile.config
 	-rm -f *~ \#* .\#*
 
@@ -74,7 +76,7 @@ endif
 
 install.files:
 	@echo
-	@echo "## Run \"make doc\" and \"make install.doc\" to build and install the ocamldoc."
+	@echo "## Run \"make wikidoc\" to generate wiki API documentation."
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
 	 ## Configuration files
 	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
@@ -100,7 +102,6 @@ install.files:
 	$(INSTALL) -m ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
 
 uninstall:
-	-make -C doc uninstall
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf.sample
 	-rm -f $(TEMPROOT)$(MANDIR)/ocsigenserver.1
 	-rm -f $(TEMPROOT)$(COMMANDPIPE)
@@ -123,9 +124,6 @@ purge.files:
 			  $(TEMPROOT)$(STATICPAGESDIR)/%, \
 			  $(wildcard local/var/www/*.html))
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(STATICPAGESDIR)
-
-install.doc:
-	${MAKE} -C doc install
 
 ### Install logrotate configuration files ###
 

@@ -15,9 +15,24 @@ Build instructions:
  * [optional] run "make logrotate" as root to install logrotate
               configuration files in /etc/logrotate.d
 
- * [optional] run "make doc" to build the ocamldoc
-
  * run "make purge" to uninstall everything (even configuration files)
+
+------------------------------------------------------------------
+
+Generating API documentation:
+=============================
+
+Wiki API pages are generated from the `.mli` files using `ocamldoc`
+and the [wikidoc](https://github.com/ocsigen/wikidoc) plugin:
+
+ * run "make wikidoc" — output goes to `_build/doc/dev/api/`.
+
+The wiki files are published on the [wikidoc branch] under
+`doc/dev/api/`. To update the published documentation, copy the
+generated `.wiki` files to a checkout of the `wikidoc` branch and
+commit.
+
+[wikidoc branch]: https://github.com/ocsigen/ocsigenserver/tree/wikidoc/doc/dev/api
 
 ------------------------------------------------------------------
 
