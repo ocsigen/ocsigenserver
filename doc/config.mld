@@ -489,7 +489,7 @@ Predefined orders:
 - [gc]: will trigger a heap compaction
 - [shutdown]: will shutdown the server when all the current rerquests are fulfilled {e (see below for more information)}
 - [reopen_logs]: will reopen the logs files (see logrotate configuration for an example of use)
-- [clearcache]: will empty all the caches defined by the module [Ocsigen_cache]
+- [clearcache]: will empty all the caches defined by the module [Ocsigen_base.Cache]
 
 
 {3 [<extconf>] : Splitting the configuration file}

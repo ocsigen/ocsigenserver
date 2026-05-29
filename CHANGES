@@ -1,4 +1,8 @@
 ==== 8.0.0~dev ===
+ * Documentation: the manual now lives in the main branch as odoc pages
+   (doc/*.mld), compiled in place by `dune build @doc`, replacing the
+   wikicreole manual of the wikidoc branch. doc/index.mld is the package
+   landing page (manual table of contents + API reference).
  * Module namespace modernization
    - Public modules are now grouped under three wrappers:
      * ocsigenserver (main library): Ocsigen.Server, Ocsigen.Config,
