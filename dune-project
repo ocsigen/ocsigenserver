@@ -1,6 +1,6 @@
 (lang dune 3.19)
 (name ocsigenserver)
-(version 7.0.0)
+(version 8.0.0~dev)
 
 (generate_opam_files true)
 
