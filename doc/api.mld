@@ -1,0 +1,44 @@
+{0 API reference}
+
+API reference for Ocsigen Server. See the {{!page-quickstart}manual} to get
+started.
+
+{!modules:
+Ocsigen.Server
+}
+
+{2 Extensions}
+
+{!modules:
+Staticmod
+Extendconfiguration
+Accesscontrol
+Authbasic
+Deflatemod
+Redirectmod
+Revproxy
+Rewritemod
+Outputfilter
+Userconf
+Cors
+}
+
+{2 Persistent data, writing in the logs, configuration file extension, polymorphic tables}
+
+{!modules:
+Ocsigen_base.Lib
+Ocsigen.Messages
+Ocsigen.Parseconfig
+Polytables
+Ocsigen_base.Cache
+Ocsigen.Config
+}
+
+{2 Extending Ocsigen Server}
+
+{!modules:
+Ocsigen.Extensions
+Ocsigen.Local_files
+Ocsigen_http.Header
+Ocsigen_base.Ocsigen_stream
+}
