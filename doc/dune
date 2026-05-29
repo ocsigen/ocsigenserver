@@ -1,0 +1,4 @@
+; Manual and API landing pages, compiled in place by `dune build @doc`.
+; index.mld is the package landing page; the other .mld files are the manual.
+(documentation
+ (package ocsigenserver))
