@@ -1,0 +1,49 @@
+# Build the Ocsigen Server documentation with odoc, theme it with the Ocsigen
+# chrome (wodoc), and publish it on the project's gh-pages branch, served at
+# https://ocsigen.org/ocsigenserver/. See doc/README.md.
+#
+# CI deploys ONLY the "dev" docs and ONLY from master. Stable versions are built
+# by hand and committed to gh-pages at release time, so there is no dispatch /
+# release path here.
+name: Documentation
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+jobs:
+  build-deploy:
+    if: github.repository == 'ocsigen/ocsigenserver'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.4.0"
+
+      - name: Install dependencies
+        run: |
+          opam install . --deps-only --with-doc
+          opam install odoc
+          opam pin add -n wodoc https://github.com/ocsigen/wodoc.git
+          opam install wodoc
+
+      - name: Build documentation (dev)
+        run: >-
+          opam exec -- wodoc build --config doc/wodoc
+          --menu https://ocsigen.org/wodoc/menu.html
+          --out "$PWD/_doc-site/dev" --label dev
+
+      - name: Deploy to gh-pages (replace only dev/, keep the rest)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: _doc-site/dev
+          target-folder: dev
+          clean: true
