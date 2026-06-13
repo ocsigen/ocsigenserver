@@ -1,6 +1,6 @@
 ;; Declarative wodoc config for the Ocsigen Server documentation.
 ;;   wodoc build --config doc/wodoc --out <dir>/<label> --label <v> \
-;;               --menu https://ocsigen.org/wodoc/menu.html [--local]
+;;               --menu https://ocsigen.org/doc/menu.html [--local]
 ;; (wodoc build runs `dune build @doc` itself when --src is omitted.)
 ;; Ocsigen Server has no client/server split, so plain `dune build @doc` is
 ;; enough (no odoc-driver). Internal links are version-relative via {{base}} and

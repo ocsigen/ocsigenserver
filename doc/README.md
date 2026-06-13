@@ -22,7 +22,7 @@ navigation and page theming are declared in [`doc/wodoc`](wodoc) and produced by
 
 ```
 wodoc build --config doc/wodoc --label dev --out _doc-site/dev \
-  --menu https://ocsigen.org/wodoc/menu.html
+  --menu https://ocsigen.org/doc/menu.html
 ```
 
 `wodoc build` runs `dune build @doc`, assembles every page into the Ocsigen site
