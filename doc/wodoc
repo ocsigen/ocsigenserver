@@ -13,6 +13,7 @@
 (css /css/style.css /css/ocsigen-odoc.css)  ; shared Ocsigen theme (wodoc css default changed)
 (landing ocsigenserver/index.html)
 (manual-root)
+(packages ocsigenserver)  ; exclude ocsigenserver-compat (backward-compat shims) from the doc
 (nav
   (section "Usage"
     (link "Quick start"          ocsigenserver/index.html      index)
