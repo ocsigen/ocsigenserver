@@ -1,0 +1,37 @@
+;; Declarative wodoc config for the Ocsigen Server documentation.
+;;   wodoc build --config doc/wodoc --out <dir>/<label> --label <v> \
+;;               --menu https://ocsigen.org/doc/menu.html [--local]
+;; (wodoc build runs `dune build @doc` itself when --src is omitted.)
+;; Ocsigen Server has no client/server split, so plain `dune build @doc` is
+;; enough (no odoc-driver). Internal links are version-relative via {{base}} and
+;; the version <select> is client-side — fixing the old hardcoded absolute base
+;; (report §14.2 #4) for free. The manual (doc/*.mld) and API live under
+;; ocsigenserver/.
+(project ocsigenserver)
+(title Server)
+(pub /ocsigenserver)
+(landing ocsigenserver/quickstart.html)
+(manual-root)
+(nav
+  (section "Usage"
+    (link "Quick start"          ocsigenserver/quickstart.html quickstart)
+    (link "Launching the server" ocsigenserver/launching.html  launching)
+    (link "Configuration file"   ocsigenserver/config.html     config)
+    (link "Using as a library"   ocsigenserver/staticlink.html staticlink))
+  (section "Extensions"
+    (link "Staticmod"          ocsigenserver/staticmod.html          staticmod)
+    (link "Eliom"              ocsigenserver/eliom.html              eliom)
+    (link "Extendconfiguration" ocsigenserver/extendconfiguration.html extendconfiguration)
+    (link "Accesscontrol"      ocsigenserver/accesscontrol.html      accesscontrol)
+    (link "Authbasic"          ocsigenserver/authbasic.html          authbasic)
+    (link "Deflatemod"         ocsigenserver/deflatemod.html         deflatemod)
+    (link "Redirectmod"        ocsigenserver/redirectmod.html        redirectmod)
+    (link "Revproxy"           ocsigenserver/revproxy.html           revproxy)
+    (link "Rewritemod"         ocsigenserver/rewritemod.html         rewritemod)
+    (link "Outputfilter"       ocsigenserver/outputfilter.html       outputfilter)
+    (link "Userconf"           ocsigenserver/userconf.html           userconf)
+    (link "CORS"               ocsigenserver/cors.html               cors))
+  (section "Developer documentation"
+    (link "Writing an extension" ocsigenserver/extend.html extend))
+  (api-section "API"
+    (link "API reference" ocsigenserver/api.html api)))
