@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Deflatemod — Server</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="/css/ocsigen-odoc.css"/>
+  <script src="./highlight.pack.js"></script>
+  <script src="./wodoc-highlight.js"></script>
+</head>
+<body class="wodoc-page wodoc-doc">
+  <!-- Shared site menu — THE single source of truth for the header, top menu and
+     drawer of EVERY Ocsigen doc page (vitrine + all projects). Canonical copy
+     lives here in ocsigen.github.io; each project's build fetches it. Injected
+     by `wodoc assemble --menu`. Holes filled by the tool (braces omitted here so
+     this comment is not itself rewritten by the hole-filler):
+       subproject  the sub-project name shown next to the Ocsigen logo
+                   (empty on the vitrine), via --subproject
+       leftnav     the project's left navigation, expanded into BOTH the mobile
+                   drawer (below) and the left column (in the page template),
+                   via --leftnav
+     The current entry is highlighted by adding the `current` class to the
+     element carrying data-wodoc-page=<id>: --current on the vitrine (page id),
+     --menu-current in a project (the project id). Nothing is hardcoded here, so
+     this file is the ONLY place the menu is defined.
+
+     Links are the FINAL site paths (/<project>/, /<page>): the target layout
+     where each project is served at ocsigen.org/<project>/ — no transitional
+     /wodoc/ prefix. -->
+<div class="page-header">
+  <p class="logo-ocsigen"><a href="/"><img src="/img/ocsigen-white.svg" alt="Ocsigen"/></a></p>
+  <p class="logo-subproject">Server</p>
+
+  <div class="mainmenu">
+    <p class="mainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></p>
+    <p class="mainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></p>
+    <p data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></p>
+    <p data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></p>
+    <p data-wodoc-page="ocsigenserver" class="current"><a href="/ocsigenserver/">Server</a></p>
+    <p data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></p>
+    <p data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></p>
+    <p data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></p>
+  </div>
+
+  <form id="googlesearch" action="https://google.com/search">
+    <input name="q" id="gsearch-box" placeholder="Search using Google"/>
+    <label for="gsearch-box"><img src="/img/search.svg" alt="" id="gsearch-icon"/></label>
+    <input type="submit" id="gsearch-submit" onclick="document.getElementById('gsearch-box').value += ' site:ocsigen.org';"/>
+  </form>
+
+  <aside class="how-drawer">
+    <input id="how-drawer-toggle" type="checkbox"/>
+    <label for="how-drawer-toggle" id="how-drawer-label"><span class="how-drawer-icon"></span></label>
+    <nav class="how-drawer-content">
+      <ul class="drawermainmenu">
+        <li class="drawermainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></li>
+        <li class="drawermainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></li>
+        <li class="drawermainmenu-project current" data-wodoc-page="ocsigenserver"><a href="/ocsigenserver/">Server</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-toolkit"><a href="/ocsigen-toolkit/">Toolkit</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsipersist"><a href="/ocsipersist/">Ocsipersist</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="reactiveData"><a href="/reactiveData/">ReactiveData</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-i18n"><a href="/ocsigen-i18n/">i18n</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="wodoc"><a href="/wodoc/">Wodoc</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="projects"><a href="/projects">Other projects</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="papers"><a href="/papers">Research papers</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="credits"><a href="/credits">Who does Ocsigen?</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="contributing"><a href="/contributing">Contributing</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="blog"><a href="/blog">Blog</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="install"><a href="/install">Installation</a></li>
+        <li class="drawermainmenu-page"><a href="https://github.com/ocsigen">Source code</a></li>
+      </ul>
+      <!-- On mobile the left column is hidden; its menu lives here in the burger
+           (.how-doctree, shown only on narrow screens), as the old site did.
+           Empty on the vitrine; the leftnav hole is filled (with the same
+           fragment as the left column) only on project pages. -->
+      <nav class="how-doctree"><div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#usage">Usage</a><ul><li><a href="#what-is-deflatemod?">What is deflatemod?</a></li><li><a href="#what-do-i-need-to-use-deflatemod?">What do I need to use deflatemod?</a></li><li><a href="#how-do-i-use-deflatemod?">How do I use deflatemod?</a></li><li><a href="#how-do-i-configure-deflatemod?">How do I configure deflatemod?</a></li><li><a href="#i-want-to-deflate-only-some-files.-is-it-possible?">I want to deflate only some files. Is it possible?</a></li></ul></li><li><a href="#technical-questions">Technical questions</a><ul><li><a href="#how-can-i-choose-the-content-encoding-(gzip-or-deflate)?">How can I choose the content-encoding (gzip or deflate)?</a></li><li><a href="#does-deflatemod-support-transfert-encoding?">Does deflatemod support transfert-encoding?</a></li><li><a href="#how-does-deflatemod-deal-with-the-content-length-header?">How does deflatemod deal with the content-length header?</a></li></ul></li></ul></nav>
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="./quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="./launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="./config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="./staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="./staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="./eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="./extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="./accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="./authbasic.html">Authbasic</a></li>
+<li class="ml3 current" data-wodoc-page="deflatemod"><a href="./deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="./redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="./revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="./rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="./outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="./userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors"><a href="./cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="./extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="./api.html">API reference</a></li>
+</ul>
+</nav>
+</nav>
+    </nav>
+  </aside>
+</div>
+
+
+  <div class="project-page">
+    <div class="twocols">
+      <nav class="leftcol">
+        <div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#usage">Usage</a><ul><li><a href="#what-is-deflatemod?">What is deflatemod?</a></li><li><a href="#what-do-i-need-to-use-deflatemod?">What do I need to use deflatemod?</a></li><li><a href="#how-do-i-use-deflatemod?">How do I use deflatemod?</a></li><li><a href="#how-do-i-configure-deflatemod?">How do I configure deflatemod?</a></li><li><a href="#i-want-to-deflate-only-some-files.-is-it-possible?">I want to deflate only some files. Is it possible?</a></li></ul></li><li><a href="#technical-questions">Technical questions</a><ul><li><a href="#how-can-i-choose-the-content-encoding-(gzip-or-deflate)?">How can I choose the content-encoding (gzip or deflate)?</a></li><li><a href="#does-deflatemod-support-transfert-encoding?">Does deflatemod support transfert-encoding?</a></li><li><a href="#how-does-deflatemod-deal-with-the-content-length-header?">How does deflatemod deal with the content-length header?</a></li></ul></li></ul></nav>
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="./quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="./launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="./config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="./staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="./staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="./eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="./extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="./accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="./authbasic.html">Authbasic</a></li>
+<li class="ml3 current" data-wodoc-page="deflatemod"><a href="./deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="./redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="./revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="./rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="./outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="./userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors"><a href="./cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="./extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="./api.html">API reference</a></li>
+</ul>
+</nav>
+
+      </nav>
+      <article class="rightcol">
+        <header class="odoc-preamble"><h1 id="deflatemod">Deflatemod</h1></header>
+        <div class="odoc-content"><h2 id="usage">Usage</h2><h3 id="what-is-deflatemod?">What is deflatemod?</h3><p>Deflatemod is a module for Ocsigen that allows you to deflate content, using HTTP/1.1 mechanism. It supports gzip as well as deflate.</p><h3 id="what-do-i-need-to-use-deflatemod?">What do I need to use deflatemod?</h3><p>You need the camlzip library by Xavier Leroy and a working Ocsigen installation.</p><h3 id="how-do-i-use-deflatemod?">How do I use deflatemod?</h3><p>To use that extension, load OCamlfind package <code>ocsigenserver.ext.deflatemod</code>, either from your Dune file (if you are using static linking), or from the configuration file:</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.deflatemod&quot; /&gt;</pre><p>This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module <a href="Deflatemod/index.html"><code>Deflatemod</code></a>.</p><h3 id="how-do-i-configure-deflatemod?">How do I configure deflatemod?</h3><p>Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:</p><ul><li>the compress level: from 0 (no compression) to 9. The higher, the better compression rate you achieve. Conversely, the lower, the faster it is. Default is 6.</li><li>the buffer size: default is 1024. You shouldn't need to change this one, but you can still try a few other values (any feedback welcomed).</li></ul><p>For example:</p><pre>&lt;extension module=&quot;/home/gabriel/ocsigen/extensions/deflatemod.cmo&quot;&gt;
+&lt;compress level=&quot;6&quot; /&gt;
+&lt;buffer size=&quot;1024&quot; /&gt;
+&lt;/extension&gt;</pre><p>Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.</p><h3 id="i-want-to-deflate-only-some-files.-is-it-possible?">I want to deflate only some files. Is it possible?</h3><p>To some extent, yes. You can '''exclude''' some files and deflate every other, according to their mime-type or extension (''ie.'' the end of the '''url''' in fact, not really the file name on the disk).</p><p>Here is an example:</p><pre>&lt;host&gt;
+&lt;site&gt;
+&lt;!-- ... --&gt;
+&lt;/site&gt;
+
+&lt;deflate compress=&quot;allbut&quot;&gt;
+&lt;!-- deflate everything but *.tar.gz files and image/* files --&gt;
+    &lt;extension&gt;.tar.gz&lt;/extension&gt;
+    &lt;type&gt;image/*&lt;/type&gt;
+&lt;/deflate&gt;
+&lt;/host&gt;</pre><p>As you can see, you must put the &lt;deflate&gt; tag at the very end of the &lt;host&gt; element. Indeed, Ocsigen deals with extensions sequentially, so if you put &lt;site&gt; or other elements '''after''' &lt;deflatemod&gt;, they won't be compressed.</p><p>Conversely, you can choose to deflate '''only''' some files, based on their mime-types or extension:</p><pre>&lt;host&gt;
+&lt;site&gt;
+&lt;!-- ... --&gt;
+&lt;/site&gt;
+
+&lt;deflate compress=&quot;only&quot;&gt;
+&lt;!-- deflate only text/html files --&gt;
+    &lt;type&gt;text/html&lt;/type&gt;
+&lt;/deflate&gt;
+&lt;/host&gt;</pre><p>Warning: you can use only one contenttype tag! So you must choose, either the &quot;only&quot; or the &quot;allbut&quot; way.</p><p>Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please fill a bug report or send a patch.</p><h2 id="technical-questions">Technical questions</h2><h3 id="how-can-i-choose-the-content-encoding-(gzip-or-deflate)?">How can I choose the content-encoding (gzip or deflate)?</h3><p>You can't. Deflatemod follows the RFC and chooses automatically the right encoding, based upon Accept-encoding header sent by the client.</p><h3 id="does-deflatemod-support-transfert-encoding?">Does deflatemod support transfert-encoding?</h3><p>No, it doesn't. Content-encoding is definitely a better solution, providing end to end compression at the content-level.</p><h3 id="how-does-deflatemod-deal-with-the-content-length-header?">How does deflatemod deal with the content-length header?</h3><p>As it cannot compute the new content-length, deflatemod uses chunked-encoding. This is the recommended way to go.</p><p><em>Page written by Gabriel Kerneis</em></p></div>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    var wodocPub = "/ocsigenserver";
+    // Switch version: keep the current page, swapping only the version segment.
+    function wodocVersion(v) {
+      if (!v) return;
+      var re = new RegExp('^(' + wodocPub + '/)[^/]+');
+      var p = location.pathname;
+      location.href =
+        re.test(p) ? p.replace(re, '$1' + v) : wodocPub + '/' + v + '/index.html';
+    }
+    // Build the version <select> from the project's versions.json (the single
+    // source of truth, refreshed on every build/release), so even older frozen
+    // pages list the current set. Falls back to the baked <option>s on failure.
+    (function () {
+      var seg = (location.pathname.match(
+        new RegExp('^' + wodocPub + '/([^/]+)')) || [])[1];
+      function select(sel) {
+        var i;
+        for (i = 0; i < sel.options.length; i++)
+          if (sel.options[i].value === seg) { sel.selectedIndex = i; return; }
+        if (seg) {
+          var o = document.createElement('option');
+          o.value = seg; o.textContent = seg; o.selected = true;
+          sel.insertBefore(o, sel.firstChild);
+        }
+      }
+      fetch(wodocPub + '/versions.json')
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (m) {
+          var list = m.list || [], latest = m.latest;
+          document.querySelectorAll('.wodoc-version').forEach(function (sel) {
+            sel.innerHTML = '';
+            list.forEach(function (v) {
+              var o = document.createElement('option');
+              if (v === latest) { o.value = 'latest'; o.textContent = v + ' (latest)'; }
+              else { o.value = v; o.textContent = v; }
+              sel.appendChild(o);
+            });
+            select(sel);
+          });
+        })
+        .catch(function () {
+          document.querySelectorAll('.wodoc-version').forEach(select);
+        });
+    })();
+  </script>
+</body>
+</html>
