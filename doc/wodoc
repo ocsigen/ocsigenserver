@@ -11,6 +11,7 @@
 (title Server)
 (pub /ocsigenserver)
 (landing ocsigenserver/quickstart.html)
+(manual-root)
 (nav
   (section "Usage"
     (link "Quick start"          ocsigenserver/quickstart.html quickstart)
