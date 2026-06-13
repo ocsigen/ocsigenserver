@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Module Ocsigen_extensions — Server</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="/css/ocsigen-odoc.css"/>
+  <script src="../highlight.pack.js"></script>
+  <script src="../wodoc-highlight.js"></script>
+</head>
+<body class="wodoc-page wodoc-doc">
+  <!-- Shared site menu — THE single source of truth for the header, top menu and
+     drawer of EVERY Ocsigen doc page (vitrine + all projects). Canonical copy
+     lives here in ocsigen.github.io; each project's build fetches it. Injected
+     by `wodoc assemble --menu`. Holes filled by the tool (braces omitted here so
+     this comment is not itself rewritten by the hole-filler):
+       subproject  the sub-project name shown next to the Ocsigen logo
+                   (empty on the vitrine), via --subproject
+       leftnav     the project's left navigation, expanded into BOTH the mobile
+                   drawer (below) and the left column (in the page template),
+                   via --leftnav
+     The current entry is highlighted by adding the `current` class to the
+     element carrying data-wodoc-page=<id>: --current on the vitrine (page id),
+     --menu-current in a project (the project id). Nothing is hardcoded here, so
+     this file is the ONLY place the menu is defined.
+
+     Links are the FINAL site paths (/<project>/, /<page>): the target layout
+     where each project is served at ocsigen.org/<project>/ — no transitional
+     /wodoc/ prefix. -->
+<div class="page-header">
+  <p class="logo-ocsigen"><a href="/"><img src="/img/ocsigen-white.svg" alt="Ocsigen"/></a></p>
+  <p class="logo-subproject">Server</p>
+
+  <div class="mainmenu">
+    <p class="mainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></p>
+    <p class="mainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></p>
+    <p data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></p>
+    <p data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></p>
+    <p data-wodoc-page="ocsigenserver" class="current"><a href="/ocsigenserver/">Server</a></p>
+    <p data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></p>
+    <p data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></p>
+    <p data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></p>
+  </div>
+
+  <form id="googlesearch" action="https://google.com/search">
+    <input name="q" id="gsearch-box" placeholder="Search using Google"/>
+    <label for="gsearch-box"><img src="/img/search.svg" alt="" id="gsearch-icon"/></label>
+    <input type="submit" id="gsearch-submit" onclick="document.getElementById('gsearch-box').value += ' site:ocsigen.org';"/>
+  </form>
+
+  <aside class="how-drawer">
+    <input id="how-drawer-toggle" type="checkbox"/>
+    <label for="how-drawer-toggle" id="how-drawer-label"><span class="how-drawer-icon"></span></label>
+    <nav class="how-drawer-content">
+      <ul class="drawermainmenu">
+        <li class="drawermainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></li>
+        <li class="drawermainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></li>
+        <li class="drawermainmenu-project current" data-wodoc-page="ocsigenserver"><a href="/ocsigenserver/">Server</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-toolkit"><a href="/ocsigen-toolkit/">Toolkit</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsipersist"><a href="/ocsipersist/">Ocsipersist</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="reactiveData"><a href="/reactiveData/">ReactiveData</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-i18n"><a href="/ocsigen-i18n/">i18n</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="wodoc"><a href="/wodoc/">Wodoc</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="projects"><a href="/projects">Other projects</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="papers"><a href="/papers">Research papers</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="credits"><a href="/credits">Who does Ocsigen?</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="contributing"><a href="/contributing">Contributing</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="blog"><a href="/blog">Blog</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="install"><a href="/install">Installation</a></li>
+        <li class="drawermainmenu-page"><a href="https://github.com/ocsigen">Source code</a></li>
+      </ul>
+      <!-- On mobile the left column is hidden; its menu lives here in the burger
+           (.how-doctree, shown only on narrow screens), as the old site did.
+           Empty on the vitrine; the leftnav hole is filled (with the same
+           fragment as the left column) only on project pages. -->
+      <nav class="how-doctree"><div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#user-directories">User directories</a></li></ul></nav>
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="../quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="../launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="../config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="../staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="../staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="../eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="../extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="../accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="../authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod"><a href="../deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="../redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="../revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="../rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="../outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="../userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors"><a href="../cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="../extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="../api.html">API reference</a></li>
+</ul>
+</nav>
+</nav>
+    </nav>
+  </aside>
+</div>
+
+
+  <div class="project-page">
+    <div class="twocols">
+      <nav class="leftcol">
+        <div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#user-directories">User directories</a></li></ul></nav>
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="../quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="../launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="../config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="../staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="../staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="../eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="../extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="../accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="../authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod"><a href="../deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="../redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="../revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="../rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="../outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="../userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors"><a href="../cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="../extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="../api.html">API reference</a></li>
+</ul>
+</nav>
+
+      </nav>
+      <article class="rightcol">
+        <header class="odoc-preamble"><h1>Module <code><span>Ocsigen_extensions</span></code></h1><p>Extensions interface for Ocsigen Server</p></header>
+        <div class="odoc-content"><div class="odoc-spec"><div class="spec value anchored" id="val-section"><code><span><span class="keyword">val</span> section : <span class="xref-unresolved">Logs</span>.src</span></code></div></div><div class="odoc-include"><details open="open"><summary class="spec include"><code><span><span class="keyword">include</span> <span class="keyword">module</span> <span class="keyword">type</span> <span class="keyword">of</span> <a href="../Ocsigen_command/index.html">Ocsigen_command</a></span></code></summary><div class="odoc-spec"><div class="spec exception anchored" id="exception-Unknown_command"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Unknown_command</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-register_command_function"><code><span><span class="keyword">val</span> register_command_function : 
+  <span><span class="optlabel">?prefix</span>:string <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<span>string <span class="arrow">&#45;&gt;</span></span> <span><span>string list</span> <span class="arrow">&#45;&gt;</span></span> <span>unit <span class="xref-unresolved">Lwt</span>.t</span>)</span> <span class="arrow">&#45;&gt;</span></span>
+  unit</span></code></div><div class="spec-doc"><p>Use a prefix for all your commands when you want to create extension-specific commands. For example if the prefix is &quot;myextension&quot; and the commande &quot;blah&quot;, the actual command to be written by the user is &quot;myextension:blah&quot;. Give as parameter the function that will parse the command and do an action. Its first parameter is the full command as a string. The second one is the command without prefix, split by word. It must raise <code>ocsigen_extensions.Unknown_command</code> if it does not recognize the command.</p></div></div></details></div><div class="odoc-spec"><div class="spec exception anchored" id="exception-Ocsigen_http_error"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Ocsigen_http_error</span> <span class="keyword">of</span> <a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a> * <span class="xref-unresolved">Cohttp</span>.Code.status</span></code></div></div><div class="odoc-spec"><div class="spec exception anchored" id="exception-Bad_config_tag_for_extension"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Bad_config_tag_for_extension</span> <span class="keyword">of</span> string</span></code></div><div class="spec-doc"><p>Xml tag not recognized by an extension (usually not a real error)</p></div></div><div class="odoc-spec"><div class="spec exception anchored" id="exception-Error_in_config_file"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Error_in_config_file</span> <span class="keyword">of</span> string</span></code></div><div class="spec-doc"><p>Error in a &lt;site&gt; tag inside the main ocsigen.conf file</p></div></div><div class="odoc-spec"><div class="spec exception anchored" id="exception-Error_in_user_config_file"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Error_in_user_config_file</span> <span class="keyword">of</span> string</span></code></div><div class="spec-doc"><p>Option incorrect in a userconf file</p></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-file_info"><code><span><span class="keyword">type</span> file_info</span><span> = <a href="../Ocsigen_multipart/index.html#type-file_info">Ocsigen_multipart.file_info</a></span><span> = </span><span>{</span></code><ol><li id="type-file_info.tmp_filename" class="def record field anchored"><code><span>tmp_filename : string;</span></code></li><li id="type-file_info.filesize" class="def record field anchored"><code><span>filesize : int64;</span></code></li><li id="type-file_info.raw_original_filename" class="def record field anchored"><code><span>raw_original_filename : string;</span></code></li><li id="type-file_info.file_content_type" class="def record field anchored"><code><span>file_content_type : <span><span>(<span>(string * string)</span> * <span><span>(string * string)</span> list</span>)</span> option</span>;</span></code></li></ol><code><span>}</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-badconfig"><code><span><span class="keyword">val</span> badconfig : <span><span><span>(<span class="type-var">'a</span>, unit, string, <span class="type-var">'b</span>)</span> <span class="xref-unresolved">Stdlib</span>.format4</span> <span class="arrow">&#45;&gt;</span></span> <span class="type-var">'a</span></span></code></div><div class="spec-doc"><p>Convenient function for raising Error_in_config_file exceptions with a sprintf-formatted argument.</p></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-virtual_hosts"><code><span><span class="keyword">type</span> virtual_hosts</span><span> = <span><span>(string * <span class="xref-unresolved">Re</span>.Pcre.regexp * <span>int option</span>)</span> list</span></span></code></div><div class="spec-doc"><p>Type of the result of parsing the field <code>hostfiler</code> in the configuration file. Inside the list, the first argument is the host itself (which is a glob-like pattern that can contains <code>*</code>), a regexp parsing this pattern, and optionally a port.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-hash_virtual_hosts"><code><span><span class="keyword">val</span> hash_virtual_hosts : <span><a href="#type-virtual_hosts">virtual_hosts</a> <span class="arrow">&#45;&gt;</span></span> int</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-equal_virtual_hosts"><code><span><span class="keyword">val</span> equal_virtual_hosts : <span><a href="#type-virtual_hosts">virtual_hosts</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-virtual_hosts">virtual_hosts</a> <span class="arrow">&#45;&gt;</span></span> bool</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-host_match"><code><span><span class="keyword">val</span> host_match : 
+  <span><span class="label">virtual_hosts</span>:<a href="#type-virtual_hosts">virtual_hosts</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">host</span>:<span>string option</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">port</span>:int <span class="arrow">&#45;&gt;</span></span>
+  bool</span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-do_not_serve"><code><span><span class="keyword">type</span> do_not_serve</span><span> = </span><span>{</span></code><ol><li id="type-do_not_serve.do_not_serve_regexps" class="def record field anchored"><code><span>do_not_serve_regexps : <span>string list</span>;</span></code></li><li id="type-do_not_serve.do_not_serve_files" class="def record field anchored"><code><span>do_not_serve_files : <span>string list</span>;</span></code></li><li id="type-do_not_serve.do_not_serve_extensions" class="def record field anchored"><code><span>do_not_serve_extensions : <span>string list</span>;</span></code></li></ol><code><span>}</span></code></div><div class="spec-doc"><p>Configuration to hide/forbid local files</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-serve_everything"><code><span><span class="keyword">val</span> serve_everything : <a href="#type-do_not_serve">do_not_serve</a></span></code></div></div><div class="odoc-spec"><div class="spec exception anchored" id="exception-IncorrectRegexpes"><code><span><span class="keyword">exception</span> </span><span><span class="exception">IncorrectRegexpes</span> <span class="keyword">of</span> <a href="#type-do_not_serve">do_not_serve</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-do_not_serve_to_regexp"><code><span><span class="keyword">val</span> do_not_serve_to_regexp : <span><a href="#type-do_not_serve">do_not_serve</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Re</span>.Pcre.regexp</span></code></div><div class="spec-doc"><p>Compile a do_not_serve structure into a regexp. Raises <code>IncorrectRegexpes</code> if the compilation fails. The result is memoized for subsequent calls with the same argument</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-join_do_not_serve"><code><span><span class="keyword">val</span> join_do_not_serve : <span><a href="#type-do_not_serve">do_not_serve</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-do_not_serve">do_not_serve</a> <span class="arrow">&#45;&gt;</span></span> <a href="#type-do_not_serve">do_not_serve</a></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-config_info"><code><span><span class="keyword">type</span> config_info</span><span> = </span><span>{</span></code><ol><li id="type-config_info.default_hostname" class="def record field anchored"><code><span>default_hostname : string;</span></code></li><li id="type-config_info.default_httpport" class="def record field anchored"><code><span>default_httpport : int;</span></code></li><li id="type-config_info.default_httpsport" class="def record field anchored"><code><span>default_httpsport : int;</span></code></li><li id="type-config_info.default_protocol_is_https" class="def record field anchored"><code><span>default_protocol_is_https : bool;</span></code></li><li id="type-config_info.mime_assoc" class="def record field anchored"><code><span>mime_assoc : <a href="../Ocsigen_charset_mime/index.html#type-mime_assoc">Ocsigen_charset_mime.mime_assoc</a>;</span></code></li><li id="type-config_info.charset_assoc" class="def record field anchored"><code><span>charset_assoc : <a href="../Ocsigen_charset_mime/index.html#type-charset_assoc">Ocsigen_charset_mime.charset_assoc</a>;</span></code></li><li id="type-config_info.default_directory_index" class="def record field anchored"><code><span>default_directory_index : <span>string list</span>;</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Default name to use as index file when a directory is requested. Use <code>None</code> if no index should be tried. The various indexes are tried in the given order. If no index is specified, or the index does not exists, the content of the directory might be listed, according to <code>list_directory_content</code></p><span class="comment-delim">*)</span></div></li><li id="type-config_info.list_directory_content" class="def record field anchored"><code><span>list_directory_content : bool;</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Should the list of files in a directory be displayed if there is no index in this directory ?</p><span class="comment-delim">*)</span></div></li><li id="type-config_info.follow_symlinks" class="def record field anchored"><code><span>follow_symlinks : <span>[ `No <span>| `Owner_match</span> <span>| `Always</span> ]</span>;</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Should symlinks be followed when accessing a local file?</p><span class="comment-delim">*)</span></div></li><li id="type-config_info.do_not_serve_404" class="def record field anchored"><code><span>do_not_serve_404 : <a href="#type-do_not_serve">do_not_serve</a>;</span></code></li><li id="type-config_info.do_not_serve_403" class="def record field anchored"><code><span>do_not_serve_403 : <a href="#type-do_not_serve">do_not_serve</a>;</span></code></li><li id="type-config_info.uploaddir" class="def record field anchored"><code><span>uploaddir : <span>string option</span>;</span></code></li><li id="type-config_info.maxuploadfilesize" class="def record field anchored"><code><span>maxuploadfilesize : <span>int64 option</span>;</span></code></li></ol><code><span>}</span></code></div><div class="spec-doc"><p>Configuration options, passed to (and modified by) extensions</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-default_config_info"><code><span><span class="keyword">val</span> default_config_info : <span>unit <span class="arrow">&#45;&gt;</span></span> <a href="#type-config_info">config_info</a></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-request"><code><span><span class="keyword">type</span> request</span><span> = </span><span>{</span></code><ol><li id="type-request.request_info" class="def record field anchored"><code><span>request_info : <a href="../Ocsigen_request/index.html#type-t">Ocsigen_request.t</a>;</span></code></li><li id="type-request.request_config" class="def record field anchored"><code><span>request_config : <a href="#type-config_info">config_info</a>;</span></code></li></ol><code><span>}</span></code></div></div><div class="odoc-spec"><div class="spec exception anchored" id="exception-Ocsigen_is_dir"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Ocsigen_is_dir</span> <span class="keyword">of</span> <span><a href="../Ocsigen_request/index.html#type-t">Ocsigen_request.t</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Uri</span>.t</span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-answer"><code><span><span class="keyword">type</span> answer</span><span> = </span></code><ol><li id="type-answer.Ext_do_nothing" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_do_nothing</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>I don't want to do anything</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_found" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_found</span> <span class="keyword">of</span> <span>unit <span class="arrow">&#45;&gt;</span></span> <span><a href="../Ocsigen_response/index.html#type-t">Ocsigen_response.t</a> <span class="xref-unresolved">Lwt</span>.t</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>&quot;OK stop! I will take the page. You can start the following request of the same pipelined connection. Here is the function to generate the page&quot;. The extension must return Ext_found as soon as possible when it is sure it is safe to start next request. Usually immediately. But in some case, for example proxies, you don't want the request of one connection to be handled in different order. (for example revproxy.ml starts its requests to another server before returning Ext_found, to ensure that all requests are done in same order).</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_found_stop" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_found_stop</span> <span class="keyword">of</span> <span>unit <span class="arrow">&#45;&gt;</span></span> <span><a href="../Ocsigen_response/index.html#type-t">Ocsigen_response.t</a> <span class="xref-unresolved">Lwt</span>.t</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Found but do not try next extensions</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_next" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_next</span> <span class="keyword">of</span> <span class="xref-unresolved">Cohttp</span>.Code.status</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Page not found. Try next extension. The status is usually `Not_found, but may be for example `Forbidden (403) if you want to try another extension afterwards. Same as Ext_continue_with but does not change the request.</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_stop_site" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_stop_site</span> <span class="keyword">of</span> <a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a> * <span class="xref-unresolved">Cohttp</span>.Code.status</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Error. Do not try next extension, but try next site.</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_stop_host" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_stop_host</span> <span class="keyword">of</span> <a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a> * <span class="xref-unresolved">Cohttp</span>.Code.status</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Error. Do not try next extension, do not try next site, but try next host.</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_stop_all" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_stop_all</span> <span class="keyword">of</span> <a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a> * <span class="xref-unresolved">Cohttp</span>.Code.status</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Error. Do not try next extension, do not try next site, do not try next host.</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_continue_with" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_continue_with</span> <span class="keyword">of</span> <a href="#type-request">request</a> * <a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a> * <span class="xref-unresolved">Cohttp</span>.Code.status</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Used to modify the request before giving it to next extension. The extension returns the request (possibly modified) and a set of cookies if it wants to set or cookies (<a href="../Ocsigen_cookie_map/index.html#val-empty"><code>Ocsigen_cookie_map.empty</code></a> for no cookies). You must add these cookies yourself in request if you want them to be seen by subsequent extensions, for example using <code>Ocsigen_http_frame.compute_new_ri_cookies</code>. The status is usually equal to the one received from preceding extension (but you may want to modify it).</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_retry_with" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_retry_with</span> <span class="keyword">of</span> <a href="#type-request">request</a> * <a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Used to retry all the extensions with a new request. The extension returns the request (possibly modified) and a set of cookies if it wants to set or cookies (<a href="../Ocsigen_cookie_map/index.html#val-empty"><code>Ocsigen_cookie_map.empty</code></a> for no cookies). You must add these cookies yourself in request if you want them to be seen by subsequent extensions, for example using <code>Ocsigen_http_frame.compute_new_ri_cookies</code>.</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_sub_result" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_sub_result</span> <span class="keyword">of</span> <a href="#type-extension_composite">extension_composite</a></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Used if your extension want to define option that may contain other options from other extensions. In that case, while parsing the configuration file, call the parsing function (of type <code>parse_fun</code>), that will return something of type <code>extension_composite</code>.</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_found_continue_with" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_found_continue_with</span> <span class="keyword">of</span> <span>unit <span class="arrow">&#45;&gt;</span></span> <span><span>(<a href="../Ocsigen_response/index.html#type-t">Ocsigen_response.t</a> * <a href="#type-request">request</a>)</span> <span class="xref-unresolved">Lwt</span>.t</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Same as <code>Ext_found</code> but may modify the request.</p><span class="comment-delim">*)</span></div></li><li id="type-answer.Ext_found_continue_with'" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Ext_found_continue_with'</span> <span class="keyword">of</span> <a href="../Ocsigen_response/index.html#type-t">Ocsigen_response.t</a> * <a href="#type-request">request</a></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Same as <code>Ext_found_continue_with</code> but does not allow to delay the computation of the page. You should probably not use it, but for output filters.</p><span class="comment-delim">*)</span></div></li></ol></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-request_state"><code><span><span class="keyword">and</span> request_state</span><span> = </span></code><ol><li id="type-request_state.Req_not_found" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Req_not_found</span> <span class="keyword">of</span> <span class="xref-unresolved">Cohttp</span>.Code.status * <a href="#type-request">request</a></span></code></li><li id="type-request_state.Req_found" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Req_found</span> <span class="keyword">of</span> <a href="#type-request">request</a> * <a href="../Ocsigen_response/index.html#type-t">Ocsigen_response.t</a></span></code></li></ol></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-extension_composite"><code><span><span class="keyword">and</span> extension_composite</span><span> =
+  <span><a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-request_state">request_state</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<a href="#type-answer">answer</a> * <a href="../Ocsigen_cookie_map/index.html#type-t">Ocsigen_cookie_map.t</a>)</span> <span class="xref-unresolved">Lwt</span>.t</span></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-extension"><code><span><span class="keyword">type</span> extension</span><span> = <span><a href="#type-request_state">request_state</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-answer">answer</a> <span class="xref-unresolved">Lwt</span>.t</span></span></code></div><div class="spec-doc"><p>For each &lt;site&gt; tag in the configuration file, you can set the extensions you want. Each extension is implemented as a function, taking the charset found in configuration file, the current state of the request, and returning an answer. If no page has been generated so far (<code>Req_not_found</code>), it receive the error code given by the previous extension (default 404), and the request information. If a page has been generated by previous extensions (case <code>Req_found</code>), the extension may want to modify the result (filters).</p></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-parse_fun"><code><span><span class="keyword">type</span> parse_fun</span><span> = <span><span><span class="xref-unresolved">Xml</span>.xml list</span> <span class="arrow">&#45;&gt;</span></span> <a href="#type-extension_composite">extension_composite</a></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-parse_host"><code><span><span class="keyword">type</span> parse_host</span></code></div><div class="spec-doc"><p>Type of the functions parsing the content of a &lt;host&gt; tag</p></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-userconf_info"><code><span><span class="keyword">type</span> userconf_info</span><span> = </span><span>{</span></code><ol><li id="type-userconf_info.localfiles_root" class="def record field anchored"><code><span>localfiles_root : string;</span></code></li></ol><code><span>}</span></code></div><div class="spec-doc"><p>Information received by extensions accepting userconf files.</p><p>The parameter <code>localfiles_root</code> is an absolute path to the directory that the user is allowed to serve. This is used by staticmod, to disallow the user from allowing access to outside of this directory</p></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-parse_config"><code><span><span class="keyword">type</span> parse_config</span><span> =
+  <span><span><a href="#type-userconf_info">userconf_info</a> option</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-virtual_hosts">virtual_hosts</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-config_info">config_info</a> <span class="arrow">&#45;&gt;</span></span>
+  <a href="#type-parse_config_aux">parse_config_aux</a></span></code></div><div class="spec-doc"><p><code>parse_config</code> is the type of the functions parsing a &lt;site&gt; tag (and returning an extension). Those are functions taking</p><ul><li>the name of the virtual &lt;host&gt;</li></ul><p>that will be called for each &lt;host&gt;, and that will generate a function taking:</p><ul><li>the path attribute of a &lt;site&gt; tag</li></ul><p>that will be called for each &lt;site&gt;, and that will generate a function taking:</p><ul><li>an item of the config file</li></ul><p>that will be called on each tag inside &lt;site&gt; and:</p><ul><li>raise <code>Bad_config_tag_for_extension</code> if it does not recognize that tag</li><li>return something of type <code>extension</code> (filter or page generator)</li></ul><p><code>parse_config_user</code> is the type of functions parsing a site tag inside an userconf file. They take one more parameter, of type userconf_info</p></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-parse_config_aux"><code><span><span class="keyword">and</span> parse_config_aux</span><span> =
+  <span><a href="../Ocsigen_lib/Url/index.html#type-path">Ocsigen_lib.Url.path</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-parse_host">parse_host</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-parse_fun">parse_fun</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="xref-unresolved">Xml</span>.xml <span class="arrow">&#45;&gt;</span></span>
+  <a href="#type-extension">extension</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-register"><code><span><span class="keyword">val</span> register : 
+  <span><span class="label">name</span>:string <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?fun_site</span>:<a href="#type-parse_config">parse_config</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?end_init</span>:<span>(<span>unit <span class="arrow">&#45;&gt;</span></span> unit)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?init_fun</span>:<span>(<span><span><span class="xref-unresolved">Xml</span>.xml list</span> <span class="arrow">&#45;&gt;</span></span> unit)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?exn_handler</span>:<span>(<span>exn <span class="arrow">&#45;&gt;</span></span> string)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?respect_pipeline</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span>unit <span class="arrow">&#45;&gt;</span></span>
+  unit</span></code></div><div class="spec-doc"><p>For each extension generating pages, we register its name and six functions:</p><ul><li>a function <code>fun_site</code> of type <code>parse_config</code>. This function will be responsible for handling the options of the configuration files that are recognized by the extension, and potentially generating a page.</li><li>a function <code>end_init</code> that will be called at the end of the initialisation phase of each site</li><li>a function <code>init_fun</code> that will be called just before registering the extension, taking as parameter the configuration options between <code>&lt;extension&gt;</code> and <code>&lt;/extension&gt;</code>. This allows to give configuration options to extensions. If no function is supplied, the extension is supposed to accept no option (and loading will fail if an option is supplied) See <a href="Configuration/index.html#val-process_elements"><code>Configuration.process_elements</code></a> for the easy construction of such a function.</li><li>a function <code>exn_handler</code> that will create an error message from the exceptions that may be raised during the initialisation phase, and raise again all other exceptions</li></ul><p>Moreover, if the optional parameter <code>?respect_pipeline</code> is <code>true</code>, the extension will ask the server to respect the order of the pipeline. That means that it will wait to be sure that the previous request from the same connection has been taken by an extension before giving a request to an extension. Use this to write proxies extensions, when you want to be able to pipeline the requests you to another server. It is false by default.</p></div></div><div class="odoc-spec"><div class="spec module anchored" id="module-Configuration"><code><span><span class="keyword">module</span> <a href="Configuration/index.html">Configuration</a></span><span> : <span class="keyword">sig</span> ... <span class="keyword">end</span></span></code></div><div class="spec-doc"><p>This modules contains types and constructor for the description of XML configurations and the accordingly parsing.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_hostname"><code><span><span class="keyword">val</span> get_hostname : <span><a href="#type-request">request</a> <span class="arrow">&#45;&gt;</span></span> string</span></code></div><div class="spec-doc"><p>Returns the hostname to be used for absolute links or redirections. It is either the Host header or the hostname set in the configuration file.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_port"><code><span><span class="keyword">val</span> get_port : <span><a href="#type-request">request</a> <span class="arrow">&#45;&gt;</span></span> int</span></code></div><div class="spec-doc"><p>Returns the port to be used for absolute links or redirections. It is either:</p><ul><li>the port the server is listening at</li><li>or the port in the Host header</li><li>or the default port set in the configuration file.</li></ul></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-new_url_of_directory_request"><code><span><span class="keyword">val</span> new_url_of_directory_request : <span><a href="#type-request">request</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="../Ocsigen_request/index.html#type-t">Ocsigen_request.t</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Uri</span>.t</span></code></div><div class="spec-doc"><p>new_url_of_directory_request create a redirection and generating a new url for the client (depending on the server configuration and request)</p><ul class="at-tags"><li class="parameter"><span class="at-tag">parameter</span> <span class="value">request</span> <p>configuration of the server</p></li></ul><ul class="at-tags"><li class="parameter"><span class="at-tag">parameter</span> <span class="value">ri</span> <p>request</p></li></ul></div></div><h4 id="user-directories">User directories</h4><p>Exception raised when an non-existing user is found</p><div class="odoc-spec"><div class="spec exception anchored" id="exception-NoSuchUser"><code><span><span class="keyword">exception</span> </span><span><span class="exception">NoSuchUser</span></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-ud_string"><code><span><span class="keyword">type</span> ud_string</span></code></div><div class="spec-doc"><p>The type for string that may contain a $u(...)</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-parse_user_dir"><code><span><span class="keyword">val</span> parse_user_dir : <span>string <span class="arrow">&#45;&gt;</span></span> <a href="#type-ud_string">ud_string</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-replace_user_dir"><code><span><span class="keyword">val</span> replace_user_dir : <span><span class="xref-unresolved">Re</span>.Pcre.regexp <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-ud_string">ud_string</a> <span class="arrow">&#45;&gt;</span></span> <span>string <span class="arrow">&#45;&gt;</span></span> string</span></code></div><div class="spec-doc"><p>raises <code>Not_found</code> is the directory does not exist</p></div></div><div class="odoc-spec"><div class="spec exception anchored" id="exception-Not_concerned"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Not_concerned</span></span></code></div><div class="spec-doc"><p>Regular expressions for redirections</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-find_redirection"><code><span><span class="keyword">val</span> find_redirection : 
+  <span><span class="xref-unresolved">Re</span>.Pcre.regexp <span class="arrow">&#45;&gt;</span></span>
+  <span>bool <span class="arrow">&#45;&gt;</span></span>
+  <span>string <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="../Ocsigen_request/index.html#type-t">Ocsigen_request.t</a> <span class="arrow">&#45;&gt;</span></span>
+  string</span></code></div></div></div>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    var wodocPub = "/ocsigenserver";
+    // Switch version: keep the current page, swapping only the version segment.
+    function wodocVersion(v) {
+      if (!v) return;
+      var re = new RegExp('^(' + wodocPub + '/)[^/]+');
+      var p = location.pathname;
+      location.href =
+        re.test(p) ? p.replace(re, '$1' + v) : wodocPub + '/' + v + '/index.html';
+    }
+    // Build the version <select> from the project's versions.json (the single
+    // source of truth, refreshed on every build/release), so even older frozen
+    // pages list the current set. Falls back to the baked <option>s on failure.
+    (function () {
+      var seg = (location.pathname.match(
+        new RegExp('^' + wodocPub + '/([^/]+)')) || [])[1];
+      function select(sel) {
+        var i;
+        for (i = 0; i < sel.options.length; i++)
+          if (sel.options[i].value === seg) { sel.selectedIndex = i; return; }
+        if (seg) {
+          var o = document.createElement('option');
+          o.value = seg; o.textContent = seg; o.selected = true;
+          sel.insertBefore(o, sel.firstChild);
+        }
+      }
+      fetch(wodocPub + '/versions.json')
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (m) {
+          var list = m.list || [], latest = m.latest;
+          document.querySelectorAll('.wodoc-version').forEach(function (sel) {
+            sel.innerHTML = '';
+            list.forEach(function (v) {
+              var o = document.createElement('option');
+              if (v === latest) { o.value = 'latest'; o.textContent = v + ' (latest)'; }
+              else { o.value = v; o.textContent = v; }
+              sel.appendChild(o);
+            });
+            select(sel);
+          });
+        })
+        .catch(function () {
+          document.querySelectorAll('.wodoc-version').forEach(select);
+        });
+    })();
+  </script>
+</body>
+</html>

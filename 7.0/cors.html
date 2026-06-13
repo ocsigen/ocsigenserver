@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>The CORS extension — Server</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="/css/ocsigen-odoc.css"/>
+  <script src="./highlight.pack.js"></script>
+  <script src="./wodoc-highlight.js"></script>
+</head>
+<body class="wodoc-page wodoc-doc">
+  <!-- Shared site menu — THE single source of truth for the header, top menu and
+     drawer of EVERY Ocsigen doc page (vitrine + all projects). Canonical copy
+     lives here in ocsigen.github.io; each project's build fetches it. Injected
+     by `wodoc assemble --menu`. Holes filled by the tool (braces omitted here so
+     this comment is not itself rewritten by the hole-filler):
+       subproject  the sub-project name shown next to the Ocsigen logo
+                   (empty on the vitrine), via --subproject
+       leftnav     the project's left navigation, expanded into BOTH the mobile
+                   drawer (below) and the left column (in the page template),
+                   via --leftnav
+     The current entry is highlighted by adding the `current` class to the
+     element carrying data-wodoc-page=<id>: --current on the vitrine (page id),
+     --menu-current in a project (the project id). Nothing is hardcoded here, so
+     this file is the ONLY place the menu is defined.
+
+     Links are the FINAL site paths (/<project>/, /<page>): the target layout
+     where each project is served at ocsigen.org/<project>/ — no transitional
+     /wodoc/ prefix. -->
+<div class="page-header">
+  <p class="logo-ocsigen"><a href="/"><img src="/img/ocsigen-white.svg" alt="Ocsigen"/></a></p>
+  <p class="logo-subproject">Server</p>
+
+  <div class="mainmenu">
+    <p class="mainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></p>
+    <p class="mainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></p>
+    <p data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></p>
+    <p data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></p>
+    <p data-wodoc-page="ocsigenserver" class="current"><a href="/ocsigenserver/">Server</a></p>
+    <p data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></p>
+    <p data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></p>
+    <p data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></p>
+  </div>
+
+  <form id="googlesearch" action="https://google.com/search">
+    <input name="q" id="gsearch-box" placeholder="Search using Google"/>
+    <label for="gsearch-box"><img src="/img/search.svg" alt="" id="gsearch-icon"/></label>
+    <input type="submit" id="gsearch-submit" onclick="document.getElementById('gsearch-box').value += ' site:ocsigen.org';"/>
+  </form>
+
+  <aside class="how-drawer">
+    <input id="how-drawer-toggle" type="checkbox"/>
+    <label for="how-drawer-toggle" id="how-drawer-label"><span class="how-drawer-icon"></span></label>
+    <nav class="how-drawer-content">
+      <ul class="drawermainmenu">
+        <li class="drawermainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></li>
+        <li class="drawermainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></li>
+        <li class="drawermainmenu-project current" data-wodoc-page="ocsigenserver"><a href="/ocsigenserver/">Server</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-toolkit"><a href="/ocsigen-toolkit/">Toolkit</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsipersist"><a href="/ocsipersist/">Ocsipersist</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="reactiveData"><a href="/reactiveData/">ReactiveData</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-i18n"><a href="/ocsigen-i18n/">i18n</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="wodoc"><a href="/wodoc/">Wodoc</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="projects"><a href="/projects">Other projects</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="papers"><a href="/papers">Research papers</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="credits"><a href="/credits">Who does Ocsigen?</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="contributing"><a href="/contributing">Contributing</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="blog"><a href="/blog">Blog</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="install"><a href="/install">Installation</a></li>
+        <li class="drawermainmenu-page"><a href="https://github.com/ocsigen">Source code</a></li>
+      </ul>
+      <!-- On mobile the left column is hidden; its menu lives here in the burger
+           (.how-doctree, shown only on narrow screens), as the old site did.
+           Empty on the vitrine; the leftnav hole is filled (with the same
+           fragment as the left column) only on project pages. -->
+      <nav class="how-doctree"><div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#config">config</a></li><li><a href="#examples">Examples</a></li></ul></nav>
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="./quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="./launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="./config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="./staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="./staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="./eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="./extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="./accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="./authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod"><a href="./deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="./redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="./revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="./rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="./outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="./userconf.html">Userconf</a></li>
+<li class="ml3 current" data-wodoc-page="cors"><a href="./cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="./extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="./api.html">API reference</a></li>
+</ul>
+</nav>
+</nav>
+    </nav>
+  </aside>
+</div>
+
+
+  <div class="project-page">
+    <div class="twocols">
+      <nav class="leftcol">
+        <div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#config">config</a></li><li><a href="#examples">Examples</a></li></ul></nav>
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="./quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="./launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="./config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="./staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="./staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="./eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="./extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="./accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="./authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod"><a href="./deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="./redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="./revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="./rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="./outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="./userconf.html">Userconf</a></li>
+<li class="ml3 current" data-wodoc-page="cors"><a href="./cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="./extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="./api.html">API reference</a></li>
+</ul>
+</nav>
+
+      </nav>
+      <article class="rightcol">
+        <header class="odoc-preamble"><h1 id="the-cors-extension">The CORS extension</h1><p><em>Cross-Origin Resource Sharing</em></p><p>This extension is used to allow other servers to serve pages requesting data on that one using XmlHttpRequest. It adds headers to the server response and handle preflight OPTIONS requests to indicate if some client side code has the right to access resources.</p><p>See the <a href="http://www.w3.org/TR/cors/">CORS specifications</a> for more informations.</p><p>To use that extension, load OCamlfind package <code>ocsigenserver.ext.cors</code>, either from your Dune file (if you are using static linking), or from the configuration file:</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.cors&quot;/&gt;</pre><p>This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module <a href="Cors/index.html"><code>Cors</code></a>.</p></header>
+        <div class="odoc-content"><h2 id="config">config</h2><p>The extension is activated by the <code>&lt;cors/&gt;</code> tag.</p><p>The extension must be used after the extension serving the content (like eliom or staticmod) since it adds headers to already answered requests.</p><p>The attributes of the cors tag are:</p><ul><li><code>max_age</code>: this is a integer telling the browser how long the preflight information are valid: it prevents doing the OPTIONS requests. This option adds the <code>Access-Control-Max-Age</code> header.</li></ul><ul><li><code>credentials</code>: Adds the <code>Access-Control-Allow-Credentials</code> header to the preflight request.</li></ul><ul><li><code>exposed_headers</code>: This is a comma separated list of header names. This is the list of user defined headers accessible from the client. it Adds the <code>Access-Control-Expose-Headers</code> header.</li></ul><ul><li><code>methods</code>: This is a comma separated list of method names. If there is a requested method header in the preflight request, it adds the <code>Access-Control-Allow-Methods</code> header if it match, otherwise there is no cors header added.</li></ul><p>Note that the extension should be used with <a href="accesscontrol.html" title="accesscontrol">accesscontrol</a> to limit the application having access to the resources. This is done by checking the &quot;origin&quot; header.</p><h2 id="examples">Examples</h2><ul><li><p>minimal configuration allowing all requests with no credentials.</p><pre>&lt;cors/&gt;</pre></li></ul><ul><li><p>A configuration allowing access to an eliom application at path &quot;eliom_site&quot;, from localhost:8081</p><pre>&lt;if&gt;
+  &lt;and&gt;
+    &lt;header name=&quot;origin&quot; regexp=&quot;http://localhost:8081&quot;/&gt;
+    &lt;path regexp=&quot;eliom_site&quot; /&gt;
+  &lt;/and&gt;
+  &lt;then&gt;
+    &lt;cors max_age=&quot;86400&quot;
+          credentials=&quot;true&quot;
+          methods=&quot;POST,GET,HEAD&quot;
+          exposed_headers=&quot;
+            x-eliom-application,
+            x-eliom-location,
+            x-eliom-set-process-cookies&quot;/&gt;
+  &lt;/then&gt;
+&lt;/if&gt;</pre></li></ul></div>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    var wodocPub = "/ocsigenserver";
+    // Switch version: keep the current page, swapping only the version segment.
+    function wodocVersion(v) {
+      if (!v) return;
+      var re = new RegExp('^(' + wodocPub + '/)[^/]+');
+      var p = location.pathname;
+      location.href =
+        re.test(p) ? p.replace(re, '$1' + v) : wodocPub + '/' + v + '/index.html';
+    }
+    // Build the version <select> from the project's versions.json (the single
+    // source of truth, refreshed on every build/release), so even older frozen
+    // pages list the current set. Falls back to the baked <option>s on failure.
+    (function () {
+      var seg = (location.pathname.match(
+        new RegExp('^' + wodocPub + '/([^/]+)')) || [])[1];
+      function select(sel) {
+        var i;
+        for (i = 0; i < sel.options.length; i++)
+          if (sel.options[i].value === seg) { sel.selectedIndex = i; return; }
+        if (seg) {
+          var o = document.createElement('option');
+          o.value = seg; o.textContent = seg; o.selected = true;
+          sel.insertBefore(o, sel.firstChild);
+        }
+      }
+      fetch(wodocPub + '/versions.json')
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (m) {
+          var list = m.list || [], latest = m.latest;
+          document.querySelectorAll('.wodoc-version').forEach(function (sel) {
+            sel.innerHTML = '';
+            list.forEach(function (v) {
+              var o = document.createElement('option');
+              if (v === latest) { o.value = 'latest'; o.textContent = v + ' (latest)'; }
+              else { o.value = v; o.textContent = v; }
+              sel.appendChild(o);
+            });
+            select(sel);
+          });
+        })
+        .catch(function () {
+          document.querySelectorAll('.wodoc-version').forEach(select);
+        });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Module Ocsigen_request — Server</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="/css/ocsigen-odoc.css"/>
+  <script src="../highlight.pack.js"></script>
+  <script src="../wodoc-highlight.js"></script>
+</head>
+<body class="wodoc-page wodoc-doc">
+  <!-- Shared site menu — THE single source of truth for the header, top menu and
+     drawer of EVERY Ocsigen doc page (vitrine + all projects). Canonical copy
+     lives here in ocsigen.github.io; each project's build fetches it. Injected
+     by `wodoc assemble --menu`. Holes filled by the tool (braces omitted here so
+     this comment is not itself rewritten by the hole-filler):
+       subproject  the sub-project name shown next to the Ocsigen logo
+                   (empty on the vitrine), via --subproject
+       leftnav     the project's left navigation, expanded into BOTH the mobile
+                   drawer (below) and the left column (in the page template),
+                   via --leftnav
+     The current entry is highlighted by adding the `current` class to the
+     element carrying data-wodoc-page=<id>: --current on the vitrine (page id),
+     --menu-current in a project (the project id). Nothing is hardcoded here, so
+     this file is the ONLY place the menu is defined.
+
+     Links are the FINAL site paths (/<project>/, /<page>): the target layout
+     where each project is served at ocsigen.org/<project>/ — no transitional
+     /wodoc/ prefix. -->
+<div class="page-header">
+  <p class="logo-ocsigen"><a href="/"><img src="/img/ocsigen-white.svg" alt="Ocsigen"/></a></p>
+  <p class="logo-subproject">Server</p>
+
+  <div class="mainmenu">
+    <p class="mainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></p>
+    <p class="mainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></p>
+    <p data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></p>
+    <p data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></p>
+    <p data-wodoc-page="ocsigenserver" class="current"><a href="/ocsigenserver/">Server</a></p>
+    <p data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></p>
+    <p data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></p>
+    <p data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></p>
+  </div>
+
+  <form id="googlesearch" action="https://google.com/search">
+    <input name="q" id="gsearch-box" placeholder="Search using Google"/>
+    <label for="gsearch-box"><img src="/img/search.svg" alt="" id="gsearch-icon"/></label>
+    <input type="submit" id="gsearch-submit" onclick="document.getElementById('gsearch-box').value += ' site:ocsigen.org';"/>
+  </form>
+
+  <aside class="how-drawer">
+    <input id="how-drawer-toggle" type="checkbox"/>
+    <label for="how-drawer-toggle" id="how-drawer-label"><span class="how-drawer-icon"></span></label>
+    <nav class="how-drawer-content">
+      <ul class="drawermainmenu">
+        <li class="drawermainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></li>
+        <li class="drawermainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></li>
+        <li class="drawermainmenu-project current" data-wodoc-page="ocsigenserver"><a href="/ocsigenserver/">Server</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-toolkit"><a href="/ocsigen-toolkit/">Toolkit</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsipersist"><a href="/ocsipersist/">Ocsipersist</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="reactiveData"><a href="/reactiveData/">ReactiveData</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-i18n"><a href="/ocsigen-i18n/">i18n</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="wodoc"><a href="/wodoc/">Wodoc</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="projects"><a href="/projects">Other projects</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="papers"><a href="/papers">Research papers</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="credits"><a href="/credits">Who does Ocsigen?</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="contributing"><a href="/contributing">Contributing</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="blog"><a href="/blog">Blog</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="install"><a href="/install">Installation</a></li>
+        <li class="drawermainmenu-page"><a href="https://github.com/ocsigen">Source code</a></li>
+      </ul>
+      <!-- On mobile the left column is hidden; its menu lives here in the burger
+           (.how-doctree, shown only on narrow screens), as the old site did.
+           Empty on the vitrine; the leftnav hole is filled (with the same
+           fragment as the left column) only on project pages. -->
+      <nav class="how-doctree"><div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="../quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="../launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="../config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="../staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="../staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="../eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="../extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="../accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="../authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod"><a href="../deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="../redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="../revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="../rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="../outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="../userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors"><a href="../cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="../extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="../api.html">API reference</a></li>
+</ul>
+</nav>
+</nav>
+    </nav>
+  </aside>
+</div>
+
+
+  <div class="project-page">
+    <div class="twocols">
+      <nav class="leftcol">
+        <div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="quickstart"><a href="../quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching"><a href="../launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config"><a href="../config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink"><a href="../staticlink.html">Using as a library</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod"><a href="../staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom"><a href="../eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration"><a href="../extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol"><a href="../accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic"><a href="../authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod"><a href="../deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod"><a href="../redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy"><a href="../revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod"><a href="../rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter"><a href="../outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="userconf"><a href="../userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors"><a href="../cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend"><a href="../extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api"><a href="../api.html">API reference</a></li>
+</ul>
+</nav>
+
+      </nav>
+      <article class="rightcol">
+        <header class="odoc-preamble"><h1>Module <code><span>Ocsigen_request</span></code></h1></header>
+        <div class="odoc-content"><div class="odoc-spec"><div class="spec type anchored" id="type-t"><code><span><span class="keyword">type</span> t</span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-content_type"><code><span><span class="keyword">type</span> content_type</span><span> = <span>(string * string)</span> * <span><span>(string * string)</span> list</span></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-file_info"><code><span><span class="keyword">type</span> file_info</span><span> = <a href="../Ocsigen_multipart/index.html#type-file_info">Ocsigen_multipart.file_info</a></span><span> = </span><span>{</span></code><ol><li id="type-file_info.tmp_filename" class="def record field anchored"><code><span>tmp_filename : string;</span></code></li><li id="type-file_info.filesize" class="def record field anchored"><code><span>filesize : int64;</span></code></li><li id="type-file_info.raw_original_filename" class="def record field anchored"><code><span>raw_original_filename : string;</span></code></li><li id="type-file_info.file_content_type" class="def record field anchored"><code><span>file_content_type : <span><a href="#type-content_type">content_type</a> option</span>;</span></code></li></ol><code><span>}</span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-post_data"><code><span><span class="keyword">type</span> post_data</span><span> = <span><span>(string * string)</span> list</span> * <span><span>(string * <a href="#type-file_info">file_info</a>)</span> list</span></span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-client_conn"><code><span><span class="keyword">type</span> client_conn</span><span> = </span><span>[ </span></code><ol><li id="type-client_conn.Inet" class="def variant constructor anchored"><code><span>| </span><span>`Inet <span class="keyword">of</span> <span class="xref-unresolved">Ipaddr</span>.t * int</span></code></li><li id="type-client_conn.Unix" class="def variant constructor anchored"><code><span>| </span><span>`Unix <span class="keyword">of</span> string</span></code></li><li id="type-client_conn.Forwarded_for" class="def variant constructor anchored"><code><span>| </span><span>`Forwarded_for <span class="keyword">of</span> string</span></code></li><li id="type-client_conn.Unknown" class="def variant constructor anchored"><code><span>| </span><span>`Unknown</span></code></li></ol><code><span> ]</span></code></div><div class="spec-doc"><p>Type of connection used by the client. <code>`Inet</code> means the client connected through the Internet. <code>`Forwarded_for</code> means that the client connected through a proxy and carries the IP address reported in the HTTP headers.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-make"><code><span><span class="keyword">val</span> make : 
+  <span><span class="optlabel">?forward_ip</span>:<span>string list</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?sub_path</span>:string <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?original_full_path</span>:string <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?request_cache</span>:<a href="../Polytables/index.html#type-t">Polytables.t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?cookies_override</span>:<span>string <span class="xref-unresolved">Ocsigen_cookie_map</span>.Map_inner.t</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">address</span>:<a href="../Ocsigen_config/Socket_type/index.html#type-t">Ocsigen_config.Socket_type.t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">port</span>:int <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">ssl</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">filenames</span>:<span><span>string list</span> <span class="xref-unresolved">Stdlib</span>.ref</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">client_conn</span>:<a href="#type-client_conn">client_conn</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">body</span>:<span class="xref-unresolved">Cohttp_lwt</span>.Body.t <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="label">connection_closed</span>:<span>unit <span class="xref-unresolved">Lwt</span>.t</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="xref-unresolved">Cohttp</span>.Request.t <span class="arrow">&#45;&gt;</span></span>
+  <a href="#type-t">t</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-update"><code><span><span class="keyword">val</span> update : 
+  <span><span class="optlabel">?ssl</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?forward_ip</span>:<span>string list</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?client_conn</span>:<a href="#type-client_conn">client_conn</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?sub_path</span>:string <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?meth</span>:<span class="xref-unresolved">Cohttp</span>.Code.meth <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?get_params_flat</span>:<span><span>(string * string)</span> list</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?post_data</span>:<span><a href="#type-post_data">post_data</a> option</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?cookies_override</span>:<span>string <span class="xref-unresolved">Ocsigen_cookie_map</span>.Map_inner.t</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?full_rewrite</span>:bool <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?uri</span>:<span class="xref-unresolved">Uri</span>.t <span class="arrow">&#45;&gt;</span></span>
+  <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span>
+  <a href="#type-t">t</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-to_cohttp"><code><span><span class="keyword">val</span> to_cohttp : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Cohttp</span>.Request.t</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-uri"><code><span><span class="keyword">val</span> uri : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Uri</span>.t</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-body"><code><span><span class="keyword">val</span> body : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Cohttp_lwt</span>.Body.t</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-address"><code><span><span class="keyword">val</span> address : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <a href="../Ocsigen_config/Socket_type/index.html#type-t">Ocsigen_config.Socket_type.t</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-host"><code><span><span class="keyword">val</span> host : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>string option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-meth"><code><span><span class="keyword">val</span> meth : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Cohttp</span>.Code.meth</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-port"><code><span><span class="keyword">val</span> port : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> int</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-ssl"><code><span><span class="keyword">val</span> ssl : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> bool</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-version"><code><span><span class="keyword">val</span> version : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span class="xref-unresolved">Cohttp</span>.Code.version</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-query"><code><span><span class="keyword">val</span> query : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>string option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_params"><code><span><span class="keyword">val</span> get_params : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><span>(string * <span>string list</span>)</span> list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-get_params_flat"><code><span><span class="keyword">val</span> get_params_flat : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><span>(string * string)</span> list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-path"><code><span><span class="keyword">val</span> path : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>string list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-path_string"><code><span><span class="keyword">val</span> path_string : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-sub_path"><code><span><span class="keyword">val</span> sub_path : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>string list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-sub_path_string"><code><span><span class="keyword">val</span> sub_path_string : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-original_full_path"><code><span><span class="keyword">val</span> original_full_path : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>string list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-original_full_path_string"><code><span><span class="keyword">val</span> original_full_path_string : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> string</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-header"><code><span><span class="keyword">val</span> header : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="../Ocsigen_header/Name/index.html#type-t">Ocsigen_header.Name.t</a> <span class="arrow">&#45;&gt;</span></span> <span>string option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-header_multi"><code><span><span class="keyword">val</span> header_multi : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="../Ocsigen_header/Name/index.html#type-t">Ocsigen_header.Name.t</a> <span class="arrow">&#45;&gt;</span></span> <span>string list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-add_header"><code><span><span class="keyword">val</span> add_header : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="../Ocsigen_header/Name/index.html#type-t">Ocsigen_header.Name.t</a> <span class="arrow">&#45;&gt;</span></span> <span>string <span class="arrow">&#45;&gt;</span></span> <a href="#type-t">t</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-cookies"><code><span><span class="keyword">val</span> cookies : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>string <span class="xref-unresolved">Ocsigen_cookie_map</span>.Map_inner.t</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-files"><code><span><span class="keyword">val</span> files : 
+  <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>string option</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span class="xref-unresolved">Stdlib</span>.Int64.t option</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span><span>(string * <a href="#type-file_info">file_info</a>)</span> list</span> <span class="xref-unresolved">Lwt</span>.t</span> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-post_params"><code><span><span class="keyword">val</span> post_params : 
+  <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>string option</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span class="xref-unresolved">Stdlib</span>.Int64.t option</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span><span><span>(string * string)</span> list</span> <span class="xref-unresolved">Lwt</span>.t</span> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-client_conn"><code><span><span class="keyword">val</span> client_conn : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <a href="#type-client_conn">client_conn</a></span></code></div><div class="spec-doc"><p>The way the client connects to the server (for example, its IP address if connected over the internet).</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-client_conn_to_string"><code><span><span class="keyword">val</span> client_conn_to_string : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> string</span></code></div><div class="spec-doc"><p>A textual representation of <code>client_conn</code> suitable for use in logs.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-forward_ip"><code><span><span class="keyword">val</span> forward_ip : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>string list</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-content_type"><code><span><span class="keyword">val</span> content_type : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-content_type">content_type</a> option</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-request_cache"><code><span><span class="keyword">val</span> request_cache : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <a href="../Polytables/index.html#type-t">Polytables.t</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-tries"><code><span><span class="keyword">val</span> tries : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> int</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-incr_tries"><code><span><span class="keyword">val</span> incr_tries : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> unit</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-connection_closed"><code><span><span class="keyword">val</span> connection_closed : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span>unit <span class="xref-unresolved">Lwt</span>.t</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-timeofday"><code><span><span class="keyword">val</span> timeofday : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> float</span></code></div></div></div>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    var wodocPub = "/ocsigenserver";
+    // Switch version: keep the current page, swapping only the version segment.
+    function wodocVersion(v) {
+      if (!v) return;
+      var re = new RegExp('^(' + wodocPub + '/)[^/]+');
+      var p = location.pathname;
+      location.href =
+        re.test(p) ? p.replace(re, '$1' + v) : wodocPub + '/' + v + '/index.html';
+    }
+    // Build the version <select> from the project's versions.json (the single
+    // source of truth, refreshed on every build/release), so even older frozen
+    // pages list the current set. Falls back to the baked <option>s on failure.
+    (function () {
+      var seg = (location.pathname.match(
+        new RegExp('^' + wodocPub + '/([^/]+)')) || [])[1];
+      function select(sel) {
+        var i;
+        for (i = 0; i < sel.options.length; i++)
+          if (sel.options[i].value === seg) { sel.selectedIndex = i; return; }
+        if (seg) {
+          var o = document.createElement('option');
+          o.value = seg; o.textContent = seg; o.selected = true;
+          sel.insertBefore(o, sel.firstChild);
+        }
+      }
+      fetch(wodocPub + '/versions.json')
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (m) {
+          var list = m.list || [], latest = m.latest;
+          document.querySelectorAll('.wodoc-version').forEach(function (sel) {
+            sel.innerHTML = '';
+            list.forEach(function (v) {
+              var o = document.createElement('option');
+              if (v === latest) { o.value = 'latest'; o.textContent = v + ' (latest)'; }
+              else { o.value = v; o.textContent = v; }
+              sel.appendChild(o);
+            });
+            select(sel);
+          });
+        })
+        .catch(function () {
+          document.querySelectorAll('.wodoc-version').forEach(select);
+        });
+    })();
+  </script>
+</body>
+</html>
