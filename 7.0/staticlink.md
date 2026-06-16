@@ -1,0 +1,196 @@
+
+# Using Ocsigen Server as a library
+
+
+## Creating and running a statically linked executable
+
+Instead of using a configuration file, you can use Ocsigen Server as a library for your OCaml program.
+
+Call function [`Ocsigen_server.start`](./Ocsigen_server.md#val-start) like this to run the server:
+
+```ocaml
+let _ =
+  Ocsigen_server.start
+    [ Ocsigen_server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
+```
+Have a look at the API documentation for [`Ocsigen_server.start`](./Ocsigen_server.md#val-start) to see how to provide configuration options.
+
+As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function [`Ocsigen_server.host`](./Ocsigen_server.md#val-host) to configure them.
+
+Functions like [`Staticmod.run`](./Staticmod.md#val-run) are defined by extensions.
+
+The programming interface follows exactly the structure of the configuration file: Each request received by the server goes through all the instructions given in the list. These instructions can be:
+
+- either input filters that will modify the request (for example [Rewritemod](rewritemod))
+- or page generation instructions (for example with [Staticmod](staticmod), [Eliom](eliom) or [Redirectmod](redirectmod))
+- or output filters, that will modify the result (for example [Deflatemod](deflatemod) or [CORS](cors)).
+Here is an example of a more complex configuration:
+
+```ocaml
+let _ =
+  Ocsigen_server.start
+    ~ports:[`All, 8080]
+    ~command_pipe:"local/var/run/mysite-cmd"
+    ~logdir:"local/var/log/mysite"
+    ~datadir:"local/var/data/mysite"
+    ~default_charset:(Some "utf-8")
+    [ Ocsigen_server.host
+        ~regexp:"mydomain.com"
+        [ Ocsigen_server.site ["subsite"]
+            [ Accesscontrol.(
+                if_
+                  (and_
+                     [ ip "122.122.122.122"
+                     ; header ~name:"user-agent" ~regexp:".*FooBar.*"
+                     ; method_ `POST ])
+                  [forbidden] [])
+            ; Authbasic.run ~realm:"myrealm"
+                ~auth:(fun _u p -> Lwt.return (p = "toto"))
+                ()
+            ; Staticmod.run ~dir:"local/var/www/otherdir" () ]
+        ; Ocsigen_server.site ["othersubsite"]
+            [ Revproxy.run
+                ~redirection:
+                  (Revproxy.create_redirection ~full_url:false ~regexp:"(.*)"
+                     ~keephost:true "http://localhost:8888/\\1")
+                () ]
+        ; Redirectmod.run
+            ~redirection:
+              (Redirectmod.create_redirection ~full_url:false ~regexp:"old(.*)"
+                 "new\\1")
+            ()
+        ; Staticmod.run ~dir:"local/var/www/staticdir" ()
+        ; Cors.run ~max_age:86400 ~credentials:true ~methods:[`POST; `GET; `HEAD]
+            ~exposed_headers:
+              [ "x-eliom-application"
+              ; "x-eliom-location"
+              ; "x-eliom-set-process-cookies"
+              ; "x-eliom-set-cookie-substitutes" ]
+            ()
+        ; Deflatemod.run
+            ~mode:
+              (`Only
+                [ `Type (Some "text", Some "html")
+                ; `Type (Some "text", Some "javascript")
+                ; `Type (Some "text", Some "css")
+                ; `Type (Some "application", Some "javascript")
+                ; `Type (Some "application", Some "x-javascript")
+                ; `Type (Some "application", Some "xhtml+xml")
+                ; `Type (Some "image", Some "svg+xml")
+                ; `Type (Some "application", Some "x-eliom") ])
+            () ] ]
+```
+In this example, the server defines one virtual host for domain `mydomain.com`. It will first check whether it is a request for directory `subsite/`, and if yes, will reject the request with `403 Forbidden` if it is a POST request coming from user-agent `FooBar` at IP 122\.122.122.122. If not, it will ask for a password before serving files from directory `local/var/www/otherdir`.<br/> Then we define another subsite othersubsite for which the requests will be transfered to another Web server running locally on port 8888, then rewrite the answer location header accordingly. Then, if the page is still not generated, the server will send a redirection if URLs starts with “old”. Otherwise, it will try to serve files from directory `local/var/www/staticdir`. If the page has still not been found, a `404 Not found` will be sent, otherwise, some CORS headers will be added, and the result will be compressed before being sent.
+
+Compile this example with the following dune file:
+
+```
+(executable
+ (public_name myserver)
+ (name main)
+ (libraries
+  ocsigenserver
+  ocsigenserver.ext.staticmod
+  ocsigenserver.ext.authbasic
+  ocsigenserver.ext.extendconfiguration
+  ocsigenserver.ext.outputfilter
+  ocsigenserver.ext.cors
+  ocsigenserver.ext.accesscontrol
+  ocsigenserver.ext.deflatemod
+  ocsigenserver.ext.redirectmod
+  ocsigenserver.ext.revproxy
+ ))
+```
+This program corresponds to the following configuration file:
+
+```
+<ocsigen>
+  <server>
+    <port>8080</port>
+    <commandpipe>local/var/run/mysite-cmd</commandpipe>
+    <logdir>local/var/log/mysite</logdir>
+    <datadir>local/var/data/mysite</datadir>
+    <charset>utf-8</charset>
+    <debugmode/>
+    <extension findlib-package="ocsigenserver.ext.staticmod"/>
+    <extension findlib-package="ocsigenserver.ext.authbasic"/>
+    <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
+    <extension findlib-package="ocsigenserver.ext.outputfilter"/>
+    <extension findlib-package="ocsigenserver.ext.cors"/>
+    <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
+    <extension findlib-package="ocsigenserver.ext.deflatemod"/>
+    <extension findlib-package="ocsigenserver.ext.redirectmod"/>
+    <extension findlib-package="ocsigenserver.ext.revproxy"/>
+    <host hostfilter="mydomain.com">
+      <site dir="subsite">
+        <if>
+          <and>
+            <ip value="122.122.122.122"/>
+            <header name="user-agent" regexp=".*FooBar.*"/>
+            <method value="POST"/>
+          </and>
+          <then>
+            <forbidden/>
+          </then>
+        </if>
+        <authbasic realm="myrealm">
+          <plain login="" password="toto"/>
+        </authbasic>
+        <static dir="local/var/www/otherdir"/>
+      </site>
+      <site dir="othersite">
+        <revproxy suburl="(.*)" keephost="true" dest="http://localhost:8888/otherdir/\\1"/>
+        <outputfilter header="location" regexp="http://localhost:8888/(.* )" dest="http://mydomain.com/\\1"/>
+      </site>
+      <redirect suburl="old(.*)" dest="http://mydomain.org/new\\1"/>
+      <static dir="local/var/www/staticdir"/>
+      <cors max_age="86400"
+       credentials="true"
+       methods="POST,GET,HEAD"
+       exposed_headers="x-eliom-application,x-eliom-location,x-eliom-set-process-cookies,x-eliom-set-cookie-substitutes"/>
+      <deflate compress="only">
+        <type>text/html</type>
+        <type>text/javascript</type>
+        <type>text/css</type>
+        <type>application/javascript</type>
+        <type>application/x-javascript</type>
+        <type>application/xhtml+xml</type>
+        <type>image/svg+xml</type>
+        <type>application/x-eliom</type>
+      </deflate>
+    </host>
+  </server>
+</ocsigen>
+```
+
+## Experimental: Using a configuration file with a static executable
+
+If you want to use the configuration file with a statically linked executable, call
+
+```
+Ocsigen_server.exec (Ocsigen_parseconfig.parse_config ())
+```
+to launch the server's main loop.
+
+Alternatively, you can link module `ocsigenserver.cmx` to set the default commandline option and launch the main loop.
+
+If you still want to use dynamic linking, add option `-linkall` while compiling, otherwise the compiler may remove some modules from packages `cma/cmxa`.
+
+All statically linked extensions need to be initialized from the configuration file. To do that, replace the lines like:
+
+```
+<extension module="staticmod.cmxs" />
+```
+or
+
+```
+<extension findlib-package="ocsigenserver.ext.staticmod" />
+```
+by
+
+```
+<extension name="staticmod" />
+```
+This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.
+
+This is an experimental feature. Let us know if you test it (for example by opening an issue on Github).
