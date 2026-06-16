@@ -55,7 +55,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-` Options behave exactly like their <<a_manual chapter="config"|configuration file>>` counterparts.
+Options behave exactly like their [configuration file](./config.md) counterparts.
 
 ```ocaml
 type instruction =

@@ -184,7 +184,7 @@
       </nav>
       <article class="rightcol">
         <header class="odoc-preamble"><h1>Module <code><span>Extendconfiguration</span></code></h1><p>Extendconfiguration: More configuration options for Ocsigen Server</p></header>
-        <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file, have a look at the <code> &lt;&lt;a_manual chapter=&quot;extendconfiguration&quot;|manual page&gt;&gt;</code>. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.</p><ol><li></li></ol><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.extendconfiguration</code>.</p><p>Example of use:</p><pre class="language-ocaml"><code>let _ =
+        <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file, have a look at the <a href="../extendconfiguration.html" title="extendconfiguration">manual page</a>. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.</p><ol><li></li></ol><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.extendconfiguration</code>.</p><p>Example of use:</p><pre class="language-ocaml"><code>let _ =
    Ocsigen_server.start
      [ Ocsigen_server.host ~regexp:&quot;.*&quot;
          [ Extendconfiguration.forbidfile ~extensions:[&quot;php&quot;] ()

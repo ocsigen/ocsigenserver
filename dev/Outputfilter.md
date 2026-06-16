@@ -3,7 +3,7 @@
 
 Outputfilter: Rewrite some part of the output
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="outputfilter"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./outputfilter.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.outputfilter`.
 

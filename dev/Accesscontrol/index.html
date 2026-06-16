@@ -184,7 +184,7 @@
       </nav>
       <article class="rightcol">
         <header class="odoc-preamble"><h1>Module <code><span>Accesscontrol</span></code></h1><p>Accesscontrol: Conditional access to some sites</p></header>
-        <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file,</p><ol><li>have a look at the <code> &lt;&lt;a_manual chapter=&quot;accesscontrol&quot;|manual page&gt;&gt;</code>.</li><li>If you are using Ocsigen Server as a library, use the interface described</li><li>here. Each of these functions behaves exactly as its configuration file counterpart.</li><li></li></ol><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.accesscontrol</code>.</p><p>Example of use (with <code> &lt;&lt;a_manual chapter=&quot;redirectmod&quot;|Redirectmod&gt;&gt;</code>):</p><pre class="language-ocaml"><code>let _ =
+        <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file,</p><ol><li>have a look at the <a href="../accesscontrol.html" title="accesscontrol">manual page</a>.</li><li>If you are using Ocsigen Server as a library, use the interface described</li><li>here. Each of these functions behaves exactly as its configuration file counterpart.</li><li></li></ol><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.accesscontrol</code>.</p><p>Example of use (with <a href="../redirectmod.html" title="redirectmod">Redirectmod</a>):</p><pre class="language-ocaml"><code>let _ =
   Ocsigen_server.start
     [ Ocsigen_server.host ~regexp:&quot;.*&quot;
         [ Accesscontrol.(

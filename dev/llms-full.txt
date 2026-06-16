@@ -1790,12 +1790,12 @@ Accesscontrol: Conditional access to some sites
 
 If you want to use this extension with Ocsigen Server's configuration file,
 
-1. have a look at the ` <<a_manual chapter="accesscontrol"|manual page>>`.
+1. have a look at the [manual page](./accesscontrol.md).
 2. If you are using Ocsigen Server as a library, use the interface described
 3. here. Each of these functions behaves exactly as its configuration file counterpart.
 This module belongs to ocamlfind package `ocsigenserver.ext.accesscontrol`.
 
-Example of use (with ` <<a_manual chapter="redirectmod"|Redirectmod>>`):
+Example of use (with [Redirectmod](./redirectmod.md)):
 
 ```ocaml
 let _ =
@@ -1895,7 +1895,7 @@ val section : Logs.src
 
 Authbasic: Basic HTTP authentication
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="authbasic"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./authbasic.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.authbasic`.
 
@@ -1943,7 +1943,7 @@ val run : realm:string -> auth:auth -> unit -> Ocsigen_server.instruction
 
 Cross-Origin Resource Sharing
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="cors"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./cors.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.cors`.
 
@@ -1986,7 +1986,7 @@ Deflatemod: compress output data
 
 If you want to use this extension with Ocsigen Server's configuration file,
 
-1. have a look at the ` <<a_manual chapter="deflatemod"|manual page>>`.
+1. have a look at the [manual page](./deflatemod.md).
 2. If you are using Ocsigen Server as a library, use the interface described
 3. here. Each of these functions behaves exactly as its configuration file counterpart.
 This module belongs to ocamlfind package `ocsigenserver.ext.deflatemod`.
@@ -2066,7 +2066,7 @@ val is_native : bool
 
 Extendconfiguration: More configuration options for Ocsigen Server
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="extendconfiguration"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./extendconfiguration.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.extendconfiguration`.
 
@@ -6284,7 +6284,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-` Options behave exactly like their <<a_manual chapter="config"|configuration file>>` counterparts.
+Options behave exactly like their [configuration file](./config.md) counterparts.
 
 ```ocaml
 type instruction =
@@ -6508,7 +6508,7 @@ module StringStream : sig ... end
 
 Outputfilter: Rewrite some part of the output
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="outputfilter"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./outputfilter.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.outputfilter`.
 
@@ -6583,7 +6583,7 @@ val clear : table:t -> unit
 
 Redirectmod: HTTP redirections
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="redirectmod"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./redirectmod.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.redirectmod`.
 
@@ -6629,11 +6629,11 @@ val run : redirection:redirection -> unit -> Ocsigen_server.instruction
 
 Revproxy: Forward a request to another Web server
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="revproxy"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./revproxy.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.revproxy`.
 
-Example of use. Forward all requests to a given directory to the same directory of another server running locally on another port. We are using it in combination with ` <<a_manual chapter="outputfilter"|Outputfilter>>` to rewrite redirections.
+Example of use. Forward all requests to a given directory to the same directory of another server running locally on another port. We are using it in combination with [Outputfilter](./outputfilter.md) to rewrite redirections.
 
 ```ocaml
 let _ =
@@ -6680,7 +6680,7 @@ val run : redirection:redirection -> unit -> Ocsigen_server.instruction
 
 Rewrite: Change the request
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="rewritemod"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./rewritemod.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.rewritemod`.
 
@@ -6705,7 +6705,7 @@ val run :
 
 Staticmod: serve static files
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="staticmod"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./staticmod.md). If you are using Ocsigen Server as a library, use the interface described here.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.staticmod`.
 
@@ -6727,7 +6727,7 @@ val run :
   unit ->
   Ocsigen_server.instruction
 ```
-Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described ` <<a_manual chapter="staticmod"|here>>`.
+Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described [here](./staticmod.md).
 
 ```ocaml
 val section : Logs.src

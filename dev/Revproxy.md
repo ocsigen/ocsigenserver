@@ -3,11 +3,11 @@
 
 Revproxy: Forward a request to another Web server
 
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the ` <<a_manual chapter="revproxy"|manual page>>`. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./revproxy.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
 This module belongs to ocamlfind package `ocsigenserver.ext.revproxy`.
 
-Example of use. Forward all requests to a given directory to the same directory of another server running locally on another port. We are using it in combination with ` <<a_manual chapter="outputfilter"|Outputfilter>>` to rewrite redirections.
+Example of use. Forward all requests to a given directory to the same directory of another server running locally on another port. We are using it in combination with [Outputfilter](./outputfilter.md) to rewrite redirections.
 
 ```ocaml
 let _ =
