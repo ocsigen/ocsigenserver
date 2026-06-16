@@ -1,7 +1,7 @@
 (** Staticmod: serve static files *)
 
 (** If you want to use this extension with Ocsigen Server's configuration file, 
-   have a look at the {% <<a_manual chapter="staticmod"|manual page>>%}.
+   have a look at the {{!page-"staticmod"}manual page}.
    If you are using Ocsigen Server as a library, use the interface described
    here.
 *)
@@ -31,6 +31,6 @@ val run :
 (** Run static mod on a specific directory. 
     Call this if you want to run Ocsigen Server without configuration file.
     The optional parameter correspond to the options of the configuration
-    file described {% <<a_manual chapter="staticmod"|here>>%}.*)
+    file described {{!page-"staticmod"}here}.*)
 
 val section : Logs.src
