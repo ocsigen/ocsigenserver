@@ -2,12 +2,18 @@ name: Builds, tests & co
 
 on:
   push:
+    branches:
+      - master
   pull_request:
   schedule:
     # Prime the caches every Monday
     - cron: 0 1 * * MON
 
 permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
