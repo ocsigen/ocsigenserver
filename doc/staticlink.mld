@@ -25,11 +25,11 @@ The programming interface follows exactly the structure of the configuration fil
 Each request received by the server goes through all the instructions given
 in the list. These instructions can be:
 - either input filters that will modify the request
-  (for example {{:rewritemod}Rewritemod})
-- or page generation instructions (for example with {{:staticmod}Staticmod},
-  {{:eliom}Eliom} or {{:redirectmod}Redirectmod})
+  (for example {{!page-rewritemod}Rewritemod})
+- or page generation instructions (for example with {{!page-staticmod}Staticmod},
+  {{!page-eliom}Eliom} or {{!page-redirectmod}Redirectmod})
 - or output filters, that will modify the result (for example
-  {{:deflatemod}Deflatemod} or {{:cors}CORS}).
+  {{!page-deflatemod}Deflatemod} or {{!page-cors}CORS}).
 
 Here is an example of a more complex configuration:
 {@ocaml[
