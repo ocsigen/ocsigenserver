@@ -21,9 +21,9 @@ Functions like [`Staticmod.run`](./Staticmod.md#val-run) are defined by extensio
 
 The programming interface follows exactly the structure of the configuration file: Each request received by the server goes through all the instructions given in the list. These instructions can be:
 
-- either input filters that will modify the request (for example [Rewritemod](rewritemod))
-- or page generation instructions (for example with [Staticmod](staticmod), [Eliom](eliom) or [Redirectmod](redirectmod))
-- or output filters, that will modify the result (for example [Deflatemod](deflatemod) or [CORS](cors)).
+- either input filters that will modify the request (for example [Rewritemod](./rewritemod.md))
+- or page generation instructions (for example with [Staticmod](./staticmod.md), [Eliom](./eliom.md) or [Redirectmod](./redirectmod.md))
+- or output filters, that will modify the result (for example [Deflatemod](./deflatemod.md) or [CORS](./cors.md)).
 Here is an example of a more complex configuration:
 
 ```ocaml
