@@ -1,7 +1,7 @@
 
 # API reference
 
-API reference for Ocsigen Server. See the [manual](./quickstart.md) to get started.
+API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 
 [`Ocsigen_server`](./Ocsigen_server.md) 
 
