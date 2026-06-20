@@ -36,3 +36,9 @@
     (link "Writing an extension" ocsigenserver/extend.html extend))
   (api-section "API"
     (link "API reference" ocsigenserver/api.html api)))
+
+;; Sibling Ocsigen projects this doc links to, so wodoc rewrites their
+;; ocaml.org cross-references to relative links into their deployed docs on
+;; ocsigen.org. (pkg deploy-dir layout wrapper-module)
+(hosted
+  (eliom eliom true Eliom))
