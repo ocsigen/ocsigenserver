@@ -9,7 +9,7 @@ sources are also what ocaml.org renders.
 
 | What | Where | Format |
 |---|---|---|
-| Manual | [`doc/*.mld`](.) (quickstart, launching, config, the extensions, …) | odoc pages |
+| Manual | [`doc/*.mld`](.) (`index` home page, launching, config, the extensions, …) | odoc pages |
 | API | the `.mli` of `ocsigenserver` | odoc comments |
 | Site configuration (nav, …) | [`doc/wodoc`](wodoc) | wodoc config (S-expression) |
 
