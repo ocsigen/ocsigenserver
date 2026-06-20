@@ -1,0 +1,48 @@
+@children_order quickstart launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter userconf cors extend api
+@short_title Ocsigen Server
+
+{0 Ocsigen Server}
+
+Ocsigen Server is a powerful and modular general-purpose Web server,
+written in OCaml. It supports static files, redirections, reverse proxy,
+CORS, user pages with local configuration, page compression,
+authentication, and more.
+
+It can be used:
+- as an executable: it reads its configuration from a file and dynamically
+  loads the extensions and libraries you need for your sites;
+- or as a library: build your own executable, statically linked with the
+  modules you need.
+
+Ocsigen Server is part of the {{:https://ocsigen.org}Ocsigen project}.
+
+{1 Manual}
+
+- {{!page-quickstart}Quick start}: install and run your first server.
+- {{!page-launching}Launching the server}
+- {{!page-config}Configuration file}
+- {{!page-staticlink}Using Ocsigen Server as a library}
+
+{1 Extensions}
+
+Ocsigen Server is extensible. The bundled extensions are:
+{{!page-staticmod}Staticmod} (serve static files),
+{{!page-eliom}Eliom} (the Web framework),
+{{!page-extendconfiguration}Extendconfiguration},
+{{!page-accesscontrol}Accesscontrol},
+{{!page-authbasic}Authbasic},
+{{!page-deflatemod}Deflatemod} (compression),
+{{!page-redirectmod}Redirectmod},
+{{!page-revproxy}Revproxy} (reverse proxy),
+{{!page-rewritemod}Rewritemod},
+{{!page-outputfilter}Outputfilter},
+{{!page-userconf}Userconf} and
+{{!page-cors}CORS}.
+
+{1 Developer documentation}
+
+- {{!page-extend}Writing an extension}
+
+{1 API reference}
+
+See the {{!page-api}API reference}.
