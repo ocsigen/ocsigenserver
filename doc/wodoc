@@ -10,11 +10,11 @@
 (project ocsigenserver)
 (title Server)
 (pub /ocsigenserver)
-(landing ocsigenserver/quickstart.html)
+(landing ocsigenserver/index.html)
 (manual-root)
 (nav
   (section "Usage"
-    (link "Quick start"          ocsigenserver/quickstart.html quickstart)
+    (link "Quick start"          ocsigenserver/index.html      index)
     (link "Launching the server" ocsigenserver/launching.html  launching)
     (link "Configuration file"   ocsigenserver/config.html     config)
     (link "Using as a library"   ocsigenserver/staticlink.html staticlink))
