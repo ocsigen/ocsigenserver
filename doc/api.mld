@@ -23,6 +23,16 @@ Userconf
 Cors
 }
 
+{2 Requests and responses}
+
+{!modules:
+Ocsigen_request
+Ocsigen_response
+Ocsigen_multipart
+Ocsigen_cookie_map
+Ocsigen_charset_mime
+}
+
 {2 Persistent data, writing in the logs, configuration file extension, polymorphic tables}
 
 {!modules:
@@ -41,4 +51,6 @@ Ocsigen_extensions
 Ocsigen_local_files
 Ocsigen_header
 Ocsigen_stream
+Ocsigen_loader
+Ocsigen_command
 }
