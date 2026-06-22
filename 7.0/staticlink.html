@@ -95,7 +95,7 @@
 <nav class="api-nav manual-nav">
 <h3>Usage</h3>
 <ul class="api-section">
-<li class="ml3" data-wodoc-page="quickstart.html"><a href="./quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="index.html"><a href="./index.html">Quick start</a></li>
 <li class="ml3" data-wodoc-page="launching.html"><a href="./launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="./config.html">Configuration file</a></li>
 <li class="ml3 current" data-wodoc-page="staticlink.html"><a href="./staticlink.html">Using as a library</a></li>
@@ -149,7 +149,7 @@
 <nav class="api-nav manual-nav">
 <h3>Usage</h3>
 <ul class="api-section">
-<li class="ml3" data-wodoc-page="quickstart.html"><a href="./quickstart.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="index.html"><a href="./index.html">Quick start</a></li>
 <li class="ml3" data-wodoc-page="launching.html"><a href="./launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="./config.html">Configuration file</a></li>
 <li class="ml3 current" data-wodoc-page="staticlink.html"><a href="./staticlink.html">Using as a library</a></li>
@@ -186,7 +186,7 @@
         <header class="odoc-preamble"><h1 id="using-ocsigen-server-as-a-library">Using Ocsigen Server as a library</h1></header>
         <div class="odoc-content"><h2 id="creating-and-running-a-statically-linked-executable">Creating and running a statically linked executable</h2><p>Instead of using a configuration file, you can use Ocsigen Server as a library for your OCaml program.</p><p>Call function <a href="Ocsigen_server/index.html#val-start"><code>Ocsigen_server.start</code></a> like this to run the server:</p><pre class="language-ocaml"><code>let _ =
   Ocsigen_server.start
-    [ Ocsigen_server.host [Staticmod.run ~dir:&quot;local/var/www/mysite/&quot; ()]]</code></pre><p>Have a look at the API documentation for <a href="Ocsigen_server/index.html#val-start"><code>Ocsigen_server.start</code></a> to see how to provide configuration options.</p><p>As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function <a href="Ocsigen_server/index.html#val-host"><code>Ocsigen_server.host</code></a> to configure them.</p><p>Functions like <a href="Staticmod/index.html#val-run"><code>Staticmod.run</code></a> are defined by extensions.</p><p>The programming interface follows exactly the structure of the configuration file: Each request received by the server goes through all the instructions given in the list. These instructions can be:</p><ul><li>either input filters that will modify the request (for example <a href="rewritemod">Rewritemod</a>)</li><li>or page generation instructions (for example with <a href="staticmod">Staticmod</a>, <a href="eliom">Eliom</a> or <a href="redirectmod">Redirectmod</a>)</li><li>or output filters, that will modify the result (for example <a href="deflatemod">Deflatemod</a> or <a href="cors">CORS</a>).</li></ul><p>Here is an example of a more complex configuration:</p><pre class="language-ocaml"><code>let _ =
+    [ Ocsigen_server.host [Staticmod.run ~dir:&quot;local/var/www/mysite/&quot; ()]]</code></pre><p>Have a look at the API documentation for <a href="Ocsigen_server/index.html#val-start"><code>Ocsigen_server.start</code></a> to see how to provide configuration options.</p><p>As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function <a href="Ocsigen_server/index.html#val-host"><code>Ocsigen_server.host</code></a> to configure them.</p><p>Functions like <a href="Staticmod/index.html#val-run"><code>Staticmod.run</code></a> are defined by extensions.</p><p>The programming interface follows exactly the structure of the configuration file: Each request received by the server goes through all the instructions given in the list. These instructions can be:</p><ul><li>either input filters that will modify the request (for example <a href="rewritemod.html" title="rewritemod">Rewritemod</a>)</li><li>or page generation instructions (for example with <a href="staticmod.html" title="staticmod">Staticmod</a>, <a href="eliom.html" title="eliom">Eliom</a> or <a href="redirectmod.html" title="redirectmod">Redirectmod</a>)</li><li>or output filters, that will modify the result (for example <a href="deflatemod.html" title="deflatemod">Deflatemod</a> or <a href="cors.html" title="cors">CORS</a>).</li></ul><p>Here is an example of a more complex configuration:</p><pre class="language-ocaml"><code>let _ =
   Ocsigen_server.start
     ~ports:[`All, 8080]
     ~command_pipe:&quot;local/var/run/mysite-cmd&quot;
