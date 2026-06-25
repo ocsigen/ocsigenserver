@@ -14,8 +14,8 @@ Example of use (with [Redirectmod](./redirectmod.md)):
 
 ```ocaml
 let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host ~regexp:".*"
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host ~regexp:".*"
         [ Accesscontrol.(
             if_ (not_ ssl)
               [ Redirectmod.run
@@ -62,42 +62,42 @@ val not_ : condition -> condition
 ```ocaml
 val if_ : 
   condition ->
-  Ocsigen_server.instruction list ->
-  Ocsigen_server.instruction list ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction list ->
+  Ocsigen.Server.instruction list ->
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val iffound : Ocsigen_server.instruction list -> Ocsigen_server.instruction
+val iffound : Ocsigen.Server.instruction list -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val ifnotfound : 
   ?code:string ->
-  Ocsigen_server.instruction list ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction list ->
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val notfound : Ocsigen_server.instruction
+val notfound : Ocsigen.Server.instruction
 ```
 ```ocaml
-val nextsite : Ocsigen_server.instruction
+val nextsite : Ocsigen.Server.instruction
 ```
 ```ocaml
-val nexthost : Ocsigen_server.instruction
+val nexthost : Ocsigen.Server.instruction
 ```
 ```ocaml
-val stop : Ocsigen_server.instruction
+val stop : Ocsigen.Server.instruction
 ```
 ```ocaml
-val forbidden : Ocsigen_server.instruction
+val forbidden : Ocsigen.Server.instruction
 ```
 ```ocaml
 val allow_forward_for : 
   ?check_equal_ip:bool ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val allow_forward_proto : unit -> Ocsigen_server.instruction
+val allow_forward_proto : unit -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val section : Logs.src

@@ -99,6 +99,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -153,6 +154,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -185,8 +187,8 @@
       <article class="rightcol">
         <header class="odoc-preamble"><h1>Module <code><span>Deflatemod</span></code></h1><p>Deflatemod: compress output data</p></header>
         <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file,</p><ol><li>have a look at the <a href="../deflatemod.html" title="deflatemod">manual page</a>.</li><li>If you are using Ocsigen Server as a library, use the interface described</li><li>here. Each of these functions behaves exactly as its configuration file counterpart.</li><li></li></ol><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.deflatemod</code>.</p><p>Example of use:</p><pre class="language-ocaml"><code>let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:&quot;.*&quot;
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:&quot;.*&quot;
        [ Staticmod.run ~dir:&quot;static&quot; () 
        ; Deflatemod.run
            ~mode:(`Only [ `Type (Some &quot;text&quot;, Some &quot;html&quot;)
@@ -200,7 +202,7 @@
         ]]</code></pre><div class="odoc-spec"><div class="spec value anchored" id="val-set_compress_level"><code><span><span class="keyword">val</span> set_compress_level : <span>int <span class="arrow">&#45;&gt;</span></span> unit</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-set_buffer_size"><code><span><span class="keyword">val</span> set_buffer_size : <span>int <span class="arrow">&#45;&gt;</span></span> unit</span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-filter"><code><span><span class="keyword">type</span> filter</span><span> = </span><span>[ </span></code><ol><li id="type-filter.Type" class="def variant constructor anchored"><code><span>| </span><span>`Type <span class="keyword">of</span> <span>string option</span> * <span>string option</span></span></code></li><li id="type-filter.Extension" class="def variant constructor anchored"><code><span>| </span><span>`Extension <span class="keyword">of</span> string</span></code></li></ol><code><span> ]</span></code></div><div class="spec-doc"><p>Describes the content to deflate, either using its content type, or file extension</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-run"><code><span><span class="keyword">val</span> run : 
   <span><span class="label">mode</span>:<span>[ <span>`All_but of <span><a href="#type-filter">filter</a> list</span></span> <span><span>| `Only</span> of <span><a href="#type-filter">filter</a> list</span></span> ]</span> <span class="arrow">&#45;&gt;</span></span>
   <span>unit <span class="arrow">&#45;&gt;</span></span>
-  <a href="../Ocsigen_server/index.html#type-instruction">Ocsigen_server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~mode ()</code> makes it possible to use this extension without configuration file.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-section"><code><span><span class="keyword">val</span> section : <span class="xref-unresolved">Logs</span>.src</span></code></div></div></div>
+  <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~mode ()</code> makes it possible to use this extension without configuration file.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-section"><code><span><span class="keyword">val</span> section : <span class="xref-unresolved">Logs</span>.src</span></code></div></div></div>
       </article>
     </div>
   </div>

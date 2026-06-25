@@ -99,6 +99,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="./launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="./config.html">Configuration file</a></li>
 <li class="ml3 current" data-wodoc-page="staticlink.html"><a href="./staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="./migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -153,6 +154,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="./launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="./config.html">Configuration file</a></li>
 <li class="ml3 current" data-wodoc-page="staticlink.html"><a href="./staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="./migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -184,18 +186,18 @@
       </nav>
       <article class="rightcol">
         <header class="odoc-preamble"><h1 id="using-ocsigen-server-as-a-library">Using Ocsigen Server as a library</h1></header>
-        <div class="odoc-content"><h2 id="creating-and-running-a-statically-linked-executable">Creating and running a statically linked executable</h2><p>Instead of using a configuration file, you can use Ocsigen Server as a library for your OCaml program.</p><p>Call function <a href="Ocsigen_server/index.html#val-start"><code>Ocsigen_server.start</code></a> like this to run the server:</p><pre class="language-ocaml"><code>let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host [Staticmod.run ~dir:&quot;local/var/www/mysite/&quot; ()]]</code></pre><p>Have a look at the API documentation for <a href="Ocsigen_server/index.html#val-start"><code>Ocsigen_server.start</code></a> to see how to provide configuration options.</p><p>As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function <a href="Ocsigen_server/index.html#val-host"><code>Ocsigen_server.host</code></a> to configure them.</p><p>Functions like <a href="Staticmod/index.html#val-run"><code>Staticmod.run</code></a> are defined by extensions.</p><p>The programming interface follows exactly the structure of the configuration file: Each request received by the server goes through all the instructions given in the list. These instructions can be:</p><ul><li>either input filters that will modify the request (for example <a href="rewritemod.html" title="rewritemod">Rewritemod</a>)</li><li>or page generation instructions (for example with <a href="staticmod.html" title="staticmod">Staticmod</a>, <a href="eliom.html" title="eliom">Eliom</a> or <a href="redirectmod.html" title="redirectmod">Redirectmod</a>)</li><li>or output filters, that will modify the result (for example <a href="deflatemod.html" title="deflatemod">Deflatemod</a> or <a href="cors.html" title="cors">CORS</a>).</li></ul><p>Here is an example of a more complex configuration:</p><pre class="language-ocaml"><code>let _ =
-  Ocsigen_server.start
+        <div class="odoc-content"><h2 id="creating-and-running-a-statically-linked-executable">Creating and running a statically linked executable</h2><p>Instead of using a configuration file, you can use Ocsigen Server as a library for your OCaml program.</p><p>Call function <a href="Ocsigen/Server/index.html#val-start"><code>Ocsigen.Server.start</code></a> like this to run the server:</p><pre class="language-ocaml"><code>let _ =
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host [Staticmod.run ~dir:&quot;local/var/www/mysite/&quot; ()]]</code></pre><p>Have a look at the API documentation for <a href="Ocsigen/Server/index.html#val-start"><code>Ocsigen.Server.start</code></a> to see how to provide configuration options.</p><p>As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function <a href="Ocsigen/Server/index.html#val-host"><code>Ocsigen.Server.host</code></a> to configure them.</p><p>Functions like <a href="Staticmod/index.html#val-run"><code>Staticmod.run</code></a> are defined by extensions.</p><p>The programming interface follows exactly the structure of the configuration file: Each request received by the server goes through all the instructions given in the list. These instructions can be:</p><ul><li>either input filters that will modify the request (for example <a href="rewritemod.html" title="rewritemod">Rewritemod</a>)</li><li>or page generation instructions (for example with <a href="staticmod.html" title="staticmod">Staticmod</a>, <a href="eliom.html" title="eliom">Eliom</a> or <a href="redirectmod.html" title="redirectmod">Redirectmod</a>)</li><li>or output filters, that will modify the result (for example <a href="deflatemod.html" title="deflatemod">Deflatemod</a> or <a href="cors.html" title="cors">CORS</a>).</li></ul><p>Here is an example of a more complex configuration:</p><pre class="language-ocaml"><code>let _ =
+  Ocsigen.Server.start
     ~ports:[`All, 8080]
     ~command_pipe:&quot;local/var/run/mysite-cmd&quot;
     ~logdir:&quot;local/var/log/mysite&quot;
     ~datadir:&quot;local/var/data/mysite&quot;
     ~default_charset:(Some &quot;utf-8&quot;)
-    [ Ocsigen_server.host
+    [ Ocsigen.Server.host
         ~regexp:&quot;mydomain.com&quot;
-        [ Ocsigen_server.site [&quot;subsite&quot;]
+        [ Ocsigen.Server.site [&quot;subsite&quot;]
             [ Accesscontrol.(
                 if_
                   (and_
@@ -207,7 +209,7 @@
                 ~auth:(fun _u p -&gt; Lwt.return (p = &quot;toto&quot;))
                 ()
             ; Staticmod.run ~dir:&quot;local/var/www/otherdir&quot; () ]
-        ; Ocsigen_server.site [&quot;othersubsite&quot;]
+        ; Ocsigen.Server.site [&quot;othersubsite&quot;]
             [ Revproxy.run
                 ~redirection:
                   (Revproxy.create_redirection ~full_url:false ~regexp:&quot;(.*)&quot;
@@ -307,7 +309,7 @@
       &lt;/deflate&gt;
     &lt;/host&gt;
   &lt;/server&gt;
-&lt;/ocsigen&gt;</pre><h2 id="experimental:-using-a-configuration-file-with-a-static-executable">Experimental: Using a configuration file with a static executable</h2><p>If you want to use the configuration file with a statically linked executable, call</p><pre>Ocsigen_server.exec (Ocsigen_parseconfig.parse_config ())</pre><p>to launch the server's main loop.</p><p>Alternatively, you can link module <code>ocsigenserver.cmx</code> to set the default commandline option and launch the main loop.</p><p>If you still want to use dynamic linking, add option <code>-linkall</code> while compiling, otherwise the compiler may remove some modules from packages <code>cma/cmxa</code>.</p><p>All statically linked extensions need to be initialized from the configuration file. To do that, replace the lines like:</p><pre>&lt;extension module=&quot;staticmod.cmxs&quot; /&gt;</pre><p>or</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.staticmod&quot; /&gt;</pre><p>by</p><pre>&lt;extension name=&quot;staticmod&quot; /&gt;</pre><p>This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.</p><p>This is an experimental feature. Let us know if you test it (for example by opening an issue on Github).</p></div>
+&lt;/ocsigen&gt;</pre><h2 id="experimental:-using-a-configuration-file-with-a-static-executable">Experimental: Using a configuration file with a static executable</h2><p>If you want to use the configuration file with a statically linked executable, call</p><pre>Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())</pre><p>to launch the server's main loop.</p><p>Alternatively, you can link module <code>ocsigenserver.cmx</code> to set the default commandline option and launch the main loop.</p><p>If you still want to use dynamic linking, add option <code>-linkall</code> while compiling, otherwise the compiler may remove some modules from packages <code>cma/cmxa</code>.</p><p>All statically linked extensions need to be initialized from the configuration file. To do that, replace the lines like:</p><pre>&lt;extension module=&quot;staticmod.cmxs&quot; /&gt;</pre><p>or</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.staticmod&quot; /&gt;</pre><p>by</p><pre>&lt;extension name=&quot;staticmod&quot; /&gt;</pre><p>This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.</p><p>This is an experimental feature. Let us know if you test it (for example by opening an issue on Github).</p></div>
       </article>
     </div>
   </div>

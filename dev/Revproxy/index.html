@@ -99,6 +99,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -153,6 +154,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -185,8 +187,8 @@
       <article class="rightcol">
         <header class="odoc-preamble"><h1>Module <code><span>Revproxy</span></code></h1><p>Revproxy: Forward a request to another Web server</p></header>
         <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file, have a look at the <a href="../revproxy.html" title="revproxy">manual page</a>. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.</p><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.revproxy</code>.</p><p>Example of use. Forward all requests to a given directory to the same directory of another server running locally on another port. We are using it in combination with <a href="../outputfilter.html" title="outputfilter">Outputfilter</a> to rewrite redirections.</p><pre class="language-ocaml"><code>let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:&quot;.*&quot;
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:&quot;.*&quot;
        [ Revproxy.run
            ~redirection:(Revproxy.create_redirection 
                            ~full_url:false
@@ -195,7 +197,7 @@
                            &quot;https://localhost:8123/\\1&quot;) 
            ()
         ; Outputfilter.run 
-            ~mode:(`Rewrite (Ocsigen_header.Name.location,
+            ~mode:(`Rewrite (Ocsigen_http.Header.Name.location,
                              &quot;http://localhost:8123/(.* )&quot;,
                              &quot;http://my.publicaddress.org/\\1&quot;))
             ()
@@ -205,7 +207,7 @@
   <span><span class="optlabel">?keephost</span>:bool <span class="arrow">&#45;&gt;</span></span>
   <span><span class="label">regexp</span>:string <span class="arrow">&#45;&gt;</span></span>
   <span>string <span class="arrow">&#45;&gt;</span></span>
-  <a href="#type-redirection">redirection</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-run"><code><span><span class="keyword">val</span> run : <span><span class="label">redirection</span>:<a href="#type-redirection">redirection</a> <span class="arrow">&#45;&gt;</span></span> <span>unit <span class="arrow">&#45;&gt;</span></span> <a href="../Ocsigen_server/index.html#type-instruction">Ocsigen_server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~redirection ()</code> makes it possible to use this extension without configuration file.</p></div></div></div>
+  <a href="#type-redirection">redirection</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-run"><code><span><span class="keyword">val</span> run : <span><span class="label">redirection</span>:<a href="#type-redirection">redirection</a> <span class="arrow">&#45;&gt;</span></span> <span>unit <span class="arrow">&#45;&gt;</span></span> <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~redirection ()</code> makes it possible to use this extension without configuration file.</p></div></div></div>
       </article>
     </div>
   </div>

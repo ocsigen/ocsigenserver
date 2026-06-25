@@ -99,6 +99,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -153,6 +154,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -186,11 +188,11 @@
         <header class="odoc-preamble"><h1>Module <code><span>Outputfilter</span></code></h1><p>Outputfilter: Rewrite some part of the output</p></header>
         <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file, have a look at the <a href="../outputfilter.html" title="outputfilter">manual page</a>. If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.</p><ol><li></li></ol><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.outputfilter</code>.</p><p>See an example of use on the API documentation of <a href="../Revproxy/index.html"><code>Revproxy</code></a>.</p><div class="odoc-spec"><div class="spec value anchored" id="val-run"><code><span><span class="keyword">val</span> run : 
   <span><span class="label">mode</span>:
-    <span>[ <span>`Rewrite of <a href="../Ocsigen_header/Name/index.html#type-t">Ocsigen_header.Name.t</a> * string * string</span>
-    <span><span>| `Add</span> of <a href="../Ocsigen_header/Name/index.html#type-t">Ocsigen_header.Name.t</a> * string * <span>bool option</span></span>
+    <span>[ <span>`Rewrite of <a href="../Ocsigen_http/Header/Name/index.html#type-t">Ocsigen_http.Header.Name.t</a> * string * string</span>
+    <span><span>| `Add</span> of <a href="../Ocsigen_http/Header/Name/index.html#type-t">Ocsigen_http.Header.Name.t</a> * string * <span>bool option</span></span>
     <span><span>| `Code</span> of <span class="xref-unresolved">Cohttp</span>.Code.status</span> ]</span> <span class="arrow">&#45;&gt;</span></span>
   <span>unit <span class="arrow">&#45;&gt;</span></span>
-  <a href="../Ocsigen_server/index.html#type-instruction">Ocsigen_server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~mode ()</code> makes it possible to use this extension without configuration file.</p></div></div></div>
+  <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~mode ()</code> makes it possible to use this extension without configuration file.</p></div></div></div>
       </article>
     </div>
   </div>

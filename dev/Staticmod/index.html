@@ -99,6 +99,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -153,6 +154,7 @@
 <li class="ml3" data-wodoc-page="launching.html"><a href="../launching.html">Launching the server</a></li>
 <li class="ml3" data-wodoc-page="config.html"><a href="../config.html">Configuration file</a></li>
 <li class="ml3" data-wodoc-page="staticlink.html"><a href="../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../migration.html">Migrating to 8.0</a></li>
 </ul>
 <h3>Extensions</h3>
 <ul class="api-section">
@@ -185,8 +187,8 @@
       <article class="rightcol">
         <header class="odoc-preamble"><h1>Module <code><span>Staticmod</span></code></h1><p>Staticmod: serve static files</p></header>
         <div class="odoc-content"><p>If you want to use this extension with Ocsigen Server's configuration file, have a look at the <a href="../staticmod.html" title="staticmod">manual page</a>. If you are using Ocsigen Server as a library, use the interface described here.</p><p>This module belongs to ocamlfind package <code>ocsigenserver.ext.staticmod</code>.</p><p>Example of use:</p><pre class="language-ocaml"><code>let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:&quot;.*&quot; [ Staticmod.run ~dir:&quot;static&quot; () ]]</code></pre><div class="odoc-spec"><div class="spec value anchored" id="val-run"><code><span><span class="keyword">val</span> run : 
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:&quot;.*&quot; [ Staticmod.run ~dir:&quot;static&quot; () ]]</code></pre><div class="odoc-spec"><div class="spec value anchored" id="val-run"><code><span><span class="keyword">val</span> run : 
   <span><span class="optlabel">?dir</span>:string <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?regexp</span>:string <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?dest</span>:string <span class="arrow">&#45;&gt;</span></span>
@@ -194,7 +196,7 @@
   <span><span class="optlabel">?cache</span>:int <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?root</span>:string <span class="arrow">&#45;&gt;</span></span>
   <span>unit <span class="arrow">&#45;&gt;</span></span>
-  <a href="../Ocsigen_server/index.html#type-instruction">Ocsigen_server.instruction</a></span></code></div><div class="spec-doc"><p>Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described <a href="../staticmod.html" title="staticmod">here</a>.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-section"><code><span><span class="keyword">val</span> section : <span class="xref-unresolved">Logs</span>.src</span></code></div></div></div>
+  <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p>Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described <a href="../staticmod.html" title="staticmod">here</a>.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-section"><code><span><span class="keyword">val</span> section : <span class="xref-unresolved">Logs</span>.src</span></code></div></div></div>
       </article>
     </div>
   </div>

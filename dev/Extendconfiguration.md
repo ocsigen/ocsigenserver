@@ -11,8 +11,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
          [ Extendconfiguration.forbidfile ~extensions:["php"] ()
          ; Staticmod.run ~dir:"static" ()
          ]
@@ -21,16 +21,16 @@ let _ =
 ```ocaml
 val followsymlinks : 
   [ `Always | `No | `Owner_match ] ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val maxuploadfilesize : int64 option -> Ocsigen_server.instruction
+val maxuploadfilesize : int64 option -> Ocsigen.Server.instruction
 ```
 ```ocaml
-val uploaddir : string option -> Ocsigen_server.instruction
+val uploaddir : string option -> Ocsigen.Server.instruction
 ```
 ```ocaml
-val listdirs : bool -> Ocsigen_server.instruction
+val listdirs : bool -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val forbidfile : 
@@ -38,7 +38,7 @@ val forbidfile :
   ?extensions:string list ->
   ?regexps:string list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
 val hidefile : 
@@ -46,10 +46,10 @@ val hidefile :
   ?extensions:string list ->
   ?regexps:string list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val defaultindex : string list -> Ocsigen_server.instruction
+val defaultindex : string list -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val contenttype : 
@@ -58,7 +58,7 @@ val contenttype :
   ?extensions:(string * string) list ->
   ?regexps:(string * string) list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
 val charset : 
@@ -67,5 +67,5 @@ val charset :
   ?extensions:(string * string) list ->
   ?regexps:(string * string) list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```

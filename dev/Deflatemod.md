@@ -14,8 +14,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Staticmod.run ~dir:"static" () 
        ; Deflatemod.run
            ~mode:(`Only [ `Type (Some "text", Some "html")
@@ -46,7 +46,7 @@ Describes the content to deflate, either using its content type, or file extensi
 val run : 
   mode:[ `All_but of filter list | `Only of filter list ] ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 `run ~mode ()` makes it possible to use this extension without configuration file.
 

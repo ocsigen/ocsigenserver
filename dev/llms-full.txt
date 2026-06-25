@@ -1,13 +1,14 @@
 # Server
 
-> - [ocsigenserver](ocsigenserver/index.md) (version 7.0.0)
+> - [ocsigenserver](ocsigenserver/index.md) (version 8.0.0~dev)
 
 
 ---
 
 # OCaml Package Documentation
 
-- [ocsigenserver](ocsigenserver/index.md) (version 7.0.0)
+- [ocsigenserver](ocsigenserver/index.md) (version 8.0.0~dev)
+- [ocsigenserver-compat](ocsigenserver-compat/index.md) (version 8.0.0~dev)
 
 
 ---
@@ -479,7 +480,7 @@ Predefined orders:
 - `gc`: will trigger a heap compaction
 - `shutdown`: will shutdown the server when all the current rerquests are fulfilled *(see below for more information)*
 - `reopen_logs`: will reopen the logs files (see logrotate configuration for an example of use)
-- `clearcache`: will empty all the caches defined by the module `Ocsigen_cache`
+- `clearcache`: will empty all the caches defined by the module `Ocsigen_base.Cache`
 
 #### `<extconf>` : Splitting the configuration file
 
@@ -634,16 +635,16 @@ The default timeout value can be set in the configuration file (see `shutdowntim
 
 Instead of using a configuration file, you can use Ocsigen Server as a library for your OCaml program.
 
-Call function [`Ocsigen_server.start`](./Ocsigen_server.md#val-start) like this to run the server:
+Call function [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) like this to run the server:
 
 ```ocaml
 let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
 ```
-Have a look at the API documentation for [`Ocsigen_server.start`](./Ocsigen_server.md#val-start) to see how to provide configuration options.
+Have a look at the API documentation for [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) to see how to provide configuration options.
 
-As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function [`Ocsigen_server.host`](./Ocsigen_server.md#val-host) to configure them.
+As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function [`Ocsigen.Server.host`](./Ocsigen-Server.md#val-host) to configure them.
 
 Functions like [`Staticmod.run`](./Staticmod.md#val-run) are defined by extensions.
 
@@ -656,15 +657,15 @@ Here is an example of a more complex configuration:
 
 ```ocaml
 let _ =
-  Ocsigen_server.start
+  Ocsigen.Server.start
     ~ports:[`All, 8080]
     ~command_pipe:"local/var/run/mysite-cmd"
     ~logdir:"local/var/log/mysite"
     ~datadir:"local/var/data/mysite"
     ~default_charset:(Some "utf-8")
-    [ Ocsigen_server.host
+    [ Ocsigen.Server.host
         ~regexp:"mydomain.com"
-        [ Ocsigen_server.site ["subsite"]
+        [ Ocsigen.Server.site ["subsite"]
             [ Accesscontrol.(
                 if_
                   (and_
@@ -676,7 +677,7 @@ let _ =
                 ~auth:(fun _u p -> Lwt.return (p = "toto"))
                 ()
             ; Staticmod.run ~dir:"local/var/www/otherdir" () ]
-        ; Ocsigen_server.site ["othersubsite"]
+        ; Ocsigen.Server.site ["othersubsite"]
             [ Revproxy.run
                 ~redirection:
                   (Revproxy.create_redirection ~full_url:false ~regexp:"(.*)"
@@ -796,7 +797,7 @@ This program corresponds to the following configuration file:
 If you want to use the configuration file with a statically linked executable, call
 
 ```
-Ocsigen_server.exec (Ocsigen_parseconfig.parse_config ())
+Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
 ```
 to launch the server's main loop.
 
@@ -822,6 +823,92 @@ by
 This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.
 
 This is an experimental feature. Let us know if you test it (for example by opening an issue on Github).
+
+
+---
+
+# Migrating to Ocsigen Server 8\.0
+
+Ocsigen Server 8\.0 reorganises its public modules under hierarchical names and modernises its base library. These changes break compatibility with earlier versions. This page explains what changed and how to update existing code, either by switching to the new names or by relying on the `ocsigenserver-compat` package during the transition.
+
+
+## Hierarchical module names
+
+The historical flat `Ocsigen_xxx` modules are now grouped under three namespaces: `Ocsigen` for the server, `Ocsigen_base` for the base library and `Ocsigen_http` for the HTTP layer.
+
+
+### Server modules (`Ocsigen.Xxx`)
+
+- `Ocsigen_server` becomes [`Ocsigen.Server`](./Ocsigen-Server.md)
+- `Ocsigen_config` becomes [`Ocsigen.Config`](./Ocsigen-Config.md)
+- `Ocsigen_extensions` becomes [`Ocsigen.Extensions`](./Ocsigen-Extensions.md)
+- `Ocsigen_request` becomes [`Ocsigen.Request`](./Ocsigen-Request.md)
+- `Ocsigen_response` becomes [`Ocsigen.Response`](./Ocsigen-Response.md)
+- `Ocsigen_multipart` becomes [`Ocsigen.Multipart`](./Ocsigen-Multipart.md)
+- `Ocsigen_messages` becomes [`Ocsigen.Messages`](./Ocsigen-Messages.md)
+- `Ocsigen_local_files` becomes [`Ocsigen.Local_files`](./Ocsigen-Local_files.md)
+- `Ocsigen_command` becomes [`Ocsigen.Command`](./Ocsigen-Command.md)
+- `Ocsigen_parseconfig` becomes [`Ocsigen.Parseconfig`](./Ocsigen-Parseconfig.md)
+- `Ocsigen_cohttp` becomes [`Ocsigen.Ocsigen_cohttp`](./Ocsigen-Ocsigen_cohttp.md)
+
+### Base library modules (`Ocsigen_base.Xxx`)
+
+- `Ocsigen_lib` becomes [`Ocsigen_base.Lib`](./Ocsigen_base-Lib.md)
+- `Ocsigen_cache` becomes [`Ocsigen_base.Cache`](./Ocsigen_base-Cache.md)
+- `Ocsigen_loader` becomes [`Ocsigen_base.Loader`](./Ocsigen_base-Loader.md)
+- `Ocsigen_stream` becomes [`Ocsigen_base.Ocsigen_stream`](./Ocsigen_base-Ocsigen_stream.md)
+- `Ocsigen_config_static` becomes [`Ocsigen_base.Config_static`](./Ocsigen_base-Config_static.md)
+
+### HTTP modules (`Ocsigen_http.Xxx`)
+
+- `Ocsigen_header` becomes [`Ocsigen_http.Header`](./Ocsigen_http-Header.md)
+- `Ocsigen_charset_mime` becomes [`Ocsigen_http.Charset_mime`](./Ocsigen_http-Charset_mime.md)
+
+### Modules that keep their name
+
+A few public modules are unchanged and need no update: `Ocsigen_lib_base`, `Polytables`, `Ocsigen_cookie_map` and the main `Ocsigenserver` module.
+
+
+## The ocsigenserver-compat package
+
+To make the transition smooth, the `ocsigenserver-compat` package provides every old `Ocsigen_xxx` name as an alias to its new module. Existing code keeps compiling without changes: just add the package to your `dune` file.
+
+The shims are split to mirror the libraries they alias:
+
+;`ocsigenserver-compat` :old server names (`Ocsigen_server`, `Ocsigen_extensions`, `Ocsigen_config`, ...) ;`ocsigenserver-compat.baselib` :old base-library names (`Ocsigen_lib`, `Ocsigen_cache`, ...) ;`ocsigenserver-compat.http` :old HTTP names (`Ocsigen_header`, `Ocsigen_charset_mime`)
+
+For example, to keep using the old names in an executable:
+
+```
+(executable
+ (public_name myserver)
+ (name main)
+ (libraries
+  ocsigenserver
+  ocsigenserver-compat
+  ocsigenserver-compat.baselib
+  ocsigenserver-compat.http))
+```
+The compat package is meant as a temporary migration aid: it is recommended to update your code to the new module names and drop the dependency once done. The compat modules are intentionally excluded from the [API reference](./api.md), which documents the new names only.
+
+
+## Other breaking changes
+
+
+### Minimum OCaml version
+
+Ocsigen Server 8\.0 requires OCaml 4\.14 or later.
+
+
+### Removed deprecated helpers from the base library
+
+Several helpers that duplicated standard-library features have been removed from `Ocsigen_lib` (now [`Ocsigen_base.Lib`](./Ocsigen_base-Lib.md)). Use the standard library instead:
+
+- `Ocsigen_lib.id` is removed; use `Sys.opaque_identity`
+- `Ocsigen_lib.leftright` is removed; use `Either.t`
+- `Ocsigen_lib.List.map_filter` is removed; use `List.filter_map`
+- the `Ocsigen_lib.Option` module is removed; use the standard library `Option`
+These helpers have no replacement in `ocsigenserver-compat`: their standard equivalents should be used directly.
 
 
 ---
@@ -1592,7 +1679,7 @@ This page describes how to extend Ocsigen's server. This can be used to create n
 
 You can take as example the files `staticmod.ml` or `accesscontrol.ml` from Ocsigen Server's distribution.
 
-The type of request is `Ocsigen_extensions.request_info` (have a look at it in the interface of module [`Ocsigen_extensions`](./Ocsigen_extensions.md)).
+The type of request is `Ocsigen.Extensions.request_info` (have a look at it in the interface of module [`Ocsigen.Extensions`](./Ocsigen-Extensions.md)).
 
 Each extensions loaded in the configuration file tries to handle the request and returns something of type `Extensions.answer`. If the page is not found by the extension (`Ext_not_found`), the following one will try to handle the request. If the page is found, the answer is `Ext_found r`. An extension can also modify the request before giving it to the next one (answer `Ext_continue_with of Extensions.request_info`), etc.
 
@@ -1636,10 +1723,10 @@ If you want to add your own commands for the server command pipe, do something l
 
 ```
 let () =
-  Ocsigen_extensions.register_command_function ~prefix:"yourextensionname"
+  Ocsigen.Extensions.register_command_function ~prefix:"yourextensionname"
     (fun s c -> match c with
        | ["mycommand"] -> ...
-       | _ -> raise Ocsigen_extensions.Unknown_command)
+       | _ -> raise Ocsigen.Extensions.Unknown_command)
 ```
 
 
@@ -1649,7 +1736,7 @@ let () =
 
 API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 
-[`Ocsigen_server`](./Ocsigen_server.md) 
+[`Ocsigen.Server`](./Ocsigen-Server.md) 
 
 ### Extensions
 
@@ -1665,21 +1752,70 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 [`Userconf`](./Userconf.md) 
 [`Cors`](./Cors.md) Cross-Origin Resource Sharing
 
+### Requests and responses
+
+[`Ocsigen.Request`](./Ocsigen-Request.md) 
+[`Ocsigen.Response`](./Ocsigen-Response.md) 
+[`Ocsigen.Multipart`](./Ocsigen-Multipart.md) 
+[`Ocsigen_cookie_map`](./Ocsigen_cookie_map.md) 
+[`Ocsigen_http.Charset_mime`](./Ocsigen_http-Charset_mime.md) 
+
 ### Persistent data, writing in the logs, configuration file extension, polymorphic tables
 
-[`Ocsigen_lib`](./Ocsigen_lib.md) This module contains some auxiliaries for the Ocsigenserver. In contrast to Ocsigen\_lib\_base, the function may also refer to libraries other than the standard library.
-[`Ocsigen_messages`](./Ocsigen_messages.md) Writing messages in the logs
-[`Ocsigen_parseconfig`](./Ocsigen_parseconfig.md) Config file parsing. See also module Ocsigen\_extensions.​Configuration
+[`Ocsigen_base.Lib`](./Ocsigen_base-Lib.md) This module contains some auxiliaries for the Ocsigenserver. In contrast to Ocsigen\_lib\_base, the function may also refer to libraries other than the standard library.
+[`Ocsigen.Messages`](./Ocsigen-Messages.md) Writing messages in the logs
+[`Ocsigen.Parseconfig`](./Ocsigen-Parseconfig.md) Config file parsing. See also module Extensions.​Configuration
 [`Polytables`](./Polytables.md) Polymorphic tables (using Map)
-[`Ocsigen_cache`](./Ocsigen_cache.md) Cache. Association tables (from any kind of database) that keep the most recently used values in memory. It is also possible to set a maximum lifetime for data in the cache.
-[`Ocsigen_config`](./Ocsigen_config.md) Configuring Ocsigen server
+[`Ocsigen_base.Cache`](./Ocsigen_base-Cache.md) Cache. Association tables (from any kind of database) that keep the most recently used values in memory. It is also possible to set a maximum lifetime for data in the cache.
+[`Ocsigen.Config`](./Ocsigen-Config.md) Configuring Ocsigen server
 
 ### Extending Ocsigen Server
 
-[`Ocsigen_extensions`](./Ocsigen_extensions.md) Extensions interface for Ocsigen Server
+[`Ocsigen.Extensions`](./Ocsigen-Extensions.md) Extensions interface for Ocsigen Server
+[`Ocsigen.Local_files`](./Ocsigen-Local_files.md) 
+[`Ocsigen_http.Header`](./Ocsigen_http-Header.md) 
+[`Ocsigen_base.Ocsigen_stream`](./Ocsigen_base-Ocsigen_stream.md) 
+[`Ocsigen_base.Loader`](./Ocsigen_base-Loader.md) Module Loader: Dynamic loading for Ocsigen.
+[`Ocsigen.Command`](./Ocsigen-Command.md) Extending server commands
+
+
+---
+
+# ocsigenserver-compat index
+
+
+## Library ocsigenserver-compat
+
+This library exposes the following toplevel modules:
+
+[`Ocsigen_cohttp`](./Ocsigen_cohttp.md) 
+[`Ocsigen_command`](./Ocsigen_command.md) 
+[`Ocsigen_config`](./Ocsigen_config.md) 
+[`Ocsigen_extensions`](./Ocsigen_extensions.md) 
 [`Ocsigen_local_files`](./Ocsigen_local_files.md) 
-[`Ocsigen_header`](./Ocsigen_header.md) 
-[`Ocsigen_stream`](./Ocsigen_stream.md)
+[`Ocsigen_messages`](./Ocsigen_messages.md) 
+[`Ocsigen_multipart`](./Ocsigen_multipart.md) 
+[`Ocsigen_parseconfig`](./Ocsigen_parseconfig.md) 
+[`Ocsigen_request`](./Ocsigen_request.md) 
+[`Ocsigen_response`](./Ocsigen_response.md) 
+[`Ocsigen_server`](./Ocsigen_server.md) 
+
+## Library ocsigenserver-compat.baselib
+
+This library exposes the following toplevel modules:
+
+[`Ocsigen_cache`](./Ocsigen_cache.md) 
+[`Ocsigen_config_static`](./Ocsigen_config_static.md) 
+[`Ocsigen_lib`](./Ocsigen_lib.md) 
+[`Ocsigen_loader`](./Ocsigen_loader.md) 
+[`Ocsigen_stream`](./Ocsigen_stream.md) 
+
+## Library ocsigenserver-compat.http
+
+This library exposes the following toplevel modules:
+
+[`Ocsigen_charset_mime`](./Ocsigen_charset_mime.md) 
+[`Ocsigen_header`](./Ocsigen_header.md)
 
 
 ---
@@ -1699,8 +1835,8 @@ Example of use (with [Redirectmod](./redirectmod.md)):
 
 ```ocaml
 let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host ~regexp:".*"
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host ~regexp:".*"
         [ Accesscontrol.(
             if_ (not_ ssl)
               [ Redirectmod.run
@@ -1747,42 +1883,42 @@ val not_ : condition -> condition
 ```ocaml
 val if_ : 
   condition ->
-  Ocsigen_server.instruction list ->
-  Ocsigen_server.instruction list ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction list ->
+  Ocsigen.Server.instruction list ->
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val iffound : Ocsigen_server.instruction list -> Ocsigen_server.instruction
+val iffound : Ocsigen.Server.instruction list -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val ifnotfound : 
   ?code:string ->
-  Ocsigen_server.instruction list ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction list ->
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val notfound : Ocsigen_server.instruction
+val notfound : Ocsigen.Server.instruction
 ```
 ```ocaml
-val nextsite : Ocsigen_server.instruction
+val nextsite : Ocsigen.Server.instruction
 ```
 ```ocaml
-val nexthost : Ocsigen_server.instruction
+val nexthost : Ocsigen.Server.instruction
 ```
 ```ocaml
-val stop : Ocsigen_server.instruction
+val stop : Ocsigen.Server.instruction
 ```
 ```ocaml
-val forbidden : Ocsigen_server.instruction
+val forbidden : Ocsigen.Server.instruction
 ```
 ```ocaml
 val allow_forward_for : 
   ?check_equal_ip:bool ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val allow_forward_proto : unit -> Ocsigen_server.instruction
+val allow_forward_proto : unit -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val section : Logs.src
@@ -1803,8 +1939,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Authbasic.run ~realm:"test"
             ~auth:(fun u p -> Lwt.return (u = "theuser" && p = "thepassword"))
             () 
@@ -1832,7 +1968,7 @@ A parser takes as argument an XML tree (corresponding to the first son of an \<a
 The \<authbasic\> element must have a *realm* attribute, giving some identifier to the resource which is protected (several resources on the same hostname can share the same realm). This gives a general customization scheme "for free" from the point of view of plugin developers and is totally transparent to the plugin.
 
 ```ocaml
-val run : realm:string -> auth:auth -> unit -> Ocsigen_server.instruction
+val run : realm:string -> auth:auth -> unit -> Ocsigen.Server.instruction
 ```
 `run ~realm ~auth ()` makes it possible to use this extension without configuration file.
 
@@ -1851,8 +1987,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Staticmod.run ~dir:"static" ()
        ; Eliom.App.run () 
        ; Cors.run
@@ -1873,7 +2009,7 @@ val run :
   ?exposed_headers:string list ->
   ?methods:Cohttp.Code.meth list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 `run` makes it possible to use this extension without configuration file.
 
@@ -1895,8 +2031,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Staticmod.run ~dir:"static" () 
        ; Deflatemod.run
            ~mode:(`Only [ `Type (Some "text", Some "html")
@@ -1927,7 +2063,7 @@ Describes the content to deflate, either using its content type, or file extensi
 val run : 
   mode:[ `All_but of filter list | `Only of filter list ] ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 `run ~mode ()` makes it possible to use this extension without configuration file.
 
@@ -1974,8 +2110,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
          [ Extendconfiguration.forbidfile ~extensions:["php"] ()
          ; Staticmod.run ~dir:"static" ()
          ]
@@ -1984,16 +2120,16 @@ let _ =
 ```ocaml
 val followsymlinks : 
   [ `Always | `No | `Owner_match ] ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val maxuploadfilesize : int64 option -> Ocsigen_server.instruction
+val maxuploadfilesize : int64 option -> Ocsigen.Server.instruction
 ```
 ```ocaml
-val uploaddir : string option -> Ocsigen_server.instruction
+val uploaddir : string option -> Ocsigen.Server.instruction
 ```
 ```ocaml
-val listdirs : bool -> Ocsigen_server.instruction
+val listdirs : bool -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val forbidfile : 
@@ -2001,7 +2137,7 @@ val forbidfile :
   ?extensions:string list ->
   ?regexps:string list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
 val hidefile : 
@@ -2009,10 +2145,10 @@ val hidefile :
   ?extensions:string list ->
   ?regexps:string list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
-val defaultindex : string list -> Ocsigen_server.instruction
+val defaultindex : string list -> Ocsigen.Server.instruction
 ```
 ```ocaml
 val contenttype : 
@@ -2021,7 +2157,7 @@ val contenttype :
   ?extensions:(string * string) list ->
   ?regexps:(string * string) list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 ```ocaml
 val charset : 
@@ -2030,361 +2166,13 @@ val charset :
   ?extensions:(string * string) list ->
   ?regexps:(string * string) list ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 
 
 ---
 
-# Module `Ocsigen_cache.Dlist`
-
-Doubly-linked lists with maximum number of entries, and (possibly) limited lifespan for entries.
-
-```ocaml
-type 'a t
-```
-```ocaml
-type 'a node
-```
-```ocaml
-val create : ?timer:float -> int -> 'a t
-```
-Create a dlist. It takes the maximum length of the list as parameter. The optional `?timer` parameter sets a maximum lifetime for elements (in seconds).
-
-```ocaml
-val add : 'a -> 'a t -> 'a option
-```
-Adds an element to the list, and possibly returns the element that has been removed if the maximum size was exceeded.
-
-```ocaml
-val remove : 'a node -> unit
-```
-Removes an element from its list. If it is not in a list, it does nothing. If it is in a list, it calls the finaliser, then removes the element. If the finaliser fails with an exception, the element is removed and the exception is raised again.
-
-```ocaml
-val up : 'a node -> unit
-```
-Removes the element from its list without finalising, then adds it as newest.
-
-```ocaml
-val newest : 'a t -> 'a node option
-```
-```ocaml
-val oldest : 'a t -> 'a node option
-```
-```ocaml
-val size : 'a t -> int
-```
-```ocaml
-val maxsize : 'a t -> int
-```
-```ocaml
-val value : 'a node -> 'a
-```
-```ocaml
-val get_timer : 'a t -> float option
-```
-returns the timer of the Dlist
-
-```ocaml
-val list_of : 'a node -> 'a t option
-```
-The list to which the node belongs
-
-```ocaml
-val remove_n_oldest : 'a t -> int -> 'a list
-```
-remove the n oldest values (or less if the list is not long enough) ; returns the list of removed values
-
-```ocaml
-val fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
-```
-fold over the elements from the cache starting from the newest to the oldest
-
-```ocaml
-val fold_back : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
-```
-fold over the elements from the cache starting from the oldest to the newest
-
-```ocaml
-val move : 'a node -> 'a t -> 'a option
-```
-Move a node from one dlist to another one, without finalizing. If one value is removed from the destination list (because its maximum size is reached), it is returned (after finalisation).
-
-```ocaml
-val set_maxsize : 'a t -> int -> 'a list
-```
-change the maximum size ; returns the list of removed values, if any.
-
-```ocaml
-val set_finaliser_before : ('a node -> unit) -> 'a t -> unit
-```
-set a function to be called automatically on a piece of data just before it disappears from the list (either by explicit removal or because the maximum size is exceeded)
-
-```ocaml
-val get_finaliser_before : 'a t -> 'a node -> unit
-```
-```ocaml
-val add_finaliser_before : ('a node -> unit) -> 'a t -> unit
-```
-```ocaml
-val set_finaliser_after : ('a node -> unit) -> 'a t -> unit
-```
-set a function to be called automatically on a piece of data just after it disappears from the list (either by explicit removal or because the maximum size is exceeded)
-
-```ocaml
-val get_finaliser_after : 'a t -> 'a node -> unit
-```
-```ocaml
-val add_finaliser_after : ('a node -> unit) -> 'a t -> unit
-```
-
-
----
-
-# Parameter `Make.A`
-
-```ocaml
-type key
-```
-```ocaml
-type value
-```
-
-
----
-
-# Class `Make.cache`
-
-`new cache finder ?timer size` creates a cache object where `finder` is the function responsible for retrieving non-cached data, `timer` (if any) is the life span of cached values (in seconds) (values in the cache are removed after their time is up) and `size` is the upper bound to the number of simultaneoulsy cached elements.
-
-Whenever a value is found (using `find` method), it's lifespan is set to `timer` (or not if the cache is not time bounded). If the value was already cached, it's lifespan is reset to `timer`.
-
-Using `timer` allow one to create a cache bounded both in space and time. It is to be noted that real lifespan of values is always slightly greater than `timer`.
-
-```ocaml
-method find : A.key -> A.value Lwt.t
-```
-Find the cached value associated to the key, or binds this value in the cache using the function `finder` passed as argument to `create`, and returns this value
-
-```ocaml
-method find_in_cache : A.key -> A.value
-```
-Find the cached value associated to the key. Raises `Not_found` if the key is not present in the cache
-
-```ocaml
-method remove : A.key -> unit
-```
-```ocaml
-method add : A.key -> A.value -> unit
-```
-```ocaml
-method clear : unit -> unit
-```
-```ocaml
-method size : int
-```
-
-
----
-
-# Module `Ocsigen_cache.Make`
-
-
-## Parameters
-
-```ocaml
-module A : sig ... end
-```
-
-## Signature
-
-```ocaml
-class cache : (A.key -> A.value Lwt.t) -> ?timer:float -> int -> object ... end
-```
-`new cache finder ?timer size` creates a cache object where `finder` is the function responsible for retrieving non-cached data, `timer` (if any) is the life span of cached values (in seconds) (values in the cache are removed after their time is up) and `size` is the upper bound to the number of simultaneoulsy cached elements.
-
-
----
-
-# Module `Ocsigen_cache`
-
-Cache. Association tables (from any kind of database) that keep the most recently used values in memory. It is also possible to set a maximum lifetime for data in the cache.
-
-It is based on a structure of doubly linked lists with maximum size, that keeps only the mostly recently used values first, if you call the `up` function each time you use a value. (Insertion, remove and "up" in time 1\). This structure is exported, so that it can be used in other cases.
-
-Not (preemptive) thread safe.
-
-author Vincent Balat
-author Raphaël Proust (adding timers)
-```ocaml
-module Make (A : sig ... end) : sig ... end
-```
-```ocaml
-val clear_all_caches : unit -> unit
-```
-Clear the contents of all the existing caches
-
-```ocaml
-module Dlist : sig ... end
-```
-Doubly-linked lists with maximum number of entries, and (possibly) limited lifespan for entries.
-
-
----
-
-# Module `Ocsigen_charset_mime`
-
-```ocaml
-type extension = string
-```
-```ocaml
-type file = string
-```
-```ocaml
-type filename = string
-```
-Charset
-
-```ocaml
-type charset = string
-```
-By convention, "no specified charset" is represented by the empty string
-
-```ocaml
-val no_charset : charset
-```
-```ocaml
-type charset_assoc
-```
-Association between extensions and charset, with a default value.
-
-```ocaml
-val empty_charset_assoc : ?default:charset -> unit -> charset_assoc
-```
-All files are mapped to `no_charset`
-
-```ocaml
-val empty_mime_assoc : ?default:charset -> unit -> charset_assoc
-```
-```ocaml
-val find_charset : string -> charset_assoc -> charset
-```
-```ocaml
-val default_charset : charset_assoc -> charset
-```
-Functions related to the default charset in the association
-
-```ocaml
-val set_default_charset : charset_assoc -> charset -> charset_assoc
-```
-```ocaml
-val update_charset_ext : charset_assoc -> extension -> charset -> charset_assoc
-```
-Updates the mapping between extensions from a file to its charset. The update can be specified using the extension of the file, the name of the file, or the entire file (with its path)
-
-```ocaml
-val update_charset_file : charset_assoc -> filename -> charset -> charset_assoc
-```
-```ocaml
-val update_charset_regexp : 
-  charset_assoc ->
-  Re.Pcre.regexp ->
-  charset ->
-  charset_assoc
-```
-```ocaml
-type mime_type = string
-```
-MIME types; the default value is `"application/octet-stream"`
-
-```ocaml
-val default_mime_type : mime_type
-```
-```ocaml
-type mime_assoc
-```
-association between extensions and mime types, with default value
-
-```ocaml
-val default_mime_assoc : unit -> mime_assoc
-```
-Default values, obtained by reading the file specified by `Ocsigen_config_static.get_mimefile`
-
-```ocaml
-val parse_mime_types : filename:string -> mime_assoc
-```
-Parsing of a file containing mime associations, such as /etc/mime-types
-
-```ocaml
-val find_mime : file -> mime_assoc -> string
-```
-```ocaml
-val default_mime : mime_assoc -> mime_type
-```
-```ocaml
-val set_default_mime : mime_assoc -> mime_type -> mime_assoc
-```
-```ocaml
-val update_mime_ext : mime_assoc -> extension -> mime_type -> mime_assoc
-```
-```ocaml
-val update_mime_file : mime_assoc -> filename -> mime_type -> mime_assoc
-```
-```ocaml
-val update_mime_regexp : 
-  mime_assoc ->
-  Re.Pcre.regexp ->
-  mime_type ->
-  mime_assoc
-```
-
-
----
-
-# Module `Ocsigen_cohttp`
-
-```ocaml
-val section : Logs.src
-```
-```ocaml
-exception Ocsigen_http_error of Ocsigen_cookie_map.t * Cohttp.Code.status
-```
-```ocaml
-exception Ext_http_error of Cohttp.Code.status * string option * Cohttp.Header.t option
-```
-Exception raised by exceptions to describe an HTTP error. It is possible to pass the code of the error, an optional comment, and optionally some headers.
-
-```ocaml
-exception Ocsigen_is_dir of Ocsigen_request.t -> Uri.t
-```
-compute a redirection if path links to a directory
-
-```ocaml
-val get_number_of_connected : unit -> int
-```
-accessor to get number of client (used by eliom monitoring)
-
-```ocaml
-val shutdown : float option -> unit
-```
-Shutdown main loop of server
-
-```ocaml
-val service : 
-  ?ssl:(string * string * (bool -> string) option) ->
-  address:Ocsigen_config.socket_type ->
-  port:int ->
-  connector:(Ocsigen_request.t -> Ocsigen_response.t Lwt.t) ->
-  unit ->
-  unit Lwt.t
-```
-initialize a main loop of http server
-
-
----
-
-# Module `Ocsigen_command`
+# Module `Ocsigen.Command`
 
 Extending server commands
 
@@ -2402,7 +2190,7 @@ Use a prefix for all your commands when you want to create extension-specific co
 
 ---
 
-# Module `Ocsigen_config.Socket_type`
+# Module `Config.Socket_type`
 
 ```ocaml
 type t = [ 
@@ -2419,7 +2207,7 @@ val to_string : t -> string
 
 ---
 
-# Module `Ocsigen_config`
+# Module `Ocsigen.Config`
 
 Configuring Ocsigen server
 
@@ -2462,7 +2250,7 @@ val is_native : bool
 val native_ext : string
 ```
 ```ocaml
-val builtin_packages : Ocsigen_lib.String.Set.t
+val builtin_packages : Ocsigen_base.Lib.String.Set.t
 ```
 ```ocaml
 val set_logdir : string -> unit
@@ -2674,116 +2462,7 @@ val display_version : unit -> 'a
 
 ---
 
-# Module `Ocsigen_config_static`
-
-```ocaml
-val version_number : string
-```
-```ocaml
-val config_file : string Stdlib.ref
-```
-```ocaml
-val is_native : bool
-```
-```ocaml
-val logdir : string option Stdlib.ref
-```
-```ocaml
-val mimefile : string Stdlib.ref
-```
-```ocaml
-val datadir : string Stdlib.ref
-```
-```ocaml
-val bindir : string Stdlib.ref
-```
-```ocaml
-val extdir : string Stdlib.ref
-```
-```ocaml
-val command_pipe : string Stdlib.ref
-```
-```ocaml
-val builtin_packages : Ocsigen_lib.String.Set.t
-```
-
-
----
-
-# Module `Ocsigen_cookie_map.Poly`
-
-Polymorphic versions of `add` and `remove` to use when we don't need to OUnset (client-side)
-
-```ocaml
-val add : 
-  path:Ocsigen_lib_base.Url_base.path ->
-  string ->
-  'a ->
-  'a Map_inner.t Map_path.t ->
-  'a Map_inner.t Map_path.t
-```
-```ocaml
-val remove : 
-  path:Ocsigen_lib_base.Url_base.path ->
-  string ->
-  'a Map_inner.t Map_path.t ->
-  'a Map_inner.t Map_path.t
-```
-
-
----
-
-# Module `Ocsigen_cookie_map`
-
-```ocaml
-module Map_path : Stdlib.Map.S with type key := Ocsigen_lib_base.Url_base.path
-```
-This type of maps is used to store cookie values for each path. The key has type Url.path option: it is for the path (default: root of the site).
-
-```ocaml
-module Map_inner : Stdlib.Map.S with type key := string
-```
-```ocaml
-type cookie = 
-  | OSet of float option * string * bool
-  | OUnset
-```
-Type used for cookies to set. The float option is the timestamp for the expiration date. The string is the value. If the bool is true and the protocol is https, the cookie will be secure (will ask the browser to send it only through secure connections).
-
-```ocaml
-type t = cookie Map_inner.t Map_path.t
-```
-```ocaml
-val empty : t
-```
-```ocaml
-val add : path:Ocsigen_lib_base.Url_base.path -> string -> cookie -> t -> t
-```
-`add ~path c v m` adds the cookie `c` to `m`.
-
-If the cookie is already bound, the previous binding disappear.
-
-```ocaml
-val add_multi : t -> t -> t
-```
-`add_multi new old` adds the cookies from `new` to `old`. If cookies are already bound in oldcookies, the previous binding disappear.
-
-```ocaml
-val remove : path:Ocsigen_lib_base.Url_base.path -> string -> t -> t
-```
-`remove c cookie_table` removes the cookie `c` from `m`.
-
-Warning: it is not equivalent to `add ... OUnset ...`).
-
-```ocaml
-module Poly : sig ... end
-```
-Polymorphic versions of `add` and `remove` to use when we don't need to OUnset (client-side)
-
-
----
-
-# Module `Ocsigen_extensions.Configuration`
+# Module `Extensions.Configuration`
 
 This modules contains types and constructor for the description of XML configurations and the accordingly parsing.
 
@@ -2847,7 +2526,7 @@ parameter in\_tag Name of the enclosing XML tag (just for generating error messa
 parameter elements Specifications of the child elements
 parameter pcdata Function to be applied on the PCDATA (ignore\_blank\_pcdata by default)
 parameter other\_elements Optional function to be applied on unexpected child elements
-raises [`Error_in_config_file`](./Ocsigen_extensions.md#exception-Error_in_config_file) If an element (resp. attribute) occurs which is not specified by the element (resp. attribute) parameter and no function other\_elements (resp. other\_attributes) is provided
+raises [`Error_in_config_file`](./Ocsigen-Extensions.md#exception-Error_in_config_file) If an element (resp. attribute) occurs which is not specified by the element (resp. attribute) parameter and no function other\_elements (resp. other\_attributes) is provided
 ```ocaml
 val process_elements : 
   in_tag:string ->
@@ -2872,7 +2551,7 @@ val refuse_pcdata : in_tag:string -> string -> unit
 
 ---
 
-# Module `Ocsigen_extensions`
+# Module `Ocsigen.Extensions`
 
 Extensions interface for Ocsigen Server
 
@@ -2909,7 +2588,7 @@ exception Error_in_user_config_file of string
 Option incorrect in a userconf file
 
 ```ocaml
-type file_info = Ocsigen_multipart.file_info = {
+type file_info = Multipart.file_info = {
   tmp_filename : string;
   filesize : int64;
   raw_original_filename : string;
@@ -2968,8 +2647,8 @@ type config_info = {
   default_httpport : int;
   default_httpsport : int;
   default_protocol_is_https : bool;
-  mime_assoc : Ocsigen_charset_mime.mime_assoc;
-  charset_assoc : Ocsigen_charset_mime.charset_assoc;
+  mime_assoc : Ocsigen_http.Charset_mime.mime_assoc;
+  charset_assoc : Ocsigen_http.Charset_mime.charset_assoc;
   default_directory_index : string list; (* Default name to use as index file when a directory is requested. Use None if no index should be tried. The various indexes are tried in the given order. If no index is specified, or the index does not exists, the content of the directory might be listed, according to list_directory_content *)
   list_directory_content : bool; (* Should the list of files in a directory be displayed if there is no index in this directory ? *)
   follow_symlinks : [ `No | `Owner_match | `Always ]; (* Should symlinks be followed when accessing a local file? *)
@@ -2986,18 +2665,18 @@ val default_config_info : unit -> config_info
 ```
 ```ocaml
 type request = {
-  request_info : Ocsigen_request.t;
+  request_info : Request.t;
   request_config : config_info;
 }
 ```
 ```ocaml
-exception Ocsigen_is_dir of Ocsigen_request.t -> Uri.t
+exception Ocsigen_is_dir of Request.t -> Uri.t
 ```
 ```ocaml
 type answer = 
   | Ext_do_nothing (* I don't want to do anything *)
-  | Ext_found of unit -> Ocsigen_response.t Lwt.t (* "OK stop! I will take the page. You can start the following request of the same pipelined connection. Here is the function to generate the page". The extension must return Ext_found as soon as possible when it is sure it is safe to start next request. Usually immediately. But in some case, for example proxies, you don't want the request of one connection to be handled in different order. (for example revproxy.ml starts its requests to another server before returning Ext_found, to ensure that all requests are done in same order). *)
-  | Ext_found_stop of unit -> Ocsigen_response.t Lwt.t (* Found but do not try next extensions *)
+  | Ext_found of unit -> Response.t Lwt.t (* "OK stop! I will take the page. You can start the following request of the same pipelined connection. Here is the function to generate the page". The extension must return Ext_found as soon as possible when it is sure it is safe to start next request. Usually immediately. But in some case, for example proxies, you don't want the request of one connection to be handled in different order. (for example revproxy.ml starts its requests to another server before returning Ext_found, to ensure that all requests are done in same order). *)
+  | Ext_found_stop of unit -> Response.t Lwt.t (* Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status (* Page not found. Try next extension. The status is usually `Not_found, but may be for example `Forbidden (403) if you want to try another extension afterwards. Same as Ext_continue_with but does not change the request. *)
   | Ext_stop_site of Ocsigen_cookie_map.t * Cohttp.Code.status (* Error. Do not try next extension, but try next site. *)
   | Ext_stop_host of Ocsigen_cookie_map.t * Cohttp.Code.status (* Error. Do not try next extension, do not try next site, but try next host. *)
@@ -3005,13 +2684,13 @@ type answer =
   | Ext_continue_with of request * Ocsigen_cookie_map.t * Cohttp.Code.status (* Used to modify the request before giving it to next extension. The extension returns the request (possibly modified) and a set of cookies if it wants to set or cookies (Ocsigen_cookie_map.empty for no cookies). You must add these cookies yourself in request if you want them to be seen by subsequent extensions, for example using Ocsigen_http_frame.compute_new_ri_cookies. The status is usually equal to the one received from preceding extension (but you may want to modify it). *)
   | Ext_retry_with of request * Ocsigen_cookie_map.t (* Used to retry all the extensions with a new request. The extension returns the request (possibly modified) and a set of cookies if it wants to set or cookies (Ocsigen_cookie_map.empty for no cookies). You must add these cookies yourself in request if you want them to be seen by subsequent extensions, for example using Ocsigen_http_frame.compute_new_ri_cookies. *)
   | Ext_sub_result of extension_composite (* Used if your extension want to define option that may contain other options from other extensions. In that case, while parsing the configuration file, call the parsing function (of type parse_fun), that will return something of type extension_composite. *)
-  | Ext_found_continue_with of unit -> (Ocsigen_response.t * request) Lwt.t (* Same as Ext_found but may modify the request. *)
-  | Ext_found_continue_with' of Ocsigen_response.t * request (* Same as Ext_found_continue_with but does not allow to delay the computation of the page. You should probably not use it, but for output filters. *)
+  | Ext_found_continue_with of unit -> (Response.t * request) Lwt.t (* Same as Ext_found but may modify the request. *)
+  | Ext_found_continue_with' of Response.t * request (* Same as Ext_found_continue_with but does not allow to delay the computation of the page. You should probably not use it, but for output filters. *)
 ```
 ```ocaml
 and request_state = 
   | Req_not_found of Cohttp.Code.status * request
-  | Req_found of request * Ocsigen_response.t
+  | Req_found of request * Response.t
 ```
 ```ocaml
 and extension_composite =
@@ -3065,7 +2744,7 @@ that will be called on each tag inside \<site\> and:
 
 ```ocaml
 and parse_config_aux =
-  Ocsigen_lib.Url.path ->
+  Ocsigen_base.Lib.Url.path ->
   parse_host ->
   parse_fun ->
   Xml.xml ->
@@ -3086,7 +2765,7 @@ For each extension generating pages, we register its name and six functions:
 
 - a function `fun_site` of type `parse_config`. This function will be responsible for handling the options of the configuration files that are recognized by the extension, and potentially generating a page.
 - a function `end_init` that will be called at the end of the initialisation phase of each site
-- a function `init_fun` that will be called just before registering the extension, taking as parameter the configuration options between `<extension>` and `</extension>`. This allows to give configuration options to extensions. If no function is supplied, the extension is supposed to accept no option (and loading will fail if an option is supplied) See [`Configuration.process_elements`](./Ocsigen_extensions-Configuration.md#val-process_elements) for the easy construction of such a function.
+- a function `init_fun` that will be called just before registering the extension, taking as parameter the configuration options between `<extension>` and `</extension>`. This allows to give configuration options to extensions. If no function is supplied, the extension is supposed to accept no option (and loading will fail if an option is supplied) See [`Configuration.process_elements`](./Ocsigen-Extensions-Configuration.md#val-process_elements) for the easy construction of such a function.
 - a function `exn_handler` that will create an error message from the exceptions that may be raised during the initialisation phase, and raise again all other exceptions
 Moreover, if the optional parameter `?respect_pipeline` is `true`, the extension will ask the server to respect the order of the pipeline. That means that it will wait to be sure that the previous request from the same connection has been taken by an extension before giving a request to an extension. Use this to write proxies extensions, when you want to be able to pipeline the requests you to another server. It is false by default.
 
@@ -3109,7 +2788,7 @@ Returns the port to be used for absolute links or redirections. It is either:
 - or the port in the Host header
 - or the default port set in the configuration file.
 ```ocaml
-val new_url_of_directory_request : request -> Ocsigen_request.t -> Uri.t
+val new_url_of_directory_request : request -> Request.t -> Uri.t
 ```
 new\_url\_of\_directory\_request create a redirection and generating a new url for the client (depending on the server configuration and request)
 
@@ -3142,255 +2821,910 @@ exception Not_concerned
 Regular expressions for redirections
 
 ```ocaml
-val find_redirection : 
-  Re.Pcre.regexp ->
-  bool ->
-  string ->
-  Ocsigen_request.t ->
-  string
+val find_redirection : Re.Pcre.regexp -> bool -> string -> Request.t -> string
 ```
 
 
 ---
 
-# Module `Ocsigen_header.Accept`
+# Module `Ocsigen.Local_files`
 
 ```ocaml
-type t = (Mime_type.t * float option * (string * string) list) list
+val section : Logs.src
 ```
 ```ocaml
-val parse : string list -> t
+exception Failed_404
+```
+The requested file does not exists
+
+```ocaml
+exception Failed_403
+```
+The requested file cannot be served: does not exists, not enough permissions ...
+
+```ocaml
+exception NotReadableDirectory
+```
+The file is a directory which we should not display
+
+```ocaml
+type resolved = 
+  | RFile of string
+  | RDir of string
+```
+Local file corresponding to a request. The string argument represents the real file or directory to serve, eg. foo/index.html instead of foo
+
+```ocaml
+val resolve : 
+  ?no_check_for:string ->
+  request:Extensions.request ->
+  filename:string ->
+  unit ->
+  resolved
+```
+Finds `filename` in the filesystem, with a possible redirection if it is a directory. Takes into account the fact that `filename` does not exists, is a symlink or is a directory, and raises Failed\_404 or Failed\_403 accordingly.
+
+- we return `"filename/index.html"` if `filename` corresponds to a directory, `"filename/index.html"` is valid, and `"index.html"` is one possible index (trying all possible indexes in order)
+- we raise `Failed_404` if `filename` corresponds to a directory, no index exists and `list_dir_content` is false. Warning: this behaviour is not the same as Apache's but it corresponds to a missing service in Eliom (answers 404\). This also allows to have an Eliom service after a "forbidden" directory
+- we raise `Failed_403` if `filename` is a symlink that must not be followed
+- raises `Failed_404` if `filename` does not exist, or is a special file
+- otherwise returns `filename`
+`no_check_for` is supposed to be a prefix of `filename` ; directories above `no_check_for` are not checked for symlinks
+
+
+---
+
+# Module `Ocsigen.Messages`
+
+Writing messages in the logs
+
+```ocaml
+val access_sect : Logs.src
+```
+```ocaml
+val accesslog : string -> unit
+```
+Write a message in access.log
+
+```ocaml
+val errlog : ?section:Logs.src -> string -> unit
+```
+Write a message in errors.log
+
+```ocaml
+val warning : ?section:Logs.src -> string -> unit
+```
+Write a message in warnings.log
+
+```ocaml
+val console : (unit -> string) -> unit
+```
+Write a message in the console (if not called in silent mode)
+
+```ocaml
+val unexpected_exception : exn -> string -> unit
+```
+Use that function for all impossible cases in exception handlers (`try ... with ... | e -> unexpected_exception ...` or `Lwt.catch ...`). A message will be written in `warnings.log`. Put something in the string to help locating the problem (usually the name of the function where is has been called).
+
+```ocaml
+val error_log_path : unit -> string
+```
+Path to the error log file
+
+
+---
+
+# Module `Ocsigen.Multipart`
+
+```ocaml
+val section : Logs.src
+```
+```ocaml
+val scan_multipart_body_from_stream : 
+  ?max_size:Stdlib.Int64.t ->
+  boundary:string ->
+  create:((string * string) list -> 'a) ->
+  add:('a -> string -> unit Lwt.t) ->
+  stop:(int64 -> 'a -> 'b Lwt.t) ->
+  string Ocsigen_base.Ocsigen_stream.stream ->
+  unit Lwt.t
+```
+```ocaml
+type content_type = (string * string) * (string * string) list
+```
+```ocaml
+type file_info = {
+  tmp_filename : string;
+  filesize : int64;
+  raw_original_filename : string;
+  file_content_type : content_type option;
+}
+```
+```ocaml
+type post_data = (string * string) list * (string * file_info) list
+```
+```ocaml
+val post_params : 
+  content_type:content_type ->
+  Cohttp_lwt.Body.t ->
+  (string option -> Stdlib.Int64.t option -> post_data Lwt.t) option
+```
+```ocaml
+val parse_content_type : string -> content_type option
 ```
 
 
 ---
 
-# Module `Ocsigen_header.Accept_encoding`
+# Module `Ocsigen.Ocsigen_cohttp`
 
 ```ocaml
-type t = (string option * float option) list
+val section : Logs.src
 ```
 ```ocaml
-val parse : string list -> t
+exception Ocsigen_http_error of Ocsigen_cookie_map.t * Cohttp.Code.status
 ```
+```ocaml
+exception Ext_http_error of Cohttp.Code.status * string option * Cohttp.Header.t option
+```
+Exception raised by exceptions to describe an HTTP error. It is possible to pass the code of the error, an optional comment, and optionally some headers.
+
+```ocaml
+exception Ocsigen_is_dir of Request.t -> Uri.t
+```
+compute a redirection if path links to a directory
+
+```ocaml
+val get_number_of_connected : unit -> int
+```
+accessor to get number of client (used by eliom monitoring)
+
+```ocaml
+val shutdown : float option -> unit
+```
+Shutdown main loop of server
+
+```ocaml
+val service : 
+  ?ssl:(string * string * (bool -> string) option) ->
+  address:Config.socket_type ->
+  port:int ->
+  connector:(Request.t -> Response.t Lwt.t) ->
+  unit ->
+  unit Lwt.t
+```
+initialize a main loop of http server
 
 
 ---
 
-# Module `Ocsigen_header.Accept_language`
+# Module `Ocsigen.Parseconfig`
+
+Config file parsing. See also module `Extensions.​Configuration`
 
 ```ocaml
-type t = (string * float option) list
+val parse_config : ?file:string -> unit -> Xml.xml list list
 ```
-```ocaml
-val parse : string list -> t
-```
+Returns the config file. Use this if you want to read a config file from your own executable. See [`Server.exec`](./Ocsigen-Server.md#val-exec).
 
 
 ---
 
-# Module `Ocsigen_header.Content_type`
-
-```ocaml
-val choose : Accept.t -> string -> string list -> string
-```
-
-
----
-
-# Module `Ocsigen_header.Mime_type`
-
-```ocaml
-type t = string option * string option
-```
-```ocaml
-val parse : string -> t
-```
-
-
----
-
-# Module `Ocsigen_header.Name`
+# Module `Ocsigen.Request`
 
 ```ocaml
 type t
 ```
 ```ocaml
-val to_string : t -> string
+type content_type = (string * string) * (string * string) list
+```
+```ocaml
+type file_info = Multipart.file_info = {
+  tmp_filename : string;
+  filesize : int64;
+  raw_original_filename : string;
+  file_content_type : content_type option;
+}
+```
+```ocaml
+type post_data = (string * string) list * (string * file_info) list
+```
+```ocaml
+type client_conn = [ 
+  | `Inet of Ipaddr.t * int
+  | `Unix of string
+  | `Forwarded_for of string
+  | `Unknown
+ ]
+```
+Type of connection used by the client. ``Inet` means the client connected through the Internet. ``Forwarded_for` means that the client connected through a proxy and carries the IP address reported in the HTTP headers.
+
+```ocaml
+val make : 
+  ?forward_ip:string list ->
+  ?sub_path:string ->
+  ?original_full_path:string ->
+  ?request_cache:Polytables.t ->
+  ?cookies_override:string Ocsigen_cookie_map.Map_inner.t ->
+  address:Config.Socket_type.t ->
+  port:int ->
+  ssl:bool ->
+  filenames:string list Stdlib.ref ->
+  client_conn:client_conn ->
+  body:Cohttp_lwt.Body.t ->
+  connection_closed:unit Lwt.t ->
+  Cohttp.Request.t ->
+  t
+```
+```ocaml
+val update : 
+  ?ssl:bool ->
+  ?forward_ip:string list ->
+  ?client_conn:client_conn ->
+  ?sub_path:string ->
+  ?meth:Cohttp.Code.meth ->
+  ?get_params_flat:(string * string) list ->
+  ?post_data:post_data option ->
+  ?cookies_override:string Ocsigen_cookie_map.Map_inner.t ->
+  ?full_rewrite:bool ->
+  ?uri:Uri.t ->
+  t ->
+  t
+```
+```ocaml
+val to_cohttp : t -> Cohttp.Request.t
+```
+```ocaml
+val uri : t -> Uri.t
+```
+```ocaml
+val body : t -> Cohttp_lwt.Body.t
+```
+```ocaml
+val address : t -> Config.Socket_type.t
+```
+```ocaml
+val host : t -> string option
+```
+```ocaml
+val meth : t -> Cohttp.Code.meth
+```
+```ocaml
+val port : t -> int
+```
+```ocaml
+val ssl : t -> bool
+```
+```ocaml
+val version : t -> Cohttp.Code.version
+```
+```ocaml
+val query : t -> string option
+```
+```ocaml
+val get_params : t -> (string * string list) list
+```
+```ocaml
+val get_params_flat : t -> (string * string) list
+```
+```ocaml
+val path : t -> string list
+```
+```ocaml
+val path_string : t -> string
+```
+```ocaml
+val sub_path : t -> string list
+```
+```ocaml
+val sub_path_string : t -> string
+```
+```ocaml
+val original_full_path : t -> string list
+```
+```ocaml
+val original_full_path_string : t -> string
+```
+```ocaml
+val header : t -> Ocsigen_http.Header.Name.t -> string option
+```
+```ocaml
+val header_multi : t -> Ocsigen_http.Header.Name.t -> string list
+```
+```ocaml
+val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
+```
+```ocaml
+val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
+```
+```ocaml
+val files : 
+  t ->
+  string option ->
+  Stdlib.Int64.t option ->
+  (string * file_info) list Lwt.t option
+```
+```ocaml
+val post_params : 
+  t ->
+  string option ->
+  Stdlib.Int64.t option ->
+  (string * string) list Lwt.t option
+```
+```ocaml
+val client_conn : t -> client_conn
+```
+The way the client connects to the server (for example, its IP address if connected over the internet).
+
+```ocaml
+val client_conn_to_string : t -> string
+```
+A textual representation of `client_conn` suitable for use in logs.
+
+```ocaml
+val forward_ip : t -> string list
+```
+```ocaml
+val content_type : t -> content_type option
+```
+```ocaml
+val request_cache : t -> Polytables.t
+```
+```ocaml
+val tries : t -> int
+```
+```ocaml
+val incr_tries : t -> unit
+```
+```ocaml
+val connection_closed : t -> unit Lwt.t
+```
+```ocaml
+val timeofday : t -> float
+```
+
+
+---
+
+# Module `Response.Body`
+
+```ocaml
+type t
+```
+```ocaml
+val empty : t
 ```
 ```ocaml
 val of_string : string -> t
 ```
 ```ocaml
-val accept : t
+val make : 
+  Cohttp.Transfer.encoding ->
+  ((string -> unit Lwt.t) -> unit Lwt.t) ->
+  t
+```
+`make writer` makes a reponse body whose content is generated by `writer write`. `write str` blocks until `str` is fully written.
+
+```ocaml
+val of_cohttp : encoding:Cohttp.Transfer.encoding -> Cohttp_lwt.Body.t -> t
 ```
 ```ocaml
-val accept_charset : t
+val write : t -> (string -> unit Lwt.t) -> unit Lwt.t
 ```
 ```ocaml
-val accept_encoding : t
-```
-```ocaml
-val accept_language : t
-```
-```ocaml
-val accept_ranges : t
-```
-```ocaml
-val authorization : t
-```
-```ocaml
-val cache_control : t
-```
-```ocaml
-val connection : t
-```
-```ocaml
-val content_disposition : t
-```
-```ocaml
-val content_encoding : t
-```
-```ocaml
-val content_length : t
-```
-```ocaml
-val content_type : t
-```
-```ocaml
-val content_range : t
-```
-```ocaml
-val cookie : t
-```
-```ocaml
-val date : t
-```
-```ocaml
-val etag : t
-```
-```ocaml
-val expect : t
-```
-```ocaml
-val expires : t
-```
-```ocaml
-val host : t
-```
-```ocaml
-val if_match : t
-```
-```ocaml
-val if_modified_since : t
-```
-```ocaml
-val if_none_match : t
-```
-```ocaml
-val if_unmodified_since : t
-```
-```ocaml
-val if_range : t
-```
-```ocaml
-val last_modified : t
-```
-```ocaml
-val location : t
-```
-```ocaml
-val pragma : t
-```
-```ocaml
-val server : t
-```
-```ocaml
-val set_cookie : t
-```
-```ocaml
-val status : t
-```
-```ocaml
-val transfer_encoding : t
-```
-```ocaml
-val user_agent : t
-```
-```ocaml
-val referer : t
-```
-```ocaml
-val range : t
-```
-```ocaml
-val x_forwarded_for : t
-```
-```ocaml
-val x_forwarded_proto : t
-```
-```ocaml
-val origin : t
-```
-```ocaml
-val access_control_request_method : t
-```
-```ocaml
-val access_control_request_headers : t
-```
-```ocaml
-val access_control_allow_origin : t
-```
-```ocaml
-val access_control_allow_credentials : t
-```
-```ocaml
-val access_control_expose_headers : t
-```
-```ocaml
-val access_control_max_age : t
-```
-```ocaml
-val access_control_allow_methods : t
-```
-```ocaml
-val access_control_allow_headers : t
+val transfer_encoding : t -> Cohttp.Transfer.encoding
 ```
 
 
 ---
 
-# Module `Ocsigen_header`
+# Module `Ocsigen.Response`
 
 ```ocaml
-type t = Cohttp.Header.t
+type t
 ```
 ```ocaml
-val of_option : t option -> t
+module Body : sig ... end
 ```
 ```ocaml
-module Name : sig ... end
+val make : 
+  ?body:Body.t ->
+  ?cookies:Ocsigen_cookie_map.t ->
+  Cohttp.Response.t ->
+  t
+```
+Make a response from a `Cohttp.Response.t`. Note that the `transfer-encoding` header is not taken into account if it is set to `chunked`, use [`add_header`](./#val-add_header). This is because `Cohttp.Response.make` sets this header by default, which interferes with the transfer-encoding carried by the `body`.
+
+```ocaml
+val respond : 
+  ?headers:Cohttp.Header.t ->
+  status:Http.Status.t ->
+  ?body:Body.t ->
+  unit ->
+  t
+```
+Like `make` but with an interface similar to `Cohttp_lwt_unix.Server.respond`.
+
+```ocaml
+val respond_string : 
+  ?headers:Cohttp.Header.t ->
+  status:Http.Status.t ->
+  body:string ->
+  unit ->
+  t
+```
+Like `respond` but with a fixed string body.
+
+```ocaml
+val respond_error : 
+  ?headers:Cohttp.Header.t ->
+  ?status:Http.Status.t ->
+  body:string ->
+  unit ->
+  t
+```
+Like `respond_string` with `"Error: "` appended to the body. The default status is ``Internal_server_error`.
+
+deprecated Use respond\_string with a ~status argument instead.
+```ocaml
+val respond_file : 
+  ?headers:Cohttp.Header.t ->
+  ?status:Http.Status.t ->
+  string ->
+  t Lwt.t
+```
+Respond with the content of a file. The content type is guessed using `Magic_mime`.
+
+```ocaml
+val update : 
+  ?response:Cohttp.Response.t ->
+  ?body:Body.t ->
+  ?cookies:Ocsigen_cookie_map.t ->
+  t ->
+  t
 ```
 ```ocaml
-module Mime_type : sig ... end
+val of_cohttp : 
+  ?cookies:Ocsigen_cookie_map.t ->
+  (Cohttp.Response.t * Cohttp_lwt.Body.t) ->
+  t
 ```
 ```ocaml
-module Accept : sig ... end
+val to_response_expert : 
+  t ->
+  Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
+```
+Response for `Cohttp_lwt_unix.Server.make_expert`. Set cookie headers.
+
+```ocaml
+val response : t -> Cohttp.Response.t
+```
+Raw response without cookie headers set.
+
+```ocaml
+val body : t -> Body.t
 ```
 ```ocaml
-module Accept_encoding : sig ... end
+val status : t -> Cohttp.Code.status
 ```
 ```ocaml
-module Accept_language : sig ... end
+val set_status : t -> Cohttp.Code.status -> t
 ```
 ```ocaml
-module Content_type : sig ... end
+val cookies : t -> Ocsigen_cookie_map.t
+```
+```ocaml
+val add_cookies : t -> Ocsigen_cookie_map.t -> t
+```
+```ocaml
+val header : t -> Ocsigen_http.Header.Name.t -> string option
+```
+```ocaml
+val header_multi : t -> Ocsigen_http.Header.Name.t -> string list
+```
+```ocaml
+val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
+```
+```ocaml
+val add_header_multi : t -> Ocsigen_http.Header.Name.t -> string list -> t
+```
+```ocaml
+val replace_header : t -> Ocsigen_http.Header.Name.t -> string -> t
+```
+```ocaml
+val replace_headers : t -> (Ocsigen_http.Header.Name.t * string) list -> t
+```
+```ocaml
+val remove_header : t -> Ocsigen_http.Header.Name.t -> t
 ```
 
 
 ---
 
-# Module `Ocsigen_lib.Clist`
+# Module `Ocsigen.Server`
+
+```ocaml
+val section : Logs.src
+```
+```ocaml
+val reload : ?file:string -> unit -> unit
+```
+Reload the configuration of the server. The optional parameter `?file` may be used to read the configuration from another file.
+
+```ocaml
+val exec : Xml.xml list list -> unit
+```
+Start the server with a configuration file. Never returns.
+
+```ocaml
+val start : 
+  ?ports:(Config.Socket_type.t * int) list ->
+  ?ssl_ports:(Config.Socket_type.t * int) list ->
+  ?ssl_info:Config.ssl_info option ->
+  ?default_charset:string option ->
+  ?logdir:string ->
+  ?datadir:string ->
+  ?uploaddir:string option ->
+  ?maxuploadfilesize:int64 option ->
+  ?syslog_facility:Syslog_message.facility option ->
+  ?configfile:string ->
+  ?usedefaulthostname:bool ->
+  ?pidfile:string ->
+  ?mimefile:string ->
+  ?verbose:unit ->
+  ?veryverbose:unit ->
+  ?silent:unit ->
+  ?daemon:unit ->
+  ?debug:unit ->
+  ?debugmode:bool ->
+  ?minthreads:int ->
+  ?maxthreads:int ->
+  ?max_number_of_connections:int ->
+  ?client_timeout:int ->
+  ?server_timeout:int ->
+  ?shutdown_timeout:float option ->
+  ?filebuffersize:int ->
+  ?maxrequestbodysize:int64 option ->
+  ?maxrequestbodysizeinmemory:int ->
+  ?bindir:string ->
+  ?extdir:string ->
+  ?command_pipe:string ->
+  ?disablepartialrequests:bool ->
+  ?respect_pipeline:unit ->
+  ?maxretries:int ->
+  Extensions.host_config list ->
+  unit
+```
+Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
+
+Options behave exactly like their [configuration file](./config.md) counterparts.
+
+```ocaml
+type instruction =
+  Extensions.virtual_hosts ->
+  Extensions.config_info ->
+  Ocsigen_base.Lib.Url.path ->
+  Extensions.extension
+```
+The type of instructions to be used inside an host or site. Instructions are defined by extensions (Staticmod, Eliom, etc.)
+
+```ocaml
+val host : 
+  ?regexp:string ->
+  ?port:int ->
+  ?default_hostname:string ->
+  ?default_httpport:int ->
+  ?default_httpsport:int ->
+  ?default_protocol_is_https:bool ->
+  ?mime_assoc:Ocsigen_http.Charset_mime.mime_assoc ->
+  ?charset_assoc:Ocsigen_http.Charset_mime.charset_assoc ->
+  ?default_directory_index:string list ->
+  ?list_directory_content:bool ->
+  ?follow_symlinks:[ `Always | `No | `Owner_match ] ->
+  ?do_not_serve_404:Extensions.do_not_serve ->
+  ?do_not_serve_403:Extensions.do_not_serve ->
+  ?uploaddir:string option ->
+  ?maxuploadfilesize:int64 option ->
+  instruction list ->
+  Extensions.host_config
+```
+You can define one or several virtual hosts corresponding to a given server name or port.
+
+```ocaml
+val site : 
+  ?charset:string ->
+  Ocsigen_base.Lib.Url.path ->
+  instruction list ->
+  instruction
+```
+Each host may contain some sub-sites corresponding to subdirectories in the URL.
+
+
+---
+
+# Module `Ocsigen`
+
+```ocaml
+module Command : sig ... end
+```
+Extending server commands
+
+```ocaml
+module Config : sig ... end
+```
+Configuring Ocsigen server
+
+```ocaml
+module Extensions : sig ... end
+```
+Extensions interface for Ocsigen Server
+
+```ocaml
+module Local_files : sig ... end
+```
+```ocaml
+module Messages : sig ... end
+```
+Writing messages in the logs
+
+```ocaml
+module Multipart : sig ... end
+```
+```ocaml
+module Ocsigen_cohttp : sig ... end
+```
+```ocaml
+module Parseconfig : sig ... end
+```
+Config file parsing. See also module `Extensions.​Configuration`
+
+```ocaml
+module Request : sig ... end
+```
+```ocaml
+module Response : sig ... end
+```
+```ocaml
+module Server : sig ... end
+```
+
+
+---
+
+# Module `Cache.Dlist`
+
+Doubly-linked lists with maximum number of entries, and (possibly) limited lifespan for entries.
+
+```ocaml
+type 'a t
+```
+```ocaml
+type 'a node
+```
+```ocaml
+val create : ?timer:float -> int -> 'a t
+```
+Create a dlist. It takes the maximum length of the list as parameter. The optional `?timer` parameter sets a maximum lifetime for elements (in seconds).
+
+```ocaml
+val add : 'a -> 'a t -> 'a option
+```
+Adds an element to the list, and possibly returns the element that has been removed if the maximum size was exceeded.
+
+```ocaml
+val remove : 'a node -> unit
+```
+Removes an element from its list. If it is not in a list, it does nothing. If it is in a list, it calls the finaliser, then removes the element. If the finaliser fails with an exception, the element is removed and the exception is raised again.
+
+```ocaml
+val up : 'a node -> unit
+```
+Removes the element from its list without finalising, then adds it as newest.
+
+```ocaml
+val newest : 'a t -> 'a node option
+```
+```ocaml
+val oldest : 'a t -> 'a node option
+```
+```ocaml
+val size : 'a t -> int
+```
+```ocaml
+val maxsize : 'a t -> int
+```
+```ocaml
+val value : 'a node -> 'a
+```
+```ocaml
+val get_timer : 'a t -> float option
+```
+returns the timer of the Dlist
+
+```ocaml
+val list_of : 'a node -> 'a t option
+```
+The list to which the node belongs
+
+```ocaml
+val remove_n_oldest : 'a t -> int -> 'a list
+```
+remove the n oldest values (or less if the list is not long enough) ; returns the list of removed values
+
+```ocaml
+val fold : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+```
+fold over the elements from the cache starting from the newest to the oldest
+
+```ocaml
+val fold_back : ('b -> 'a -> 'b) -> 'b -> 'a t -> 'b
+```
+fold over the elements from the cache starting from the oldest to the newest
+
+```ocaml
+val move : 'a node -> 'a t -> 'a option
+```
+Move a node from one dlist to another one, without finalizing. If one value is removed from the destination list (because its maximum size is reached), it is returned (after finalisation).
+
+```ocaml
+val set_maxsize : 'a t -> int -> 'a list
+```
+change the maximum size ; returns the list of removed values, if any.
+
+```ocaml
+val set_finaliser_before : ('a node -> unit) -> 'a t -> unit
+```
+set a function to be called automatically on a piece of data just before it disappears from the list (either by explicit removal or because the maximum size is exceeded)
+
+```ocaml
+val get_finaliser_before : 'a t -> 'a node -> unit
+```
+```ocaml
+val add_finaliser_before : ('a node -> unit) -> 'a t -> unit
+```
+```ocaml
+val set_finaliser_after : ('a node -> unit) -> 'a t -> unit
+```
+set a function to be called automatically on a piece of data just after it disappears from the list (either by explicit removal or because the maximum size is exceeded)
+
+```ocaml
+val get_finaliser_after : 'a t -> 'a node -> unit
+```
+```ocaml
+val add_finaliser_after : ('a node -> unit) -> 'a t -> unit
+```
+
+
+---
+
+# Parameter `Make.A`
+
+```ocaml
+type key
+```
+```ocaml
+type value
+```
+
+
+---
+
+# Class `Make.cache`
+
+`new cache finder ?timer size` creates a cache object where `finder` is the function responsible for retrieving non-cached data, `timer` (if any) is the life span of cached values (in seconds) (values in the cache are removed after their time is up) and `size` is the upper bound to the number of simultaneoulsy cached elements.
+
+Whenever a value is found (using `find` method), it's lifespan is set to `timer` (or not if the cache is not time bounded). If the value was already cached, it's lifespan is reset to `timer`.
+
+Using `timer` allow one to create a cache bounded both in space and time. It is to be noted that real lifespan of values is always slightly greater than `timer`.
+
+```ocaml
+method find : A.key -> A.value Lwt.t
+```
+Find the cached value associated to the key, or binds this value in the cache using the function `finder` passed as argument to `create`, and returns this value
+
+```ocaml
+method find_in_cache : A.key -> A.value
+```
+Find the cached value associated to the key. Raises `Not_found` if the key is not present in the cache
+
+```ocaml
+method remove : A.key -> unit
+```
+```ocaml
+method add : A.key -> A.value -> unit
+```
+```ocaml
+method clear : unit -> unit
+```
+```ocaml
+method size : int
+```
+
+
+---
+
+# Module `Cache.Make`
+
+
+## Parameters
+
+```ocaml
+module A : sig ... end
+```
+
+## Signature
+
+```ocaml
+class cache : (A.key -> A.value Lwt.t) -> ?timer:float -> int -> object ... end
+```
+`new cache finder ?timer size` creates a cache object where `finder` is the function responsible for retrieving non-cached data, `timer` (if any) is the life span of cached values (in seconds) (values in the cache are removed after their time is up) and `size` is the upper bound to the number of simultaneoulsy cached elements.
+
+
+---
+
+# Module `Ocsigen_base.Cache`
+
+Cache. Association tables (from any kind of database) that keep the most recently used values in memory. It is also possible to set a maximum lifetime for data in the cache.
+
+It is based on a structure of doubly linked lists with maximum size, that keeps only the mostly recently used values first, if you call the `up` function each time you use a value. (Insertion, remove and "up" in time 1\). This structure is exported, so that it can be used in other cases.
+
+Not (preemptive) thread safe.
+
+author Vincent Balat
+author Raphaël Proust (adding timers)
+```ocaml
+module Make (A : sig ... end) : sig ... end
+```
+```ocaml
+val clear_all_caches : unit -> unit
+```
+Clear the contents of all the existing caches
+
+```ocaml
+module Dlist : sig ... end
+```
+Doubly-linked lists with maximum number of entries, and (possibly) limited lifespan for entries.
+
+
+---
+
+# Module `Ocsigen_base.Config_static`
+
+```ocaml
+val version_number : string
+```
+```ocaml
+val config_file : string Stdlib.ref
+```
+```ocaml
+val is_native : bool
+```
+```ocaml
+val logdir : string option Stdlib.ref
+```
+```ocaml
+val mimefile : string Stdlib.ref
+```
+```ocaml
+val datadir : string Stdlib.ref
+```
+```ocaml
+val bindir : string Stdlib.ref
+```
+```ocaml
+val extdir : string Stdlib.ref
+```
+```ocaml
+val command_pipe : string Stdlib.ref
+```
+```ocaml
+val builtin_packages : Ocsigen_base.Lib.String.Set.t
+```
+
+
+---
+
+# Module `Lib.Clist`
 
 Circular lists
 
@@ -3434,7 +3768,7 @@ Infinite fold on circular lists (use with care!)
 
 ---
 
-# Module `Ocsigen_lib.Filename`
+# Module `Lib.Filename`
 
 ```ocaml
 val current_dir_name : string
@@ -3521,7 +3855,7 @@ val extension_no_directory : string -> string
 
 ---
 
-# Module `Ocsigen_lib.Int`
+# Module `Lib.Int`
 
 ```ocaml
 module Table : Stdlib.Map.S with type key = int
@@ -3530,7 +3864,7 @@ module Table : Stdlib.Map.S with type key = int
 
 ---
 
-# Module `Ocsigen_lib.Ip_address`
+# Module `Lib.Ip_address`
 
 ```ocaml
 exception No_such_host
@@ -3547,7 +3881,7 @@ val get_inet_addr : ?v6:bool -> string -> Unix.inet_addr Lwt.t
 
 ---
 
-# Module `Ocsigen_lib.Let_syntax`
+# Module `Lib.Let_syntax`
 
 ```ocaml
 val return : 'a -> 'a Lwt.t
@@ -3568,7 +3902,7 @@ module Open_on_rhs : sig ... end
 
 ---
 
-# Module `Ocsigen_lib.List`
+# Module `Lib.List`
 
 Improvement of module List
 
@@ -3849,7 +4183,7 @@ val split_at : int -> 'a list -> 'a list * 'a list
 
 ---
 
-# Module `Ocsigen_lib.String`
+# Module `Lib.String`
 
 Improvement of module String
 
@@ -4116,7 +4450,7 @@ module Map : Stdlib.Map.S with type key = string
 
 ---
 
-# Module `Ocsigen_lib.String_base`
+# Module `Lib.String_base`
 
 Improvement of module String
 
@@ -4383,7 +4717,7 @@ module Map : Stdlib.Map.S with type key = string
 
 ---
 
-# Module `Ocsigen_lib.Tuple3`
+# Module `Lib.Tuple3`
 
 ```ocaml
 val fst : ('a * 'b * 'c) -> 'a
@@ -4398,7 +4732,7 @@ val thd : ('a * 'b * 'c) -> 'c
 
 ---
 
-# Module `Ocsigen_lib.Url`
+# Module `Lib.Url`
 
 ```ocaml
 type t = Url_base.t
@@ -4499,7 +4833,7 @@ Example: `prefix_and_path_of_t "http://ocsigen.org:80/tuto/manual"` returns `("h
 
 ---
 
-# Module `Ocsigen_lib.Url_base`
+# Module `Lib.Url_base`
 
 ```ocaml
 type t = string
@@ -4559,7 +4893,7 @@ val join_path : path -> string
 
 ---
 
-# Module `Ocsigen_lib`
+# Module `Ocsigen_base.Lib`
 
 This module contains some auxiliaries for the Ocsigenserver. In contrast to [`Ocsigen_lib_base`](./Ocsigen_lib_base.md), the function may also refer to libraries other than the standard library.
 
@@ -4671,6 +5005,715 @@ module Filename : sig ... end
 ```
 ```ocaml
 module Url : sig ... end
+```
+
+
+---
+
+# Module `Ocsigen_base.Loader`
+
+Module `Loader`: Dynamic loading for Ocsigen.
+
+Notes about Findlib usage:
+
+- Findlib is called with predicates "plugin", "mt". Moreover, the predicate "native" or "byte" is added, depending on whether Ocsigen is running in native or bytecode mode.
+- In native mode, .cmx/.cmxa extensions provided by META files are replaced by .cmxs.
+- The OCAMLPATH environment variable is ignored altogether.
+```ocaml
+exception Dynlink_error of string * exn
+```
+```ocaml
+exception Findlib_error of string * exn
+```
+```ocaml
+val section : Logs.src
+```
+```ocaml
+val translate : string -> string
+```
+`translate filename` translate .cmo/.cma extensions to .cmxs in native mode, and .cmxs to .cmo (.cma if it exists) in bytecode mode.
+
+```ocaml
+val set_init_on_load : bool -> unit
+```
+If set to `true`, the module initialization functions passed to `set_module_init_function` will be executed directly. Otherwise, they will have to be invoked using `init_module` at some later stage.
+
+```ocaml
+val loadfile : (unit -> unit) -> (unit -> unit) -> bool -> string -> unit
+```
+`loadfile pre post force file` (dynamically) loads `file`. If `force` is `false`, remember `file` so that it isn't loaded twice. If the loading effectively occurs, `pre` (resp. `post`) is called before (resp. after) the loading. `post` will be called even if the loading fails.
+
+```ocaml
+val loadfiles : (unit -> unit) -> (unit -> unit) -> bool -> string list -> unit
+```
+`loadfiles pre post force file` loads all the `files`, using `loadfile (fun () -> ()) (fun () -> ()) false` for all the files but the last one, and `loadfile pre post force` for the last one (if any).
+
+```ocaml
+val add_module_init_function : string -> (unit -> unit) -> unit
+```
+`add_module_init_function name f` adds function `f` to the initialisation functions to be run when `init_module name` is called.
+
+```ocaml
+val set_module_init_function : string -> (unit -> unit) -> unit
+```
+`set_module_init_function name f` registers the function `f`, which will be used to initialize the module when `init_module name` is called. Will replace the prvious value.
+
+```ocaml
+val init_module : (unit -> unit) -> (unit -> unit) -> bool -> string -> unit
+```
+`init_module pre post force name` runs the init function for the module `name`. If `force` is `false`, remember `name` so that the init function isn't executed twice. If the function is executed, `pre` (resp. `post`) is called before (resp. after) the loading. `post` will be called even if the loading fails.
+
+```ocaml
+val get_ocamlpath : unit -> string list
+```
+Returns the current Findlib library search path.
+
+```ocaml
+val set_ocamlpath : string list -> unit
+```
+Sets the current Findlib library search path. The OCaml standard library path and some site-specific paths are always implicitly added.
+
+```ocaml
+val add_ocamlpath : string -> unit
+```
+Adds a path to the Findlib library search path.
+
+```ocaml
+val findfiles : string -> string list
+```
+`findfiles pkg` returns the list of files needed to load Findlib package `pkg`, including dependencies. The archive files of `pkg` will appear last in the returned result.
+
+
+---
+
+# Module `Ocsigen_stream.StringStream`
+
+```ocaml
+type out = string t
+```
+Interface for stream creation (for tyxml)
+
+```ocaml
+type m
+```
+```ocaml
+val make : m -> out
+```
+```ocaml
+val empty : m
+```
+Create an empty stream
+
+```ocaml
+val put : string -> m
+```
+Create a stream with one element
+
+```ocaml
+val concat : m -> m -> m
+```
+Concatenate two stream
+
+
+---
+
+# Module `Ocsigen_base.Ocsigen_stream`
+
+```ocaml
+exception Interrupted of exn
+```
+```ocaml
+exception Cancelled
+```
+```ocaml
+exception Already_read
+```
+```ocaml
+exception Finalized
+```
+Streams are a means to read data block by block
+
+```ocaml
+type 'a stream
+```
+```ocaml
+type 'a step = private 
+  | Finished of 'a stream option
+  | Cont of 'a * 'a stream
+```
+A stream may be composed by several substreams. Thus a stream is either something that contains the current buffer and a function to retrieve the following data, or a finished stream with possibly another stream following.
+
+```ocaml
+type 'a t
+```
+```ocaml
+type outcome = [ 
+  | `Success
+  | `Failure
+ ]
+```
+```ocaml
+val make : ?finalize:(outcome -> unit Lwt.t) -> (unit -> 'a step Lwt.t) -> 'a t
+```
+creates a new stream
+
+```ocaml
+val get : 'a t -> 'a stream
+```
+call this function if you decide to start reading a stream.
+
+raises [`Already_read`](./#exception-Already_read) if the stream has already been read.
+```ocaml
+val next : 'a stream -> 'a step Lwt.t
+```
+get the next step of a stream. Fails with `Interrupted e` if reading the thread failed with exception `e`, and with `Cancelled` if the thread has been cancelled.
+
+```ocaml
+val empty : (unit -> 'a step Lwt.t) option -> 'a step Lwt.t
+```
+creates an empty step. The parameter is the following substream, if any.
+
+```ocaml
+val cont : 'a -> (unit -> 'a step Lwt.t) -> 'a step Lwt.t
+```
+creates a non empty step.
+
+```ocaml
+val add_finalizer : 'a t -> (outcome -> unit Lwt.t) -> unit
+```
+Add a finalizer function. In the current version, finalizers must be called manually.
+
+```ocaml
+val finalize : 'a t -> outcome -> unit Lwt.t
+```
+Finalize the stream. This function must be called explicitly after reading the stream, otherwise finalizers won't be called.
+
+```ocaml
+val cancel : 'a t -> unit Lwt.t
+```
+Cancel the stream, i.e. read the stream until the end, without decoding. Further tries to read on the stream will fail with exception [`Ocsigen_stream.Cancelled`](./#exception-Cancelled)
+
+```ocaml
+val consume : 'a t -> unit Lwt.t
+```
+Consume without cancelling. Read the stream until the end, without decoding.
+
+```ocaml
+exception Stream_too_small
+```
+possibly with the size of the stream
+
+```ocaml
+exception Stream_error of string
+```
+```ocaml
+exception String_too_large
+```
+```ocaml
+val string_of_stream : int -> string stream -> string Lwt.t
+```
+Creates a string from a stream. The first argument is the upper limit of the string length
+
+```ocaml
+val enlarge_stream : string step -> string step Lwt.t
+```
+Read more data in the buffer
+
+```ocaml
+val stream_want : string step -> int -> string step Lwt.t
+```
+`stream_want s len` Returns a stream with at least len bytes in the buffer if possible
+
+```ocaml
+val current_buffer : string step -> string
+```
+Returns the value of the current buffer
+
+```ocaml
+val skip : string step -> int64 -> string step Lwt.t
+```
+Skips data. Raises `Stream_too_small (Some size)` if the stream is too small, where `size` is the size of the stream.
+
+```ocaml
+val substream : string -> string step -> string step Lwt.t
+```
+Cut the stream at the position given by a string delimiter
+
+```ocaml
+val of_file : string -> string t
+```
+returns a stream reading from a file. Do not forget to finalize the stream to close the file.
+
+```ocaml
+val of_string : string -> string t
+```
+returns a stream containing a string.
+
+```ocaml
+val of_cohttp_body : Cohttp_lwt.Body.t -> string t
+```
+Convert a `Lwt_stream.t` to an [`Ocsigen_stream.t`](./#type-t).
+
+```ocaml
+module StringStream : sig ... end
+```
+
+
+---
+
+# Module `Ocsigen_base`
+
+```ocaml
+module Cache : sig ... end
+```
+Cache. Association tables (from any kind of database) that keep the most recently used values in memory. It is also possible to set a maximum lifetime for data in the cache.
+
+```ocaml
+module Config_static : sig ... end
+```
+```ocaml
+module Lib : sig ... end
+```
+This module contains some auxiliaries for the Ocsigenserver. In contrast to [`Ocsigen_lib_base`](./Ocsigen_lib_base.md), the function may also refer to libraries other than the standard library.
+
+```ocaml
+module Loader : sig ... end
+```
+Module `Loader`: Dynamic loading for Ocsigen.
+
+```ocaml
+module Ocsigen_stream : sig ... end
+```
+
+
+---
+
+# Module `Ocsigen_cookie_map.Poly`
+
+Polymorphic versions of `add` and `remove` to use when we don't need to OUnset (client-side)
+
+```ocaml
+val add : 
+  path:Ocsigen_lib_base.Url_base.path ->
+  string ->
+  'a ->
+  'a Map_inner.t Map_path.t ->
+  'a Map_inner.t Map_path.t
+```
+```ocaml
+val remove : 
+  path:Ocsigen_lib_base.Url_base.path ->
+  string ->
+  'a Map_inner.t Map_path.t ->
+  'a Map_inner.t Map_path.t
+```
+
+
+---
+
+# Module `Ocsigen_cookie_map`
+
+```ocaml
+module Map_path : Stdlib.Map.S with type key := Ocsigen_lib_base.Url_base.path
+```
+This type of maps is used to store cookie values for each path. The key has type Url.path option: it is for the path (default: root of the site).
+
+```ocaml
+module Map_inner : Stdlib.Map.S with type key := string
+```
+```ocaml
+type cookie = 
+  | OSet of float option * string * bool
+  | OUnset
+```
+Type used for cookies to set. The float option is the timestamp for the expiration date. The string is the value. If the bool is true and the protocol is https, the cookie will be secure (will ask the browser to send it only through secure connections).
+
+```ocaml
+type t = cookie Map_inner.t Map_path.t
+```
+```ocaml
+val empty : t
+```
+```ocaml
+val add : path:Ocsigen_lib_base.Url_base.path -> string -> cookie -> t -> t
+```
+`add ~path c v m` adds the cookie `c` to `m`.
+
+If the cookie is already bound, the previous binding disappear.
+
+```ocaml
+val add_multi : t -> t -> t
+```
+`add_multi new old` adds the cookies from `new` to `old`. If cookies are already bound in oldcookies, the previous binding disappear.
+
+```ocaml
+val remove : path:Ocsigen_lib_base.Url_base.path -> string -> t -> t
+```
+`remove c cookie_table` removes the cookie `c` from `m`.
+
+Warning: it is not equivalent to `add ... OUnset ...`).
+
+```ocaml
+module Poly : sig ... end
+```
+Polymorphic versions of `add` and `remove` to use when we don't need to OUnset (client-side)
+
+
+---
+
+# Module `Ocsigen_http.Charset_mime`
+
+```ocaml
+type extension = string
+```
+```ocaml
+type file = string
+```
+```ocaml
+type filename = string
+```
+Charset
+
+```ocaml
+type charset = string
+```
+By convention, "no specified charset" is represented by the empty string
+
+```ocaml
+val no_charset : charset
+```
+```ocaml
+type charset_assoc
+```
+Association between extensions and charset, with a default value.
+
+```ocaml
+val empty_charset_assoc : ?default:charset -> unit -> charset_assoc
+```
+All files are mapped to `no_charset`
+
+```ocaml
+val empty_mime_assoc : ?default:charset -> unit -> charset_assoc
+```
+```ocaml
+val find_charset : string -> charset_assoc -> charset
+```
+```ocaml
+val default_charset : charset_assoc -> charset
+```
+Functions related to the default charset in the association
+
+```ocaml
+val set_default_charset : charset_assoc -> charset -> charset_assoc
+```
+```ocaml
+val update_charset_ext : charset_assoc -> extension -> charset -> charset_assoc
+```
+Updates the mapping between extensions from a file to its charset. The update can be specified using the extension of the file, the name of the file, or the entire file (with its path)
+
+```ocaml
+val update_charset_file : charset_assoc -> filename -> charset -> charset_assoc
+```
+```ocaml
+val update_charset_regexp : 
+  charset_assoc ->
+  Re.Pcre.regexp ->
+  charset ->
+  charset_assoc
+```
+```ocaml
+type mime_type = string
+```
+MIME types; the default value is `"application/octet-stream"`
+
+```ocaml
+val default_mime_type : mime_type
+```
+```ocaml
+type mime_assoc
+```
+association between extensions and mime types, with default value
+
+```ocaml
+val default_mime_assoc : unit -> mime_assoc
+```
+Default values, obtained by reading the file specified by `Ocsigen_base.Config_static.get_mimefile`
+
+```ocaml
+val parse_mime_types : filename:string -> mime_assoc
+```
+Parsing of a file containing mime associations, such as /etc/mime-types
+
+```ocaml
+val find_mime : file -> mime_assoc -> string
+```
+```ocaml
+val default_mime : mime_assoc -> mime_type
+```
+```ocaml
+val set_default_mime : mime_assoc -> mime_type -> mime_assoc
+```
+```ocaml
+val update_mime_ext : mime_assoc -> extension -> mime_type -> mime_assoc
+```
+```ocaml
+val update_mime_file : mime_assoc -> filename -> mime_type -> mime_assoc
+```
+```ocaml
+val update_mime_regexp : 
+  mime_assoc ->
+  Re.Pcre.regexp ->
+  mime_type ->
+  mime_assoc
+```
+
+
+---
+
+# Module `Header.Accept`
+
+```ocaml
+type t = (Mime_type.t * float option * (string * string) list) list
+```
+```ocaml
+val parse : string list -> t
+```
+
+
+---
+
+# Module `Header.Accept_encoding`
+
+```ocaml
+type t = (string option * float option) list
+```
+```ocaml
+val parse : string list -> t
+```
+
+
+---
+
+# Module `Header.Accept_language`
+
+```ocaml
+type t = (string * float option) list
+```
+```ocaml
+val parse : string list -> t
+```
+
+
+---
+
+# Module `Header.Content_type`
+
+```ocaml
+val choose : Accept.t -> string -> string list -> string
+```
+
+
+---
+
+# Module `Header.Mime_type`
+
+```ocaml
+type t = string option * string option
+```
+```ocaml
+val parse : string -> t
+```
+
+
+---
+
+# Module `Header.Name`
+
+```ocaml
+type t
+```
+```ocaml
+val to_string : t -> string
+```
+```ocaml
+val of_string : string -> t
+```
+```ocaml
+val accept : t
+```
+```ocaml
+val accept_charset : t
+```
+```ocaml
+val accept_encoding : t
+```
+```ocaml
+val accept_language : t
+```
+```ocaml
+val accept_ranges : t
+```
+```ocaml
+val authorization : t
+```
+```ocaml
+val cache_control : t
+```
+```ocaml
+val connection : t
+```
+```ocaml
+val content_disposition : t
+```
+```ocaml
+val content_encoding : t
+```
+```ocaml
+val content_length : t
+```
+```ocaml
+val content_type : t
+```
+```ocaml
+val content_range : t
+```
+```ocaml
+val cookie : t
+```
+```ocaml
+val date : t
+```
+```ocaml
+val etag : t
+```
+```ocaml
+val expect : t
+```
+```ocaml
+val expires : t
+```
+```ocaml
+val host : t
+```
+```ocaml
+val if_match : t
+```
+```ocaml
+val if_modified_since : t
+```
+```ocaml
+val if_none_match : t
+```
+```ocaml
+val if_unmodified_since : t
+```
+```ocaml
+val if_range : t
+```
+```ocaml
+val last_modified : t
+```
+```ocaml
+val location : t
+```
+```ocaml
+val pragma : t
+```
+```ocaml
+val server : t
+```
+```ocaml
+val set_cookie : t
+```
+```ocaml
+val status : t
+```
+```ocaml
+val transfer_encoding : t
+```
+```ocaml
+val user_agent : t
+```
+```ocaml
+val referer : t
+```
+```ocaml
+val range : t
+```
+```ocaml
+val x_forwarded_for : t
+```
+```ocaml
+val x_forwarded_proto : t
+```
+```ocaml
+val origin : t
+```
+```ocaml
+val access_control_request_method : t
+```
+```ocaml
+val access_control_request_headers : t
+```
+```ocaml
+val access_control_allow_origin : t
+```
+```ocaml
+val access_control_allow_credentials : t
+```
+```ocaml
+val access_control_expose_headers : t
+```
+```ocaml
+val access_control_max_age : t
+```
+```ocaml
+val access_control_allow_methods : t
+```
+```ocaml
+val access_control_allow_headers : t
+```
+
+
+---
+
+# Module `Ocsigen_http.Header`
+
+```ocaml
+type t = Cohttp.Header.t
+```
+```ocaml
+val of_option : t option -> t
+```
+```ocaml
+module Name : sig ... end
+```
+```ocaml
+module Mime_type : sig ... end
+```
+```ocaml
+module Accept : sig ... end
+```
+```ocaml
+module Accept_encoding : sig ... end
+```
+```ocaml
+module Accept_language : sig ... end
+```
+```ocaml
+module Content_type : sig ... end
+```
+
+
+---
+
+# Module `Ocsigen_http`
+
+```ocaml
+module Charset_mime : sig ... end
+```
+```ocaml
+module Header : sig ... end
 ```
 
 
@@ -5380,7 +6423,7 @@ val join_path : path -> string
 
 # Module `Ocsigen_lib_base`
 
-This module just contains only extensions of the standard library and very basic Ocsigen values and exceptions. Cf. [`Ocsigen_lib`](./Ocsigen_lib.md) for functionality which depends on specific external libraries.
+This module just contains only extensions of the standard library and very basic Ocsigen values and exceptions. Cf. `Lib` for functionality which depends on specific external libraries.
 
 ```ocaml
 exception Ocsigen_Internal_Error of string
@@ -5476,9 +6519,1140 @@ val debug : string -> unit
 
 ---
 
-# Module `Ocsigen_loader`
+# Module `Outputfilter`
 
-Module `Ocsigen_loader`: Dynamic loading for Ocsigen.
+Outputfilter: Rewrite some part of the output
+
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./outputfilter.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+
+This module belongs to ocamlfind package `ocsigenserver.ext.outputfilter`.
+
+See an example of use on the API documentation of [`Revproxy`](./Revproxy.md).
+
+```ocaml
+val run : 
+  mode:
+    [ `Rewrite of Ocsigen_http.Header.Name.t * string * string
+    | `Add of Ocsigen_http.Header.Name.t * string * bool option
+    | `Code of Cohttp.Code.status ] ->
+  unit ->
+  Ocsigen.Server.instruction
+```
+`run ~mode ()` makes it possible to use this extension without configuration file.
+
+
+---
+
+# Module `Polytables`
+
+Polymorphic tables (using Map)
+
+author Vincent Balat
+author Jérôme Vouillon
+Warning: this module is not thread safe\!
+
+```ocaml
+type 'a key
+```
+The type of key for a piece of data of type 'a
+
+```ocaml
+type t
+```
+The type of tables
+
+```ocaml
+val create : unit -> t
+```
+creates a new table
+
+```ocaml
+val make_key : unit -> 'a key
+```
+create a new key for each data you want to save
+
+```ocaml
+val set : table:t -> key:'a key -> value:'a -> unit
+```
+`set t k v` associates `v` to `k` in `t`
+
+```ocaml
+val get : table:t -> key:'a key -> 'a
+```
+`get t k` returns the current binding of `k` in `t` or raises `Not_found`
+
+```ocaml
+val remove : table:t -> key:'a key -> unit
+```
+`remove t k` remove the current binding of `k` in `t` if it exists
+
+```ocaml
+val clear : table:t -> unit
+```
+`clear t` remove all data from t
+
+
+---
+
+# Module `Redirectmod`
+
+Redirectmod: HTTP redirections
+
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./redirectmod.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+
+This module belongs to ocamlfind package `ocsigenserver.ext.redirectmod`.
+
+Example of use:
+
+```ocaml
+let _ =
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
+       [ Redirectmod.run
+            ~redirection:
+              (Redirectmod.create_redirection
+                ~temporary:false ~full_url:false ~regexp:"^olddir/(.* )$"
+                "https://blahblahblah.org/newdir/\\1")
+              ()
+       ; Staticmod.run ~dir:"static" ()
+       ]
+     ]
+```
+```ocaml
+val section : Logs.src
+```
+```ocaml
+type redirection
+```
+```ocaml
+val create_redirection : 
+  ?full_url:bool ->
+  ?temporary:bool ->
+  regexp:string ->
+  string ->
+  redirection
+```
+```ocaml
+val run : redirection:redirection -> unit -> Ocsigen.Server.instruction
+```
+`run ~redirection ()` makes it possible to use this extension without configuration file.
+
+
+---
+
+# Module `Revproxy`
+
+Revproxy: Forward a request to another Web server
+
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./revproxy.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+
+This module belongs to ocamlfind package `ocsigenserver.ext.revproxy`.
+
+Example of use. Forward all requests to a given directory to the same directory of another server running locally on another port. We are using it in combination with [Outputfilter](./outputfilter.md) to rewrite redirections.
+
+```ocaml
+let _ =
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
+       [ Revproxy.run
+           ~redirection:(Revproxy.create_redirection 
+                           ~full_url:false
+                           ~regexp:"(othersite/.* )"
+                           ~keephost:true
+                           "https://localhost:8123/\\1") 
+           ()
+        ; Outputfilter.run 
+            ~mode:(`Rewrite (Ocsigen_http.Header.Name.location,
+                             "http://localhost:8123/(.* )",
+                             "http://my.publicaddress.org/\\1"))
+            ()
+ ]]
+```
+```ocaml
+val section : Logs.src
+```
+```ocaml
+type redirection
+```
+```ocaml
+val create_redirection : 
+  ?full_url:bool ->
+  ?pipeline:bool ->
+  ?keephost:bool ->
+  regexp:string ->
+  string ->
+  redirection
+```
+```ocaml
+val run : redirection:redirection -> unit -> Ocsigen.Server.instruction
+```
+`run ~redirection ()` makes it possible to use this extension without configuration file.
+
+
+---
+
+# Module `Rewritemod`
+
+Rewrite: Change the request
+
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./rewritemod.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
+
+This module belongs to ocamlfind package `ocsigenserver.ext.rewritemod`.
+
+```ocaml
+val section : Logs.src
+```
+```ocaml
+val run : 
+  ?continue:bool ->
+  ?full_rewrite:bool ->
+  regexp:string ->
+  string ->
+  unit ->
+  Ocsigen.Server.instruction
+```
+`run ~realm ~auth ()` makes it possible to use this extension without configuration file.
+
+
+---
+
+# Module `Staticmod`
+
+Staticmod: serve static files
+
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./staticmod.md). If you are using Ocsigen Server as a library, use the interface described here.
+
+This module belongs to ocamlfind package `ocsigenserver.ext.staticmod`.
+
+Example of use:
+
+```ocaml
+let _ =
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
+```
+```ocaml
+val run : 
+  ?dir:string ->
+  ?regexp:string ->
+  ?dest:string ->
+  ?code:string ->
+  ?cache:int ->
+  ?root:string ->
+  unit ->
+  Ocsigen.Server.instruction
+```
+Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described [here](./staticmod.md).
+
+```ocaml
+val section : Logs.src
+```
+
+
+---
+
+# Module `Userconf`
+
+
+---
+
+# Module `Ocsigen_cache`
+
+```ocaml
+module Make = Ocsigen_base.Cache.Make
+```
+```ocaml
+val clear_all_caches : unit -> unit
+```
+Clear the contents of all the existing caches
+
+```ocaml
+module Dlist = Ocsigen_base.Cache.Dlist
+```
+Doubly-linked lists with maximum number of entries, and (possibly) limited lifespan for entries.
+
+
+---
+
+# Module `Ocsigen_charset_mime`
+
+```ocaml
+type extension = string
+```
+```ocaml
+type file = string
+```
+```ocaml
+type filename = string
+```
+Charset
+
+```ocaml
+type charset = string
+```
+By convention, "no specified charset" is represented by the empty string
+
+```ocaml
+val no_charset : charset
+```
+```ocaml
+type charset_assoc = Ocsigen_http.Charset_mime.charset_assoc
+```
+Association between extensions and charset, with a default value.
+
+```ocaml
+val empty_charset_assoc : ?default:charset -> unit -> charset_assoc
+```
+All files are mapped to `no_charset`
+
+```ocaml
+val empty_mime_assoc : ?default:charset -> unit -> charset_assoc
+```
+```ocaml
+val find_charset : string -> charset_assoc -> charset
+```
+```ocaml
+val default_charset : charset_assoc -> charset
+```
+Functions related to the default charset in the association
+
+```ocaml
+val set_default_charset : charset_assoc -> charset -> charset_assoc
+```
+```ocaml
+val update_charset_ext : charset_assoc -> extension -> charset -> charset_assoc
+```
+Updates the mapping between extensions from a file to its charset. The update can be specified using the extension of the file, the name of the file, or the entire file (with its path)
+
+```ocaml
+val update_charset_file : charset_assoc -> filename -> charset -> charset_assoc
+```
+```ocaml
+val update_charset_regexp : 
+  charset_assoc ->
+  Re.Pcre.regexp ->
+  charset ->
+  charset_assoc
+```
+```ocaml
+type mime_type = string
+```
+MIME types; the default value is `"application/octet-stream"`
+
+```ocaml
+val default_mime_type : mime_type
+```
+```ocaml
+type mime_assoc = Ocsigen_http.Charset_mime.mime_assoc
+```
+association between extensions and mime types, with default value
+
+```ocaml
+val default_mime_assoc : unit -> mime_assoc
+```
+Default values, obtained by reading the file specified by `Ocsigen_base.Config_static.get_mimefile`
+
+```ocaml
+val parse_mime_types : filename:string -> mime_assoc
+```
+Parsing of a file containing mime associations, such as /etc/mime-types
+
+```ocaml
+val find_mime : file -> mime_assoc -> string
+```
+```ocaml
+val default_mime : mime_assoc -> mime_type
+```
+```ocaml
+val set_default_mime : mime_assoc -> mime_type -> mime_assoc
+```
+```ocaml
+val update_mime_ext : mime_assoc -> extension -> mime_type -> mime_assoc
+```
+```ocaml
+val update_mime_file : mime_assoc -> filename -> mime_type -> mime_assoc
+```
+```ocaml
+val update_mime_regexp : 
+  mime_assoc ->
+  Re.Pcre.regexp ->
+  mime_type ->
+  mime_assoc
+```
+
+
+---
+
+# Module `Ocsigen_cohttp`
+
+```ocaml
+val section : Logs.src
+```
+```ocaml
+exception Ocsigen_http_error of Ocsigen_cookie_map.t * Cohttp.Code.status
+```
+```ocaml
+exception Ext_http_error of Cohttp.Code.status * string option * Cohttp.Header.t option
+```
+Exception raised by exceptions to describe an HTTP error. It is possible to pass the code of the error, an optional comment, and optionally some headers.
+
+```ocaml
+exception Ocsigen_is_dir of Ocsigen.Request.t -> Uri.t
+```
+compute a redirection if path links to a directory
+
+```ocaml
+val get_number_of_connected : unit -> int
+```
+accessor to get number of client (used by eliom monitoring)
+
+```ocaml
+val shutdown : float option -> unit
+```
+Shutdown main loop of server
+
+```ocaml
+val service : 
+  ?ssl:(string * string * (bool -> string) option) ->
+  address:Ocsigen.Config.socket_type ->
+  port:int ->
+  connector:(Ocsigen.Request.t -> Ocsigen.Response.t Lwt.t) ->
+  unit ->
+  unit Lwt.t
+```
+initialize a main loop of http server
+
+
+---
+
+# Module `Ocsigen_command`
+
+```ocaml
+exception Unknown_command
+```
+```ocaml
+val register_command_function : 
+  ?prefix:string ->
+  (string -> string list -> unit Lwt.t) ->
+  unit
+```
+Use a prefix for all your commands when you want to create extension-specific commands. For example if the prefix is "myextension" and the commande "blah", the actual command to be written by the user is "myextension:blah". Give as parameter the function that will parse the command and do an action. Its first parameter is the full command as a string. The second one is the command without prefix, split by word. It must raise `ocsigen_extensions.Unknown_command` if it does not recognize the command.
+
+
+---
+
+# Module `Ocsigen_config`
+
+```ocaml
+type ssl_info = Ocsigen.Config.ssl_info = {
+  ssl_certificate : string option;
+  ssl_privatekey : string option;
+  ssl_ciphers : string option;
+  ssl_dhfile : string option;
+  ssl_curve : string option;
+}
+```
+```ocaml
+module Socket_type = Ocsigen.Config.Socket_type
+```
+```ocaml
+type socket_type = Socket_type.t
+```
+```ocaml
+exception Config_file_error of string
+```
+```ocaml
+val set_global_log_level : Logs.level option -> unit
+```
+Set the log level for all Ocsigen log sources. Using this function is preferable to using `Logs.set_level` directly to avoid the excessive logging from Cohttp and let you use a different log level for your application.
+
+```ocaml
+val server_name : string
+```
+```ocaml
+val full_server_name : string
+```
+```ocaml
+val version_number : string
+```
+```ocaml
+val is_native : bool
+```
+```ocaml
+val native_ext : string
+```
+```ocaml
+val builtin_packages : Ocsigen_base.Lib.String.Set.t
+```
+```ocaml
+val set_logdir : string -> unit
+```
+```ocaml
+val set_syslog_facility : Syslog_message.facility option -> unit
+```
+```ocaml
+val set_configfile : string -> unit
+```
+```ocaml
+val set_pidfile : string -> unit
+```
+```ocaml
+val set_mimefile : string -> unit
+```
+```ocaml
+val set_verbose : unit -> unit
+```
+```ocaml
+val set_silent : unit -> unit
+```
+```ocaml
+val set_daemon : unit -> unit
+```
+```ocaml
+val set_veryverbose : unit -> unit
+```
+```ocaml
+val set_debug : unit -> unit
+```
+```ocaml
+val set_minthreads : int -> unit
+```
+```ocaml
+val set_maxthreads : int -> unit
+```
+```ocaml
+val set_max_number_of_connections : int -> unit
+```
+```ocaml
+val set_client_timeout : int -> unit
+```
+```ocaml
+val set_server_timeout : int -> unit
+```
+```ocaml
+val set_filebuffersize : int -> unit
+```
+```ocaml
+val set_maxrequestbodysize : int64 option -> unit
+```
+```ocaml
+val set_maxrequestbodysizeinmemory : int -> unit
+```
+```ocaml
+val set_default_charset : string option -> unit
+```
+```ocaml
+val set_datadir : string -> unit
+```
+```ocaml
+val set_bindir : string -> unit
+```
+```ocaml
+val set_extdir : string -> unit
+```
+```ocaml
+val set_command_pipe : string -> unit
+```
+```ocaml
+val set_debugmode : bool -> unit
+```
+```ocaml
+val set_disablepartialrequests : bool -> unit
+```
+```ocaml
+val set_usedefaulthostname : bool -> unit
+```
+```ocaml
+val set_respect_pipeline : unit -> unit
+```
+```ocaml
+val set_maxretries : int -> unit
+```
+```ocaml
+val set_shutdown_timeout : float option -> unit
+```
+```ocaml
+val set_ssl_info : ssl_info option -> unit
+```
+```ocaml
+val set_ports : (socket_type * int) list -> unit
+```
+```ocaml
+val set_ssl_ports : (socket_type * int) list -> unit
+```
+```ocaml
+val get_logdir : unit -> string
+```
+```ocaml
+val get_syslog_facility : unit -> Syslog_message.facility option
+```
+```ocaml
+val get_config_file : unit -> string
+```
+```ocaml
+val get_pidfile : unit -> string option
+```
+```ocaml
+val get_mimefile : unit -> string
+```
+```ocaml
+val get_verbose : unit -> bool
+```
+```ocaml
+val get_silent : unit -> bool
+```
+```ocaml
+val get_daemon : unit -> bool
+```
+```ocaml
+val get_veryverbose : unit -> bool
+```
+```ocaml
+val get_debug : unit -> bool
+```
+```ocaml
+val get_minthreads : unit -> int
+```
+```ocaml
+val get_maxthreads : unit -> int
+```
+```ocaml
+val get_max_number_of_connections : unit -> int
+```
+```ocaml
+val get_client_timeout : unit -> int
+```
+```ocaml
+val get_server_timeout : unit -> int
+```
+```ocaml
+val has_configuration_file : unit -> bool
+```
+returns true if Ocsigen Server is running with a configuration file,
+
+```ocaml
+val get_filebuffersize : unit -> int
+```
+```ocaml
+val get_maxrequestbodysize : unit -> int64 option
+```
+```ocaml
+val get_maxrequestbodysizeinmemory : unit -> int
+```
+```ocaml
+val get_default_charset : unit -> string option
+```
+```ocaml
+val get_datadir : unit -> string
+```
+```ocaml
+val get_bindir : unit -> string
+```
+```ocaml
+val get_extdir : unit -> string
+```
+```ocaml
+val get_command_pipe : unit -> string
+```
+```ocaml
+val get_debugmode : unit -> bool
+```
+```ocaml
+val get_disablepartialrequests : unit -> bool
+```
+```ocaml
+val get_usedefaulthostname : unit -> bool
+```
+```ocaml
+val get_respect_pipeline : unit -> bool
+```
+```ocaml
+val get_default_port : unit -> int
+```
+```ocaml
+val get_default_sslport : unit -> int
+```
+```ocaml
+val get_maxretries : unit -> int
+```
+```ocaml
+val get_shutdown_timeout : unit -> float option
+```
+```ocaml
+val get_ssl_info : unit -> ssl_info option
+```
+```ocaml
+val get_ports : unit -> (socket_type * int) list
+```
+```ocaml
+val get_ssl_ports : unit -> (socket_type * int) list
+```
+```ocaml
+val display_version : unit -> 'a
+```
+
+
+---
+
+# Module `Ocsigen_config_static`
+
+```ocaml
+val version_number : string
+```
+```ocaml
+val config_file : string Stdlib.ref
+```
+```ocaml
+val is_native : bool
+```
+```ocaml
+val logdir : string option Stdlib.ref
+```
+```ocaml
+val mimefile : string Stdlib.ref
+```
+```ocaml
+val datadir : string Stdlib.ref
+```
+```ocaml
+val bindir : string Stdlib.ref
+```
+```ocaml
+val extdir : string Stdlib.ref
+```
+```ocaml
+val command_pipe : string Stdlib.ref
+```
+```ocaml
+val builtin_packages : Ocsigen_base.Lib.String.Set.t
+```
+
+
+---
+
+# Module `Ocsigen_extensions`
+
+```ocaml
+val section : Logs.src
+```
+```ocaml
+exception Unknown_command
+```
+```ocaml
+val register_command_function : 
+  ?prefix:string ->
+  (string -> string list -> unit Lwt.t) ->
+  unit
+```
+Use a prefix for all your commands when you want to create extension-specific commands. For example if the prefix is "myextension" and the commande "blah", the actual command to be written by the user is "myextension:blah". Give as parameter the function that will parse the command and do an action. Its first parameter is the full command as a string. The second one is the command without prefix, split by word. It must raise `ocsigen_extensions.Unknown_command` if it does not recognize the command.
+
+```ocaml
+exception Ocsigen_http_error of Ocsigen_cookie_map.t * Cohttp.Code.status
+```
+```ocaml
+exception Bad_config_tag_for_extension of string
+```
+Xml tag not recognized by an extension (usually not a real error)
+
+```ocaml
+exception Error_in_config_file of string
+```
+Error in a \<site\> tag inside the main ocsigen.conf file
+
+```ocaml
+exception Error_in_user_config_file of string
+```
+Option incorrect in a userconf file
+
+```ocaml
+type file_info = Ocsigen.Multipart.file_info = {
+  tmp_filename : string;
+  filesize : int64;
+  raw_original_filename : string;
+  file_content_type : ((string * string) * (string * string) list) option;
+}
+```
+```ocaml
+val badconfig : ('a, unit, string, 'b) Stdlib.format4 -> 'a
+```
+Convenient function for raising Error\_in\_config\_file exceptions with a sprintf-formatted argument.
+
+```ocaml
+type virtual_hosts = (string * Re.Pcre.regexp * int option) list
+```
+Type of the result of parsing the field `hostfiler` in the configuration file. Inside the list, the first argument is the host itself (which is a glob-like pattern that can contains `*`), a regexp parsing this pattern, and optionally a port.
+
+```ocaml
+val hash_virtual_hosts : virtual_hosts -> int
+```
+```ocaml
+val equal_virtual_hosts : virtual_hosts -> virtual_hosts -> bool
+```
+```ocaml
+val host_match : 
+  virtual_hosts:virtual_hosts ->
+  host:string option ->
+  port:int ->
+  bool
+```
+```ocaml
+type do_not_serve = Ocsigen.Extensions.do_not_serve = {
+  do_not_serve_regexps : string list;
+  do_not_serve_files : string list;
+  do_not_serve_extensions : string list;
+}
+```
+Configuration to hide/forbid local files
+
+```ocaml
+val serve_everything : do_not_serve
+```
+```ocaml
+exception IncorrectRegexpes of do_not_serve
+```
+```ocaml
+val do_not_serve_to_regexp : do_not_serve -> Re.Pcre.regexp
+```
+Compile a do\_not\_serve structure into a regexp. Raises `IncorrectRegexpes` if the compilation fails. The result is memoized for subsequent calls with the same argument
+
+```ocaml
+val join_do_not_serve : do_not_serve -> do_not_serve -> do_not_serve
+```
+```ocaml
+type config_info = Ocsigen.Extensions.config_info = {
+  default_hostname : string;
+  default_httpport : int;
+  default_httpsport : int;
+  default_protocol_is_https : bool;
+  mime_assoc : Ocsigen_http.Charset_mime.mime_assoc;
+  charset_assoc : Ocsigen_http.Charset_mime.charset_assoc;
+  default_directory_index : string list; (* Default name to use as index file when a directory is requested. Use None if no index should be tried. The various indexes are tried in the given order. If no index is specified, or the index does not exists, the content of the directory might be listed, according to list_directory_content *)
+  list_directory_content : bool; (* Should the list of files in a directory be displayed if there is no index in this directory ? *)
+  follow_symlinks : [ `No | `Owner_match | `Always ]; (* Should symlinks be followed when accessing a local file? *)
+  do_not_serve_404 : do_not_serve;
+  do_not_serve_403 : do_not_serve;
+  uploaddir : string option;
+  maxuploadfilesize : int64 option;
+}
+```
+Configuration options, passed to (and modified by) extensions
+
+```ocaml
+val default_config_info : unit -> config_info
+```
+```ocaml
+type request = Ocsigen.Extensions.request = {
+  request_info : Ocsigen.Request.t;
+  request_config : config_info;
+}
+```
+```ocaml
+exception Ocsigen_is_dir of Ocsigen.Request.t -> Uri.t
+```
+```ocaml
+type answer = Ocsigen.Extensions.answer = 
+  | Ext_do_nothing (* I don't want to do anything *)
+  | Ext_found of unit -> Ocsigen.Response.t Lwt.t (* "OK stop! I will take the page. You can start the following request of the same pipelined connection. Here is the function to generate the page". The extension must return Ext_found as soon as possible when it is sure it is safe to start next request. Usually immediately. But in some case, for example proxies, you don't want the request of one connection to be handled in different order. (for example revproxy.ml starts its requests to another server before returning Ext_found, to ensure that all requests are done in same order). *)
+  | Ext_found_stop of unit -> Ocsigen.Response.t Lwt.t (* Found but do not try next extensions *)
+  | Ext_next of Cohttp.Code.status (* Page not found. Try next extension. The status is usually `Not_found, but may be for example `Forbidden (403) if you want to try another extension afterwards. Same as Ext_continue_with but does not change the request. *)
+  | Ext_stop_site of Ocsigen_cookie_map.t * Cohttp.Code.status (* Error. Do not try next extension, but try next site. *)
+  | Ext_stop_host of Ocsigen_cookie_map.t * Cohttp.Code.status (* Error. Do not try next extension, do not try next site, but try next host. *)
+  | Ext_stop_all of Ocsigen_cookie_map.t * Cohttp.Code.status (* Error. Do not try next extension, do not try next site, do not try next host. *)
+  | Ext_continue_with of request * Ocsigen_cookie_map.t * Cohttp.Code.status (* Used to modify the request before giving it to next extension. The extension returns the request (possibly modified) and a set of cookies if it wants to set or cookies (Ocsigen_cookie_map.empty for no cookies). You must add these cookies yourself in request if you want them to be seen by subsequent extensions, for example using Ocsigen_http_frame.compute_new_ri_cookies. The status is usually equal to the one received from preceding extension (but you may want to modify it). *)
+  | Ext_retry_with of request * Ocsigen_cookie_map.t (* Used to retry all the extensions with a new request. The extension returns the request (possibly modified) and a set of cookies if it wants to set or cookies (Ocsigen_cookie_map.empty for no cookies). You must add these cookies yourself in request if you want them to be seen by subsequent extensions, for example using Ocsigen_http_frame.compute_new_ri_cookies. *)
+  | Ext_sub_result of extension_composite (* Used if your extension want to define option that may contain other options from other extensions. In that case, while parsing the configuration file, call the parsing function (of type parse_fun), that will return something of type extension_composite. *)
+  | Ext_found_continue_with of unit -> (Ocsigen.Response.t * request) Lwt.t (* Same as Ext_found but may modify the request. *)
+  | Ext_found_continue_with' of Ocsigen.Response.t * request (* Same as Ext_found_continue_with but does not allow to delay the computation of the page. You should probably not use it, but for output filters. *)
+```
+```ocaml
+and request_state = Ocsigen.Extensions.request_state = 
+  | Req_not_found of Cohttp.Code.status * request
+  | Req_found of request * Ocsigen.Response.t
+```
+```ocaml
+and extension_composite =
+  Ocsigen_cookie_map.t ->
+  request_state ->
+  (answer * Ocsigen_cookie_map.t) Lwt.t
+```
+```ocaml
+type extension = request_state -> answer Lwt.t
+```
+For each \<site\> tag in the configuration file, you can set the extensions you want. Each extension is implemented as a function, taking the charset found in configuration file, the current state of the request, and returning an answer. If no page has been generated so far (`Req_not_found`), it receive the error code given by the previous extension (default 404\), and the request information. If a page has been generated by previous extensions (case `Req_found`), the extension may want to modify the result (filters).
+
+```ocaml
+type parse_fun = Xml.xml list -> extension_composite
+```
+```ocaml
+type parse_host = Ocsigen.Extensions.parse_host
+```
+Type of the functions parsing the content of a \<host\> tag
+
+```ocaml
+type userconf_info = Ocsigen.Extensions.userconf_info = {
+  localfiles_root : string;
+}
+```
+Information received by extensions accepting userconf files.
+
+The parameter `localfiles_root` is an absolute path to the directory that the user is allowed to serve. This is used by staticmod, to disallow the user from allowing access to outside of this directory
+
+```ocaml
+type parse_config =
+  userconf_info option ->
+  virtual_hosts ->
+  config_info ->
+  parse_config_aux
+```
+`parse_config` is the type of the functions parsing a \<site\> tag (and returning an extension). Those are functions taking
+
+- the name of the virtual \<host\>
+that will be called for each \<host\>, and that will generate a function taking:
+
+- the path attribute of a \<site\> tag
+that will be called for each \<site\>, and that will generate a function taking:
+
+- an item of the config file
+that will be called on each tag inside \<site\> and:
+
+- raise `Bad_config_tag_for_extension` if it does not recognize that tag
+- return something of type `extension` (filter or page generator)
+`parse_config_user` is the type of functions parsing a site tag inside an userconf file. They take one more parameter, of type userconf\_info
+
+```ocaml
+and parse_config_aux =
+  Ocsigen_base.Lib.Url.path ->
+  parse_host ->
+  parse_fun ->
+  Xml.xml ->
+  extension
+```
+```ocaml
+val register : 
+  name:string ->
+  ?fun_site:parse_config ->
+  ?end_init:(unit -> unit) ->
+  ?init_fun:(Xml.xml list -> unit) ->
+  ?exn_handler:(exn -> string) ->
+  ?respect_pipeline:bool ->
+  unit ->
+  unit
+```
+For each extension generating pages, we register its name and six functions:
+
+- a function `fun_site` of type `parse_config`. This function will be responsible for handling the options of the configuration files that are recognized by the extension, and potentially generating a page.
+- a function `end_init` that will be called at the end of the initialisation phase of each site
+- a function `init_fun` that will be called just before registering the extension, taking as parameter the configuration options between `<extension>` and `</extension>`. This allows to give configuration options to extensions. If no function is supplied, the extension is supposed to accept no option (and loading will fail if an option is supplied) See [`Configuration.process_elements`](./../ocsigenserver/Ocsigen-Extensions-Configuration.md#val-process_elements) for the easy construction of such a function.
+- a function `exn_handler` that will create an error message from the exceptions that may be raised during the initialisation phase, and raise again all other exceptions
+Moreover, if the optional parameter `?respect_pipeline` is `true`, the extension will ask the server to respect the order of the pipeline. That means that it will wait to be sure that the previous request from the same connection has been taken by an extension before giving a request to an extension. Use this to write proxies extensions, when you want to be able to pipeline the requests you to another server. It is false by default.
+
+```ocaml
+module Configuration = Ocsigen.Extensions.Configuration
+```
+This modules contains types and constructor for the description of XML configurations and the accordingly parsing.
+
+```ocaml
+val get_hostname : request -> string
+```
+Returns the hostname to be used for absolute links or redirections. It is either the Host header or the hostname set in the configuration file.
+
+```ocaml
+val get_port : request -> int
+```
+Returns the port to be used for absolute links or redirections. It is either:
+
+- the port the server is listening at
+- or the port in the Host header
+- or the default port set in the configuration file.
+```ocaml
+val new_url_of_directory_request : request -> Ocsigen.Request.t -> Uri.t
+```
+new\_url\_of\_directory\_request create a redirection and generating a new url for the client (depending on the server configuration and request)
+
+parameter request configuration of the server
+parameter ri request
+
+#### User directories
+
+Exception raised when an non-existing user is found
+
+```ocaml
+exception NoSuchUser
+```
+```ocaml
+type ud_string = Ocsigen.Extensions.ud_string
+```
+The type for string that may contain a \$u(...)
+
+```ocaml
+val parse_user_dir : string -> ud_string
+```
+```ocaml
+val replace_user_dir : Re.Pcre.regexp -> ud_string -> string -> string
+```
+raises `Not_found` is the directory does not exist
+
+```ocaml
+exception Not_concerned
+```
+Regular expressions for redirections
+
+```ocaml
+val find_redirection : 
+  Re.Pcre.regexp ->
+  bool ->
+  string ->
+  Ocsigen.Request.t ->
+  string
+```
+
+
+---
+
+# Module `Ocsigen_header`
+
+```ocaml
+type t = Cohttp.Header.t
+```
+```ocaml
+val of_option : t option -> t
+```
+```ocaml
+module Name = Ocsigen_http.Header.Name
+```
+```ocaml
+module Mime_type = Ocsigen_http.Header.Mime_type
+```
+```ocaml
+module Accept = Ocsigen_http.Header.Accept
+```
+```ocaml
+module Accept_encoding = Ocsigen_http.Header.Accept_encoding
+```
+```ocaml
+module Accept_language = Ocsigen_http.Header.Accept_language
+```
+```ocaml
+module Content_type = Ocsigen_http.Header.Content_type
+```
+
+
+---
+
+# Module `Ocsigen_lib`
+
+```ocaml
+exception Ocsigen_Internal_Error of string
+```
+```ocaml
+exception Input_is_too_large
+```
+```ocaml
+exception Ocsigen_Bad_Request
+```
+```ocaml
+exception Ocsigen_Request_too_long
+```
+```ocaml
+val (>>=) : 'a Lwt.t -> ('a -> 'b Lwt.t) -> 'b Lwt.t
+```
+```ocaml
+val (>|=) : 'a Lwt.t -> ('a -> 'b) -> 'b Lwt.t
+```
+```ocaml
+val (<&>) : unit Lwt.t -> unit Lwt.t -> unit Lwt.t
+```
+```ocaml
+val (<?>) : 'a Lwt.t -> 'a Lwt.t -> 'a Lwt.t
+```
+```ocaml
+val (=<<) : ('a -> 'b Lwt.t) -> 'a Lwt.t -> 'b Lwt.t
+```
+```ocaml
+val (=|<) : ('a -> 'b) -> 'a Lwt.t -> 'b Lwt.t
+```
+```ocaml
+module Let_syntax = Ocsigen_base.Lib.Let_syntax
+```
+```ocaml
+val (!!) : 'a Stdlib.Lazy.t -> 'a
+```
+```ocaml
+val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
+```
+```ocaml
+val curry : (('a * 'b) -> 'c) -> 'a -> 'b -> 'c
+```
+```ocaml
+val uncurry : ('a -> 'b -> 'c) -> ('a * 'b) -> 'c
+```
+```ocaml
+module Tuple3 = Ocsigen_base.Lib.Tuple3
+```
+```ocaml
+type poly = Ocsigen_lib_base.poly
+```
+```ocaml
+val to_poly : 'a -> poly
+```
+```ocaml
+val from_poly : poly -> 'a
+```
+```ocaml
+type yesnomaybe = Ocsigen_lib_base.yesnomaybe = 
+  | Yes
+  | No
+  | Maybe
+```
+```ocaml
+val advert : string
+```
+```ocaml
+module List = Ocsigen_base.Lib.List
+```
+Improvement of module List
+
+```ocaml
+module Clist = Ocsigen_base.Lib.Clist
+```
+Circular lists
+
+```ocaml
+module Int = Ocsigen_base.Lib.Int
+```
+```ocaml
+module String_base = Ocsigen_base.Lib.String_base
+```
+Improvement of module String
+
+```ocaml
+module Url_base = Ocsigen_base.Lib.Url_base
+```
+```ocaml
+val debug : string -> unit
+```
+```ocaml
+val make_cryptographic_safe_string : unit -> string
+```
+Generate an unique and cryptographically safe random string. It is impossible to guess for other people and will never return twice the same value (with very good probabilities).
+
+```ocaml
+module String = Ocsigen_base.Lib.String
+```
+```ocaml
+module Ip_address = Ocsigen_base.Lib.Ip_address
+```
+```ocaml
+module Filename = Ocsigen_base.Lib.Filename
+```
+```ocaml
+module Url = Ocsigen_base.Lib.Url
+```
+
+
+---
+
+# Module `Ocsigen_loader`
 
 Notes about Findlib usage:
 
@@ -5573,7 +7747,7 @@ exception NotReadableDirectory
 The file is a directory which we should not display
 
 ```ocaml
-type resolved = 
+type resolved = Ocsigen.Local_files.resolved = 
   | RFile of string
   | RDir of string
 ```
@@ -5582,7 +7756,7 @@ Local file corresponding to a request. The string argument represents the real f
 ```ocaml
 val resolve : 
   ?no_check_for:string ->
-  request:Ocsigen_extensions.request ->
+  request:Ocsigen.Extensions.request ->
   filename:string ->
   unit ->
   resolved
@@ -5600,8 +7774,6 @@ Finds `filename` in the filesystem, with a possible redirection if it is a direc
 ---
 
 # Module `Ocsigen_messages`
-
-Writing messages in the logs
 
 ```ocaml
 val access_sect : Logs.src
@@ -5651,14 +7823,14 @@ val scan_multipart_body_from_stream :
   create:((string * string) list -> 'a) ->
   add:('a -> string -> unit Lwt.t) ->
   stop:(int64 -> 'a -> 'b Lwt.t) ->
-  string Ocsigen_stream.stream ->
+  string Ocsigen_base.Ocsigen_stream.stream ->
   unit Lwt.t
 ```
 ```ocaml
 type content_type = (string * string) * (string * string) list
 ```
 ```ocaml
-type file_info = {
+type file_info = Ocsigen.Multipart.file_info = {
   tmp_filename : string;
   filesize : int64;
   raw_original_filename : string;
@@ -5683,12 +7855,10 @@ val parse_content_type : string -> content_type option
 
 # Module `Ocsigen_parseconfig`
 
-Config file parsing. See also module `Ocsigen_extensions.​Configuration`
-
 ```ocaml
 val parse_config : ?file:string -> unit -> Xml.xml list list
 ```
-Returns the config file. Use this if you want to read a config file from your own executable. See [`Ocsigen_server.exec`](./Ocsigen_server.md#val-exec).
+Returns the config file. Use this if you want to read a config file from your own executable. See `Server.exec`.
 
 
 ---
@@ -5696,13 +7866,13 @@ Returns the config file. Use this if you want to read a config file from your ow
 # Module `Ocsigen_request`
 
 ```ocaml
-type t
+type t = Ocsigen.Request.t
 ```
 ```ocaml
 type content_type = (string * string) * (string * string) list
 ```
 ```ocaml
-type file_info = Ocsigen_multipart.file_info = {
+type file_info = Ocsigen.Multipart.file_info = {
   tmp_filename : string;
   filesize : int64;
   raw_original_filename : string;
@@ -5729,7 +7899,7 @@ val make :
   ?original_full_path:string ->
   ?request_cache:Polytables.t ->
   ?cookies_override:string Ocsigen_cookie_map.Map_inner.t ->
-  address:Ocsigen_config.Socket_type.t ->
+  address:Ocsigen.Config.Socket_type.t ->
   port:int ->
   ssl:bool ->
   filenames:string list Stdlib.ref ->
@@ -5764,7 +7934,7 @@ val uri : t -> Uri.t
 val body : t -> Cohttp_lwt.Body.t
 ```
 ```ocaml
-val address : t -> Ocsigen_config.Socket_type.t
+val address : t -> Ocsigen.Config.Socket_type.t
 ```
 ```ocaml
 val host : t -> string option
@@ -5809,13 +7979,13 @@ val original_full_path : t -> string list
 val original_full_path_string : t -> string
 ```
 ```ocaml
-val header : t -> Ocsigen_header.Name.t -> string option
+val header : t -> Ocsigen_http.Header.Name.t -> string option
 ```
 ```ocaml
-val header_multi : t -> Ocsigen_header.Name.t -> string list
+val header_multi : t -> Ocsigen_http.Header.Name.t -> string list
 ```
 ```ocaml
-val add_header : t -> Ocsigen_header.Name.t -> string -> t
+val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
 ```
 ```ocaml
 val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
@@ -5869,45 +8039,13 @@ val timeofday : t -> float
 
 ---
 
-# Module `Ocsigen_response.Body`
-
-```ocaml
-type t
-```
-```ocaml
-val empty : t
-```
-```ocaml
-val of_string : string -> t
-```
-```ocaml
-val make : 
-  Cohttp.Transfer.encoding ->
-  ((string -> unit Lwt.t) -> unit Lwt.t) ->
-  t
-```
-`make writer` makes a reponse body whose content is generated by `writer write`. `write str` blocks until `str` is fully written.
-
-```ocaml
-val of_cohttp : encoding:Cohttp.Transfer.encoding -> Cohttp_lwt.Body.t -> t
-```
-```ocaml
-val write : t -> (string -> unit Lwt.t) -> unit Lwt.t
-```
-```ocaml
-val transfer_encoding : t -> Cohttp.Transfer.encoding
-```
-
-
----
-
 # Module `Ocsigen_response`
 
 ```ocaml
-type t
+type t = Ocsigen.Response.t
 ```
 ```ocaml
-module Body : sig ... end
+module Body = Ocsigen.Response.Body
 ```
 ```ocaml
 val make : 
@@ -6000,25 +8138,25 @@ val cookies : t -> Ocsigen_cookie_map.t
 val add_cookies : t -> Ocsigen_cookie_map.t -> t
 ```
 ```ocaml
-val header : t -> Ocsigen_header.Name.t -> string option
+val header : t -> Ocsigen_http.Header.Name.t -> string option
 ```
 ```ocaml
-val header_multi : t -> Ocsigen_header.Name.t -> string list
+val header_multi : t -> Ocsigen_http.Header.Name.t -> string list
 ```
 ```ocaml
-val add_header : t -> Ocsigen_header.Name.t -> string -> t
+val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
 ```
 ```ocaml
-val add_header_multi : t -> Ocsigen_header.Name.t -> string list -> t
+val add_header_multi : t -> Ocsigen_http.Header.Name.t -> string list -> t
 ```
 ```ocaml
-val replace_header : t -> Ocsigen_header.Name.t -> string -> t
+val replace_header : t -> Ocsigen_http.Header.Name.t -> string -> t
 ```
 ```ocaml
-val replace_headers : t -> (Ocsigen_header.Name.t * string) list -> t
+val replace_headers : t -> (Ocsigen_http.Header.Name.t * string) list -> t
 ```
 ```ocaml
-val remove_header : t -> Ocsigen_header.Name.t -> t
+val remove_header : t -> Ocsigen_http.Header.Name.t -> t
 ```
 
 
@@ -6041,9 +8179,9 @@ Start the server with a configuration file. Never returns.
 
 ```ocaml
 val start : 
-  ?ports:(Ocsigen_config.Socket_type.t * int) list ->
-  ?ssl_ports:(Ocsigen_config.Socket_type.t * int) list ->
-  ?ssl_info:Ocsigen_config.ssl_info option ->
+  ?ports:(Ocsigen.Config.Socket_type.t * int) list ->
+  ?ssl_ports:(Ocsigen.Config.Socket_type.t * int) list ->
+  ?ssl_info:Ocsigen.Config.ssl_info option ->
   ?default_charset:string option ->
   ?logdir:string ->
   ?datadir:string ->
@@ -6075,19 +8213,19 @@ val start :
   ?disablepartialrequests:bool ->
   ?respect_pipeline:unit ->
   ?maxretries:int ->
-  Ocsigen_extensions.host_config list ->
+  Ocsigen.Extensions.host_config list ->
   unit
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-Options behave exactly like their [configuration file](./config.md) counterparts.
+Options behave exactly like their `configuration file` counterparts.
 
 ```ocaml
 type instruction =
-  Ocsigen_extensions.virtual_hosts ->
-  Ocsigen_extensions.config_info ->
-  Ocsigen_lib.Url.path ->
-  Ocsigen_extensions.extension
+  Ocsigen.Extensions.virtual_hosts ->
+  Ocsigen.Extensions.config_info ->
+  Ocsigen_base.Lib.Url.path ->
+  Ocsigen.Extensions.extension
 ```
 The type of instructions to be used inside an host or site. Instructions are defined by extensions (Staticmod, Eliom, etc.)
 
@@ -6099,59 +8237,28 @@ val host :
   ?default_httpport:int ->
   ?default_httpsport:int ->
   ?default_protocol_is_https:bool ->
-  ?mime_assoc:Ocsigen_charset_mime.mime_assoc ->
-  ?charset_assoc:Ocsigen_charset_mime.charset_assoc ->
+  ?mime_assoc:Ocsigen_http.Charset_mime.mime_assoc ->
+  ?charset_assoc:Ocsigen_http.Charset_mime.charset_assoc ->
   ?default_directory_index:string list ->
   ?list_directory_content:bool ->
   ?follow_symlinks:[ `Always | `No | `Owner_match ] ->
-  ?do_not_serve_404:Ocsigen_extensions.do_not_serve ->
-  ?do_not_serve_403:Ocsigen_extensions.do_not_serve ->
+  ?do_not_serve_404:Ocsigen.Extensions.do_not_serve ->
+  ?do_not_serve_403:Ocsigen.Extensions.do_not_serve ->
   ?uploaddir:string option ->
   ?maxuploadfilesize:int64 option ->
   instruction list ->
-  Ocsigen_extensions.host_config
+  Ocsigen.Extensions.host_config
 ```
 You can define one or several virtual hosts corresponding to a given server name or port.
 
 ```ocaml
 val site : 
   ?charset:string ->
-  Ocsigen_lib.Url.path ->
+  Ocsigen_base.Lib.Url.path ->
   instruction list ->
   instruction
 ```
 Each host may contain some sub-sites corresponding to subdirectories in the URL.
-
-
----
-
-# Module `Ocsigen_stream.StringStream`
-
-```ocaml
-type out = string t
-```
-Interface for stream creation (for tyxml)
-
-```ocaml
-type m
-```
-```ocaml
-val make : m -> out
-```
-```ocaml
-val empty : m
-```
-Create an empty stream
-
-```ocaml
-val put : string -> m
-```
-Create a stream with one element
-
-```ocaml
-val concat : m -> m -> m
-```
-Concatenate two stream
 
 
 ---
@@ -6173,17 +8280,17 @@ exception Finalized
 Streams are a means to read data block by block
 
 ```ocaml
-type 'a stream
+type 'a stream = 'a Ocsigen_base.Ocsigen_stream.stream
 ```
 ```ocaml
-type 'a step = private 
+type 'a step = private 'a Ocsigen_base.Ocsigen_stream.step = 
   | Finished of 'a stream option
   | Cont of 'a * 'a stream
 ```
 A stream may be composed by several substreams. Thus a stream is either something that contains the current buffer and a function to retrieve the following data, or a finished stream with possibly another stream following.
 
 ```ocaml
-type 'a t
+type 'a t = 'a Ocsigen_base.Ocsigen_stream.t
 ```
 ```ocaml
 type outcome = [ 
@@ -6294,242 +8401,5 @@ val of_cohttp_body : Cohttp_lwt.Body.t -> string t
 Convert a `Lwt_stream.t` to an [`Ocsigen_stream.t`](./#type-t).
 
 ```ocaml
-module StringStream : sig ... end
+module StringStream = Ocsigen_base.Ocsigen_stream.StringStream
 ```
-
-
----
-
-# Module `Outputfilter`
-
-Outputfilter: Rewrite some part of the output
-
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./outputfilter.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
-
-This module belongs to ocamlfind package `ocsigenserver.ext.outputfilter`.
-
-See an example of use on the API documentation of [`Revproxy`](./Revproxy.md).
-
-```ocaml
-val run : 
-  mode:
-    [ `Rewrite of Ocsigen_header.Name.t * string * string
-    | `Add of Ocsigen_header.Name.t * string * bool option
-    | `Code of Cohttp.Code.status ] ->
-  unit ->
-  Ocsigen_server.instruction
-```
-`run ~mode ()` makes it possible to use this extension without configuration file.
-
-
----
-
-# Module `Polytables`
-
-Polymorphic tables (using Map)
-
-author Vincent Balat
-author Jérôme Vouillon
-Warning: this module is not thread safe\!
-
-```ocaml
-type 'a key
-```
-The type of key for a piece of data of type 'a
-
-```ocaml
-type t
-```
-The type of tables
-
-```ocaml
-val create : unit -> t
-```
-creates a new table
-
-```ocaml
-val make_key : unit -> 'a key
-```
-create a new key for each data you want to save
-
-```ocaml
-val set : table:t -> key:'a key -> value:'a -> unit
-```
-`set t k v` associates `v` to `k` in `t`
-
-```ocaml
-val get : table:t -> key:'a key -> 'a
-```
-`get t k` returns the current binding of `k` in `t` or raises `Not_found`
-
-```ocaml
-val remove : table:t -> key:'a key -> unit
-```
-`remove t k` remove the current binding of `k` in `t` if it exists
-
-```ocaml
-val clear : table:t -> unit
-```
-`clear t` remove all data from t
-
-
----
-
-# Module `Redirectmod`
-
-Redirectmod: HTTP redirections
-
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./redirectmod.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
-
-This module belongs to ocamlfind package `ocsigenserver.ext.redirectmod`.
-
-Example of use:
-
-```ocaml
-let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
-       [ Redirectmod.run
-            ~redirection:
-              (Redirectmod.create_redirection
-                ~temporary:false ~full_url:false ~regexp:"^olddir/(.* )$"
-                "https://blahblahblah.org/newdir/\\1")
-              ()
-       ; Staticmod.run ~dir:"static" ()
-       ]
-     ]
-```
-```ocaml
-val section : Logs.src
-```
-```ocaml
-type redirection
-```
-```ocaml
-val create_redirection : 
-  ?full_url:bool ->
-  ?temporary:bool ->
-  regexp:string ->
-  string ->
-  redirection
-```
-```ocaml
-val run : redirection:redirection -> unit -> Ocsigen_server.instruction
-```
-`run ~redirection ()` makes it possible to use this extension without configuration file.
-
-
----
-
-# Module `Revproxy`
-
-Revproxy: Forward a request to another Web server
-
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./revproxy.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
-
-This module belongs to ocamlfind package `ocsigenserver.ext.revproxy`.
-
-Example of use. Forward all requests to a given directory to the same directory of another server running locally on another port. We are using it in combination with [Outputfilter](./outputfilter.md) to rewrite redirections.
-
-```ocaml
-let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
-       [ Revproxy.run
-           ~redirection:(Revproxy.create_redirection 
-                           ~full_url:false
-                           ~regexp:"(othersite/.* )"
-                           ~keephost:true
-                           "https://localhost:8123/\\1") 
-           ()
-        ; Outputfilter.run 
-            ~mode:(`Rewrite (Ocsigen_header.Name.location,
-                             "http://localhost:8123/(.* )",
-                             "http://my.publicaddress.org/\\1"))
-            ()
- ]]
-```
-```ocaml
-val section : Logs.src
-```
-```ocaml
-type redirection
-```
-```ocaml
-val create_redirection : 
-  ?full_url:bool ->
-  ?pipeline:bool ->
-  ?keephost:bool ->
-  regexp:string ->
-  string ->
-  redirection
-```
-```ocaml
-val run : redirection:redirection -> unit -> Ocsigen_server.instruction
-```
-`run ~redirection ()` makes it possible to use this extension without configuration file.
-
-
----
-
-# Module `Rewritemod`
-
-Rewrite: Change the request
-
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./rewritemod.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
-
-This module belongs to ocamlfind package `ocsigenserver.ext.rewritemod`.
-
-```ocaml
-val section : Logs.src
-```
-```ocaml
-val run : 
-  ?continue:bool ->
-  ?full_rewrite:bool ->
-  regexp:string ->
-  string ->
-  unit ->
-  Ocsigen_server.instruction
-```
-`run ~realm ~auth ()` makes it possible to use this extension without configuration file.
-
-
----
-
-# Module `Staticmod`
-
-Staticmod: serve static files
-
-If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./staticmod.md). If you are using Ocsigen Server as a library, use the interface described here.
-
-This module belongs to ocamlfind package `ocsigenserver.ext.staticmod`.
-
-Example of use:
-
-```ocaml
-let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
-```
-```ocaml
-val run : 
-  ?dir:string ->
-  ?regexp:string ->
-  ?dest:string ->
-  ?code:string ->
-  ?cache:int ->
-  ?root:string ->
-  unit ->
-  Ocsigen_server.instruction
-```
-Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described [here](./staticmod.md).
-
-```ocaml
-val section : Logs.src
-```
-
-
----
-
-# Module `Userconf`

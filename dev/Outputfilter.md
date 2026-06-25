@@ -12,10 +12,10 @@ See an example of use on the API documentation of [`Revproxy`](./Revproxy.md).
 ```ocaml
 val run : 
   mode:
-    [ `Rewrite of Ocsigen_header.Name.t * string * string
-    | `Add of Ocsigen_header.Name.t * string * bool option
+    [ `Rewrite of Ocsigen_http.Header.Name.t * string * string
+    | `Add of Ocsigen_http.Header.Name.t * string * bool option
     | `Code of Cohttp.Code.status ] ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 `run ~mode ()` makes it possible to use this extension without configuration file.

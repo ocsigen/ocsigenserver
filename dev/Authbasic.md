@@ -11,8 +11,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Authbasic.run ~realm:"test"
             ~auth:(fun u p -> Lwt.return (u = "theuser" && p = "thepassword"))
             () 
@@ -40,6 +40,6 @@ A parser takes as argument an XML tree (corresponding to the first son of an \<a
 The \<authbasic\> element must have a *realm* attribute, giving some identifier to the resource which is protected (several resources on the same hostname can share the same realm). This gives a general customization scheme "for free" from the point of view of plugin developers and is totally transparent to the plugin.
 
 ```ocaml
-val run : realm:string -> auth:auth -> unit -> Ocsigen_server.instruction
+val run : realm:string -> auth:auth -> unit -> Ocsigen.Server.instruction
 ```
 `run ~realm ~auth ()` makes it possible to use this extension without configuration file.

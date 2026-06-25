@@ -8,7 +8,7 @@ This page describes how to extend Ocsigen's server. This can be used to create n
 
 You can take as example the files `staticmod.ml` or `accesscontrol.ml` from Ocsigen Server's distribution.
 
-The type of request is `Ocsigen_extensions.request_info` (have a look at it in the interface of module [`Ocsigen_extensions`](./Ocsigen_extensions.md)).
+The type of request is `Ocsigen.Extensions.request_info` (have a look at it in the interface of module [`Ocsigen.Extensions`](./Ocsigen-Extensions.md)).
 
 Each extensions loaded in the configuration file tries to handle the request and returns something of type `Extensions.answer`. If the page is not found by the extension (`Ext_not_found`), the following one will try to handle the request. If the page is found, the answer is `Ext_found r`. An extension can also modify the request before giving it to the next one (answer `Ext_continue_with of Extensions.request_info`), etc.
 
@@ -52,8 +52,8 @@ If you want to add your own commands for the server command pipe, do something l
 
 ```
 let () =
-  Ocsigen_extensions.register_command_function ~prefix:"yourextensionname"
+  Ocsigen.Extensions.register_command_function ~prefix:"yourextensionname"
     (fun s c -> match c with
        | ["mycommand"] -> ...
-       | _ -> raise Ocsigen_extensions.Unknown_command)
+       | _ -> raise Ocsigen.Extensions.Unknown_command)
 ```

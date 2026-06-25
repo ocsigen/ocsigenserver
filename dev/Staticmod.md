@@ -11,8 +11,8 @@ Example of use:
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*" [ Staticmod.run ~dir:"static" () ]]
 ```
 ```ocaml
 val run : 
@@ -23,7 +23,7 @@ val run :
   ?cache:int ->
   ?root:string ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described [here](./staticmod.md).
 

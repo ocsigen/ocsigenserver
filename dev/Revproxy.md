@@ -11,8 +11,8 @@ Example of use. Forward all requests to a given directory to the same directory 
 
 ```ocaml
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Revproxy.run
            ~redirection:(Revproxy.create_redirection 
                            ~full_url:false
@@ -21,7 +21,7 @@ let _ =
                            "https://localhost:8123/\\1") 
            ()
         ; Outputfilter.run 
-            ~mode:(`Rewrite (Ocsigen_header.Name.location,
+            ~mode:(`Rewrite (Ocsigen_http.Header.Name.location,
                              "http://localhost:8123/(.* )",
                              "http://my.publicaddress.org/\\1"))
             ()
@@ -43,6 +43,6 @@ val create_redirection :
   redirection
 ```
 ```ocaml
-val run : redirection:redirection -> unit -> Ocsigen_server.instruction
+val run : redirection:redirection -> unit -> Ocsigen.Server.instruction
 ```
 `run ~redirection ()` makes it possible to use this extension without configuration file.

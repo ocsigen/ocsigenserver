@@ -17,6 +17,6 @@ val run :
   regexp:string ->
   string ->
   unit ->
-  Ocsigen_server.instruction
+  Ocsigen.Server.instruction
 ```
 `run ~realm ~auth ()` makes it possible to use this extension without configuration file.

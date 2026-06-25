@@ -1,7 +1,7 @@
 
 # Module `Ocsigen_lib_base`
 
-This module just contains only extensions of the standard library and very basic Ocsigen values and exceptions. Cf. [`Ocsigen_lib`](./Ocsigen_lib.md) for functionality which depends on specific external libraries.
+This module just contains only extensions of the standard library and very basic Ocsigen values and exceptions. Cf. `Lib` for functionality which depends on specific external libraries.
 
 ```ocaml
 exception Ocsigen_Internal_Error of string

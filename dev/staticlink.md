@@ -6,16 +6,16 @@
 
 Instead of using a configuration file, you can use Ocsigen Server as a library for your OCaml program.
 
-Call function [`Ocsigen_server.start`](./Ocsigen_server.md#val-start) like this to run the server:
+Call function [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) like this to run the server:
 
 ```ocaml
 let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
 ```
-Have a look at the API documentation for [`Ocsigen_server.start`](./Ocsigen_server.md#val-start) to see how to provide configuration options.
+Have a look at the API documentation for [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) to see how to provide configuration options.
 
-As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function [`Ocsigen_server.host`](./Ocsigen_server.md#val-host) to configure them.
+As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function [`Ocsigen.Server.host`](./Ocsigen-Server.md#val-host) to configure them.
 
 Functions like [`Staticmod.run`](./Staticmod.md#val-run) are defined by extensions.
 
@@ -28,15 +28,15 @@ Here is an example of a more complex configuration:
 
 ```ocaml
 let _ =
-  Ocsigen_server.start
+  Ocsigen.Server.start
     ~ports:[`All, 8080]
     ~command_pipe:"local/var/run/mysite-cmd"
     ~logdir:"local/var/log/mysite"
     ~datadir:"local/var/data/mysite"
     ~default_charset:(Some "utf-8")
-    [ Ocsigen_server.host
+    [ Ocsigen.Server.host
         ~regexp:"mydomain.com"
-        [ Ocsigen_server.site ["subsite"]
+        [ Ocsigen.Server.site ["subsite"]
             [ Accesscontrol.(
                 if_
                   (and_
@@ -48,7 +48,7 @@ let _ =
                 ~auth:(fun _u p -> Lwt.return (p = "toto"))
                 ()
             ; Staticmod.run ~dir:"local/var/www/otherdir" () ]
-        ; Ocsigen_server.site ["othersubsite"]
+        ; Ocsigen.Server.site ["othersubsite"]
             [ Revproxy.run
                 ~redirection:
                   (Revproxy.create_redirection ~full_url:false ~regexp:"(.*)"
@@ -168,7 +168,7 @@ This program corresponds to the following configuration file:
 If you want to use the configuration file with a statically linked executable, call
 
 ```
-Ocsigen_server.exec (Ocsigen_parseconfig.parse_config ())
+Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
 ```
 to launch the server's main loop.
 
