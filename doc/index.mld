@@ -1,4 +1,4 @@
-@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter userconf cors extend api
+@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter userconf cors extend migration api
 
 {0 Ocsigen Server}
 
@@ -123,6 +123,12 @@ it defines and the configuration options.
 
 See the {{!page-api}API reference} for all the modules, functions and
 configuration options provided by Ocsigen Server and its extensions.
+
+{1 Upgrading from an earlier version}
+
+Ocsigen Server 8.0 renamed its modules and modernised its base library. See
+{{!page-migration}Migrating to Ocsigen Server 8.0} for the details and for the
+[ocsigenserver-compat] package that eases the transition.
 
 {1 Running on port 80 or 443}
 It is not recommended to run a Web server as root.

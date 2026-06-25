@@ -19,7 +19,8 @@
     (link "Quick start"          ocsigenserver/index.html      index)
     (link "Launching the server" ocsigenserver/launching.html  launching)
     (link "Configuration file"   ocsigenserver/config.html     config)
-    (link "Using as a library"   ocsigenserver/staticlink.html staticlink))
+    (link "Using as a library"   ocsigenserver/staticlink.html staticlink)
+    (link "Migrating to 8.0"     ocsigenserver/migration.html  migration))
   (section "Extensions"
     (link "Staticmod"          ocsigenserver/staticmod.html          staticmod)
     (link "Eliom"              ocsigenserver/eliom.html              eliom)
