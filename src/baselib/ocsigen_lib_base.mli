@@ -29,10 +29,6 @@ exception Ocsigen_Request_too_long
 include module type of Lwt.Infix
 
 val ( !! ) : 'a Lazy.t -> 'a
-
-external id : 'a -> 'a = "%identity"
-[@@deprecated "Use Sys.opaque_identity instead."]
-
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
 val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
@@ -50,17 +46,11 @@ val from_poly : poly -> 'a
 
 type yesnomaybe = Yes | No | Maybe
 
-type ('a, 'b) leftright = ('a, 'b) Either.t
-[@@deprecated "Use Either.t instead."]
-
 val advert : string
 
 (** Improvement of module List *)
 module List : sig
   include module type of List
-
-  val map_filter : ('a -> 'b option) -> 'a list -> 'b list
-  [@@deprecated "Use List.filter_map instead."]
 
   val last : 'a list -> 'a
   val assoc_remove : 'a -> ('a * 'b) list -> 'b * ('a * 'b) list
