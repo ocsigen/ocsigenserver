@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (* Define page redirections in the configuration file *)
 
@@ -34,15 +34,15 @@ let create_redirection ?(full_url = true) ?(temporary = false) ~regexp r_dest =
 
 let attempt_redir {r_regexp; r_dest; r_full; r_temp} _err ri () =
   Logs.info ~src:section (fun fmt -> fmt "Is it a redirection?");
-  let redir = Ocsigen_extensions.find_redirection r_regexp r_full r_dest ri in
+  let redir = Ocsigen.Extensions.find_redirection r_regexp r_full r_dest ri in
   Logs.info ~src:section (fun fmt ->
     fmt "YES! %s redirection to: %s"
       (if r_temp then "Temporary " else "Permanent ")
       redir);
   Lwt.return
-  @@ Ocsigen_extensions.Ext_found
+  @@ Ocsigen.Extensions.Ext_found
        (fun () ->
-         Lwt.return @@ Ocsigen_response.make
+         Lwt.return @@ Ocsigen.Response.make
          @@
          let headers = Cohttp.Header.(init_with "Location" redir)
          and status = if r_temp then `Found else `Moved_permanently in
@@ -50,13 +50,13 @@ let attempt_redir {r_regexp; r_dest; r_full; r_temp} _err ri () =
 
 (** The function that will generate the pages from the request *)
 let gen dir = function
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found (err, {Ocsigen_extensions.request_info; _})
+  | Ocsigen.Extensions.Req_found _ ->
+      Lwt.return Ocsigen.Extensions.Ext_do_nothing
+  | Ocsigen.Extensions.Req_not_found (err, {Ocsigen.Extensions.request_info; _})
     -> (
       Lwt.catch (attempt_redir dir err request_info) @@ function
-      | Ocsigen_extensions.Not_concerned ->
-          Lwt.return (Ocsigen_extensions.Ext_next err)
+      | Ocsigen.Extensions.Not_concerned ->
+          Lwt.return (Ocsigen.Extensions.Ext_next err)
       | e -> Lwt.fail e)
 
 let parse_config config_elem =
@@ -64,7 +64,7 @@ let parse_config config_elem =
   and dest = ref ""
   and mode = ref true
   and temporary = ref false in
-  Ocsigen_extensions.(
+  Ocsigen.Extensions.(
     Configuration.process_element ~in_tag:"host"
       ~other_elements:(fun t _ _ -> raise (Bad_config_tag_for_extension t))
       ~elements:
@@ -85,13 +85,13 @@ let parse_config config_elem =
       config_elem);
   match !regexp with
   | None ->
-      Ocsigen_extensions.badconfig "Missing attribute regexp for <redirect>"
+      Ocsigen.Extensions.badconfig "Missing attribute regexp for <redirect>"
   | Some regexp ->
       gen
         (create_redirection ~full_url:!mode ~regexp ~temporary:!temporary !dest)
 
 let () =
-  Ocsigen_extensions.register ~name:"redirectmod"
+  Ocsigen.Extensions.register ~name:"redirectmod"
     ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
     ()
 

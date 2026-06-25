@@ -1,3 +1,5 @@
+(include_subdirs qualified)
+
 (library
  (name ocsigen_lib_base)
  (public_name ocsigenserver.baselib.base)
@@ -12,13 +14,7 @@
  (wrapped false)
  (flags
   (:standard -no-keep-locs))
- (modules
-  dynlink_wrapper
-  ocsigen_cache
-  ocsigen_config_static
-  ocsigen_lib
-  ocsigen_loader
-  ocsigen_stream)
+ (modules :standard \ ocsigen_lib_base)
  (libraries
   str
   findlib
@@ -34,7 +30,9 @@
    (dynlink -> dynlink_wrapper.natdynlink.ml)
    (_ -> dynlink_wrapper.nonatdynlink.ml))))
 
-(rule
- (with-stdout-to
-  ocsigen_config_static.ml
-  (run ../files/ocsigenserver.conf/gen.exe static.ml)))
+(subdir
+ Ocsigen_base
+ (rule
+  (with-stdout-to
+   config_static.ml
+   (run ../../files/ocsigenserver.conf/gen.exe static.ml))))

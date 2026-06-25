@@ -1,4 +1,4 @@
-@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter userconf cors extend api
+@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter userconf cors extend migration api
 
 {0 Ocsigen Server}
 
@@ -66,16 +66,16 @@ add library [ocsigenserver] and the extensions you need
   ocsigenserver
   ocsigenserver.ext.staticmod))
 v}
-Call function {!Ocsigen_server.start} like this to run the server:
+Call function {!Ocsigen.Server.start} like this to run the server:
 {@ocaml[
 let _ =
-  Ocsigen_server.start
-    [ Ocsigen_server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
+  Ocsigen.Server.start
+    [ Ocsigen.Server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
 ]}
 
 The server runs on port 8080 by default.
 Customise this using optional parameters of function
-{!Ocsigen_server.start}
+{!Ocsigen.Server.start}
 
 {1 Extensions}
 
@@ -124,6 +124,12 @@ it defines and the configuration options.
 See the {{!page-api}API reference} for all the modules, functions and
 configuration options provided by Ocsigen Server and its extensions.
 
+{1 Upgrading from an earlier version}
+
+Ocsigen Server 8.0 renamed its modules and modernised its base library. See
+{{!page-migration}Migrating to Ocsigen Server 8.0} for the details and for the
+[ocsigenserver-compat] package that eases the transition.
+
 {1 Running on port 80 or 443}
 It is not recommended to run a Web server as root.
 If you want to use priviledged ports (port numbers less than 1024), like 80 or
@@ -137,7 +143,7 @@ v}
 If something goes wrong, first have a look in the logs to see if there
 is an error message. The directory of logs is set in the configuration
 file or through option [?logdir] of function
-{!Ocsigen_server.start}
+{!Ocsigen.Server.start}
 ([$OPAM_SWITCH_PREFIX/lib/ocsigenserver/var/log/ocsigenserver] by 
 default).
 

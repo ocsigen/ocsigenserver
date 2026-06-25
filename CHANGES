@@ -1,7 +1,32 @@
+==== 8.0.0~dev ===
+ * Documentation: the manual now lives in the main branch as odoc pages
+   (doc/*.mld), compiled in place by `dune build @doc`, replacing the
+   wikicreole manual of the wikidoc branch. doc/index.mld is the package
+   landing page (manual table of contents + API reference).
+ * Module namespace modernization
+   - Public modules are now grouped under three wrappers:
+     * ocsigenserver (main library): Ocsigen.Server, Ocsigen.Config,
+       Ocsigen.Extensions, Ocsigen.Request, Ocsigen.Response,
+       Ocsigen.Messages, ... (replaces Ocsigen_server,
+       Ocsigen_config, Ocsigen_extensions, Ocsigen_request,
+       Ocsigen_response, Ocsigen_messages, ...)
+     * ocsigenserver.baselib: Ocsigen_base.Lib, Ocsigen_base.Cache,
+       Ocsigen_base.Loader (replaces Ocsigen_lib, Ocsigen_cache,
+       Ocsigen_loader)
+     * ocsigenserver.http: Ocsigen_http.Header,
+       Ocsigen_http.Charset_mime (replaces Ocsigen_header,
+       Ocsigen_charset_mime)
+   - Modules kept with their existing prefix to avoid name clashes:
+     Ocsigen_cohttp (cohttp conflict), Ocsigen_stream (Stdlib.Stream
+     conflict).
+ * New ocsigenserver-compat opam package: provides the legacy
+   Ocsigen_xxx module names as include-aliases of the new wrapped
+   modules.
+
 ==== 7.0.0 (2026-02-18) ===
  * Use Log instead og Lwt_logs (by Jules Aguillon)
  * Test suite (by Jules Aguillon)
- * Code change to prepare an Eio version (by Jules Aguillon) 
+ * Code change to prepare an Eio version (by Jules Aguillon)
  * Restore dirlist feature (by Samuel Hym)
 
 ==== 6.0.0 (2024-08-28) ===

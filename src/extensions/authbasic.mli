@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 (** Authbasic: Basic HTTP authentication *)
 
@@ -35,8 +35,8 @@ This module belongs to ocamlfind package
 (** Example of use:
 {[
 let _ =
-   Ocsigen_server.start
-     [ Ocsigen_server.host ~regexp:".*"
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host ~regexp:".*"
        [ Authbasic.run ~realm:"test"
             ~auth:(fun u p -> Lwt.return (u = "theuser" && p = "thepassword"))
             () 
@@ -82,7 +82,7 @@ val register_basic_authentication_method : (Xml.xml -> auth) -> unit
     from the point of view of plugin developers and is totally
     transparent to the plugin. *)
 
-val run : realm:string -> auth:auth -> unit -> Ocsigen_server.instruction
+val run : realm:string -> auth:auth -> unit -> Ocsigen.Server.instruction
 (** [run ~realm ~auth ()] makes it possible to use this extension without
     configuration file.  *)
 

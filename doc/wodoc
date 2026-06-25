@@ -13,12 +13,14 @@
 (css /css/style.css /css/ocsigen-odoc.css)  ; shared Ocsigen theme (wodoc css default changed)
 (landing ocsigenserver/index.html)
 (manual-root)
+(packages ocsigenserver)  ; exclude ocsigenserver-compat (backward-compat shims) from the doc
 (nav
   (section "Usage"
     (link "Quick start"          ocsigenserver/index.html      index)
     (link "Launching the server" ocsigenserver/launching.html  launching)
     (link "Configuration file"   ocsigenserver/config.html     config)
-    (link "Using as a library"   ocsigenserver/staticlink.html staticlink))
+    (link "Using as a library"   ocsigenserver/staticlink.html staticlink)
+    (link "Migrating to 8.0"     ocsigenserver/migration.html  migration))
   (section "Extensions"
     (link "Staticmod"          ocsigenserver/staticmod.html          staticmod)
     (link "Eliom"              ocsigenserver/eliom.html              eliom)

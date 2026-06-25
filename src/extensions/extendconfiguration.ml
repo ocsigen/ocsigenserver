@@ -16,29 +16,29 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-*)
+ *)
 
 let name = "extendconfiguration"
-let bad_config s = raise (Ocsigen_extensions.Error_in_config_file s)
+let bad_config s = raise (Ocsigen.Extensions.Error_in_config_file s)
 
 let gen configfun = function
-  | Ocsigen_extensions.Req_found _ ->
-      Lwt.return Ocsigen_extensions.Ext_do_nothing
-  | Ocsigen_extensions.Req_not_found
-      (err, ({Ocsigen_extensions.request_config; _} as request)) ->
+  | Ocsigen.Extensions.Req_found _ ->
+      Lwt.return Ocsigen.Extensions.Ext_do_nothing
+  | Ocsigen.Extensions.Req_not_found
+      (err, ({Ocsigen.Extensions.request_config; _} as request)) ->
       Logs.info (fun fmt -> fmt "Updating configuration");
       let request =
         { request with
-          Ocsigen_extensions.request_config = configfun request_config }
+          Ocsigen.Extensions.request_config = configfun request_config }
       in
       Lwt.return
-        (Ocsigen_extensions.Ext_continue_with
+        (Ocsigen.Extensions.Ext_continue_with
            (request, Ocsigen_cookie_map.empty, err))
 
 let gather_do_not_serve_files tag =
   let rec aux (regexps, files, extensions) = function
     | [] ->
-        { Ocsigen_extensions.do_not_serve_regexps = regexps
+        { Ocsigen.Extensions.do_not_serve_regexps = regexps
         ; do_not_serve_files = files
         ; do_not_serve_extensions = extensions }
     | Xml.Element ("regexp", [("regexp", f)], []) :: q ->
@@ -59,19 +59,19 @@ let check_regexp_list =
   try Hashtbl.find hashtbl r
   with Not_found -> (
     try
-      ignore (Ocsigen_lib.Netstring_pcre.regexp r : Re.re);
+      ignore (Ocsigen_base.Lib.Netstring_pcre.regexp r : Re.re);
       Hashtbl.add hashtbl r ()
     with _ -> raise (Bad_regexp r))
 
 let fun_site usermode _ _ _ _ _ = function
   | Xml.Element ("listdirs", [("value", "true")], []) ->
       gen @@ fun config ->
-      {config with Ocsigen_extensions.list_directory_content = true}
+      {config with Ocsigen.Extensions.list_directory_content = true}
   | Xml.Element ("listdirs", [("value", "false")], []) ->
       gen @@ fun config ->
-      {config with Ocsigen_extensions.list_directory_content = false}
+      {config with Ocsigen.Extensions.list_directory_content = false}
   | Xml.Element (("listdirs" as s), _, _) ->
-      Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
+      Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("followsymlinks", [("value", follow_symlinks)], []) ->
       let follow_symlinks =
         match follow_symlinks with
@@ -81,7 +81,7 @@ let fun_site usermode _ _ _ _ _ = function
           | None -> `Always
           | Some _ ->
               raise
-                (Ocsigen_extensions.Error_in_user_config_file
+                (Ocsigen.Extensions.Error_in_user_config_file
                    "Cannot specify value 'always' for option 'followsymlinks' in userconf files")
           )
         | "ownermatch" -> `Owner_match
@@ -90,29 +90,29 @@ let fun_site usermode _ _ _ _ _ = function
               ("Wrong value \"" ^ follow_symlinks
              ^ "\" for option \"followsymlinks\"")
       in
-      gen @@ fun config -> {config with Ocsigen_extensions.follow_symlinks}
+      gen @@ fun config -> {config with Ocsigen.Extensions.follow_symlinks}
   | Xml.Element (("followsymlinks" as s), _, _) ->
-      Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
+      Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("charset", attrs, exts) ->
       let rec aux charset_assoc = function
         | [] -> charset_assoc
         | Xml.Element ("extension", [("ext", extension); ("value", charset)], [])
           :: q ->
             aux
-              (Ocsigen_charset_mime.update_charset_ext charset_assoc extension
-                 charset)
+              (Ocsigen_http.Charset_mime.update_charset_ext charset_assoc
+                 extension charset)
               q
         | Xml.Element ("file", [("file", file); ("value", charset)], []) :: q ->
             aux
-              (Ocsigen_charset_mime.update_charset_file charset_assoc file
+              (Ocsigen_http.Charset_mime.update_charset_file charset_assoc file
                  charset)
               q
         | Xml.Element ("regexp", [("regexp", regexp); ("value", charset)], [])
           :: q -> (
           try
-            let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
+            let r = Ocsigen_base.Lib.Netstring_pcre.regexp regexp in
             aux
-              (Ocsigen_charset_mime.update_charset_regexp charset_assoc r
+              (Ocsigen_http.Charset_mime.update_charset_regexp charset_assoc r
                  charset)
               q
           with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
@@ -123,32 +123,37 @@ let fun_site usermode _ _ _ _ _ = function
           match attrs with
           | [("default", s)] ->
               { config with
-                Ocsigen_extensions.charset_assoc =
-                  Ocsigen_charset_mime.set_default_charset
-                    config.Ocsigen_extensions.charset_assoc s }
+                Ocsigen.Extensions.charset_assoc =
+                  Ocsigen_http.Charset_mime.set_default_charset
+                    config.Ocsigen.Extensions.charset_assoc s }
           | [] -> config
           | _ ->
               bad_config
                 "Only attribute \"default\" is permitted for option \"charset\""
         in
         { config with
-          Ocsigen_extensions.charset_assoc =
-            aux config.Ocsigen_extensions.charset_assoc exts })
+          Ocsigen.Extensions.charset_assoc =
+            aux config.Ocsigen.Extensions.charset_assoc exts })
   | Xml.Element ("contenttype", attrs, exts) ->
       let rec aux mime_assoc = function
         | [] -> mime_assoc
         | Xml.Element ("extension", [("ext", extension); ("value", mime)], [])
           :: q ->
             aux
-              (Ocsigen_charset_mime.update_mime_ext mime_assoc extension mime)
+              (Ocsigen_http.Charset_mime.update_mime_ext mime_assoc extension
+                 mime)
               q
         | Xml.Element ("file", [("file", file); ("value", mime)], []) :: q ->
-            aux (Ocsigen_charset_mime.update_mime_file mime_assoc file mime) q
+            aux
+              (Ocsigen_http.Charset_mime.update_mime_file mime_assoc file mime)
+              q
         | Xml.Element ("regexp", [("regexp", regexp); ("value", mime)], []) :: q
           -> (
           try
-            let r = Ocsigen_lib.Netstring_pcre.regexp regexp in
-            aux (Ocsigen_charset_mime.update_mime_regexp mime_assoc r mime) q
+            let r = Ocsigen_base.Lib.Netstring_pcre.regexp regexp in
+            aux
+              (Ocsigen_http.Charset_mime.update_mime_regexp mime_assoc r mime)
+              q
           with _ -> bad_config "invalid regexp '%s' in <extension regexp ...>")
         | _ :: _ -> bad_config "invalid subtag in option mime"
       in
@@ -157,17 +162,17 @@ let fun_site usermode _ _ _ _ _ = function
           match attrs with
           | [("default", s)] ->
               { config with
-                Ocsigen_extensions.mime_assoc =
-                  Ocsigen_charset_mime.set_default_mime
-                    config.Ocsigen_extensions.mime_assoc s }
+                Ocsigen.Extensions.mime_assoc =
+                  Ocsigen_http.Charset_mime.set_default_mime
+                    config.Ocsigen.Extensions.mime_assoc s }
           | [] -> config
           | _ ->
               bad_config
                 "Only attribute \"default\" is permitted for option \"contenttype\""
         in
         { config with
-          Ocsigen_extensions.mime_assoc =
-            aux config.Ocsigen_extensions.mime_assoc exts })
+          Ocsigen.Extensions.mime_assoc =
+            aux config.Ocsigen.Extensions.mime_assoc exts })
   | Xml.Element ("defaultindex", [], l) ->
       let rec aux indexes = function
         | [] -> List.rev indexes
@@ -177,103 +182,103 @@ let fun_site usermode _ _ _ _ _ = function
               "subtags must be of the form <index>...</index> in option defaultindex"
       in
       gen (fun config ->
-        {config with Ocsigen_extensions.default_directory_index = aux [] l})
+        {config with Ocsigen.Extensions.default_directory_index = aux [] l})
   | Xml.Element (("defaultindex" as s), _, _) ->
-      Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
+      Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("hidefile", [], l) -> (
       let do_not_serve = gather_do_not_serve_files "hidefile" l in
       try
-        check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
+        check_regexp_list do_not_serve.Ocsigen.Extensions.do_not_serve_regexps;
         gen (fun config ->
           { config with
-            Ocsigen_extensions.do_not_serve_404 =
-              Ocsigen_extensions.join_do_not_serve do_not_serve
-                config.Ocsigen_extensions.do_not_serve_404 })
+            Ocsigen.Extensions.do_not_serve_404 =
+              Ocsigen.Extensions.join_do_not_serve do_not_serve
+                config.Ocsigen.Extensions.do_not_serve_404 })
       with Bad_regexp r ->
-        Ocsigen_extensions.badconfig "Invalid regexp %s in %s" r "hidefile")
+        Ocsigen.Extensions.badconfig "Invalid regexp %s in %s" r "hidefile")
   | Xml.Element (("hidefile" as s), _, _) ->
-      Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
+      Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("forbidfile", [], l) -> (
       let do_not_serve = gather_do_not_serve_files "forbidfile" l in
       try
-        check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
+        check_regexp_list do_not_serve.Ocsigen.Extensions.do_not_serve_regexps;
         gen (fun config ->
           { config with
-            Ocsigen_extensions.do_not_serve_403 =
-              Ocsigen_extensions.join_do_not_serve do_not_serve
-                config.Ocsigen_extensions.do_not_serve_403 })
+            Ocsigen.Extensions.do_not_serve_403 =
+              Ocsigen.Extensions.join_do_not_serve do_not_serve
+                config.Ocsigen.Extensions.do_not_serve_403 })
       with Bad_regexp r ->
-        Ocsigen_extensions.badconfig "Invalid regexp %s in %s" r "forbidfile")
+        Ocsigen.Extensions.badconfig "Invalid regexp %s in %s" r "forbidfile")
   | Xml.Element (("forbidfile" as s), _, _) ->
-      Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
+      Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element ("uploaddir", [], [Xml.PCData s]) ->
       gen
       @@
       if s = ""
-      then fun config -> {config with Ocsigen_extensions.uploaddir = None}
-      else fun config -> {config with Ocsigen_extensions.uploaddir = Some s}
+      then fun config -> {config with Ocsigen.Extensions.uploaddir = None}
+      else fun config -> {config with Ocsigen.Extensions.uploaddir = Some s}
   | Xml.Element (("uploaddir" as s), _, _) ->
-      Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
+      Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element (("maxuploadfilesize" as tag), [], [Xml.PCData s]) ->
       let s =
-        try Ocsigen_parseconfig.parse_size_tag "maxuploadfilesize" s
-        with Ocsigen_config.Config_file_error _ ->
-          Ocsigen_extensions.badconfig "Bad syntax for tag %s" tag
+        try Ocsigen.Parseconfig.parse_size_tag "maxuploadfilesize" s
+        with Ocsigen.Config.Config_file_error _ ->
+          Ocsigen.Extensions.badconfig "Bad syntax for tag %s" tag
       in
-      gen @@ fun config -> {config with Ocsigen_extensions.maxuploadfilesize = s}
+      gen @@ fun config -> {config with Ocsigen.Extensions.maxuploadfilesize = s}
   | Xml.Element (("maxuploadfilesize" as s), _, _) ->
-      Ocsigen_extensions.badconfig "Bad syntax for tag %s" s
+      Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element (t, _, _) ->
-      raise (Ocsigen_extensions.Bad_config_tag_for_extension t)
+      raise (Ocsigen.Extensions.Bad_config_tag_for_extension t)
   | _ ->
       raise
-        (Ocsigen_extensions.Error_in_config_file
+        (Ocsigen.Extensions.Error_in_config_file
            "Unexpected data in config file")
 
-let () = Ocsigen_extensions.register ~name ~fun_site ()
+let () = Ocsigen.Extensions.register ~name ~fun_site ()
 
 let maxuploadfilesize s _ _ _ =
-  gen @@ fun config -> {config with Ocsigen_extensions.maxuploadfilesize = s}
+  gen @@ fun config -> {config with Ocsigen.Extensions.maxuploadfilesize = s}
 
 let uploaddir d _ _ _ =
-  gen @@ fun config -> {config with Ocsigen_extensions.uploaddir = d}
+  gen @@ fun config -> {config with Ocsigen.Extensions.uploaddir = d}
 
 let followsymlinks v _ _ _ =
-  gen @@ fun config -> {config with Ocsigen_extensions.follow_symlinks = v}
+  gen @@ fun config -> {config with Ocsigen.Extensions.follow_symlinks = v}
 
 let listdirs v _ _ _ =
   gen @@ fun config ->
-  {config with Ocsigen_extensions.list_directory_content = v}
+  {config with Ocsigen.Extensions.list_directory_content = v}
 
 let forbidfile ?(files = []) ?(extensions = []) ?(regexps = []) () _ _ _ =
   let do_not_serve =
-    { Ocsigen_extensions.do_not_serve_regexps = regexps
+    { Ocsigen.Extensions.do_not_serve_regexps = regexps
     ; do_not_serve_files = files
     ; do_not_serve_extensions = extensions }
   in
-  check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
+  check_regexp_list do_not_serve.Ocsigen.Extensions.do_not_serve_regexps;
   gen @@ fun config ->
   { config with
-    Ocsigen_extensions.do_not_serve_403 =
-      Ocsigen_extensions.join_do_not_serve do_not_serve
-        config.Ocsigen_extensions.do_not_serve_403 }
+    Ocsigen.Extensions.do_not_serve_403 =
+      Ocsigen.Extensions.join_do_not_serve do_not_serve
+        config.Ocsigen.Extensions.do_not_serve_403 }
 
 let hidefile ?(files = []) ?(extensions = []) ?(regexps = []) () _ _ _ =
   let do_not_serve =
-    { Ocsigen_extensions.do_not_serve_regexps = regexps
+    { Ocsigen.Extensions.do_not_serve_regexps = regexps
     ; do_not_serve_files = files
     ; do_not_serve_extensions = extensions }
   in
-  check_regexp_list do_not_serve.Ocsigen_extensions.do_not_serve_regexps;
+  check_regexp_list do_not_serve.Ocsigen.Extensions.do_not_serve_regexps;
   gen @@ fun config ->
   { config with
-    Ocsigen_extensions.do_not_serve_404 =
-      Ocsigen_extensions.join_do_not_serve do_not_serve
-        config.Ocsigen_extensions.do_not_serve_404 }
+    Ocsigen.Extensions.do_not_serve_404 =
+      Ocsigen.Extensions.join_do_not_serve do_not_serve
+        config.Ocsigen.Extensions.do_not_serve_404 }
 
 let defaultindex v _ _ _ =
   gen @@ fun config ->
-  {config with Ocsigen_extensions.default_directory_index = v}
+  {config with Ocsigen.Extensions.default_directory_index = v}
 
 let contenttype
       ?default
@@ -286,59 +291,60 @@ let contenttype
       _
   =
   gen @@ fun config ->
-  let mime_assoc = config.Ocsigen_extensions.mime_assoc in
+  let mime_assoc = config.Ocsigen.Extensions.mime_assoc in
   let mime_assoc =
     match default with
     | None -> mime_assoc
-    | Some s -> Ocsigen_charset_mime.set_default_mime mime_assoc s
+    | Some s -> Ocsigen_http.Charset_mime.set_default_mime mime_assoc s
   in
   let mime_assoc =
     List.fold_left
       (fun ma (file, mime) ->
-         Ocsigen_charset_mime.update_mime_file ma file mime)
+         Ocsigen_http.Charset_mime.update_mime_file ma file mime)
       mime_assoc files
   in
   let mime_assoc =
     List.fold_left
-      (fun ma (ext, mime) -> Ocsigen_charset_mime.update_mime_ext ma ext mime)
+      (fun ma (ext, mime) ->
+         Ocsigen_http.Charset_mime.update_mime_ext ma ext mime)
       mime_assoc extensions
   in
   let mime_assoc =
     List.fold_left
       (fun ma (regexp, mime) ->
-         Ocsigen_charset_mime.update_mime_regexp ma
-           (Ocsigen_lib.Netstring_pcre.regexp regexp)
+         Ocsigen_http.Charset_mime.update_mime_regexp ma
+           (Ocsigen_base.Lib.Netstring_pcre.regexp regexp)
            mime)
       mime_assoc regexps
   in
-  {config with Ocsigen_extensions.mime_assoc}
+  {config with Ocsigen.Extensions.mime_assoc}
 
 let charset ?default ?(files = []) ?(extensions = []) ?(regexps = []) () _ _ _ =
   gen @@ fun config ->
-  let charset_assoc = config.Ocsigen_extensions.charset_assoc in
+  let charset_assoc = config.Ocsigen.Extensions.charset_assoc in
   let charset_assoc =
     match default with
     | None -> charset_assoc
-    | Some s -> Ocsigen_charset_mime.set_default_charset charset_assoc s
+    | Some s -> Ocsigen_http.Charset_mime.set_default_charset charset_assoc s
   in
   let charset_assoc =
     List.fold_left
       (fun ma (file, charset) ->
-         Ocsigen_charset_mime.update_charset_file ma file charset)
+         Ocsigen_http.Charset_mime.update_charset_file ma file charset)
       charset_assoc files
   in
   let charset_assoc =
     List.fold_left
       (fun ma (ext, charset) ->
-         Ocsigen_charset_mime.update_charset_ext ma ext charset)
+         Ocsigen_http.Charset_mime.update_charset_ext ma ext charset)
       charset_assoc extensions
   in
   let charset_assoc =
     List.fold_left
       (fun ma (regexp, charset) ->
-         Ocsigen_charset_mime.update_charset_regexp ma
-           (Ocsigen_lib.Netstring_pcre.regexp regexp)
+         Ocsigen_http.Charset_mime.update_charset_regexp ma
+           (Ocsigen_base.Lib.Netstring_pcre.regexp regexp)
            charset)
       charset_assoc regexps
   in
-  {config with Ocsigen_extensions.charset_assoc}
+  {config with Ocsigen.Extensions.charset_assoc}

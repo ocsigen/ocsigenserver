@@ -4,7 +4,7 @@ API reference for Ocsigen Server. See the {{!page-index}manual} to get
 started.
 
 {!modules:
-Ocsigen_server
+Ocsigen.Server
 }
 
 {2 Extensions}
@@ -23,22 +23,34 @@ Userconf
 Cors
 }
 
+{2 Requests and responses}
+
+{!modules:
+Ocsigen.Request
+Ocsigen.Response
+Ocsigen.Multipart
+Ocsigen_cookie_map
+Ocsigen_http.Charset_mime
+}
+
 {2 Persistent data, writing in the logs, configuration file extension, polymorphic tables}
 
 {!modules:
-Ocsigen_lib
-Ocsigen_messages
-Ocsigen_parseconfig
+Ocsigen_base.Lib
+Ocsigen.Messages
+Ocsigen.Parseconfig
 Polytables
-Ocsigen_cache
-Ocsigen_config
+Ocsigen_base.Cache
+Ocsigen.Config
 }
 
 {2 Extending Ocsigen Server}
 
 {!modules:
-Ocsigen_extensions
-Ocsigen_local_files
-Ocsigen_header
-Ocsigen_stream
+Ocsigen.Extensions
+Ocsigen.Local_files
+Ocsigen_http.Header
+Ocsigen_base.Ocsigen_stream
+Ocsigen_base.Loader
+Ocsigen.Command
 }
