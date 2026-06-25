@@ -1,0 +1,1 @@
+include Ocsigen_base.Config_static
