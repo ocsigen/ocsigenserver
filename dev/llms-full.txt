@@ -3805,9 +3805,6 @@ val to_seq : 'a list -> 'a Stdlib.Seq.t
 val of_seq : 'a Stdlib.Seq.t -> 'a list
 ```
 ```ocaml
-val map_filter : ('a -> 'b option) -> 'a list -> 'b list
-```
-```ocaml
 val last : 'a list -> 'a
 ```
 ```ocaml
@@ -3843,40 +3840,10 @@ val is_prefix : 'a list -> 'a list -> bool
 ```ocaml
 val chop : int -> 'a list -> 'a list
 ```
+Equivalent to `List.drop` from OCaml 5\.3.
+
 ```ocaml
 val split_at : int -> 'a list -> 'a list * 'a list
-```
-
-
----
-
-# Module `Ocsigen_lib.Option`
-
-Module Option to compute type `'a option`
-
-```ocaml
-type 'a t = 'a option
-```
-```ocaml
-val map : ('a -> 'b) -> 'a t -> 'b t
-```
-```ocaml
-val get : (unit -> 'a) -> 'a t -> 'a
-```
-```ocaml
-val get' : 'a -> 'a t -> 'a
-```
-```ocaml
-val iter : ('a -> unit) -> 'a t -> unit
-```
-```ocaml
-val return : 'a -> 'a t
-```
-```ocaml
-val bind : 'a t -> ('a -> 'b t) -> 'b t
-```
-```ocaml
-val to_list : 'a t -> 'a list
 ```
 
 
@@ -4633,15 +4600,6 @@ module Let_syntax : sig ... end
 val (!!) : 'a Stdlib.Lazy.t -> 'a
 ```
 ```ocaml
-val (|>) : 'a -> ('a -> 'b) -> 'b
-```
-```ocaml
-val (@@) : ('a -> 'b) -> 'a -> 'b
-```
-```ocaml
-val id : 'a -> 'a
-```
-```ocaml
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 ```
 ```ocaml
@@ -4669,18 +4627,8 @@ type yesnomaybe = Ocsigen_lib_base.yesnomaybe =
   | Maybe
 ```
 ```ocaml
-type ('a, 'b) leftright = ('a, 'b) Ocsigen_lib_base.leftright = 
-  | Left of 'a
-  | Right of 'b
-```
-```ocaml
 val advert : string
 ```
-```ocaml
-module Option : sig ... end
-```
-Module Option to compute type `'a option`
-
 ```ocaml
 module List : sig ... end
 ```
@@ -5044,9 +4992,6 @@ val to_seq : 'a list -> 'a Stdlib.Seq.t
 val of_seq : 'a Stdlib.Seq.t -> 'a list
 ```
 ```ocaml
-val map_filter : ('a -> 'b option) -> 'a list -> 'b list
-```
-```ocaml
 val last : 'a list -> 'a
 ```
 ```ocaml
@@ -5082,40 +5027,10 @@ val is_prefix : 'a list -> 'a list -> bool
 ```ocaml
 val chop : int -> 'a list -> 'a list
 ```
+Equivalent to `List.drop` from OCaml 5\.3.
+
 ```ocaml
 val split_at : int -> 'a list -> 'a list * 'a list
-```
-
-
----
-
-# Module `Ocsigen_lib_base.Option`
-
-Module Option to compute type `'a option`
-
-```ocaml
-type 'a t = 'a option
-```
-```ocaml
-val map : ('a -> 'b) -> 'a t -> 'b t
-```
-```ocaml
-val get : (unit -> 'a) -> 'a t -> 'a
-```
-```ocaml
-val get' : 'a -> 'a t -> 'a
-```
-```ocaml
-val iter : ('a -> unit) -> 'a t -> unit
-```
-```ocaml
-val return : 'a -> 'a t
-```
-```ocaml
-val bind : 'a t -> ('a -> 'b t) -> 'b t
-```
-```ocaml
-val to_list : 'a t -> 'a list
 ```
 
 
@@ -5504,15 +5419,6 @@ module Let_syntax : sig ... end
 val (!!) : 'a Stdlib.Lazy.t -> 'a
 ```
 ```ocaml
-val (|>) : 'a -> ('a -> 'b) -> 'b
-```
-```ocaml
-val (@@) : ('a -> 'b) -> 'a -> 'b
-```
-```ocaml
-val id : 'a -> 'a
-```
-```ocaml
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 ```
 ```ocaml
@@ -5540,18 +5446,8 @@ type yesnomaybe =
   | Maybe
 ```
 ```ocaml
-type ('a, 'b) leftright = 
-  | Left of 'a
-  | Right of 'b
-```
-```ocaml
 val advert : string
 ```
-```ocaml
-module Option : sig ... end
-```
-Module Option to compute type `'a option`
-
 ```ocaml
 module List : sig ... end
 ```

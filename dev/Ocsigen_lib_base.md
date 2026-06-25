@@ -40,15 +40,6 @@ module Let_syntax : sig ... end
 val (!!) : 'a Stdlib.Lazy.t -> 'a
 ```
 ```ocaml
-val (|>) : 'a -> ('a -> 'b) -> 'b
-```
-```ocaml
-val (@@) : ('a -> 'b) -> 'a -> 'b
-```
-```ocaml
-val id : 'a -> 'a
-```
-```ocaml
 val comp : ('a -> 'b) -> ('c -> 'a) -> 'c -> 'b
 ```
 ```ocaml
@@ -76,18 +67,8 @@ type yesnomaybe =
   | Maybe
 ```
 ```ocaml
-type ('a, 'b) leftright = 
-  | Left of 'a
-  | Right of 'b
-```
-```ocaml
 val advert : string
 ```
-```ocaml
-module Option : sig ... end
-```
-Module Option to compute type `'a option`
-
 ```ocaml
 module List : sig ... end
 ```

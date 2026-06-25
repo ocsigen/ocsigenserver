@@ -236,9 +236,6 @@ val to_seq : 'a list -> 'a Stdlib.Seq.t
 val of_seq : 'a Stdlib.Seq.t -> 'a list
 ```
 ```ocaml
-val map_filter : ('a -> 'b option) -> 'a list -> 'b list
-```
-```ocaml
 val last : 'a list -> 'a
 ```
 ```ocaml
@@ -274,6 +271,8 @@ val is_prefix : 'a list -> 'a list -> bool
 ```ocaml
 val chop : int -> 'a list -> 'a list
 ```
+Equivalent to `List.drop` from OCaml 5\.3.
+
 ```ocaml
 val split_at : int -> 'a list -> 'a list * 'a list
 ```
