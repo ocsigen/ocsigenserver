@@ -3,7 +3,8 @@
 (library
  (name ocsigen_lib_base)
  (public_name ocsigenserver.baselib.base)
- (flags (:standard -no-keep-locs))
+ (flags
+  (:standard -no-keep-locs))
  (modules ocsigen_lib_base)
  (libraries lwt))
 
@@ -11,15 +12,27 @@
  (name baselib)
  (public_name ocsigenserver.baselib)
  (wrapped false)
- (flags (:standard -no-keep-locs))
+ (flags
+  (:standard -no-keep-locs))
  (modules :standard \ ocsigen_lib_base)
  (libraries
-  str findlib lwt.unix cryptokit re ocsigen_lib_base cohttp-lwt logs
-  (select dynlink_wrapper.ml from
+  str
+  findlib
+  lwt.unix
+  cryptokit
+  re
+  ocsigen_lib_base
+  cohttp-lwt
+  logs
+  (select
+   dynlink_wrapper.ml
+   from
    (dynlink -> dynlink_wrapper.natdynlink.ml)
    (_ -> dynlink_wrapper.nonatdynlink.ml))))
 
-(subdir Ocsigen_base
+(subdir
+ Ocsigen_base
  (rule
-  (with-stdout-to config_static.ml
+  (with-stdout-to
+   config_static.ml
    (run ../../files/ocsigenserver.conf/gen.exe static.ml))))

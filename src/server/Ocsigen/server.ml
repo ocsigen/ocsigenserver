@@ -41,9 +41,7 @@ let () =
 (* fatal errors messages *)
 let errmsg = function
   | Dynlink_wrapper.Error e ->
-      ( "Fatal - Dynamic linking error: "
-        ^ Dynlink_wrapper.error_message e
-      , 6 )
+      "Fatal - Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
   | Unix.Unix_error _ as e -> "Fatal - " ^ Printexc.to_string e, 9
   | Ssl.Private_key_error msg -> "Fatal - bad password: " ^ msg, 10
   | Config.Config_file_error msg | Extensions.Error_in_config_file msg ->
