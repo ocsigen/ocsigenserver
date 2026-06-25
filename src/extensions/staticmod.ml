@@ -365,13 +365,13 @@ let preprocess s = "^" ^ s ^ "$"
 let run ?dir ?regexp ?dest ?code ?cache ?root () =
   let kind =
     kind dir
-      (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) regexp)
-      (Ocsigen_lib.Option.map (fun x -> Pcre.regexp (preprocess x)) code)
-      (Ocsigen_lib.Option.map
+      (Option.map (fun x -> Pcre.regexp (preprocess x)) regexp)
+      (Option.map (fun x -> Pcre.regexp (preprocess x)) code)
+      (Option.map
          (fun x ->
             Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
          dest)
-      (Ocsigen_lib.Option.map
+      (Option.map
          (fun x ->
             Ocsigen_extensions.parse_user_dir (rewrite_local_path None x))
          root)

@@ -675,13 +675,10 @@ module Configuration = struct
             ?pcdata:spec_pcdata
             ?other_elements:spec_other_elements
     = function
-    | Xml.PCData str ->
-        let spec_pcdata =
-          Ocsigen_lib.Option.get
-            (fun () -> ignore_blank_pcdata ~in_tag)
-            spec_pcdata
-        in
-        spec_pcdata str
+    | Xml.PCData str -> (
+      match spec_pcdata with
+      | Some f -> f str
+      | None -> ignore_blank_pcdata ~in_tag str)
     | Xml.Element (name, attributes, elements) -> (
       try
         let spec = List.assoc name spec_elements in
