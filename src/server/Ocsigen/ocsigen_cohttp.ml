@@ -175,7 +175,24 @@ let shutdown timeout =
   in
   ignore (Lwt.pick [process (); stop] >>= fun () -> exit 0 : unit Lwt.t)
 
+(* Harden the TLS server context used by Conduit/OpenSSL. Conduit already
+   disables SSLv2/SSLv3 on its default server context; we additionally require
+   TLS 1.2 at minimum (TLS 1.0 and 1.1 are deprecated, RFC 8996) and let the
+   server choose the cipher. The <ciphers>, <dhfile> and <curve> entries of the
+   <ssl> configuration, until now parsed but never applied, are honoured. *)
+let harden_tls_context () =
+  let ctx = Conduit_lwt_unix_ssl.Server.default_ctx in
+  Ssl.set_min_protocol_version ctx Ssl.TLSv1_2;
+  Ssl.honor_cipher_order ctx;
+  match Config.get_ssl_info () with
+  | None -> ()
+  | Some {Config.ssl_ciphers; ssl_dhfile; ssl_curve; _} ->
+      Option.iter (Ssl.set_cipher_list ctx) ssl_ciphers;
+      Option.iter (Ssl.init_dh_from_file ctx) ssl_dhfile;
+      Option.iter (Ssl.init_ec_from_named_curve ctx) ssl_curve
+
 let service ?ssl ~address ~port ~connector () =
+  (match ssl with Some _ -> harden_tls_context () | None -> ());
   let tls_own_key =
     match ssl with
     | Some (crt, key, Some password) ->
