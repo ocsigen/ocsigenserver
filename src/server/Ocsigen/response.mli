@@ -60,10 +60,15 @@ val respond_error :
 val respond_file :
    ?headers:Cohttp.Header.t
   -> ?status:Http.Status.t
+  -> ?if_none_match:string
+  -> ?if_modified_since:string
   -> string
   -> t Lwt.t
 (** Respond with the content of a file. The content type is guessed using
-    [Magic_mime]. *)
+    [Magic_mime]. An [ETag] (weak, derived from the file's modification time and
+    size) and a [Last-Modified] header are always added. If the request's
+    [If-None-Match] or [If-Modified-Since] header is passed and matches, the
+    response is [304 Not Modified] with an empty body (RFC 7232). *)
 
 val update :
    ?response:Cohttp.Response.t

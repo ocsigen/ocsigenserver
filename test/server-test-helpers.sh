@@ -39,8 +39,9 @@ run_server ()
 curl_ ()
 {
   path=$1; shift
-  # Remove the 'date' header, which is unreproducible
+  # Remove the headers that are not reproducible: 'date', and the validators
+  # of a static file, which are derived from its modification time.
   curl --unix-socket ./local.sock --user-agent "" -s -i \
     "$@" "http://local-test/$path" | \
-    grep -v "^date: "
+    grep -viE "^(date|etag|last-modified): "
 }

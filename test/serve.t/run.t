@@ -11,11 +11,13 @@ a file here), so no log directory is created.
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
 
-An existing file is served with the correct content type and body. The
-unreproducible "date" header is filtered out.
+An existing file is served with the correct content type and body. The headers
+that are not reproducible (the date, and the validators derived from the file's
+modification time) are filtered out.
 
   $ curl -s -i --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
-  >   --user-agent "" http://127.0.0.1:8061/index.html | grep -v "^date: "
+  >   --user-agent "" http://127.0.0.1:8061/index.html \
+  >   | grep -viE "^(date|etag|last-modified): "
   HTTP/1.1 200 OK
   content-type: text/html
   server: Ocsigen

@@ -60,50 +60,95 @@ let respond_not_found ?uri () =
   in
   respond_string ~status:`Not_found ~body ()
 
-let respond_file ?headers ?(status = `OK) fname =
+(* Weak entity-tag built from the file's modification time and size. *)
+let weak_etag ~mtime ~size = Printf.sprintf "W/\"%x-%x\"" mtime size
+
+(* Does the [If-None-Match] header value match [etag]? Handles ["*"] and a
+   comma-separated list of entity-tags. *)
+let if_none_match_matches if_none_match etag =
+  let if_none_match = String.trim if_none_match in
+  String.equal if_none_match "*"
+  || List.exists
+       (fun t -> String.equal (String.trim t) etag)
+       (String.split_on_char ',' if_none_match)
+
+let respond_file
+      ?headers
+      ?(status = `OK)
+      ?if_none_match
+      ?if_modified_since
+      fname
+  =
   let exception Isnt_a_file in
   (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
   Lwt.catch
     (fun () ->
        (* Check this isn't a directory first *)
-       let* () =
-         let* s = Lwt_unix.stat fname in
-         if Unix.(s.st_kind <> S_REG)
-         then raise Isnt_a_file
-         else Lwt.return_unit
-       in
-       let count = 16384 in
-       let* ic =
-         Lwt_io.open_file ~buffer:(Lwt_bytes.create count) ~mode:Lwt_io.input
-           fname
-       in
-       let* len = Lwt_io.length ic in
-       let encoding = Http.Transfer.Fixed len in
-       let stream write =
-         let rec cat_loop () =
-           Lwt.bind (Lwt_io.read ~count ic) (function
-             | "" -> Lwt.return_unit
-             | buf -> Lwt.bind (write buf) cat_loop)
+       let* s = Lwt_unix.stat fname in
+       if Unix.(s.st_kind <> S_REG)
+       then raise Isnt_a_file
+       else
+         let last_modified = Ocsigen_base.Lib.Date.to_string s.Unix.st_mtime in
+         let etag =
+           weak_etag ~mtime:(int_of_float s.Unix.st_mtime) ~size:s.Unix.st_size
          in
-         let* () =
-           Lwt.catch cat_loop (fun exn ->
-             Logs.warn (fun m ->
-               m "Error resolving file %s (%s)" fname (Printexc.to_string exn));
-             Lwt.return_unit)
+         (* Validators sent with both [200] and [304] responses (RFC 7232). *)
+         let add_validators h =
+           Http.Header.add
+             (Http.Header.add h "etag" etag)
+             "last-modified" last_modified
          in
-         Lwt.catch
-           (fun () -> Lwt_io.close ic)
-           (fun e ->
-              Logs.warn (fun f ->
-                f "Closing channel failed: %s" (Printexc.to_string e));
-              Lwt.return_unit)
-       in
-       let body = Body.make encoding stream in
-       let mime_type = Magic_mime.lookup fname in
-       let headers =
-         Http.Header.add_opt_unless_exists headers "content-type" mime_type
-       in
-       Lwt.return (respond ~headers ~status ~body ()))
+         let headers = Option.value headers ~default:(Http.Header.init ()) in
+         (* [If-None-Match] takes precedence over [If-Modified-Since]
+            (RFC 7232). For the latter we only return [304] on an exact match of
+            our [Last-Modified] value, so we never answer [304] wrongly. *)
+         let not_modified =
+           match if_none_match with
+           | Some inm -> if_none_match_matches inm etag
+           | None -> (
+             match if_modified_since with
+             | Some ims -> String.equal ims last_modified
+             | None -> false)
+         in
+         if not_modified
+         then
+           Lwt.return
+             (respond ~headers:(add_validators headers) ~status:`Not_modified ())
+         else
+           let count = 16384 in
+           let* ic =
+             Lwt_io.open_file ~buffer:(Lwt_bytes.create count)
+               ~mode:Lwt_io.input fname
+           in
+           let* len = Lwt_io.length ic in
+           let encoding = Http.Transfer.Fixed len in
+           let stream write =
+             let rec cat_loop () =
+               Lwt.bind (Lwt_io.read ~count ic) (function
+                 | "" -> Lwt.return_unit
+                 | buf -> Lwt.bind (write buf) cat_loop)
+             in
+             let* () =
+               Lwt.catch cat_loop (fun exn ->
+                 Logs.warn (fun m ->
+                   m "Error resolving file %s (%s)" fname
+                     (Printexc.to_string exn));
+                 Lwt.return_unit)
+             in
+             Lwt.catch
+               (fun () -> Lwt_io.close ic)
+               (fun e ->
+                  Logs.warn (fun f ->
+                    f "Closing channel failed: %s" (Printexc.to_string e));
+                  Lwt.return_unit)
+           in
+           let body = Body.make encoding stream in
+           let mime_type = Magic_mime.lookup fname in
+           let headers =
+             add_validators
+               (Http.Header.add_unless_exists headers "content-type" mime_type)
+           in
+           Lwt.return (respond ~headers ~status ~body ()))
     (function
       | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
           Lwt.return (respond_not_found ())
