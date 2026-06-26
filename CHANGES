@@ -6,6 +6,9 @@
  * Logging: when no <logdir> (and no <syslog>) is given in the configuration
    file, logs now go to the standard output and standard error instead of to
    files, so that no log directory is required.
+ * Static files: serve an ETag and a Last-Modified header, and answer
+   conditional requests (If-None-Match / If-Modified-Since) with 304 Not
+   Modified (RFC 7232).
  * Documentation: the manual now lives in the main branch as odoc pages
    (doc/*.mld), compiled in place by `dune build @doc`, replacing the
    wikicreole manual of the wikidoc branch. doc/index.mld is the package
