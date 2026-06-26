@@ -1,4 +1,8 @@
 ==== 8.0.0~dev ===
+ * Compression: the Deflatemod extension now supports the zstd
+   content-encoding (RFC 8878) in addition to gzip and deflate, and its
+   backend was switched from camlzip to bytesrw. Compression is enabled by
+   default in the one-command serve mode.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or
