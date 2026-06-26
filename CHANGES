@@ -1,4 +1,7 @@
 ==== 8.0.0~dev ===
+ * Security: the <maxconnected> limit (maximum number of simultaneous
+   connections) is now enforced again. It throttles the accept loop instead
+   of being silently ignored.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or

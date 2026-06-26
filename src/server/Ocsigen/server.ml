@@ -315,6 +315,13 @@ let main config =
            >>= f
          in
          ignore (f () : 'a Lwt.t));
+      (* Enforce the maximum number of simultaneous connections: conduit
+         throttles its accept loop (across all listening sockets, as file
+         descriptors are a global resource) while the number of active
+         connections exceeds this cap. Without this call the configured limit
+         would have no effect. *)
+      Conduit_lwt_server.set_max_active
+        (Config.get_max_number_of_connections ());
       Lwt.join
         (List.map
            (fun (address, port) ->
