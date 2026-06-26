@@ -31,6 +31,14 @@ The safe-by-default security headers are present:
   $ grep -i '^referrer-policy:' headers | tr -d '\r'
   referrer-policy: strict-origin-when-cross-origin
 
+Compression is on by default in serve mode: a client that accepts an encoding
+gets a compressed response.
+
+  $ curl -s -i --user-agent "" -H "Accept-Encoding: gzip" --compressed \
+  >   http://127.0.0.1:8061/index.html | grep -iE "^(HTTP|content-encoding)"
+  HTTP/1.1 200 OK
+  content-encoding: gzip
+
 A missing file gives a 404.
 
   $ curl -s -o /dev/null -w "%{http_code}\n" --max-time 10 \
