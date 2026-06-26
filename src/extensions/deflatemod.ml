@@ -277,3 +277,19 @@ let () =
     ~init_fun:parse_global_config ()
 
 let run ~mode () _ _ _ = filter mode
+
+(* Content types compressed by default in the one-command serve mode. Covers
+   the usual text-based, highly compressible resources; binary formats (images,
+   video, archives) are already compressed and left untouched. *)
+let default_serve_mode =
+  `Only
+    [ `Type (Some "text", None)
+    ; `Type (Some "application", Some "javascript")
+    ; `Type (Some "application", Some "x-javascript")
+    ; `Type (Some "application", Some "json")
+    ; `Type (Some "application", Some "xml")
+    ; `Type (Some "application", Some "xhtml+xml")
+    ; `Type (Some "application", Some "wasm")
+    ; `Type (Some "image", Some "svg+xml") ]
+
+let () = Ocsigen.Server.register_compression (run ~mode:default_serve_mode ())
