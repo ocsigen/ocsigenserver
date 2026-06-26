@@ -1,4 +1,6 @@
-let usage = "usage: ocsigenserver [-c configfile | [--serve] DIR [options]]"
+let usage =
+  "usage: ocsigenserver [-c configfile | [--serve] DIR | --reverse-proxy URL [options]]"
+
 let section = Logs.Src.create "ocsigen:main"
 
 (* Report command-line errors through Logs. A stderr reporter is installed
@@ -19,6 +21,7 @@ let fatal fmt =
 let serve_dir = ref None
 let serve_port = ref None
 let directory_listing = ref false
+let reverse_proxy = ref None
 let config_given = ref false
 
 let set_serve_dir d =
@@ -35,6 +38,8 @@ let () =
   let alt_msg =
     "Alternate config file (default " ^ Ocsigen.Config.get_config_file () ^ ")"
   and serve_msg = "Serve the static files of DIR without a configuration file"
+  and proxy_msg =
+    "Forward every request to the base URL given, without a configuration file"
   and port_msg = "Port to listen on in serve mode (default 8080)"
   and listing_msg = "List directory contents in serve mode (when no index file)"
   and silent_msg = "Silent mode (error messages in errors.log only)"
@@ -49,6 +54,9 @@ let () =
       [ "-c", Arg.String set_configfile, alt_msg
       ; "--config", Arg.String set_configfile, alt_msg
       ; "--serve", Arg.String set_serve_dir, serve_msg
+      ; ( "--reverse-proxy"
+        , Arg.String (fun u -> reverse_proxy := Some u)
+        , proxy_msg )
       ; "-P", Arg.Int (fun p -> serve_port := Some p), port_msg
       ; "--port", Arg.Int (fun p -> serve_port := Some p), port_msg
       ; "--directory-listing", Arg.Set directory_listing, listing_msg
@@ -86,14 +94,23 @@ let check_serve_dir dir =
   | exception Sys_error _ -> fatal "no such directory: %s" dir
 
 let () =
-  match !serve_dir with
-  | Some dir ->
+  match !serve_dir, !reverse_proxy with
+  | Some _, Some _ -> fatal "--serve and --reverse-proxy cannot be combined"
+  | Some dir, None ->
       if !config_given
       then fatal "-c/--config cannot be combined with serve mode";
       let dir = check_serve_dir dir in
       Ocsigen.Server.serve ~dir ?port:!serve_port
         ~directory_listing:!directory_listing ()
-  | None ->
+  | None, Some target ->
+      if !config_given
+      then fatal "-c/--config cannot be combined with --reverse-proxy";
+      if !directory_listing
+      then fatal "--directory-listing is only valid when serving a directory";
+      Ocsigen.Server.reverse_proxy ~target ?port:!serve_port ()
+  | None, None ->
       if !serve_port <> None || !directory_listing
-      then fatal "--port and --directory-listing require a directory to serve";
+      then
+        fatal
+          "--port and --directory-listing require a directory to serve or --reverse-proxy";
       Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
