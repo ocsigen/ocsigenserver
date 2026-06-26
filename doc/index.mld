@@ -1,4 +1,4 @@
-@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter userconf cors extend migration api
+@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter securityheaders userconf cors extend migration api
 
 {0 Ocsigen Server}
 
@@ -115,6 +115,8 @@ The extensions provided are:
 :if you want to compress the content before sending your pages,
 ;{{!page-outputfilter}Outputfilter}
 :allows to change the header of the HTTP response,
+;{{!page-securityheaders}Securityheaders}
+:adds common security-related HTTP headers (HSTS, nosniff, X-Frame-Options, CSP),
 ;{{!page-rewritemod}Rewritemod}
 :allows to rewrite the request before continuing,
 ;{{!page-extendconfiguration}Extendconfiguration}

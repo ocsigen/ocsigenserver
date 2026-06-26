@@ -19,6 +19,7 @@ Redirectmod
 Revproxy
 Rewritemod
 Outputfilter
+Securityheaders
 Userconf
 Cors
 }

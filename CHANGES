@@ -1,4 +1,9 @@
 ==== 8.0.0~dev ===
+ * New extension Securityheaders (ocsigenserver.ext.securityheaders): adds
+   common security headers (X-Content-Type-Options, X-Frame-Options,
+   Strict-Transport-Security and an optional Content-Security-Policy) with one
+   declaration.
+ * Serve mode now logs a startup banner with the URL it listens on.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or

@@ -1,0 +1,47 @@
+{0 Securityheaders}
+Securityheaders adds common security-related HTTP headers to responses with a
+single declaration, instead of hand-rolling {{!page-outputfilter}output filter}
+rules.
+
+By default it adds, to every response that does not already set them:
+- [X-Content-Type-Options: nosniff]
+- [X-Frame-Options: SAMEORIGIN]
+- [Strict-Transport-Security: max-age=15552000; includeSubDomains]
+
+A [Content-Security-Policy] is added only when you configure one, as it has no
+safe default.
+
+{1 Using as a library}
+To use that extension as a library for your OCaml programs, load OCamlfind
+package [ocsigenserver.ext.securityheaders] from your Dune file, and have a look
+at the {{!Securityheaders}API documentation}. Place it after the extension
+whose responses it should decorate:
+{[
+let _ =
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host
+         [ Staticmod.run ~dir:"static" ()
+         ; Securityheaders.run () ]]
+]}
+
+{1 Configuration file}
+Load the extension and add the [<securityheaders/>] element to a host, after the
+elements producing the responses to decorate:
+{v
+<extension findlib-package="ocsigenserver.ext.securityheaders"/>
+...
+<host hostfilter="*">
+  <static dir="/path/to/the/local/directory" />
+  <securityheaders/>
+</host>
+v}
+
+Each header can be customised or disabled with an attribute. The values ["no"],
+["none"] and the empty string disable a header:
+{v
+<securityheaders
+   hsts="max-age=63072000; includeSubDomains; preload"
+   frame-options="DENY"
+   nosniff="true"
+   content-security-policy="default-src 'self'" />
+v}
