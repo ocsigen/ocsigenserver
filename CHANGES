@@ -3,6 +3,9 @@
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or
    pre-created log directory. The Staticmod extension is loaded on demand.
+ * One-command reverse proxy: "ocsigenserver --reverse-proxy URL" forwards
+   every request to the base URL given, with no configuration file. The
+   Revproxy extension is loaded on demand.
  * Logging: when no <logdir> (and no <syslog>) is given in the configuration
    file, logs now go to the standard output and standard error instead of to
    files, so that no log directory is required.

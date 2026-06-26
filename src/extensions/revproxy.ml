@@ -192,3 +192,14 @@ let () =
     ()
 
 let run ~redirection () _ _ _ = gen redirection
+
+(* Publish a "forward everything to TARGET" function so that the one-command
+   reverse-proxy mode can use it after loading this extension dynamically,
+   without a static dependency. *)
+let () =
+  Ocsigen.Server.register_reverse_proxy_server (fun ~target ->
+    let target = Ocsigen_base.Lib.Url.remove_end_slash target in
+    run
+      ~redirection:
+        (create_redirection ~full_url:false ~regexp:"(.*)" (target ^ "/\\1"))
+      ())

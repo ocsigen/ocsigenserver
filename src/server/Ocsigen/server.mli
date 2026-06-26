@@ -37,6 +37,13 @@ val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
     into the program. [port] defaults to 8080. When [directory_listing] is
     [true], directories without an index file are listed. Never returns. *)
 
+val reverse_proxy : ?port:int -> target:string -> unit -> unit
+(** [reverse_proxy ~target ()] starts a server that forwards every request to
+    the [target] base URL (for example [http://localhost:9000]), with no
+    configuration file and no log directory required. This backs
+    [ocsigenserver --reverse-proxy URL]. The Revproxy extension is loaded
+    dynamically on demand. [port] defaults to 8080. Never returns. *)
+
 val start :
    ?ports:(Config.Socket_type.t * int) list
   -> ?ssl_ports:(Config.Socket_type.t * int) list
@@ -93,6 +100,11 @@ val register_static_server : (dir:string -> instruction) -> unit
 (** Called by the Staticmod extension when it is loaded to publish its
     static-file serving function, so that {!serve} can use it without a static
     dependency on the extension. *)
+
+val register_reverse_proxy_server : (target:string -> instruction) -> unit
+(** Called by the Revproxy extension when it is loaded to publish its
+    request-forwarding function, so that {!reverse_proxy} can use it without a
+    static dependency on the extension. *)
 
 val host :
    ?regexp:string

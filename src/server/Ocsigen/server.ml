@@ -475,39 +475,55 @@ let start
     Extensions.start_initialisation ();
     Extensions.set_hosts instructions)
 
-(* Registry through which the Staticmod extension, once loaded, publishes its
-   static-file serving function. This lets the one-command serve mode use the
-   extension without statically linking it (which would clash with the
-   configuration-file path, where the extension is loaded dynamically). *)
+(* Registries through which the Staticmod and Revproxy extensions, once loaded,
+   publish their serving functions. This lets the one-command serve mode use
+   them without statically linking them (which would clash with the
+   configuration-file path, where the extensions are loaded dynamically). *)
 let static_server : (dir:string -> instruction) option ref = ref None
 let register_static_server f = static_server := Some f
+let reverse_proxy_server : (target:string -> instruction) option ref = ref None
+let register_reverse_proxy_server f = reverse_proxy_server := Some f
 
-let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
-  (* One-command serve mode: no configuration file and no log directory are
-     required. Logs go to stderr and the command pipe is placed in a temporary
-     location so that the usual control commands remain available. *)
+(* Common setup of the one-command modes: no configuration file and no log
+   directory are required. Logs go to stderr and the command pipe is placed in a
+   temporary location so that the usual control commands remain available. *)
+let one_command_setup () =
   Config.set_log_to_stderr true;
   Config.set_command_pipe
     (Filename.concat
        (Filename.get_temp_dir_name ())
-       (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())));
-  (* Load the Staticmod extension on demand. It registers its serving function
-     through [register_static_server]. *)
+       (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())))
+
+(* Load the extension [package] on demand and return the serving function it
+   published in [registry]. *)
+let load_one_command_extension package registry =
   (try
      Ocsigen_base.Loader.loadfiles
        (fun () -> ())
        (fun () -> ())
        false
-       (Ocsigen_base.Loader.findfiles "ocsigenserver.ext.staticmod")
+       (Ocsigen_base.Loader.findfiles package)
    with e ->
      let msg, errno = errmsg e in
      Messages.errlog msg; exit errno);
-  match !static_server with
+  match !registry with
+  | Some f -> f
   | None ->
-      Messages.errlog
-        "The Staticmod extension did not register its serving function";
+      Messages.errlog (package ^ " did not register its serving function");
       exit 1
-  | Some static ->
-      start
-        ~ports:[`All, port]
-        [host ~list_directory_content:directory_listing [static ~dir]]
+
+let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
+  one_command_setup ();
+  let static =
+    load_one_command_extension "ocsigenserver.ext.staticmod" static_server
+  in
+  start
+    ~ports:[`All, port]
+    [host ~list_directory_content:directory_listing [static ~dir]]
+
+let reverse_proxy ?(port = 8080) ~target () =
+  one_command_setup ();
+  let proxy =
+    load_one_command_extension "ocsigenserver.ext.revproxy" reverse_proxy_server
+  in
+  start ~ports:[`All, port] [host [proxy ~target]]
