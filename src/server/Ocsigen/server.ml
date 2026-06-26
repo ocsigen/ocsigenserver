@@ -520,6 +520,7 @@ let load_one_command_extension ?(required = true) package =
   with e ->
     let msg, errno = errmsg e in
     if required then (Messages.errlog msg; exit errno) else Messages.warning msg
+
 let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
   (* One-command serve mode: no configuration file and no log directory are
      required. Logs go to stderr and the command pipe is placed in a temporary

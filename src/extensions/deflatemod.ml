@@ -65,9 +65,9 @@ let compress_body (cfilter : Bytesrw.Bytes.Writer.filter) body =
   let flush_out () =
     if Buffer.length out = 0
     then Lwt.return_unit
-    else (
+    else
       let s = Buffer.contents out in
-      Buffer.clear out; flush s)
+      Buffer.clear out; flush s
   in
   let write f =
     try f () with Bytesrw.Bytes.Stream.Error e -> raise (stream_error e)
