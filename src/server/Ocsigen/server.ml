@@ -508,6 +508,8 @@ let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
         "The Staticmod extension did not register its serving function";
       exit 1
   | Some static ->
+      Logs.app ~src:section (fun fmt ->
+        fmt "Serving %s on http://localhost:%d" dir port);
       start
         ~ports:[`All, port]
         [host ~list_directory_content:directory_listing [static ~dir]]
