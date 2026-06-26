@@ -77,32 +77,38 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       fmt
         ("Got exception while handling request." ^^ "@\n%s")
         (Printexc.to_string exn));
-    let headers, ret_code =
+    let headers, ret_code, explicit_msg =
       match exn with
       | Ocsigen_http_error (cookies_to_set, code) ->
           let headers =
             Cookie.serialize cookies_to_set (Cohttp.Header.init ())
           in
-          Some headers, code
+          Some headers, code, None
       | Ocsigen_base.Ocsigen_stream.Interrupted
           Ocsigen_base.Ocsigen_stream.Already_read ->
-          None, `Internal_server_error
-      | Unix.Unix_error (Unix.EACCES, _, _) -> None, `Forbidden
-      | Ext_http_error (code, _, headers) -> headers, code
-      | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request
+          None, `Internal_server_error, None
+      | Unix.Unix_error (Unix.EACCES, _, _) -> None, `Forbidden, None
+      | Ext_http_error (code, msg, headers) -> headers, code, msg
+      | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request, None
       | Ocsigen_base.Lib.Ocsigen_Request_too_long ->
-          None, `Request_entity_too_large
+          None, `Request_entity_too_large, None
       | exn ->
           Logs.err ~src:section (fun fmt ->
             fmt
               ("Error while handling request." ^^ "@\n%s")
               (Printexc.to_string exn));
-          None, `Internal_server_error
+          None, `Internal_server_error, None
     in
     let body =
-      match ret_code with
-      | `Not_found -> "Not Found"
-      | _ -> Printexc.to_string exn
+      (* Never leak the OCaml exception (constructor names, file paths, ...)
+         to the client: the exception detail stays in the logs (above). The
+         client only gets the generic status reason phrase, or the explicit
+         message an extension chose to expose through [Ext_http_error]. *)
+      match explicit_msg with
+      | Some msg -> msg
+      | None ->
+          Cohttp.Code.reason_phrase_of_code
+            (Cohttp.Code.code_of_status (ret_code :> Cohttp.Code.status_code))
     in
     Response.respond_error ?headers
       ~status:(ret_code :> Cohttp.Code.status_code)

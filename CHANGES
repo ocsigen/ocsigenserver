@@ -2,6 +2,9 @@
  * Security: the <maxconnected> limit (maximum number of simultaneous
    connections) is now enforced again. It throttles the accept loop instead
    of being silently ignored.
+ * Security: error responses no longer include the raw OCaml exception in
+   their body. Clients now receive the generic HTTP status reason phrase;
+   the exception details remain in the logs.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or
