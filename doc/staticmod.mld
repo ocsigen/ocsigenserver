@@ -6,6 +6,11 @@ and size) and a [Last-Modified] header. Conditional requests made with
 [If-None-Match] or [If-Modified-Since] are answered with [304 Not Modified]
 when the file is unchanged (RFC 7232), saving bandwidth on revalidation.
 
+Single byte-range requests are supported (RFC 7233): responses advertise
+[Accept-Ranges: bytes], a [Range] request yields [206 Partial Content] with a
+[Content-Range] header (and honours [If-Range]), enabling media streaming and
+resumable downloads.
+
 {1 Using as a library}
 To use that extension as a library for your OCaml programs,
 load OCamlfind package [ocsigenserver.ext.staticmod],
