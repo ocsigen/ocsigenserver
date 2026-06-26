@@ -62,13 +62,20 @@ val respond_file :
   -> ?status:Http.Status.t
   -> ?if_none_match:string
   -> ?if_modified_since:string
+  -> ?range:string
+  -> ?if_range:string
   -> string
   -> t Lwt.t
 (** Respond with the content of a file. The content type is guessed using
     [Magic_mime]. An [ETag] (weak, derived from the file's modification time and
-    size) and a [Last-Modified] header are always added. If the request's
-    [If-None-Match] or [If-Modified-Since] header is passed and matches, the
-    response is [304 Not Modified] with an empty body (RFC 7232). *)
+    size), a [Last-Modified] and an [Accept-Ranges: bytes] header are added. If
+    the request's [If-None-Match] or [If-Modified-Since] header is passed and
+    matches, the response is [304 Not Modified] with an empty body (RFC 7232).
+    If a [range] (the [Range] header) is passed and satisfiable, a single byte
+    range is returned as [206 Partial Content] with a [Content-Range] header
+    (RFC 7233); an unsatisfiable range gives [416]. A passed [if_range] (the
+    [If-Range] header) must match the current validators for the range to be
+    honoured. *)
 
 val update :
    ?response:Cohttp.Response.t
