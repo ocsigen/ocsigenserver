@@ -34,9 +34,15 @@ terminal. A few options are available:
 {v
 ocsigenserver --serve ./public --port 8000 --directory-listing
 v}
+You can also start a reverse proxy that forwards every request to another
+server, again without any configuration file:
+{v
+ocsigenserver --reverse-proxy http://localhost:9000 --port 8080
+v}
+
 This is the simplest way to get started. For anything more elaborate (several
-hosts, extensions, reverse proxy, etc.) use a configuration file or the library
-API, as described below.
+hosts, extensions, fine-grained reverse proxy rules, etc.) use a configuration
+file or the library API, as described below.
 
 {1 Using Ocsigen Server as an executable}
 
