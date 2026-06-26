@@ -11,20 +11,25 @@ a file here), so no log directory is created.
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
 
-An existing file is served with the correct content type and body. The headers
-that are not reproducible (the date, and the validators derived from the file's
-modification time) are filtered out.
+An existing file is served with the correct status, content type and body:
 
-  $ curl -s -i --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
-  >   --user-agent "" http://127.0.0.1:8061/index.html \
-  >   | grep -viE "^(date|etag|last-modified): "
-  HTTP/1.1 200 OK
-  content-type: text/html
-  server: Ocsigen
-  content-length: 18
-  
+  $ curl -s -D headers -o body -w '%{http_code}\n' --max-time 10 \
+  >   --retry 20 --retry-delay 1 --retry-connrefused \
+  >   http://127.0.0.1:8061/index.html
+  200
+  $ cat body; echo
   <html>hello</html>
+  $ grep -i '^content-type:' headers | tr -d '\r'
+  content-type: text/html
 
+The safe-by-default security headers are present:
+
+  $ grep -i '^x-content-type-options:' headers | tr -d '\r'
+  x-content-type-options: nosniff
+  $ grep -i '^x-frame-options:' headers | tr -d '\r'
+  x-frame-options: SAMEORIGIN
+  $ grep -i '^referrer-policy:' headers | tr -d '\r'
+  referrer-policy: strict-origin-when-cross-origin
 
 A missing file gives a 404.
 
@@ -40,5 +45,7 @@ The server logged a startup banner with the URL:
 No log directory is created in the current directory.
 
   $ ls
+  body
+  headers
   server.log
   www

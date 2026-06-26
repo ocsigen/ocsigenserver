@@ -137,3 +137,7 @@ let run
   gen
     (headers_of ~nosniff ~frame_options ~referrer_policy ~hsts
        ~content_security_policy)
+
+(* Publish the safe-by-default instruction so that the one-command serve mode
+   can add the security headers after loading this extension dynamically. *)
+let () = Ocsigen.Server.register_security_headers (run ())
