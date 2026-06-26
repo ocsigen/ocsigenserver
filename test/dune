@@ -5,3 +5,8 @@
   (deps
    ../server-test-helpers.sh
    (package ocsigenserver))))
+
+(cram
+ (package ocsigenserver)
+ (deps
+  (package ocsigenserver)))

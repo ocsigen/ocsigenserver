@@ -380,3 +380,7 @@ let run ?dir ?regexp ?dest ?code ?cache ?root () =
          root)
   in
   fun _ _ _ -> gen ~usermode:None ?cache kind
+
+(* Publish the serving function so that the one-command serve mode can use it
+   after loading this extension dynamically, without a static dependency. *)
+let () = Ocsigen.Server.register_static_server (fun ~dir -> run ~dir ())

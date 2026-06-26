@@ -56,6 +56,12 @@ val set_pidfile : string -> unit
 val set_mimefile : string -> unit
 val set_verbose : unit -> unit
 val set_silent : unit -> unit
+
+val set_log_to_stderr : bool -> unit
+(** When set to [true], logs are written to [stdout]/[stderr] instead of the log
+    files under {!get_logdir}. Used by the one-command serve mode so that no log
+    directory needs to exist. *)
+
 val set_daemon : unit -> unit
 val set_veryverbose : unit -> unit
 val set_debug : unit -> unit
@@ -91,6 +97,7 @@ val get_pidfile : unit -> string option
 val get_mimefile : unit -> string
 val get_verbose : unit -> bool
 val get_silent : unit -> bool
+val get_log_to_stderr : unit -> bool
 val get_daemon : unit -> bool
 val get_veryverbose : unit -> bool
 val get_debug : unit -> bool

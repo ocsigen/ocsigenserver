@@ -51,6 +51,7 @@ let set_global_log_level lvl =
 (* General config *)
 let verbose = ref false
 let silent = ref false
+let log_to_stderr = ref false
 let daemon = ref false
 let veryverbose = ref false
 let debug = ref false
@@ -98,6 +99,7 @@ let set_verbose () =
   set_global_log_level (Some Logs.Warning)
 
 let set_silent () = silent := true
+let set_log_to_stderr b = log_to_stderr := b
 
 let set_daemon () =
   set_silent ();
@@ -153,6 +155,7 @@ let get_pidfile () = !pidfile
 let get_mimefile () = !mimefile
 let get_verbose () = !verbose
 let get_silent () = !silent
+let get_log_to_stderr () = !log_to_stderr
 let get_daemon () = !daemon
 let get_veryverbose () = !veryverbose
 let get_debug () = !debug

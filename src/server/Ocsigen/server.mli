@@ -28,6 +28,15 @@ val reload : ?file:string -> unit -> unit
 val exec : Xml.xml list list -> unit
 (** Start the server with a configuration file. Never returns. *)
 
+val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
+(** [serve ~dir ()] starts a server that serves the static files of directory
+    [dir], with no configuration file and no log directory required (logs go to
+    [stdout]/[stderr]). This backs the one-command serve mode of the
+    [ocsigenserver] executable ([ocsigenserver ./public]). The Staticmod
+    extension is loaded dynamically on demand, so it does not need to be linked
+    into the program. [port] defaults to 8080. When [directory_listing] is
+    [true], directories without an index file are listed. Never returns. *)
+
 val start :
    ?ports:(Config.Socket_type.t * int) list
   -> ?ssl_ports:(Config.Socket_type.t * int) list
@@ -79,6 +88,11 @@ type instruction =
   -> Extensions.extension
 (** The type of instructions to be used inside an host or site.
     Instructions are defined by extensions (Staticmod, Eliom, etc.) *)
+
+val register_static_server : (dir:string -> instruction) -> unit
+(** Called by the Staticmod extension when it is loaded to publish its
+    static-file serving function, so that {!serve} can use it without a static
+    dependency on the extension. *)
 
 val host :
    ?regexp:string
