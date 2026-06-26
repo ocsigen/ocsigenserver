@@ -28,6 +28,11 @@ A missing file gives a 404.
   $ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8061/nope.html
   404
 
+The server logged a startup banner with the URL:
+
+  $ grep -o 'on http://localhost:8061' server.log
+  on http://localhost:8061
+
 No log directory is created in the current directory.
 
   $ ls
