@@ -26,25 +26,58 @@
   ocsigen:local-file: [INFO] Testing "./doesnt_exists.html".
   application: [WARNING] Command received: shutdown
 
-First response is not compressed:
+Without Accept-Encoding the response is not compressed:
 
   $ curl_ "index.html"
   HTTP/1.1 200 OK
   content-type: text/html
   server: Ocsigen
   content-length: 12
-  
+
   Hello world
 
-Second response is compressed:
+gzip:
 
-  $ curl_ "index.html" --compressed
+  $ curl_ "index.html" -H "Accept-Encoding: gzip" --compressed
   HTTP/1.1 200 OK
   content-type: text/html
   content-encoding: gzip
   server: Ocsigen
   transfer-encoding: chunked
-  
+
+  Hello world
+
+deflate (zlib format):
+
+  $ curl_ "index.html" -H "Accept-Encoding: deflate" --compressed
+  HTTP/1.1 200 OK
+  content-type: text/html
+  content-encoding: deflate
+  server: Ocsigen
+  transfer-encoding: chunked
+
+  Hello world
+
+zstd:
+
+  $ curl_ "index.html" -H "Accept-Encoding: zstd" --compressed
+  HTTP/1.1 200 OK
+  content-type: text/html
+  content-encoding: zstd
+  server: Ocsigen
+  transfer-encoding: chunked
+
+  Hello world
+
+When several codecs are offered, zstd is preferred:
+
+  $ curl_ "index.html" -H "Accept-Encoding: gzip, zstd" --compressed
+  HTTP/1.1 200 OK
+  content-type: text/html
+  content-encoding: zstd
+  server: Ocsigen
+  transfer-encoding: chunked
+
   Hello world
 
 Querying a directory or a non-existing file should give "Not found" without
