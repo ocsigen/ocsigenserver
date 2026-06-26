@@ -1,6 +1,11 @@
 {0 Staticmod}
 Staticmod is a module allowing to serve static pages (files).
 
+Served files carry an [ETag] (weak, derived from the file's modification time
+and size) and a [Last-Modified] header. Conditional requests made with
+[If-None-Match] or [If-Modified-Since] are answered with [304 Not Modified]
+when the file is unchanged (RFC 7232), saving bandwidth on revalidation.
+
 {1 Using as a library}
 To use that extension as a library for your OCaml programs,
 load OCamlfind package [ocsigenserver.ext.staticmod],
