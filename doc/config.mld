@@ -101,9 +101,6 @@ Here is a simple example:
     <datadir>/var/lib/ocsigenserver</datadir>
     <commandpipe>/var/run/ocsigenserver/command</commandpipe>
 
-    <user>www-data</user>
-    <group>www-data</group>
-
     <charset>utf-8</charset>
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
@@ -146,9 +143,6 @@ exist. To create it run [psql] and execute [CREATE TABLE ocsipersist;].
     <logdir>/home/toto/var/log/ocsigenserver</logdir>
     <datadir>/home/toto/var/lib/ocsigenserver</datadir>
     <commandpipe>/home/toto/var/run/ocsigenserver_command</commandpipe>
-
-    <user>toto</user>
-    <group>toto</group>
 
     <charset>utf-8</charset>
 
@@ -333,16 +327,20 @@ v}
 {3 [<user>] and [<group>] : user who runs the server}
 
 
-If the server is launched by root, it will change itself the user and group for the process, for security reasons. Create a group and a user for Ocsigenserver or use an existing user of your system (e.g. [www-data]).
+{b Deprecated and ignored.} Ocsigenserver no longer drops privileges: these
+tags are accepted for backward compatibility but have {b no effect}, and the
+server logs a warning if they are present.
 
-Example :
+{b Do not launch the server as root.} Run it directly as a dedicated
+unprivileged user (e.g. [www-data]). To serve a privileged port (80 or 443)
+as a non-root user, use one of:
+- a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and
+  forwarding to Ocsigenserver on a high port (recommended, see the [<timeout>]
+  note above);
+- the Linux capability [cap_net_bind_service] on the executable
+  ([setcap 'cap_net_bind_service=+ep' ...]);
+- a firewall/port redirection from 80/443 to a high port.
 
-
-
-{v
-<user>www-data</user>
-<group>www-data</group>
-v}
 {3 [<charset>] : default charset for pages}
 
 
