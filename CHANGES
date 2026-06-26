@@ -9,6 +9,10 @@
  * Static files: serve an ETag and a Last-Modified header, and answer
    conditional requests (If-None-Match / If-Modified-Since) with 304 Not
    Modified (RFC 7232).
+ * Static files: support single byte-range requests. Responses advertise
+   Accept-Ranges, a satisfiable Range yields 206 Partial Content with a
+   Content-Range header (honouring If-Range), and an unsatisfiable range gives
+   416 (RFC 7233). This enables media streaming and resumable downloads.
  * Documentation: the manual now lives in the main branch as odoc pages
    (doc/*.mld), compiled in place by `dune build @doc`, replacing the
    wikicreole manual of the wikidoc branch. doc/index.mld is the package

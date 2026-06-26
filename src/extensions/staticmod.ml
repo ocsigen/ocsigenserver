@@ -221,6 +221,8 @@ let gen ~usermode ?cache dir = function
                 ?if_none_match:(header Ocsigen_http.Header.Name.if_none_match)
                 ?if_modified_since:
                   (header Ocsigen_http.Header.Name.if_modified_since)
+                ?range:(header Ocsigen_http.Header.Name.range)
+                ?if_range:(header Ocsigen_http.Header.Name.if_range)
                 fname
           | Ocsigen.Local_files.RDir dname ->
               respond_dir pathstring dname >>= fun answer ->
