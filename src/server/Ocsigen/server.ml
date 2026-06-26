@@ -482,6 +482,24 @@ let start
 let static_server : (dir:string -> instruction) option ref = ref None
 let register_static_server f = static_server := Some f
 
+(* Likewise for the Securityheaders extension, whose serving instruction takes
+   no argument. *)
+let security_headers : instruction option ref = ref None
+let register_security_headers f = security_headers := Some f
+
+(* Load the extension [package] on demand. On failure: exit if [required],
+   otherwise log a warning and continue. *)
+let load_one_command_extension ?(required = true) package =
+  try
+    Ocsigen_base.Loader.loadfiles
+      (fun () -> ())
+      (fun () -> ())
+      false
+      (Ocsigen_base.Loader.findfiles package)
+  with e ->
+    let msg, errno = errmsg e in
+    if required then (Messages.errlog msg; exit errno) else Messages.warning msg
+
 let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
   (* One-command serve mode: no configuration file and no log directory are
      required. Logs go to stderr and the command pipe is placed in a temporary
@@ -491,25 +509,23 @@ let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
     (Filename.concat
        (Filename.get_temp_dir_name ())
        (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())));
-  (* Load the Staticmod extension on demand. It registers its serving function
-     through [register_static_server]. *)
-  (try
-     Ocsigen_base.Loader.loadfiles
-       (fun () -> ())
-       (fun () -> ())
-       false
-       (Ocsigen_base.Loader.findfiles "ocsigenserver.ext.staticmod")
-   with e ->
-     let msg, errno = errmsg e in
-     Messages.errlog msg; exit errno);
+  (* Staticmod is required; Securityheaders is best-effort (safe headers by
+     default). Both publish their instruction through the registries above. *)
+  load_one_command_extension "ocsigenserver.ext.staticmod";
+  load_one_command_extension ~required:false "ocsigenserver.ext.securityheaders";
   match !static_server with
   | None ->
       Messages.errlog
         "The Staticmod extension did not register its serving function";
       exit 1
   | Some static ->
+      (* The security-headers filter must come after the file server. *)
+      let instructions =
+        static ~dir
+        :: (match !security_headers with Some sh -> [sh] | None -> [])
+      in
       Logs.app ~src:section (fun fmt ->
         fmt "Serving %s on http://localhost:%d" dir port);
       start
         ~ports:[`All, port]
-        [host ~list_directory_content:directory_listing [static ~dir]]
+        [host ~list_directory_content:directory_listing instructions]

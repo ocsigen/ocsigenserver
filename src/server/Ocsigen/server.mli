@@ -94,6 +94,11 @@ val register_static_server : (dir:string -> instruction) -> unit
     static-file serving function, so that {!serve} can use it without a static
     dependency on the extension. *)
 
+val register_security_headers : instruction -> unit
+(** Called by the Securityheaders extension when it is loaded to publish its
+    instruction, so that {!serve} can add the safe-by-default security headers
+    without a static dependency on the extension. *)
+
 val host :
    ?regexp:string
   -> ?port:int
