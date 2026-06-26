@@ -63,10 +63,20 @@ let stderr = make_reporter stderr
 let stdout = make_reporter stdout
 let close_loggers = ref []
 
-let open_files () =
-  (* CHECK: we are closing asynchronously! That should be ok, though. *)
-  List.iter (fun close -> close ()) !close_loggers;
-  close_loggers := [];
+(* Reporter used in serve mode: access messages go to [stdout], warnings and
+   errors to [stderr], everything else to [stdout]. No log files are opened. *)
+let stdio_reporter =
+  { Logs.report =
+      (fun src level ~over k msgf ->
+        let r =
+          if Logs.Src.equal src access_sect
+          then stdout
+          else
+            match level with Logs.Warning | Logs.Error -> stderr | _ -> stdout
+        in
+        r.Logs.report src level ~over k msgf) }
+
+let open_log_files () =
   match Config.get_syslog_facility () with
   | Some facility ->
       (* log to syslog *)
@@ -152,6 +162,16 @@ let open_files () =
                  (fun k r () -> r.Logs.report src level ~over k msgf)
                  k broadcast_reporters ()) });
       Lwt.return ()
+
+let open_files () =
+  (* CHECK: we are closing asynchronously! That should be ok, though. *)
+  List.iter (fun close -> close ()) !close_loggers;
+  close_loggers := [];
+  if Config.get_log_to_stderr ()
+  then (
+    Logs.set_reporter stdio_reporter;
+    Lwt.return ())
+  else open_log_files ()
 
 (****)
 
