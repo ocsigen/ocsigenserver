@@ -54,6 +54,89 @@ module Cookie = struct
     Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
 end
 
+(* Access log in the Apache/nginx Combined Log Format:
+   %h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-agent}i"
+   https://httpd.apache.org/docs/current/logs.html#combined *)
+module Access_log = struct
+  (* Offset of local time from UTC, in minutes, robust across day boundaries. *)
+  let timezone_offset t =
+    let l = Unix.localtime t and u = Unix.gmtime t in
+    let day_diff =
+      if l.Unix.tm_year <> u.Unix.tm_year
+      then compare l.Unix.tm_year u.Unix.tm_year
+      else compare l.Unix.tm_yday u.Unix.tm_yday
+    in
+    (((day_diff * 24) + l.Unix.tm_hour - u.Unix.tm_hour) * 60)
+    + l.Unix.tm_min - u.Unix.tm_min
+
+  let time t =
+    let tm = Unix.localtime t in
+    let off = timezone_offset t in
+    let sign = if off < 0 then '-' else '+' in
+    let off = abs off in
+    Printf.sprintf "[%02d/%s/%04d:%02d:%02d:%02d %c%02d%02d]" tm.Unix.tm_mday
+      (Ocsigen_base.Lib.Date.name_of_month tm.Unix.tm_mon)
+      (1900 + tm.Unix.tm_year) tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec
+      sign (off / 60) (off mod 60)
+
+  (* Escape characters that would break the format or allow log injection in
+     attacker-controlled fields (request line, Referer, User-Agent). *)
+  let escape s =
+    let buf = Buffer.create (String.length s) in
+    String.iter
+      (fun c ->
+         match c with
+         | '"' -> Buffer.add_string buf "\\\""
+         | '\\' -> Buffer.add_string buf "\\\\"
+         | '\n' -> Buffer.add_string buf "\\n"
+         | '\r' -> Buffer.add_string buf "\\r"
+         | '\t' -> Buffer.add_string buf "\\t"
+         | c when Char.code c < 0x20 || Char.code c = 0x7f ->
+             Buffer.add_string buf (Printf.sprintf "\\x%02x" (Char.code c))
+         | c -> Buffer.add_char buf c)
+      s;
+    Buffer.contents buf
+
+  let line request response =
+    let quoted s = "\"" ^ escape s ^ "\"" in
+    let header name =
+      match Request.header request name with
+      | Some s -> quoted s
+      | None -> "\"-\""
+    in
+    let user =
+      match Request.remote_user request with
+      | Some u when u <> "" -> escape u
+      | _ -> "-"
+    in
+    let request_line =
+      (* string_of_version already yields "HTTP/1.1". *)
+      Printf.sprintf "%s %s %s"
+        (Cohttp.Code.string_of_method (Request.meth request))
+        (Uri.path_and_query (Request.uri request))
+        (Cohttp.Code.string_of_version (Request.version request))
+    in
+    let status =
+      Cohttp.Code.code_of_status
+        (Response.status response :> Cohttp.Code.status_code)
+    in
+    (* The response size is carried by the body transfer encoding, not a
+       header: known for fixed-length bodies (e.g. static files), "-" when
+       streamed with an unknown length. *)
+    let bytes =
+      match Response.Body.transfer_encoding (Response.body response) with
+      | Cohttp.Transfer.Fixed n -> Int64.to_string n
+      | Cohttp.Transfer.Chunked | Cohttp.Transfer.Unknown -> "-"
+    in
+    Printf.sprintf "%s - %s %s %s %d %s %s %s"
+      (Request.client_ip_to_string request)
+      user
+      (time (Request.timeofday request))
+      (quoted request_line) status bytes
+      (header Ocsigen_http.Header.Name.referer)
+      (header Ocsigen_http.Header.Name.user_agent)
+end
+
 let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
@@ -115,18 +198,6 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
   in
   Lwt.finalize
     (fun () ->
-       Messages.accesslog
-         (Format.sprintf "connection for %s from %s (%s)%s: %s"
-            (match Request.host request with
-            | None -> "<host not specified in the request>"
-            | Some h -> h)
-            (Request.client_conn_to_string request)
-            (Option.value ~default:""
-               (Request.header request Ocsigen_http.Header.Name.user_agent))
-            (Option.fold ~none:""
-               ~some:(fun s -> " X-Forwarded-For: " ^ s)
-               (Request.header request Ocsigen_http.Header.Name.x_forwarded_for))
-            (Uri.path (Request.uri request)));
        Lwt.catch
          (fun () -> connector request)
          (function
@@ -137,7 +208,9 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
                and status = `Moved_permanently in
                Lwt.return (Response.respond_string ~headers ~status ~body:"" ())
            | exn -> Lwt.return (handle_error exn))
-       >>= fun response -> Lwt.return (Response.to_response_expert response))
+       >>= fun response ->
+       Messages.accesslog (Access_log.line request response);
+       Lwt.return (Response.to_response_expert response))
     (fun () ->
        if !filenames <> []
        then

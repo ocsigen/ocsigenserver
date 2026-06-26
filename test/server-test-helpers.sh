@@ -13,7 +13,9 @@ run_server ()
   mkdir -p log data # Directories that might be required by the server
   dune build "$1"
   # Run the server in the background, cut the datetime out of the log output.
-  dune exec -- "$@" 2>&1 | cut -b 18- &
+  # Access lines (Combined Log Format) carry their own timestamp, which is not
+  # reproducible, so drop them from the captured log.
+  dune exec -- "$@" 2>&1 | cut -b 18- | grep -v "^ocsigen:access:" &
   # Wait for the unix-domain socket and the command-pipe to be created
   local timeout=50 # Don't wait more than 0.5s
   while ! ( [[ -e ./local.sock ]] && [[ -e ./local.cmd ]] ) && (( timeout-- > 0 )); do

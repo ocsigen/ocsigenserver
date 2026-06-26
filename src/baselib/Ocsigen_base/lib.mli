@@ -107,4 +107,9 @@ end
 module Date : sig
   val to_string : float -> string
   (** Converts Unix GMT date to string *)
+
+  val name_of_month : int -> string
+  (** Three-letter English abbreviation of a month, [0] for January to [11] for
+      December (as in {!Unix.tm.tm_mon}).
+      @raise Failure if the argument is out of range. *)
 end

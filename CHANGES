@@ -6,6 +6,10 @@
  * Logging: when no <logdir> (and no <syslog>) is given in the configuration
    file, logs now go to the standard output and standard error instead of to
    files, so that no log directory is required.
+ * Access log: requests are now logged in the standard Apache/nginx Combined
+   Log Format, understood by common log analysers, instead of the previous
+   custom format. The line now reports the final status code, the response
+   size and the authenticated user.
  * Documentation: the manual now lives in the main branch as odoc pages
    (doc/*.mld), compiled in place by `dune build @doc`, replacing the
    wikicreole manual of the wikidoc branch. doc/index.mld is the package

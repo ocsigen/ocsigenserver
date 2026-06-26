@@ -44,10 +44,10 @@ val error_log_path : unit -> string
 (** Path to the error log file *)
 
 val stdio_reporter : Logs.reporter
-(** A reporter that writes access messages to [stdout] and warnings and errors
-    to [stderr], without opening any log file. It is used by the one-command
-    serve mode and to report command-line errors before the logging system is
-    configured. *)
+(** A reporter that writes warnings and errors to [stderr] and everything else
+    to [stdout], without opening any log file. It is used by the one-command
+    serve mode (where access lines are written directly to [stdout]) and to
+    report command-line errors before the logging system is configured. *)
 
 (**/**)
 

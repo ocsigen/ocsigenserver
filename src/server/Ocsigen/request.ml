@@ -284,6 +284,28 @@ let client_conn_to_string {r_client_conn = c; _} =
   | `Forwarded_for ip -> "forwarded:" ^ ip
   | `Unknown -> "unknown"
 
+(* Unlike [client_conn_to_string], which is meant for human-readable debug logs
+   and adds scheme prefixes ("unix:", "forwarded:", "unknown"), this returns a
+   bare value valid for the Combined Log Format %h field. *)
+let client_ip_to_string {r_client_conn = c; _} =
+  match c with
+  | `Inet (ip, _) -> Ipaddr.to_string ip
+  | `Forwarded_for ip -> ip
+  | `Unix path when path <> "" -> path
+  | `Unix _ | `Unknown -> "-"
+
+(* The user authenticated by an authentication extension (e.g. authbasic),
+   stored in the request cache so that the access log can report it. *)
+let remote_user_key : string Polytables.key = Polytables.make_key ()
+
+let set_remote_user r user =
+  Polytables.set ~table:r.r_request_cache ~key:remote_user_key ~value:user
+
+let remote_user r =
+  match Polytables.get ~table:r.r_request_cache ~key:remote_user_key with
+  | user -> Some user
+  | exception Not_found -> None
+
 let forward_ip {r_forward_ip; _} = r_forward_ip
 let request_cache {r_request_cache; _} = r_request_cache
 let tries {r_tries; _} = r_tries
