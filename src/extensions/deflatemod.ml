@@ -81,7 +81,7 @@ let compress_body (cfilter : Bytesrw.Bytes.Writer.filter) body =
   flush_out ()
 
 (* We implement Content-Encoding, not Transfer-Encoding *)
-type encoding = Deflate | Gzip | Id | Star | Not_acceptable
+type encoding = Deflate | Gzip | Zstd | Id | Star | Not_acceptable
 
 let qvalue = function Some x -> x | None -> 1.0
 
@@ -92,6 +92,8 @@ let enc_compare e e' =
   | (_, v), (_, v') when v < v' -> 1 (* then, sort by qvalue *)
   | (_, v), (_, v') when v > v' -> -1
   | (x, _), (x', _) when x = x' -> 0
+  | (Zstd, _), (_, _) -> -1 (* zstd is preferred at equal qvalue *)
+  | (_, _), (Zstd, _) -> 1
   | (Deflate, _), (_, _) -> 1 (* and subsort by encoding *)
   | (_, _), (Deflate, _) -> -1
   | (Gzip, _), (_, _) -> 1
@@ -108,6 +110,7 @@ let rec filtermap f = function
 let convert = function
   | Some "deflate", v -> Some (Deflate, qvalue v)
   | Some "gzip", v | Some "x-gzip", v -> Some (Gzip, qvalue v)
+  | Some "zstd", v -> Some (Zstd, qvalue v)
   | Some "identity", v -> Some (Id, qvalue v)
   | None, v -> Some (Star, qvalue v)
   | _ -> None
@@ -195,6 +198,12 @@ let filter choice_list = function
         stream_filter
           (Bytesrw_zlib.Gzip.compress_writes ~level:!compress_level ())
           "gzip" "Gdeflatemod"
+          (Ocsigen.Request.sub_path_string ri)
+          choice_list res
+    | Zstd ->
+        stream_filter
+          (Bytesrw_zstd.compress_writes ())
+          "zstd" "Zdeflatemod"
           (Ocsigen.Request.sub_path_string ri)
           choice_list res
     | Id | Star ->

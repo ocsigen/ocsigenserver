@@ -20,6 +20,7 @@
   (ocaml (>= 4.14))
   (bytesrw (>= 0.3.0))
   conf-zlib
+  conf-zstd
   (cohttp-lwt-unix (>= 6.0))
   conduit-lwt-unix
   http
