@@ -3,19 +3,45 @@ Securityheaders adds common security-related HTTP headers to responses with a
 single declaration, instead of hand-rolling {{!page-outputfilter}output filter}
 rules.
 
-By default it adds, to every response that does not already set them:
-- [X-Content-Type-Options: nosniff]
-- [X-Frame-Options: SAMEORIGIN]
-- [Strict-Transport-Security: max-age=15552000; includeSubDomains]
+{1 What it adds}
 
-A [Content-Security-Policy] is added only when you configure one, as it has no
-safe default.
+By default, to every response that does not already set them:
+
+- [X-Content-Type-Options: nosniff] — forbids the browser from MIME-sniffing,
+  so it honours the declared [Content-Type] instead of guessing. Prevents a
+  file served as, say, [text/plain] from being run as HTML or JavaScript.
+- [X-Frame-Options: SAMEORIGIN] — only the same origin may embed the page in a
+  frame, mitigating clickjacking. (The modern equivalent is the CSP
+  [frame-ancestors] directive; keeping both is common.)
+- [Referrer-Policy: strict-origin-when-cross-origin] — limits how much of the
+  URL is sent in the [Referer] header to other origins.
+
+Two further headers are {b opt-in} (added only when you configure them):
+
+- [Strict-Transport-Security] (HSTS) — tells the browser to use HTTPS only for
+  this domain. {b Use with care:} it is honoured only over HTTPS, it is sticky
+  (the browser remembers it for the whole [max-age]), and [includeSubDomains]
+  forces {e every} subdomain of the registrable domain to HTTPS for that
+  duration — which can take sibling subdomains offline if they are not all on
+  HTTPS. Enable it only when the whole domain is HTTPS-only.
+- [Content-Security-Policy] (CSP) — restricts where scripts, styles, etc. may
+  come from. Very effective against XSS, but application-specific: there is no
+  safe generic default, and a wrong policy breaks the site. Set one tailored to
+  your application.
+
+Any header already set by the application is left untouched, so you can
+override a default per response.
+
+{1 Ordering}
+
+This is a response filter: it decorates responses produced by earlier
+extensions. {b Place it after} the extension whose responses it should cover
+(Staticmod, Eliom, ...). If placed before, it sees no response and silently
+adds nothing.
 
 {1 Using as a library}
-To use that extension as a library for your OCaml programs, load OCamlfind
-package [ocsigenserver.ext.securityheaders] from your Dune file, and have a look
-at the {{!Securityheaders}API documentation}. Place it after the extension
-whose responses it should decorate:
+Load OCamlfind package [ocsigenserver.ext.securityheaders] from your Dune file,
+and see the {{!Securityheaders}API documentation}:
 {[
 let _ =
    Ocsigen.Server.start
@@ -37,11 +63,13 @@ elements producing the responses to decorate:
 v}
 
 Each header can be customised or disabled with an attribute. The values ["no"],
-["none"] and the empty string disable a header:
+["none"] and the empty string disable a header. HSTS and CSP are added only when
+their attribute is present:
 {v
 <securityheaders
-   hsts="max-age=63072000; includeSubDomains; preload"
    frame-options="DENY"
+   referrer-policy="no-referrer"
    nosniff="true"
+   hsts="max-age=63072000; includeSubDomains"
    content-security-policy="default-src 'self'" />
 v}
