@@ -20,7 +20,7 @@
  (name deflatemod)
  (public_name ocsigenserver.ext.deflatemod)
  (modules deflatemod)
- (libraries bytesrw bytesrw.zlib ocsigenserver))
+ (libraries bytesrw bytesrw.zlib bytesrw.zstd ocsigenserver))
 
 (library
  (name extendconfiguration)
