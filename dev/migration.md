@@ -47,8 +47,9 @@ To make the transition smooth, the `ocsigenserver-compat` package provides every
 
 The shims are split to mirror the libraries they alias:
 
-;`ocsigenserver-compat` :old server names (`Ocsigen_server`, `Ocsigen_extensions`, `Ocsigen_config`, ...) ;`ocsigenserver-compat.baselib` :old base-library names (`Ocsigen_lib`, `Ocsigen_cache`, ...) ;`ocsigenserver-compat.http` :old HTTP names (`Ocsigen_header`, `Ocsigen_charset_mime`)
-
+- `ocsigenserver-compat`: old server names (`Ocsigen_server`, `Ocsigen_extensions`, `Ocsigen_config`, ...)
+- `ocsigenserver-compat.baselib`: old base-library names (`Ocsigen_lib`, `Ocsigen_cache`, ...)
+- `ocsigenserver-compat.http`: old HTTP names (`Ocsigen_header`, `Ocsigen_charset_mime`)
 For example, to keep using the old names in an executable:
 
 ```
