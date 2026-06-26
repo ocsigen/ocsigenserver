@@ -507,7 +507,9 @@ let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
         (Ocsigen_base.Loader.findfiles package)
     with e ->
       let msg, errno = errmsg e in
-      if required then (Messages.errlog msg; exit errno) else Messages.warning msg
+      if required
+      then (Messages.errlog msg; exit errno)
+      else Messages.warning msg
   in
   (* Staticmod is required; Deflatemod is best-effort. Both publish their
      instruction through the registries above. *)
