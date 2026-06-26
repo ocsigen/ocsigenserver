@@ -6,13 +6,17 @@
 
 {2 What is deflatemod?}
 
-Deflatemod is a module for Ocsigen that allows you to
-deflate content, using HTTP/1.1 mechanism. It supports gzip as well as
-deflate.
+Deflatemod is a module for Ocsigen that compresses content using the
+HTTP [Content-Encoding] mechanism. It supports [gzip], [deflate] (zlib
+format) and [zstd].
+
+Brotli ([br]) is not supported yet: at the time of writing there is no
+maintained OCaml binding to libbrotli that builds on OCaml 5.
 
 {2 What do I need to use deflatemod?}
 
-You need the camlzip library by Xavier Leroy and a working Ocsigen
+You need the [bytesrw] library (with its [zlib] and [zstd] backends, which
+require the system [zlib] and [libzstd] libraries) and a working Ocsigen
 installation.
 
 {2 How do I use deflatemod?}
@@ -35,8 +39,9 @@ Again, the options are in ocsigen.conf. You can set a few options globally, in t
 
 - the compress level: from 0 (no compression) to 9. The higher, the
   better compression rate you achieve. Conversely, the lower, the faster
-  it is. Default is 6.
-- the buffer size: default is 1024. You shouldn't need to change this
+  it is. Default is 6. This level applies to [gzip] and [deflate]; [zstd]
+  uses the library default level.
+- the buffer size: default is 8192. You shouldn't need to change this
   one, but you can still try a few other values (any feedback welcomed).
 
 For example:
@@ -96,10 +101,18 @@ Limitations: you cannot filter by directory or by filename extension (remember e
 
 {1 Technical questions}
 
-{2 How can I choose the content-encoding (gzip or deflate)?}
+{2 How can I choose the content-encoding (gzip, deflate or zstd)?}
 
 You can't. Deflatemod follows the RFC and chooses automatically the
-right encoding, based upon Accept-encoding header sent by the client.
+right encoding, based upon the [Accept-Encoding] header sent by the client.
+When the client offers several codecs at the same quality, [zstd] is
+preferred, then [gzip], then [deflate].
+
+{2 Is compression enabled in the one-command serve mode?}
+
+Yes. When you run [ocsigenserver ./public] (or [ocsigenserver --serve ...]),
+responses with a text-based content type are compressed by default, with no
+configuration needed, just like a static file server such as Caddy.
 
 {2 Does deflatemod support transfert-encoding?}
 
