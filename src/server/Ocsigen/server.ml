@@ -238,9 +238,14 @@ let main config =
           true
         with Unix.Unix_error _ -> (
           try
-            let umask = Unix.umask 0 in
-            Unix.mkfifo commandpipe 0o660;
-            ignore (Unix.umask umask : int);
+            (* The command pipe is a control channel (shutdown, reload,
+               clearcache, ...). Now that <user>/<group> no longer drop
+               privileges, the server runs as the launching user and owns the
+               pipe, so only that user should be able to send commands: hence
+               0o600. (Group administration via the pipe is no longer
+               supported.) A 0o600 mode has no group/other bits, so it is
+               unaffected by the umask and there is no need to force it to 0. *)
+            Unix.mkfifo commandpipe 0o600;
             Logs.warn ~src:section (fun fmt -> fmt "Command pipe created");
             true
           with e ->
@@ -283,7 +288,7 @@ let main config =
       (if with_commandpipe
        then
          let pipe =
-           Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
+           Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o600
            |> Lwt_unix.of_unix_file_descr
            |> Lwt_io.(of_fd ~mode:input)
          in
