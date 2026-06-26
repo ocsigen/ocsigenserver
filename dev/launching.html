@@ -185,7 +185,19 @@
 
       </nav>
       <article class="rightcol">
-        <header class="odoc-preamble"><h1 id="launching-the-server">Launching the server</h1><p>To run the server, use the command <code>ocsigenserver</code>. It has the following options:</p><pre>  -c, --config
+        <header class="odoc-preamble"><h1 id="launching-the-server">Launching the server</h1><p>To run the server, use the command <code>ocsigenserver</code>. It has the following options:</p><pre>  DIR, --serve DIR
+         Serve the static files of directory DIR without a configuration
+         file (logs go to the terminal). DIR can also be given as a plain
+         positional argument: &quot;ocsigenserver ./public&quot;.
+
+  -P, --port
+         Port to listen on in serve mode (default 8080).
+
+  --directory-listing
+         In serve mode, list the contents of directories that have no
+         index file.
+
+  -c, --config
          Alternate configuration file.
 
   -d, --daemon

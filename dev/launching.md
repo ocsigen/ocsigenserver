@@ -4,6 +4,18 @@
 To run the server, use the command `ocsigenserver`. It has the following options:
 
 ```
+  DIR, --serve DIR
+         Serve the static files of directory DIR without a configuration
+         file (logs go to the terminal). DIR can also be given as a plain
+         positional argument: "ocsigenserver ./public".
+
+  -P, --port
+         Port to listen on in serve mode (default 8080).
+
+  --directory-listing
+         In serve mode, list the contents of directories that have no
+         index file.
+
   -c, --config
          Alternate configuration file.
 

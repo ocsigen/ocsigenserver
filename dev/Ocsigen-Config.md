@@ -66,6 +66,11 @@ val set_verbose : unit -> unit
 val set_silent : unit -> unit
 ```
 ```ocaml
+val set_log_to_stderr : bool -> unit
+```
+When set to `true`, logs are written to `stdout`/`stderr` instead of the log files under [`get_logdir`](./#val-get_logdir). Used by the one-command serve mode so that no log directory needs to exist.
+
+```ocaml
 val set_daemon : unit -> unit
 ```
 ```ocaml
@@ -160,6 +165,9 @@ val get_verbose : unit -> bool
 ```
 ```ocaml
 val get_silent : unit -> bool
+```
+```ocaml
+val get_log_to_stderr : unit -> bool
 ```
 ```ocaml
 val get_daemon : unit -> bool

@@ -237,6 +237,8 @@ If you don't want to be asked for a password at start-up, you can uncrypt the pr
 
 The directory for log files. Usually `/var/log/ocsigenserver`. Ocsigenserver is using three log files: `access.log` where all requests are logged, `errors.log` for error messages, and `warnings.log` for warnings.
 
+If `<logdir>` is omitted (and `<syslog>` is not used), the logs are written to the standard output and standard error instead of to files, so that no log directory is required.
+
 Example :
 
 ```

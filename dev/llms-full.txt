@@ -18,6 +18,18 @@
 To run the server, use the command `ocsigenserver`. It has the following options:
 
 ```
+  DIR, --serve DIR
+         Serve the static files of directory DIR without a configuration
+         file (logs go to the terminal). DIR can also be given as a plain
+         positional argument: "ocsigenserver ./public".
+
+  -P, --port
+         Port to listen on in serve mode (default 8080).
+
+  --directory-listing
+         In serve mode, list the contents of directories that have no
+         index file.
+
   -c, --config
          Alternate configuration file.
 
@@ -287,6 +299,8 @@ If you don't want to be asked for a password at start-up, you can uncrypt the pr
 #### `<logdir>` : log files directory
 
 The directory for log files. Usually `/var/log/ocsigenserver`. Ocsigenserver is using three log files: `access.log` where all requests are logged, `errors.log` for error messages, and `warnings.log` for warnings.
+
+If `<logdir>` is omitted (and `<syslog>` is not used), the logs are written to the standard output and standard error instead of to files, so that no log directory is required.
 
 Example :
 
@@ -2274,6 +2288,11 @@ val set_verbose : unit -> unit
 val set_silent : unit -> unit
 ```
 ```ocaml
+val set_log_to_stderr : bool -> unit
+```
+When set to `true`, logs are written to `stdout`/`stderr` instead of the log files under [`get_logdir`](./#val-get_logdir). Used by the one-command serve mode so that no log directory needs to exist.
+
+```ocaml
 val set_daemon : unit -> unit
 ```
 ```ocaml
@@ -2368,6 +2387,9 @@ val get_verbose : unit -> bool
 ```
 ```ocaml
 val get_silent : unit -> bool
+```
+```ocaml
+val get_log_to_stderr : unit -> bool
 ```
 ```ocaml
 val get_daemon : unit -> bool
@@ -2911,6 +2933,11 @@ val error_log_path : unit -> string
 ```
 Path to the error log file
 
+```ocaml
+val stdio_reporter : Logs.reporter
+```
+A reporter that writes access messages to `stdout` and warnings and errors to `stderr`, without opening any log file. It is used by the one-command serve mode and to report command-line errors before the logging system is configured.
+
 
 ---
 
@@ -3357,6 +3384,11 @@ val exec : Xml.xml list list -> unit
 Start the server with a configuration file. Never returns.
 
 ```ocaml
+val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
+```
+`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
+
+```ocaml
 val start : 
   ?ports:(Config.Socket_type.t * int) list ->
   ?ssl_ports:(Config.Socket_type.t * int) list ->
@@ -3407,6 +3439,11 @@ type instruction =
   Extensions.extension
 ```
 The type of instructions to be used inside an host or site. Instructions are defined by extensions (Staticmod, Eliom, etc.)
+
+```ocaml
+val register_static_server : (dir:string -> instruction) -> unit
+```
+Called by the Staticmod extension when it is loaded to publish its static-file serving function, so that [`serve`](./#val-serve) can use it without a static dependency on the extension.
 
 ```ocaml
 val host : 
@@ -7006,6 +7043,11 @@ val set_verbose : unit -> unit
 val set_silent : unit -> unit
 ```
 ```ocaml
+val set_log_to_stderr : bool -> unit
+```
+When set to `true`, logs are written to `stdout`/`stderr` instead of the log files under [`get_logdir`](./#val-get_logdir). Used by the one-command serve mode so that no log directory needs to exist.
+
+```ocaml
 val set_daemon : unit -> unit
 ```
 ```ocaml
@@ -7100,6 +7142,9 @@ val get_verbose : unit -> bool
 ```
 ```ocaml
 val get_silent : unit -> bool
+```
+```ocaml
+val get_log_to_stderr : unit -> bool
 ```
 ```ocaml
 val get_daemon : unit -> bool
@@ -7808,6 +7853,11 @@ val error_log_path : unit -> string
 ```
 Path to the error log file
 
+```ocaml
+val stdio_reporter : Logs.reporter
+```
+A reporter that writes access messages to `stdout` and warnings and errors to `stderr`, without opening any log file. It is used by the one-command serve mode and to report command-line errors before the logging system is configured.
+
 
 ---
 
@@ -8178,6 +8228,11 @@ val exec : Xml.xml list list -> unit
 Start the server with a configuration file. Never returns.
 
 ```ocaml
+val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
+```
+`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
+
+```ocaml
 val start : 
   ?ports:(Ocsigen.Config.Socket_type.t * int) list ->
   ?ssl_ports:(Ocsigen.Config.Socket_type.t * int) list ->
@@ -8228,6 +8283,11 @@ type instruction =
   Ocsigen.Extensions.extension
 ```
 The type of instructions to be used inside an host or site. Instructions are defined by extensions (Staticmod, Eliom, etc.)
+
+```ocaml
+val register_static_server : (dir:string -> instruction) -> unit
+```
+Called by the Staticmod extension when it is loaded to publish its static-file serving function, so that [`serve`](./#val-serve) can use it without a static dependency on the extension.
 
 ```ocaml
 val host : 

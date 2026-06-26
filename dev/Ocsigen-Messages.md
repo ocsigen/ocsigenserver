@@ -35,3 +35,8 @@ Use that function for all impossible cases in exception handlers (`try ... with 
 val error_log_path : unit -> string
 ```
 Path to the error log file
+
+```ocaml
+val stdio_reporter : Logs.reporter
+```
+A reporter that writes access messages to `stdout` and warnings and errors to `stderr`, without opening any log file. It is used by the one-command serve mode and to report command-line errors before the logging system is configured.
