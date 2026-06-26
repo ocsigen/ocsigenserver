@@ -101,30 +101,18 @@ some modules.
 
 The extensions provided are:
 
-;{{!page-staticmod}Staticmod}
-:for serving static pages,
-;{{!page-accesscontrol}Accesscontrol}
-:if you need to restrict the access to the sites,
-;{{!page-eliom}Eliom}
-:if you want to use dynamic Web and mobile applications written in OCaml with Eliom,
-;{{!page-revproxy}Revproxy}
-:if you want to redirect some requests to another Web server,.
-;{{!page-redirectmod}Redirectmod}
-:if you want to define some HTTP redirections,
-;{{!page-deflatemod}Deflatemod}
-:if you want to compress the content before sending your pages,
-;{{!page-outputfilter}Outputfilter}
-:allows to change the header of the HTTP response,
-;{{!page-rewritemod}Rewritemod}
-:allows to rewrite the request before continuing,
-;{{!page-extendconfiguration}Extendconfiguration}
-:adds many useful configuration options,
-;{{!page-authbasic}Authbasic}
-:for basic HTTP authentication,
-;{{!page-cors}CORS}
-:for settings CORS options,
-;{{!page-userconf}Userconf}
-:for allowing local users to have personal pages,
+- {{!page-staticmod}Staticmod}: for serving static pages,
+- {{!page-accesscontrol}Accesscontrol}: if you need to restrict the access to the sites,
+- {{!page-eliom}Eliom}: if you want to use dynamic Web and mobile applications written in OCaml with Eliom,
+- {{!page-revproxy}Revproxy}: if you want to redirect some requests to another Web server,.
+- {{!page-redirectmod}Redirectmod}: if you want to define some HTTP redirections,
+- {{!page-deflatemod}Deflatemod}: if you want to compress the content before sending your pages,
+- {{!page-outputfilter}Outputfilter}: allows to change the header of the HTTP response,
+- {{!page-rewritemod}Rewritemod}: allows to rewrite the request before continuing,
+- {{!page-extendconfiguration}Extendconfiguration}: adds many useful configuration options,
+- {{!page-authbasic}Authbasic}: for basic HTTP authentication,
+- {{!page-cors}CORS}: for settings CORS options,
+- {{!page-userconf}Userconf}: for allowing local users to have personal pages,
 
 If you are using a configuration, file, use tag 
 [<extension/>] to load an exetnsion (see examples in the
