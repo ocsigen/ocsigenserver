@@ -53,6 +53,12 @@
  (libraries ocsigenserver))
 
 (library
+ (name securityheaders)
+ (public_name ocsigenserver.ext.securityheaders)
+ (modules securityheaders)
+ (libraries ocsigenserver))
+
+(library
  (name staticmod)
  (public_name ocsigenserver.ext.staticmod)
  (modules staticmod)
