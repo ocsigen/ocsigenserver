@@ -68,7 +68,9 @@ let () =
       ; "--daemon", Arg.Unit Ocsigen.Config.set_daemon, daemon_msg
       ; "--version", Arg.Unit Ocsigen.Config.display_version, version_msg ]
       set_serve_dir usage
-  with Arg.Help s -> print_endline s; exit 0
+  with
+  | Arg.Help s -> print_endline s; exit 0
+  | Arg.Bad s -> fatal "%s" (String.trim s)
 
 (* Resolve [dir] to an absolute path and check that it is an existing directory.
    The directory is never created. *)
