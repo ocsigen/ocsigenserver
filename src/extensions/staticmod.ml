@@ -216,7 +216,12 @@ let gen ~usermode ?cache dir = function
         in
         (match page with
           | Ocsigen.Local_files.RFile fname ->
-              Ocsigen.Response.respond_file fname
+              let header name = Ocsigen.Request.header request_info name in
+              Ocsigen.Response.respond_file
+                ?if_none_match:(header Ocsigen_http.Header.Name.if_none_match)
+                ?if_modified_since:
+                  (header Ocsigen_http.Header.Name.if_modified_since)
+                fname
           | Ocsigen.Local_files.RDir dname ->
               respond_dir pathstring dname >>= fun answer ->
               Lwt.return @@ Ocsigen.Response.of_cohttp answer)
