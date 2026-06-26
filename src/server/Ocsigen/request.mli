@@ -90,6 +90,19 @@ val client_conn : t -> client_conn
 val client_conn_to_string : t -> string
 (** A textual representation of [client_conn] suitable for use in logs. *)
 
+val client_ip_to_string : t -> string
+(** The bare client IP address (no scheme prefix), suitable for the [%h] field
+    of a Common/Combined access-log line. Returns ["-"] when the address is
+    unknown. *)
+
+val set_remote_user : t -> string -> unit
+(** [set_remote_user r user] records the name of the user authenticated for
+    this request (typically by {!Authbasic}). It is stored in the request cache
+    and reported as the [%u] field of the access log. *)
+
+val remote_user : t -> string option
+(** The user authenticated for this request, if any. See {!set_remote_user}. *)
+
 val forward_ip : t -> string list
 val content_type : t -> content_type option
 val request_cache : t -> Polytables.t
