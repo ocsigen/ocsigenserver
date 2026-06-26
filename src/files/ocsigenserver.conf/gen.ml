@@ -21,6 +21,7 @@ let conf_in =
     <findlib path="_METADIR_"/>_FINDLIBEXTRA_
 
     <extension findlib-package="_EXTPACKAGENAME_.staticmod"/>
+    <extension findlib-package="_EXTPACKAGENAME_.securityheaders"/>
 
     <!-- Inclusion of all external configuration files matching *.conf
          from the directory 'dir' (in alphabetical order): -->
@@ -33,6 +34,11 @@ let conf_in =
       </site>
 
       <static dir="_STATICPAGESDIR_" />
+
+      <!-- Add safe security headers (nosniff, X-Frame-Options, Referrer-Policy)
+           to every response. HSTS and CSP are opt-in: see the securityheaders
+           manual page. -->
+      <securityheaders/>
 
     </host>
 

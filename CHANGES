@@ -2,7 +2,8 @@
  * New extension Securityheaders (ocsigenserver.ext.securityheaders): adds
    common security headers with one declaration. Safe by default
    (X-Content-Type-Options, X-Frame-Options, Referrer-Policy);
-   Strict-Transport-Security and Content-Security-Policy are opt-in.
+   Strict-Transport-Security and Content-Security-Policy are opt-in. It is
+   enabled by default in the sample configuration file and in serve mode.
  * Serve mode now logs a startup banner with the URL it listens on.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
