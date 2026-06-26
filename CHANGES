@@ -1,4 +1,8 @@
 ==== 8.0.0~dev ===
+ * One-command serve mode: "ocsigenserver ./public" (or
+   "ocsigenserver --serve ./public --port 8000 --directory-listing") now
+   serves a directory of static files without any configuration file or
+   pre-created log directory. The Staticmod extension is loaded on demand.
  * Documentation: the manual now lives in the main branch as odoc pages
    (doc/*.mld), compiled in place by `dune build @doc`, replacing the
    wikicreole manual of the wikidoc branch. doc/index.mld is the package

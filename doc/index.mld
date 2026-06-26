@@ -18,8 +18,25 @@ It is written in OCaml and uses the
 
 {1 Installation}
 
-The easier way to install Ocsigenserver is to use the [opam] package 
+The easier way to install Ocsigenserver is to use the [opam] package
 manager. Ocsigen Server is also available in Linux distributions.
+
+{1 Quick start: serving a directory in one command}
+
+To serve the static files of a directory without writing any configuration
+file, just give the directory to [ocsigenserver]:
+{v
+ocsigenserver ./public
+v}
+This starts a server on port 8080 serving the files of [./public]. No
+configuration file and no log directory are needed: the logs go to the
+terminal. A few options are available:
+{v
+ocsigenserver --serve ./public --port 8000 --directory-listing
+v}
+This is the simplest way to get started. For anything more elaborate (several
+hosts, extensions, reverse proxy, etc.) use a configuration file or the library
+API, as described below.
 
 {1 Using Ocsigen Server as an executable}
 
