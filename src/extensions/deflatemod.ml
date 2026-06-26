@@ -44,101 +44,44 @@ let set_compress_level i = compress_level := if i >= 0 && i <= 9 then i else 6
 let buffer_size = ref 8192
 let set_buffer_size s = buffer_size := if s > 0 then s else 8192
 
-(* Minimal header, by X. Leroy *)
-let gzip_header_length = 10
+(* Compression backend, provided by bytesrw. A codec is given as a bytesrw
+   writer filter (see [compress_body]). *)
 
-let gzip_header =
-  let gzip_header = Bytes.make gzip_header_length (Char.chr 0) in
-  Bytes.set gzip_header 0 @@ Char.chr 0x1F;
-  Bytes.set gzip_header 1 @@ Char.chr 0x8B;
-  Bytes.set gzip_header 2 @@ Char.chr 8;
-  Bytes.set gzip_header 9 @@ Char.chr 0xFF;
-  Bytes.unsafe_to_string gzip_header
+let stream_error e =
+  Ocsigen_base.Ocsigen_stream.Stream_error
+    ("Error during compression: " ^ Bytesrw.Bytes.Stream.error_message e)
 
-(* inspired by an auxiliary function from camlzip, by Xavier Leroy *)
-type output_buffer =
-  { stream : Zlib.stream
-  ; buf : bytes
-  ; flush : string -> unit Lwt.t
-  ; mutable size : int32
-  ; mutable crc : int32 }
+(* Compress [body] with the bytesrw writer filter [cfilter], pushing each
+   produced chunk to [flush].
 
-let write_int32 buf offset n =
-  for i = 0 to 3 do
-    Bytes.set buf (offset + i)
-      (Char.chr (Int32.to_int (Int32.shift_right_logical n (8 * i)) land 0xff))
-  done
-
-let compress_flush oz used_out =
-  Logs.debug ~src:section (fun fmt -> fmt "Flushing %d bytes" used_out);
-  if used_out > 0
-  then oz.flush (Bytes.sub_string oz.buf 0 used_out)
-  else Lwt.return_unit
-
-(* gzip trailer *)
-let write_trailer oz =
-  write_int32 oz.buf 0 oz.crc;
-  write_int32 oz.buf 4 oz.size;
-  compress_flush oz 8
-
-(* puts in oz the content of buf, from pos to pos + len ; *)
-let rec compress_output oz inbuf pos len =
-  if len = 0
-  then Lwt.return_unit
-  else
-    let (_ : bool), used_in, used_out =
-      try
-        Zlib.deflate_string oz.stream inbuf pos len oz.buf 0
-          (Bytes.length oz.buf) Zlib.Z_NO_FLUSH
-      with Zlib.Error (s, s') ->
-        raise
-          (Ocsigen_base.Ocsigen_stream.Stream_error
-             ("Error during compression: " ^ s ^ " " ^ s'))
-    in
-    compress_flush oz used_out >>= fun () ->
-    compress_output oz inbuf (pos + used_in) (len - used_in)
-
-let rec compress_finish oz =
-  Logs.debug ~src:section (fun fmt -> fmt "Finishing");
-  (* loop until there is nothing left to compress and flush *)
-  let finished, (_ : int), used_out =
-    Zlib.deflate oz.stream oz.buf 0 0 oz.buf 0 (Bytes.length oz.buf)
-      Zlib.Z_FINISH
-  in
-  compress_flush oz used_out >>= fun () ->
-  if not finished then compress_finish oz else Lwt.return_unit
-
-(* deflate param : true = deflate ; false = gzip (no header in this case) *)
-let compress_body deflate body =
+   bytesrw writers are synchronous, whereas [flush] is an Lwt operation. We let
+   the compressor write its output into an in-memory buffer, then flush that
+   buffer downstream after each input chunk. This bridges the synchronous
+   compressor with the Lwt output stream without ever blocking. *)
+let compress_body (cfilter : Bytesrw.Bytes.Writer.filter) body =
  fun flush ->
-  let zstream = Zlib.deflate_init !compress_level deflate in
-  let oz =
-    let buffer_size = !buffer_size in
-    { stream = zstream
-    ; buf = Bytes.create buffer_size
-    ; flush
-    ; size = 0l
-    ; crc = 0l }
+  let out = Buffer.create !buffer_size in
+  let cw = cfilter ~eod:true (Bytesrw.Bytes.Writer.of_buffer out) in
+  let flush_out () =
+    if Buffer.length out = 0
+    then Lwt.return_unit
+    else
+      let s = Buffer.contents out in
+      Buffer.clear out; flush s
   in
-  (if deflate then Lwt.return_unit else flush gzip_header) >>= fun () ->
+  let write f =
+    try f () with Bytesrw.Bytes.Stream.Error e -> raise (stream_error e)
+  in
   body (fun inbuf ->
-    let len = String.length inbuf in
-    oz.size <- Int32.add oz.size (Int32.of_int len);
-    oz.crc <- Zlib.update_crc_string oz.crc inbuf 0 len;
-    compress_output oz inbuf 0 len)
+    write (fun () -> Bytesrw.Bytes.Writer.write_string cw inbuf);
+    flush_out ())
   >>= fun () ->
-  compress_finish oz >>= fun () ->
-  (if deflate then Lwt.return_unit else write_trailer oz) >>= fun () ->
+  write (fun () -> Bytesrw.Bytes.Writer.write_eod cw);
   Logs.debug ~src:section (fun fmt -> fmt "Close stream");
-  (try Zlib.deflate_end zstream
-   with
-   (* ignore errors, deflate_end cleans everything anyway *)
-   | Zlib.Error _ ->
-     ());
-  Lwt.return_unit
+  flush_out ()
 
 (* We implement Content-Encoding, not Transfer-Encoding *)
-type encoding = Deflate | Gzip | Id | Star | Not_acceptable
+type encoding = Deflate | Gzip | Zstd | Id | Star | Not_acceptable
 
 let qvalue = function Some x -> x | None -> 1.0
 
@@ -149,6 +92,8 @@ let enc_compare e e' =
   | (_, v), (_, v') when v < v' -> 1 (* then, sort by qvalue *)
   | (_, v), (_, v') when v > v' -> -1
   | (x, _), (x', _) when x = x' -> 0
+  | (Zstd, _), (_, _) -> -1 (* zstd is preferred at equal qvalue *)
+  | (_, _), (Zstd, _) -> 1
   | (Deflate, _), (_, _) -> 1 (* and subsort by encoding *)
   | (_, _), (Deflate, _) -> -1
   | (Gzip, _), (_, _) -> 1
@@ -165,6 +110,7 @@ let rec filtermap f = function
 let convert = function
   | Some "deflate", v -> Some (Deflate, qvalue v)
   | Some "gzip", v | Some "x-gzip", v -> Some (Gzip, qvalue v)
+  | Some "zstd", v -> Some (Zstd, qvalue v)
   | Some "identity", v -> Some (Id, qvalue v)
   | None, v -> Some (Star, qvalue v)
   | _ -> None
@@ -185,9 +131,10 @@ let select_encoding accept_header =
   in
   aux accept
 
-(* deflate = true -> mode deflate
-   deflate = false -> mode gzip *)
-let stream_filter contentencoding url deflate choice res =
+(* [cfilter] is the bytesrw writer filter for the negotiated codec,
+   [contentencoding] the matching Content-Encoding token, [etag_prefix] a
+   per-codec tag prepended to the ETag so that variants stay distinct. *)
+let stream_filter cfilter contentencoding etag_prefix url choice res =
   Lwt.return
     (Ocsigen.Extensions.Ext_found
        (fun () ->
@@ -212,9 +159,7 @@ let stream_filter contentencoding url deflate choice res =
                        let name = Ocsigen_http.Header.Name.(to_string etag) in
                        match Cohttp.Header.get headers name with
                        | Some e ->
-                           Cohttp.Header.replace headers name
-                             ((if deflate then "Ddeflatemod" else "Gdeflatemod")
-                             ^ e)
+                           Cohttp.Header.replace headers name (etag_prefix ^ e)
                        | None -> headers
                      in
                      let headers =
@@ -225,7 +170,7 @@ let stream_filter contentencoding url deflate choice res =
                      Http.Response.make ~headers ~status ~version ()
                    and body =
                      Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
-                       (compress_body deflate
+                       (compress_body cfilter
                           (Ocsigen.Response.Body.write
                              (Ocsigen.Response.body res)))
                    in
@@ -243,13 +188,24 @@ let filter choice_list = function
       |> Ocsigen_http.Header.Accept_encoding.parse |> select_encoding
     with
     | Deflate ->
-        stream_filter "deflate"
+        (* HTTP "deflate" is the zlib format (RFC 1950), not raw deflate. *)
+        stream_filter
+          (Bytesrw_zlib.Zlib.compress_writes ~level:!compress_level ())
+          "deflate" "Ddeflatemod"
           (Ocsigen.Request.sub_path_string ri)
-          true choice_list res
+          choice_list res
     | Gzip ->
-        stream_filter "gzip"
+        stream_filter
+          (Bytesrw_zlib.Gzip.compress_writes ~level:!compress_level ())
+          "gzip" "Gdeflatemod"
           (Ocsigen.Request.sub_path_string ri)
-          false choice_list res
+          choice_list res
+    | Zstd ->
+        stream_filter
+          (Bytesrw_zstd.compress_writes ())
+          "zstd" "Zdeflatemod"
+          (Ocsigen.Request.sub_path_string ri)
+          choice_list res
     | Id | Star ->
         Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return res))
     | Not_acceptable ->
@@ -321,3 +277,19 @@ let () =
     ~init_fun:parse_global_config ()
 
 let run ~mode () _ _ _ = filter mode
+
+(* Content types compressed by default in the one-command serve mode. Covers
+   the usual text-based, highly compressible resources; binary formats (images,
+   video, archives) are already compressed and left untouched. *)
+let default_serve_mode =
+  `Only
+    [ `Type (Some "text", None)
+    ; `Type (Some "application", Some "javascript")
+    ; `Type (Some "application", Some "x-javascript")
+    ; `Type (Some "application", Some "json")
+    ; `Type (Some "application", Some "xml")
+    ; `Type (Some "application", Some "xhtml+xml")
+    ; `Type (Some "application", Some "wasm")
+    ; `Type (Some "image", Some "svg+xml") ]
+
+let () = Ocsigen.Server.register_compression (run ~mode:default_serve_mode ())

@@ -94,6 +94,11 @@ val register_static_server : (dir:string -> instruction) -> unit
     static-file serving function, so that {!serve} can use it without a static
     dependency on the extension. *)
 
+val register_compression : instruction -> unit
+(** Called by the Deflatemod extension when it is loaded to publish a
+    compression instruction with safe defaults, so that {!serve} can compress
+    responses without a static dependency on the extension. *)
+
 val host :
    ?regexp:string
   -> ?port:int

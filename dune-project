@@ -18,7 +18,9 @@
  (maintenance_intent "(latest)")
  (depends
   (ocaml (>= 4.14))
-  (camlzip (>= 1.08))
+  (bytesrw (>= 0.3.0))
+  conf-zlib
+  conf-zstd
   (cohttp-lwt-unix (>= 6.0))
   conduit-lwt-unix
   http
