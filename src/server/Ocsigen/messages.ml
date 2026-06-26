@@ -76,6 +76,75 @@ let stdio_reporter =
         in
         r.Logs.report src level ~over k msgf) }
 
+let log_to_stdio () =
+  Logs.set_reporter stdio_reporter;
+  Lwt.return ()
+
+(* Write logs to the access/warnings/errors files in the log directory. *)
+let open_log_files_in_dir () =
+  let open_channel path =
+    let path = full_path path in
+    try
+      let channel =
+        open_out_gen
+          [Open_append; Open_wronly; Open_creat; Open_text]
+          0o640 path
+      in
+      channel, fun () -> close_out_noerr channel
+    with
+    | Unix.Unix_error (error, _, _) ->
+        raise
+          (Config.Config_file_error
+             (Printf.sprintf "can't open log file %s: %s" path
+                (Unix.error_message error)))
+    | exn -> raise exn
+  in
+  let open_log path =
+    let channel, close = open_channel path in
+    make_reporter channel, close
+  in
+  let acc = open_log access_file in
+  let war = open_log warning_file in
+  let err = open_log error_file in
+  close_loggers := [snd acc; snd war; snd err];
+  Logs.set_reporter
+    (let broadcast_reporters =
+       [ { Logs.report =
+             (fun src _level ~over k msgf ->
+               let r =
+                 if Logs.Src.equal src access_sect
+                 then fst acc
+                 else Logs.nop_reporter
+               in
+               r.Logs.report src Error ~over k msgf) }
+       ; (let dispatch_f =
+           fun _sect lev ->
+            match lev with
+            | Logs.Error -> fst err
+            | Logs.Warning -> fst war
+            | _ -> Logs.nop_reporter
+          in
+          { Logs.report =
+              (fun src level ~over k msgf ->
+                (dispatch_f src level).Logs.report src level ~over k msgf) })
+       ; (let dispatch_f =
+           fun _sect lev ->
+            if Config.get_silent ()
+            then Logs.nop_reporter
+            else
+              match lev with Logs.Warning | Logs.Error -> stderr | _ -> stdout
+          in
+          { Logs.report =
+              (fun src level ~over k msgf ->
+                (dispatch_f src level).Logs.report src level ~over k msgf) }) ]
+     in
+     { Logs.report =
+         (fun src level ~over k msgf ->
+           List.fold_left
+             (fun k r () -> r.Logs.report src level ~over k msgf)
+             k broadcast_reporters ()) });
+  Lwt.return ()
+
 let open_log_files () =
   match Config.get_syslog_facility () with
   | Some facility ->
@@ -95,83 +164,17 @@ let open_log_files () =
                  k broadcast_reporters ()) });
       Lwt.return ()
   | None ->
-      (* log to files *)
-      let open_channel path =
-        let path = full_path path in
-        try
-          let channel =
-            open_out_gen
-              [Open_append; Open_wronly; Open_creat; Open_text]
-              0o640 path
-          in
-          channel, fun () -> close_out_noerr channel
-        with
-        | Unix.Unix_error (error, _, _) ->
-            raise
-              (Config.Config_file_error
-                 (Printf.sprintf "can't open log file %s: %s" path
-                    (Unix.error_message error)))
-        | exn -> raise exn
-      in
-      let open_log path =
-        let channel, close = open_channel path in
-        make_reporter channel, close
-      in
-      let acc = open_log access_file in
-      let war = open_log warning_file in
-      let err = open_log error_file in
-      close_loggers := [snd acc; snd war; snd err];
-      Logs.set_reporter
-        (let broadcast_reporters =
-           [ { Logs.report =
-                 (fun src _level ~over k msgf ->
-                   let r =
-                     if Logs.Src.equal src access_sect
-                     then fst acc
-                     else Logs.nop_reporter
-                   in
-                   r.Logs.report src Error ~over k msgf) }
-           ; (let dispatch_f =
-               fun _sect lev ->
-                match lev with
-                | Logs.Error -> fst err
-                | Logs.Warning -> fst war
-                | _ -> Logs.nop_reporter
-              in
-              { Logs.report =
-                  (fun src level ~over k msgf ->
-                    (dispatch_f src level).Logs.report src level ~over k msgf)
-              })
-           ; (let dispatch_f =
-               fun _sect lev ->
-                if Config.get_silent ()
-                then Logs.nop_reporter
-                else
-                  match lev with
-                  | Logs.Warning | Logs.Error -> stderr
-                  | _ -> stdout
-              in
-              { Logs.report =
-                  (fun src level ~over k msgf ->
-                    (dispatch_f src level).Logs.report src level ~over k msgf)
-              }) ]
-         in
-         { Logs.report =
-             (fun src level ~over k msgf ->
-               List.fold_left
-                 (fun k r () -> r.Logs.report src level ~over k msgf)
-                 k broadcast_reporters ()) });
-      Lwt.return ()
+      (* When no log directory is configured, log to stdout/stderr instead of
+         creating files in the current directory. *)
+      if Config.get_logdir () = ""
+      then log_to_stdio ()
+      else open_log_files_in_dir ()
 
 let open_files () =
   (* CHECK: we are closing asynchronously! That should be ok, though. *)
   List.iter (fun close -> close ()) !close_loggers;
   close_loggers := [];
-  if Config.get_log_to_stderr ()
-  then (
-    Logs.set_reporter stdio_reporter;
-    Lwt.return ())
-  else open_log_files ()
+  if Config.get_log_to_stderr () then log_to_stdio () else open_log_files ()
 
 (****)
 
