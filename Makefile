@@ -46,13 +46,11 @@ distclean: clean.local
 # BB different, make files universally accessible, we cannot chown.
 INSTALL_CAN_PUT_PERMISSIONS=yes
 INSTALL_USER_GROUP=-o $(OCSIGENUSER) -g "$(OCSIGENGROUP)"
-INSTALL_MOD_660=-m 660
-INSTALL_MOD_644=-m 644
-INSTALL_MOD_755=-m 755
-INSTALL_MOD_770=-m 770
-INSTALL_MOD_750=-m 750
-INSTALL_DIR=$(INSTALL) -d
-INSTALL_FILE=$(INSTALL)
+INSTALL_MOD_660=660
+INSTALL_MOD_644=644
+INSTALL_MOD_755=755
+INSTALL_MOD_770=770
+INSTALL_MOD_750=750
 USERNAME=$(shell whoami)
 ifneq ($(shell id -u), 0)
   ifneq ($(OCSIGENUSER), $(USERNAME))
@@ -64,58 +62,38 @@ ifneq ($(shell id -u), 0)
 endif
 ifeq ($(INSTALL_CAN_PUT_PERMISSIONS), no)
     INSTALL_USER_GROUP=
-    INSTALL_MOD_660=-m 666
-    INSTALL_MOD_644=-m 666
-    INSTALL_MOD_755=-m 777
-    INSTALL_MOD_770=-m 777
-    INSTALL_MOD_750=-m 777
-endif
-
-# On Windows (Cygwin), NTFS does not support Unix permission bits and `install`
-# aborts when it fails to chmod the freshly created file or directory. Fall back
-# to plain `mkdir -p` / `cp` and drop the mode and ownership flags.
-ifeq ($(OS),Windows_NT)
-  OCSIGEN_WINDOWS=yes
-endif
-ifneq (,$(findstring CYGWIN,$(shell uname -s 2>/dev/null)))
-  OCSIGEN_WINDOWS=yes
-endif
-ifeq ($(OCSIGEN_WINDOWS), yes)
-    INSTALL_USER_GROUP=
-    INSTALL_MOD_660=
-    INSTALL_MOD_644=
-    INSTALL_MOD_755=
-    INSTALL_MOD_770=
-    INSTALL_MOD_750=
-    INSTALL_DIR=mkdir -p
-    INSTALL_FILE=cp
+    INSTALL_MOD_660=666
+    INSTALL_MOD_644=666
+    INSTALL_MOD_755=777
+    INSTALL_MOD_770=777
+    INSTALL_MOD_750=777
 endif
 
 install.files:
 	@echo
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
 	 ## Configuration files
-	$(INSTALL_DIR) ${INSTALL_MOD_755} $(TEMPROOT)$(CONFIGDIR)/conf.d
-	$(INSTALL_FILE) ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
+	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
+	${INSTALL} -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
 	[ -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf ] || \
-	  { $(INSTALL_FILE) ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample \
+	  { $(INSTALL) -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample \
 		$(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory
-	$(INSTALL_FILE) ${INSTALL_MOD_644} src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
-	$(INSTALL_DIR) ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(LOGDIR)
+	$(INSTALL) -m ${INSTALL_MOD_644} src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
+	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(LOGDIR)
 	 ## Static files
-	$(INSTALL_DIR) ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(STATICPAGESDIR)
-	$(INSTALL_DIR) ${INSTALL_MOD_750} ${INSTALL_USER_GROUP} $(TEMPROOT)$(DATADIR)
-	$(INSTALL_FILE) ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
+	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(STATICPAGESDIR)
+	$(INSTALL) -d -m ${INSTALL_MOD_750} ${INSTALL_USER_GROUP} $(TEMPROOT)$(DATADIR)
+	$(INSTALL) -m ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
 	  local/var/www/*.html $(TEMPROOT)$(STATICPAGESDIR)
-	$(INSTALL_DIR) ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} \
+	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
-	$(INSTALL_FILE) ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
+	$(INSTALL) -m ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
 	  local/var/www/ocsigenstuff/*.png local/var/www/ocsigenstuff/*.css \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	mkdir -p $(TEMPROOT)$(MANDIR)
-	$(INSTALL_FILE) ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
+	$(INSTALL) -m ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
 
 uninstall:
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf.sample
