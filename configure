@@ -350,6 +350,17 @@ done
 temproot=`echo "$temproot" | tr -d '"'`
 root=`echo "$root" | tr -d '"'`
 
+# On Windows, opam passes paths with backslash separators (e.g. the expansion
+# of %{lib}%). The Cygwin shell that runs the install recipes would eat those
+# backslashes as escape characters and corrupt the paths. Convert them to
+# forward slashes, which Cygwin accepts (e.g. D:/a/...). Harmless on Unix.
+for __var in prefix root temproot bindir logdir libdir mandir docdir \
+             commandpipe sysconfdir staticpagesdir uploaddir datadir full_pwd; do
+  eval "__val=\$$__var"
+  __val=`printf '%s' "$__val" | tr '\\' '/'`
+  eval "$__var=\$__val"
+done
+
 case "$bindir" in
   "") bindir="$prefix/bin";;
 esac
