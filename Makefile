@@ -53,6 +53,10 @@ INSTALL_MOD_770=-m 770
 INSTALL_MOD_750=-m 750
 INSTALL_DIR=$(INSTALL) -d
 INSTALL_FILE=$(INSTALL)
+# The Unix permission/ownership handling below is meaningless on Windows (the
+# OCSIGEN_WINDOWS branch drops modes and ownership anyway), and OCSIGENGROUP is
+# empty there, which makes the `grep` check below print a usage error. Skip it.
+ifneq ($(OCSIGEN_WINDOWS), yes)
 USERNAME=$(shell whoami)
 ifneq ($(shell id -u), 0)
   ifneq ($(OCSIGENUSER), $(USERNAME))
@@ -69,6 +73,7 @@ ifeq ($(INSTALL_CAN_PUT_PERMISSIONS), no)
     INSTALL_MOD_755=-m 777
     INSTALL_MOD_770=-m 777
     INSTALL_MOD_750=-m 777
+endif
 endif
 
 # On Windows (Cygwin), NTFS does not support Unix permission bits and `install`
