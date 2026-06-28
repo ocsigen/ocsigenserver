@@ -343,23 +343,31 @@ while [ "$#" -gt 0 ]; do
 	esac
 done
 
-# On Windows, opam passes empty arguments (e.g. `--temproot ""`) through the
-# Cygwin shell as a literal double-quote character. That stray quote ends up in
-# Makefile.config and breaks the install recipes ("unexpected EOF while looking
-# for matching"). Strip double quotes from the path variables to stay robust.
-temproot=`echo "$temproot" | tr -d '"'`
-root=`echo "$root" | tr -d '"'`
+# Detect a Cygwin/Windows build. cygpath is only available on Cygwin, so its
+# presence both identifies the platform and provides the path conversion we
+# need: on Windows opam passes Windows-style paths (backslash separators, drive
+# letters, and occasionally a stray double quote from an empty argument such as
+# `--temproot ""`). The Cygwin shell that runs the install recipes would eat the
+# backslashes as escape characters, so normalize every path through cygpath into
+# a form it accepts (e.g. D:/a/...). On Unix cygpath is absent and paths are
+# left untouched.
+if command -v cygpath >/dev/null 2>&1; then
+  windows=yes
+else
+  windows=no
+fi
 
-# On Windows, opam passes paths with backslash separators (e.g. the expansion
-# of %{lib}%). The Cygwin shell that runs the install recipes would eat those
-# backslashes as escape characters and corrupt the paths. Convert them to
-# forward slashes, which Cygwin accepts (e.g. D:/a/...). Harmless on Unix.
-for __var in prefix root temproot bindir logdir libdir mandir docdir \
-             commandpipe sysconfdir staticpagesdir uploaddir datadir full_pwd; do
-  eval "__val=\$$__var"
-  __val=`printf '%s' "$__val" | tr '\\' '/'`
-  eval "$__var=\$__val"
-done
+if [ "$windows" = yes ]; then
+  for __var in prefix root temproot bindir logdir libdir mandir docdir \
+               commandpipe sysconfdir staticpagesdir uploaddir datadir full_pwd; do
+    eval "__val=\$$__var"
+    __val=`printf '%s' "$__val" | tr -d '"'`
+    if [ -n "$__val" ]; then
+      __val=`cygpath -m "$__val" 2>/dev/null || printf '%s' "$__val"`
+    fi
+    eval "$__var=\$__val"
+  done
+fi
 
 case "$bindir" in
   "") bindir="$prefix/bin";;
@@ -493,6 +501,10 @@ ocamlinclude=`ocamlfind printconf stdlib`
 
 echo "Writing Makefile.config"
 cat <<_EOF_ > $my_pwd/Makefile.config
+
+# Whether this is a Cygwin/Windows build (NTFS cannot apply Unix permissions, so
+# install.files falls back to mkdir -p / cp instead of install -m).
+OCSIGEN_WINDOWS := $windows
 
 #### External binaries ####
 

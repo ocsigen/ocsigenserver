@@ -74,12 +74,7 @@ endif
 # On Windows (Cygwin), NTFS does not support Unix permission bits and `install`
 # aborts when it fails to chmod the freshly created file or directory. Fall back
 # to plain `mkdir -p` / `cp` and drop the mode and ownership flags.
-ifeq ($(OS),Windows_NT)
-  OCSIGEN_WINDOWS=yes
-endif
-ifneq (,$(findstring CYGWIN,$(shell uname -s 2>/dev/null)))
-  OCSIGEN_WINDOWS=yes
-endif
+# OCSIGEN_WINDOWS is set by ./configure (see Makefile.config).
 ifeq ($(OCSIGEN_WINDOWS), yes)
     INSTALL_USER_GROUP=
     INSTALL_MOD_660=
