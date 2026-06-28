@@ -343,6 +343,13 @@ while [ "$#" -gt 0 ]; do
 	esac
 done
 
+# On Windows, opam passes empty arguments (e.g. `--temproot ""`) through the
+# Cygwin shell as a literal double-quote character. That stray quote ends up in
+# Makefile.config and breaks the install recipes ("unexpected EOF while looking
+# for matching"). Strip double quotes from the path variables to stay robust.
+temproot=`echo "$temproot" | tr -d '"'`
+root=`echo "$root" | tr -d '"'`
+
 case "$bindir" in
   "") bindir="$prefix/bin";;
 esac
