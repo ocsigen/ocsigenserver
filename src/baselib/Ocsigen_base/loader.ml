@@ -62,6 +62,13 @@ let get_init_on_load, set_init_on_load =
   let init_on_load = ref false in
   (fun () -> !init_on_load), fun b -> init_on_load := b
 
+(* Bytecode Dynlink refuses, by default, to load a module that declares
+   primitives (it flags such modules as "unsafe"); this includes pure-OCaml
+   modules that use compiler primitives, e.g. base64 with %caml_string_get16u.
+   Allow them so extensions depending on such modules can be loaded when the
+   server runs as bytecode. No-op for native Dynlink. *)
+let () = Dynlink_wrapper.allow_unsafe_modules true
+
 let loadfile pre post force file =
   let file = translate file in
   try
