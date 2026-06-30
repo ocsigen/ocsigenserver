@@ -1,0 +1,7 @@
+(executable
+ (name test)
+ (libraries
+  ocsigenserver
+  ocsigenserver.ext.staticmod
+  ocsigenserver.ext.authbasic
+  lwt))

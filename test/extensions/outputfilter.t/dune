@@ -1,0 +1,7 @@
+(executable
+ (name test)
+ (libraries
+  ocsigenserver
+  ocsigenserver.http
+  ocsigenserver.ext.staticmod
+  ocsigenserver.ext.outputfilter))

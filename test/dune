@@ -1,12 +1,34 @@
+; Tests that start the server over a unix-domain socket (via
+; server-test-helpers.sh). Unix-domain sockets are not available under Cygwin,
+; so these are disabled on Windows.
+
 (subdir
  extensions
  (cram
   (package ocsigenserver)
+  (enabled_if
+   (<> %{os_type} Win32))
   (deps
    ../server-test-helpers.sh
    (package ocsigenserver))))
 
 (cram
+ (applies_to http-semantics static-files range-requests)
+ (package ocsigenserver)
+ (enabled_if
+  (<> %{os_type} Win32))
+ (deps
+  server-test-helpers.sh
+  (package ocsigenserver)))
+
+; Serve-mode tests. They start a background server and stop it gracefully by
+; sending "shutdown" to its command pipe (a FIFO on Unix, a named pipe on
+; Windows), so the server exits on its own and nothing is left for dune's cram
+; cleanup. They run on every platform, including Windows.
+
+(cram
+ (applies_to serve serve-listing serve-cli)
  (package ocsigenserver)
  (deps
+  server-test-helpers.sh
   (package ocsigenserver)))
