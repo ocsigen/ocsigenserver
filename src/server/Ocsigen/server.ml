@@ -95,6 +95,10 @@ let reload ?file () =
    with e -> Logs.err ~src:section (fun fmt -> fmt "%s" (fst (errmsg e))));
   Logs.warn ~src:section (fun fmt -> fmt "Config file reloaded")
 
+(* Set once a "shutdown" command has been received, so the Windows named-pipe
+   reader stops blocking on the next read (see [read_named_pipe_commands]). *)
+let shutdown_requested = ref false
+
 let () =
   let f _s = function
     | ["reopen_logs"] ->
@@ -104,9 +108,11 @@ let () =
     | ["reload"] -> reload (); Lwt.return ()
     | ["reload"; file] -> reload ~file (); Lwt.return ()
     | ["shutdown"] ->
+        shutdown_requested := true;
         Ocsigen_cohttp.shutdown None;
         Lwt.return ()
     | ["shutdown"; f] ->
+        shutdown_requested := true;
         Ocsigen_cohttp.shutdown (Some (float_of_string f));
         Lwt.return ()
     | ["gc"] ->
@@ -120,6 +126,78 @@ let () =
     | _ -> Lwt.fail Command.Unknown_command
   in
   Command.register_command_function f
+
+(* Parse and run one command line received on the command pipe. *)
+let run_command s =
+  Messages.warning ("Command received: " ^ s);
+  Lwt.catch
+    (fun () ->
+       let prefix, c =
+         match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
+         | [] -> raise Command.Unknown_command
+         | a :: l -> (
+           try
+             let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
+             Some aa, ab :: l
+           with Not_found -> None, a :: l)
+       in
+       Command.get_command_function () ?prefix s c)
+    (function
+      | Command.Unknown_command ->
+          Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
+          Lwt.return ()
+      | e ->
+          Logs.err ~src:section (fun fmt ->
+            fmt
+              ("Uncaught Exception after command" ^^ "@\n%s")
+              (Printexc.to_string e));
+          Lwt.fail e)
+
+(* A Windows named pipe must be named "\\.\pipe\NAME"; derive such a name from
+   the configured command-pipe path if it is not already one. *)
+let windows_command_pipe_name path =
+  let has_prefix q =
+    String.length path >= String.length q
+    && String.sub path 0 (String.length q) = q
+  in
+  if has_prefix "\\\\.\\pipe\\" || has_prefix "//./pipe/"
+  then path
+  else "\\\\.\\pipe\\" ^ Filename.basename path
+
+(* Send [command] to a running server's command pipe [command_pipe] (a Windows
+   named pipe or a Unix FIFO). This is the client side of the command channel,
+   used by the "--command" mode of the executable to control a server without a
+   signal (notably to stop it gracefully on Windows, where killing the
+   background process reliably is not possible). *)
+let send_command ~command_pipe command =
+  if Ocsigen_base.Win_command_pipe.supported
+  then
+    Ocsigen_base.Win_command_pipe.send
+      (windows_command_pipe_name command_pipe)
+      (command ^ "\n")
+  else
+    let oc = open_out command_pipe in
+    output_string oc (command ^ "\n");
+    close_out oc
+
+(* Read commands from a Windows named pipe. The blocking read runs in a worker
+   thread (Lwt_preemptive) so the rest of the server keeps running. We stop once
+   a "shutdown" has been requested: otherwise the loop would start another
+   blocking read (ConnectNamedPipe) in a worker thread, and Stdlib.exit cannot
+   complete the runtime shutdown while a worker is stuck in that uninterruptible
+   call -- the process would hang at exit. *)
+let rec read_named_pipe_commands handle =
+  Lwt_preemptive.detach Ocsigen_base.Win_command_pipe.read handle
+  >>= fun data ->
+  let commands =
+    String.split_on_char '\n' data
+    |> List.map String.trim
+    |> List.filter (fun s -> s <> "")
+  in
+  Lwt_list.iter_s run_command commands >>= fun () ->
+  if !shutdown_requested
+  then Lwt.return ()
+  else read_named_pipe_commands handle
 
 type instruction =
   Extensions.virtual_hosts
@@ -237,26 +315,42 @@ let main config =
         | l, Some (crt, key) -> List.map (fun (a, p) -> a, p, (crt, key)) l
         | _ -> []
       in
-      (* A pipe to communicate with the server *)
+      (* A pipe to communicate with the server. On Unix this is a FIFO; on
+         Windows (where mkfifo is unavailable) it is a named pipe. *)
       let commandpipe = Config.get_command_pipe () in
-      let with_commandpipe =
+      let command_channel =
         try
           ignore (Unix.stat commandpipe : Unix.stats);
-          true
+          `Fifo
         with Unix.Unix_error _ -> (
           try
             let umask = Unix.umask 0 in
             Unix.mkfifo commandpipe 0o660;
             ignore (Unix.umask umask : int);
             Logs.warn ~src:section (fun fmt -> fmt "Command pipe created");
-            true
-          with e ->
-            Logs.warn ~src:section (fun fmt ->
-              fmt
-                ("Cannot create the command pipe %s. I will continue without."
-               ^^ "@\n%s")
-                commandpipe (Printexc.to_string e));
-            false)
+            `Fifo
+          with
+          | _ when Ocsigen_base.Win_command_pipe.supported -> (
+            try
+              let name = windows_command_pipe_name commandpipe in
+              let handle = Ocsigen_base.Win_command_pipe.create name in
+              Logs.warn ~src:section (fun fmt ->
+                fmt "Command named pipe created: %s" name);
+              `Named_pipe handle
+            with e' ->
+              Logs.warn ~src:section (fun fmt ->
+                fmt
+                  ("Cannot create the command pipe %s. I will continue without."
+                 ^^ "@\n%s")
+                  commandpipe (Printexc.to_string e'));
+              `None)
+          | e ->
+              Logs.warn ~src:section (fun fmt ->
+                fmt
+                  ("Cannot create the command pipe %s. I will continue without."
+                 ^^ "@\n%s")
+                  commandpipe (Printexc.to_string e));
+              `None)
       in
       let minthreads = Config.get_minthreads ()
       and maxthreads = Config.get_maxthreads () in
@@ -287,41 +381,18 @@ let main config =
       (* detach from the terminal *)
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
-      (if with_commandpipe
-       then
-         let pipe =
-           Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
-           |> Lwt_unix.of_unix_file_descr
-           |> Lwt_io.(of_fd ~mode:input)
-         in
-         let rec f () =
-           Lwt_io.read_line pipe >>= fun s ->
-           Messages.warning ("Command received: " ^ s);
-           Lwt.catch
-             (fun () ->
-                let prefix, c =
-                  match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
-                  | [] -> raise Command.Unknown_command
-                  | a :: l -> (
-                    try
-                      let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
-                      Some aa, ab :: l
-                    with Not_found -> None, a :: l)
-                in
-                Command.get_command_function () ?prefix s c)
-             (function
-               | Command.Unknown_command ->
-                   Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
-                   Lwt.return ()
-               | e ->
-                   Logs.err ~src:section (fun fmt ->
-                     fmt
-                       ("Uncaught Exception after command" ^^ "@\n%s")
-                       (Printexc.to_string e));
-                   Lwt.fail e)
-           >>= f
-         in
-         ignore (f () : 'a Lwt.t));
+      (match command_channel with
+      | `Fifo ->
+          let pipe =
+            Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
+            |> Lwt_unix.of_unix_file_descr
+            |> Lwt_io.(of_fd ~mode:input)
+          in
+          let rec f () = Lwt_io.read_line pipe >>= run_command >>= f in
+          ignore (f () : 'a Lwt.t)
+      | `Named_pipe handle ->
+          ignore (read_named_pipe_commands handle : 'a Lwt.t)
+      | `None -> ());
       Lwt.join
         (List.map
            (fun (address, port) ->
@@ -489,15 +560,19 @@ let start
 let static_server : (dir:string -> instruction) option ref = ref None
 let register_static_server f = static_server := Some f
 
-let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
+let serve ?(port = 8080) ?(directory_listing = false) ?command_pipe ~dir () =
   (* One-command serve mode: no configuration file and no log directory are
      required. Logs go to stderr and the command pipe is placed in a temporary
-     location so that the usual control commands remain available. *)
+     location (unless one is given) so that the usual control commands remain
+     available. *)
   Config.set_log_to_stderr true;
   Config.set_command_pipe
-    (Filename.concat
-       (Filename.get_temp_dir_name ())
-       (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())));
+    (match command_pipe with
+    | Some p -> p
+    | None ->
+        Filename.concat
+          (Filename.get_temp_dir_name ())
+          (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())));
   (* Load the Staticmod extension on demand. It registers its serving function
      through [register_static_server]. *)
   (try

@@ -14,6 +14,9 @@
  (wrapped false)
  (flags
   (:standard -no-keep-locs))
+ (foreign_stubs
+  (language c)
+  (names command_pipe_stubs))
  (modules :standard \ ocsigen_lib_base)
  (libraries
   str

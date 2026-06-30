@@ -28,7 +28,13 @@ val reload : ?file:string -> unit -> unit
 val exec : Xml.xml list list -> unit
 (** Start the server with a configuration file. Never returns. *)
 
-val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
+val serve :
+   ?port:int
+  -> ?directory_listing:bool
+  -> ?command_pipe:string
+  -> dir:string
+  -> unit
+  -> unit
 (** [serve ~dir ()] starts a server that serves the static files of directory
     [dir], with no configuration file and no log directory required (logs go to
     [stdout]/[stderr]). This backs the one-command serve mode of the
@@ -36,6 +42,14 @@ val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
     extension is loaded dynamically on demand, so it does not need to be linked
     into the program. [port] defaults to 8080. When [directory_listing] is
     [true], directories without an index file are listed. Never returns. *)
+
+val send_command : command_pipe:string -> string -> unit
+(** [send_command ~command_pipe cmd] connects to a running server's command pipe
+    (a Unix FIFO or, on Windows, a named pipe — [command_pipe] is the same value
+    passed to {!serve}'s [command_pipe]) and writes [cmd] to it. This is the
+    client side used by the [--command] mode of the executable, mainly to stop a
+    server gracefully on Windows where killing the background process is
+    unreliable. *)
 
 val start :
    ?ports:(Config.Socket_type.t * int) list

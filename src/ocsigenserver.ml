@@ -19,6 +19,8 @@ let fatal fmt =
 let serve_dir = ref None
 let serve_port = ref None
 let directory_listing = ref false
+let serve_command_pipe = ref None
+let serve_command = ref None
 let config_given = ref false
 
 let set_serve_dir d =
@@ -37,6 +39,10 @@ let () =
   and serve_msg = "Serve the static files of DIR without a configuration file"
   and port_msg = "Port to listen on in serve mode (default 8080)"
   and listing_msg = "List directory contents in serve mode (when no index file)"
+  and command_pipe_msg =
+    "Command pipe to control the server in serve mode (FIFO on Unix, named pipe on Windows)"
+  and command_msg =
+    "Send CMD to a running server through its --command-pipe and exit (e.g. \"shutdown\")"
   and silent_msg = "Silent mode (error messages in errors.log only)"
   and pid_msg = "Specify a file where to write the PIDs of servers"
   and daemon_msg = "Daemon mode (detach the process)"
@@ -52,6 +58,12 @@ let () =
       ; "-P", Arg.Int (fun p -> serve_port := Some p), port_msg
       ; "--port", Arg.Int (fun p -> serve_port := Some p), port_msg
       ; "--directory-listing", Arg.Set directory_listing, listing_msg
+      ; ( "--command-pipe"
+        , Arg.String (fun s -> serve_command_pipe := Some s)
+        , command_pipe_msg )
+      ; ( "--command"
+        , Arg.String (fun s -> serve_command := Some s)
+        , command_msg )
       ; "-s", Arg.Unit Ocsigen.Config.set_silent, silent_msg
       ; "--silent", Arg.Unit Ocsigen.Config.set_silent, silent_msg
       ; "-p", Arg.String Ocsigen.Config.set_pidfile, pid_msg
@@ -86,14 +98,27 @@ let check_serve_dir dir =
   | exception Sys_error _ -> fatal "no such directory: %s" dir
 
 let () =
+  match !serve_command with
+  | Some command -> (
+      (* Client mode: send a command to a running server and exit. *)
+      match !serve_command_pipe with
+      | None -> fatal "--command requires --command-pipe"
+      | Some command_pipe -> (
+          try Ocsigen.Server.send_command ~command_pipe command
+          with Failure msg -> fatal "could not send command: %s" msg))
+  | None -> (
   match !serve_dir with
   | Some dir ->
       if !config_given
       then fatal "-c/--config cannot be combined with serve mode";
       let dir = check_serve_dir dir in
       Ocsigen.Server.serve ~dir ?port:!serve_port
-        ~directory_listing:!directory_listing ()
+        ~directory_listing:!directory_listing ?command_pipe:!serve_command_pipe
+        ()
   | None ->
-      if !serve_port <> None || !directory_listing
-      then fatal "--port and --directory-listing require a directory to serve";
-      Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
+      if
+        !serve_port <> None || !directory_listing || !serve_command_pipe <> None
+      then
+        fatal
+          "--port, --directory-listing and --command-pipe require a directory to serve";
+      Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ()))
