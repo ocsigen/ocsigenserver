@@ -65,10 +65,12 @@ let respond_file ?headers ?(status = `OK) fname =
   (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
   Lwt.catch
     (fun () ->
-       (* Check this isn't a directory first *)
+       (* Check this is a regular file, and take its size from the stat. Using
+          Lwt_io.length would seek to the end of the channel, which fails on
+          Windows ("Lwt_io.length: seek failed"). *)
+       let* s = Lwt_unix.LargeFile.stat fname in
        let* () =
-         let* s = Lwt_unix.stat fname in
-         if Unix.(s.st_kind <> S_REG)
+         if s.Unix.LargeFile.st_kind <> Unix.S_REG
          then raise Isnt_a_file
          else Lwt.return_unit
        in
@@ -77,8 +79,7 @@ let respond_file ?headers ?(status = `OK) fname =
          Lwt_io.open_file ~buffer:(Lwt_bytes.create count) ~mode:Lwt_io.input
            fname
        in
-       let* len = Lwt_io.length ic in
-       let encoding = Http.Transfer.Fixed len in
+       let encoding = Http.Transfer.Fixed s.Unix.LargeFile.st_size in
        let stream write =
          let rec cat_loop () =
            Lwt.bind (Lwt_io.read ~count ic) (function
