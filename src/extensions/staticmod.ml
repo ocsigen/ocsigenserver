@@ -150,26 +150,15 @@ let html_of_string s =
 (* End of borrowed code *)
 
 let respond_dir relpath dname : (Cohttp.Response.t * Cohttp_lwt.Body.t) Lwt.t =
-  let readsortdir =
-    (* Read a complete directory and sort its entries *)
-    let chunk_size = 1024 in
-    let rec aux entries dir =
-      Lwt_unix.readdir_n dir chunk_size >>= fun chunk ->
-      let entries = chunk :: entries in
-      if Array.length chunk < chunk_size
-      then Lwt.return entries
-      else aux entries dir
-    in
-    Lwt_unix.opendir dname >>= fun dir ->
-    Lwt.finalize
-      (fun () ->
-         aux [] dir >|= fun entries ->
-         List.sort compare (List.concat_map Array.to_list entries))
-      (fun () -> Lwt_unix.closedir dir)
-  in
   Lwt.catch
     (fun () ->
-       readsortdir >>= fun entries ->
+       (* Read and sort the directory entries. Sys.readdir is synchronous but
+          reliable on every platform; Lwt_unix.readdir_n (asynchronous readdir
+          via Lwt's thread pool) hangs on Windows. *)
+       let entries =
+         let a = Sys.readdir dname in
+         Array.sort compare a; Array.to_list a
+       in
        let title = html_of_string ("Directory listing for /" ^ relpath) in
        let entries =
          List.filter_map
@@ -197,7 +186,8 @@ let respond_dir relpath dname : (Cohttp.Response.t * Cohttp_lwt.Body.t) Lwt.t =
          ( Cohttp.Response.make ~status:`OK ~headers ()
          , Cohttp_lwt.Body.of_string_list doc ))
     (function
-      | Unix.Unix_error _ -> Cohttp_lwt_unix.Server.respond_not_found ()
+      | Unix.Unix_error _ | Sys_error _ ->
+          Cohttp_lwt_unix.Server.respond_not_found ()
       | exn -> Lwt.fail exn)
 
 let gen ~usermode ?cache dir = function
