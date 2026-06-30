@@ -22,12 +22,19 @@ open Lwt.Infix
 
 let () = Random.self_init ()
 
+(* Some signals (e.g. SIGPIPE) do not exist on Windows, where Sys.set_signal
+   raises Invalid_argument; ignore that so the server still starts there. *)
+let set_signal_if_available signal behaviour =
+  try Sys.set_signal signal behaviour with Invalid_argument _ -> ()
+
 (* Without the following line, it stops with "Broken Pipe" without
    raising an exception ... *)
-let () = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
+let () = set_signal_if_available Sys.sigpipe Sys.Signal_ignore
 
 (* Exit gracefully on SIGINT so that profiling will work *)
-let () = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
+let () =
+  set_signal_if_available Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
+
 let section = Logs.Src.create "ocsigen:main"
 
 (* Initialize exception handler for Lwt timeouts: *)
