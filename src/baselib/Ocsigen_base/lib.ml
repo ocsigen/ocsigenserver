@@ -73,7 +73,10 @@ end
 (*****************************************************************************)
 
 let make_cryptographic_safe_string =
-  let rng = Cryptokit.Random.device_rng "/dev/urandom" in
+  (* Use the OS-provided cryptographically secure RNG. This is portable (it maps
+     to /dev/urandom or getrandom on Unix and to the crypto provider on Windows),
+     unlike opening "/dev/urandom" directly, which fails on Windows. *)
+  let rng = Cryptokit.Random.secure_rng in
   fun () ->
     let random_part =
       let random_number = Cryptokit.Random.string rng 20 in
@@ -86,10 +89,10 @@ let make_cryptographic_safe_string =
     random_part ^ sequential_part
 
 (* The string is produced from the concatenation of two components:
-   a 160-bit random sequence obtained from /dev/urandom, and a
+   a 160-bit random sequence obtained from the OS secure RNG, and a
    64-bit sequential component derived from the system clock.  The
    former is supposed to prevent session spoofing.  The assumption
-   is that given the high cryptographic quality of /dev/urandom, it
+   is that given the high cryptographic quality of the OS RNG, it
    is impossible for an attacker to deduce the sequence of random
    numbers produced.  As for the latter component, it exists to
    prevent a theoretical (though infinitesimally unlikely) session
