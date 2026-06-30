@@ -57,10 +57,18 @@ let rec check_symlinks_parent_directories
           ~no_check_for
           (policy : symlink_policy)
   =
-  if filename = "/" || filename = "." || Some filename = no_check_for
+  let dirname = Filename.dirname filename in
+  if
+    filename = "/"
+    || filename = "."
+    || Some filename = no_check_for
+    (* Stop at a filesystem root. On Windows [Filename.dirname "C:\\"] returns
+       "C:\\" (a fixed point), so without this the recursion below would loop
+       forever -- the Unix root "/" is handled above but Windows roots are
+       not. *)
+    || dirname = filename
   then true
   else
-    let dirname = Filename.dirname filename in
     check_symlinks_aux dirname policy
     && check_symlinks_parent_directories ~filename:dirname ~no_check_for policy
 
@@ -81,9 +89,14 @@ let check_symlinks ~no_check_for ~filename policy =
         (* We remove an eventual trailing slash, in order to avoid a
            needless recursion in check_symlinks_parent_directories, and so
            that Unix.lstat returns the correct result (Unix.lstat "foo/" and
-           Unix.lstat "foo" return two different results...)  *)
+           Unix.lstat "foo" return two different results...). On Windows the
+           separator is '\\', so accept it too -- otherwise the trailing
+           separator left by [Filename.concat dir ""] makes the parent-directory
+           recursion skip [no_check_for] and loop. *)
         let len = String.length filename - 1 in
-        if filename.[len] = '/' then String.sub filename 0 len else filename
+        if filename.[len] = '/' || filename.[len] = Filename.dir_sep.[0]
+        then String.sub filename 0 len
+        else filename
       in
       check_symlinks_aux filename policy
       && check_symlinks_parent_directories ~filename ~no_check_for policy
@@ -167,7 +180,13 @@ let resolve
     let filename, stat =
       if stat.Unix.LargeFile.st_kind = Unix.S_DIR
       then
-        if filename.[String.length filename - 1] <> '/'
+        (* Does [filename] already end with a directory separator? On Windows
+           Filename.concat appends '\\' rather than '/', so accept either. *)
+        if
+          let n = String.length filename in
+          n > 0
+          && filename.[n - 1] <> '/'
+          && filename.[n - 1] <> Filename.dir_sep.[0]
         then (
           Logs.info
             ~src:
