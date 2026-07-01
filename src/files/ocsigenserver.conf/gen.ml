@@ -91,7 +91,14 @@ let deps () =
   let inp = Unix.open_process_in cmd in
   (try
      while true do
-       deps := input_line inp :: !deps
+       (* Trim the line: on Windows ocamlfind's output ends in CRLF and
+          input_line keeps the trailing '\r', which would otherwise make the
+          package names in builtin_packages fail to match the (clean) names
+          the loader gets from Findlib, so already-linked packages would be
+          dynamically reloaded. *)
+       match String.trim (input_line inp) with
+       | "" -> ()
+       | dep -> deps := dep :: !deps
      done
    with End_of_file -> ());
   match Unix.close_process_in inp with

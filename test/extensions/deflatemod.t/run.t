@@ -1,30 +1,5 @@
-  $ source ../../server-test-helpers.sh
-  $ run_server ./test.exe
-  ocsigen:main: [WARNING] Command pipe created
-  ocsigen:access:  connection for local-test from unix: (): /index.html
-  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
-  ocsigen:ext:staticmod: [INFO] Is it a static file?
-  ocsigen:local-file: [INFO] Testing "./index.html".
-  ocsigen:local-file: [INFO] checking if file index.html can be sent
-  ocsigen:ext: [INFO] Compiling exclusion regexp $^
-  ocsigen:local-file: [INFO] Returning "./index.html".
-  ocsigen:access:  connection for local-test from unix: (): /index.html
-  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
-  ocsigen:ext:staticmod: [INFO] Is it a static file?
-  ocsigen:local-file: [INFO] Testing "./index.html".
-  ocsigen:local-file: [INFO] checking if file index.html can be sent
-  ocsigen:local-file: [INFO] Returning "./index.html".
-  ocsigen:access:  connection for local-test from unix: (): /empty_dir/
-  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
-  ocsigen:ext:staticmod: [INFO] Is it a static file?
-  ocsigen:local-file: [INFO] Testing "./empty_dir/".
-  ocsigen:local-file: [INFO] Testing "./empty_dir/index.html" as possible index.
-  ocsigen:local-file: [INFO] No index and no listing
-  ocsigen:access:  connection for local-test from unix: (): /doesnt_exists.html
-  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
-  ocsigen:ext:staticmod: [INFO] Is it a static file?
-  ocsigen:local-file: [INFO] Testing "./doesnt_exists.html".
-  application: [WARNING] Command received: shutdown
+  $ . ../../server-test-helpers.sh
+  $ run_server ../deflatemod_server.exe
 
 First response is not compressed:
 

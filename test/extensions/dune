@@ -1,0 +1,50 @@
+; Little servers driving the extension cram tests, built by the project and
+; passed to the cram tests as dependencies (so they need no nested dune-project).
+; Each server only uses its own extension; linking them all is harmless.
+
+(executables
+ (names
+  accesscontrol_server
+  authbasic_server
+  cors_server
+  deflatemod_server
+  outputfilter_server
+  redirectmod_server
+  rewritemod_server)
+ (libraries
+  ocsigenserver
+  ocsigenserver.http
+  ocsigenserver.ext.staticmod
+  ocsigenserver.ext.accesscontrol
+  ocsigenserver.ext.authbasic
+  ocsigenserver.ext.cors
+  ocsigenserver.ext.deflatemod
+  ocsigenserver.ext.outputfilter
+  ocsigenserver.ext.redirectmod
+  ocsigenserver.ext.rewritemod
+  lwt))
+
+; These start the server over a Unix-domain socket, which works on every
+; platform including Windows (see the note in ../dune about the pinned conduit
+; fix that makes AF_UNIX bind work there).
+
+(cram
+ (applies_to
+  accesscontrol
+  authbasic
+  cors
+  deflatemod
+  outputfilter
+  redirectmod
+  rewritemod)
+ (package ocsigenserver)
+ (deps
+  accesscontrol_server.exe
+  authbasic_server.exe
+  cors_server.exe
+  deflatemod_server.exe
+  outputfilter_server.exe
+  redirectmod_server.exe
+  rewritemod_server.exe
+  ../server-test-helpers.sh
+  (package ocsigenserver)))

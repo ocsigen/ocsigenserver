@@ -22,12 +22,19 @@ open Lwt.Infix
 
 let () = Random.self_init ()
 
+(* Some signals (e.g. SIGPIPE) do not exist on Windows, where Sys.set_signal
+   raises Invalid_argument; ignore that so the server still starts there. *)
+let set_signal_if_available signal behaviour =
+  try Sys.set_signal signal behaviour with Invalid_argument _ -> ()
+
 (* Without the following line, it stops with "Broken Pipe" without
    raising an exception ... *)
-let () = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
+let () = set_signal_if_available Sys.sigpipe Sys.Signal_ignore
 
 (* Exit gracefully on SIGINT so that profiling will work *)
-let () = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
+let () =
+  set_signal_if_available Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
+
 let section = Logs.Src.create "ocsigen:main"
 
 (* Initialize exception handler for Lwt timeouts: *)
@@ -88,6 +95,10 @@ let reload ?file () =
    with e -> Logs.err ~src:section (fun fmt -> fmt "%s" (fst (errmsg e))));
   Logs.warn ~src:section (fun fmt -> fmt "Config file reloaded")
 
+(* Set once a "shutdown" command has been received, so the command-file poller
+   stops polling on Windows (see [poll_command_file]). *)
+let shutdown_requested = ref false
+
 let () =
   let f _s = function
     | ["reopen_logs"] ->
@@ -97,9 +108,11 @@ let () =
     | ["reload"] -> reload (); Lwt.return ()
     | ["reload"; file] -> reload ~file (); Lwt.return ()
     | ["shutdown"] ->
+        shutdown_requested := true;
         Ocsigen_cohttp.shutdown None;
         Lwt.return ()
     | ["shutdown"; f] ->
+        shutdown_requested := true;
         Ocsigen_cohttp.shutdown (Some (float_of_string f));
         Lwt.return ()
     | ["gc"] ->
@@ -113,6 +126,79 @@ let () =
     | _ -> Lwt.fail Command.Unknown_command
   in
   Command.register_command_function f
+
+(* Parse and run one command line received on the command pipe. *)
+let run_command s =
+  Messages.warning ("Command received: " ^ s);
+  Lwt.catch
+    (fun () ->
+       let prefix, c =
+         match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
+         | [] -> raise Command.Unknown_command
+         | a :: l -> (
+           try
+             let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
+             Some aa, ab :: l
+           with Not_found -> None, a :: l)
+       in
+       Command.get_command_function () ?prefix s c)
+    (function
+      | Command.Unknown_command ->
+          Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
+          Lwt.return ()
+      | e ->
+          Logs.err ~src:section (fun fmt ->
+            fmt
+              ("Uncaught Exception after command" ^^ "@\n%s")
+              (Printexc.to_string e));
+          Lwt.fail e)
+
+(* Send [command] to a running server's command pipe [command_pipe]. On Unix
+   this is a FIFO (open and write). On Windows, where mkfifo is unavailable, the
+   command pipe is an ordinary file that the server polls, so we append to it.
+   This is the client side of the command channel, used by the "--command" mode
+   of the executable to control a server without a signal (notably to stop it
+   gracefully on Windows, where killing the background process is unreliable). *)
+let send_command ~command_pipe command =
+  let oc =
+    if Sys.win32
+    then open_out_gen [Open_append; Open_creat; Open_binary] 0o660 command_pipe
+    else open_out command_pipe
+  in
+  output_string oc (command ^ "\n");
+  close_out oc
+
+(* Read and clear the commands written to the polled command file (Windows).
+   The read is synchronous, but commands are tiny and infrequent. Reading by
+   chunks avoids seeking, which is unreliable on Windows. *)
+let read_command_file path =
+  match open_in_bin path with
+  | exception Sys_error _ -> []
+  | ic ->
+      let buf = Buffer.create 256 in
+      let chunk = Bytes.create 4096 in
+      let rec loop () =
+        let n = input ic chunk 0 (Bytes.length chunk) in
+        if n > 0
+        then (
+          Buffer.add_subbytes buf chunk 0 n;
+          loop ())
+      in
+      loop ();
+      close_in ic;
+      (* Truncate so the same commands are not processed again. *)
+      (try close_out (open_out_bin path) with Sys_error _ -> ());
+      String.split_on_char '\n' (Buffer.contents buf)
+      |> List.map String.trim
+      |> List.filter (fun s -> s <> "")
+
+(* Poll the command file (Windows) for new commands. Stop once a "shutdown" has
+   been requested. Unlike a FIFO this needs no blocking read, so the server can
+   still exit cleanly while it is running. *)
+let rec poll_command_file path =
+  Lwt_unix.sleep 0.3 >>= fun () ->
+  Lwt_list.iter_s run_command (read_command_file path) >>= fun () ->
+  if !shutdown_requested then Lwt.return () else poll_command_file path
 
 type instruction =
   Extensions.virtual_hosts
@@ -230,26 +316,44 @@ let main config =
         | l, Some (crt, key) -> List.map (fun (a, p) -> a, p, (crt, key)) l
         | _ -> []
       in
-      (* A pipe to communicate with the server *)
+      (* A pipe to communicate with the server. On Unix this is a FIFO; on
+         Windows (where mkfifo is unavailable) it is an ordinary file that we
+         poll for commands. *)
       let commandpipe = Config.get_command_pipe () in
-      let with_commandpipe =
-        try
-          ignore (Unix.stat commandpipe : Unix.stats);
-          true
-        with Unix.Unix_error _ -> (
+      let command_channel =
+        if Sys.win32
+        then (
           try
-            let umask = Unix.umask 0 in
-            Unix.mkfifo commandpipe 0o660;
-            ignore (Unix.umask umask : int);
-            Logs.warn ~src:section (fun fmt -> fmt "Command pipe created");
-            true
+            (* Create/clear the command file. *)
+            close_out (open_out_bin commandpipe);
+            Logs.warn ~src:section (fun fmt ->
+              fmt "Command file created: %s" commandpipe);
+            `Polled_file commandpipe
           with e ->
             Logs.warn ~src:section (fun fmt ->
               fmt
-                ("Cannot create the command pipe %s. I will continue without."
+                ("Cannot create the command file %s. I will continue without."
                ^^ "@\n%s")
                 commandpipe (Printexc.to_string e));
-            false)
+            `None)
+        else
+          try
+            ignore (Unix.stat commandpipe : Unix.stats);
+            `Fifo
+          with Unix.Unix_error _ -> (
+            try
+              let umask = Unix.umask 0 in
+              Unix.mkfifo commandpipe 0o660;
+              ignore (Unix.umask umask : int);
+              Logs.warn ~src:section (fun fmt -> fmt "Command pipe created");
+              `Fifo
+            with e ->
+              Logs.warn ~src:section (fun fmt ->
+                fmt
+                  ("Cannot create the command pipe %s. I will continue without."
+                 ^^ "@\n%s")
+                  commandpipe (Printexc.to_string e));
+              `None)
       in
       let minthreads = Config.get_minthreads ()
       and maxthreads = Config.get_maxthreads () in
@@ -280,41 +384,17 @@ let main config =
       (* detach from the terminal *)
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
-      (if with_commandpipe
-       then
-         let pipe =
-           Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
-           |> Lwt_unix.of_unix_file_descr
-           |> Lwt_io.(of_fd ~mode:input)
-         in
-         let rec f () =
-           Lwt_io.read_line pipe >>= fun s ->
-           Messages.warning ("Command received: " ^ s);
-           Lwt.catch
-             (fun () ->
-                let prefix, c =
-                  match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
-                  | [] -> raise Command.Unknown_command
-                  | a :: l -> (
-                    try
-                      let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
-                      Some aa, ab :: l
-                    with Not_found -> None, a :: l)
-                in
-                Command.get_command_function () ?prefix s c)
-             (function
-               | Command.Unknown_command ->
-                   Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
-                   Lwt.return ()
-               | e ->
-                   Logs.err ~src:section (fun fmt ->
-                     fmt
-                       ("Uncaught Exception after command" ^^ "@\n%s")
-                       (Printexc.to_string e));
-                   Lwt.fail e)
-           >>= f
-         in
-         ignore (f () : 'a Lwt.t));
+      (match command_channel with
+      | `Fifo ->
+          let pipe =
+            Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o660
+            |> Lwt_unix.of_unix_file_descr
+            |> Lwt_io.(of_fd ~mode:input)
+          in
+          let rec f () = Lwt_io.read_line pipe >>= run_command >>= f in
+          ignore (f () : 'a Lwt.t)
+      | `Polled_file path -> ignore (poll_command_file path : 'a Lwt.t)
+      | `None -> ());
       Lwt.join
         (List.map
            (fun (address, port) ->
@@ -482,15 +562,19 @@ let start
 let static_server : (dir:string -> instruction) option ref = ref None
 let register_static_server f = static_server := Some f
 
-let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
+let serve ?(port = 8080) ?(directory_listing = false) ?command_pipe ~dir () =
   (* One-command serve mode: no configuration file and no log directory are
      required. Logs go to stderr and the command pipe is placed in a temporary
-     location so that the usual control commands remain available. *)
+     location (unless one is given) so that the usual control commands remain
+     available. *)
   Config.set_log_to_stderr true;
   Config.set_command_pipe
-    (Filename.concat
-       (Filename.get_temp_dir_name ())
-       (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())));
+    (match command_pipe with
+    | Some p -> p
+    | None ->
+        Filename.concat
+          (Filename.get_temp_dir_name ())
+          (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())));
   (* Load the Staticmod extension on demand. It registers its serving function
      through [register_static_server]. *)
   (try
