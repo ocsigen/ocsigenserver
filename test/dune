@@ -1,12 +1,35 @@
-(subdir
- extensions
- (cram
-  (package ocsigenserver)
-  (deps
-   ../server-test-helpers.sh
-   (package ocsigenserver))))
+; Tests that start the server over a Unix-domain socket (via
+; server-test-helpers.sh). They run on every platform, including Windows: AF_UNIX
+; works there since OCaml 4.14, and the pinned conduit fix stops it from setting
+; SO_REUSEADDR on the socket (which Windows rejects for AF_UNIX, EOPNOTSUPP).
+; (The extension tests live in extensions/.)
+
+; The little servers these tests drive, built by the outer project and passed to
+; the cram tests as dependencies (so they need no nested dune-project).
+
+(executables
+ (names http_semantics_server static_files_server range_requests_server)
+ (modules http_semantics_server static_files_server range_requests_server)
+ (libraries ocsigenserver ocsigenserver.ext.staticmod))
 
 (cram
+ (applies_to http-semantics static-files range-requests)
  (package ocsigenserver)
  (deps
+  http_semantics_server.exe
+  static_files_server.exe
+  range_requests_server.exe
+  server-test-helpers.sh
+  (package ocsigenserver)))
+
+; Serve-mode tests. They start a background server and stop it gracefully by
+; sending "shutdown" to its command pipe (a FIFO on Unix, a polled file on
+; Windows), so the server exits on its own and nothing is left for dune's cram
+; cleanup. They run on every platform, including Windows.
+
+(cram
+ (applies_to serve serve-listing serve-cli)
+ (package ocsigenserver)
+ (deps
+  server-test-helpers.sh
   (package ocsigenserver)))
