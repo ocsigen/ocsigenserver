@@ -30,3 +30,10 @@ build: [
   ["dune" "build" "-p" name "-j" jobs]
 ]
 install:[make "install.files"]
+# Temporary: conduit sets SO_REUSEADDR on AF_UNIX sockets, which breaks bind on
+# Windows (EOPNOTSUPP). Pin a fork with that fix until it is released upstream.
+pin-depends: [
+  ["conduit.8.0.0" "git+https://github.com/hhugo/ocaml-conduit.git#fix-afunix-reuseaddr"]
+  ["conduit-lwt.8.0.0" "git+https://github.com/hhugo/ocaml-conduit.git#fix-afunix-reuseaddr"]
+  ["conduit-lwt-unix.8.0.0" "git+https://github.com/hhugo/ocaml-conduit.git#fix-afunix-reuseaddr"]
+]
