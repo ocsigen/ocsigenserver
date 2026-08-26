@@ -314,6 +314,16 @@ module Url = struct
     String.concat "&"
       (List.map (fun (name, value) -> encode name ^ "=" ^ encode value) params)
 
+  let split_decoded_path =
+    (* Leave a segment alone rather than reject the whole request when it
+       holds a malformed escape sequence, as browsers do. *)
+    let decode_segment s = try decode ~plus:false s with Failure _ -> s in
+    fun s ->
+      remove_dotdot
+        (List.concat_map
+           (fun seg -> String.split_on_char '/' (decode_segment seg))
+           (split_path s))
+
   let string_of_url_path ~encode l =
     if encode
     then

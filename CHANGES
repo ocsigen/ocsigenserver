@@ -12,6 +12,13 @@
    and 1.1 are deprecated) and prefers the server's cipher order. The
    <ciphers>, <dhfile> and <curve> entries of <ssl>, previously parsed but
    ignored, are now applied to the TLS context.
+ * Request paths are percent-decoded again, as they were before the
+   migration to Cohttp: Ocsigen.Request.path, sub_path and
+   original_full_path used to return their segments still encoded,
+   whereas the GET parameters were decoded. A file whose name is not
+   made of unreserved characters can be served again, and Eliom
+   suffix parameters get decoded values. Encoded ".." and encoded
+   slashes cannot be used to walk up the tree.
  * Fix Ocsigen_base.Lib.Url.decode, which was silently returning its
    argument unchanged: its regexp was still written in Str syntax
    ('\|' for the alternation) after the migration to Re.Pcre.

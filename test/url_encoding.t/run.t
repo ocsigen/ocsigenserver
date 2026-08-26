@@ -25,3 +25,17 @@ Percent-encoding helpers of Ocsigen_base.Lib.Url.
   encode ~plus:true:
   a b                      -> a+b
   a+b                      -> a%2Bb
+  
+  split_decoded_path:
+                                   -> []
+  foo                              -> ["foo"]
+  foo/                             -> ["foo"; ""]
+  foo/bar/baz                      -> ["foo"; "bar"; "baz"]
+  a//b                             -> ["a"; ""; "b"]
+  caf%C3%A9/a%20b                  -> ["caf\195\169"; "a b"]
+  ../../etc/passwd                 -> ["etc"; "passwd"]
+  a/../b                           -> ["a"; "b"]
+  %2e%2e%2f%2e%2e%2fetc%2fpasswd   -> ["etc"; "passwd"]
+  ..%2f..%2fetc%2fpasswd           -> ["etc"; "passwd"]
+  a%2Fb                            -> ["a"; "b"]
+  100%/x                           -> ["100%"; "x"]
