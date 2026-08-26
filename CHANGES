@@ -12,6 +12,9 @@
    and 1.1 are deprecated) and prefers the server's cipher order. The
    <ciphers>, <dhfile> and <curve> entries of <ssl>, previously parsed but
    ignored, are now applied to the TLS context.
+ * Fix Ocsigen_base.Lib.Url.decode, which was silently returning its
+   argument unchanged: its regexp was still written in Str syntax
+   ('\|' for the alternation) after the migration to Re.Pcre.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or

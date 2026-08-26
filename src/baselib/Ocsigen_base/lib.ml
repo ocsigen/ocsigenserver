@@ -269,7 +269,9 @@ module Url = struct
       if plus then encode_plus s else percent_encode s
   end
 
-  let url_decoding_re = Netstring_pcre.regexp "\\+\\|%..\\|%.\\|%"
+  (* Beware: this is PCRE syntax (see {!Netstring_pcre}), where "|" is the
+     alternation and "\\|" would be a literal pipe. *)
+  let url_decoding_re = Netstring_pcre.regexp "\\+|%..|%.|%"
 
   let of_hex1 c =
     match c with
