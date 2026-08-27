@@ -1,4 +1,17 @@
 ==== 8.0.0~dev ===
+ * Security: the <maxconnected> limit (maximum number of simultaneous
+   connections) is now enforced again. It throttles the accept loop instead
+   of being silently ignored.
+ * Security: error responses no longer include the raw OCaml exception in
+   their body. Clients now receive the generic HTTP status reason phrase;
+   the exception details remain in the logs.
+ * Security: the command pipe is now created with mode 0o600 instead of
+   0o660, so that local users in the server's group can no longer send it
+   control commands (shutdown, reload, ...).
+ * Security (TLS): the HTTPS server now requires TLS 1.2 at minimum (TLS 1.0
+   and 1.1 are deprecated) and prefers the server's cipher order. The
+   <ciphers>, <dhfile> and <curve> entries of <ssl>, previously parsed but
+   ignored, are now applied to the TLS context.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or

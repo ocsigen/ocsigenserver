@@ -101,9 +101,6 @@ Here is a simple example:
     <datadir>/var/lib/ocsigenserver</datadir>
     <commandpipe>/var/run/ocsigenserver/command</commandpipe>
 
-    <user>www-data</user>
-    <group>www-data</group>
-
     <charset>utf-8</charset>
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
@@ -146,9 +143,6 @@ exist. To create it run [psql] and execute [CREATE TABLE ocsipersist;].
     <logdir>/home/toto/var/log/ocsigenserver</logdir>
     <datadir>/home/toto/var/lib/ocsigenserver</datadir>
     <commandpipe>/home/toto/var/run/ocsigenserver_command</commandpipe>
-
-    <user>toto</user>
-    <group>toto</group>
 
     <charset>utf-8</charset>
 
@@ -233,10 +227,11 @@ If you want to use HTTPS, you need to specify a certificate to use, and a privat
     </ssl>
 v}
 
-Use the tools provided by openssl to create a 1024-bit private key to use when creating your CA.:
+Use the tools provided by openssl to create a private key. Use at least a
+2048-bit RSA key (4096 bits is common today), or an elliptic-curve key:
 
 {v
-    openssl genrsa -des3 -out privkey.pem 1024
+    openssl genrsa -des3 -out privkey.pem 4096
 v}
 
 To create a master certificate based on this key, to use when signing other certificates:
@@ -250,6 +245,43 @@ If you don't want to be asked for a password at start-up, you can uncrypt the pr
 {v
     openssl rsa -in privkey.pem -out privkey-unsec.pem
 v}
+
+The TLS context requires {b TLS 1.2 at minimum} (TLS 1.0 and 1.1 are
+deprecated, RFC 8996) and prefers the server's cipher order. You can further
+tune the context inside [<ssl>]:
+
+{v
+    <ssl>
+       <certificate>path_to/cert.pem</certificate>
+       <privatekey>path_to/privkey.pem</privatekey>
+       <ciphers>ECDHE+AESGCM:ECDHE+CHACHA20</ciphers>
+       <dhfile>path_to/dhparams.pem</dhfile>
+       <curve>prime256v1</curve>
+    </ssl>
+v}
+
+[<ciphers>] is an OpenSSL cipher string, [<dhfile>] a file of
+Diffie-Hellman parameters, and [<curve>] a named elliptic curve.
+
+If you serve both HTTP and HTTPS and want to force HTTPS, redirect plain HTTP
+requests to HTTPS using the {{!page-redirectmod}Redirectmod} extension guarded
+by the [<ssl/>] condition of {{!page-accesscontrol}Accesscontrol} (both
+extensions must be loaded):
+
+{v
+    <host hostfilter="www.example.org" defaulthttpport="80" defaulthttpsport="443">
+      <if>
+        <not><ssl/></not>
+        <then>
+          <redirect suburl="(.*)" dest="https://www.example.org/\1"/>
+        </then>
+      </if>
+    </host>
+v}
+
+Note: HTTP Strict Transport Security (HSTS) is not enabled automatically.
+Once you serve only over HTTPS, add a [Strict-Transport-Security] response
+header (for instance with the {{!page-outputfilter}Outputfilter} extension).
 
 
 {3 [<logdir>] : log files directory}
@@ -295,16 +327,20 @@ v}
 {3 [<user>] and [<group>] : user who runs the server}
 
 
-If the server is launched by root, it will change itself the user and group for the process, for security reasons. Create a group and a user for Ocsigenserver or use an existing user of your system (e.g. [www-data]).
+{b Deprecated and ignored.} Ocsigenserver no longer drops privileges: these
+tags are accepted for backward compatibility but have {b no effect}, and the
+server logs a warning if they are present.
 
-Example :
+{b Do not launch the server as root.} Run it directly as a dedicated
+unprivileged user (e.g. [www-data]). To serve a privileged port (80 or 443)
+as a non-root user, use one of:
+- a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and
+  forwarding to Ocsigenserver on a high port (recommended, see the [<timeout>]
+  note above);
+- the Linux capability [cap_net_bind_service] on the executable
+  ([setcap 'cap_net_bind_service=+ep' ...]);
+- a firewall/port redirection from 80/443 to a high port.
 
-
-
-{v
-<user>www-data</user>
-<group>www-data</group>
-v}
 {3 [<charset>] : default charset for pages}
 
 
@@ -396,22 +432,24 @@ v}
 {3 [<timeout>] : Timeout for connections}
 
 
-Written in seconds. If the client does not say anything during that amount of time, the connection will be closed. Example:
-
-
+Written in seconds. Example:
 
 {v
 <timeout>20</timeout>
 v}
-{3 [<keepalivetimeout>] : Timeout for Keep-Alive}
 
+{b Limitation.} This option (and its aliases [<clienttimeout>] and
+[<servertimeout>]) is currently parsed but {b not enforced}: the cohttp-based
+connection handling does not yet apply a per-connection idle/read timeout. As
+a consequence Ocsigenserver does {b not} protect against slow-client
+("Slowloris") attacks on its own, where a client opens many connections and
+sends the request very slowly to exhaust resources.
 
-Amount of time (in seconds) the server will wait for subsequent requests on a persistent connection. Example:
-
-
-{v
-<keepalivetimeout>10</keepalivetimeout>
-v}
+{b Recommendation.} For an Internet-facing deployment, place a reverse proxy
+(nginx, HAProxy, Caddy, ...) in front of Ocsigenserver. The proxy enforces
+read/idle timeouts, buffers slow clients, terminates TLS and absorbs malformed
+requests. The [<maxconnected>] limit above does cap the number of
+simultaneous connections, which mitigates connection exhaustion.
 
 {3 [<shutdowntimeout>] : Timeout for graceful shutdown {e From version 1.3}}
 
