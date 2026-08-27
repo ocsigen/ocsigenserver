@@ -10,7 +10,7 @@
   <script src="../../highlight.pack.js"></script>
   <script src="../../wodoc-highlight.js"></script>
 </head>
-<body class="wodoc-page wodoc-doc">
+<body class="wodoc-page wodoc-doc wodoc-project-ocsigenserver">
   <!-- Shared site menu — THE single source of truth for the header, top menu and
      drawer of EVERY Ocsigen doc page (vitrine + all projects). Canonical copy
      lives here in ocsigen.github.io; each project's build fetches it. Injected
@@ -188,7 +188,7 @@
         <header class="odoc-preamble"><h1>Module <code><span>Ocsigen.Command</span></code></h1><p>Extending server commands</p></header>
         <div class="odoc-content"><div class="odoc-spec"><div class="spec exception anchored" id="exception-Unknown_command"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Unknown_command</span></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-register_command_function"><code><span><span class="keyword">val</span> register_command_function : 
   <span><span class="optlabel">?prefix</span>:string <span class="arrow">&#45;&gt;</span></span>
-  <span><span>(<span>string <span class="arrow">&#45;&gt;</span></span> <span><span>string list</span> <span class="arrow">&#45;&gt;</span></span> <span>unit <span class="xref-unresolved">Lwt</span>.t</span>)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<span>string <span class="arrow">&#45;&gt;</span></span> <span><span>string list</span> <span class="arrow">&#45;&gt;</span></span> <span>unit <a href="../../../../lwt/dev/lwt/Lwt/index.html#val-t">Lwt.t</a></span>)</span> <span class="arrow">&#45;&gt;</span></span>
   unit</span></code></div><div class="spec-doc"><p>Use a prefix for all your commands when you want to create extension-specific commands. For example if the prefix is &quot;myextension&quot; and the commande &quot;blah&quot;, the actual command to be written by the user is &quot;myextension:blah&quot;. Give as parameter the function that will parse the command and do an action. Its first parameter is the full command as a string. The second one is the command without prefix, split by word. It must raise <code>ocsigen_extensions.Unknown_command</code> if it does not recognize the command.</p></div></div></div>
       </article>
     </div>
