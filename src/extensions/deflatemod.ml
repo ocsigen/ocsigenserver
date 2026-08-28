@@ -196,6 +196,30 @@ let weaken_etag e =
   then e
   else "W/" ^ e
 
+(* The body we send depends on the request's Accept-Encoding, so the response
+   must say so: without it a shared cache may serve a compressed response to a
+   client that did not ask for one (RFC 9111 4.1). An existing Vary is extended
+   rather than replaced, and "*" is left alone since it already covers
+   everything. *)
+let add_vary_accept_encoding headers =
+  let name = Ocsigen_http.Header.Name.(to_string vary) in
+  let value = Ocsigen_http.Header.Name.(to_string accept_encoding) in
+  match Cohttp.Header.get headers name with
+  | None -> Cohttp.Header.add headers name value
+  | Some existing ->
+      let mentions_encoding =
+        String.split_on_char ',' existing
+        |> List.exists (fun field ->
+          let field = String.trim field in
+          String.equal field "*"
+          || String.equal
+               (String.lowercase_ascii field)
+               (String.lowercase_ascii value))
+      in
+      if mentions_encoding
+      then headers
+      else Cohttp.Header.replace headers name (existing ^ ", " ^ value)
+
 (* deflate = true -> mode deflate
    deflate = false -> mode gzip *)
 let stream_filter contentencoding url deflate choice res =
@@ -231,6 +255,7 @@ let stream_filter contentencoding url deflate choice res =
                          Ocsigen_http.Header.Name.(to_string content_encoding)
                          contentencoding
                      in
+                     let headers = add_vary_accept_encoding headers in
                      Http.Response.make ~headers ~status ~version ()
                    and body =
                      Ocsigen.Response.Body.make Cohttp.Transfer.Chunked

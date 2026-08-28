@@ -42,6 +42,7 @@ Second response is compressed:
   HTTP/1.1 200 OK
   content-type: text/html
   content-encoding: gzip
+  vary: accept-encoding
   server: Ocsigen
   transfer-encoding: chunked
   
