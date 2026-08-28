@@ -43,7 +43,11 @@ let make_uri u =
   let u_uri = lazy u
   and u_get_params = lazy (Uri.query u)
   and u_path_string = lazy (remove_trailing_slash_string (Uri.path u)) in
-  let u_path = lazy (Ocsigen_base.Lib.Url.split_path (Lazy.force u_path_string))
+  (* [Uri.path] leaves the path percent-encoded, whereas [Uri.query]
+     decodes the GET parameters, so the path has to be decoded here for
+     the two to be consistent. *)
+  let u_path =
+    lazy (Ocsigen_base.Lib.Url.split_decoded_path (Lazy.force u_path_string))
   and u_get_params_flat = lazy (flatten_get_params (Lazy.force u_get_params)) in
   {u_uri; u_get_params; u_get_params_flat; u_path; u_path_string}
 
@@ -210,7 +214,7 @@ let sub_path_string req =
     | {r_sub_path = Some r_sub_path; _} -> r_sub_path
     | r -> path_string r)
 
-let sub_path r = Ocsigen_base.Lib.Url.split_path (sub_path_string r)
+let sub_path r = Ocsigen_base.Lib.Url.split_decoded_path (sub_path_string r)
 
 let original_full_path_string = function
   | {r_original_full_path = Some r_original_full_path; _} ->
@@ -218,7 +222,7 @@ let original_full_path_string = function
   | r -> path_string r
 
 let original_full_path r =
-  Ocsigen_base.Lib.Url.split_path (original_full_path_string r)
+  Ocsigen_base.Lib.Url.split_decoded_path (original_full_path_string r)
 
 let header {r_headers; _} id =
   Cohttp.Header.get r_headers (Ocsigen_http.Header.Name.to_string id)
@@ -283,6 +287,28 @@ let client_conn_to_string {r_client_conn = c; _} =
   | `Unix path -> "unix:" ^ path
   | `Forwarded_for ip -> "forwarded:" ^ ip
   | `Unknown -> "unknown"
+
+(* Unlike [client_conn_to_string], which is meant for human-readable debug logs
+   and adds scheme prefixes ("unix:", "forwarded:", "unknown"), this returns a
+   bare value valid for the Combined Log Format %h field. *)
+let client_ip_to_string {r_client_conn = c; _} =
+  match c with
+  | `Inet (ip, _) -> Ipaddr.to_string ip
+  | `Forwarded_for ip -> ip
+  | `Unix path when path <> "" -> path
+  | `Unix _ | `Unknown -> "-"
+
+(* The user authenticated by an authentication extension (e.g. authbasic),
+   stored in the request cache so that the access log can report it. *)
+let remote_user_key : string Polytables.key = Polytables.make_key ()
+
+let set_remote_user r user =
+  Polytables.set ~table:r.r_request_cache ~key:remote_user_key ~value:user
+
+let remote_user r =
+  match Polytables.get ~table:r.r_request_cache ~key:remote_user_key with
+  | user -> Some user
+  | exception Not_found -> None
 
 let forward_ip {r_forward_ip; _} = r_forward_ip
 let request_cache {r_request_cache; _} = r_request_cache

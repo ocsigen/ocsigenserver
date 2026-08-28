@@ -11,18 +11,33 @@ a file here), so no log directory is created.
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
 
-An existing file is served with the correct content type and body. The
-unreproducible "date" header is filtered out.
+An existing file is served with the correct status, content type and body:
 
-  $ curl -s -i --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
-  >   --user-agent "" http://127.0.0.1:8061/index.html | grep -v "^date: "
-  HTTP/1.1 200 OK
-  content-type: text/html
-  server: Ocsigen
-  content-length: 18
-  
+  $ curl -s -D headers -o body -w '%{http_code}\n' --max-time 10 \
+  >   --retry 20 --retry-delay 1 --retry-connrefused \
+  >   http://127.0.0.1:8061/index.html
+  200
+  $ cat body; echo
   <html>hello</html>
+  $ grep -i '^content-type:' headers | tr -d '\r'
+  content-type: text/html
 
+The safe-by-default security headers are present:
+
+  $ grep -i '^x-content-type-options:' headers | tr -d '\r'
+  x-content-type-options: nosniff
+  $ grep -i '^x-frame-options:' headers | tr -d '\r'
+  x-frame-options: SAMEORIGIN
+  $ grep -i '^referrer-policy:' headers | tr -d '\r'
+  referrer-policy: strict-origin-when-cross-origin
+
+Compression is on by default in serve mode: a client that accepts an encoding
+gets a compressed response.
+
+  $ curl -s -i --user-agent "" -H "Accept-Encoding: gzip" --compressed \
+  >   http://127.0.0.1:8061/index.html | grep -iE "^(HTTP|content-encoding)"
+  HTTP/1.1 200 OK
+  content-encoding: gzip
 
 A missing file gives a 404.
 
@@ -30,8 +45,15 @@ A missing file gives a 404.
   >   http://127.0.0.1:8061/nope.html
   404
 
+The server logged a startup banner with the URL:
+
+  $ grep -o 'on http://localhost:8061' server.log
+  on http://localhost:8061
+
 No log directory is created in the current directory.
 
   $ ls
+  body
+  headers
   server.log
   www

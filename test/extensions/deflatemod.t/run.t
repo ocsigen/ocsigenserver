@@ -1,51 +1,108 @@
   $ . ../../server-test-helpers.sh
   $ run_server ./test.exe
   ocsigen:main: [WARNING] Command pipe created
-  ocsigen:access:  connection for local-test from unix: (): /index.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./index.html".
   ocsigen:local-file: [INFO] checking if file index.html can be sent
   ocsigen:ext: [INFO] Compiling exclusion regexp $^
   ocsigen:local-file: [INFO] Returning "./index.html".
-  ocsigen:access:  connection for local-test from unix: (): /index.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./index.html".
   ocsigen:local-file: [INFO] checking if file index.html can be sent
   ocsigen:local-file: [INFO] Returning "./index.html".
-  ocsigen:access:  connection for local-test from unix: (): /empty_dir/
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./empty_dir/".
   ocsigen:local-file: [INFO] Testing "./empty_dir/index.html" as possible index.
   ocsigen:local-file: [INFO] No index and no listing
-  ocsigen:access:  connection for local-test from unix: (): /doesnt_exists.html
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./doesnt_exists.html".
   application: [WARNING] Command received: shutdown
 
-First response is not compressed:
+Without Accept-Encoding the response is not compressed:
 
   $ curl_ "index.html"
   HTTP/1.1 200 OK
   content-type: text/html
-  server: Ocsigen
+  accept-ranges: bytes
   content-length: 12
+  server: Ocsigen
   
   Hello world
 
-Second response is compressed:
+gzip:
 
-  $ curl_ "index.html" --compressed
+  $ curl_ "index.html" -H "Accept-Encoding: gzip" --compressed
   HTTP/1.1 200 OK
   content-type: text/html
+  accept-ranges: bytes
   content-encoding: gzip
+  vary: accept-encoding
   server: Ocsigen
   transfer-encoding: chunked
   
   Hello world
+
+
+deflate (zlib format):
+
+  $ curl_ "index.html" -H "Accept-Encoding: deflate" --compressed
+  HTTP/1.1 200 OK
+  content-type: text/html
+  accept-ranges: bytes
+  content-encoding: deflate
+  vary: accept-encoding
+  server: Ocsigen
+  transfer-encoding: chunked
+  
+  Hello world
+
+
+zstd:
+
+  $ curl_ "index.html" -H "Accept-Encoding: zstd" --compressed
+  HTTP/1.1 200 OK
+  content-type: text/html
+  accept-ranges: bytes
+  content-encoding: zstd
+  vary: accept-encoding
+  server: Ocsigen
+  transfer-encoding: chunked
+  
+  Hello world
+
+
+When several codecs are offered, zstd is preferred:
+
+  $ curl_ "index.html" -H "Accept-Encoding: gzip, zstd" --compressed
+  HTTP/1.1 200 OK
+  content-type: text/html
+  accept-ranges: bytes
+  content-encoding: zstd
+  vary: accept-encoding
+  server: Ocsigen
+  transfer-encoding: chunked
+  
+  Hello world
+
 
 Querying a directory or a non-existing file should give "Not found" without
 compression:

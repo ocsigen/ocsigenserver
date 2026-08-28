@@ -20,7 +20,7 @@
  (name deflatemod)
  (public_name ocsigenserver.ext.deflatemod)
  (modules deflatemod)
- (libraries camlzip ocsigenserver))
+ (libraries bytesrw bytesrw.zlib bytesrw.zstd ocsigenserver))
 
 (library
  (name extendconfiguration)
@@ -50,6 +50,12 @@
  (name rewritemod)
  (public_name ocsigenserver.ext.rewritemod)
  (modules rewritemod)
+ (libraries ocsigenserver))
+
+(library
+ (name securityheaders)
+ (public_name ocsigenserver.ext.securityheaders)
+ (modules securityheaders)
  (libraries ocsigenserver))
 
 (library

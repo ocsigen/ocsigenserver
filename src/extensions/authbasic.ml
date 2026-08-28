@@ -65,21 +65,26 @@ let gen ~realm ~auth rs =
       (Ocsigen.Ocsigen_cohttp.Ocsigen_http_error
          (Ocsigen_cookie_map.empty, `Bad_request))
   in
-  let validate ~err s =
+  let validate ~err ~request s =
     match Cohttp.Auth.credential_of_string s with
     | `Basic (user, pass) ->
         auth user pass >>= fun b ->
-        if b then Lwt.return (Ocsigen.Extensions.Ext_next err) else reject ()
+        if b
+        then (
+          (* Record the authenticated user for the access log (%u field). *)
+          Ocsigen.Request.set_remote_user request user;
+          Lwt.return (Ocsigen.Extensions.Ext_next err))
+        else reject ()
     | `Other _s -> invalid_header ()
   in
   match rs with
   | Ocsigen.Extensions.Req_not_found (err, ri) -> (
-    match
-      Ocsigen.Request.header ri.Ocsigen.Extensions.request_info
-        Ocsigen_http.Header.Name.authorization
-    with
-    | Some s -> validate ~err s
-    | None -> reject ())
+      let request = ri.Ocsigen.Extensions.request_info in
+      match
+        Ocsigen.Request.header request Ocsigen_http.Header.Name.authorization
+      with
+      | Some s -> validate ~err ~request s
+      | None -> reject ())
   | Ocsigen.Extensions.Req_found _ ->
       Lwt.return Ocsigen.Extensions.Ext_do_nothing
 

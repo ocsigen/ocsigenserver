@@ -1,4 +1,4 @@
-@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter userconf cors extend migration api
+@children_order launching config staticlink staticmod eliom extendconfiguration accesscontrol authbasic deflatemod redirectmod revproxy rewritemod outputfilter securityheaders userconf cors extend migration api
 
 {0 Ocsigen Server}
 
@@ -34,9 +34,15 @@ terminal. A few options are available:
 {v
 ocsigenserver --serve ./public --port 8000 --directory-listing
 v}
+You can also start a reverse proxy that forwards every request to another
+server, again without any configuration file:
+{v
+ocsigenserver --reverse-proxy http://localhost:9000 --port 8080
+v}
+
 This is the simplest way to get started. For anything more elaborate (several
-hosts, extensions, reverse proxy, etc.) use a configuration file or the library
-API, as described below.
+hosts, extensions, fine-grained reverse proxy rules, etc.) use a configuration
+file or the library API, as described below.
 
 {1 Using Ocsigen Server as an executable}
 
@@ -108,6 +114,7 @@ The extensions provided are:
 - {{!page-redirectmod}Redirectmod}: if you want to define some HTTP redirections,
 - {{!page-deflatemod}Deflatemod}: if you want to compress the content before sending your pages,
 - {{!page-outputfilter}Outputfilter}: allows to change the header of the HTTP response,
+- {{!page-securityheaders}Securityheaders}: adds common security-related HTTP headers (HSTS, nosniff, X-Frame-Options, CSP),
 - {{!page-rewritemod}Rewritemod}: allows to rewrite the request before continuing,
 - {{!page-extendconfiguration}Extendconfiguration}: adds many useful configuration options,
 - {{!page-authbasic}Authbasic}: for basic HTTP authentication,

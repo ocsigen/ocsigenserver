@@ -12,13 +12,47 @@
    and 1.1 are deprecated) and prefers the server's cipher order. The
    <ciphers>, <dhfile> and <curve> entries of <ssl>, previously parsed but
    ignored, are now applied to the TLS context.
+ * Request paths are percent-decoded again, as they were before the
+   migration to Cohttp: Ocsigen.Request.path, sub_path and
+   original_full_path used to return their segments still encoded,
+   whereas the GET parameters were decoded. A file whose name is not
+   made of unreserved characters can be served again, and Eliom
+   suffix parameters get decoded values. Encoded ".." and encoded
+   slashes cannot be used to walk up the tree.
+ * Fix Ocsigen_base.Lib.Url.decode, which was silently returning its
+   argument unchanged: its regexp was still written in Str syntax
+   ('\|' for the alternation) after the migration to Re.Pcre.
+ * New extension Securityheaders (ocsigenserver.ext.securityheaders): adds
+   common security headers with one declaration. Safe by default
+   (X-Content-Type-Options, X-Frame-Options, Referrer-Policy);
+   Strict-Transport-Security and Content-Security-Policy are opt-in. It is
+   enabled by default in the sample configuration file and in serve mode.
+ * Serve mode now logs a startup banner with the URL it listens on.
+ * Compression: the Deflatemod extension now supports the zstd
+   content-encoding (RFC 8878) in addition to gzip and deflate, and its
+   backend was switched from camlzip to bytesrw. Compression is enabled by
+   default in the one-command serve mode.
  * One-command serve mode: "ocsigenserver ./public" (or
    "ocsigenserver --serve ./public --port 8000 --directory-listing") now
    serves a directory of static files without any configuration file or
    pre-created log directory. The Staticmod extension is loaded on demand.
+ * One-command reverse proxy: "ocsigenserver --reverse-proxy URL" forwards
+   every request to the base URL given, with no configuration file. The
+   Revproxy extension is loaded on demand.
  * Logging: when no <logdir> (and no <syslog>) is given in the configuration
    file, logs now go to the standard output and standard error instead of to
    files, so that no log directory is required.
+ * Static files: serve an ETag and a Last-Modified header, and answer
+   conditional requests (If-None-Match / If-Modified-Since) with 304 Not
+   Modified (RFC 7232).
+ * Static files: support single byte-range requests. Responses advertise
+   Accept-Ranges, a satisfiable Range yields 206 Partial Content with a
+   Content-Range header (honouring If-Range), and an unsatisfiable range gives
+   416 (RFC 7233). This enables media streaming and resumable downloads.
+ * Access log: requests are now logged in the standard Apache/nginx Combined
+   Log Format, understood by common log analysers, instead of the previous
+   custom format. The line now reports the final status code, the response
+   size and the authenticated user.
  * Documentation: the manual now lives in the main branch as odoc pages
    (doc/*.mld), compiled in place by `dune build @doc`, replacing the
    wikicreole manual of the wikidoc branch. doc/index.mld is the package

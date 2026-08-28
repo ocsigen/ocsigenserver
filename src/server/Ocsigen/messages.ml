@@ -26,27 +26,13 @@ let full_path f = Filename.concat (Config.get_logdir ()) f
 let error_log_path () = full_path error_file
 
 (* This is the date format inherited from [Lwt_log]. *)
-let pp_date ppf =
-  let time = Unix.gettimeofday () in
-  let tm = Unix.localtime time in
-  let month_string =
-    match tm.Unix.tm_mon with
-    | 0 -> "Jan"
-    | 1 -> "Feb"
-    | 2 -> "Mar"
-    | 3 -> "Apr"
-    | 4 -> "May"
-    | 5 -> "Jun"
-    | 6 -> "Jul"
-    | 7 -> "Aug"
-    | 8 -> "Sep"
-    | 9 -> "Oct"
-    | 10 -> "Nov"
-    | 11 -> "Dec"
-    | _ -> ""
-  in
-  Format.fprintf ppf "%s %2d %02d:%02d:%02d" month_string tm.Unix.tm_mday
-    tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec
+let date_string () =
+  let tm = Unix.localtime (Unix.gettimeofday ()) in
+  Printf.sprintf "%s %2d %02d:%02d:%02d"
+    (Ocsigen_base.Lib.Date.name_of_month tm.Unix.tm_mon)
+    tm.Unix.tm_mday tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec
+
+let pp_date ppf = Format.pp_print_string ppf (date_string ())
 
 let make_reporter out_channel =
   let ppf = Format.formatter_of_out_channel out_channel in
@@ -63,21 +49,35 @@ let stderr = make_reporter stderr
 let stdout = make_reporter stdout
 let close_loggers = ref []
 
-(* Reporter used in serve mode: access messages go to [stdout], warnings and
-   errors to [stderr], everything else to [stdout]. No log files are opened. *)
+(* Access logging bypasses Logs and Format: a complete Combined Log Format line
+   is written directly to the output channel. [access_out] is installed by
+   [open_files] according to the logging mode. *)
+let access_out = ref (fun (_ : string) -> ())
+let write_line oc s = output_string oc s; output_char oc '\n'; flush oc
+
+(* Echo an access line on the console with the same readable date/source prefix
+   as the other logs ([access.log] keeps the verbatim Combined format). *)
+let console_access oc s =
+  Printf.fprintf oc "%s: %s: %s\n%!" (date_string ())
+    (Logs.Src.name access_sect)
+    s
+
+(* Reporter for the non-access logs in serve mode: warnings and errors to
+   [stderr], everything else to [stdout]. Access lines are written directly to
+   [stdout] (see [log_to_stdio]). Also used to report command-line errors
+   before the logging system is configured. *)
 let stdio_reporter =
   { Logs.report =
       (fun src level ~over k msgf ->
         let r =
-          if Logs.Src.equal src access_sect
-          then stdout
-          else
-            match level with Logs.Warning | Logs.Error -> stderr | _ -> stdout
+          match level with Logs.Warning | Logs.Error -> stderr | _ -> stdout
         in
         r.Logs.report src level ~over k msgf) }
 
 let log_to_stdio () =
   Logs.set_reporter stdio_reporter;
+  (* In serve mode the terminal is the access log. *)
+  access_out := write_line Stdlib.stdout;
   Lwt.return ()
 
 (* Write logs to the access/warnings/errors files in the log directory. *)
@@ -103,21 +103,19 @@ let open_log_files_in_dir () =
     let channel, close = open_channel path in
     make_reporter channel, close
   in
-  let acc = open_log access_file in
+  let acc_channel, acc_close = open_channel access_file in
   let war = open_log warning_file in
   let err = open_log error_file in
-  close_loggers := [snd acc; snd war; snd err];
+  close_loggers := [acc_close; snd war; snd err];
+  (* Access lines: verbatim Combined format to [access.log], plus a prefixed
+     echo on the console (unless silent). *)
+  (access_out :=
+     fun s ->
+       write_line acc_channel s;
+       if not (Config.get_silent ()) then console_access Stdlib.stdout s);
   Logs.set_reporter
     (let broadcast_reporters =
-       [ { Logs.report =
-             (fun src _level ~over k msgf ->
-               let r =
-                 if Logs.Src.equal src access_sect
-                 then fst acc
-                 else Logs.nop_reporter
-               in
-               r.Logs.report src Error ~over k msgf) }
-       ; (let dispatch_f =
+       [ (let dispatch_f =
            fun _sect lev ->
             match lev with
             | Logs.Error -> fst err
@@ -162,6 +160,9 @@ let open_log_files () =
                List.fold_left
                  (fun k r () -> r.Logs.report src level ~over k msgf)
                  k broadcast_reporters ()) });
+      (* No access.log file in syslog mode: access lines reach syslog (and
+         stderr) through Logs. *)
+      (access_out := fun s -> Logs.app ~src:access_sect (fun fmt -> fmt "%s" s));
       Lwt.return ()
   | None ->
       (* When no log directory is configured, log to stdout/stderr instead of
@@ -178,7 +179,7 @@ let open_files () =
 
 (****)
 
-let accesslog s = Logs.app ~src:access_sect (fun fmt -> fmt "%s" s)
+let accesslog s = !access_out s
 let errlog ?section s = Logs.err ?src:section (fun fmt -> fmt "%s" s)
 let warning ?section s = Logs.warn ?src:section (fun fmt -> fmt "%s" s)
 

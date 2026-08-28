@@ -487,39 +487,90 @@ let start
     Extensions.start_initialisation ();
     Extensions.set_hosts instructions)
 
-(* Registry through which the Staticmod extension, once loaded, publishes its
-   static-file serving function. This lets the one-command serve mode use the
-   extension without statically linking it (which would clash with the
-   configuration-file path, where the extension is loaded dynamically). *)
+(* Registries through which the Staticmod and Revproxy extensions, once loaded,
+   publish their serving functions. This lets the one-command serve mode use
+   them without statically linking them (which would clash with the
+   configuration-file path, where the extensions are loaded dynamically). *)
 let static_server : (dir:string -> instruction) option ref = ref None
 let register_static_server f = static_server := Some f
+let reverse_proxy_server : (target:string -> instruction) option ref = ref None
+let register_reverse_proxy_server f = reverse_proxy_server := Some f
 
-let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
-  (* One-command serve mode: no configuration file and no log directory are
-     required. Logs go to stderr and the command pipe is placed in a temporary
-     location so that the usual control commands remain available. *)
+(* Likewise for the Securityheaders extension, whose serving instruction takes
+   no argument. *)
+let security_headers : instruction option ref = ref None
+let register_security_headers f = security_headers := Some f
+
+(* Likewise for the Deflatemod extension, which publishes a compression
+   instruction with safe defaults so that serve mode compresses responses. *)
+let compression : instruction option ref = ref None
+let register_compression f = compression := Some f
+
+(* Common setup of the one-command modes: no configuration file and no log
+   directory are required. Logs go to stderr and the command pipe is placed in a
+   temporary location so that the usual control commands remain available. *)
+let one_command_setup () =
   Config.set_log_to_stderr true;
   Config.set_command_pipe
     (Filename.concat
        (Filename.get_temp_dir_name ())
-       (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())));
-  (* Load the Staticmod extension on demand. It registers its serving function
-     through [register_static_server]. *)
-  (try
-     Ocsigen_base.Loader.loadfiles
-       (fun () -> ())
-       (fun () -> ())
-       false
-       (Ocsigen_base.Loader.findfiles "ocsigenserver.ext.staticmod")
-   with e ->
-     let msg, errno = errmsg e in
-     Messages.errlog msg; exit errno);
-  match !static_server with
+       (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())))
+
+(* Load the extension [package] on demand. On failure: exit if [required],
+   otherwise log a warning and continue. *)
+let load_extension ?(required = true) package =
+  (* Extensions may use C stubs, as bytesrw's zlib and zstd bindings do, and
+     the bytecode dynamic linker rejects those unless they are allowed. The
+     configuration-file path does the same before loading extensions. *)
+  Dynlink_wrapper.allow_unsafe_modules true;
+  try
+    Ocsigen_base.Loader.loadfiles
+      (fun () -> ())
+      (fun () -> ())
+      false
+      (Ocsigen_base.Loader.findfiles package)
+  with e ->
+    let msg, errno = errmsg e in
+    if required then (Messages.errlog msg; exit errno) else Messages.warning msg
+
+(* Load the extension [package], which a one-command mode cannot work without,
+   and return the serving function it published in [registry]. *)
+let load_one_command_extension package registry =
+  load_extension package;
+  match !registry with
+  | Some f -> f
   | None ->
-      Messages.errlog
-        "The Staticmod extension did not register its serving function";
+      Messages.errlog (package ^ " did not register its serving function");
       exit 1
-  | Some static ->
-      start
-        ~ports:[`All, port]
-        [host ~list_directory_content:directory_listing [static ~dir]]
+
+let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
+  one_command_setup ();
+  let static =
+    load_one_command_extension "ocsigenserver.ext.staticmod" static_server
+  in
+  (* Securityheaders and Deflatemod are best-effort: they give safe headers and
+     compression by default, but serving files must not depend on them. They
+     publish their instruction through the registries above. *)
+  load_extension ~required:false "ocsigenserver.ext.securityheaders";
+  load_extension ~required:false "ocsigenserver.ext.deflatemod";
+  (* The compression and security-header filters must come after the file
+     server. Compression comes first, so that the security headers are those of
+     the response actually sent. *)
+  let instructions =
+    static ~dir
+    :: (Option.to_list !compression @ Option.to_list !security_headers)
+  in
+  Logs.app ~src:section (fun fmt ->
+    fmt "Serving %s on http://localhost:%d" dir port);
+  start
+    ~ports:[`All, port]
+    [host ~list_directory_content:directory_listing instructions]
+
+let reverse_proxy ?(port = 8080) ~target () =
+  one_command_setup ();
+  let proxy =
+    load_one_command_extension "ocsigenserver.ext.revproxy" reverse_proxy_server
+  in
+  Logs.app ~src:section (fun fmt ->
+    fmt "Proxying http://localhost:%d to %s" port target);
+  start ~ports:[`All, port] [host [proxy ~target]]

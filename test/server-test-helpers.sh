@@ -15,7 +15,9 @@ run_server ()
   mkdir -p log data # Directories that might be required by the server
   dune build "$1"
   # Run the server in the background, cut the datetime out of the log output.
-  dune exec -- "$@" 2>&1 | cut -b 18- &
+  # Access lines (Combined Log Format) carry their own timestamp, which is not
+  # reproducible, so drop them from the captured log.
+  dune exec -- "$@" 2>&1 | cut -b 18- | grep -v "^ocsigen:access:" &
   # Wait for the unix-domain socket and the command-pipe to be created
   timeout=50 # Don't wait more than 0.5s
   while ! { [ -e ./local.sock ] && [ -e ./local.cmd ]; } && [ "$timeout" -gt 0 ]; do
@@ -39,8 +41,9 @@ run_server ()
 curl_ ()
 {
   path=$1; shift
-  # Remove the 'date' header, which is unreproducible
+  # Remove the headers that are not reproducible: 'date', and the validators
+  # of a static file, which are derived from its modification time.
   curl --unix-socket ./local.sock --user-agent "" -s -i \
     "$@" "http://local-test/$path" | \
-    grep -v "^date: "
+    grep -viE "^(date|etag|last-modified): "
 }

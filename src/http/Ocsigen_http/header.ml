@@ -56,6 +56,7 @@ module Name = struct
   let set_cookie = of_string "Set-Cookie"
   let status = of_string "Status"
   let transfer_encoding = of_string "Transfer-Encoding"
+  let vary = of_string "Vary"
   let user_agent = of_string "User-Agent"
   let referer = of_string "Referer"
   let range = of_string "Range"

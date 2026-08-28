@@ -269,7 +269,9 @@ module Url = struct
       if plus then encode_plus s else percent_encode s
   end
 
-  let url_decoding_re = Netstring_pcre.regexp "\\+\\|%..\\|%.\\|%"
+  (* Beware: this is PCRE syntax (see {!Netstring_pcre}), where "|" is the
+     alternation and "\\|" would be a literal pipe. *)
+  let url_decoding_re = Netstring_pcre.regexp "\\+|%..|%.|%"
 
   let of_hex1 c =
     match c with
@@ -311,6 +313,16 @@ module Url = struct
   let make_encoded_parameters params =
     String.concat "&"
       (List.map (fun (name, value) -> encode name ^ "=" ^ encode value) params)
+
+  let split_decoded_path =
+    (* Leave a segment alone rather than reject the whole request when it
+       holds a malformed escape sequence, as browsers do. *)
+    let decode_segment s = try decode ~plus:false s with Failure _ -> s in
+    fun s ->
+      remove_dotdot
+        (List.concat_map
+           (fun seg -> String.split_on_char '/' (decode_segment seg))
+           (split_path s))
 
   let string_of_url_path ~encode l =
     if encode

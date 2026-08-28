@@ -56,6 +56,7 @@ module Name : sig
   val set_cookie : t
   val status : t
   val transfer_encoding : t
+  val vary : t
   val user_agent : t
   val referer : t
   val range : t

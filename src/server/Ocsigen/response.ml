@@ -60,50 +60,187 @@ let respond_not_found ?uri () =
   in
   respond_string ~status:`Not_found ~body ()
 
-let respond_file ?headers ?(status = `OK) fname =
+(* Weak entity-tag built from the file's modification time and size. *)
+let weak_etag ~mtime ~size = Printf.sprintf "W/\"%x-%x\"" mtime size
+
+(* Does the [If-None-Match] header value match [etag]? Handles ["*"] and a
+   comma-separated list of entity-tags. *)
+let if_none_match_matches if_none_match etag =
+  let if_none_match = String.trim if_none_match in
+  String.equal if_none_match "*"
+  || List.exists
+       (fun t -> String.equal (String.trim t) etag)
+       (String.split_on_char ',' if_none_match)
+
+(* Parse a single byte-range request against the total [size] (RFC 7233).
+   Returns the inclusive bounds [`Range (first, last)], [`Full] when there is no
+   usable single range (absent, malformed or multi-range), or [`Unsatisfiable]. *)
+let parse_range size value =
+  match String.split_on_char '=' (String.trim value) with
+  | ["bytes"; spec] when not (String.contains spec ',') -> (
+    match String.split_on_char '-' (String.trim spec) with
+    | [first; last] -> (
+        let parse s =
+          let s = String.trim s in
+          if String.equal s "" then None else int_of_string_opt s
+        in
+        match parse first, parse last with
+        | None, None -> `Full
+        | Some first, None ->
+            if first < size then `Range (first, size - 1) else `Unsatisfiable
+        | None, Some suffix ->
+            if suffix <= 0 || size = 0
+            then `Unsatisfiable
+            else `Range (max 0 (size - suffix), size - 1)
+        | Some first, Some last ->
+            let last = min last (size - 1) in
+            if first <= last then `Range (first, last) else `Unsatisfiable)
+    | _ -> `Full)
+  | _ -> `Full
+
+let respond_file
+      ?headers
+      ?(status = `OK)
+      ?if_none_match
+      ?if_modified_since
+      ?range
+      ?if_range
+      fname
+  =
   let exception Isnt_a_file in
   (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
   Lwt.catch
     (fun () ->
        (* Check this isn't a directory first *)
-       let* () =
-         let* s = Lwt_unix.stat fname in
-         if Unix.(s.st_kind <> S_REG)
-         then raise Isnt_a_file
-         else Lwt.return_unit
-       in
-       let count = 16384 in
-       let* ic =
-         Lwt_io.open_file ~buffer:(Lwt_bytes.create count) ~mode:Lwt_io.input
-           fname
-       in
-       let* len = Lwt_io.length ic in
-       let encoding = Http.Transfer.Fixed len in
-       let stream write =
-         let rec cat_loop () =
-           Lwt.bind (Lwt_io.read ~count ic) (function
-             | "" -> Lwt.return_unit
-             | buf -> Lwt.bind (write buf) cat_loop)
+       let* s = Lwt_unix.stat fname in
+       if Unix.(s.st_kind <> S_REG)
+       then raise Isnt_a_file
+       else
+         let size = s.Unix.st_size in
+         let last_modified = Ocsigen_base.Lib.Date.to_string s.Unix.st_mtime in
+         let etag = weak_etag ~mtime:(int_of_float s.Unix.st_mtime) ~size in
+         (* Validators sent with [200], [206] and [304] responses (RFC 7232). *)
+         let add_validators h =
+           Http.Header.add
+             (Http.Header.add h "etag" etag)
+             "last-modified" last_modified
          in
-         let* () =
-           Lwt.catch cat_loop (fun exn ->
-             Logs.warn (fun m ->
-               m "Error resolving file %s (%s)" fname (Printexc.to_string exn));
-             Lwt.return_unit)
+         let headers = Option.value headers ~default:(Http.Header.init ()) in
+         (* [If-None-Match] takes precedence over [If-Modified-Since]
+            (RFC 7232). For the latter we only return [304] on an exact match of
+            our [Last-Modified] value, so we never answer [304] wrongly. *)
+         let not_modified =
+           match if_none_match with
+           | Some inm -> if_none_match_matches inm etag
+           | None -> (
+             match if_modified_since with
+             | Some ims -> String.equal ims last_modified
+             | None -> false)
          in
-         Lwt.catch
-           (fun () -> Lwt_io.close ic)
-           (fun e ->
-              Logs.warn (fun f ->
-                f "Closing channel failed: %s" (Printexc.to_string e));
-              Lwt.return_unit)
-       in
-       let body = Body.make encoding stream in
-       let mime_type = Magic_mime.lookup fname in
-       let headers =
-         Http.Header.add_opt_unless_exists headers "content-type" mime_type
-       in
-       Lwt.return (respond ~headers ~status ~body ()))
+         if not_modified
+         then
+           Lwt.return
+             (respond ~headers:(add_validators headers) ~status:`Not_modified ())
+         else
+           (* A [Range] request is honoured only if [If-Range] (when present)
+              matches the current validators (RFC 7233). *)
+           let if_range_ok =
+             match if_range with
+             | None -> true
+             | Some v ->
+                 let v = String.trim v in
+                 String.equal v etag || String.equal v last_modified
+           in
+           let range =
+             match range with
+             | Some r when if_range_ok -> parse_range size r
+             | _ -> `Full
+           in
+           let add_common h =
+             add_validators (Http.Header.add h "accept-ranges" "bytes")
+           in
+           match range with
+           | `Unsatisfiable ->
+               let headers =
+                 Http.Header.add (add_common headers) "content-range"
+                   (Printf.sprintf "bytes */%d" size)
+               in
+               Lwt.return
+                 (respond ~headers ~status:`Requested_range_not_satisfiable ())
+           | (`Full | `Range _) as range ->
+               let first, length, status, add_content_range =
+                 match range with
+                 | `Full -> 0, size, status, fun h -> h
+                 | `Range (first, last) ->
+                     ( first
+                     , last - first + 1
+                     , `Partial_content
+                     , fun h ->
+                         Http.Header.add h "content-range"
+                           (Printf.sprintf "bytes %d-%d/%d" first last size) )
+               in
+               let count = 16384 in
+               let* ic =
+                 Lwt_io.open_file ~buffer:(Lwt_bytes.create count)
+                   ~mode:Lwt_io.input fname
+               in
+               let encoding = Http.Transfer.Fixed (Int64.of_int length) in
+               let stream write =
+                 let send () =
+                   let* () =
+                     if first = 0
+                     then Lwt.return_unit
+                     else Lwt_io.set_position ic (Int64.of_int first)
+                   in
+                   let remaining = ref length in
+                   let rec cat_loop () =
+                     if !remaining <= 0
+                     then Lwt.return_unit
+                     else
+                       let* buf =
+                         Lwt_io.read ~count:(min count !remaining) ic
+                       in
+                       if String.equal buf ""
+                       then Lwt.return_unit
+                       else (
+                         remaining := !remaining - String.length buf;
+                         let* () = write buf in
+                         cat_loop ())
+                   in
+                   cat_loop ()
+                 in
+                 let* () =
+                   Lwt.catch send (fun exn ->
+                     Logs.warn (fun m ->
+                       m "Error resolving file %s (%s)" fname
+                         (Printexc.to_string exn));
+                     Lwt.return_unit)
+                 in
+                 Lwt.catch
+                   (fun () -> Lwt_io.close ic)
+                   (fun e ->
+                      Logs.warn (fun f ->
+                        f "Closing channel failed: %s" (Printexc.to_string e));
+                      Lwt.return_unit)
+               in
+               let body = Body.make encoding stream in
+               let mime_type = Magic_mime.lookup fname in
+               let headers =
+                 add_content_range
+                   (add_common
+                      (Http.Header.add_unless_exists headers "content-type"
+                         mime_type))
+               in
+               (* Announce the length of what we send. [Http.Header] infers a
+                  [Fixed] transfer encoding from [content-range] alone and then
+                  adds no [content-length] of its own, so a [206] would go out
+                  with neither a length nor chunking: the client would wait for
+                  the connection to close. *)
+               let headers =
+                 Http.Header.add_unless_exists headers "content-length"
+                   (string_of_int length)
+               in
+               Lwt.return (respond ~headers ~status ~body ()))
     (function
       | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
           Lwt.return (respond_not_found ())

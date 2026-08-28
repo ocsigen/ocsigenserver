@@ -58,6 +58,16 @@ module Url : sig
   val make_encoded_parameters : (string * string) list -> string
   val string_of_url_path : encode:bool -> path -> uri
 
+  val split_decoded_path : string -> path
+  (** [split_decoded_path s] splits the path [s] on its slashes and
+      percent-decodes each of the resulting segments.
+
+      A segment that decodes to something containing a slash is split
+      again: a path is a list of segments and cannot represent a slash
+      inside one, so an encoded slash is a separator like any other.
+      [remove_dotdot] is then applied, so that neither a literal nor an
+      encoded ".." can be used to walk up the tree. *)
+
   val parse :
      t
     -> bool option
@@ -107,4 +117,9 @@ end
 module Date : sig
   val to_string : float -> string
   (** Converts Unix GMT date to string *)
+
+  val name_of_month : int -> string
+  (** Three-letter English abbreviation of a month, [0] for January to [11] for
+      December (as in {!Unix.tm.tm_mon}).
+      @raise Failure if the argument is out of range. *)
 end
