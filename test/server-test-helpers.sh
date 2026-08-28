@@ -1,4 +1,6 @@
-# Bash functions that help test ocsigenserver
+# POSIX shell functions that help test ocsigenserver.
+# Kept free of bashisms: dune runs cram tests with /bin/sh, which is dash on
+# Debian and Ubuntu.
 
 # Run the server using 'dune exec -- "$@"' and doing the necessary setup.
 # The server must listen on the unix-domain socket named "local.sock" and on
@@ -15,8 +17,9 @@ run_server ()
   # Run the server in the background, cut the datetime out of the log output.
   dune exec -- "$@" 2>&1 | cut -b 18- &
   # Wait for the unix-domain socket and the command-pipe to be created
-  local timeout=50 # Don't wait more than 0.5s
-  while ! ( [[ -e ./local.sock ]] && [[ -e ./local.cmd ]] ) && (( timeout-- > 0 )); do
+  timeout=50 # Don't wait more than 0.5s
+  while ! { [ -e ./local.sock ] && [ -e ./local.cmd ]; } && [ "$timeout" -gt 0 ]; do
+    timeout=$((timeout - 1))
     sleep 0.01
   done
   # Print an error if a file is missing
@@ -35,7 +38,7 @@ run_server ()
 #
 curl_ ()
 {
-  local path=$1; shift
+  path=$1; shift
   # Remove the 'date' header, which is unreproducible
   curl --unix-socket ./local.sock --user-agent "" -s -i \
     "$@" "http://local-test/$path" | \

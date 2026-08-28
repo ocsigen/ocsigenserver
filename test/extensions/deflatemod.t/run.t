@@ -1,4 +1,4 @@
-  $ source ../../server-test-helpers.sh
+  $ . ../../server-test-helpers.sh
   $ run_server ./test.exe
   ocsigen:main: [WARNING] Command pipe created
   ocsigen:access:  connection for local-test from unix: (): /index.html
