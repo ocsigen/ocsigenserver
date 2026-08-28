@@ -256,6 +256,16 @@ let stream_filter contentencoding url deflate choice res =
                          contentencoding
                      in
                      let headers = add_vary_accept_encoding headers in
+                     (* The body about to be sent is the compressed one, of a
+                        length we do not know before streaming it, so any
+                        content-length the producer computed is now wrong. A
+                        message may not carry both anyway (RFC 9112 6.1): left
+                        in place, it truncates the response at the original
+                        length. *)
+                     let headers =
+                       Http.Header.remove headers
+                         Ocsigen_http.Header.Name.(to_string content_length)
+                     in
                      Http.Response.make ~headers ~status ~version ()
                    and body =
                      Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
