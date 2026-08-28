@@ -185,6 +185,17 @@ let select_encoding accept_header =
   in
   aux accept
 
+(* Compressing changes the bytes of the representation, but not its meaning. A
+   strong entity tag must therefore be weakened, whereas a weak one may be kept:
+   RFC 9110 8.8.1 lets semantically equivalent representations share it, which is
+   what the compressed and uncompressed forms of a body are. Keeping it also
+   keeps conditional requests on compressed responses working. *)
+let weaken_etag e =
+  let e = String.trim e in
+  if String.length e >= 2 && String.equal (String.sub e 0 2) "W/"
+  then e
+  else "W/" ^ e
+
 (* deflate = true -> mode deflate
    deflate = false -> mode gzip *)
 let stream_filter contentencoding url deflate choice res =
@@ -212,9 +223,7 @@ let stream_filter contentencoding url deflate choice res =
                        let name = Ocsigen_http.Header.Name.(to_string etag) in
                        match Cohttp.Header.get headers name with
                        | Some e ->
-                           Cohttp.Header.replace headers name
-                             ((if deflate then "Ddeflatemod" else "Gdeflatemod")
-                             ^ e)
+                           Cohttp.Header.replace headers name (weaken_etag e)
                        | None -> headers
                      in
                      let headers =
