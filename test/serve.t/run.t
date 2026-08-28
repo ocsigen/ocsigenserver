@@ -14,18 +14,20 @@ a file here), so no log directory is created.
 An existing file is served with the correct content type and body. The
 unreproducible "date" header is filtered out.
 
-  $ curl -s -i --retry 20 --retry-delay 1 --retry-connrefused --user-agent "" \
-  >   http://127.0.0.1:8061/index.html | grep -v "^date: "
+  $ curl -s -i --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
+  >   --user-agent "" http://127.0.0.1:8061/index.html | grep -v "^date: "
   HTTP/1.1 200 OK
   content-type: text/html
   server: Ocsigen
   content-length: 18
+  
+  <html>hello</html>
 
-  <html>hello</html> (no-eol)
 
 A missing file gives a 404.
 
-  $ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8061/nope.html
+  $ curl -s -o /dev/null -w "%{http_code}\n" --max-time 10 \
+  >   http://127.0.0.1:8061/nope.html
   404
 
 No log directory is created in the current directory.
