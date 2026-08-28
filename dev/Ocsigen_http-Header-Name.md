@@ -104,6 +104,9 @@ val status : t
 val transfer_encoding : t
 ```
 ```ocaml
+val vary : t
+```
+```ocaml
 val user_agent : t
 ```
 ```ocaml

@@ -20,6 +20,11 @@ val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
 `serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
 
 ```ocaml
+val reverse_proxy : ?port:int -> target:string -> unit -> unit
+```
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. Never returns.
+
+```ocaml
 val start : 
   ?ports:(Ocsigen.Config.Socket_type.t * int) list ->
   ?ssl_ports:(Ocsigen.Config.Socket_type.t * int) list ->
@@ -75,6 +80,21 @@ The type of instructions to be used inside an host or site. Instructions are def
 val register_static_server : (dir:string -> instruction) -> unit
 ```
 Called by the Staticmod extension when it is loaded to publish its static-file serving function, so that [`serve`](./#val-serve) can use it without a static dependency on the extension.
+
+```ocaml
+val register_reverse_proxy_server : (target:string -> instruction) -> unit
+```
+Called by the Revproxy extension when it is loaded to publish its request-forwarding function, so that [`reverse_proxy`](./#val-reverse_proxy) can use it without a static dependency on the extension.
+
+```ocaml
+val register_security_headers : instruction -> unit
+```
+Called by the Securityheaders extension when it is loaded to publish its instruction, so that [`serve`](./#val-serve) can add the safe-by-default security headers without a static dependency on the extension.
+
+```ocaml
+val register_compression : instruction -> unit
+```
+Called by the Deflatemod extension when it is loaded to publish a compression instruction with safe defaults, so that [`serve`](./#val-serve) can compress responses without a static dependency on the extension.
 
 ```ocaml
 val host : 

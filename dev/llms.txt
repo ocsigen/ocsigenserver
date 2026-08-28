@@ -23,6 +23,7 @@
 - [Writing an extension for Ocsigen server](extend.md)
 - [API reference](api.md)
 - [ocsigenserver-compat index](ocsigenserver-compat/index.md)
+- [Securityheaders](securityheaders.md)
 
 ## API
 - [Module `Accesscontrol`](Accesscontrol.md)
@@ -94,6 +95,7 @@
 - [Module `Redirectmod`](Redirectmod.md)
 - [Module `Revproxy`](Revproxy.md)
 - [Module `Rewritemod`](Rewritemod.md)
+- [Module `Securityheaders`](Securityheaders.md)
 - [Module `Staticmod`](Staticmod.md)
 - [Module `Userconf`](Userconf.md)
 - [Module `Ocsigen_cache`](ocsigenserver-compat/Ocsigen_cache.md)

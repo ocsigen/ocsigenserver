@@ -16,6 +16,7 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 [`Revproxy`](./Revproxy.md) Revproxy: Forward a request to another Web server
 [`Rewritemod`](./Rewritemod.md) Rewrite: Change the request
 [`Outputfilter`](./Outputfilter.md) Outputfilter: Rewrite some part of the output
+[`Securityheaders`](./Securityheaders.md) Securityheaders: add common security-related response headers
 [`Userconf`](./Userconf.md) 
 [`Cors`](./Cors.md) Cross-Origin Resource Sharing
 

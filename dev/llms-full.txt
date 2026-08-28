@@ -33,7 +33,12 @@ This starts a server on port 8080 serving the files of `./public`. No configurat
 ```
 ocsigenserver --serve ./public --port 8000 --directory-listing
 ```
-This is the simplest way to get started. For anything more elaborate (several hosts, extensions, reverse proxy, etc.) use a configuration file or the library API, as described below.
+You can also start a reverse proxy that forwards every request to another server, again without any configuration file:
+
+```
+ocsigenserver --reverse-proxy http://localhost:9000 --port 8080
+```
+This is the simplest way to get started. For anything more elaborate (several hosts, extensions, fine-grained reverse proxy rules, etc.) use a configuration file or the library API, as described below.
 
 
 ## Using Ocsigen Server as an executable
@@ -103,6 +108,7 @@ The extensions provided are:
 - [Redirectmod](./redirectmod.md): if you want to define some HTTP redirections,
 - [Deflatemod](./deflatemod.md): if you want to compress the content before sending your pages,
 - [Outputfilter](./outputfilter.md): allows to change the header of the HTTP response,
+- [Securityheaders](./securityheaders.md): adds common security-related HTTP headers (HSTS, nosniff, X-Frame-Options, CSP),
 - [Rewritemod](./rewritemod.md): allows to rewrite the request before continuing,
 - [Extendconfiguration](./extendconfiguration.md): adds many useful configuration options,
 - [Authbasic](./authbasic.md): for basic HTTP authentication,
@@ -149,6 +155,10 @@ To run the server, use the command `ocsigenserver`. It has the following options
          Serve the static files of directory DIR without a configuration
          file (logs go to the terminal). DIR can also be given as a plain
          positional argument: "ocsigenserver ./public".
+
+  --reverse-proxy URL
+         Forward every request to the base URL given (for example
+         http://localhost:9000), without a configuration file.
 
   -P, --port
          Port to listen on in serve mode (default 8080).
@@ -448,7 +458,14 @@ Note: HTTP Strict Transport Security (HSTS) is not enabled automatically. Once y
 
 The directory for log files. Usually `/var/log/ocsigenserver`. Ocsigenserver is using three log files: `access.log` where all requests are logged, `errors.log` for error messages, and `warnings.log` for warnings.
 
-If `<logdir>` is omitted (and `<syslog>` is not used), the logs are written to the standard output and standard error instead of to files, so that no log directory is required.
+Requests are logged in the standard Apache/nginx [Combined Log Format](https://httpd.apache.org/docs/current/logs.html#combined):
+
+```
+%h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-agent}i"
+```
+that is, client address, identity (`-`), authenticated user (set by an authentication extension such as [Authbasic](./authbasic.md), `-` otherwise), request time, request line, response status, response size in bytes (`-` when unknown, for example for a streamed response), then the `Referer` and `User-Agent` headers. This format is understood out of the box by log analysers such as GoAccess, AWStats or Apache's own tools.
+
+If `<logdir>` is omitted (and `<syslog>` is not used), the logs are written to the standard output and standard error instead of to files, so that no log directory is required. In that case the access lines go to the standard output in the very same Combined Log Format.
 
 Example :
 
@@ -1075,6 +1092,10 @@ These helpers have no replacement in `ocsigenserver-compat`: their standard equi
 
 Staticmod is a module allowing to serve static pages (files).
 
+Served files carry an `ETag` (weak, derived from the file's modification time and size) and a `Last-Modified` header. Conditional requests made with `If-None-Match` or `If-Modified-Since` are answered with `304 Not Modified` when the file is unchanged (RFC 7232\), saving bandwidth on revalidation.
+
+Single byte-range requests are supported (RFC 7233\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
+
 
 ## Using as a library
 
@@ -1475,12 +1496,14 @@ To protect a resource with some fixed login and password given in the configurat
 
 ### What is deflatemod?
 
-Deflatemod is a module for Ocsigen that allows you to deflate content, using HTTP/1.1 mechanism. It supports gzip as well as deflate.
+Deflatemod is a module for Ocsigen that compresses content using the HTTP `Content-Encoding` mechanism. It supports `gzip`, `deflate` (zlib format) and `zstd`.
+
+Brotli (`br`) is not supported yet: at the time of writing there is no maintained OCaml binding to libbrotli that builds on OCaml 5\.
 
 
 ### What do I need to use deflatemod?
 
-You need the camlzip library by Xavier Leroy and a working Ocsigen installation.
+You need the `bytesrw` library (with its `zlib` and `zstd` backends, which require the system `zlib` and `libzstd` libraries) and a working Ocsigen installation.
 
 
 ### How do I use deflatemod?
@@ -1497,8 +1520,8 @@ This page describes the configuration file options. If you are building a static
 
 Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:
 
-- the compress level: from 0 (no compression) to 9\. The higher, the better compression rate you achieve. Conversely, the lower, the faster it is. Default is 6\.
-- the buffer size: default is 1024\. You shouldn't need to change this one, but you can still try a few other values (any feedback welcomed).
+- the compress level: from 0 (no compression) to 9\. The higher, the better compression rate you achieve. Conversely, the lower, the faster it is. Default is 6\. This level applies to `gzip` and `deflate`; `zstd` uses the library default level.
+- the buffer size: default is 8192\. You shouldn't need to change this one, but you can still try a few other values (any feedback welcomed).
 For example:
 
 ```
@@ -1553,9 +1576,14 @@ Limitations: you cannot filter by directory or by filename extension (remember e
 ## Technical questions
 
 
-### How can I choose the content-encoding (gzip or deflate)?
+### How can I choose the content-encoding (gzip, deflate or zstd)?
 
-You can't. Deflatemod follows the RFC and chooses automatically the right encoding, based upon Accept-encoding header sent by the client.
+You can't. Deflatemod follows the RFC and chooses automatically the right encoding, based upon the `Accept-Encoding` header sent by the client. When the client offers several codecs at the same quality, `zstd` is preferred, then `gzip`, then `deflate`.
+
+
+### Is compression enabled in the one-command serve mode?
+
+Yes. When you run `ocsigenserver ./public` (or `ocsigenserver --serve ...`), responses with a text-based content type are compressed by default, with no configuration needed, just like a static file server such as Caddy.
 
 
 ### Does deflatemod support transfert-encoding?
@@ -1907,6 +1935,7 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 [`Revproxy`](./Revproxy.md) Revproxy: Forward a request to another Web server
 [`Rewritemod`](./Rewritemod.md) Rewrite: Change the request
 [`Outputfilter`](./Outputfilter.md) Outputfilter: Rewrite some part of the output
+[`Securityheaders`](./Securityheaders.md) Securityheaders: add common security-related response headers
 [`Userconf`](./Userconf.md) 
 [`Cors`](./Cors.md) Cross-Origin Resource Sharing
 
@@ -1974,6 +2003,68 @@ This library exposes the following toplevel modules:
 
 [`Ocsigen_charset_mime`](./Ocsigen_charset_mime.md) 
 [`Ocsigen_header`](./Ocsigen_header.md)
+
+
+---
+
+# Securityheaders
+
+Securityheaders adds common security-related HTTP headers to responses with a single declaration, instead of hand-rolling [output filter](./outputfilter.md) rules.
+
+
+## What it adds
+
+By default, to every response that does not already set them:
+
+- `X-Content-Type-Options: nosniff` — forbids the browser from MIME-sniffing, so it honours the declared `Content-Type` instead of guessing. Prevents a file served as, say, `text/plain` from being run as HTML or JavaScript.
+- `X-Frame-Options: SAMEORIGIN` — only the same origin may embed the page in a frame, mitigating clickjacking. (The modern equivalent is the CSP `frame-ancestors` directive; keeping both is common.)
+- `Referrer-Policy: strict-origin-when-cross-origin` — limits how much of the URL is sent in the `Referer` header to other origins.
+Two further headers are **opt-in** (added only when you configure them):
+
+- `Strict-Transport-Security` (HSTS) — tells the browser to use HTTPS only for this domain. **Use with care:** it is honoured only over HTTPS, it is sticky (the browser remembers it for the whole `max-age`), and `includeSubDomains` forces *every* subdomain of the registrable domain to HTTPS for that duration — which can take sibling subdomains offline if they are not all on HTTPS. Enable it only when the whole domain is HTTPS-only.
+- `Content-Security-Policy` (CSP) — restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.
+Any header already set by the application is left untouched, so you can override a default per response.
+
+
+## Ordering
+
+This is a response filter: it decorates responses produced by earlier extensions. **Place it after** the extension whose responses it should cover (Staticmod, Eliom, ...). If placed before, it sees no response and silently adds nothing.
+
+
+## Using as a library
+
+Load OCamlfind package `ocsigenserver.ext.securityheaders` from your Dune file, and see the [API documentation](./Securityheaders.md):
+
+```ocaml
+let _ =
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host
+         [ Staticmod.run ~dir:"static" ()
+         ; Securityheaders.run () ]]
+```
+
+## Configuration file
+
+Load the extension and add the `<securityheaders/>` element to a host, after the elements producing the responses to decorate:
+
+```
+<extension findlib-package="ocsigenserver.ext.securityheaders"/>
+...
+<host hostfilter="*">
+  <static dir="/path/to/the/local/directory" />
+  <securityheaders/>
+</host>
+```
+Each header can be customised or disabled with an attribute. The values `"no"`, `"none"` and the empty string disable a header. HSTS and CSP are added only when their attribute is present:
+
+```
+<securityheaders
+   frame-options="DENY"
+   referrer-policy="no-referrer"
+   nosniff="true"
+   hsts="max-age=63072000; includeSubDomains"
+   content-security-policy="default-src 'self'" />
+```
 
 
 ---
@@ -3080,7 +3171,7 @@ Path to the error log file
 ```ocaml
 val stdio_reporter : Logs.reporter
 ```
-A reporter that writes access messages to `stdout` and warnings and errors to `stderr`, without opening any log file. It is used by the one-command serve mode and to report command-line errors before the logging system is configured.
+A reporter that writes warnings and errors to `stderr` and everything else to `stdout`, without opening any log file. It is used by the one-command serve mode (where access lines are written directly to `stdout`) and to report command-line errors before the logging system is configured.
 
 
 ---
@@ -3333,6 +3424,21 @@ val client_conn_to_string : t -> string
 A textual representation of `client_conn` suitable for use in logs.
 
 ```ocaml
+val client_ip_to_string : t -> string
+```
+The bare client IP address (no scheme prefix), suitable for the `%h` field of a Common/Combined access-log line. Returns `"-"` when the address is unknown.
+
+```ocaml
+val set_remote_user : t -> string -> unit
+```
+`set_remote_user r user` records the name of the user authenticated for this request (typically by [`Authbasic`](./Authbasic.md)). It is stored in the request cache and reported as the `%u` field of the access log.
+
+```ocaml
+val remote_user : t -> string option
+```
+The user authenticated for this request, if any. See [`set_remote_user`](./#val-set_remote_user).
+
+```ocaml
 val forward_ip : t -> string list
 ```
 ```ocaml
@@ -3441,10 +3547,14 @@ deprecated Use respond\_string with a ~status argument instead.
 val respond_file : 
   ?headers:Cohttp.Header.t ->
   ?status:Http.Status.t ->
+  ?if_none_match:string ->
+  ?if_modified_since:string ->
+  ?range:string ->
+  ?if_range:string ->
   string ->
   t Lwt.t
 ```
-Respond with the content of a file. The content type is guessed using `Magic_mime`.
+Respond with the content of a file. The content type is guessed using `Magic_mime`. An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must match the current validators for the range to be honoured.
 
 ```ocaml
 val update : 
@@ -3533,6 +3643,11 @@ val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
 `serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
 
 ```ocaml
+val reverse_proxy : ?port:int -> target:string -> unit -> unit
+```
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. Never returns.
+
+```ocaml
 val start : 
   ?ports:(Config.Socket_type.t * int) list ->
   ?ssl_ports:(Config.Socket_type.t * int) list ->
@@ -3588,6 +3703,21 @@ The type of instructions to be used inside an host or site. Instructions are def
 val register_static_server : (dir:string -> instruction) -> unit
 ```
 Called by the Staticmod extension when it is loaded to publish its static-file serving function, so that [`serve`](./#val-serve) can use it without a static dependency on the extension.
+
+```ocaml
+val register_reverse_proxy_server : (target:string -> instruction) -> unit
+```
+Called by the Revproxy extension when it is loaded to publish its request-forwarding function, so that [`reverse_proxy`](./#val-reverse_proxy) can use it without a static dependency on the extension.
+
+```ocaml
+val register_security_headers : instruction -> unit
+```
+Called by the Securityheaders extension when it is loaded to publish its instruction, so that [`serve`](./#val-serve) can add the safe-by-default security headers without a static dependency on the extension.
+
+```ocaml
+val register_compression : instruction -> unit
+```
+Called by the Deflatemod extension when it is loaded to publish a compression instruction with safe defaults, so that [`serve`](./#val-serve) can compress responses without a static dependency on the extension.
 
 ```ocaml
 val host : 
@@ -4985,6 +5115,13 @@ val make_encoded_parameters : (string * string) list -> string
 val string_of_url_path : encode:bool -> path -> uri
 ```
 ```ocaml
+val split_decoded_path : string -> path
+```
+`split_decoded_path s` splits the path `s` on its slashes and percent-decodes each of the resulting segments.
+
+A segment that decodes to something containing a slash is split again: a path is a list of segments and cannot represent a slash inside one, so an encoded slash is a separator like any other. `remove_dotdot` is then applied, so that neither a literal nor an encoded ".." can be used to walk up the tree.
+
+```ocaml
 val parse : 
   t ->
   bool option
@@ -5811,6 +5948,9 @@ val status : t
 ```
 ```ocaml
 val transfer_encoding : t
+```
+```ocaml
+val vary : t
 ```
 ```ocaml
 val user_agent : t
@@ -6893,6 +7033,42 @@ val run :
   Ocsigen.Server.instruction
 ```
 `run ~realm ~auth ()` makes it possible to use this extension without configuration file.
+
+
+---
+
+# Module `Securityheaders`
+
+Securityheaders: add common security-related response headers
+
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./securityheaders.md). If you are using Ocsigen Server as a library, use the interface described here.
+
+This module belongs to ocamlfind package `ocsigenserver.ext.securityheaders`.
+
+**Ordering matters.** This is a response filter: it only decorates responses that an earlier extension has produced. Place it *after* the extension whose responses it should cover (Staticmod, Eliom, ...). If it is placed before, it sees no response and silently adds nothing.
+
+Example of use:
+
+```ocaml
+let _ =
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host
+         [ Staticmod.run ~dir:"static" ()
+         ; Securityheaders.run () ]]
+```
+```ocaml
+val run : 
+  ?nosniff:bool ->
+  ?frame_options:string option ->
+  ?referrer_policy:string option ->
+  ?hsts:string option ->
+  ?content_security_policy:string ->
+  unit ->
+  Ocsigen.Server.instruction
+```
+`run ()` adds, to every response that does not already set them, three safe-by-default headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN` and `Referrer-Policy: strict-origin-when-cross-origin`. Each can be customised (`~frame_options:(Some "DENY")`) or disabled (`~nosniff:false`, `~frame_options:None`).
+
+`Strict-Transport-Security` and `Content-Security-Policy` are **opt-in** (both default to `None`) and must be set explicitly, e.g. `~hsts:(Some "max-age=15552000; includeSubDomains")`. HSTS is only honoured over HTTPS and is a sticky commitment: `includeSubDomains` forces every subdomain of the registrable domain to HTTPS for the whole `max-age`, so enable it only when the whole domain is HTTPS-only. A `Content-Security-Policy` has no safe generic default; set one tailored to your application.
 
 
 ---
@@ -8000,7 +8176,7 @@ Path to the error log file
 ```ocaml
 val stdio_reporter : Logs.reporter
 ```
-A reporter that writes access messages to `stdout` and warnings and errors to `stderr`, without opening any log file. It is used by the one-command serve mode and to report command-line errors before the logging system is configured.
+A reporter that writes warnings and errors to `stderr` and everything else to `stdout`, without opening any log file. It is used by the one-command serve mode (where access lines are written directly to `stdout`) and to report command-line errors before the logging system is configured.
 
 
 ---
@@ -8209,6 +8385,21 @@ val client_conn_to_string : t -> string
 A textual representation of `client_conn` suitable for use in logs.
 
 ```ocaml
+val client_ip_to_string : t -> string
+```
+The bare client IP address (no scheme prefix), suitable for the `%h` field of a Common/Combined access-log line. Returns `"-"` when the address is unknown.
+
+```ocaml
+val set_remote_user : t -> string -> unit
+```
+`set_remote_user r user` records the name of the user authenticated for this request (typically by `Authbasic`). It is stored in the request cache and reported as the `%u` field of the access log.
+
+```ocaml
+val remote_user : t -> string option
+```
+The user authenticated for this request, if any. See [`set_remote_user`](./#val-set_remote_user).
+
+```ocaml
 val forward_ip : t -> string list
 ```
 ```ocaml
@@ -8285,10 +8476,14 @@ deprecated Use respond\_string with a ~status argument instead.
 val respond_file : 
   ?headers:Cohttp.Header.t ->
   ?status:Http.Status.t ->
+  ?if_none_match:string ->
+  ?if_modified_since:string ->
+  ?range:string ->
+  ?if_range:string ->
   string ->
   t Lwt.t
 ```
-Respond with the content of a file. The content type is guessed using `Magic_mime`.
+Respond with the content of a file. The content type is guessed using `Magic_mime`. An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must match the current validators for the range to be honoured.
 
 ```ocaml
 val update : 
@@ -8377,6 +8572,11 @@ val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
 `serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
 
 ```ocaml
+val reverse_proxy : ?port:int -> target:string -> unit -> unit
+```
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. Never returns.
+
+```ocaml
 val start : 
   ?ports:(Ocsigen.Config.Socket_type.t * int) list ->
   ?ssl_ports:(Ocsigen.Config.Socket_type.t * int) list ->
@@ -8432,6 +8632,21 @@ The type of instructions to be used inside an host or site. Instructions are def
 val register_static_server : (dir:string -> instruction) -> unit
 ```
 Called by the Staticmod extension when it is loaded to publish its static-file serving function, so that [`serve`](./#val-serve) can use it without a static dependency on the extension.
+
+```ocaml
+val register_reverse_proxy_server : (target:string -> instruction) -> unit
+```
+Called by the Revproxy extension when it is loaded to publish its request-forwarding function, so that [`reverse_proxy`](./#val-reverse_proxy) can use it without a static dependency on the extension.
+
+```ocaml
+val register_security_headers : instruction -> unit
+```
+Called by the Securityheaders extension when it is loaded to publish its instruction, so that [`serve`](./#val-serve) can add the safe-by-default security headers without a static dependency on the extension.
+
+```ocaml
+val register_compression : instruction -> unit
+```
+Called by the Deflatemod extension when it is loaded to publish a compression instruction with safe defaults, so that [`serve`](./#val-serve) can compress responses without a static dependency on the extension.
 
 ```ocaml
 val host : 

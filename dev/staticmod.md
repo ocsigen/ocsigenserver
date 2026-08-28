@@ -3,6 +3,10 @@
 
 Staticmod is a module allowing to serve static pages (files).
 
+Served files carry an `ETag` (weak, derived from the file's modification time and size) and a `Last-Modified` header. Conditional requests made with `If-None-Match` or `If-Modified-Since` are answered with `304 Not Modified` when the file is unchanged (RFC 7232\), saving bandwidth on revalidation.
+
+Single byte-range requests are supported (RFC 7233\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
+
 
 ## Using as a library
 

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Deflatemod — Server</title>
+  <title>Securityheaders — Server</title>
   <link rel="stylesheet" href="/css/style.css"/>
   <link rel="stylesheet" href="/css/ocsigen-odoc.css"/>
-  <link rel="alternate" type="text/markdown" href="./deflatemod.md"/>
+  <link rel="alternate" type="text/markdown" href="./securityheaders.md"/>
   <script src="./highlight.pack.js"></script>
   <script src="./wodoc-highlight.js"></script>
 </head>
@@ -90,7 +90,7 @@
 </div>
 <div class="page-toc">
   <h3>On this page</h3>
-  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#usage">Usage</a><ul><li><a href="#what-is-deflatemod?">What is deflatemod?</a></li><li><a href="#what-do-i-need-to-use-deflatemod?">What do I need to use deflatemod?</a></li><li><a href="#how-do-i-use-deflatemod?">How do I use deflatemod?</a></li><li><a href="#how-do-i-configure-deflatemod?">How do I configure deflatemod?</a></li><li><a href="#i-want-to-deflate-only-some-files.-is-it-possible?">I want to deflate only some files. Is it possible?</a></li></ul></li><li><a href="#technical-questions">Technical questions</a><ul><li><a href="#how-can-i-choose-the-content-encoding-(gzip,-deflate-or-zstd)?">How can I choose the content-encoding (gzip, deflate or zstd)?</a></li><li><a href="#is-compression-enabled-in-the-one-command-serve-mode?">Is compression enabled in the one-command serve mode?</a></li><li><a href="#does-deflatemod-support-transfert-encoding?">Does deflatemod support transfert-encoding?</a></li><li><a href="#how-does-deflatemod-deal-with-the-content-length-header?">How does deflatemod deal with the content-length header?</a></li></ul></li></ul></nav>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#what-it-adds">What it adds</a></li><li><a href="#ordering">Ordering</a></li><li><a href="#using-as-a-library">Using as a library</a></li><li><a href="#configuration-file">Configuration file</a></li></ul></nav>
 </div>
 <nav class="api-nav manual-nav">
 <h3>Usage</h3>
@@ -108,7 +108,7 @@
 <li class="ml3" data-wodoc-page="extendconfiguration.html"><a href="./extendconfiguration.html">Extendconfiguration</a></li>
 <li class="ml3" data-wodoc-page="accesscontrol.html"><a href="./accesscontrol.html">Accesscontrol</a></li>
 <li class="ml3" data-wodoc-page="authbasic.html"><a href="./authbasic.html">Authbasic</a></li>
-<li class="ml3 current" data-wodoc-page="deflatemod.html"><a href="./deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="deflatemod.html"><a href="./deflatemod.html">Deflatemod</a></li>
 <li class="ml3" data-wodoc-page="redirectmod.html"><a href="./redirectmod.html">Redirectmod</a></li>
 <li class="ml3" data-wodoc-page="revproxy.html"><a href="./revproxy.html">Revproxy</a></li>
 <li class="ml3" data-wodoc-page="rewritemod.html"><a href="./rewritemod.html">Rewritemod</a></li>
@@ -145,7 +145,7 @@
 </div>
 <div class="page-toc">
   <h3>On this page</h3>
-  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#usage">Usage</a><ul><li><a href="#what-is-deflatemod?">What is deflatemod?</a></li><li><a href="#what-do-i-need-to-use-deflatemod?">What do I need to use deflatemod?</a></li><li><a href="#how-do-i-use-deflatemod?">How do I use deflatemod?</a></li><li><a href="#how-do-i-configure-deflatemod?">How do I configure deflatemod?</a></li><li><a href="#i-want-to-deflate-only-some-files.-is-it-possible?">I want to deflate only some files. Is it possible?</a></li></ul></li><li><a href="#technical-questions">Technical questions</a><ul><li><a href="#how-can-i-choose-the-content-encoding-(gzip,-deflate-or-zstd)?">How can I choose the content-encoding (gzip, deflate or zstd)?</a></li><li><a href="#is-compression-enabled-in-the-one-command-serve-mode?">Is compression enabled in the one-command serve mode?</a></li><li><a href="#does-deflatemod-support-transfert-encoding?">Does deflatemod support transfert-encoding?</a></li><li><a href="#how-does-deflatemod-deal-with-the-content-length-header?">How does deflatemod deal with the content-length header?</a></li></ul></li></ul></nav>
+  <nav class="odoc-toc odoc-local-toc"><ul><li><a href="#what-it-adds">What it adds</a></li><li><a href="#ordering">Ordering</a></li><li><a href="#using-as-a-library">Using as a library</a></li><li><a href="#configuration-file">Configuration file</a></li></ul></nav>
 </div>
 <nav class="api-nav manual-nav">
 <h3>Usage</h3>
@@ -163,7 +163,7 @@
 <li class="ml3" data-wodoc-page="extendconfiguration.html"><a href="./extendconfiguration.html">Extendconfiguration</a></li>
 <li class="ml3" data-wodoc-page="accesscontrol.html"><a href="./accesscontrol.html">Accesscontrol</a></li>
 <li class="ml3" data-wodoc-page="authbasic.html"><a href="./authbasic.html">Authbasic</a></li>
-<li class="ml3 current" data-wodoc-page="deflatemod.html"><a href="./deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="deflatemod.html"><a href="./deflatemod.html">Deflatemod</a></li>
 <li class="ml3" data-wodoc-page="redirectmod.html"><a href="./redirectmod.html">Redirectmod</a></li>
 <li class="ml3" data-wodoc-page="revproxy.html"><a href="./revproxy.html">Revproxy</a></li>
 <li class="ml3" data-wodoc-page="rewritemod.html"><a href="./rewritemod.html">Rewritemod</a></li>
@@ -185,30 +185,22 @@
 
       </nav>
       <article class="rightcol">
-        <header class="odoc-preamble"><h1 id="deflatemod">Deflatemod</h1></header>
-        <div class="odoc-content"><h2 id="usage">Usage</h2><h3 id="what-is-deflatemod?">What is deflatemod?</h3><p>Deflatemod is a module for Ocsigen that compresses content using the HTTP <code>Content-Encoding</code> mechanism. It supports <code>gzip</code>, <code>deflate</code> (zlib format) and <code>zstd</code>.</p><p>Brotli (<code>br</code>) is not supported yet: at the time of writing there is no maintained OCaml binding to libbrotli that builds on OCaml 5.</p><h3 id="what-do-i-need-to-use-deflatemod?">What do I need to use deflatemod?</h3><p>You need the <code>bytesrw</code> library (with its <code>zlib</code> and <code>zstd</code> backends, which require the system <code>zlib</code> and <code>libzstd</code> libraries) and a working Ocsigen installation.</p><h3 id="how-do-i-use-deflatemod?">How do I use deflatemod?</h3><p>To use that extension, load OCamlfind package <code>ocsigenserver.ext.deflatemod</code>, either from your Dune file (if you are using static linking), or from the configuration file:</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.deflatemod&quot; /&gt;</pre><p>This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module <a href="Deflatemod/index.html"><code>Deflatemod</code></a>.</p><h3 id="how-do-i-configure-deflatemod?">How do I configure deflatemod?</h3><p>Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:</p><ul><li>the compress level: from 0 (no compression) to 9. The higher, the better compression rate you achieve. Conversely, the lower, the faster it is. Default is 6. This level applies to <code>gzip</code> and <code>deflate</code>; <code>zstd</code> uses the library default level.</li><li>the buffer size: default is 8192. You shouldn't need to change this one, but you can still try a few other values (any feedback welcomed).</li></ul><p>For example:</p><pre>&lt;extension module=&quot;/home/gabriel/ocsigen/extensions/deflatemod.cmo&quot;&gt;
-&lt;compress level=&quot;6&quot; /&gt;
-&lt;buffer size=&quot;1024&quot; /&gt;
-&lt;/extension&gt;</pre><p>Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.</p><h3 id="i-want-to-deflate-only-some-files.-is-it-possible?">I want to deflate only some files. Is it possible?</h3><p>To some extent, yes. You can '''exclude''' some files and deflate every other, according to their mime-type or extension (''ie.'' the end of the '''url''' in fact, not really the file name on the disk).</p><p>Here is an example:</p><pre>&lt;host&gt;
-&lt;site&gt;
-&lt;!-- ... --&gt;
-&lt;/site&gt;
-
-&lt;deflate compress=&quot;allbut&quot;&gt;
-&lt;!-- deflate everything but *.tar.gz files and image/* files --&gt;
-    &lt;extension&gt;.tar.gz&lt;/extension&gt;
-    &lt;type&gt;image/*&lt;/type&gt;
-&lt;/deflate&gt;
-&lt;/host&gt;</pre><p>As you can see, you must put the &lt;deflate&gt; tag at the very end of the &lt;host&gt; element. Indeed, Ocsigen deals with extensions sequentially, so if you put &lt;site&gt; or other elements '''after''' &lt;deflatemod&gt;, they won't be compressed.</p><p>Conversely, you can choose to deflate '''only''' some files, based on their mime-types or extension:</p><pre>&lt;host&gt;
-&lt;site&gt;
-&lt;!-- ... --&gt;
-&lt;/site&gt;
-
-&lt;deflate compress=&quot;only&quot;&gt;
-&lt;!-- deflate only text/html files --&gt;
-    &lt;type&gt;text/html&lt;/type&gt;
-&lt;/deflate&gt;
-&lt;/host&gt;</pre><p>Warning: you can use only one contenttype tag! So you must choose, either the &quot;only&quot; or the &quot;allbut&quot; way.</p><p>Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please fill a bug report or send a patch.</p><h2 id="technical-questions">Technical questions</h2><h3 id="how-can-i-choose-the-content-encoding-(gzip,-deflate-or-zstd)?">How can I choose the content-encoding (gzip, deflate or zstd)?</h3><p>You can't. Deflatemod follows the RFC and chooses automatically the right encoding, based upon the <code>Accept-Encoding</code> header sent by the client. When the client offers several codecs at the same quality, <code>zstd</code> is preferred, then <code>gzip</code>, then <code>deflate</code>.</p><h3 id="is-compression-enabled-in-the-one-command-serve-mode?">Is compression enabled in the one-command serve mode?</h3><p>Yes. When you run <code>ocsigenserver ./public</code> (or <code>ocsigenserver --serve ...</code>), responses with a text-based content type are compressed by default, with no configuration needed, just like a static file server such as Caddy.</p><h3 id="does-deflatemod-support-transfert-encoding?">Does deflatemod support transfert-encoding?</h3><p>No, it doesn't. Content-encoding is definitely a better solution, providing end to end compression at the content-level.</p><h3 id="how-does-deflatemod-deal-with-the-content-length-header?">How does deflatemod deal with the content-length header?</h3><p>As it cannot compute the new content-length, deflatemod uses chunked-encoding. This is the recommended way to go.</p><p><em>Page written by Gabriel Kerneis</em></p></div>
+        <header class="odoc-preamble"><h1 id="securityheaders">Securityheaders</h1><p>Securityheaders adds common security-related HTTP headers to responses with a single declaration, instead of hand-rolling <a href="outputfilter.html" title="outputfilter">output filter</a> rules.</p></header>
+        <div class="odoc-content"><h2 id="what-it-adds">What it adds</h2><p>By default, to every response that does not already set them:</p><ul><li><code>X-Content-Type-Options: nosniff</code> — forbids the browser from MIME-sniffing, so it honours the declared <code>Content-Type</code> instead of guessing. Prevents a file served as, say, <code>text/plain</code> from being run as HTML or JavaScript.</li><li><code>X-Frame-Options: SAMEORIGIN</code> — only the same origin may embed the page in a frame, mitigating clickjacking. (The modern equivalent is the CSP <code>frame-ancestors</code> directive; keeping both is common.)</li><li><code>Referrer-Policy: strict-origin-when-cross-origin</code> — limits how much of the URL is sent in the <code>Referer</code> header to other origins.</li></ul><p>Two further headers are <b>opt-in</b> (added only when you configure them):</p><ul><li><code>Strict-Transport-Security</code> (HSTS) — tells the browser to use HTTPS only for this domain. <b>Use with care:</b> it is honoured only over HTTPS, it is sticky (the browser remembers it for the whole <code>max-age</code>), and <code>includeSubDomains</code> forces <em>every</em> subdomain of the registrable domain to HTTPS for that duration — which can take sibling subdomains offline if they are not all on HTTPS. Enable it only when the whole domain is HTTPS-only.</li><li><code>Content-Security-Policy</code> (CSP) — restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.</li></ul><p>Any header already set by the application is left untouched, so you can override a default per response.</p><h2 id="ordering">Ordering</h2><p>This is a response filter: it decorates responses produced by earlier extensions. <b>Place it after</b> the extension whose responses it should cover (Staticmod, Eliom, ...). If placed before, it sees no response and silently adds nothing.</p><h2 id="using-as-a-library">Using as a library</h2><p>Load OCamlfind package <code>ocsigenserver.ext.securityheaders</code> from your Dune file, and see the <a href="Securityheaders/index.html" title="Securityheaders">API documentation</a>:</p><pre class="language-ocaml"><code>let _ =
+   Ocsigen.Server.start
+     [ Ocsigen.Server.host
+         [ Staticmod.run ~dir:&quot;static&quot; ()
+         ; Securityheaders.run () ]]</code></pre><h2 id="configuration-file">Configuration file</h2><p>Load the extension and add the <code>&lt;securityheaders/&gt;</code> element to a host, after the elements producing the responses to decorate:</p><pre>&lt;extension findlib-package=&quot;ocsigenserver.ext.securityheaders&quot;/&gt;
+...
+&lt;host hostfilter=&quot;*&quot;&gt;
+  &lt;static dir=&quot;/path/to/the/local/directory&quot; /&gt;
+  &lt;securityheaders/&gt;
+&lt;/host&gt;</pre><p>Each header can be customised or disabled with an attribute. The values <code>&quot;no&quot;</code>, <code>&quot;none&quot;</code> and the empty string disable a header. HSTS and CSP are added only when their attribute is present:</p><pre>&lt;securityheaders
+   frame-options=&quot;DENY&quot;
+   referrer-policy=&quot;no-referrer&quot;
+   nosniff=&quot;true&quot;
+   hsts=&quot;max-age=63072000; includeSubDomains&quot;
+   content-security-policy=&quot;default-src 'self'&quot; /&gt;</pre></div>
       </article>
     </div>
   </div>

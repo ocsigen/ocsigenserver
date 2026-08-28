@@ -27,7 +27,12 @@ This starts a server on port 8080 serving the files of `./public`. No configurat
 ```
 ocsigenserver --serve ./public --port 8000 --directory-listing
 ```
-This is the simplest way to get started. For anything more elaborate (several hosts, extensions, reverse proxy, etc.) use a configuration file or the library API, as described below.
+You can also start a reverse proxy that forwards every request to another server, again without any configuration file:
+
+```
+ocsigenserver --reverse-proxy http://localhost:9000 --port 8080
+```
+This is the simplest way to get started. For anything more elaborate (several hosts, extensions, fine-grained reverse proxy rules, etc.) use a configuration file or the library API, as described below.
 
 
 ## Using Ocsigen Server as an executable
@@ -97,6 +102,7 @@ The extensions provided are:
 - [Redirectmod](./redirectmod.md): if you want to define some HTTP redirections,
 - [Deflatemod](./deflatemod.md): if you want to compress the content before sending your pages,
 - [Outputfilter](./outputfilter.md): allows to change the header of the HTTP response,
+- [Securityheaders](./securityheaders.md): adds common security-related HTTP headers (HSTS, nosniff, X-Frame-Options, CSP),
 - [Rewritemod](./rewritemod.md): allows to rewrite the request before continuing,
 - [Extendconfiguration](./extendconfiguration.md): adds many useful configuration options,
 - [Authbasic](./authbasic.md): for basic HTTP authentication,

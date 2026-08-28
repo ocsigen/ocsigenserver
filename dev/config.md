@@ -258,7 +258,14 @@ Note: HTTP Strict Transport Security (HSTS) is not enabled automatically. Once y
 
 The directory for log files. Usually `/var/log/ocsigenserver`. Ocsigenserver is using three log files: `access.log` where all requests are logged, `errors.log` for error messages, and `warnings.log` for warnings.
 
-If `<logdir>` is omitted (and `<syslog>` is not used), the logs are written to the standard output and standard error instead of to files, so that no log directory is required.
+Requests are logged in the standard Apache/nginx [Combined Log Format](https://httpd.apache.org/docs/current/logs.html#combined):
+
+```
+%h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-agent}i"
+```
+that is, client address, identity (`-`), authenticated user (set by an authentication extension such as [Authbasic](./authbasic.md), `-` otherwise), request time, request line, response status, response size in bytes (`-` when unknown, for example for a streamed response), then the `Referer` and `User-Agent` headers. This format is understood out of the box by log analysers such as GoAccess, AWStats or Apache's own tools.
+
+If `<logdir>` is omitted (and `<syslog>` is not used), the logs are written to the standard output and standard error instead of to files, so that no log directory is required. In that case the access lines go to the standard output in the very same Combined Log Format.
 
 Example :
 

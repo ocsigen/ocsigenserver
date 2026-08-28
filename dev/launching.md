@@ -9,6 +9,10 @@ To run the server, use the command `ocsigenserver`. It has the following options
          file (logs go to the terminal). DIR can also be given as a plain
          positional argument: "ocsigenserver ./public".
 
+  --reverse-proxy URL
+         Forward every request to the base URL given (for example
+         http://localhost:9000), without a configuration file.
+
   -P, --port
          Port to listen on in serve mode (default 8080).
 
