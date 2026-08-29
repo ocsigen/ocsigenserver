@@ -1,4 +1,3 @@
-available: os != "win32"
 build: [
   [
     "sh"
