@@ -47,6 +47,11 @@ let () =
   in
   check "invalid size raises Config_file_error" raised
 
+(* Default in-memory cap, before any tag sets it. *)
+let () =
+  check "<maxrequestbodysizeinmemory> defaults to 1 MiB"
+    (Ocsigen.Config.get_maxrequestbodysizeinmemory () = 1_048_576)
+
 (* Wiring: feeding a single tag through [later_pass] must update the matching
    [Config] value. This is exactly what fails when a tag branch is missing. *)
 let set_tag tag value =
