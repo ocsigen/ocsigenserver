@@ -465,6 +465,14 @@ and later_pass = function
   | Element (("maxrequestbodysize" as st), [], p) :: ll ->
       set_maxrequestbodysize (parse_size_tag st (parse_string_tag st p));
       later_pass ll
+  | Element (("maxrequestbodysizeinmemory" as st), [], p) :: ll ->
+      (* The in-memory cap is a plain [int]; "infinity"/empty (i.e. [None])
+         means no in-memory limit, bounded in practice by <maxrequestbodysize>. *)
+      set_maxrequestbodysizeinmemory
+        (match parse_size_tag st (parse_string_tag st p) with
+        | None -> max_int
+        | Some v -> Int64.to_int v);
+      later_pass ll
   | Element (("maxuploadfilesize" as st), [], p) :: ll ->
       set_maxuploadfilesize (parse_size_tag st (parse_string_tag st p));
       later_pass ll
