@@ -137,16 +137,115 @@ module Access_log = struct
       (header Ocsigen_http.Header.Name.user_agent)
 end
 
-let handler ~ssl ~address ~port ~connector (flow, conn) request body =
+(* Bounding the reads on a connection by the client timeout ([<timeout>] in the
+   configuration file).
+
+   cohttp can only bound the whole lifetime of a connection, which would cut
+   long downloads, streamed responses and Eliom's comet requests along with slow
+   clients. What is bounded here depends instead on what the connection is
+   waiting for:
+   - while it waits for a request, the headers must have arrived in full before
+     a deadline, set when the connection is accepted and after each response, so
+     that sending a request one byte at a time ("Slowloris") does not keep a
+     connection open;
+   - while the body of a request is read, each read must make progress within
+     the timeout;
+   - nothing is bounded while a response is produced and sent, since nothing is
+     read then.
+   Once the timeout has expired every read fails at once, so that the
+   connection is closed without anything more being read or answered: cohttp
+   drains the body of a request before writing its response. A timeout of 0 or
+   less disables all this.
+
+   This can go once cohttp is able to bound its reads itself. *)
+module Client_timeout = struct
+  exception Timed_out
+
+  type phase =
+    | Awaiting_request of unit Lwt.t
+    (* Resolves when the headers of the next request are overdue. *)
+    | Reading_body
+    | Expired
+
+  type state = {timeout : float; mutable phase : phase}
+  type t = Disabled | Enabled of state
+
+  let leave r =
+    match r.phase with
+    | Awaiting_request deadline -> Lwt.cancel deadline
+    | Reading_body | Expired -> ()
+
+  let await_request = function
+    | Disabled | Enabled {phase = Expired; _} -> ()
+    | Enabled r ->
+        leave r;
+        r.phase <- Awaiting_request (Lwt_unix.sleep r.timeout)
+
+  let read_body = function
+    | Disabled | Enabled {phase = Expired; _} -> ()
+    | Enabled r ->
+        leave r;
+        r.phase <- Reading_body
+
+  let close = function Disabled -> () | Enabled r -> leave r
+
+  let create () =
+    match Config.get_client_timeout () with
+    | timeout when timeout <= 0 -> Disabled
+    | timeout ->
+        let t =
+          Enabled {timeout = float_of_int timeout; phase = Reading_body}
+        in
+        await_request t; t
+
+  (* The deadline of a request is shared by all the reads of its headers, hence
+     protected from the cancellation of the read that loses the race. *)
+  let read r ic buf pos len =
+    let bounded expiry =
+      Lwt.pick
+        [ Lwt_io.read_into_bigstring ic buf pos len >|= Option.some
+        ; (expiry >|= fun () -> None) ]
+      >>= function
+      | Some n -> Lwt.return n
+      | None ->
+          r.phase <- Expired;
+          Lwt.fail Timed_out
+    in
+    match r.phase with
+    | Awaiting_request deadline -> bounded (Lwt.protected deadline)
+    | Reading_body -> bounded (Lwt_unix.sleep r.timeout)
+    | Expired -> Lwt.fail Timed_out
+
+  (* [ic], with each read bounded according to [t]. *)
+  let channel t ic =
+    match t with
+    | Disabled -> ic
+    | Enabled r -> Lwt_io.make ~mode:Lwt_io.input (read r ic)
+
+  (* The expert response [(res, write_body)], after which the connection waits
+     for the next request. *)
+  let after_response t (res, write_body) =
+    res, fun ic oc -> write_body ic oc >|= fun () -> await_request t
+end
+
+let client_conn_of_flow flow =
+  match Conduit_lwt_unix.endp_of_flow flow with
+  | `TCP (ip, port) | `TLS (_, `TCP (ip, port)) -> `Inet (ip, port)
+  | `Unix_domain_socket path | `TLS (_, `Unix_domain_socket path) -> `Unix path
+  | _ -> `Unknown
+
+let log_client_timeout flow =
+  Logs.info ~src:section (fun fmt ->
+    fmt "Closing the connection of a client that timed out%s"
+      (match client_conn_of_flow flow with
+      | `Inet (ip, _) -> Printf.sprintf " (%s)" (Ipaddr.to_string ip)
+      | `Unix _ | `Unknown -> ""))
+
+let handler ~ssl ~address ~port ~connector ~timeout (flow, conn) request body =
+  (* cohttp calls this once the headers of [request] have arrived. *)
+  Client_timeout.read_body timeout;
   let filenames = ref [] in
-  let edn = Conduit_lwt_unix.endp_of_flow flow in
-  let client_conn =
-    match edn with
-    | `TCP (ip, port) | `TLS (_, `TCP (ip, port)) -> `Inet (ip, port)
-    | `Unix_domain_socket path | `TLS (_, `Unix_domain_socket path) ->
-        `Unix path
-    | _ -> `Unknown
-  in
+  let client_conn = client_conn_of_flow flow in
   let connection_closed =
     try fst (Hashtbl.find connections conn)
     with Not_found ->
@@ -180,6 +279,10 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
             fmt
               "Request body too large to be decoded in memory (see the <maxrequestbodysizeinmemory> and <netbuffersize> configuration options)");
           None, `Request_entity_too_large, None
+      (* The body of the request did not arrive in time. The connection is
+         closed before this is sent (see [Client_timeout]), and the closing is
+         logged when the connection ends. *)
+      | Client_timeout.Timed_out -> None, `Request_timeout, None
       | exn ->
           Logs.err ~src:section (fun fmt ->
             fmt
@@ -221,7 +324,9 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
            | exn -> Lwt.return (handle_error exn))
        >>= fun response ->
        Messages.accesslog (Access_log.line request response);
-       Lwt.return (Response.to_response_expert response))
+       Lwt.return
+         (Client_timeout.after_response timeout
+            (Response.to_response_expert response)))
     (fun () ->
        if !filenames <> []
        then
@@ -302,7 +407,6 @@ let service ?ssl ~address ~port ~connector () =
     let ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in
-  let spec = Cohttp_lwt_unix.Server.make_expert ~conn_closed ~callback () in
   let mode =
     match address, tls_own_key with
     | `Unix f, _ -> `Unix_domain_socket (`File f)
@@ -314,7 +418,24 @@ let service ?ssl ~address ~port ~connector () =
      input channel can be adjusted before cohttp reads from it. *)
   Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
     (fun flow ic oc ->
-       Cohttp_lwt_unix.Server.callback spec flow
-         (Cohttp_lwt_unix.Private.Input_channel.create ic)
-         oc)
+       let timeout = Client_timeout.create () in
+       let spec =
+         Cohttp_lwt_unix.Server.make_expert ~conn_closed
+           ~callback:(callback ~timeout) ()
+       in
+       Lwt.finalize
+         (fun () ->
+            Lwt.catch
+              (fun () ->
+                 Cohttp_lwt_unix.Server.callback spec flow
+                   (Cohttp_lwt_unix.Private.Input_channel.create
+                      (Client_timeout.channel timeout ic))
+                   oc)
+              (function
+                | Client_timeout.Timed_out ->
+                    log_client_timeout flow; Lwt.return_unit
+                | exn -> Lwt.reraise exn))
+         (fun () ->
+            Client_timeout.close timeout;
+            Lwt.return_unit))
   >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())
