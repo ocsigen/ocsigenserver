@@ -10,6 +10,9 @@ New features:
    such as Eliom RPCs with large parameters, no longer fail.
 
 Bug fixes:
+ * A request body too large to be decoded in memory is now answered with
+   413 (Request Entity Too Large) instead of 500, and a warning naming the
+   relevant configuration options is logged.
  * A server listening on a Unix-domain socket, which has no port (typically
    behind a reverse proxy), no longer writes port 0 in the absolute URLs it
    builds, e.g. the redirection of a directory to its URL with a slash:

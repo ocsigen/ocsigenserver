@@ -413,8 +413,8 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 This is the maximum size of a request body that Ocsigenserver keeps in memory
 while decoding it, for example when reading the parameters of a form encoded as
 [application/x-www-form-urlencoded]. A request whose body exceeds this size is
-rejected with an [Input_is_too_large] error (HTTP status 500). The default is
-1 MiB (1048576 bytes).
+rejected with HTTP status 413 (Request Entity Too Large), and a warning is
+logged. The default is 1 MiB (1048576 bytes).
 
 Decoding a request body may use a few times this size in memory, for each
 request being decoded, so the memory used in the worst case grows with
