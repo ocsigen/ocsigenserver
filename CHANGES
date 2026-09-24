@@ -1,4 +1,11 @@
-==== 8.0.1~dev ===
+==== 8.1.0~dev ===
+
+New features:
+ * New <maxrequestbodysizeinmemory> configuration option: sets the maximum size
+   of a request body kept in memory while decoding it (for instance form
+   parameters), so the previously OCaml-only 8192-byte limit can now be raised
+   from the configuration file. Accepts SI/binary size units, like
+   <maxrequestbodysize>.
 
 Bug fixes:
  * A server listening on a Unix-domain socket, which has no port (typically
