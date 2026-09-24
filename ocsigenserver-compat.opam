@@ -11,7 +11,7 @@ homepage: "http://ocsigen.org/ocsigenserver"
 bug-reports: "https://github.com/ocsigen/ocsigenserver/issues"
 depends: [
   "dune" {>= "3.19"}
-  "ocsigenserver"
+  "ocsigenserver" {= version}
   "odoc" {with-doc}
 ]
 build: [
