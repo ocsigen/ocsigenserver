@@ -1,0 +1,4 @@
+(test
+ (name test_parseconfig)
+ (package ocsigenserver)
+ (libraries ocsigenserver xml-light))
