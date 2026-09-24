@@ -1,62 +1,6 @@
-==== 8.0.0~dev ===
- * Security: the <maxconnected> limit (maximum number of simultaneous
-   connections) is now enforced again. It throttles the accept loop instead
-   of being silently ignored.
- * Security: error responses no longer include the raw OCaml exception in
-   their body. Clients now receive the generic HTTP status reason phrase;
-   the exception details remain in the logs.
- * Security: the command pipe is now created with mode 0o600 instead of
-   0o660, so that local users in the server's group can no longer send it
-   control commands (shutdown, reload, ...).
- * Security (TLS): the HTTPS server now requires TLS 1.2 at minimum (TLS 1.0
-   and 1.1 are deprecated) and prefers the server's cipher order. The
-   <ciphers>, <dhfile> and <curve> entries of <ssl>, previously parsed but
-   ignored, are now applied to the TLS context.
- * Request paths are percent-decoded again, as they were before the
-   migration to Cohttp: Ocsigen.Request.path, sub_path and
-   original_full_path used to return their segments still encoded,
-   whereas the GET parameters were decoded. A file whose name is not
-   made of unreserved characters can be served again, and Eliom
-   suffix parameters get decoded values. Encoded ".." and encoded
-   slashes cannot be used to walk up the tree.
- * Fix Ocsigen_base.Lib.Url.decode, which was silently returning its
-   argument unchanged: its regexp was still written in Str syntax
-   ('\|' for the alternation) after the migration to Re.Pcre.
- * New extension Securityheaders (ocsigenserver.ext.securityheaders): adds
-   common security headers with one declaration. Safe by default
-   (X-Content-Type-Options, X-Frame-Options, Referrer-Policy);
-   Strict-Transport-Security and Content-Security-Policy are opt-in. It is
-   enabled by default in the sample configuration file and in serve mode.
- * Serve mode now logs a startup banner with the URL it listens on.
- * Compression: the Deflatemod extension now supports the zstd
-   content-encoding (RFC 8878) in addition to gzip and deflate, and its
-   backend was switched from camlzip to bytesrw. Compression is enabled by
-   default in the one-command serve mode.
- * One-command serve mode: "ocsigenserver ./public" (or
-   "ocsigenserver --serve ./public --port 8000 --directory-listing") now
-   serves a directory of static files without any configuration file or
-   pre-created log directory. The Staticmod extension is loaded on demand.
- * One-command reverse proxy: "ocsigenserver --reverse-proxy URL" forwards
-   every request to the base URL given, with no configuration file. The
-   Revproxy extension is loaded on demand.
- * Logging: when no <logdir> (and no <syslog>) is given in the configuration
-   file, logs now go to the standard output and standard error instead of to
-   files, so that no log directory is required.
- * Static files: serve an ETag and a Last-Modified header, and answer
-   conditional requests (If-None-Match / If-Modified-Since) with 304 Not
-   Modified (RFC 7232).
- * Static files: support single byte-range requests. Responses advertise
-   Accept-Ranges, a satisfiable Range yields 206 Partial Content with a
-   Content-Range header (honouring If-Range), and an unsatisfiable range gives
-   416 (RFC 7233). This enables media streaming and resumable downloads.
- * Access log: requests are now logged in the standard Apache/nginx Combined
-   Log Format, understood by common log analysers, instead of the previous
-   custom format. The line now reports the final status code, the response
-   size and the authenticated user.
- * Documentation: the manual now lives in the main branch as odoc pages
-   (doc/*.mld), compiled in place by `dune build @doc`, replacing the
-   wikicreole manual of the wikidoc branch. doc/index.mld is the package
-   landing page (manual table of contents + API reference).
+==== 8.0.0 (2026-09-24) ===
+
+Incompatible changes:
  * Module namespace modernization
    - Public modules are now grouped under three wrappers:
      * ocsigenserver (main library): Ocsigen.Server, Ocsigen.Config,
@@ -75,7 +19,77 @@
      conflict).
  * New ocsigenserver-compat opam package: provides the legacy
    Ocsigen_xxx module names as include-aliases of the new wrapped
-   modules.
+   modules. Installing it is enough to keep existing code compiling.
+ * Dependencies: the compression backend no longer uses camlzip. The package
+   now depends on bytesrw, conf-zlib and conf-zstd instead.
+ * Access log: requests are now logged in the standard Apache/nginx Combined
+   Log Format, understood by common log analysers, instead of the previous
+   custom format. The line now reports the final status code, the response
+   size and the authenticated user. Anything parsing the old format must be
+   updated.
+ * Logging: when no <logdir> (and no <syslog>) is given in the configuration
+   file, logs now go to the standard output and standard error instead of to
+   files, so that no log directory is required.
+
+New features:
+ * One-command serve mode: "ocsigenserver ./public" (or
+   "ocsigenserver --serve ./public --port 8000 --directory-listing") now
+   serves a directory of static files without any configuration file or
+   pre-created log directory. The Staticmod extension is loaded on demand.
+   Serve mode logs a startup banner with the URL it listens on, adds the
+   safe-by-default security headers, and compresses responses.
+ * One-command reverse proxy: "ocsigenserver --reverse-proxy URL" forwards
+   every request to the base URL given, with no configuration file. The
+   Revproxy extension is loaded on demand.
+ * New extension Securityheaders (ocsigenserver.ext.securityheaders): adds
+   common security headers with one declaration. Safe by default
+   (X-Content-Type-Options, X-Frame-Options, Referrer-Policy);
+   Strict-Transport-Security and Content-Security-Policy are opt-in. It is
+   enabled by default in the sample configuration file and in serve mode.
+ * Compression: the Deflatemod extension now supports the zstd
+   content-encoding (RFC 8878) in addition to gzip and deflate.
+ * Static files: serve an ETag and a Last-Modified header, and answer
+   conditional requests (If-None-Match / If-Modified-Since) with 304 Not
+   Modified (RFC 7232).
+ * Static files: support single byte-range requests. Responses advertise
+   Accept-Ranges, a satisfiable Range yields 206 Partial Content with a
+   Content-Range header (honouring If-Range), and an unsatisfiable range gives
+   416 (RFC 7233). This enables media streaming and resumable downloads.
+ * Documentation: the manual now lives in the main branch as odoc pages
+   (doc/*.mld), compiled in place by `dune build @doc`, replacing the
+   wikicreole manual of the wikidoc branch. doc/index.mld is the package
+   landing page (manual table of contents + API reference).
+
+Security:
+ * The <maxconnected> limit (maximum number of simultaneous connections) is
+   now enforced again. It throttles the accept loop instead of being silently
+   ignored.
+ * Error responses no longer include the raw OCaml exception in their body.
+   Clients now receive the generic HTTP status reason phrase; the exception
+   details remain in the logs.
+ * The command pipe is now created with mode 0o600 instead of 0o660, so that
+   local users in the server's group can no longer send it control commands
+   (shutdown, reload, ...).
+ * TLS: the HTTPS server now requires TLS 1.2 at minimum (TLS 1.0 and 1.1 are
+   deprecated) and prefers the server's cipher order. The <ciphers>, <dhfile>
+   and <curve> entries of <ssl>, previously parsed but ignored, are now
+   applied to the TLS context.
+
+Bug fixes:
+ * Request paths are percent-decoded again, as they were before the
+   migration to Cohttp: Ocsigen.Request.path, sub_path and
+   original_full_path used to return their segments still encoded,
+   whereas the GET parameters were decoded. A file whose name is not
+   made of unreserved characters can be served again, and Eliom
+   suffix parameters get decoded values. Encoded ".." and encoded
+   slashes cannot be used to walk up the tree.
+ * Fix Ocsigen_base.Lib.Url.decode, which was silently returning its
+   argument unchanged: its regexp was still written in Str syntax
+   ('\|' for the alternation) after the migration to Re.Pcre.
+ * Compression: a compressed response kept the content-length of the
+   uncompressed body, which truncated it, and carried an entity tag that was
+   not a valid one. It now drops the stale content-length and announces
+   Vary: Accept-Encoding.
 
 ==== 7.0.0 (2026-02-18) ===
  * Use Log instead og Lwt_logs (by Jules Aguillon)
