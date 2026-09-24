@@ -1,5 +1,13 @@
 ==== 8.1.0~dev ===
 
+ * Security: the client timeout (<timeout>, its alias <clienttimeout>, and the
+   ~client_timeout argument of Ocsigen.Server.start), until now parsed but
+   never applied, is enforced. The headers of a request must arrive in full
+   within the timeout, so that sending a request slowly ("Slowloris") no
+   longer holds a connection, and a kept-alive connection left idle is closed;
+   the body of a request must keep coming. Producing and sending a response is
+   not bounded, so that long downloads, streamed responses and Eliom's comet
+   requests are not cut. A timeout of 0 disables it.
  * New <maxrequestbodysizeinmemory> configuration option: sets the maximum size
    of a request body kept in memory while decoding it (for instance form
    parameters), which could previously be set only through the OCaml API.

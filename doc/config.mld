@@ -352,7 +352,7 @@ unprivileged user (e.g. [www-data]). To serve a privileged port (80 or 443)
 as a non-root user, use one of:
 - a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and
   forwarding to Ocsigenserver on a high port (recommended, see the [<timeout>]
-  note above);
+  note below);
 - the Linux capability [cap_net_bind_service] on the executable
   ([setcap 'cap_net_bind_service=+ep' ...]);
 - a firewall/port redirection from 80/443 to a high port.
@@ -470,24 +470,41 @@ v}
 {3 [<timeout>] : Timeout for connections}
 
 
-Written in seconds. Example:
+Written in seconds; [<clienttimeout>] is an alias. Default: 30. Example:
 
 {v
 <timeout>20</timeout>
 v}
 
-{b Limitation.} This option (and its aliases [<clienttimeout>] and
-[<servertimeout>]) is currently parsed but {b not enforced}: the cohttp-based
-connection handling does not yet apply a per-connection idle/read timeout. As
-a consequence Ocsigenserver does {b not} protect against slow-client
-("Slowloris") attacks on its own, where a client opens many connections and
-sends the request very slowly to exhaust resources.
+The timeout bounds how long the server waits for a client, in a way that
+depends on what the connection is waiting for:
+- while it waits for a request, the headers of the request must have arrived in
+  full within the timeout, counted from the opening of the connection (for TLS,
+  once the handshake is done) or from the end of the previous response. A
+  client sending its request slowly, even one byte at a time ("Slowloris"),
+  cannot hold a connection, and a kept-alive connection left idle is closed;
+- while the body of a request is received, each part of it must arrive within
+  the timeout after the previous one, so that a large upload over a slow link
+  is not cut as long as it keeps progressing;
+- nothing is bounded while the server produces and sends its response: long
+  downloads, streamed responses and Eliom's comet requests are not cut.
 
-{b Recommendation.} For an Internet-facing deployment, place a reverse proxy
-(nginx, HAProxy, Caddy, ...) in front of Ocsigenserver. The proxy enforces
-read/idle timeouts, buffers slow clients, terminates TLS and absorbs malformed
-requests. The [<maxconnected>] limit above does cap the number of
-simultaneous connections, which mitigates connection exhaustion.
+When the timeout expires, the connection is closed without an answer, and the
+closing is logged at the [info] level with the address of the client. A value
+of [0] disables the timeout.
+
+{b Limitations.} The TLS handshake itself is not bounded. The body of a request
+is bounded by its inactivity only: a client that keeps sending a large body
+very slowly holds its connection for as long as the body keeps coming. A client
+that does not read its response is not bounded either.
+
+[<servertimeout>] is accepted for compatibility, but has no effect.
+
+{b Recommendation.} For an Internet-facing deployment, a reverse proxy (nginx,
+HAProxy, Caddy, ...) in front of Ocsigenserver still brings what the server does
+not do itself: bounding the TLS handshake and clients that read slowly,
+buffering slow clients, and obtaining certificates. The [<maxconnected>] limit
+above caps the number of simultaneous connections.
 
 {3 [<shutdowntimeout>] : Timeout for graceful shutdown {e From version 1.3}}
 
