@@ -414,15 +414,17 @@ This is the maximum size of a request body that Ocsigenserver keeps in memory
 while decoding it, for example when reading the parameters of a form encoded as
 [application/x-www-form-urlencoded]. A request whose body exceeds this size is
 rejected with an [Input_is_too_large] error (HTTP status 500). The default is
-8192 bytes.
+1 MiB (1048576 bytes).
 
-Raise it if legitimate requests, for example large RPC calls, carry more than a
-few kilobytes of parameters. The whole request body is still limited by
-[<maxrequestbodysize>].
+Decoding a request body may use a few times this size in memory, for each
+request being decoded, so the memory used in the worst case grows with
+[<maxconnected>]. Lower this value to reduce it, or raise it if legitimate
+requests, for example large RPC calls, carry more parameters. The whole request
+body is still limited by [<maxrequestbodysize>].
 
 Example:
 {v
-<maxrequestbodysizeinmemory>1MB</maxrequestbodysizeinmemory>
+<maxrequestbodysizeinmemory>4MiB</maxrequestbodysizeinmemory>
 v}
 
 The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10kB 10kiB 10MiB 10TB ... (or 10o 10ko ...) (default in bytes when no unit is specified). The value "infinity" removes the in-memory limit, so the body is then bounded only by [<maxrequestbodysize>].
