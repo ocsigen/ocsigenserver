@@ -1,9 +1,6 @@
-
 # Deflatemod
 
-
 ## Usage
-
 
 ### What is deflatemod?
 
@@ -11,11 +8,9 @@ Deflatemod is a module for Ocsigen that compresses content using the HTTP `Conte
 
 Brotli (`br`) is not supported yet: at the time of writing there is no maintained OCaml binding to libbrotli that builds on OCaml 5\.
 
-
 ### What do I need to use deflatemod?
 
 You need the `bytesrw` library (with its `zlib` and `zstd` backends, which require the system `zlib` and `libzstd` libraries) and a working Ocsigen installation.
-
 
 ### How do I use deflatemod?
 
@@ -25,7 +20,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.deflatemod`, ei
 <extension findlib-package="ocsigenserver.ext.deflatemod" />
 ```
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Deflatemod`](./Deflatemod.md).
-
 
 ### How do I configure deflatemod?
 
@@ -42,7 +36,6 @@ For example:
 </extension>
 ```
 Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.
-
 
 ### I want to deflate only some files. Is it possible?
 
@@ -83,24 +76,19 @@ Warning: you can use only one contenttype tag\! So you must choose, either the "
 
 Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please fill a bug report or send a patch.
 
-
 ## Technical questions
-
 
 ### How can I choose the content-encoding (gzip, deflate or zstd)?
 
 You can't. Deflatemod follows the RFC and chooses automatically the right encoding, based upon the `Accept-Encoding` header sent by the client. When the client offers several codecs at the same quality, `zstd` is preferred, then `gzip`, then `deflate`.
 
-
 ### Is compression enabled in the one-command serve mode?
 
 Yes. When you run `ocsigenserver ./public` (or `ocsigenserver --serve ...`), responses with a text-based content type are compressed by default, with no configuration needed, just like a static file server such as Caddy.
 
-
 ### Does deflatemod support transfert-encoding?
 
 No, it doesn't. Content-encoding is definitely a better solution, providing end to end compression at the content-level.
-
 
 ### How does deflatemod deal with the content-length header?
 

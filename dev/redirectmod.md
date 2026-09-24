@@ -1,4 +1,3 @@
-
 # Redirectmod
 
 Redirectmod is a module allowing to define HTTP redirections from Ocsigen's configuration file. Submit your bugs and feature wishes (or any enhancement/mistake in the documentation) [here](https://github.com/ocsigen/ocsigenserver).

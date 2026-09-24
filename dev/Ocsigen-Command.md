@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Command`
 
 Extending server commands

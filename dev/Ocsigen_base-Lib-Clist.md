@@ -1,4 +1,3 @@
-
 # Module `Lib.Clist`
 
 Circular lists

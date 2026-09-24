@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Messages`
 
 Writing messages in the logs

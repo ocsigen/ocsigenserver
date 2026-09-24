@@ -1,11 +1,8 @@
-
 # Accesscontrol
-
 
 ## The accesscontrol extension
 
 If you want to restrict access for some sites, this extension is for you.
-
 
 ## Loading the extension
 
@@ -18,11 +15,9 @@ Here, we call *actions* elements that can be put in a site configuration. Action
 
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Accesscontrol`](./Accesscontrol.md).
 
-
 ## The `<if>` action
 
 It takes as children a condition followed by a `<then>` element and possibly an `<else>` element. When a request reaches an `<if>`, if the condition evaluates to true, then the whole `<if>` behaves as if it had been replaced by the contents of the `<then>` element, otherwise it behaves as if it had been replaced by the contents of the `<else>` element. A missing `<else>` is considered as an `<else>` with no children.
-
 
 ### Conditions
 
@@ -56,7 +51,7 @@ Combining conditions (all their children must be conditions):
 ## Examples
 
 - I want some actions to handle only requests from localhost, for users using the browser Konqueror:
-  
+
   ```
   <if>
   <and>
@@ -69,7 +64,7 @@ Combining conditions (all their children must be conditions):
 </if>
   ```
   Or, if you are using Ocsigen Server as a library:
-  
+
   ```ocaml
   Accesscontrol.(if_ (and_ [(ip "127.0.0.1"); 
                           (header ~name:"user-agent" ~regexp:".*Konqueror.*")])
@@ -80,7 +75,7 @@ Combining conditions (all their children must be conditions):
 - they belong to the subnet 123\.123.123.0/24,
 - or they want to access a page beginning with the letter 'c',
 - or they are not doing a `GET HTTP` request:
-  
+
   ```
   <if>
   <or>
@@ -94,7 +89,7 @@ Combining conditions (all their children must be conditions):
 </if>
   ```
   Or, if you are using Ocsigen Server as a library:
-  
+
   ```ocaml
   Accesscontrol.(if_ (or_ [(ip "123.123.123.0/24"); 
                          (path ~regexp:"/c.*");
@@ -103,7 +98,7 @@ Combining conditions (all their children must be conditions):
                   [])
   ```
 - I want to deny access to 192\.168.0.0/24 except 192\.168.0.42, and to 192\.168.99.0/24:
-  
+
   ```
   <if>
   <or>

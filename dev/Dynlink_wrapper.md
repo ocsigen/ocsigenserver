@@ -1,4 +1,3 @@
-
 # Module `Dynlink_wrapper`
 
 ```ocaml

@@ -1,4 +1,3 @@
-
 # Module `Redirectmod`
 
 Redirectmod: HTTP redirections

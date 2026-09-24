@@ -1,8 +1,6 @@
-
 # Securityheaders
 
 Securityheaders adds common security-related HTTP headers to responses with a single declaration, instead of hand-rolling [output filter](./outputfilter.md) rules.
-
 
 ## What it adds
 
@@ -17,11 +15,9 @@ Two further headers are **opt-in** (added only when you configure them):
 - `Content-Security-Policy` (CSP) — restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.
 Any header already set by the application is left untouched, so you can override a default per response.
 
-
 ## Ordering
 
 This is a response filter: it decorates responses produced by earlier extensions. **Place it after** the extension whose responses it should cover (Staticmod, Eliom, ...). If placed before, it sees no response and silently adds nothing.
-
 
 ## Using as a library
 

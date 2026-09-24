@@ -1,4 +1,3 @@
-
 # Module `Lib.List`
 
 Improvement of module List

@@ -1,4 +1,3 @@
-
 # Launching the server
 
 To run the server, use the command `ocsigenserver`. It has the following options:

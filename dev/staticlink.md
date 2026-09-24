@@ -1,6 +1,4 @@
-
 # Using Ocsigen Server as a library
-
 
 ## Creating and running a statically linked executable
 

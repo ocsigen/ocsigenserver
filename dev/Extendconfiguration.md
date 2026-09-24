@@ -1,4 +1,3 @@
-
 # Module `Extendconfiguration`
 
 Extendconfiguration: More configuration options for Ocsigen Server

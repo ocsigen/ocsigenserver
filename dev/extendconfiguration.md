@@ -1,8 +1,6 @@
-
 # Extendconfiguration
 
 Extendconfiguration allows to configure some options of the server inside a `<host>` tag. (This extension is available starting from Ocsigen ≥ 1\.2)
-
 
 ## Loading the extension
 
@@ -15,7 +13,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.extendconfigura
 ## Options
 
 This section describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Extendconfiguration`](./Extendconfiguration.md).
-
 
 ### Following symlinks
 
@@ -31,7 +28,6 @@ where `VAL` can be:
 - `ownermatch` symlinks are followed only if the owner of the symlink and of the target coincide. (Default value)
 Notice that staticmod partially overrides this setting when it is not used in a userconf file. When used with the syntax `<static dir="dir" />`, the checks start only after the directory `dir`. In regexp mode, the checks only start after the value given by the `root` attribute. See the documentation of [staticmod](./staticmod.md) for details.
 
-
 ### Hiding or forbidding local files
 
 Again for extensions that send local files, you can selectively disallow sending some files. The syntax is as such:
@@ -46,7 +42,6 @@ Again for extensions that send local files, you can selectively disallow sending
 ```
 Using the tag `hidefile` results in 404 error codes. To have 403 errors, use `forbidfile` instead.
 
-
 ### Index of directories
 
 When the user requests access to a directory of the filesystem, Ocsigen can automatically try to find an index file. This is done through the following option
@@ -59,7 +54,6 @@ When the user requests access to a directory of the filesystem, Ocsigen can auto
 ```
 Ocsigen serves the first file (according to the order given by the index tags) that exists.
 
-
 ### List the content of directories
 
 If you want to list the content of a directory that does not contain an index file, use the tag
@@ -68,7 +62,6 @@ If you want to list the content of a directory that does not contain an index fi
 <listdirs value="true" />
 ```
 You can also deactivate this option with `value="false"` instead.
-
 
 ### Charset
 
@@ -85,7 +78,6 @@ This sets the default charset for text files to `utf8`, while files whose extens
 
 Multiple extension tags can be specified. Both the default attribute and extension tags are optional. Extension tags are cumulative between the various sites.
 
-
 ### Content-type
 
 The content-type for the files sent by the server can be specified using the tag
@@ -98,7 +90,6 @@ The content-type for the files sent by the server can be specified using the tag
 </contenttype>
 ```
 The options are similar to the ones for the `charset` tag.
-
 
 ### File uploading
 
@@ -115,7 +106,6 @@ The arguments are the same as for the global corresponding options ; see the [co
 *Warning*
 
 POST arguments (including sent files) are read once and for all, by the first extension that attempts to decode the POST parameters. This means that the POST-uploaded files are stored *according to the settings local to this first extension*. Changing the `uploaddir` and `maxuploadfilesize` options later will have no effect; plan accordingly when you write your `ocsigen.conf` file. Currently the only extension supplied with Ocsigen that reads POST data is Eliom.
-
 
 ## Visibility
 

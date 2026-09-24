@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Config`
 
 Configuring Ocsigen server

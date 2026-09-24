@@ -1,4 +1,3 @@
-
 # Module `Authbasic`
 
 Authbasic: Basic HTTP authentication

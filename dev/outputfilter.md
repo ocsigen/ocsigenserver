@@ -1,10 +1,8 @@
-
 # Outputfilter
 
 Outputfilter allows to filter the output and rewrite some part of it (for example headers) before sending it to the client. It is in beta version. Submit your bugs, feature wishes (or any enhancement/mistake in the documentation) [here](https://github.com/ocsigen/ocsigenserver).
 
 For now it only allows to change or add headers, or to change the HTTP code.
-
 
 ## Configuration
 
@@ -15,7 +13,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.outputfilter`, 
 ```
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Outputfilter`](./Outputfilter.md).
 
-
 ### Rewrite headers
 
 When you want to rewrite one header (after having generated a page), do something like:
@@ -24,7 +21,6 @@ When you want to rewrite one header (after having generated a page), do somethin
 <outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/\1"/>
 ```
 Here we rewrite the content of the header location (this line is useful when you are using the reverse proxy).
-
 
 ### Add headers
 

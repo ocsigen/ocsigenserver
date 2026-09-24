@@ -1,4 +1,3 @@
-
 # Module `Config.Socket_type`
 
 ```ocaml

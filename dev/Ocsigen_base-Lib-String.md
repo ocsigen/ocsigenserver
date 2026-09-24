@@ -1,4 +1,3 @@
-
 # Module `Lib.String`
 
 Improvement of module String

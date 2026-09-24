@@ -1,4 +1,3 @@
-
 # Authbasic
 
 This module implements Basic HTTP Authentication as described in RFC 2617\. It can be used to add an authentication layer to sites with no built-in authentication (e.g. static files).
@@ -18,7 +17,6 @@ This page describes the configuration file options. If you are building a static
 
 This extension defines one action, `<authbasic>`, and one authentication plugin, `<plain>`.
 
-
 ## The `<authbasic>` action
 
 To add an authentication layer to a site, add the following lines before the actions defining the restricted part of your site:
@@ -33,7 +31,6 @@ The realm attribute is some name identifying the protected resource. The client 
 When a request containing the right authentication token arrives, this action doesn't do anything (and therefore grants access). If the authentication info is missing, an HTTP 401 Unauthorized is immediately returned (no other extension is tried) to request the client to provide this authentication token. On most interactive browsers, this is done by popping up a dialog box asking the user for a login and a password.
 
 The `<authbasic>` element expects one child element, specifying which authentication plugin to use.
-
 
 ## The `<plain>` plugin
 

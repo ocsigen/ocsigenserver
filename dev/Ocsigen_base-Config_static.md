@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_base.Config_static`
 
 ```ocaml

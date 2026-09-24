@@ -1,4 +1,3 @@
-
 # Module `Extensions.Configuration`
 
 This modules contains types and constructor for the description of XML configurations and the accordingly parsing.

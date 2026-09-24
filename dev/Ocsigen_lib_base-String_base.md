@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_lib_base.String_base`
 
 Improvement of module String

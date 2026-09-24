@@ -1,4 +1,3 @@
-
 # Module `Deflatemod`
 
 Deflatemod: compress output data

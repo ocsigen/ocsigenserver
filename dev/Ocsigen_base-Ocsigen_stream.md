@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_base.Ocsigen_stream`
 
 ```ocaml

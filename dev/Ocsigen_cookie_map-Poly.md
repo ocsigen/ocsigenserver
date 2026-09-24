@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_cookie_map.Poly`
 
 Polymorphic versions of `add` and `remove` to use when we don't need to OUnset (client-side)

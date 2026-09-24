@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_base.Lib`
 
 This module contains some auxiliaries for the Ocsigenserver. In contrast to [`Ocsigen_lib_base`](./Ocsigen_lib_base.md), the function may also refer to libraries other than the standard library.

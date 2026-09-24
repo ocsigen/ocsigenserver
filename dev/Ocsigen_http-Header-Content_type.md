@@ -1,4 +1,3 @@
-
 # Module `Header.Content_type`
 
 ```ocaml

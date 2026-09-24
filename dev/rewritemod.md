@@ -1,4 +1,3 @@
-
 # Rewritemod
 
 Rewritemod allows to rewrite the requests.It is available from Ocsigen version 1\.2. It is really basic for now, but for most uses you don't need it, as staticmod and others already have sophisticated configuration features. It is in beta version. Submit your bugs and feature wishes [here](https://github.com/ocsigen/ocsigenserver).

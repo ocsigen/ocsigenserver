@@ -1,4 +1,3 @@
-
 # Module `Outputfilter`
 
 Outputfilter: Rewrite some part of the output

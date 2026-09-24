@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_stream.StringStream`
 
 ```ocaml

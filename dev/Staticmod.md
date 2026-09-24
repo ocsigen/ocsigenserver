@@ -1,4 +1,3 @@
-
 # Module `Staticmod`
 
 Staticmod: serve static files

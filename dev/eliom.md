@@ -1,4 +1,3 @@
-
 # Eliom
 
 *Eliom* is a powerful framework for programming Web applications in OCaml.

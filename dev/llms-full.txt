@@ -1,147 +1,14 @@
 # Server
 
-> Ocsigen Server is a powerful and modular generic purpose Web Server. It supports static files, redirections, reverse proxy, CORS, user pages with local configuration, page compression, authentication, etc.
+> - [ocsigenserver](ocsigenserver/index.md) (version 8.0.0)
 
 
 ---
 
-# Ocsigen Server
+# OCaml Package Documentation
 
-Ocsigen Server is a powerful and modular generic purpose Web Server. It supports static files, redirections, reverse proxy, CORS, user pages with local configuration, page compression, authentication, etc.
-
-Ocsigen Server can be used:
-
-- as an executable: it reads its configuration from a file and dynamically loads the extensions and libraries you need for your sites,
-- or as a library: build your own executable and statically link your the modules you need for your pages.
-It is written in OCaml and uses the [Cohttp](https://github.com/mirage/ocaml-cohttp) library.
-
-
-## Installation
-
-The easier way to install Ocsigenserver is to use the `opam` package manager. Ocsigen Server is also available in Linux distributions.
-
-
-## Quick start: serving a directory in one command
-
-To serve the static files of a directory without writing any configuration file, just give the directory to `ocsigenserver`:
-
-```
-ocsigenserver ./public
-```
-This starts a server on port 8080 serving the files of `./public`. No configuration file and no log directory are needed: the logs go to the terminal. A few options are available:
-
-```
-ocsigenserver --serve ./public --port 8000 --directory-listing
-```
-You can also start a reverse proxy that forwards every request to another server, again without any configuration file:
-
-```
-ocsigenserver --reverse-proxy http://localhost:9000 --port 8080
-```
-This is the simplest way to get started. For anything more elaborate (several hosts, extensions, fine-grained reverse proxy rules, etc.) use a configuration file or the library API, as described below.
-
-
-## Using Ocsigen Server as an executable
-
-Create your configuration file. You can take this one as an example:
-
-```
-<ocsigen>
-  <server>
-    <port>8080</port>
-
-    <logdir>local/var/log/mysite</logdir>
-    <datadir>local/var/data/mysite</datadir>
-    <charset>utf-8</charset>
-
-    <commandpipe>local/var/run/mysite-cmd</commandpipe>
-    <extension findlib-package="ocsigenserver.ext.staticmod"/>
-    <host hostfilter="*">
-      <static dir="local/var/www/mysite/" />
-    </host>
-  </server>
-</ocsigen>
-```
-Update the paths to match your configuration and create the missing directories. Then run:
-
-```
-ocsigenserver -c <name of your configuration file>
-```
-
-### Personalising your configuration
-
-Have a look at the page [Configuration](./config.md) to learn how to personalise the configuration file and adapt it to your needs.
-
-
-## Using Ocsigen Server as a library
-
-If you want to include a Web Server in your OCaml app, add library `ocsigenserver` and the extensions you need (here `ocsigenserver.ext.staticmod`) in your Dune file:
-
-```
-(executable
- (public_name myapp)
- (name main)
- (libraries
-  ocsigenserver
-  ocsigenserver.ext.staticmod))
-```
-Call function [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) like this to run the server:
-
-```ocaml
-let _ =
-  Ocsigen.Server.start
-    [ Ocsigen.Server.host [Staticmod.run ~dir:"local/var/www/mysite/" ()]]
-```
-The server runs on port 8080 by default. Customise this using optional parameters of function [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start)
-
-
-## Extensions
-
-Depending on the features you need, you can extend the server by loading some modules.
-
-The extensions provided are:
-
-- [Staticmod](./staticmod.md): for serving static pages,
-- [Accesscontrol](./accesscontrol.md): if you need to restrict the access to the sites,
-- [Eliom](./eliom.md): if you want to use dynamic Web and mobile applications written in OCaml with Eliom,
-- [Revproxy](./revproxy.md): if you want to redirect some requests to another Web server,.
-- [Redirectmod](./redirectmod.md): if you want to define some HTTP redirections,
-- [Deflatemod](./deflatemod.md): if you want to compress the content before sending your pages,
-- [Outputfilter](./outputfilter.md): allows to change the header of the HTTP response,
-- [Securityheaders](./securityheaders.md): adds common security-related HTTP headers (HSTS, nosniff, X-Frame-Options, CSP),
-- [Rewritemod](./rewritemod.md): allows to rewrite the request before continuing,
-- [Extendconfiguration](./extendconfiguration.md): adds many useful configuration options,
-- [Authbasic](./authbasic.md): for basic HTTP authentication,
-- [CORS](./cors.md): for settings CORS options,
-- [Userconf](./userconf.md): for allowing local users to have personal pages,
-If you are using a configuration, file, use tag `<extension/>` to load an exetnsion (see examples in the manual of each extension). Most extension have configuration options, and define new tags for the configuration file.
-
-If you are building a static executable, load the extensions as any library from your Dune file. Have a look at the API documentation of each documentation to see the functions it defines and the configuration options.
-
-
-## API reference
-
-See the [API reference](./api.md) for all the modules, functions and configuration options provided by Ocsigen Server and its extensions.
-
-
-## Upgrading from an earlier version
-
-Ocsigen Server 8\.0 renamed its modules and modernised its base library. See [Migrating to Ocsigen Server 8\.0](./migration.md) for the details and for the `ocsigenserver-compat` package that eases the transition.
-
-
-## Running on port 80 or 443
-
-It is not recommended to run a Web server as root. If you want to use priviledged ports (port numbers less than 1024\), like 80 or 443, you can add the capability to ocsigenserver with:
-
-```
-setcap 'cap_net_bind_service=+ep' <path to the server executable>
-```
-
-## If something goes wrong
-
-If something goes wrong, first have a look in the logs to see if there is an error message. The directory of logs is set in the configuration file or through option `?logdir` of function [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) (`$OPAM_SWITCH_PREFIX/lib/ocsigenserver/var/log/ocsigenserver` by default).
-
-If you cannot solve your problem, if you find a bug, a mistake in the documentation (even a small one), or if you want to make a suggestion, [open an issue on Github](https://github.com/ocsigen/ocsigenserver).
+- [ocsigenserver](ocsigenserver/index.md) (version 8.0.0)
+- [ocsigenserver-compat](ocsigenserver-compat/index.md) (version 8.0.0)
 
 
 ---
@@ -202,7 +69,6 @@ To run the server, use the command `ocsigenserver`. It has the following options
 # Configuration file
 
 The main configuration file is usually named `/etc/ocsigenserver/ocsigenserver.conf`. It contains the port(s) on which you want to run the server (usually 80\), the protocol to use (HTTP or HTTPS), the location of log files, many settings for the server, the extensions to be loaded, the OCaml libraries you need for your Web sites, the configuration of each Web site, etc. One default configuration file should be provided by your distribution.
-
 
 ### Basic layout of the configuration file
 
@@ -369,7 +235,6 @@ Here is another example, for use as unprivileged user toto on port 8000\. We use
 
 ### Details about settings
 
-
 #### `<port>` : port and protocol
 
 The port on which the server is listening. You can have several `<port>`lines if you want to listen on several ports.
@@ -453,7 +318,6 @@ If you serve both HTTP and HTTPS and want to force HTTPS, redirect plain HTTP re
 ```
 Note: HTTP Strict Transport Security (HSTS) is not enabled automatically. Once you serve only over HTTPS, add a `Strict-Transport-Security` response header (for instance with the [Outputfilter](./outputfilter.md) extension).
 
-
 #### `<logdir>` : log files directory
 
 The directory for log files. Usually `/var/log/ocsigenserver`. Ocsigenserver is using three log files: `access.log` where all requests are logged, `errors.log` for error messages, and `warnings.log` for warnings.
@@ -533,7 +397,6 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 
 Starting from Ocsigenserver 1\.3, you can redefine the options `<uploaddir>` and `<maxuploadfilesize>` on each host or inside `<site>` tags. The syntax is the same as above. There are however some limitations; please read carefully the documentation of the module [Extendconfiguration](./extendconfiguration.md#upload) before using this functionality.
 
-
 #### `<maxrequestbodysize>` : maximum size of the body of incoming requests
 
 Example:
@@ -542,7 +405,6 @@ Example:
 <maxrequestbodysize>100MB</maxrequestbodysize>
 ```
 The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10kB 10kiB 10MiB 10TB ... (or 10o 10ko ...) (default in bytes when no unit is specified)
-
 
 #### `<mimefile>` : MIME type file
 
@@ -587,7 +449,6 @@ Written in seconds. Example:
 
 **Recommendation.** For an Internet-facing deployment, place a reverse proxy (nginx, HAProxy, Caddy, ...) in front of Ocsigenserver. The proxy enforces read/idle timeouts, buffers slow clients, terminates TLS and absorbs malformed requests. The `<maxconnected>` limit above does cap the number of simultaneous connections, which mitigates connection exhaustion.
 
-
 #### `<shutdowntimeout>` : Timeout for graceful shutdown *From version 1\.3*
 
 Amount of time (in seconds) the server will wait for current requests to terminate before ending the process, when you use the "graceful shutdown" server command (see below).
@@ -596,7 +457,6 @@ Amount of time (in seconds) the server will wait for current requests to termina
 <shutdowntimeout>10</shutdowntimeout>
 ```
 Other possible value: `notimeout` if you don't want to wait all connections even if it takes time.
-
 
 #### `<netbuffersize>` : Size of the input buffer
 
@@ -666,7 +526,6 @@ If your configuration is complex, it is recommended to split the configuration f
 
 ### Loading extensions and libraries
 
-
 #### `<extension>` : Loading extensions and libraries
 
 Ocsigenserver does not do anything without some extensions loaded. For example, you need the extension staticmod for serving static pages. Extensions are loaded dynamically when launching the server. Specify the extensions and libraries you want using the tag \<extension\>.
@@ -700,11 +559,9 @@ Extensions shipped with Ocsigen Server are available as subpackages of `ocsigens
 ```
 This will load deflatemod, and its dependency camlzip (if not already loaded).
 
-
 #### `<require>` : Loading libraries
 
 From version 1\.0, `<require>` is a synonymous for `<extension>`.
-
 
 #### `<library>` : Loading libraries
 
@@ -719,9 +576,7 @@ Example of use:
 ```
 As in `<extension>`, you can also use `findlib-package=` instead of `module=`. However, remember that dependencies will always be loaded only once (only the last file of the package itself may be reloaded several times).
 
-
 ### Virtual host and site configuration
-
 
 #### `<host>` : Virtual host setting
 
@@ -744,7 +599,6 @@ It is also possible to set the default ports for http and https, and default pro
 <host defaulthostname="www.mywebsite.org" hostfilter="*.org" defaulthttpport="8080" defaulthttpsport="4433" defaultprotocol="https"> ... </host>
 ```
 Inside `<host>`, write the configuration for your main (root) site. These options depend on the extensions loaded. See the documentation about the extensions to know what to put here. It is also possible to define here several subsites, using `<site>` (see below).
-
 
 #### `<site>` : Configuring sub-sites
 
@@ -775,7 +629,6 @@ Most distributions have a special command to do that automatically (for the defa
 ```
 The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stoping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
 
-
 ### Graceful shutdown *(From version 1\.3)*
 
 To end the server cleanly, use the `shutdown` command, for example:
@@ -803,7 +656,6 @@ The default timeout value can be set in the configuration file (see `shutdowntim
 ---
 
 # Using Ocsigen Server as a library
-
 
 ## Creating and running a statically linked executable
 
@@ -1005,11 +857,9 @@ This is an experimental feature. Let us know if you test it (for example by open
 
 Ocsigen Server 8\.0 reorganises its public modules under hierarchical names and modernises its base library. These changes break compatibility with earlier versions. This page explains what changed and how to update existing code, either by switching to the new names or by relying on the `ocsigenserver-compat` package during the transition.
 
-
 ## Hierarchical module names
 
 The historical flat `Ocsigen_xxx` modules are now grouped under three namespaces: `Ocsigen` for the server, `Ocsigen_base` for the base library and `Ocsigen_http` for the HTTP layer.
-
 
 ### Server modules (`Ocsigen.Xxx`)
 
@@ -1042,7 +892,6 @@ The historical flat `Ocsigen_xxx` modules are now grouped under three namespaces
 
 A few public modules are unchanged and need no update: `Ocsigen_lib_base`, `Polytables`, `Ocsigen_cookie_map` and the main `Ocsigenserver` module.
 
-
 ## The ocsigenserver-compat package
 
 To make the transition smooth, the `ocsigenserver-compat` package provides every old `Ocsigen_xxx` name as an alias to its new module. Existing code keeps compiling without changes: just add the package to your `dune` file.
@@ -1066,14 +915,11 @@ For example, to keep using the old names in an executable:
 ```
 The compat package is meant as a temporary migration aid: it is recommended to update your code to the new module names and drop the dependency once done. The compat modules are intentionally excluded from the [API reference](./api.md), which documents the new names only.
 
-
 ## Other breaking changes
-
 
 ### Minimum OCaml version
 
 Ocsigen Server 8\.0 requires OCaml 4\.14 or later.
-
 
 ### Removed deprecated helpers from the base library
 
@@ -1096,14 +942,11 @@ Served files carry an `ETag` (weak, derived from the file's modification time an
 
 Single byte-range requests are supported (RFC 7233\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
 
-
 ## Using as a library
 
 To use that extension as a library for your OCaml programs, load OCamlfind package `ocsigenserver.ext.staticmod`, from your Dune file, and have a look at the [API documentation](./Staticmod.md).
 
-
 ## Configuration file
-
 
 ### Basics
 
@@ -1118,7 +961,6 @@ Then configure your hosts as in this example:
 <static dir="/path/to/the/local/directory" />
 ```
 Note that when running Ocsigenserver as a daemon, a relative path is interpreted starting at `/`.
-
 
 ### Rewriting URLs
 
@@ -1143,7 +985,6 @@ You can also specify the option root as in
 ```
 This will wave all symlinks checks above the directory `u(\1)/public_html`. This option is not permitted inside userconf files.
 
-
 ### Catching HTTP errors
 
 Here is an example on how to set a default error page for all 40x errors:
@@ -1154,7 +995,6 @@ Here is an example on how to set a default error page for all 40x errors:
 `code` is a regular expression (here matching 400, 401 etc.). `regexp` is optional (matches the URL path).
 
 Note that if you want to catch errors from all sites, you need to put this configuration in a separate \<site path=""\>at the end of your configuration file.
-
 
 ### Max-age and Expires
 
@@ -1167,13 +1007,11 @@ The `cache` argument is given in seconds. (1 month in the example)
 
 When the `cache` argument is `0` or `no`, the `Cache-control: no-cache` header is sent.
 
-
 ### Staticmod and userconf
 
 (version 1\.2.0 and greater)
 
 Staticmod is authorized inside userconf files, but all paths specified by dir or dest must be relative, and cannot contain "`/../`" or end by "`/..`". The relative paths are concatenated with the result of evaluating the attribute localpath of userconf.
-
 
 ### Other options
 
@@ -1195,7 +1033,6 @@ See the full documentation `here`.
 
 Extendconfiguration allows to configure some options of the server inside a `<host>` tag. (This extension is available starting from Ocsigen ≥ 1\.2)
 
-
 ## Loading the extension
 
 To use that extension, load OCamlfind package `ocsigenserver.ext.extendconfiguration`, either from your Dune file (if you are using static linking), or from the configuration file:
@@ -1207,7 +1044,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.extendconfigura
 ## Options
 
 This section describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Extendconfiguration`](./Extendconfiguration.md).
-
 
 ### Following symlinks
 
@@ -1223,7 +1059,6 @@ where `VAL` can be:
 - `ownermatch` symlinks are followed only if the owner of the symlink and of the target coincide. (Default value)
 Notice that staticmod partially overrides this setting when it is not used in a userconf file. When used with the syntax `<static dir="dir" />`, the checks start only after the directory `dir`. In regexp mode, the checks only start after the value given by the `root` attribute. See the documentation of [staticmod](./staticmod.md) for details.
 
-
 ### Hiding or forbidding local files
 
 Again for extensions that send local files, you can selectively disallow sending some files. The syntax is as such:
@@ -1238,7 +1073,6 @@ Again for extensions that send local files, you can selectively disallow sending
 ```
 Using the tag `hidefile` results in 404 error codes. To have 403 errors, use `forbidfile` instead.
 
-
 ### Index of directories
 
 When the user requests access to a directory of the filesystem, Ocsigen can automatically try to find an index file. This is done through the following option
@@ -1251,7 +1085,6 @@ When the user requests access to a directory of the filesystem, Ocsigen can auto
 ```
 Ocsigen serves the first file (according to the order given by the index tags) that exists.
 
-
 ### List the content of directories
 
 If you want to list the content of a directory that does not contain an index file, use the tag
@@ -1260,7 +1093,6 @@ If you want to list the content of a directory that does not contain an index fi
 <listdirs value="true" />
 ```
 You can also deactivate this option with `value="false"` instead.
-
 
 ### Charset
 
@@ -1277,7 +1109,6 @@ This sets the default charset for text files to `utf8`, while files whose extens
 
 Multiple extension tags can be specified. Both the default attribute and extension tags are optional. Extension tags are cumulative between the various sites.
 
-
 ### Content-type
 
 The content-type for the files sent by the server can be specified using the tag
@@ -1290,7 +1121,6 @@ The content-type for the files sent by the server can be specified using the tag
 </contenttype>
 ```
 The options are similar to the ones for the `charset` tag.
-
 
 ### File uploading
 
@@ -1308,7 +1138,6 @@ The arguments are the same as for the global corresponding options ; see the [co
 
 POST arguments (including sent files) are read once and for all, by the first extension that attempts to decode the POST parameters. This means that the POST-uploaded files are stored *according to the settings local to this first extension*. Changing the `uploaddir` and `maxuploadfilesize` options later will have no effect; plan accordingly when you write your `ocsigen.conf` file. Currently the only extension supplied with Ocsigen that reads POST data is Eliom.
 
-
 ## Visibility
 
 The options above are visible until the end of the \<site\> tag they are part of.
@@ -1318,11 +1147,9 @@ The options above are visible until the end of the \<site\> tag they are part of
 
 # Accesscontrol
 
-
 ## The accesscontrol extension
 
 If you want to restrict access for some sites, this extension is for you.
-
 
 ## Loading the extension
 
@@ -1335,11 +1162,9 @@ Here, we call *actions* elements that can be put in a site configuration. Action
 
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Accesscontrol`](./Accesscontrol.md).
 
-
 ## The `<if>` action
 
 It takes as children a condition followed by a `<then>` element and possibly an `<else>` element. When a request reaches an `<if>`, if the condition evaluates to true, then the whole `<if>` behaves as if it had been replaced by the contents of the `<then>` element, otherwise it behaves as if it had been replaced by the contents of the `<else>` element. A missing `<else>` is considered as an `<else>` with no children.
-
 
 ### Conditions
 
@@ -1373,7 +1198,7 @@ Combining conditions (all their children must be conditions):
 ## Examples
 
 - I want some actions to handle only requests from localhost, for users using the browser Konqueror:
-  
+
   ```
   <if>
   <and>
@@ -1386,7 +1211,7 @@ Combining conditions (all their children must be conditions):
 </if>
   ```
   Or, if you are using Ocsigen Server as a library:
-  
+
   ```ocaml
   Accesscontrol.(if_ (and_ [(ip "127.0.0.1"); 
                           (header ~name:"user-agent" ~regexp:".*Konqueror.*")])
@@ -1397,7 +1222,7 @@ Combining conditions (all their children must be conditions):
 - they belong to the subnet 123\.123.123.0/24,
 - or they want to access a page beginning with the letter 'c',
 - or they are not doing a `GET HTTP` request:
-  
+
   ```
   <if>
   <or>
@@ -1411,7 +1236,7 @@ Combining conditions (all their children must be conditions):
 </if>
   ```
   Or, if you are using Ocsigen Server as a library:
-  
+
   ```ocaml
   Accesscontrol.(if_ (or_ [(ip "123.123.123.0/24"); 
                          (path ~regexp:"/c.*");
@@ -1420,7 +1245,7 @@ Combining conditions (all their children must be conditions):
                   [])
   ```
 - I want to deny access to 192\.168.0.0/24 except 192\.168.0.42, and to 192\.168.99.0/24:
-  
+
   ```
   <if>
   <or>
@@ -1458,7 +1283,6 @@ This page describes the configuration file options. If you are building a static
 
 This extension defines one action, `<authbasic>`, and one authentication plugin, `<plain>`.
 
-
 ## The `<authbasic>` action
 
 To add an authentication layer to a site, add the following lines before the actions defining the restricted part of your site:
@@ -1473,7 +1297,6 @@ The realm attribute is some name identifying the protected resource. The client 
 When a request containing the right authentication token arrives, this action doesn't do anything (and therefore grants access). If the authentication info is missing, an HTTP 401 Unauthorized is immediately returned (no other extension is tried) to request the client to provide this authentication token. On most interactive browsers, this is done by popping up a dialog box asking the user for a login and a password.
 
 The `<authbasic>` element expects one child element, specifying which authentication plugin to use.
-
 
 ## The `<plain>` plugin
 
@@ -1490,9 +1313,7 @@ To protect a resource with some fixed login and password given in the configurat
 
 # Deflatemod
 
-
 ## Usage
-
 
 ### What is deflatemod?
 
@@ -1500,11 +1321,9 @@ Deflatemod is a module for Ocsigen that compresses content using the HTTP `Conte
 
 Brotli (`br`) is not supported yet: at the time of writing there is no maintained OCaml binding to libbrotli that builds on OCaml 5\.
 
-
 ### What do I need to use deflatemod?
 
 You need the `bytesrw` library (with its `zlib` and `zstd` backends, which require the system `zlib` and `libzstd` libraries) and a working Ocsigen installation.
-
 
 ### How do I use deflatemod?
 
@@ -1514,7 +1333,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.deflatemod`, ei
 <extension findlib-package="ocsigenserver.ext.deflatemod" />
 ```
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Deflatemod`](./Deflatemod.md).
-
 
 ### How do I configure deflatemod?
 
@@ -1531,7 +1349,6 @@ For example:
 </extension>
 ```
 Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.
-
 
 ### I want to deflate only some files. Is it possible?
 
@@ -1572,24 +1389,19 @@ Warning: you can use only one contenttype tag\! So you must choose, either the "
 
 Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please fill a bug report or send a patch.
 
-
 ## Technical questions
-
 
 ### How can I choose the content-encoding (gzip, deflate or zstd)?
 
 You can't. Deflatemod follows the RFC and chooses automatically the right encoding, based upon the `Accept-Encoding` header sent by the client. When the client offers several codecs at the same quality, `zstd` is preferred, then `gzip`, then `deflate`.
 
-
 ### Is compression enabled in the one-command serve mode?
 
 Yes. When you run `ocsigenserver ./public` (or `ocsigenserver --serve ...`), responses with a text-based content type are compressed by default, with no configuration needed, just like a static file server such as Caddy.
 
-
 ### Does deflatemod support transfert-encoding?
 
 No, it doesn't. Content-encoding is definitely a better solution, providing end to end compression at the content-level.
-
 
 ### How does deflatemod deal with the content-length header?
 
@@ -1646,7 +1458,6 @@ Other example: redirect `https://foobar.org/aaa` (and `https://foobar.net/aaa` e
 Revproxy is a reverse proxy for Ocsigen.
 
 This module allows to transmit some requests to another Web server using the HTTP or HTTPS protocol. For example if you want to use Ocsigen together with another Web server (Apache, Tomcat, etc. or even another Ocsigen).
-
 
 ### Configuration
 
@@ -1724,7 +1535,6 @@ Outputfilter allows to filter the output and rewrite some part of it (for exampl
 
 For now it only allows to change or add headers, or to change the HTTP code.
 
-
 ## Configuration
 
 To use that extension, load OCamlfind package `ocsigenserver.ext.outputfilter`, either from your Dune file (if you are using static linking), or from the configuration file:
@@ -1734,7 +1544,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.outputfilter`, 
 ```
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Outputfilter`](./Outputfilter.md).
 
-
 ### Rewrite headers
 
 When you want to rewrite one header (after having generated a page), do something like:
@@ -1743,7 +1552,6 @@ When you want to rewrite one header (after having generated a page), do somethin
 <outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/\1"/>
 ```
 Here we rewrite the content of the header location (this line is useful when you are using the reverse proxy).
-
 
 ### Add headers
 
@@ -1773,7 +1581,6 @@ where the value of the code attribute is a valid HTTP code (404 or 200 for examp
 # Userconf
 
 Userconf allows users to have their own configuration files. It is in beta version, and requires some cooperation from other extensions to disallow unsafe options (for example, in version 1\.2 it is not possible to have Eliom sites for users).
-
 
 ## Configuration
 
@@ -1810,7 +1617,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.cors`, either f
 ```
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Cors`](./Cors.md).
 
-
 ## config
 
 The extension is activated by the `<cors/>` tag.
@@ -1825,16 +1631,15 @@ The attributes of the cors tag are:
 - `methods`: This is a comma separated list of method names. If there is a requested method header in the preflight request, it adds the `Access-Control-Allow-Methods` header if it match, otherwise there is no cors header added.
 Note that the extension should be used with [accesscontrol](./accesscontrol.md) to limit the application having access to the resources. This is done by checking the "origin" header.
 
-
 ## Examples
 
 - minimal configuration allowing all requests with no credentials.
-  
+
   ```
   <cors/>
   ```
 - A configuration allowing access to an eliom application at path "eliom\_site", from localhost:8081
-  
+
   ```
   <if>
   <and>
@@ -1860,7 +1665,6 @@ Note that the extension should be used with [accesscontrol](./accesscontrol.md) 
 
 This page describes how to extend Ocsigen's server. This can be used to create new ways to generate pages (like Apache modules), to filter and change the requests (for example, rewriting of URLS), to extend the syntax of the configuration file.
 
-
 ### Filtering the requests or writing a module to generate pages
 
 You can take as example the files `staticmod.ml` or `accesscontrol.ml` from Ocsigen Server's distribution.
@@ -1869,14 +1673,11 @@ The type of request is `Ocsigen.Extensions.request_info` (have a look at it in t
 
 Each extensions loaded in the configuration file tries to handle the request and returns something of type `Extensions.answer`. If the page is not found by the extension (`Ext_not_found`), the following one will try to handle the request. If the page is found, the answer is `Ext_found r`. An extension can also modify the request before giving it to the next one (answer `Ext_continue_with of Extensions.request_info`), etc.
 
-
 ### Filtering the outputs
 
 It is also possible to create extensions that will filter the output of the server (for example to compress it). It is very similar to the previous one. Have a look at the file `deflatemod.ml` for an example.
 
-
 ### Extending the configuration file
-
 
 #### Extending the configuration file for an extension
 
@@ -1892,16 +1693,13 @@ let parse_config path = function
 ```
 The module `Parseconfig` defines functions to parse strings or sizes (in bytes, GB etc).
 
-
 #### Giving parameters to an extension
 
 Extensions may take parameters in the configuration file. During the loading of the extension, the function `Extensions.get_config ()` returns the xml tree between `<extension>` and `</extension>` (or `<library>` and `</library>`). Write a parser for that tree.
 
-
 ### Catching the request before it is fully read
 
 For some extensions of the Web server, it is necessary to catch the request before it has been fully read (especially before the body of the request has been read). For example it is the case if you want to write a (reverse) proxy.
-
 
 ### Adding new commands for the server
 
@@ -1922,7 +1720,7 @@ let () =
 
 API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 
-[`Ocsigen.Server`](./Ocsigen-Server.md) 
+[`Ocsigen.Server`](./Ocsigen-Server.md)
 
 ### Extensions
 
@@ -1936,16 +1734,16 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 [`Rewritemod`](./Rewritemod.md) Rewrite: Change the request
 [`Outputfilter`](./Outputfilter.md) Outputfilter: Rewrite some part of the output
 [`Securityheaders`](./Securityheaders.md) Securityheaders: add common security-related response headers
-[`Userconf`](./Userconf.md) 
+[`Userconf`](./Userconf.md)
 [`Cors`](./Cors.md) Cross-Origin Resource Sharing
 
 ### Requests and responses
 
-[`Ocsigen.Request`](./Ocsigen-Request.md) 
-[`Ocsigen.Response`](./Ocsigen-Response.md) 
-[`Ocsigen.Multipart`](./Ocsigen-Multipart.md) 
-[`Ocsigen_cookie_map`](./Ocsigen_cookie_map.md) 
-[`Ocsigen_http.Charset_mime`](./Ocsigen_http-Charset_mime.md) 
+[`Ocsigen.Request`](./Ocsigen-Request.md)
+[`Ocsigen.Response`](./Ocsigen-Response.md)
+[`Ocsigen.Multipart`](./Ocsigen-Multipart.md)
+[`Ocsigen_cookie_map`](./Ocsigen_cookie_map.md)
+[`Ocsigen_http.Charset_mime`](./Ocsigen_http-Charset_mime.md)
 
 ### Persistent data, writing in the logs, configuration file extension, polymorphic tables
 
@@ -1959,9 +1757,9 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 ### Extending Ocsigen Server
 
 [`Ocsigen.Extensions`](./Ocsigen-Extensions.md) Extensions interface for Ocsigen Server
-[`Ocsigen.Local_files`](./Ocsigen-Local_files.md) 
-[`Ocsigen_http.Header`](./Ocsigen_http-Header.md) 
-[`Ocsigen_base.Ocsigen_stream`](./Ocsigen_base-Ocsigen_stream.md) 
+[`Ocsigen.Local_files`](./Ocsigen-Local_files.md)
+[`Ocsigen_http.Header`](./Ocsigen_http-Header.md)
+[`Ocsigen_base.Ocsigen_stream`](./Ocsigen_base-Ocsigen_stream.md)
 [`Ocsigen_base.Loader`](./Ocsigen_base-Loader.md) Module Loader: Dynamic loading for Ocsigen.
 [`Ocsigen.Command`](./Ocsigen-Command.md) Extending server commands
 
@@ -1970,38 +1768,37 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 
 # ocsigenserver-compat index
 
-
 ## Library ocsigenserver-compat
 
 This library exposes the following toplevel modules:
 
-[`Ocsigen_cohttp`](./Ocsigen_cohttp.md) 
-[`Ocsigen_command`](./Ocsigen_command.md) 
-[`Ocsigen_config`](./Ocsigen_config.md) 
-[`Ocsigen_extensions`](./Ocsigen_extensions.md) 
-[`Ocsigen_local_files`](./Ocsigen_local_files.md) 
-[`Ocsigen_messages`](./Ocsigen_messages.md) 
-[`Ocsigen_multipart`](./Ocsigen_multipart.md) 
-[`Ocsigen_parseconfig`](./Ocsigen_parseconfig.md) 
-[`Ocsigen_request`](./Ocsigen_request.md) 
-[`Ocsigen_response`](./Ocsigen_response.md) 
-[`Ocsigen_server`](./Ocsigen_server.md) 
+[`Ocsigen_cohttp`](./Ocsigen_cohttp.md)
+[`Ocsigen_command`](./Ocsigen_command.md)
+[`Ocsigen_config`](./Ocsigen_config.md)
+[`Ocsigen_extensions`](./Ocsigen_extensions.md)
+[`Ocsigen_local_files`](./Ocsigen_local_files.md)
+[`Ocsigen_messages`](./Ocsigen_messages.md)
+[`Ocsigen_multipart`](./Ocsigen_multipart.md)
+[`Ocsigen_parseconfig`](./Ocsigen_parseconfig.md)
+[`Ocsigen_request`](./Ocsigen_request.md)
+[`Ocsigen_response`](./Ocsigen_response.md)
+[`Ocsigen_server`](./Ocsigen_server.md)
 
 ## Library ocsigenserver-compat.baselib
 
 This library exposes the following toplevel modules:
 
-[`Ocsigen_cache`](./Ocsigen_cache.md) 
-[`Ocsigen_config_static`](./Ocsigen_config_static.md) 
-[`Ocsigen_lib`](./Ocsigen_lib.md) 
-[`Ocsigen_loader`](./Ocsigen_loader.md) 
-[`Ocsigen_stream`](./Ocsigen_stream.md) 
+[`Ocsigen_cache`](./Ocsigen_cache.md)
+[`Ocsigen_config_static`](./Ocsigen_config_static.md)
+[`Ocsigen_lib`](./Ocsigen_lib.md)
+[`Ocsigen_loader`](./Ocsigen_loader.md)
+[`Ocsigen_stream`](./Ocsigen_stream.md)
 
 ## Library ocsigenserver-compat.http
 
 This library exposes the following toplevel modules:
 
-[`Ocsigen_charset_mime`](./Ocsigen_charset_mime.md) 
+[`Ocsigen_charset_mime`](./Ocsigen_charset_mime.md)
 [`Ocsigen_header`](./Ocsigen_header.md)
 
 
@@ -2010,7 +1807,6 @@ This library exposes the following toplevel modules:
 # Securityheaders
 
 Securityheaders adds common security-related HTTP headers to responses with a single declaration, instead of hand-rolling [output filter](./outputfilter.md) rules.
-
 
 ## What it adds
 
@@ -2025,11 +1821,9 @@ Two further headers are **opt-in** (added only when you configure them):
 - `Content-Security-Policy` (CSP) — restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.
 Any header already set by the application is left untouched, so you can override a default per response.
 
-
 ## Ordering
 
 This is a response filter: it decorates responses produced by earlier extensions. **Place it after** the extension whose responses it should cover (Staticmod, Eliom, ...). If placed before, it sees no response and silently adds nothing.
-
 
 ## Using as a library
 
@@ -3955,7 +3749,6 @@ method size : int
 ---
 
 # Module `Cache.Make`
-
 
 ## Parameters
 

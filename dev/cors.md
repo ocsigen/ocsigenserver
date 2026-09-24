@@ -1,4 +1,3 @@
-
 # The CORS extension
 
 *Cross-Origin Resource Sharing*
@@ -14,7 +13,6 @@ To use that extension, load OCamlfind package `ocsigenserver.ext.cors`, either f
 ```
 This page describes the configuration file options. If you are building a statically linked executable without configuration file, use the corresponding functions from module [`Cors`](./Cors.md).
 
-
 ## config
 
 The extension is activated by the `<cors/>` tag.
@@ -29,16 +27,15 @@ The attributes of the cors tag are:
 - `methods`: This is a comma separated list of method names. If there is a requested method header in the preflight request, it adds the `Access-Control-Allow-Methods` header if it match, otherwise there is no cors header added.
 Note that the extension should be used with [accesscontrol](./accesscontrol.md) to limit the application having access to the resources. This is done by checking the "origin" header.
 
-
 ## Examples
 
 - minimal configuration allowing all requests with no credentials.
-  
+
   ```
   <cors/>
   ```
 - A configuration allowing access to an eliom application at path "eliom\_site", from localhost:8081
-  
+
   ```
   <if>
   <and>

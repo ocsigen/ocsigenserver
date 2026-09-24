@@ -1,4 +1,3 @@
-
 # Module `Lib.Tuple3`
 
 ```ocaml

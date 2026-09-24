@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_loader`
 
 Notes about Findlib usage:

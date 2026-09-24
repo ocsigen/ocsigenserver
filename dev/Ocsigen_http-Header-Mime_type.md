@@ -1,4 +1,3 @@
-
 # Module `Header.Mime_type`
 
 ```ocaml

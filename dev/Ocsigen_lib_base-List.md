@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_lib_base.List`
 
 Improvement of module List

@@ -1,4 +1,3 @@
-
 # Staticmod
 
 Staticmod is a module allowing to serve static pages (files).
@@ -7,14 +6,11 @@ Served files carry an `ETag` (weak, derived from the file's modification time an
 
 Single byte-range requests are supported (RFC 7233\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
 
-
 ## Using as a library
 
 To use that extension as a library for your OCaml programs, load OCamlfind package `ocsigenserver.ext.staticmod`, from your Dune file, and have a look at the [API documentation](./Staticmod.md).
 
-
 ## Configuration file
-
 
 ### Basics
 
@@ -29,7 +25,6 @@ Then configure your hosts as in this example:
 <static dir="/path/to/the/local/directory" />
 ```
 Note that when running Ocsigenserver as a daemon, a relative path is interpreted starting at `/`.
-
 
 ### Rewriting URLs
 
@@ -54,7 +49,6 @@ You can also specify the option root as in
 ```
 This will wave all symlinks checks above the directory `u(\1)/public_html`. This option is not permitted inside userconf files.
 
-
 ### Catching HTTP errors
 
 Here is an example on how to set a default error page for all 40x errors:
@@ -65,7 +59,6 @@ Here is an example on how to set a default error page for all 40x errors:
 `code` is a regular expression (here matching 400, 401 etc.). `regexp` is optional (matches the URL path).
 
 Note that if you want to catch errors from all sites, you need to put this configuration in a separate \<site path=""\>at the end of your configuration file.
-
 
 ### Max-age and Expires
 
@@ -78,13 +71,11 @@ The `cache` argument is given in seconds. (1 month in the example)
 
 When the `cache` argument is `0` or `no`, the `Cache-control: no-cache` header is sent.
 
-
 ### Staticmod and userconf
 
 (version 1\.2.0 and greater)
 
 Staticmod is authorized inside userconf files, but all paths specified by dir or dest must be relative, and cannot contain "`/../`" or end by "`/..`". The relative paths are concatenated with the result of evaluating the attribute localpath of userconf.
-
 
 ### Other options
 

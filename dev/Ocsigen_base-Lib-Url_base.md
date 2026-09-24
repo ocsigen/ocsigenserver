@@ -1,4 +1,3 @@
-
 # Module `Lib.Url_base`
 
 ```ocaml

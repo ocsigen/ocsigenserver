@@ -1,4 +1,3 @@
-
 # Module `Rewritemod`
 
 Rewrite: Change the request

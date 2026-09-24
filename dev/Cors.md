@@ -1,4 +1,3 @@
-
 # Module `Cors`
 
 Cross-Origin Resource Sharing

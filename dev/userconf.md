@@ -1,8 +1,6 @@
-
 # Userconf
 
 Userconf allows users to have their own configuration files. It is in beta version, and requires some cooperation from other extensions to disallow unsafe options (for example, in version 1\.2 it is not possible to have Eliom sites for users).
-
 
 ## Configuration
 

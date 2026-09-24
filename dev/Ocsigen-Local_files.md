@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Local_files`
 
 ```ocaml

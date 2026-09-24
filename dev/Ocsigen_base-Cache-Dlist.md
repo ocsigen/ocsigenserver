@@ -1,4 +1,3 @@
-
 # Module `Cache.Dlist`
 
 Doubly-linked lists with maximum number of entries, and (possibly) limited lifespan for entries.

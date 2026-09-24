@@ -1,13 +1,10 @@
-
 # Migrating to Ocsigen Server 8\.0
 
 Ocsigen Server 8\.0 reorganises its public modules under hierarchical names and modernises its base library. These changes break compatibility with earlier versions. This page explains what changed and how to update existing code, either by switching to the new names or by relying on the `ocsigenserver-compat` package during the transition.
 
-
 ## Hierarchical module names
 
 The historical flat `Ocsigen_xxx` modules are now grouped under three namespaces: `Ocsigen` for the server, `Ocsigen_base` for the base library and `Ocsigen_http` for the HTTP layer.
-
 
 ### Server modules (`Ocsigen.Xxx`)
 
@@ -40,7 +37,6 @@ The historical flat `Ocsigen_xxx` modules are now grouped under three namespaces
 
 A few public modules are unchanged and need no update: `Ocsigen_lib_base`, `Polytables`, `Ocsigen_cookie_map` and the main `Ocsigenserver` module.
 
-
 ## The ocsigenserver-compat package
 
 To make the transition smooth, the `ocsigenserver-compat` package provides every old `Ocsigen_xxx` name as an alias to its new module. Existing code keeps compiling without changes: just add the package to your `dune` file.
@@ -64,14 +60,11 @@ For example, to keep using the old names in an executable:
 ```
 The compat package is meant as a temporary migration aid: it is recommended to update your code to the new module names and drop the dependency once done. The compat modules are intentionally excluded from the [API reference](./api.md), which documents the new names only.
 
-
 ## Other breaking changes
-
 
 ### Minimum OCaml version
 
 Ocsigen Server 8\.0 requires OCaml 4\.14 or later.
-
 
 ### Removed deprecated helpers from the base library
 

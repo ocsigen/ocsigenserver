@@ -1,8 +1,6 @@
-
 # Writing an extension for Ocsigen server
 
 This page describes how to extend Ocsigen's server. This can be used to create new ways to generate pages (like Apache modules), to filter and change the requests (for example, rewriting of URLS), to extend the syntax of the configuration file.
-
 
 ### Filtering the requests or writing a module to generate pages
 
@@ -12,14 +10,11 @@ The type of request is `Ocsigen.Extensions.request_info` (have a look at it in t
 
 Each extensions loaded in the configuration file tries to handle the request and returns something of type `Extensions.answer`. If the page is not found by the extension (`Ext_not_found`), the following one will try to handle the request. If the page is found, the answer is `Ext_found r`. An extension can also modify the request before giving it to the next one (answer `Ext_continue_with of Extensions.request_info`), etc.
 
-
 ### Filtering the outputs
 
 It is also possible to create extensions that will filter the output of the server (for example to compress it). It is very similar to the previous one. Have a look at the file `deflatemod.ml` for an example.
 
-
 ### Extending the configuration file
-
 
 #### Extending the configuration file for an extension
 
@@ -35,16 +30,13 @@ let parse_config path = function
 ```
 The module `Parseconfig` defines functions to parse strings or sizes (in bytes, GB etc).
 
-
 #### Giving parameters to an extension
 
 Extensions may take parameters in the configuration file. During the loading of the extension, the function `Extensions.get_config ()` returns the xml tree between `<extension>` and `</extension>` (or `<library>` and `</library>`). Write a parser for that tree.
 
-
 ### Catching the request before it is fully read
 
 For some extensions of the Web server, it is necessary to catch the request before it has been fully read (especially before the body of the request has been read). For example it is the case if you want to write a (reverse) proxy.
-
 
 ### Adding new commands for the server
 

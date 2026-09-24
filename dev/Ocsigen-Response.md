@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Response`
 
 ```ocaml

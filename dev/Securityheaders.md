@@ -1,4 +1,3 @@
-
 # Module `Securityheaders`
 
 Securityheaders: add common security-related response headers

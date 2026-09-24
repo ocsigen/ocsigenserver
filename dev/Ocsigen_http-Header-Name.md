@@ -1,4 +1,3 @@
-
 # Module `Header.Name`
 
 ```ocaml

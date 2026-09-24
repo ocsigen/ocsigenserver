@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_extensions`
 
 ```ocaml

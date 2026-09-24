@@ -1,6 +1,4 @@
-
 # Module `Cache.Make`
-
 
 ## Parameters
 

@@ -1,4 +1,3 @@
-
 # Module `Header.Accept_encoding`
 
 ```ocaml

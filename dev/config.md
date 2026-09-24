@@ -1,8 +1,6 @@
-
 # Configuration file
 
 The main configuration file is usually named `/etc/ocsigenserver/ocsigenserver.conf`. It contains the port(s) on which you want to run the server (usually 80\), the protocol to use (HTTP or HTTPS), the location of log files, many settings for the server, the extensions to be loaded, the OCaml libraries you need for your Web sites, the configuration of each Web site, etc. One default configuration file should be provided by your distribution.
-
 
 ### Basic layout of the configuration file
 
@@ -169,7 +167,6 @@ Here is another example, for use as unprivileged user toto on port 8000\. We use
 
 ### Details about settings
 
-
 #### `<port>` : port and protocol
 
 The port on which the server is listening. You can have several `<port>`lines if you want to listen on several ports.
@@ -253,7 +250,6 @@ If you serve both HTTP and HTTPS and want to force HTTPS, redirect plain HTTP re
 ```
 Note: HTTP Strict Transport Security (HSTS) is not enabled automatically. Once you serve only over HTTPS, add a `Strict-Transport-Security` response header (for instance with the [Outputfilter](./outputfilter.md) extension).
 
-
 #### `<logdir>` : log files directory
 
 The directory for log files. Usually `/var/log/ocsigenserver`. Ocsigenserver is using three log files: `access.log` where all requests are logged, `errors.log` for error messages, and `warnings.log` for warnings.
@@ -333,7 +329,6 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 
 Starting from Ocsigenserver 1\.3, you can redefine the options `<uploaddir>` and `<maxuploadfilesize>` on each host or inside `<site>` tags. The syntax is the same as above. There are however some limitations; please read carefully the documentation of the module [Extendconfiguration](./extendconfiguration.md#upload) before using this functionality.
 
-
 #### `<maxrequestbodysize>` : maximum size of the body of incoming requests
 
 Example:
@@ -342,7 +337,6 @@ Example:
 <maxrequestbodysize>100MB</maxrequestbodysize>
 ```
 The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10kB 10kiB 10MiB 10TB ... (or 10o 10ko ...) (default in bytes when no unit is specified)
-
 
 #### `<mimefile>` : MIME type file
 
@@ -387,7 +381,6 @@ Written in seconds. Example:
 
 **Recommendation.** For an Internet-facing deployment, place a reverse proxy (nginx, HAProxy, Caddy, ...) in front of Ocsigenserver. The proxy enforces read/idle timeouts, buffers slow clients, terminates TLS and absorbs malformed requests. The `<maxconnected>` limit above does cap the number of simultaneous connections, which mitigates connection exhaustion.
 
-
 #### `<shutdowntimeout>` : Timeout for graceful shutdown *From version 1\.3*
 
 Amount of time (in seconds) the server will wait for current requests to terminate before ending the process, when you use the "graceful shutdown" server command (see below).
@@ -396,7 +389,6 @@ Amount of time (in seconds) the server will wait for current requests to termina
 <shutdowntimeout>10</shutdowntimeout>
 ```
 Other possible value: `notimeout` if you don't want to wait all connections even if it takes time.
-
 
 #### `<netbuffersize>` : Size of the input buffer
 
@@ -466,7 +458,6 @@ If your configuration is complex, it is recommended to split the configuration f
 
 ### Loading extensions and libraries
 
-
 #### `<extension>` : Loading extensions and libraries
 
 Ocsigenserver does not do anything without some extensions loaded. For example, you need the extension staticmod for serving static pages. Extensions are loaded dynamically when launching the server. Specify the extensions and libraries you want using the tag \<extension\>.
@@ -500,11 +491,9 @@ Extensions shipped with Ocsigen Server are available as subpackages of `ocsigens
 ```
 This will load deflatemod, and its dependency camlzip (if not already loaded).
 
-
 #### `<require>` : Loading libraries
 
 From version 1\.0, `<require>` is a synonymous for `<extension>`.
-
 
 #### `<library>` : Loading libraries
 
@@ -519,9 +508,7 @@ Example of use:
 ```
 As in `<extension>`, you can also use `findlib-package=` instead of `module=`. However, remember that dependencies will always be loaded only once (only the last file of the package itself may be reloaded several times).
 
-
 ### Virtual host and site configuration
-
 
 #### `<host>` : Virtual host setting
 
@@ -544,7 +531,6 @@ It is also possible to set the default ports for http and https, and default pro
 <host defaulthostname="www.mywebsite.org" hostfilter="*.org" defaulthttpport="8080" defaulthttpsport="4433" defaultprotocol="https"> ... </host>
 ```
 Inside `<host>`, write the configuration for your main (root) site. These options depend on the extensions loaded. See the documentation about the extensions to know what to put here. It is also possible to define here several subsites, using `<site>` (see below).
-
 
 #### `<site>` : Configuring sub-sites
 
@@ -574,7 +560,6 @@ Most distributions have a special command to do that automatically (for the defa
 /etc/init.d/ocsigenserver reload
 ```
 The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stoping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
-
 
 ### Graceful shutdown *(From version 1\.3)*
 

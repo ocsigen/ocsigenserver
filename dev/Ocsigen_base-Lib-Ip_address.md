@@ -1,4 +1,3 @@
-
 # Module `Lib.Ip_address`
 
 ```ocaml

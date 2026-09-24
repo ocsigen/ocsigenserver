@@ -1,4 +1,3 @@
-
 # Module `Ocsigen_base.Cache`
 
 Cache. Association tables (from any kind of database) that keep the most recently used values in memory. It is also possible to set a maximum lifetime for data in the cache.

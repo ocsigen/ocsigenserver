@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Extensions`
 
 Extensions interface for Ocsigen Server

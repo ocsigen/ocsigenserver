@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Parseconfig`
 
 Config file parsing. See also module `Extensions.​Configuration`

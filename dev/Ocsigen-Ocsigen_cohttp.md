@@ -1,4 +1,3 @@
-
 # Module `Ocsigen.Ocsigen_cohttp`
 
 ```ocaml

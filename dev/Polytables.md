@@ -1,4 +1,3 @@
-
 # Module `Polytables`
 
 Polymorphic tables (using Map)
