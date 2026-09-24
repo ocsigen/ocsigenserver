@@ -269,6 +269,17 @@ let harden_tls_context () =
       Option.iter (Ssl.init_dh_from_file ctx) ssl_dhfile;
       Option.iter (Ssl.init_ec_from_named_curve ctx) ssl_curve
 
+(* What [Cohttp_lwt_unix.Server.create] does, with its handler not exported,
+   for an exception that escapes the serving of a connection. *)
+let log_connection_error = function
+  | Unix.Unix_error (error, func, arg) ->
+      Logs.warn ~src:section (fun fmt ->
+        fmt "Client connection error %s: %s(%S)" (Unix.error_message error) func
+          arg)
+  | exn ->
+      Logs.err ~src:section (fun fmt ->
+        fmt "Unhandled exception: %s" (Printexc.to_string exn))
+
 let service ?ssl ~address ~port ~connector () =
   (match ssl with Some _ -> harden_tls_context () | None -> ());
   let tls_own_key =
@@ -279,25 +290,31 @@ let service ?ssl ~address ~port ~connector () =
         `TLS (`Crt_file_path crt, `Key_file_path key, `No_password)
     | None -> `None
   in
-  (* We create a specific context for Conduit and Cohttp. *)
+  (* We create a specific context for Conduit. *)
   let src =
     match address with
     | `Unix _ -> None
     | _ -> Some (Config.Socket_type.to_string address)
   in
-  Conduit_lwt_unix.init ?src ~tls_own_key () >>= fun conduit_ctx ->
-  Lwt.return (Cohttp_lwt_unix.Net.init ~ctx:conduit_ctx ()) >>= fun ctx ->
+  Conduit_lwt_unix.init ?src ~tls_own_key () >>= fun ctx ->
   (* We catch the INET_ADDR of the server *)
   let callback =
     let ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in
-  let config = Cohttp_lwt_unix.Server.make_expert ~conn_closed ~callback () in
+  let spec = Cohttp_lwt_unix.Server.make_expert ~conn_closed ~callback () in
   let mode =
     match address, tls_own_key with
     | `Unix f, _ -> `Unix_domain_socket (`File f)
     | _, `None -> `TCP (`Port port)
     | _, `TLS (crt, key, pass) -> `OpenSSL (crt, key, pass, `Port port)
   in
-  Cohttp_lwt_unix.Server.create ~stop ~ctx ~mode config >>= fun () ->
-  Lwt.return (Lwt.wakeup stop_wakener ())
+  (* Serve each connection here rather than through
+     [Cohttp_lwt_unix.Server.create], which does nothing more, so that the
+     input channel can be adjusted before cohttp reads from it. *)
+  Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
+    (fun flow ic oc ->
+       Cohttp_lwt_unix.Server.callback spec flow
+         (Cohttp_lwt_unix.Private.Input_channel.create ic)
+         oc)
+  >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())
