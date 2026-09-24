@@ -1,0 +1,49 @@
+# Launching the server
+
+To run the server, use the command `ocsigenserver`. It has the following options:
+
+```
+  DIR, --serve DIR
+         Serve the static files of directory DIR without a configuration
+         file (logs go to the terminal). DIR can also be given as a plain
+         positional argument: "ocsigenserver ./public".
+
+  --reverse-proxy URL
+         Forward every request to the base URL given (for example
+         http://localhost:9000), without a configuration file.
+
+  -P, --port
+         Port to listen on in serve mode (default 8080).
+
+  --directory-listing
+         In serve mode, list the contents of directories that have no
+         index file.
+
+  -c, --config
+         Alternate configuration file.
+
+  -d, --daemon
+         Daemon mode (detach the process).
+	 This is the default when there are more than 1 process.
+
+  -help, --help
+         Show summary of options.
+
+  -p, --pidfile
+         Specify a file where to write the PIDs of the servers.
+
+  -s, --silent
+         Silent mode (error messages go in errors.log only).
+
+  -v, --verbose
+         Verbose mode.
+
+  -vv, --veryverbose
+         Very verbose mode (info).
+
+  -vvv
+         Extremely verbose mode (debug).
+
+  --version
+         Show version of program.
+```
