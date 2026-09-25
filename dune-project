@@ -32,7 +32,7 @@
   ocamlfind
   (re (>= 1.11))
   react
-  (ssl (>= 0.5.8))
+  (ssl (>= 0.7.0))
   xml-light
   logs
   logs-syslog
