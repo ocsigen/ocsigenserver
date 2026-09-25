@@ -1,3 +1,16 @@
+==== 8.1.0~dev ===
+
+ * New <maxrequestbodysizeinmemory> configuration option: sets the maximum size
+   of a request body kept in memory while decoding it (for instance form
+   parameters), which could previously be set only through the OCaml API.
+   Accepts SI/binary size units, like <maxrequestbodysize>.
+ * The default maximum size of a request body kept in memory is raised from
+   8192 bytes to 1 MiB, so that urlencoded POST requests larger than 8 kB,
+   such as Eliom RPCs with large parameters, no longer fail.
+ * A request body too large to be decoded in memory is now answered with
+   413 (Request Entity Too Large) instead of 500, and a warning naming the
+   relevant configuration options is logged.
+
 ==== 8.0.0 (2026-09-24) ===
 
 Incompatible changes:
