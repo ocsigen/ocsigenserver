@@ -56,3 +56,9 @@ The same holds over TLS, once the handshake is done.
 
   $ dune exec -- ./client.exe partial-headers tls
   closed by the server after the timeout, without answering
+
+The server timeout has no effect, so passing it to Ocsigen.Server.start, as the
+test server does, logs a warning.
+
+  $ grep -c "server_timeout has no effect" log/warnings.log
+  1

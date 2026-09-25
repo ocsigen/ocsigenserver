@@ -484,6 +484,13 @@ let start
   Option.iter Config.set_shutdown_timeout shutdown_timeout;
   Option.iter Config.set_ssl_info ssl_info;
   main (fun () ->
+    (* Logged here rather than above, where the logs are not open yet. *)
+    Option.iter
+      (fun _ ->
+         Logs.warn ~src:section (fun fmt ->
+           fmt
+             "Ocsigen.Server.start: ~server_timeout has no effect and is ignored."))
+      server_timeout;
     Extensions.start_initialisation ();
     Extensions.set_hosts instructions)
 

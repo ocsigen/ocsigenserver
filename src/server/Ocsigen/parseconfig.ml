@@ -453,6 +453,8 @@ and later_pass = function
       set_client_timeout (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("servertimeout" as st), [], p) :: ll ->
+      Logs.warn ~src:section (fun fmt ->
+        fmt "Config file: <servertimeout> has no effect and is ignored.");
       set_server_timeout (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("netbuffersize" as st), [], p) :: ll ->

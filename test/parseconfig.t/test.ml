@@ -5,7 +5,8 @@
      [<maxrequestbodysize>], [<maxuploadfilesize>] and
      [<maxrequestbodysizeinmemory>];
    - the wiring of each of these tags to its [Ocsigen.Config] setter, which is
-     what a missing tag branch would break. *)
+     what a missing tag branch would break;
+   - the warning for [<servertimeout>], which is accepted but has no effect. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
 
@@ -67,3 +68,23 @@ let () =
   show_tag "maxuploadfilesize" "3MB" upload_size;
   show_tag "maxrequestbodysizeinmemory" "1MB" in_memory;
   show_tag "maxrequestbodysizeinmemory" "infinity" in_memory
+
+(* A tag that is accepted but has no effect says so with a warning, printed
+   here on the standard output. *)
+let () =
+  Logs.set_reporter
+    { Logs.report =
+        (fun _src level ~over k msgf ->
+          msgf (fun ?header:_ ?tags:_ fmt ->
+            Format.kasprintf
+              (fun message ->
+                 Printf.printf "%s: %s\n"
+                   (Logs.level_to_string (Some level))
+                   message;
+                 over ();
+                 k ())
+              fmt)) };
+  print_newline ();
+  print_endline "tags without effect:";
+  Ocsigen.Parseconfig.later_pass
+    [Xml.Element ("servertimeout", [], [Xml.PCData "20"])]

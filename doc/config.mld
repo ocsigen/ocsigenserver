@@ -498,7 +498,8 @@ is bounded by its inactivity only: a client that keeps sending a large body
 very slowly holds its connection for as long as the body keeps coming. A client
 that does not read its response is not bounded either.
 
-[<servertimeout>] is accepted for compatibility, but has no effect.
+[<servertimeout>] is accepted for compatibility, but has no effect, and a
+warning says so.
 
 {b Recommendation.} For an Internet-facing deployment, a reverse proxy (nginx,
 HAProxy, Caddy, ...) in front of Ocsigenserver still brings what the server does
