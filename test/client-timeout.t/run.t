@@ -117,3 +117,9 @@ which a client could withhold to hold the connection.
   $ cat mute.out
   HTTP/1.1 200 OK: ok
   close_notify after the keep-alive timeout, then the socket closed at once
+
+The server timeout has no effect, so passing it to Ocsigen.Server.start, as the
+test server does, logs a warning.
+
+  $ grep -c "server_timeout has no effect" log/warnings.log
+  1

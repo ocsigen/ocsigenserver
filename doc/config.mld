@@ -528,7 +528,8 @@ server checks the bounds once a second, so a connection is closed up to two
 seconds after its bound, never before. A value of [0] disables the timeout,
 and the minimum rate of [<mindatarate>] with it.
 
-[<servertimeout>] is accepted for compatibility, but has no effect.
+[<servertimeout>] is accepted for compatibility, but has no effect, and a
+warning says so.
 
 {3 [<keepalivetimeout>] : Timeout for idle connections}
 
