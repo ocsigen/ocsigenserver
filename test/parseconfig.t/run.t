@@ -1,6 +1,7 @@
 Size-valued configuration tags: the units accepted by parse_size_tag, and the
 wiring of each tag to its Config value. Then the log levels set by <loglevel>
-and by the logs: command of the command pipe.
+and by the logs: command of the command pipe. Last, the warning for a tag that
+has no effect.
 
   $ dune exec ./test.exe 2>&1
   parse_size_tag:
@@ -41,3 +42,6 @@ and by the logs: command of the command pipe.
   logs:test:app -> quiet
   logs:test:app loud -> quiet
   sources named test:app -> 1
+  
+  tags without effect:
+  warning: Config file: <servertimeout> has no effect and is ignored.
