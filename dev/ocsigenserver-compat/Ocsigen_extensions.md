@@ -231,7 +231,7 @@ Returns the port to be used for absolute links or redirections. It is either:
 
 - the port the server is listening at
 - or the port in the Host header
-- or the default port set in the configuration file.
+- or the default port set in the configuration file, also when the server listens on a Unix-domain socket, which has no port.
 ```ocaml
 val new_url_of_directory_request : request -> Ocsigen.Request.t -> Uri.t
 ```
