@@ -1,3 +1,11 @@
+==== 8.0.1~dev ===
+
+Bug fixes:
+ * A server listening on a Unix-domain socket, which has no port (typically
+   behind a reverse proxy), no longer writes port 0 in the absolute URLs it
+   builds, e.g. the redirection of a directory to its URL with a slash:
+   Ocsigen.Extensions.get_port returns the default port instead.
+
 ==== 8.0.0 (2026-09-24) ===
 
 Incompatible changes:

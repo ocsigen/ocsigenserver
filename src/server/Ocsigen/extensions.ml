@@ -282,9 +282,18 @@ let get_hostname {request_info; request_config = {default_hostname; _}; _} =
 let get_port
       {request_info; request_config = {default_httpport; default_httpsport; _}}
   =
+  let default () =
+    if Request.ssl request_info then default_httpsport else default_httpport
+  in
   if Config.get_usedefaulthostname ()
-  then if Request.ssl request_info then default_httpsport else default_httpport
-  else Request.port request_info
+  then default ()
+  else
+    match Request.port request_info with
+    | 0 ->
+        (* A Unix-domain socket, typically behind a reverse proxy, has no
+           port of its own. *)
+        default ()
+    | port -> port
 
 let new_url_of_directory_request request ri =
   Logs.info ~src:section (fun fmt -> fmt "Sending 301 Moved permanently");
