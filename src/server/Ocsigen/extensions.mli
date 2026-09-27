@@ -360,7 +360,8 @@ val get_port : request -> int
     It is either:
     - the port the server is listening at
     - or the port in the Host header
-    - or the default port set in the configuration file. *)
+    - or the default port set in the configuration file, also when the
+      server listens on a Unix-domain socket, which has no port. *)
 
 val new_url_of_directory_request : request -> Request.t -> Uri.t
 (** new_url_of_directory_request create a redirection and generating a new url
