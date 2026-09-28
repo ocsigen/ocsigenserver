@@ -32,6 +32,7 @@
     (link "Revproxy"           ocsigenserver/revproxy.html           revproxy)
     (link "Rewritemod"         ocsigenserver/rewritemod.html         rewritemod)
     (link "Outputfilter"       ocsigenserver/outputfilter.html       outputfilter)
+    (link "Securityheaders"    ocsigenserver/securityheaders.html    securityheaders)
     (link "Userconf"           ocsigenserver/userconf.html           userconf)
     (link "CORS"               ocsigenserver/cors.html               cors))
   (section "Developer documentation"
