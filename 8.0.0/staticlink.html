@@ -113,6 +113,7 @@
 <li class="ml3" data-wodoc-page="revproxy.html"><a href="./revproxy.html">Revproxy</a></li>
 <li class="ml3" data-wodoc-page="rewritemod.html"><a href="./rewritemod.html">Rewritemod</a></li>
 <li class="ml3" data-wodoc-page="outputfilter.html"><a href="./outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="securityheaders.html"><a href="./securityheaders.html">Securityheaders</a></li>
 <li class="ml3" data-wodoc-page="userconf.html"><a href="./userconf.html">Userconf</a></li>
 <li class="ml3" data-wodoc-page="cors.html"><a href="./cors.html">CORS</a></li>
 </ul>
@@ -168,6 +169,7 @@
 <li class="ml3" data-wodoc-page="revproxy.html"><a href="./revproxy.html">Revproxy</a></li>
 <li class="ml3" data-wodoc-page="rewritemod.html"><a href="./rewritemod.html">Rewritemod</a></li>
 <li class="ml3" data-wodoc-page="outputfilter.html"><a href="./outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="securityheaders.html"><a href="./securityheaders.html">Securityheaders</a></li>
 <li class="ml3" data-wodoc-page="userconf.html"><a href="./userconf.html">Userconf</a></li>
 <li class="ml3" data-wodoc-page="cors.html"><a href="./cors.html">CORS</a></li>
 </ul>
@@ -316,13 +318,19 @@
 
   <script>
     var wodocPub = "/ocsigenserver";
-    // Switch version: keep the current page, swapping only the version segment.
+    // Switch version: keep the current page, swapping only the version segment,
+    // unless that page does not exist in the target version (a renamed module,
+    // a merged manual page): then go to that version's index.
     function wodocVersion(v) {
       if (!v) return;
       var re = new RegExp('^(' + wodocPub + '/)[^/]+');
       var p = location.pathname;
-      location.href =
-        re.test(p) ? p.replace(re, '$1' + v) : wodocPub + '/' + v + '/index.html';
+      var home = wodocPub + '/' + v + '/index.html';
+      if (!re.test(p)) { location.href = home; return; }
+      var target = p.replace(re, '$1' + v);
+      fetch(target, { method: 'HEAD' })
+        .then(function (r) { location.href = r.ok ? target : home; })
+        .catch(function () { location.href = target; });
     }
     // Build the version <select> from the project's versions.json (the single
     // source of truth, refreshed on every build/release), so even older frozen

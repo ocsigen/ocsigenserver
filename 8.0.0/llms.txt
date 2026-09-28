@@ -1,9 +1,9 @@
 # Server
 
-> - [ocsigenserver](ocsigenserver/index.md) (version 8.0.0)
+> Ocsigen Server is a powerful and modular generic purpose Web Server. It supports static files, redirections, reverse proxy, CORS, user pages with local configuration, page compression, authentication, etc.
 
 ## Manual
-- [OCaml Package Documentation](index.md)
+- [Ocsigen Server](index.md)
 - [Launching the server](launching.md)
 - [Configuration file](config.md)
 - [Using Ocsigen Server as a library](staticlink.md)
@@ -18,12 +18,12 @@
 - [Revproxy](revproxy.md)
 - [Rewritemod](rewritemod.md)
 - [Outputfilter](outputfilter.md)
+- [Securityheaders](securityheaders.md)
 - [Userconf](userconf.md)
 - [The CORS extension](cors.md)
 - [Writing an extension for Ocsigen server](extend.md)
 - [API reference](api.md)
 - [ocsigenserver-compat index](ocsigenserver-compat/index.md)
-- [Securityheaders](securityheaders.md)
 
 ## API
 - [Module `Accesscontrol`](Accesscontrol.md)
