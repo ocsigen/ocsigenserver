@@ -47,6 +47,21 @@ let make_reporter out_channel =
 
 let stderr = make_reporter stderr
 let stdout = make_reporter stdout
+
+(* Send each message to all [reporters], in order. Logs requires [over] to be
+   called exactly once per message ([Logs.set_reporter_mutex] releases its lock
+   there), so the sub-reporters get a no-op and the real [over] runs after the
+   last one. *)
+let broadcast reporters =
+  let report src level ~over k msgf =
+    let rec loop = function
+      | [] -> over (); k ()
+      | r :: rs -> r.Logs.report src level ~over:ignore (fun () -> loop rs) msgf
+    in
+    loop reporters
+  in
+  {Logs.report}
+
 let close_loggers = ref []
 
 (* Access logging bypasses Logs and Format: a complete Combined Log Format line
@@ -136,11 +151,7 @@ let open_log_files_in_dir () =
               (fun src level ~over k msgf ->
                 (dispatch_f src level).Logs.report src level ~over k msgf) }) ]
      in
-     { Logs.report =
-         (fun src level ~over k msgf ->
-           List.fold_left
-             (fun k r () -> r.Logs.report src level ~over k msgf)
-             k broadcast_reporters ()) });
+     broadcast broadcast_reporters);
   Lwt.return ()
 
 let open_log_files () =
@@ -153,13 +164,7 @@ let open_log_files () =
         | Ok r -> r
         | Error msg -> failwith msg
       in
-      Logs.set_reporter
-        (let broadcast_reporters = [syslog; stderr] in
-         { Logs.report =
-             (fun src level ~over k msgf ->
-               List.fold_left
-                 (fun k r () -> r.Logs.report src level ~over k msgf)
-                 k broadcast_reporters ()) });
+      Logs.set_reporter (broadcast [syslog; stderr]);
       (* No access.log file in syslog mode: access lines reach syslog (and
          stderr) through Logs. *)
       (access_out := fun s -> Logs.app ~src:access_sect (fun fmt -> fmt "%s" s));

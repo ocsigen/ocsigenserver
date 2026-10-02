@@ -1,0 +1,4 @@
+(test
+ (name test_reporter_over)
+ (package ocsigenserver)
+ (libraries ocsigenserver logs lwt.unix))

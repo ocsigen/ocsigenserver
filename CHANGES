@@ -5,6 +5,11 @@ Bug fixes:
    behind a reverse proxy), no longer writes port 0 in the absolute URLs it
    builds, e.g. the redirection of a directory to its URL with a slash:
    Ocsigen.Extensions.get_port returns the default port instead.
+ * The log reporters installed by Ocsigen Server, which send each message
+   both to the log files and to the console (or to syslog and stderr), now
+   call the [over] callback of Logs once per message instead of once per
+   destination. This makes Logs.set_reporter_mutex usable with them: the
+   second release of the reporter mutex made the server fail at startup.
 
 ==== 8.0.0 (2026-09-24) ===
 
