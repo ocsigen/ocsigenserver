@@ -46,11 +46,17 @@ distclean: clean.local
 # BB different, make files universally accessible, we cannot chown.
 INSTALL_CAN_PUT_PERMISSIONS=yes
 INSTALL_USER_GROUP=-o $(OCSIGENUSER) -g "$(OCSIGENGROUP)"
-INSTALL_MOD_660=660
-INSTALL_MOD_644=644
-INSTALL_MOD_755=755
-INSTALL_MOD_770=770
-INSTALL_MOD_750=750
+INSTALL_MOD_660=-m 660
+INSTALL_MOD_644=-m 644
+INSTALL_MOD_755=-m 755
+INSTALL_MOD_770=-m 770
+INSTALL_MOD_750=-m 750
+INSTALL_DIR=$(INSTALL) -d
+INSTALL_FILE=$(INSTALL)
+# The Unix permission/ownership handling below is meaningless on Windows (the
+# OCSIGEN_WINDOWS branch drops modes and ownership anyway), and OCSIGENGROUP is
+# empty there, which makes the `grep` check below print a usage error. Skip it.
+ifneq ($(OCSIGEN_WINDOWS), yes)
 USERNAME=$(shell whoami)
 ifneq ($(shell id -u), 0)
   ifneq ($(OCSIGENUSER), $(USERNAME))
@@ -62,38 +68,54 @@ ifneq ($(shell id -u), 0)
 endif
 ifeq ($(INSTALL_CAN_PUT_PERMISSIONS), no)
     INSTALL_USER_GROUP=
-    INSTALL_MOD_660=666
-    INSTALL_MOD_644=666
-    INSTALL_MOD_755=777
-    INSTALL_MOD_770=777
-    INSTALL_MOD_750=777
+    INSTALL_MOD_660=-m 666
+    INSTALL_MOD_644=-m 666
+    INSTALL_MOD_755=-m 777
+    INSTALL_MOD_770=-m 777
+    INSTALL_MOD_750=-m 777
+endif
+endif
+
+# On Windows (Cygwin), NTFS does not support Unix permission bits and `install`
+# aborts when it fails to chmod the freshly created file or directory. Fall back
+# to plain `mkdir -p` / `cp` and drop the mode and ownership flags.
+# OCSIGEN_WINDOWS is set by ./configure (see Makefile.config).
+ifeq ($(OCSIGEN_WINDOWS), yes)
+    INSTALL_USER_GROUP=
+    INSTALL_MOD_660=
+    INSTALL_MOD_644=
+    INSTALL_MOD_755=
+    INSTALL_MOD_770=
+    INSTALL_MOD_750=
+    INSTALL_DIR=mkdir -p
+    INSTALL_FILE=cp
 endif
 
 install.files:
 	@echo
 	@echo INSTALL_CAN_PUT_PERMISSIONS: ${INSTALL_CAN_PUT_PERMISSIONS}
 	 ## Configuration files
-	$(INSTALL) -m ${INSTALL_MOD_755} -d $(TEMPROOT)$(CONFIGDIR)/conf.d
-	${INSTALL} -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
+	$(INSTALL_DIR) ${INSTALL_MOD_755} $(TEMPROOT)$(CONFIGDIR)/conf.d
+	$(INSTALL_FILE) ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample $(TEMPROOT)$(CONFIGDIR)/
 	[ -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf ] || \
-	  { $(INSTALL) -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample \
+	  { $(INSTALL_FILE) ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample \
 		$(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf;  }
 	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory
-	$(INSTALL) -m ${INSTALL_MOD_644} src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
-	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(LOGDIR)
+	$(INSTALL_FILE) ${INSTALL_MOD_644} src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
+	$(INSTALL_DIR) ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(LOGDIR)
 	 ## Static files
-	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(STATICPAGESDIR)
-	$(INSTALL) -d -m ${INSTALL_MOD_750} ${INSTALL_USER_GROUP} $(TEMPROOT)$(DATADIR)
-	$(INSTALL) -m ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
+	$(INSTALL_DIR) ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(STATICPAGESDIR)
+	$(INSTALL_DIR) ${INSTALL_MOD_750} ${INSTALL_USER_GROUP} $(TEMPROOT)$(DATADIR)
+	$(INSTALL_FILE) ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
 	  local/var/www/*.html $(TEMPROOT)$(STATICPAGESDIR)
-	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} \
+	$(INSTALL_DIR) ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
-	$(INSTALL) -m ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
+	$(INSTALL_FILE) ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
 	  local/var/www/ocsigenstuff/*.png local/var/www/ocsigenstuff/*.css \
 	  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff
 	mkdir -p $(TEMPROOT)$(MANDIR)
-	$(INSTALL) -m ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
+	$(INSTALL_FILE) ${INSTALL_MOD_644} src/files/ocsigenserver.1 $(TEMPROOT)$(MANDIR)
 
 uninstall:
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf.sample
