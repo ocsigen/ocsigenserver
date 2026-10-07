@@ -175,6 +175,11 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request, None
       | Ocsigen_base.Lib.Ocsigen_Request_too_long ->
           None, `Request_entity_too_large, None
+      | Ocsigen_base.Lib.Input_is_too_large ->
+          Logs.warn ~src:section (fun fmt ->
+            fmt
+              "Request body too large to be decoded in memory (see the <maxrequestbodysizeinmemory> and <netbuffersize> configuration options)");
+          None, `Request_entity_too_large, None
       | exn ->
           Logs.err ~src:section (fun fmt ->
             fmt

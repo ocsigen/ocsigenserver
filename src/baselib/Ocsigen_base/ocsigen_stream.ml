@@ -109,7 +109,10 @@ exception Stream_error of string
 exception String_too_large
 
 let string_of_stream m s =
-  let buff = Buffer.create (m / 4) in
+  (* The buffer grows as needed: do not preallocate a size derived from the
+     upper limit [m], which may be very large (up to [max_int]) while most
+     strings are short. *)
+  let buff = Buffer.create (min m 4096) in
   let rec aux i s =
     next s >>= function
     | Finished _ -> Lwt.return buff
