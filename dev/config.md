@@ -289,6 +289,21 @@ Example:
 <syslog>Local7</syslog>
 ```
 
+#### `<loglevel>` : level of a log source
+
+Sets the level of a [Logs](https://erratique.ch/software/logs) source, by its name: the messages of that source below this level are not logged. The levels are `debug`, `info`, `notice`, `warning`, `error` and `fatal` (the same as `error`). The tag may appear several times, once per source, anywhere among the children of `<server>`.
+
+It is meant for the sources of extensions and applications, a debug trace in particular, that the command-line options `-v`, `-vv` and `-V` do not reach: these set the level of Ocsigen Server's own sources only.
+
+The levels are set once the whole configuration file is loaded, since the sources of an application are made when its modules load, and again when it is reloaded. A warning is logged for a name that no source has.
+
+Example:
+
+```
+<loglevel source="myapp:requests" level="debug"/>
+```
+The `logs:` order of the command pipe (see `<commandpipe>` below) sets the level of a source at run time.
+
 #### `<user>` and `<group>` : user who runs the server
 
 **Deprecated and ignored.** Ocsigenserver no longer drops privileges: these tags are accepted for backward compatibility but have **no effect**, and the server logs a warning if they are present.
@@ -460,6 +475,7 @@ Predefined orders:
 - `shutdown`: will shutdown the server when all the current rerquests are fulfilled *(see below for more information)*
 - `reopen_logs`: will reopen the logs files (see logrotate configuration for an example of use)
 - `clearcache`: will empty all the caches defined by the module `Ocsigen_base.Cache`
+- `logs:name level`: will set the level of the log source `name`, as `<loglevel>` does; `logs:name` turns the source off
 
 #### `<extconf>` : Splitting the configuration file
 

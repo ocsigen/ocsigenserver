@@ -39,3 +39,13 @@ Path to the error log file
 val stdio_reporter : Logs.reporter
 ```
 A reporter that writes warnings and errors to `stderr` and everything else to `stdout`, without opening any log file. It is used by the one-command serve mode (where access lines are written directly to `stdout`) and to report command-line errors before the logging system is configured.
+
+```ocaml
+val level_of_string : string -> Logs.level option
+```
+`level_of_string s` is the level named `s`: `"debug"`, `"info"`, `"notice"`, `"warning"`, `"error"` or `"fatal"` (the same as `"error"`).
+
+```ocaml
+val set_source_level : string -> Logs.level option -> bool
+```
+`set_source_level name level` sets the level of every log source named `name` to `level` (`None` turns them off), and is `false` when there is no such source.
