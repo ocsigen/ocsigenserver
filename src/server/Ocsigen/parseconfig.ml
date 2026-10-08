@@ -387,6 +387,37 @@ let later_pass_extension tag attrs l =
         (Ocsigen_base.Loader.findfiles s)
   | _ -> raise (Config_file_error ("Wrong attribute for " ^ tag))
 
+(* <loglevel source="name" level="debug"/>: the levels the configuration
+   asks for, by source name, in the order of the file. They are set once
+   the whole configuration is loaded (see [later_pass] below): the sources
+   of an application are made when its modules load, possibly after the
+   tag. *)
+let log_levels = ref []
+
+let parse_loglevel atts =
+  let source, level =
+    List.fold_left
+      (fun (source, level) -> function
+         | "source", s -> Some s, level
+         | "level", l -> source, Some l
+         | att, _ ->
+             raise
+               (Config_file_error
+                  ("unexpected attribute " ^ att ^ " in <loglevel>")))
+      (None, None) atts
+  in
+  match source, level with
+  | None, _ -> raise (Config_file_error "<loglevel> needs a source attribute")
+  | _, None -> raise (Config_file_error "<loglevel> needs a level attribute")
+  | Some source, Some level -> (
+    match Messages.level_of_string (String.lowercase_ascii level) with
+    | Some l -> source, l
+    | None ->
+        raise
+          (Config_file_error
+             ("<loglevel level=\"" ^ level
+            ^ "\">: expected debug, info, notice, warning, error or fatal")))
+
 let rec later_pass_extconf dir =
   let f acc s =
     if Filename.check_suffix s "conf"
@@ -503,6 +534,9 @@ and later_pass = function
   | Element ("library", atts, l) :: ll ->
       later_pass_extension "<library>" atts l;
       later_pass ll
+  | Element ("loglevel", atts, []) :: ll ->
+      log_levels := parse_loglevel atts :: !log_levels;
+      later_pass ll
   | Element ("host", atts, l) :: ll ->
       (* The evaluation order is important here *)
       let h = later_pass_host atts l in
@@ -515,7 +549,16 @@ and later_pass = function
       raise (Config_file_error ("tag <" ^ tag ^ "> unexpected inside <server>"))
   | _ -> raise (Config_file_error "Syntax error")
 
-let later_pass l = Extensions.set_hosts (later_pass l)
+let later_pass l =
+  log_levels := [];
+  Extensions.set_hosts (later_pass l);
+  List.iter
+    (fun (source, level) ->
+       if not (Messages.set_source_level source (Some level))
+       then
+         Logs.warn ~src:section (fun fmt ->
+           fmt "<loglevel>: no log source named %s" source))
+    (List.rev !log_levels)
 
 (* Parsing <port> tags *)
 let parse_port =
