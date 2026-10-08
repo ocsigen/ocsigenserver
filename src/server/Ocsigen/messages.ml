@@ -208,21 +208,36 @@ let level_of_string = function
   | "fatal" -> Some Logs.Error
   | _ -> None
 
-let command_f exc _ = function
-  | [sect_name] ->
-      (* Lwt_log.Section.make :
-       if a section with the same name
-       already exists, it is returned. *)
-      let sect = Logs.Src.create sect_name in
-      Logs.Src.set_level sect None;
-      Lwt.return_unit
-  | [sect_name; level_name] ->
-      (* Lwt_log.Section.make :
-       if a section with the same name
-       already exists, it is returned. *)
-      let sect = Logs.Src.create sect_name in
+(* Logs does not make source names unique: every source with that name is
+   set. [Logs.Src.create] would make a new source rather than return the
+   existing one. *)
+let set_source_level name level =
+  match
+    List.filter (fun src -> Logs.Src.name src = name) (Logs.Src.list ())
+  with
+  | [] -> false
+  | sources ->
+      List.iter (fun src -> Logs.Src.set_level src level) sources;
+      true
+
+let command_section = Logs.Src.create "ocsigen:command"
+
+(* The [logs:] command of the command pipe: [logs:name level] sets the
+   level of the log source [name], [logs:name] turns it off. *)
+let command_f exc _ args =
+  let set name level =
+    if not (set_source_level name level)
+    then
+      Logs.warn ~src:command_section (fun fmt ->
+        fmt "logs: no log source named %s" name)
+  in
+  match args with
+  | [name] -> set name None; Lwt.return_unit
+  | [name; level_name] ->
       (match level_of_string (String.lowercase_ascii level_name) with
-      | None -> Logs.Src.set_level sect None
-      | Some l -> Logs.Src.set_level sect (Some l));
-      Lwt.return ()
+      | Some level -> set name (Some level)
+      | None ->
+          Logs.warn ~src:command_section (fun fmt ->
+            fmt "logs: unknown log level %s" level_name));
+      Lwt.return_unit
   | _ -> Lwt.fail exc

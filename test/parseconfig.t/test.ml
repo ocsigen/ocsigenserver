@@ -1,11 +1,11 @@
-(* Tests for the size-valued configuration tags parsed by
-   [Ocsigen.Parseconfig]:
+(* Tests for configuration tags parsed by [Ocsigen.Parseconfig]:
 
    - the SI and binary units accepted by [parse_size_tag], shared by
      [<maxrequestbodysize>], [<maxuploadfilesize>] and
      [<maxrequestbodysizeinmemory>];
    - the wiring of each of these tags to its [Ocsigen.Config] setter, which is
-     what a missing tag branch would break. *)
+     what a missing tag branch would break;
+   - the log levels set by [<loglevel>] and by the [logs:] command. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
 
@@ -67,3 +67,45 @@ let () =
   show_tag "maxuploadfilesize" "3MB" upload_size;
   show_tag "maxrequestbodysizeinmemory" "1MB" in_memory;
   show_tag "maxrequestbodysizeinmemory" "infinity" in_memory
+
+(* [<loglevel source="..." level="..."/>] sets the level of the log sources
+   of that name once the configuration is loaded; the [logs:] command of
+   the command pipe sets it at run time. Both act on the existing sources:
+   they make no new one. *)
+let () =
+  let src = Logs.Src.create "test:app" in
+  let level () = Logs.level_to_string (Logs.Src.level src) in
+  let same_name () =
+    List.length
+      (List.filter (fun s -> Logs.Src.name s = "test:app") (Logs.Src.list ()))
+  in
+  let loglevel atts =
+    match Ocsigen.Parseconfig.later_pass [Xml.Element ("loglevel", atts, [])] with
+    | () -> Printf.printf "-> %s\n" (level ())
+    | exception Ocsigen.Config.Config_file_error msg ->
+        Printf.printf "-> Config_file_error: %s\n" msg
+  in
+  let command args =
+    Lwt_main.run (Ocsigen.Messages.command_f Exit "" args);
+    Printf.printf "-> %s\n" (level ())
+  in
+  print_newline ();
+  print_endline "loglevel:";
+  Printf.printf "default -> %s\n" (level ());
+  print_string "<loglevel source=\"test:app\" level=\"debug\"/> ";
+  loglevel ["source", "test:app"; "level", "debug"];
+  print_string "<loglevel level=\"info\" source=\"test:app\"/> ";
+  loglevel ["level", "info"; "source", "test:app"];
+  print_string "<loglevel source=\"test:app\" level=\"loud\"/> ";
+  loglevel ["source", "test:app"; "level", "loud"];
+  print_string "<loglevel level=\"debug\"/> ";
+  loglevel ["level", "debug"];
+  print_string "<loglevel source=\"test:none\" level=\"debug\"/> ";
+  loglevel ["source", "test:none"; "level", "debug"];
+  print_string "logs:test:app warning ";
+  command ["test:app"; "warning"];
+  print_string "logs:test:app ";
+  command ["test:app"];
+  print_string "logs:test:app loud ";
+  command ["test:app"; "loud"];
+  Printf.printf "sources named test:app -> %d\n" (same_name ())
