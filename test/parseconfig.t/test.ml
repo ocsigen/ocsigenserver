@@ -1,11 +1,12 @@
-(* Tests for the size-valued configuration tags parsed by
-   [Ocsigen.Parseconfig]:
+(* Tests for configuration tags parsed by [Ocsigen.Parseconfig], and for
+   the log levels:
 
    - the SI and binary units accepted by [parse_size_tag], shared by
      [<maxrequestbodysize>], [<maxuploadfilesize>] and
      [<maxrequestbodysizeinmemory>];
    - the wiring of each of these tags to its [Ocsigen.Config] setter, which is
-     what a missing tag branch would break. *)
+     what a missing tag branch would break;
+   - the log levels set by the [logs:] command of the command pipe. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
 
@@ -67,3 +68,27 @@ let () =
   show_tag "maxuploadfilesize" "3MB" upload_size;
   show_tag "maxrequestbodysizeinmemory" "1MB" in_memory;
   show_tag "maxrequestbodysizeinmemory" "infinity" in_memory
+
+(* The [logs:] command of the command pipe sets the level of the existing
+   log sources of that name: it makes no new one. *)
+let () =
+  let src = Logs.Src.create "test:app" in
+  let level () = Logs.level_to_string (Logs.Src.level src) in
+  let same_name () =
+    List.length
+      (List.filter (fun s -> Logs.Src.name s = "test:app") (Logs.Src.list ()))
+  in
+  let command args =
+    Lwt_main.run (Ocsigen.Messages.command_f Exit "" args);
+    Printf.printf "-> %s\n" (level ())
+  in
+  print_newline ();
+  print_endline "logs:";
+  Printf.printf "default -> %s\n" (level ());
+  print_string "logs:test:app info ";
+  command ["test:app"; "info"];
+  print_string "logs:test:app ";
+  command ["test:app"];
+  print_string "logs:test:app loud ";
+  command ["test:app"; "loud"];
+  Printf.printf "sources named test:app -> %d\n" (same_name ())

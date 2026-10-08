@@ -49,6 +49,16 @@ val stdio_reporter : Logs.reporter
     serve mode (where access lines are written directly to [stdout]) and to
     report command-line errors before the logging system is configured. *)
 
+val level_of_string : string -> Logs.level option
+(** [level_of_string s] is the level named [s]: ["debug"], ["info"],
+    ["notice"], ["warning"], ["error"] or ["fatal"] (the same as
+    ["error"]). *)
+
+val set_source_level : string -> Logs.level option -> bool
+(** [set_source_level name level] sets the level of every log source named
+    [name] to [level] ([None] turns them off), and is [false] when there is
+    no such source. *)
+
 (**/**)
 
 val open_files : unit -> unit Lwt.t

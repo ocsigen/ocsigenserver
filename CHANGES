@@ -10,6 +10,10 @@ New features:
    such as Eliom RPCs with large parameters, no longer fail.
 
 Bug fixes:
+ * The logs:name level order of the command pipe now sets the level of the
+   existing log source of that name. It used to make a new source with that
+   name, which nothing logged to, so the order had no effect. An unknown level
+   is now reported instead of turning the source off.
  * A request body too large to be decoded in memory is now answered with
    413 (Request Entity Too Large) instead of 500, and a warning naming the
    relevant configuration options is logged.
