@@ -16,7 +16,25 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *)
 
-(** Writing messages in the logs *)
+(** Writing messages in the logs
+
+    The log reporters that Ocsigen Server installs, and its writes to the
+    access log, may be used from several domains or threads at once, and
+    while the logs are reopened. Each message is formatted with no lock held,
+    so a printer may log, or take a lock of the application. The formatted
+    message is then written whole, in one call, to each of its destinations,
+    so that messages never mix. A message logged by a printer is written
+    before the message that the printer is part of. Signal handlers and
+    finalisers must not log: they may run while a message is written, with
+    the lock of its destination held.
+
+    The reporter mutex of Logs ([Logs.set_reporter_mutex]) is left to the
+    application. The reporters of Ocsigen Server do not need it, and work
+    with it if the application installs one. But Logs keeps that mutex
+    locked while the message is formatted: a printer may then log only if
+    the mutex is reentrant, and must not take a lock that another thread may
+    hold while it logs. An application that installs its own reporter is
+    responsible for its thread safety. *)
 
 val access_sect : Logs.src
 

@@ -60,7 +60,8 @@ end
 module Access_log = struct
   (* Offset of local time from UTC, in minutes, robust across day boundaries. *)
   let timezone_offset t =
-    let l = Unix.localtime t and u = Unix.gmtime t in
+    let l = Ocsigen_base.Lib.Date.localtime t
+    and u = Ocsigen_base.Lib.Date.gmtime t in
     let day_diff =
       if l.Unix.tm_year <> u.Unix.tm_year
       then compare l.Unix.tm_year u.Unix.tm_year
@@ -70,7 +71,7 @@ module Access_log = struct
     + l.Unix.tm_min - u.Unix.tm_min
 
   let time t =
-    let tm = Unix.localtime t in
+    let tm = Ocsigen_base.Lib.Date.localtime t in
     let off = timezone_offset t in
     let sign = if off < 0 then '-' else '+' in
     let off = abs off in

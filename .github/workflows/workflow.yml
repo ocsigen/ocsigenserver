@@ -53,6 +53,10 @@ jobs:
 
       - run: opam exec -- make all
 
+      # The OCaml tests of the log reporters. The cram tests (test/*.t) start
+      # servers and query them with curl: they are not run here.
+      - run: opam exec -- dune build --profile release @test/logs/runtest
+
   # lint-doc:
   #   runs-on: ubuntu-latest
   #   steps:

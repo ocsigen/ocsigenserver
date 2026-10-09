@@ -33,6 +33,11 @@ val make_cryptographic_safe_string : unit -> string
     It is impossible to guess for other people and
     will never return twice the same value (with very good probabilities). *)
 
+val with_lock : Mutex.t -> (unit -> 'a) -> 'a
+(** [with_lock m f] is [f ()], with [m] locked. [m] is unlocked when [f]
+    returns or raises. This is [Mutex.protect], which OCaml 4.14 does not
+    have. *)
+
 module String : module type of String_base
 
 module Ip_address : sig
@@ -115,6 +120,18 @@ module Netstring_pcre : sig
 end
 
 module Date : sig
+  val localtime : float -> Unix.tm
+  (** [localtime t] is [Unix.localtime t]. [Unix.localtime] and [Unix.gmtime]
+      may return a buffer shared by the whole program, and with OCaml 5,
+      several domains may call them at once. Ocsigen Server calls them
+      through {!localtime} and {!gmtime}, one at a time, so these may be used
+      from several domains or threads at once. Other direct calls are not
+      protected. *)
+
+  val gmtime : float -> Unix.tm
+  (** [gmtime t] is [Unix.gmtime t], as {!localtime} for its use from several
+      domains or threads. *)
+
   val to_string : float -> string
   (** Converts Unix GMT date to string *)
 

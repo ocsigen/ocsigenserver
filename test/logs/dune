@@ -1,4 +1,26 @@
-(test
- (name test_reporter_over)
+(library
+ (name log_test)
+ (modules log_test)
+ (libraries ocsigenserver lwt.unix threads.posix))
+
+(tests
+ (names
+  test_reporter_over
+  test_reporter_printer_logs
+  test_reporter_printer_lock
+  test_reporter_app_mutex)
+ (modules
+  test_reporter_over
+  test_reporter_printer_logs
+  test_reporter_printer_lock
+  test_reporter_app_mutex)
  (package ocsigenserver)
- (libraries ocsigenserver logs lwt.unix))
+ (libraries log_test ocsigenserver logs threads.posix))
+
+(tests
+ (names test_reporter_domains test_reporter_reopen test_reporter_stdio)
+ (modules test_reporter_domains test_reporter_reopen test_reporter_stdio)
+ (package ocsigenserver)
+ (enabled_if
+  (>= %{ocaml_version} 5.0))
+ (libraries log_test ocsigenserver logs unix))
