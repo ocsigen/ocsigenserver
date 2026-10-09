@@ -81,3 +81,8 @@ val set_source_level : string -> Logs.level option -> bool
 
 val open_files : unit -> unit Lwt.t
 val command_f : exn -> string -> string list -> unit Lwt.t
+
+val syslog_reporter : Logs.reporter -> Logs.reporter
+(** [syslog_reporter r] is the reporter that the syslog mode installs, which
+    sends each message, formatted with no lock held, to the [Logs_syslog]
+    reporter [r]. Exposed for the tests. *)

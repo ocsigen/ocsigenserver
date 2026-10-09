@@ -50,11 +50,10 @@ let pp_date ppf = Format.pp_print_string ppf (date_string ())
 (* The logs may be written from several domains or threads at once. Each
    message is formatted first, with a formatter of its own and no lock held,
    so that the printers of the application never run with a lock of this
-   module (except the tag printers in syslog mode, see [syslog_reporter]).
-   The line is then written to each of its destinations ([Sink.t]) under the
-   mutex of that destination only. No lock of this module is taken while
-   another one is held, so they cannot deadlock, between themselves or with
-   the locks of the application.
+   module. The line is then written to each of its destinations ([Sink.t])
+   under the mutex of that destination only. No lock of this module is taken
+   while another one is held, so they cannot deadlock, between themselves or
+   with the locks of the application.
 
    One exception: OCaml may run signal handlers, finalisers and Memprof
    callbacks while a channel is flushed, so with the mutex of a destination
@@ -145,18 +144,33 @@ let reporter sinks =
 (* [Logs_syslog] formats every message in one buffer, shared by its
    reporters, and keeps the state of its connection: [syslog_mutex]
    serializes them. The message is formatted before, with no lock held, and
-   given to [syslog] whole. Only the tags are printed by [syslog], with
-   [syslog_mutex] locked: a tag printer must not log. *)
+   given to [syslog] whole, with its tags and header, as [Logs_syslog] would
+   print them. Only the facility tag is given to [syslog], which does not
+   print it: no printer of the application runs with [syslog_mutex] locked. *)
 let syslog_mutex = Mutex.create ()
 
 let syslog_reporter syslog =
   let report src level ~over k msgf =
-    msgf @@ fun ?header ?tags fmt ->
+    msgf @@ fun ?header ?(tags = Logs.Tag.empty) fmt ->
     Format.kasprintf
       (fun msg ->
+         let facility = Logs.Tag.find Logs_syslog.facility tags in
+         let tags = Logs.Tag.rem Logs_syslog.facility tags in
+         let content =
+           String.concat " "
+             ((if Logs.Tag.is_empty tags
+               then []
+               else [Format.asprintf "%a" Logs.Tag.pp_set tags])
+             @ Option.to_list header @ [msg])
+         in
+         let facility_tag =
+           match facility with
+           | Some facility -> Logs.Tag.(add Logs_syslog.facility facility empty)
+           | None -> Logs.Tag.empty
+         in
          with_lock syslog_mutex (fun () ->
            syslog.Logs.report src level ~over:ignore Fun.id (fun m ->
-             m ?header ?tags "%s" msg));
+             m ~tags:facility_tag "%s" content));
          over ();
          k ())
       fmt
