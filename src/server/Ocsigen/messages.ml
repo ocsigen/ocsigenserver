@@ -46,9 +46,30 @@ let date_string () =
       date
 
 let pp_date ppf = Format.pp_print_string ppf (date_string ())
+
+(* The logs may be written from several domains or threads at once. Each
+   message is formatted first, with a formatter of its own and no lock held,
+   so that the printers of the application never run with a lock of this
+   module (except the tag printers in syslog mode, see [syslog_reporter]).
+   The line is then written to each of its destinations ([Sink.t]) under the
+   mutex of that destination only. No lock of this module is taken while
+   another one is held, so they cannot deadlock, between themselves or with
+   the locks of the application.
+
+   One exception: OCaml may run signal handlers, finalisers and Memprof
+   callbacks while a channel is flushed, so with the mutex of a destination
+   locked. These functions must not log. Logging to the same destination
+   would raise [Sys_error] (OCaml mutexes detect it), and logging to another
+   one would take two locks at once.
+
+   The reporter mutex of Logs ([Logs.set_reporter_mutex]) is left to the
+   application: the reporters below do not need it. If the application
+   installs one, Logs keeps it locked while the message is formatted, so the
+   printers run with it locked. *)
+
 let with_lock = Ocsigen_base.Lib.with_lock
 
-(* A destination of log lines. *)
+(* A destination of log lines: a terminal, or a log file. *)
 module Sink : sig
   type t
 
@@ -56,11 +77,10 @@ module Sink : sig
   (** [make c] is a destination that writes to [c], or nowhere if [c] is
       [None]. *)
 
-  val formatter : t -> Format.formatter
-  (** [formatter sink] is a formatter that writes to [sink]. *)
-
   val write : t -> string -> unit
-  (** [write sink s] writes [s] to [sink] and flushes it. *)
+  (** [write sink s] writes [s] to [sink] and flushes it. Several domains or
+      threads may write to [sink] at the same time: each [s] is written
+      whole. *)
 
   val replace : t -> out_channel option -> unit
   (** [replace sink c] makes [sink] write to [c] from now on, and closes the
@@ -76,12 +96,6 @@ end = struct
   let with_channel sink f =
     with_lock sink.mutex (fun () -> Option.iter f sink.channel)
 
-  let formatter sink =
-    Format.make_formatter
-      (fun s pos len ->
-         with_channel sink (fun channel -> output_substring channel s pos len))
-      (fun () -> with_channel sink flush)
-
   let write sink s =
     with_channel sink (fun channel -> output_string channel s; flush channel)
 
@@ -93,18 +107,8 @@ end = struct
       sink.channel <- channel)
 end
 
-let make_reporter ppf =
-  let report src level ~over k msgf =
-    let k _ = over (); k () in
-    msgf @@ fun ?header ?tags:_ fmt ->
-    Format.kfprintf k ppf
-      ("%t: %s: %a @[" ^^ fmt ^^ "@]@.")
-      pp_date (Logs.Src.name src) Logs.pp_header (level, header)
-  in
-  {Logs.report}
-
-let stderr = make_reporter (Format.formatter_of_out_channel stderr)
-let stdout = make_reporter (Format.formatter_of_out_channel stdout)
+let stdout_sink = Sink.make (Some Stdlib.stdout)
+let stderr_sink = Sink.make (Some Stdlib.stderr)
 
 (* The log files, opened in the log directory by [open_log_files_in_dir].
    They are kept when the logs are reopened, and their channels replaced, so
@@ -112,13 +116,52 @@ let stdout = make_reporter (Format.formatter_of_out_channel stdout)
 let access_sink = Sink.make None
 let warning_sink = Sink.make None
 let error_sink = Sink.make None
-let warning_reporter = make_reporter (Sink.formatter warning_sink)
-let error_reporter = make_reporter (Sink.formatter error_sink)
 
 let close_log_files () =
   List.iter
     (fun sink -> Sink.replace sink None)
     [access_sink; warning_sink; error_sink]
+
+(* [reporter sinks] writes each message, whole and in one call, to the
+   destinations [sinks level]. A message without destination is not
+   formatted. A message logged by a printer is written before the message it
+   prints. *)
+let reporter sinks =
+  let report src level ~over k msgf =
+    match sinks level with
+    | [] -> over (); k ()
+    | sinks ->
+        msgf @@ fun ?header ?tags:_ fmt ->
+        Format.kasprintf
+          (fun line ->
+             List.iter (fun sink -> Sink.write sink line) sinks;
+             over ();
+             k ())
+          ("%t: %s: %a @[" ^^ fmt ^^ "@]@.")
+          pp_date (Logs.Src.name src) Logs.pp_header (level, header)
+  in
+  {Logs.report}
+
+(* [Logs_syslog] formats every message in one buffer, shared by its
+   reporters, and keeps the state of its connection: [syslog_mutex]
+   serializes them. The message is formatted before, with no lock held, and
+   given to [syslog] whole. Only the tags are printed by [syslog], with
+   [syslog_mutex] locked: a tag printer must not log. *)
+let syslog_mutex = Mutex.create ()
+
+let syslog_reporter syslog =
+  let report src level ~over k msgf =
+    msgf @@ fun ?header ?tags fmt ->
+    Format.kasprintf
+      (fun msg ->
+         with_lock syslog_mutex (fun () ->
+           syslog.Logs.report src level ~over:ignore Fun.id (fun m ->
+             m ?header ?tags "%s" msg));
+         over ();
+         k ())
+      fmt
+  in
+  {Logs.report}
 
 (* Send each message to all [reporters], in order. Logs requires [over] to be
    called exactly once per message ([Logs.set_reporter_mutex] releases its lock
@@ -135,34 +178,28 @@ let broadcast reporters =
   {Logs.report}
 
 (* Access logging bypasses Logs and Format: a complete Combined Log Format line
-   is written directly to the output channel. [access_out] is installed by
+   is written directly to its destination. [access_out] is installed by
    [open_files] according to the logging mode. *)
 let access_out = Atomic.make (fun (_ : string) -> ())
-let write_line oc s = output_string oc s; output_char oc '\n'; flush oc
 
 (* Echo an access line on the console with the same readable date/source prefix
    as the other logs ([access.log] keeps the verbatim Combined format). *)
-let console_access oc s =
-  Printf.fprintf oc "%s: %s: %s\n%!" (date_string ())
-    (Logs.Src.name access_sect)
-    s
+let console_access s =
+  Printf.sprintf "%s: %s: %s\n" (date_string ()) (Logs.Src.name access_sect) s
 
 (* Reporter for the non-access logs in serve mode: warnings and errors to
    [stderr], everything else to [stdout]. Access lines are written directly to
    [stdout] (see [log_to_stdio]). Also used to report command-line errors
    before the logging system is configured. *)
 let stdio_reporter =
-  { Logs.report =
-      (fun src level ~over k msgf ->
-        let r =
-          match level with Logs.Warning | Logs.Error -> stderr | _ -> stdout
-        in
-        r.Logs.report src level ~over k msgf) }
+  reporter (function
+    | Logs.Warning | Logs.Error -> [stderr_sink]
+    | _ -> [stdout_sink])
 
 let log_to_stdio () =
   Logs.set_reporter stdio_reporter;
   (* In serve mode the terminal is the access log. *)
-  Atomic.set access_out (write_line Stdlib.stdout);
+  Atomic.set access_out (fun s -> Sink.write stdout_sink (s ^ "\n"));
   close_log_files ();
   Lwt.return ()
 
@@ -180,10 +217,10 @@ let open_log_files_in_dir () =
                 (Unix.error_message error)))
     | exn -> raise exn
   in
-  (* [with_new_channel file f] is [f c], [c] being a new channel to [file],
-     closed if [f] raises: all the files are opened before any is replaced,
-     and none is left open if one cannot be. *)
-  let with_new_channel file f =
+  (* [with_channel file f] is [f c], [c] being a new channel to [file], which
+     is closed if [f] raises: no channel is left open when a later file
+     cannot be opened. *)
+  let with_channel file f =
     let channel = open_channel file in
     match f channel with
     | v -> v
@@ -193,12 +230,12 @@ let open_log_files_in_dir () =
         Printexc.raise_with_backtrace exn bt
   in
   let access, warnings, errors =
-    with_new_channel access_file @@ fun access ->
-    with_new_channel warning_file @@ fun warnings ->
-    with_new_channel error_file @@ fun errors -> access, warnings, errors
+    with_channel access_file @@ fun access ->
+    with_channel warning_file @@ fun warnings ->
+    with_channel error_file @@ fun errors -> access, warnings, errors
   in
   (* The channels are given to the sinks only once they are all open, so
-     that [with_new_channel] never closes a channel that a sink writes to. *)
+     that [with_channel] never closes a channel that a sink writes to. *)
   Sink.replace access_sink (Some access);
   Sink.replace warning_sink (Some warnings);
   Sink.replace error_sink (Some errors);
@@ -206,31 +243,15 @@ let open_log_files_in_dir () =
      echo on the console (unless silent). *)
   Atomic.set access_out (fun s ->
     Sink.write access_sink (s ^ "\n");
-    if not (Config.get_silent ()) then console_access Stdlib.stdout s);
+    if not (Config.get_silent ()) then Sink.write stdout_sink (console_access s));
   Logs.set_reporter
-    (let broadcast_reporters =
-       [ (let dispatch_f =
-           fun _sect lev ->
-            match lev with
-            | Logs.Error -> error_reporter
-            | Logs.Warning -> warning_reporter
-            | _ -> Logs.nop_reporter
-          in
-          { Logs.report =
-              (fun src level ~over k msgf ->
-                (dispatch_f src level).Logs.report src level ~over k msgf) })
-       ; (let dispatch_f =
-           fun _sect lev ->
-            if Config.get_silent ()
-            then Logs.nop_reporter
-            else
-              match lev with Logs.Warning | Logs.Error -> stderr | _ -> stdout
-          in
-          { Logs.report =
-              (fun src level ~over k msgf ->
-                (dispatch_f src level).Logs.report src level ~over k msgf) }) ]
-     in
-     broadcast broadcast_reporters);
+    (reporter (fun level ->
+       let silent = Config.get_silent () in
+       match level with
+       | Logs.Error -> if silent then [error_sink] else [error_sink; stderr_sink]
+       | Logs.Warning ->
+           if silent then [warning_sink] else [warning_sink; stderr_sink]
+       | _ -> if silent then [] else [stdout_sink]));
   Lwt.return ()
 
 let open_log_files () =
@@ -243,7 +264,8 @@ let open_log_files () =
         | Ok r -> r
         | Error msg -> failwith msg
       in
-      Logs.set_reporter (broadcast [syslog; stderr]);
+      Logs.set_reporter
+        (broadcast [syslog_reporter syslog; reporter (fun _ -> [stderr_sink])]);
       (* No access.log file in syslog mode: access lines reach syslog (and
          stderr) through Logs. *)
       Atomic.set access_out (fun s ->

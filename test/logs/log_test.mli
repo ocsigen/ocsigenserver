@@ -4,6 +4,9 @@
 val fail : ('a, unit, string, 'b) format4 -> 'a
 (** [fail fmt ...] prints the message on [stderr] and exits with code 1. *)
 
+val temp_dir : unit -> string
+(** [temp_dir ()] creates a new temporary directory and is its path. *)
+
 val open_log_dir : unit -> string
 (** [open_log_dir ()] creates a temporary log directory, makes the server log
     there in silent mode with {!Ocsigen.Messages.open_files}, and is the
@@ -42,5 +45,13 @@ val check_lines :
     messages. *)
 
 val remove_log_dir : string -> unit
-(** [remove_log_dir dir] removes the log files and the directory made by
-    {!open_log_dir}. *)
+(** [remove_log_dir dir] removes the files in [dir], then [dir]. *)
+
+val wait_for : string -> (unit -> 'a option) -> 'a
+(** [wait_for what poll] calls [poll ()] every 10 milliseconds until it is
+    [Some v], and is [v]. It fails with the message [what] after 10 seconds. *)
+
+val on_other_thread : (unit -> unit) -> unit
+(** [on_other_thread f] runs [f ()] on a new thread and waits for it to end.
+    It fails if [f] raises, or after 10 seconds: [f] is blocked, typically on
+    a lock. *)

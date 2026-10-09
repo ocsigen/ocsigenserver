@@ -15,6 +15,12 @@ New features:
    exist.
 
 Bug fixes:
+ * The log reporters that Ocsigen Server installs, and its writes to the
+   access log, can now be used from several domains or threads at once. Each
+   message is formatted with no lock held, then written whole, in one call,
+   to each of its files or terminals, under a lock of that destination only.
+   With OCaml 5, two domains logging at the same time could make Format raise
+   "Unsynchronized access to formatter". Requires logs >= 0.10.0.
  * The logs:name level order of the command pipe now sets the level of the
    existing log source of that name. It used to make a new source with that
    name, which nothing logged to, so the order had no effect. An unknown level

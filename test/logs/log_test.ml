@@ -1,10 +1,11 @@
 let fail fmt = Printf.ksprintf (fun s -> prerr_endline s; exit 1) fmt
-let log_files = ["access.log"; "warnings.log"; "errors.log"]
+
+let temp_dir () =
+  let dir = Filename.temp_file "ocsigenserver-logs" "" in
+  Sys.remove dir; Sys.mkdir dir 0o700; dir
 
 let open_log_dir () =
-  let dir = Filename.temp_file "ocsigenserver-logs" "" in
-  Sys.remove dir;
-  Sys.mkdir dir 0o700;
+  let dir = temp_dir () in
   Ocsigen.Config.set_logdir dir;
   Ocsigen.Config.set_silent ();
   Lwt_main.run (Ocsigen.Messages.open_files ());
@@ -53,5 +54,33 @@ let check_lines ~what ~writers ~messages parse lines =
       (writers * messages)
 
 let remove_log_dir dir =
-  List.iter (fun file -> Sys.remove (Filename.concat dir file)) log_files;
+  Array.iter
+    (fun file -> Sys.remove (Filename.concat dir file))
+    (Sys.readdir dir);
   Sys.rmdir dir
+
+let wait_for what poll =
+  let rec wait tries =
+    match poll () with
+    | Some v -> v
+    | None ->
+        if tries = 0
+        then fail "%s after 10 seconds" what
+        else (
+          Thread.delay 0.01;
+          wait (tries - 1))
+  in
+  wait 1000
+
+let on_other_thread f =
+  let result = Atomic.make None in
+  let (_ : Thread.t) =
+    Thread.create
+      (fun () ->
+         Atomic.set result
+           (Some (match f () with () -> Ok () | exception exn -> Error exn)))
+      ()
+  in
+  match wait_for "a thread is still blocked" (fun () -> Atomic.get result) with
+  | Ok () -> ()
+  | Error exn -> fail "a thread raised %s" (Printexc.to_string exn)

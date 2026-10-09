@@ -34,7 +34,7 @@
   react
   (ssl (>= 0.7.0))
   xml-light
-  (logs (>= 0.7.0))
+  (logs (>= 0.10.0))
   logs-syslog
   (syslog-message (>= 1.1.0)))
  (conflicts
