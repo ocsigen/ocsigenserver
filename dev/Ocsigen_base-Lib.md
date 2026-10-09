@@ -98,6 +98,11 @@ val make_cryptographic_safe_string : unit -> string
 Generate an unique and cryptographically safe random string. It is impossible to guess for other people and will never return twice the same value (with very good probabilities).
 
 ```ocaml
+val with_lock : Stdlib.Mutex.t -> (unit -> 'a) -> 'a
+```
+`with_lock m f` is `f ()`, with `m` locked. `m` is unlocked when `f` returns or raises. This is `Mutex.protect`, which OCaml 4\.14 does not have.
+
+```ocaml
 module String : module type of String_base
 ```
 Improvement of module String
