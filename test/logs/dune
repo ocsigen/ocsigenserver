@@ -1,4 +1,10 @@
+(library
+ (name log_test)
+ (modules log_test)
+ (libraries ocsigenserver lwt.unix))
+
 (test
  (name test_reporter_over)
+ (modules test_reporter_over)
  (package ocsigenserver)
- (libraries ocsigenserver logs lwt.unix))
+ (libraries log_test logs))
