@@ -24,6 +24,7 @@
   ocsigen_lib_base
   cohttp-lwt
   logs
+  threads.posix
   (select
    dynlink_wrapper.ml
    from

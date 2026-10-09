@@ -36,6 +36,11 @@ Bug fixes:
    get Sys_error "Bad file descriptor". The new files are opened before the
    old ones are closed: if one cannot be opened, the logs keep going to the
    old files, and no channel is left open.
+ * Ocsigen Server calls Unix.localtime and Unix.gmtime one at a time, through
+   Ocsigen_base.Lib.Date.localtime and gmtime. With OCaml 5, they return a
+   buffer shared by the whole program, so the date of a log line or of an
+   HTTP header could be wrong when two domains needed one at the same time.
+   The date of the log lines is computed once per second.
 
 ==== 8.0.0 (2026-09-24) ===
 

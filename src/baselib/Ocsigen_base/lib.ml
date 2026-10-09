@@ -96,6 +96,17 @@ let make_cryptographic_safe_string =
    ID collision if the server were to be restarted.
 *)
 
+(* As [Mutex.protect] (OCaml 5.1), [with_lock] does not allocate between
+   [Mutex.lock] and the [match], so that an asynchronous exception cannot
+   leave [m] locked. *)
+let with_lock m f =
+  Mutex.lock m;
+  match f () with
+  | v -> Mutex.unlock m; v
+  | exception exn ->
+      Mutex.unlock m;
+      Printexc.raise_with_backtrace exn (Printexc.get_raw_backtrace ())
+
 module Netstring_pcre = struct
   module Pcre = Re.Pcre
 
@@ -449,6 +460,14 @@ module Url = struct
 end
 
 module Date = struct
+  (* [Unix.localtime] and [Unix.gmtime] call the C functions [localtime] and
+     [gmtime], which may return the same static buffer, shared by all the
+     threads. With OCaml 5, two domains may call them at the same time:
+     Ocsigen Server calls them one at a time. *)
+  let time_mutex = Mutex.create ()
+  let localtime t = with_lock time_mutex (fun () -> Unix.localtime t)
+  let gmtime t = with_lock time_mutex (fun () -> Unix.gmtime t)
+
   let name_of_day = function
     | 0 -> "Sun"
     | 1 -> "Mon"
@@ -476,7 +495,7 @@ module Date = struct
 
   let to_string d =
     let {Unix.tm_wday; tm_mday; tm_mon; tm_year; tm_hour; tm_min; tm_sec; _} =
-      Unix.gmtime d
+      gmtime d
     in
     Printf.sprintf "%s, %02d %s %d %02d:%02d:%02d GMT" (name_of_day tm_wday)
       tm_mday (name_of_month tm_mon) (tm_year + 1900) tm_hour tm_min tm_sec

@@ -25,25 +25,28 @@ let access_sect = Logs.Src.create "ocsigen:access"
 let full_path f = Filename.concat (Config.get_logdir ()) f
 let error_log_path () = full_path error_file
 
+(* The date is computed once per second: [last_date] is the last one, with
+   its second. Two domains may compute it at once: either result is kept, and
+   if an older date replaces a newer one, the newer one is computed again. *)
+let last_date = Atomic.make (neg_infinity, "")
+
 (* This is the date format inherited from [Lwt_log]. *)
 let date_string () =
-  let tm = Unix.localtime (Unix.gettimeofday ()) in
-  Printf.sprintf "%s %2d %02d:%02d:%02d"
-    (Ocsigen_base.Lib.Date.name_of_month tm.Unix.tm_mon)
-    tm.Unix.tm_mday tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec
+  let now = Unix.time () in
+  match Atomic.get last_date with
+  | second, date when second = now -> date
+  | _ ->
+      let tm = Ocsigen_base.Lib.Date.localtime now in
+      let date =
+        Printf.sprintf "%s %2d %02d:%02d:%02d"
+          (Ocsigen_base.Lib.Date.name_of_month tm.Unix.tm_mon)
+          tm.Unix.tm_mday tm.Unix.tm_hour tm.Unix.tm_min tm.Unix.tm_sec
+      in
+      Atomic.set last_date (now, date);
+      date
 
 let pp_date ppf = Format.pp_print_string ppf (date_string ())
-
-(* [with_lock m f] is [f ()], with [m] locked. As [Mutex.protect] (OCaml 5.1),
-   it does not allocate between [Mutex.lock] and the [match], so that an
-   asynchronous exception cannot leave [m] locked. *)
-let with_lock m f =
-  Mutex.lock m;
-  match f () with
-  | v -> Mutex.unlock m; v
-  | exception exn ->
-      Mutex.unlock m;
-      Printexc.raise_with_backtrace exn (Printexc.get_raw_backtrace ())
+let with_lock = Ocsigen_base.Lib.with_lock
 
 (* A destination of log lines. *)
 module Sink : sig
