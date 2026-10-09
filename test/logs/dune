@@ -3,6 +3,25 @@
  (modules log_test)
  (libraries ocsigenserver lwt.unix threads.posix))
 
+; A Unix-domain datagram socket plays the syslog daemon: there is none on
+; Windows.
+
+(test
+ (name test_reporter_syslog)
+ (modules test_reporter_syslog)
+ (package ocsigenserver)
+ (enabled_if
+  (<> %{os_type} Win32))
+ (libraries
+  log_test
+  ocsigenserver
+  logs
+  logs-syslog
+  logs-syslog.unix
+  syslog-message
+  unix
+  threads.posix))
+
 (tests
  (names
   test_reporter_over
