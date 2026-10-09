@@ -8,3 +8,11 @@
  (modules test_reporter_over)
  (package ocsigenserver)
  (libraries log_test logs))
+
+(tests
+ (names test_reporter_reopen)
+ (modules test_reporter_reopen)
+ (package ocsigenserver)
+ (enabled_if
+  (>= %{ocaml_version} 5.0))
+ (libraries log_test ocsigenserver logs))

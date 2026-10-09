@@ -31,6 +31,11 @@ Bug fixes:
    call the [over] callback of Logs once per message instead of once per
    destination. This makes Logs.set_reporter_mutex usable with them: the
    second release of the reporter mutex made the server fail at startup.
+ * Reopening the log files (reopen_logs command, for log rotation) no longer
+   races with the domains or threads that log at the same time, which could
+   get Sys_error "Bad file descriptor". The new files are opened before the
+   old ones are closed: if one cannot be opened, the logs keep going to the
+   old files, and no channel is left open.
 
 ==== 8.0.0 (2026-09-24) ===
 
