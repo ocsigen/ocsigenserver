@@ -71,8 +71,21 @@ val set_max_number_of_connections : int -> unit
 val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
 
-(* val set_keepalive_timeout : int -> unit
-   val set_keepopen_timeout : int -> unit *)
+val set_keepalive_timeout : int -> unit
+(** Seconds a kept-alive connection may stay idle between two requests; 0 for
+    no bound. See [<keepalivetimeout>] in the configuration file. *)
+
+val set_min_data_rate : int -> unit
+(** Bytes per second: the minimum rate of a request body, and of a response the
+    client reads, past a grace of one client timeout; 0 for no minimum. See
+    [<mindatarate>] in the configuration file. *)
+
+val set_max_connections_per_address : int -> unit
+(** The maximum number of simultaneous connections from a single client
+    address; 0 for no limit. See [<maxconnectionsperaddress>] in the
+    configuration file. *)
+
+(* val set_keepopen_timeout : int -> unit *)
 val set_filebuffersize : int -> unit
 val set_maxrequestbodysize : int64 option -> unit
 val set_maxrequestbodysizeinmemory : int -> unit
@@ -110,8 +123,11 @@ val get_server_timeout : unit -> int
 val has_configuration_file : unit -> bool
 (** returns true if Ocsigen Server is running with a configuration file, *)
 
-(*val get_keepalive_timeout : unit -> int
-  val get_keepopen_timeout : unit -> int*)
+val get_keepalive_timeout : unit -> int
+val get_min_data_rate : unit -> int
+val get_max_connections_per_address : unit -> int
+
+(*val get_keepopen_timeout : unit -> int*)
 val get_filebuffersize : unit -> int
 val get_maxrequestbodysize : unit -> int64 option
 val get_maxrequestbodysizeinmemory : unit -> int

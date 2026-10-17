@@ -436,6 +436,9 @@ let start
       ?maxthreads
       ?max_number_of_connections
       ?client_timeout
+      ?keepalive_timeout
+      ?min_data_rate
+      ?max_connections_per_address
       ?server_timeout
       ?shutdown_timeout
       ?filebuffersize
@@ -468,6 +471,9 @@ let start
   Option.iter Config.set_maxthreads maxthreads;
   Option.iter Config.set_max_number_of_connections max_number_of_connections;
   Option.iter Config.set_client_timeout client_timeout;
+  Option.iter Config.set_keepalive_timeout keepalive_timeout;
+  Option.iter Config.set_min_data_rate min_data_rate;
+  Option.iter Config.set_max_connections_per_address max_connections_per_address;
   Option.iter Config.set_server_timeout server_timeout;
   Option.iter Config.set_filebuffersize filebuffersize;
   Option.iter Config.set_maxrequestbodysize maxrequestbodysize;

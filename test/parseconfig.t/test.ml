@@ -5,6 +5,8 @@
      [<maxrequestbodysizeinmemory>];
    - the wiring of each of these tags to its [Ocsigen.Config] setter, which is
      what a missing tag branch would break;
+   - the defaults and the wiring of the connection tags [<keepalivetimeout>],
+     [<mindatarate>] and [<maxconnectionsperaddress>];
    - the log levels set by [<loglevel>] and by the [logs:] command. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
@@ -67,6 +69,20 @@ let () =
   show_tag "maxuploadfilesize" "3MB" upload_size;
   show_tag "maxrequestbodysizeinmemory" "1MB" in_memory;
   show_tag "maxrequestbodysizeinmemory" "infinity" in_memory
+
+(* The connection tags: their defaults, then their wiring. *)
+let () =
+  let int get () = string_of_int (get ()) in
+  print_newline ();
+  Printf.printf
+    "defaults -> keepalivetimeout %d, mindatarate %d, maxconnectionsperaddress %d\n"
+    (Ocsigen.Config.get_keepalive_timeout ())
+    (Ocsigen.Config.get_min_data_rate ())
+    (Ocsigen.Config.get_max_connections_per_address ());
+  show_tag "keepalivetimeout" "20" (int Ocsigen.Config.get_keepalive_timeout);
+  show_tag "mindatarate" "1000" (int Ocsigen.Config.get_min_data_rate);
+  show_tag "maxconnectionsperaddress" "16"
+    (int Ocsigen.Config.get_max_connections_per_address)
 
 (* [<loglevel source="..." level="..."/>] sets the level of the log sources
    of that name once the configuration is loaded; the [logs:] command of

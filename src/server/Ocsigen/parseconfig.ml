@@ -483,6 +483,15 @@ and later_pass = function
   | Element (("clienttimeout" as st), [], p) :: ll ->
       set_client_timeout (int_of_string st (parse_string_tag st p));
       later_pass ll
+  | Element (("keepalivetimeout" as st), [], p) :: ll ->
+      set_keepalive_timeout (int_of_string st (parse_string_tag st p));
+      later_pass ll
+  | Element (("mindatarate" as st), [], p) :: ll ->
+      set_min_data_rate (int_of_string st (parse_string_tag st p));
+      later_pass ll
+  | Element (("maxconnectionsperaddress" as st), [], p) :: ll ->
+      set_max_connections_per_address (int_of_string st (parse_string_tag st p));
+      later_pass ll
   | Element (("servertimeout" as st), [], p) :: ll ->
       set_server_timeout (int_of_string st (parse_string_tag st p));
       later_pass ll

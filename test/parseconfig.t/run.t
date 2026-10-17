@@ -1,6 +1,7 @@
 Size-valued configuration tags: the units accepted by parse_size_tag, and the
-wiring of each tag to its Config value. Then the log levels set by <loglevel>
-and by the logs: command of the command pipe.
+wiring of each tag to its Config value. Then the defaults and the wiring of the
+connection tags, and the log levels set by <loglevel> and by the logs: command
+of the command pipe.
 
   $ dune exec ./test.exe 2>&1
   parse_size_tag:
@@ -29,6 +30,11 @@ and by the logs: command of the command pipe.
   <maxuploadfilesize>3MB -> 3000000
   <maxrequestbodysizeinmemory>1MB -> 1000000
   <maxrequestbodysizeinmemory>infinity -> max_int
+  
+  defaults -> keepalivetimeout 75, mindatarate 500, maxconnectionsperaddress 0
+  <keepalivetimeout>20 -> 20
+  <mindatarate>1000 -> 1000
+  <maxconnectionsperaddress>16 -> 16
   
   loglevel:
   default -> warning
