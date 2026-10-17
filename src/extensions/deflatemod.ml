@@ -223,9 +223,28 @@ let stream_filter cfilter contentencoding url choice res =
                | _ -> Lwt.return res)
          with Not_found -> Lwt.return res))
 
+(* Only a complete representation is compressed. A 206 carries a byte range of
+   the uncompressed representation, with a Content-Range in its offsets:
+   compressing it would make both the range and the framing wrong. The same
+   goes for any response with a Content-Range, whatever its status (a static
+   error page answering a range request, for instance). 1xx, 204, 205 and 304
+   responses have no body. *)
+let may_compress res =
+  match
+    Cohttp.Code.code_of_status
+      (Http.Response.status (Ocsigen.Response.response res))
+  with
+  | 204 | 205 | 206 | 304 -> false
+  | code ->
+      code >= 200
+      && Option.is_none
+           (Ocsigen.Response.header res Ocsigen_http.Header.Name.content_range)
+
 let filter choice_list = function
   | Ocsigen.Extensions.Req_not_found (code, _) ->
       Lwt.return (Ocsigen.Extensions.Ext_next code)
+  | Ocsigen.Extensions.Req_found (_, res) when not (may_compress res) ->
+      Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return res))
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info = ri; _}, res)
     -> (
     match

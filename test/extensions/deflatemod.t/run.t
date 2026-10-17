@@ -32,9 +32,19 @@
   ocsigen:local-file: [INFO] Testing "./empty_dir/".
   ocsigen:local-file: [INFO] Testing "./empty_dir/index.html" as possible index.
   ocsigen:local-file: [INFO] No index and no listing
+  ocsigen:ext: [INFO] site "missing" does not match url "empty_dir/".
   ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   ocsigen:ext:staticmod: [INFO] Is it a static file?
   ocsigen:local-file: [INFO] Testing "./doesnt_exists.html".
+  ocsigen:ext: [INFO] site "missing" does not match url "doesnt_exists.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./missing/page.html".
+  ocsigen:ext: [INFO] site found: url "missing/page.html" matches "missing".
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "error.html".
+  ocsigen:local-file: [INFO] checking if file error.html can be sent
+  ocsigen:local-file: [INFO] Returning "error.html".
   application: [WARNING] Command received: shutdown
 
 Without Accept-Encoding the response is not compressed:
@@ -126,3 +136,18 @@ compression:
   connection: keep-alive
   
   Error: Not Found
+
+A response with a Content-Range is never compressed, whatever its status: its
+range is one of the uncompressed file. Here, a static error page answering a
+range request goes out as is, with its length:
+
+  $ curl_ missing/page.html -H "Range: bytes=0-3" -H "Accept-Encoding: gzip"
+  HTTP/1.1 404 Not Found
+  content-type: text/html
+  accept-ranges: bytes
+  content-range: bytes 0-3/11
+  content-length: 4
+  server: Ocsigen
+  connection: keep-alive
+  
+  Erro

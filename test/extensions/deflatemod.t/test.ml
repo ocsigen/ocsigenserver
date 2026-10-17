@@ -7,5 +7,8 @@ let () =
     ~default_charset:(Some "utf-8")
     [
       Ocsigen.Server.host
-        [ Staticmod.run ~dir:"." (); Deflatemod.run ~mode:(`All_but []) () ];
+        [ Staticmod.run ~dir:"." ();
+          Ocsigen.Server.site [ "missing" ]
+            [ Staticmod.run ~code:"404" ~regexp:".*" ~dest:"error.html" () ];
+          Deflatemod.run ~mode:(`All_but []) () ];
     ]
