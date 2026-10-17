@@ -246,9 +246,11 @@ Incompatible changes:
    custom format. The line now reports the final status code, the response
    size and the authenticated user. Anything parsing the old format must be
    updated.
- * Logging: when no <logdir> (and no <syslog>) is given in the configuration
-   file, logs now go to the standard output and standard error instead of to
-   files, so that no log directory is required.
+ * Logging: a server built with no default log directory, such as a
+   development build, now logs to the standard output and standard error when
+   the configuration file gives no <logdir> (and no <syslog>), instead of
+   creating log files in the current directory. An installed server (opam)
+   still uses its default log directory.
 
 New features:
  * One-command serve mode: "ocsigenserver ./public" (or
