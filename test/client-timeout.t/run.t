@@ -26,7 +26,7 @@ at once, each writing what it saw to a file, shown below.
   >   ./_build/default/client.exe "$@" >"$(echo "$@" | tr ' ' -).out" 2>&1; }
   $ (for s in partial-headers drip-headers idle-keepalive keepalive-reuse \
   >     slow-response slow-body stalled-body drip-body slow-reader per-address \
-  >     no-handshake "partial-headers tls" "idle-keepalive tls" mute; do
+  >     no-handshake "partial-headers tls" "idle-keepalive tls" mute abrupt; do
   >    scenario $s &
   >  done; wait)
 
@@ -123,3 +123,12 @@ test server does, logs a warning.
 
   $ grep -c "server_timeout has no effect" log/warnings.log
   1
+
+A TLS client that leaves without ending its session, as many do, is not an
+error of the server.
+
+  $ cat abrupt.out
+  HTTP/1.1 200 OK: ok
+  $ grep -c "Unhandled exception" log/errors.log
+  0
+  [1]

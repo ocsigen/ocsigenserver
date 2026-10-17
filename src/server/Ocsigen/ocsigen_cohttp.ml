@@ -375,6 +375,14 @@ let serve_guarded ~serve ~guard flow ~read ~write ~finish =
            (* The expiry has been logged; or the connection was idle, and its
               closing is not worth a log. *)
            | Connection_guard.Timed_out -> Lwt.return_unit
+           (* A TLS client that went away without ending its session, as many
+              do. Logged here, since the error message of OpenSSL is read when
+              the exception is printed, and the end of the connection would
+              replace it. *)
+           | (Ssl.Read_error _ | Ssl.Write_error _) as exn ->
+               Logs.info ~src:section (fun fmt ->
+                 fmt "TLS connection error: %s" (Printexc.to_string exn));
+               Lwt.return_unit
            | exn -> Lwt.reraise exn))
     (fun () -> end_connection ~guard oc ~finish)
 

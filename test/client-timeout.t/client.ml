@@ -291,6 +291,13 @@ let mute conn =
         | Too_late -> "too late")
         (if Unix.gettimeofday () -. notified < 1. then "at once" else "late")
 
+(* A TLS client that leaves without ending its session: it closes its socket
+   once it has its response, without a close_notify. *)
+let abrupt conn =
+  conn.send (request "/");
+  print_response conn;
+  Unix.close conn.fd
+
 let () =
   (* A write to a connection the server closed fails instead of killing us. *)
   Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
@@ -303,6 +310,7 @@ let () =
       (* A TCP connection to the TLS port, on which nothing is sent. *)
       await_close (plain tls_port) ~bound:timeout ~since:(Unix.gettimeofday ())
   | [|_; "mute"|] -> mute (tls tls_port)
+  | [|_; "abrupt"|] -> abrupt (tls tls_port)
   | [|_; scenario|] | [|_; scenario; "tls"|] -> (
       let conn =
         if Array.length Sys.argv = 3 then tls tls_port else plain plain_port
