@@ -450,16 +450,36 @@ let service ?ssl ~address ~port ~connector () =
              fmt "Unsupported kind of connection");
            Lwt.return_unit
        | Some (fd, client) ->
-           let guard =
-             Connection_guard.create (limits ())
-               (match tls with
-               | Some _ -> Connection_guard.Handshake
-               | None -> Connection_guard.Headers)
-               ~on_expiry:(on_expiry ~fd ~client)
-           in
-           Lwt.finalize
-             (fun () -> serve_socket ~guard flow fd)
-             (fun () ->
-                Connection_guard.release guard;
-                Lwt.return_unit))
+           let limit = Config.get_max_connections_per_address () in
+           if
+             not
+               (Option.fold ~none:true
+                  ~some:(Connection_guard.Per_address.acquire ~limit)
+                  client)
+           then (
+             Logs.info ~src:section (fun fmt ->
+               fmt
+                 "Refusing a connection from %s, which already has %d (see <maxconnectionsperaddress>)"
+                 (client_to_string client) limit);
+             Lwt.return_unit)
+           else
+             (* The address is released whatever happens from now on, even
+                if watching the connection fails. *)
+             Lwt.finalize
+               (fun () ->
+                  let guard =
+                    Connection_guard.create (limits ())
+                      (match tls with
+                      | Some _ -> Connection_guard.Handshake
+                      | None -> Connection_guard.Headers)
+                      ~on_expiry:(on_expiry ~fd ~client)
+                  in
+                  Lwt.finalize
+                    (fun () -> serve_socket ~guard flow fd)
+                    (fun () ->
+                       Connection_guard.release guard;
+                       Lwt.return_unit))
+               (fun () ->
+                  Option.iter Connection_guard.Per_address.release client;
+                  Lwt.return_unit))
   >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())
