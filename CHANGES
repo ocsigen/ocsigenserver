@@ -123,6 +123,9 @@ Bug fixes:
  * Deflatemod removes Accept-Ranges from the responses it compresses. Byte
    ranges are only served from the uncompressed file, so a client resuming a
    compressed download got bytes of the uncompressed one.
+ * A response with a status code that Cohttp has no constructor for, such as
+   421 relayed by Revproxy from its target, is now sent and logged. Writing
+   its access log line failed, and the client got a 500 instead.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
