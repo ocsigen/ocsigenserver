@@ -1,0 +1,19 @@
+== headers that vary are removed, CRLF becomes LF
+HTTP/1.1 200 OK
+Content-Length: 5
+
+hello
+[closed]
+== control and non-ASCII bytes are escaped
+a\x00b\x1Bc\xE9	d\x0De
+[idle]
+== empty answer
+[reset]
+== a final line end does not add an empty line
+x
+[overflow]
+== status only; a status line glued to a body is not seen
+HTTP/1.1 200 OK
+[closed]
+== status codes
+200 404
