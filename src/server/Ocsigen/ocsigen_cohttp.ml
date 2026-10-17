@@ -138,7 +138,9 @@ module Access_log = struct
       (header Ocsigen_http.Header.Name.user_agent)
 end
 
-let handler ~ssl ~address ~port ~connector (flow, conn) request body =
+let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
+  (* cohttp calls this once the headers of [request] have arrived. *)
+  Connection_guard.set_phase guard Connection_guard.Request;
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
   let client_conn =
@@ -181,6 +183,11 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
             fmt
               "Request body too large to be decoded in memory (see the <maxrequestbodysizeinmemory> and <netbuffersize> configuration options)");
           None, `Request_entity_too_large, None
+      (* The body of the request did not arrive in time. The socket is shut
+         down before this is sent (see [Connection_guard]), and the closing is
+         logged then. The access log records the request with this status all
+         the same, as nginx and Apache do. *)
+      | Connection_guard.Timed_out -> None, `Request_timeout, None
       | exn ->
           Logs.err ~src:section (fun fmt ->
             fmt
@@ -222,7 +229,14 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
            | exn -> Lwt.return (handle_error exn))
        >>= fun response ->
        Messages.accesslog (Access_log.line request response);
-       Lwt.return (Response.to_response_expert response))
+       let res, write_body = Response.to_response_expert response in
+       (* Once the response is written, the connection waits for the next
+          request. *)
+       Lwt.return
+         ( res
+         , fun ic oc ->
+             write_body ic oc >|= fun () ->
+             Connection_guard.set_phase guard Connection_guard.Idle ))
     (fun () ->
        if !filenames <> []
        then
@@ -274,46 +288,95 @@ let tls_context (crt, key, password) =
   Ssl.use_certificate ctx crt key;
   ctx
 
-(* The socket of a connection, for the transports a service listens on. *)
-let fd_of_flow : Conduit_lwt_unix.flow -> Lwt_unix.file_descr option = function
-  | Conduit_lwt_unix.TCP {Conduit_lwt_unix.fd; _}
-  | Conduit_lwt_unix.Domain_socket {Conduit_lwt_unix.fd; _} ->
-      Some fd
+(* The socket of a connection, and the address of its client, for the
+   transports a service listens on. *)
+let socket_of_flow = function
+  | Conduit_lwt_unix.TCP {Conduit_lwt_unix.fd; ip; _} -> Some (fd, Some ip)
+  | Conduit_lwt_unix.Domain_socket {Conduit_lwt_unix.fd; _} -> Some (fd, None)
   | Conduit_lwt_unix.Tunnel _ | Conduit_lwt_unix.Vchan _ -> None
 
+let limits () =
+  { Connection_guard.timeout = max 0 (Config.get_client_timeout ())
+  ; keepalive_timeout = max 0 (Config.get_keepalive_timeout ())
+  ; min_rate = max 0 (Config.get_min_data_rate ()) }
+
+let client_to_string = function
+  | Some ip -> Ipaddr.to_string ip
+  | None -> "a local client"
+
+(* A connection that exceeded its bounds is logged, and its socket shut down,
+   so that its pending reads and writes fail at once, and so does anything the
+   server would still try to send, such as a TLS close_notify. *)
+let on_expiry ~fd ~client phase =
+  Logs.info ~src:section (fun fmt ->
+    fmt "Closing the connection of %s, which timed out %s"
+      (client_to_string client)
+      (match phase with
+      | Connection_guard.Handshake -> "during the TLS handshake"
+      | Connection_guard.Headers -> "while sending the headers of a request"
+      | Connection_guard.Idle | Connection_guard.Request ->
+          "while sending a request or reading a response"
+      | Connection_guard.Closing -> "while the connection was ending"));
+  try Lwt_unix.shutdown fd Unix.SHUTDOWN_ALL
+  with Unix.Unix_error (Unix.ENOTCONN, _, _) -> ()
+
 (* The TLS session of a connection, or [None] if the handshake failed, as it
-   does for clients that are not speaking TLS. *)
-let accept_tls ctx fd =
+   does for clients that are not speaking TLS, or did not complete in time. *)
+let accept_tls ~guard ctx fd =
   Lwt.catch
-    (fun () -> Lwt_ssl.ssl_accept fd ctx >|= Option.some)
+    (fun () ->
+       Connection_guard.run guard (fun () -> Lwt_ssl.ssl_accept fd ctx)
+       >|= Option.some)
     (function
+      | Connection_guard.Timed_out -> Lwt.return_none
       | (Ssl.Accept_error _ | Unix.Unix_error _) as exn ->
           Logs.info ~src:section (fun fmt ->
             fmt "TLS handshake failed: %s" (Printexc.to_string exn));
           Lwt.return_none
       | exn -> Lwt.reraise exn)
 
-let tls_channels sock =
-  ( Lwt_io.make ~mode:Lwt_io.input ~close:Lwt.return (Lwt_ssl.read_bytes sock)
-  , Lwt_io.make ~mode:Lwt_io.output ~close:Lwt.return (Lwt_ssl.write_bytes sock)
-  )
-
-(* Ends a TLS session: what remains of the response is sent, then a single
-   close_notify alert. The close_notify of the client is not waited for (RFC
+(* Ends a connection: what remains of the response is sent, then [finish] is
+   run, within the bounds of the closing phase. For TLS, [finish] sends a single
+   close_notify alert: the close_notify of the client is not waited for (RFC
    8446, section 6.1), so that a client that never sends it cannot hold the
-   connection. The socket itself is closed by Conduit. *)
-let end_tls sock oc =
-  Lwt.catch
+   connection. Nothing is sent on an expired connection, whose socket is shut
+   down. The socket itself is closed by Conduit. *)
+let end_connection ~guard oc ~finish =
+  if Connection_guard.expired guard
+  then Lwt.return_unit
+  else (
+    Connection_guard.set_phase guard Connection_guard.Closing;
+    Lwt.catch
+      (fun () ->
+         Lwt_io.flush oc >>= fun () -> Connection_guard.run guard finish)
+      (function
+        | ( Connection_guard.Timed_out | Unix.Unix_error _ | Ssl.Write_error _
+          | Ssl.Connection_error _ | Lwt_io.Channel_closed _ ) as exn ->
+            Logs.debug ~src:section (fun fmt ->
+              fmt "Could not end a connection: %s" (Printexc.to_string exn));
+            Lwt.return_unit
+        | exn -> Lwt.reraise exn))
+
+(* Serves a connection whose bytes move through [read] and [write], plain or
+   through TLS, each of them watched by [guard]. *)
+let serve_guarded ~serve ~guard flow ~read ~write ~finish =
+  let ic =
+    Lwt_io.make ~mode:Lwt_io.input ~close:Lwt.return
+      (Connection_guard.read guard read)
+  and oc =
+    Lwt_io.make ~mode:Lwt_io.output ~close:Lwt.return
+      (Connection_guard.write guard write)
+  in
+  Lwt.finalize
     (fun () ->
-       Lwt_io.flush oc >>= fun () ->
-       Lwt_ssl.close_notify sock >|= fun (_ : bool) -> ())
-    (function
-      | ( Unix.Unix_error _ | Ssl.Write_error _ | Ssl.Connection_error _
-        | Lwt_io.Channel_closed _ ) as exn ->
-          Logs.debug ~src:section (fun fmt ->
-            fmt "Could not end a TLS session: %s" (Printexc.to_string exn));
-          Lwt.return_unit
-      | exn -> Lwt.reraise exn)
+       Lwt.catch
+         (fun () -> serve ~guard flow ic oc)
+         (function
+           (* The expiry has been logged; or the connection was idle, and its
+              closing is not worth a log. *)
+           | Connection_guard.Timed_out -> Lwt.return_unit
+           | exn -> Lwt.reraise exn))
+    (fun () -> end_connection ~guard oc ~finish)
 
 (* What [Cohttp_lwt_unix.Server.create] does, with its handler not exported,
    for an exception that escapes the serving of a connection. *)
@@ -341,16 +404,34 @@ let service ?ssl ~address ~port ~connector () =
     | _ -> Some (Config.Socket_type.to_string address)
   in
   Conduit_lwt_unix.init ?src () >>= fun ctx ->
+  Connection_guard.start ();
   (* We catch the INET_ADDR of the server *)
   let callback =
     let ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in
-  let spec = Cohttp_lwt_unix.Server.make_expert ~conn_closed ~callback () in
-  let serve flow ic oc =
+  let serve ~guard flow ic oc =
+    let spec =
+      Cohttp_lwt_unix.Server.make_expert ~conn_closed
+        ~callback:(callback ~guard) ()
+    in
     Cohttp_lwt_unix.Server.callback spec flow
       (Cohttp_lwt_unix.Private.Input_channel.create ic)
       oc
+  in
+  let serve_socket ~guard flow fd =
+    match tls with
+    | None ->
+        serve_guarded ~serve ~guard flow ~read:(Lwt_bytes.read fd)
+          ~write:(Lwt_bytes.write fd) ~finish:Lwt.return
+    | Some tls -> (
+        accept_tls ~guard tls fd >>= function
+        | None -> Lwt.return_unit
+        | Some sock ->
+            Connection_guard.set_phase guard Connection_guard.Headers;
+            serve_guarded ~serve ~guard flow ~read:(Lwt_ssl.read_bytes sock)
+              ~write:(Lwt_ssl.write_bytes sock) ~finish:(fun () ->
+              Lwt_ssl.close_notify sock >|= fun (_ : bool) -> ()))
   in
   let mode =
     match address with
@@ -358,22 +439,27 @@ let service ?ssl ~address ~port ~connector () =
     | _ -> `TCP (`Port port)
   in
   (* Serve each connection here rather than through
-     [Cohttp_lwt_unix.Server.create], which does nothing more, so that the
-     channels can be adjusted before cohttp uses them. *)
+     [Cohttp_lwt_unix.Server.create], which does nothing more, so that its
+     reads and writes can be watched. The channels made by Conduit are not
+     used; Conduit closes the socket once the connection ends. *)
   Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
-    (fun flow ic oc ->
-       match tls, fd_of_flow flow with
-       | None, _ -> serve flow ic oc
-       | Some _, None ->
+    (fun flow _ic _oc ->
+       match socket_of_flow flow with
+       | None ->
            Logs.err ~src:section (fun fmt ->
-             fmt "TLS is not supported on this kind of connection");
+             fmt "Unsupported kind of connection");
            Lwt.return_unit
-       | Some tls, Some fd -> (
-           accept_tls tls fd >>= function
-           | None -> Lwt.return_unit
-           | Some sock ->
-               let ic, oc = tls_channels sock in
-               Lwt.finalize
-                 (fun () -> serve flow ic oc)
-                 (fun () -> end_tls sock oc)))
+       | Some (fd, client) ->
+           let guard =
+             Connection_guard.create (limits ())
+               (match tls with
+               | Some _ -> Connection_guard.Handshake
+               | None -> Connection_guard.Headers)
+               ~on_expiry:(on_expiry ~fd ~client)
+           in
+           Lwt.finalize
+             (fun () -> serve_socket ~guard flow fd)
+             (fun () ->
+                Connection_guard.release guard;
+                Lwt.return_unit))
   >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())
