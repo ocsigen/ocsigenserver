@@ -1,7 +1,6 @@
 *~
 Makefile.config
 src/baselib/dynlink_wrapper.ml
-src/baselib/ocsigen_config_static.ml
 ocsigenserver.conf.sample
 ocsigenserver.conf.opt.sample
 local
