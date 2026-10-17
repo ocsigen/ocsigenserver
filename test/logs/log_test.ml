@@ -59,20 +59,20 @@ let remove_log_dir dir =
     (Sys.readdir dir);
   Sys.rmdir dir
 
-let wait_for what poll =
-  let rec wait tries =
-    match poll () with
-    | Some v -> v
-    | None ->
-        if tries = 0
-        then fail "%s after 10 seconds" what
-        else (
-          Thread.delay 0.01;
-          wait (tries - 1))
-  in
-  wait 1000
+(* [poll tries p] calls [p ()] every 10 milliseconds until it is [Some v], at
+   most [tries + 1] times. *)
+let rec poll tries p =
+  match p () with
+  | Some _ as result -> result
+  | None when tries = 0 -> None
+  | None ->
+      Thread.delay 0.01;
+      poll (tries - 1) p
 
-let on_other_thread f =
+let wait_for what p =
+  match poll 1000 p with Some v -> v | None -> fail "%s after 10 seconds" what
+
+let try_on_other_thread f =
   let result = Atomic.make None in
   let (_ : Thread.t) =
     Thread.create
@@ -81,6 +81,10 @@ let on_other_thread f =
            (Some (match f () with () -> Ok () | exception exn -> Error exn)))
       ()
   in
-  match wait_for "a thread is still blocked" (fun () -> Atomic.get result) with
-  | Ok () -> ()
-  | Error exn -> fail "a thread raised %s" (Printexc.to_string exn)
+  match poll 1000 (fun () -> Atomic.get result) with
+  | Some (Ok ()) -> Ok ()
+  | Some (Error exn) -> Error ("a thread raised " ^ Printexc.to_string exn)
+  | None -> Error "a thread is still blocked after 10 seconds"
+
+let on_other_thread f =
+  match try_on_other_thread f with Ok () -> () | Error msg -> fail "%s" msg

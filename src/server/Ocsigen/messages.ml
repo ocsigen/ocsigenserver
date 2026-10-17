@@ -121,6 +121,12 @@ let close_log_files () =
     (fun sink -> Sink.replace sink None)
     [access_sink; warning_sink; error_sink]
 
+(* [pp_prefix ppf (src, level, header)] prints the prefix of a log line: the
+   date, the source and the header of the message. *)
+let pp_prefix ppf (src, level, header) =
+  Format.fprintf ppf "%t: %s: %a " pp_date (Logs.Src.name src) Logs.pp_header
+    (level, header)
+
 (* [reporter sinks] writes each message, whole and in one call, to the
    destinations [sinks level]. A message without destination is not
    formatted. A message logged by a printer is written before the message it
@@ -136,10 +142,25 @@ let reporter sinks =
              List.iter (fun sink -> Sink.write sink line) sinks;
              over ();
              k ())
-          ("%t: %s: %a @[" ^^ fmt ^^ "@]@.")
-          pp_date (Logs.Src.name src) Logs.pp_header (level, header)
+          ("%a@[" ^^ fmt ^^ "@]@.")
+          pp_prefix (src, level, header)
   in
   {Logs.report}
+
+(* [indented_line prefix msg] is the log line of [msg] after [prefix]. The
+   lines of [msg] after the first one are indented to the column where [msg]
+   starts, newlines printed by [%s] included. Empty lines stay empty, with no
+   trailing spaces. *)
+let indented_line prefix msg =
+  let indentation = String.make (String.length prefix) ' ' in
+  let indent i line =
+    if i = 0
+    then prefix ^ line
+    else if line = ""
+    then ""
+    else indentation ^ line
+  in
+  String.concat "\n" (List.mapi indent (String.split_on_char '\n' msg)) ^ "\n"
 
 (* [Logs_syslog] formats every message in one buffer, shared by its
    reporters, and keeps the state of its connection: [syslog_mutex]
@@ -149,6 +170,16 @@ let reporter sinks =
    print it: no printer of the application runs with [syslog_mutex] locked. *)
 let syslog_mutex = Mutex.create ()
 
+(* The message is formatted once, so that its printers run once, from column
+   0, as with [Logs_syslog] alone. The line written to [stderr] has the
+   prefix of the other modes, then this message with its lines indented by
+   [indented_line]. It differs from the line of [reporter] in three ways:
+   break hints may make its lines longer, the newlines printed by [%s] are
+   indented, and a wide prefix does not put the message on a line of its
+   own. The tags are printed before the message is sent, so that a message
+   logged by a tag printer comes first. The message goes to [syslog], the
+   main destination, before [stderr], so that it is not lost if writing to
+   [stderr] raises, for instance on a closed pipe. *)
 let syslog_reporter syslog =
   let report src level ~over k msgf =
     msgf @@ fun ?header ?(tags = Logs.Tag.empty) fmt ->
@@ -171,23 +202,11 @@ let syslog_reporter syslog =
          with_lock syslog_mutex (fun () ->
            syslog.Logs.report src level ~over:ignore Fun.id (fun m ->
              m ~tags:facility_tag "%s" content));
+         let prefix = Format.asprintf "%a" pp_prefix (src, level, header) in
+         Sink.write stderr_sink (indented_line prefix msg);
          over ();
          k ())
       fmt
-  in
-  {Logs.report}
-
-(* Send each message to all [reporters], in order. Logs requires [over] to be
-   called exactly once per message ([Logs.set_reporter_mutex] releases its lock
-   there), so the sub-reporters get a no-op and the real [over] runs after the
-   last one. *)
-let broadcast reporters =
-  let report src level ~over k msgf =
-    let rec loop = function
-      | [] -> over (); k ()
-      | r :: rs -> r.Logs.report src level ~over:ignore (fun () -> loop rs) msgf
-    in
-    loop reporters
   in
   {Logs.report}
 
@@ -278,8 +297,7 @@ let open_log_files () =
         | Ok r -> r
         | Error msg -> failwith msg
       in
-      Logs.set_reporter
-        (broadcast [syslog_reporter syslog; reporter (fun _ -> [stderr_sink])]);
+      Logs.set_reporter (syslog_reporter syslog);
       (* No access.log file in syslog mode: access lines reach syslog (and
          stderr) through Logs. *)
       Atomic.set access_out (fun s ->

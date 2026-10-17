@@ -55,3 +55,7 @@ val on_other_thread : (unit -> unit) -> unit
 (** [on_other_thread f] runs [f ()] on a new thread and waits for it to end.
     It fails if [f] raises, or after 10 seconds: [f] is blocked, typically on
     a lock. *)
+
+val try_on_other_thread : (unit -> unit) -> (unit, string) result
+(** [try_on_other_thread f] is [on_other_thread f], but is [Error reason]
+    instead of failing, for a caller that must restore its state first. *)
