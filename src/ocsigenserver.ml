@@ -42,9 +42,10 @@ let () =
     "Forward every request to the base URL given, without a configuration file"
   and port_msg = "Port to listen on in serve mode (default 8080)"
   and listing_msg = "List directory contents in serve mode (when no index file)"
-  and silent_msg = "Silent mode (error messages in errors.log only)"
+  and silent_msg =
+    "Silent mode (error messages in errors.log only; needs log files or syslog)"
   and pid_msg = "Specify a file where to write the PIDs of servers"
-  and daemon_msg = "Daemon mode (detach the process)"
+  and daemon_msg = "Daemon mode (detach the process; implies -s)"
   and verbose_msg = "Verbose mode"
   and veryverbose_msg = "Very verbose mode (info)"
   and debug_msg = "Extremely verbose mode (debug)"
@@ -94,6 +95,14 @@ let check_serve_dir dir =
   | exception Sys_error _ -> fatal "no such directory: %s" dir
 
 let () =
+  (* The one-command modes log to the terminal, which -s and -d redirect to
+     /dev/null. *)
+  if
+    (!serve_dir <> None || !reverse_proxy <> None)
+    && Ocsigen.Config.get_silent ()
+  then
+    fatal
+      "-s and -d cannot be combined with serve mode or --reverse-proxy, which log to the terminal";
   match !serve_dir, !reverse_proxy with
   | Some _, Some _ -> fatal "--serve and --reverse-proxy cannot be combined"
   | Some dir, None ->

@@ -81,6 +81,12 @@ val set_source_level : string -> Logs.level option -> bool
     [name] to [level] ([None] turns them off), and is [false] when there is
     no such source. *)
 
+val logs_to_console : unit -> bool
+(** [logs_to_console ()] is [true] when the logs go to the standard output and
+    standard error rather than to log files or syslog: in the one-command
+    modes, or when the configuration gives neither [<logdir>] nor [<syslog>]
+    and the server has no default log directory. *)
+
 (**/**)
 
 val open_files : unit -> unit Lwt.t

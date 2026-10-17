@@ -38,8 +38,15 @@ let () =
         ("Uncaught Exception after lwt timeout" ^^ "@\n%s")
         (Printexc.to_string e)))
 
+(* Silent mode (-s) or daemon mode (-d) requested while the logs go to the
+   terminal, which these modes redirect to /dev/null. *)
+exception Silent_with_console_logs
+
 (* fatal errors messages *)
 let errmsg = function
+  | Silent_with_console_logs ->
+      ( "Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d."
+      , 50 )
   | Dynlink_wrapper.Error e ->
       "Fatal - Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
   | Unix.Unix_error _ as e -> "Fatal - " ^ Printexc.to_string e, 9
@@ -330,6 +337,11 @@ let main config =
   then Logs.err (fun fmt -> fmt "Cannot run main loop twice");
   main_loop_is_running := true;
   try
+    (* Silent and daemon modes redirect the standard output and error to
+       /dev/null: if the logs go there, nothing at all would be logged, errors
+       included. Checked before detaching, so that -d fails at once. *)
+    if Config.get_silent () && Messages.logs_to_console ()
+    then raise Silent_with_console_logs;
     (* initialization functions for modules (Ocsigen extensions or application
        code) loaded from now on will be executed directly. *)
     Ocsigen_base.Loader.set_init_on_load true;

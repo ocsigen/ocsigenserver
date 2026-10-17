@@ -9,6 +9,12 @@ Incompatible changes:
    give the path, to keep the reload order, and reopen_logs for logrotate.
    Ocsigen.Config.get_command_pipe returns a string option, and
    Ocsigen_base.Config_static.command_pipe is removed.
+ * Silent mode (-s) and daemon mode (-d) are now refused when the logs go to
+   the terminal: always in serve mode and with --reverse-proxy, and with a
+   configuration file that gives neither <logdir> nor <syslog> to a server
+   built with no default log directory. These modes redirect the standard
+   output and error to /dev/null, so nothing at all was logged, errors
+   included. With -d, the server fails before it detaches.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that

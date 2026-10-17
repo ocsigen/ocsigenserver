@@ -310,7 +310,9 @@ installation, [var/log/ocsigenserver] in the [lib/ocsigenserver] directory of
 the switch). Only a server built with no default log directory, such as a
 development build, writes them to the standard output and standard error
 instead, as the one-command modes always do. In that case the access lines go
-to the standard output in the very same Combined Log Format.
+to the standard output in the very same Combined Log Format, and the silent
+([-s]) and daemon ([-d]) modes, which redirect the standard output and error
+to [/dev/null], are refused.
 
 Example :
 
