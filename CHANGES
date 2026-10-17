@@ -65,6 +65,9 @@ Bug fixes:
    ("Keep-Alive", "keep-alive, TE"). Responses now always say whether the
    connection is kept alive, as cohttp does for the responses it writes
    itself.
+ * Accesscontrol's <allow-forward-for/> no longer answers with an Internal
+   Server Error when X-Forwarded-For holds a single address, as nginx sends
+   it, or when its last address is not an IP address.
  * Revproxy:
    - the query string of the request is forwarded. It was sent as part of the
      path, with its "?" encoded as "%3F".
