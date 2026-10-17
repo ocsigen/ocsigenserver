@@ -1,0 +1,17 @@
+; Robustness tests: malformed and unusual requests sent to a server started
+; from fixture/server.conf.in.
+
+(env
+ (_
+  (binaries
+   (client/rawhttp_cli.exe as rawhttp))))
+
+(cram
+ (package ocsigenserver)
+ (deps
+  %{bin:rawhttp}
+  %{bin:free_port}
+  ../server-test-helpers.sh
+  fixture/server.conf.in
+  fixture/helpers.sh
+  (package ocsigenserver)))
