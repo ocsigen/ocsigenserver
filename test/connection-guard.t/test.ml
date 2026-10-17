@@ -232,6 +232,55 @@ let () =
   Printf.printf "the read %s\n" (outcome read);
   G.release t
 
+(* With a capacity of 4, the connection that fills the server makes room by
+   closing the unused connection that has waited the longest. *)
+let () =
+  section "Making room, capacity 4";
+  G.set_capacity 4;
+  let show name t = Printf.printf "%s: %s\n" name (phase_name (G.phase t)) in
+  (* A connection that has received the start of a request. *)
+  let talking () =
+    let t, _ = guard G.Headers in
+    complete_read t 5; t
+  in
+  let idle, _ = guard G.Idle in
+  let idle_read, _ = pending_read idle in
+  G.tick ();
+  let busy, _ = guard G.Request in
+  let silent, _ = guard G.Headers in
+  let silent_read, _ = pending_read silent in
+  print_endline "idle, busy and silent connections, then a fourth:";
+  let fourth = talking () in
+  show "the idle one" idle;
+  Printf.printf "its read %s\n" (outcome idle_read);
+  show "the busy one" busy;
+  show "the silent one" silent;
+  G.release idle;
+  print_endline "a connection in its TLS handshake comes:";
+  let handshake, _ = guard G.Handshake in
+  let pending_handshake = G.run handshake (fun () -> fst (Lwt.task ())) in
+  show "the silent one" silent;
+  Printf.printf "its read %s\n" (outcome silent_read);
+  show "the fourth" fourth;
+  G.release silent;
+  print_endline "another comes:";
+  let sixth = talking () in
+  show "the handshake" handshake;
+  Printf.printf "the handshake %s\n" (outcome pending_handshake);
+  G.release handshake;
+  print_endline "another comes, all the others being busy:";
+  let seventh = talking () in
+  List.iter
+    (fun (name, t) -> show name t)
+    ["the busy one", busy; "the fourth", fourth; "the sixth", sixth];
+  print_endline "the server is full; the fourth becomes idle, and a tick passes:";
+  G.set_phase fourth G.Idle;
+  G.tick ();
+  show "the fourth" fourth;
+  show "the seventh" seventh;
+  List.iter G.release [busy; fourth; sixth; seventh];
+  G.set_capacity max_int
+
 let () =
   section "Connections per address";
   let ip = Ipaddr.of_string_exn in

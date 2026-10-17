@@ -397,7 +397,15 @@ let log_connection_error = function
       Logs.err ~src:section (fun fmt ->
         fmt "Unhandled exception: %s" (Printexc.to_string exn))
 
+(* The number of services. Conduit stops accepting connections once their
+   number, plus one for each service waiting to accept one, exceeds
+   <maxconnected>. *)
+let services = ref 0
+
 let service ?ssl ~address ~port ~connector () =
+  incr services;
+  Connection_guard.set_capacity
+    (Config.get_max_number_of_connections () - !services + 1);
   (* TLS is handled here rather than by Conduit, so that the handshake and the
      closing of a session are in the hands of the server. *)
   let tls =

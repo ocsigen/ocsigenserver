@@ -55,7 +55,18 @@ val create : limits -> phase -> on_expiry:(phase -> unit) -> t
     with {!Timed_out}, the pending one and the later ones, and it enters
     {!Closing}, where the server can still end it properly (with a TLS
     close_notify, for instance) within the timeout. [on_expiry] is not called
-    then. *)
+    then.
+
+    A connection is also closed that way, the oldest first, when the server is
+    full (see {!set_capacity}) and its client is not using it: it is {!Idle},
+    in the TLS {!Handshake}, or in {!Headers} without having started a
+    request. A closed handshake fails with {!Timed_out}. This happens when a new
+    connection fills the server, so that the next client can connect, and at a
+    tick, for connections that became unused once the server was full. *)
+
+val set_capacity : int -> unit
+(** [set_capacity n] records that the server stops accepting connections once
+    [n] are open. There is no capacity by default. *)
 
 val release : t -> unit
 (** [release t] stops watching [t], once its connection has ended. *)
@@ -64,8 +75,8 @@ val set_phase : t -> phase -> unit
 (** [set_phase t phase] records that the connection of [t] is now in [phase].
     Entering {!Request} resets the counters of the body and of the response. A
     read of at least one byte while {!Idle} enters {!Headers} by itself. Once
-    the connection has expired, or has been closed for idleness, its phase no
-    longer changes. *)
+    the connection has expired, or has been closed, its phase no longer
+    changes. *)
 
 val phase : t -> phase
 val expired : t -> bool

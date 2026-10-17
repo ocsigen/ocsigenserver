@@ -3,24 +3,26 @@ reading its response, too slowly, while a response that takes long to be
 produced, or a body that keeps coming fast enough, is not cut. The bounds of the
 test server are small (see server.ml): a timeout of 2 seconds, a keep-alive
 timeout of 3 seconds and a minimum data rate of 2 bytes per second. A second
-server, the limit server, accepts 4 connections per address. client.ml runs
-the scenarios.
+server, the limit server, accepts 4 connections per address, and a third, the
+pool server, is full at 4 connections. client.ml runs the scenarios.
 
-  $ mkdir -p log data limit/log limit/data
+  $ mkdir -p log data limit/log limit/data pool/log pool/data
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost >/dev/null 2>&1
   $ dune build ./server.exe ./client.exe 2>&1
   $ ./_build/default/server.exe >server.log 2>&1 &
   $ ./_build/default/server.exe limit >limit/server.log 2>&1 &
-  $ trap 'for p in local limit; do echo shutdown > $p.cmd 2>/dev/null; done; wait' EXIT
-  $ i=0; while [ ! -e local.cmd ] || [ ! -e limit.cmd ]; do
+  $ ./_build/default/server.exe pool >pool/server.log 2>&1 &
+  $ trap 'for p in local limit pool; do echo shutdown > $p.cmd 2>/dev/null; done; wait' EXIT
+  $ i=0; while [ ! -e local.cmd ] || [ ! -e limit.cmd ] || [ ! -e pool.cmd ]; do
   >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
-  $ for port in 8076 8077; do
+  $ for port in 8076 8077 8078; do
   >   i=0; while ! curl -s --max-time 5 http://127.0.0.1:$port/ >/dev/null 2>&1; do
   >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done; done
 
 Each scenario waits several seconds for the bounds of the server. They all run
-at once, each writing what it saw to a file, shown below.
+at once, each writing what it saw to a file, shown below, except those of the
+pool server, which share it and run one after the other.
 
   $ scenario () {
   >   ./_build/default/client.exe "$@" >"$(echo "$@" | tr ' ' -).out" 2>&1; }
@@ -28,7 +30,10 @@ at once, each writing what it saw to a file, shown below.
   >     slow-response slow-body stalled-body drip-body slow-reader per-address \
   >     no-handshake "partial-headers tls" "idle-keepalive tls" mute abrupt; do
   >    scenario $s &
-  >  done; wait)
+  >  done
+  >  (for s in pool-idle pool-silent pool-handshake pool-busy; do
+  >     scenario $s; done) &
+  >  wait)
 
 Headers that never end: the connection is closed once the timeout has passed,
 without an answer.
@@ -132,3 +137,25 @@ error of the server.
   $ grep -c "Unhandled exception" log/errors.log
   0
   [1]
+
+A full server makes room for a new client by closing the connections that their
+clients do not use, the oldest first: idle kept-alive connections, connections
+on which nothing was sent, and TLS connections whose handshake has not started.
+Without this, the fifth connection would wait for one of the others to end.
+
+  $ cat pool-idle.out
+  a fifth connection: HTTP/1.1 200 OK: ok
+  closed to make room: 1 2
+  $ cat pool-silent.out
+  a fifth connection: HTTP/1.1 200 OK: ok
+  closed to make room: 1 2
+  $ cat pool-handshake.out
+  a fifth connection: HTTP/1.1 200 OK: ok
+  closed to make room: 1 2
+
+Busy connections are not closed: a new client waits until one of them is done,
+which then makes room.
+
+  $ cat pool-busy.out
+  a fifth connection, once a busy one was done: HTTP/1.1 200 OK: ok
+  busy connections answered: 4

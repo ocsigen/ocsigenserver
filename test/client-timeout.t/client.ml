@@ -109,16 +109,19 @@ let parse_response data =
           Some (status, String.sub body 0 n)
       | _ -> None)
 
-let print_response conn =
+(* The status line and the body of the next response on [conn]. *)
+let response conn =
   let rec read_response data =
     match parse_response data with
-    | Some (status, body) -> Printf.printf "%s: %s\n" status body
+    | Some (status, body) -> Printf.sprintf "%s: %s" status body
     | None -> (
       match conn.receive () with
       | Data d -> read_response (data ^ d)
-      | Ended -> print_endline "connection ended before a complete response")
+      | Ended -> "connection ended before a complete response")
   in
   read_response ""
+
+let print_response conn = print_endline (response conn)
 
 let rec drain conn received =
   match conn.receive () with
@@ -298,14 +301,74 @@ let abrupt conn =
   print_response conn;
   Unix.close conn.fd
 
+(* The pool server is full at 4 connections (see server.ml). Four connections
+   that their client does not use, opened by [open_unused], then a fifth on
+   [port]: the fifth is answered, the server having closed the oldest unused
+   connections to make room, one when the fourth came, one when the fifth
+   did. *)
+let make_room ~port open_unused =
+  let unused = List.init 4 (fun _ -> open_unused ()) in
+  let fifth = plain port in
+  fifth.send (request "/");
+  Printf.printf "a fifth connection: %s\n" (response fifth);
+  let closed =
+    List.mapi (fun i conn -> i + 1, conn) unused
+    |> List.filter_map (fun (i, conn) ->
+      if conn.readable_within 0.5 && conn.receive () = Ended
+      then Some (string_of_int i)
+      else None)
+  in
+  Printf.printf "closed to make room: %s\n" (String.concat " " closed);
+  List.iter (fun conn -> Unix.close conn.fd) (fifth :: unused)
+
+(* Four busy connections on the pool server, then a fifth: it is answered once
+   a busy connection has answered, the server then closing it, idle, to make
+   room. The busy connections come 0.2 s apart, so that the server has their
+   requests before the next one comes, and does not take them for unused. *)
+let pool_busy port =
+  let since = Unix.gettimeofday () in
+  let busy =
+    List.init 4 (fun _ ->
+      let conn = plain port in
+      conn.send (request "/slow");
+      Unix.sleepf 0.2;
+      conn)
+  in
+  let fifth = plain port in
+  fifth.send (request "/");
+  let answer = response fifth in
+  Printf.printf "a fifth connection, %s: %s\n"
+    (if Unix.gettimeofday () -. since >= 3.5
+     then "once a busy one was done"
+     else "at once")
+    answer;
+  Printf.printf "busy connections answered: %d\n"
+    (List.length
+       (List.filter
+          (fun conn -> response conn = "HTTP/1.1 200 OK: slow response")
+          busy));
+  List.iter (fun conn -> Unix.close conn.fd) (fifth :: busy)
+
 let () =
   (* A write to a connection the server closed fails instead of killing us. *)
   Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
   Ssl.init ();
   let plain_port = 8076 and tls_port = 8454 in
   let limit_port = 8077 in
+  let pool_port = 8078 and pool_tls_port = 8455 in
   match Sys.argv with
   | [|_; "per-address"|] -> per_address limit_port
+  | [|_; "pool-idle"|] ->
+      make_room ~port:pool_port (fun () ->
+        let conn = plain pool_port in
+        conn.send (request "/");
+        ignore (response conn : string);
+        conn)
+  | [|_; "pool-silent"|] -> make_room ~port:pool_port (fun () -> plain pool_port)
+  | [|_; "pool-handshake"|] ->
+      (* TCP connections to the TLS port, on which nothing is sent. *)
+      make_room ~port:pool_port (fun () -> plain pool_tls_port)
+  | [|_; "pool-busy"|] -> pool_busy pool_port
   | [|_; "no-handshake"|] ->
       (* A TCP connection to the TLS port, on which nothing is sent. *)
       await_close (plain tls_port) ~bound:timeout ~since:(Unix.gettimeofday ())

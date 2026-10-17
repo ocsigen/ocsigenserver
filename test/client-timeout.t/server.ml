@@ -9,6 +9,11 @@
    connections at most per client address. This limit has its own server since
    the other scenarios run at once, all from the same address.
 
+   With the argument [pool], it is instead a server with room for few
+   connections: <maxconnected> is 5, and since each of its two ports counts
+   for one connection while it waits for a new one, it is full at 4
+   connections. Its timeouts are long enough not to interfere.
+
    Its resources:
    - /slow answers after four seconds, longer than the timeout, the way a comet
      request of Eliom waits for an event before answering;
@@ -66,4 +71,8 @@ let () =
       start ~port:8077 ~tls_port:8456 ~dir:"limit" ~command_pipe:"limit.cmd"
         ~max_connections_per_address:4
         [Ocsigen.Server.host [resources]]
-  | _ -> failwith "usage: server [limit]"
+  | [|_; "pool"|] ->
+      start ~port:8078 ~tls_port:8455 ~dir:"pool" ~command_pipe:"pool.cmd"
+        ~max_number_of_connections:5 ~client_timeout:10 ~keepalive_timeout:30
+        [Ocsigen.Server.host [resources]]
+  | _ -> failwith "usage: server [limit|pool]"

@@ -24,7 +24,7 @@ type side =
 type state =
   | Open
   | Closed of side
-  (* The server closed this side of the connection: see [close_idle]. *)
+  (* The server closed this side of the connection: see [close_side]. *)
   | Expired
 
 type t =
@@ -41,23 +41,6 @@ type t =
 let guards : (int, t) Hashtbl.t = Hashtbl.create 256
 let last_id = ref 0
 let new_side () = {pending = None; since = 0; waited = 0; bytes = 0}
-
-let create limits phase ~on_expiry =
-  incr last_id;
-  let t =
-    { id = !last_id
-    ; limits
-    ; on_expiry
-    ; phase
-    ; phase_since = !now
-    ; state = Open
-    ; reads = new_side ()
-    ; writes = new_side ()
-    ; other = new_side () }
-  in
-  Hashtbl.replace guards t.id t;
-  t
-
 let release t = Hashtbl.remove guards t.id
 let phase t = t.phase
 let expired t = match t.state with Expired -> true | Open | Closed _ -> false
@@ -140,15 +123,89 @@ let expire t =
        fmt "Error while expiring a connection: %s" (Printexc.to_string exn)));
   cancel t.reads; cancel t.writes; cancel t.other
 
-(* An idle connection is closed by failing its reads, the pending one and the
-   later ones, with [Timed_out], so that the server stops waiting for a request.
-   It enters [Closing], where the server can still end it properly, for
-   instance with a TLS close_notify, within the timeout. *)
-let close_idle t =
-  t.state <- Closed t.reads;
+(* A connection whose client did nothing wrong is closed rather than expired, by
+   failing the operations of [side], the pending one and the later ones, with
+   [Timed_out]: its reads, so that the server stops waiting for a request, or
+   its TLS handshake. It enters [Closing], where the server can still end it
+   properly, for instance with a TLS close_notify, within the timeout. *)
+let close_side t side =
+  t.state <- Closed side;
   t.phase <- Closing;
   t.phase_since <- !now;
-  cancel t.reads
+  cancel side
+
+(* The number of connections at which the server stops accepting new ones. *)
+let capacity = ref max_int
+let set_capacity n = capacity := n
+
+(* Why a connection can be closed without harm to make room for a new one, and
+   the side to close: its client is not using it. *)
+let unused t =
+  match t.state, t.phase with
+  | Open, Idle -> Some ("was idle", t.reads)
+  | Open, Headers when t.reads.bytes = 0 ->
+      Some ("had not started a request", t.reads)
+  | Open, Handshake -> Some ("had not finished its TLS handshake", t.other)
+  | Open, (Headers | Request | Closing) | (Closed _ | Expired), _ -> None
+
+(* Whether a connection is ending, and will make room by itself. *)
+let leaving t =
+  match t.state, t.phase with
+  | Expired, _ | (Open | Closed _), Closing -> true
+  | (Open | Closed _), (Handshake | Headers | Idle | Request) -> false
+
+(* Whether [a] has been in its phase for longer than [b]. *)
+let older a b =
+  a.phase_since < b.phase_since || (a.phase_since = b.phase_since && a.id < b.id)
+
+(* The unused connection that has been waiting the longest, with why it is
+   unused and the side to close. *)
+let oldest_unused () =
+  Hashtbl.fold
+    (fun _ t oldest ->
+       match unused t, oldest with
+       | None, _ -> oldest
+       | Some _, Some (o, _) when older o t -> oldest
+       | Some why, (Some _ | None) -> Some (t, why))
+    guards None
+
+(* If the server, with [incoming] new connections, would be full, closes the
+   unused connection that has been waiting the longest, so that the next client
+   can connect. The connections that are leaving do not count, since they will
+   make room by themselves. *)
+let make_room ~incoming =
+  let full n = n + incoming >= !capacity in
+  let staying () =
+    Hashtbl.fold (fun _ t n -> if leaving t then n else n + 1) guards 0
+  in
+  (* The first test spares counting when the server is far from full. *)
+  if full (Hashtbl.length guards) && full (staying ())
+  then
+    match oldest_unused () with
+    | Some (t, (why, side)) ->
+        Logs.info ~src:section (fun fmt ->
+          fmt
+            "The server is full (see <maxconnected>): closing a connection that %s, to make room"
+            why);
+        close_side t side
+    | None -> ()
+
+let create limits phase ~on_expiry =
+  make_room ~incoming:1;
+  incr last_id;
+  let t =
+    { id = !last_id
+    ; limits
+    ; on_expiry
+    ; phase
+    ; phase_since = !now
+    ; state = Open
+    ; reads = new_side ()
+    ; writes = new_side ()
+    ; other = new_side () }
+  in
+  Hashtbl.replace guards t.id t;
+  t
 
 let tick () =
   incr now;
@@ -160,7 +217,9 @@ let tick () =
          match action t with Some a -> (t, a) :: acc | None -> acc))
     guards []
   |> List.iter (fun (t, a) ->
-    match a with Close_idle -> close_idle t | Expire -> expire t)
+    match a with Close_idle -> close_side t t.reads | Expire -> expire t);
+  (* Busy connections that filled the server may have become idle since. *)
+  make_room ~incoming:0
 
 (* Whether operations on [side] must fail: all of them once the connection has
    expired, and those of the side the server closed. *)

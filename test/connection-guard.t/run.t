@@ -45,6 +45,27 @@ timeout.
   a handshake still pending at the expiry failed with Timed_out
   an exception from on_expiry: the read failed with Timed_out
   
+  Making room, capacity 4
+  idle, busy and silent connections, then a fourth:
+  the idle one: Closing
+  its read failed with Timed_out
+  the busy one: Request
+  the silent one: Headers
+  a connection in its TLS handshake comes:
+  the silent one: Closing
+  its read failed with Timed_out
+  the fourth: Headers
+  another comes:
+  the handshake: Closing
+  the handshake failed with Timed_out
+  another comes, all the others being busy:
+  the busy one: Request
+  the fourth: Headers
+  the sixth: Headers
+  the server is full; the fourth becomes idle, and a tick passes:
+  the fourth: Closing
+  the seventh: Headers
+  
   Connections per address
   acquire 192.0.2.1: true
   acquire 192.0.2.1: true

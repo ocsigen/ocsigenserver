@@ -486,16 +486,24 @@ v}
 
 
 The maximum number of connections open at once, on all the ports together.
-Once it is reached, new connections wait until others end. Default: 350.
-Example:
+Each port counts as one connection while it waits for a new one, so the
+server is full slightly before this number. Default: 350. Example:
 
 {v
 <maxconnected>500</maxconnected>
 v}
 
+When the server is full, it makes room for a new client by closing the
+connection that has waited the longest among those that their clients are not
+using: idle between two requests, without the start of a request, or with a TLS
+handshake not finished. The closing is logged at the [info] level. When all
+the connections are in use, new connections wait until others end.
+
 Since a connection counts until it ends, the timeouts below matter: they keep
-clients that are slow, or pretend to be, from holding connections for ever.
-See also [<maxconnectionsperaddress>].
+clients that are slow, or pretend to be, from holding connections for ever. A
+client that sends its requests slowly, and opens a new connection each time
+one is cut, can still take many connections: [<maxconnectionsperaddress>]
+limits how many a single client address may take.
 
 {3 [<timeout>] : Timeout for connections}
 
