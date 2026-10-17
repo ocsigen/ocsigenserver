@@ -3,7 +3,8 @@ what it received. Self-contained POSIX sh.
 
   $ mkdir -p log data
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
-  >   -out cert.pem -days 2 -subj /CN=localhost >/dev/null 2>&1
+  >   -out cert.pem -days 2 -subj /CN=localhost \
+  >   -addext subjectAltName=DNS:localhost >/dev/null 2>&1
   $ dune build ./test.exe 2>&1
   $ ./_build/default/test.exe >upstream.log 2>&1 &
   $ UPSTREAM="$!"
@@ -25,3 +26,15 @@ becomes "%3B":
   https: false
   x-forwarded-proto: HTTP/1.1
   x-forwarded-for: 127.0.0.1, 0.0.0.0
+
+A reverse proxy to the HTTPS upstream contacts it over TLS, whatever the scheme
+of the request it forwards. The proxy checks the certificate of its target, so
+it is told to trust the self-signed one of the upstream:
+
+  $ SSL_CERT_FILE=$PWD/cert.pem \
+  >   ocsigenserver --reverse-proxy https://localhost:8064 --port 8075 \
+  >   >proxy-tls.log 2>&1 &
+  $ PROXIES="$PROXIES $!"
+  $ curl -s --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
+  >   http://127.0.0.1:8075/x | grep https
+  https: true

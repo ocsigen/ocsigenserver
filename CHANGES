@@ -68,6 +68,9 @@ Bug fixes:
  * Revproxy:
    - the query string of the request is forwarded. It was sent as part of the
      path, with its "?" encoded as "%3F".
+   - an https:// target is contacted over TLS. The scheme of the incoming
+     request was used instead, so a request received over HTTP was sent in
+     clear to the HTTPS port of the target.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
