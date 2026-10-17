@@ -65,6 +65,9 @@ Bug fixes:
    ("Keep-Alive", "keep-alive, TE"). Responses now always say whether the
    connection is kept alive, as cohttp does for the responses it writes
    itself.
+ * Revproxy:
+   - the query string of the request is forwarded. It was sent as part of the
+     path, with its "?" encoded as "%3F".
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

@@ -53,5 +53,6 @@ v}
 {2 Technical details}
 
 - The reverse proxy does no caching for now.
+- The query string is decoded, then encoded again before it is sent, so its encoding may change: for instance, [+] is sent as [%20] and [;] as [%3B]. [+] and [%20] both mean a space in a form, but a target that reads [+] literally, or splits the query on [;], sees something else.
 - The reverse proxy does pipeline the requests for server it trusts for pipelining. But current trusting criteria are probably too strong. They will probably evolve soon.
 

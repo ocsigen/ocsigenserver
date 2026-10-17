@@ -59,33 +59,26 @@ let gen dir = function
              Ocsigen.Extensions.find_redirection dir.regexp dir.full_url
                dir.dest request_info
            in
-           let https, host, port, path =
-             try
-               (* FIXME: we do not seem to handle GET
-                parameters. Why? *)
-               match Ocsigen_base.Lib.Url.parse dest with
-               | Some https, Some host, port, path, _, _, _ ->
-                   let port =
-                     match port with
-                     | None -> if https then 443 else 80
-                     | Some p -> p
-                   in
-                   https, host, port, path
-               | _ ->
-                   raise
-                     (Ocsigen.Extensions.Error_in_config_file
-                        ("Revproxy : error in destination URL " ^ dest))
-               (*VVV catch only URL-related exceptions? *)
-             with e ->
-               raise
-                 (Ocsigen.Extensions.Error_in_config_file
-                    ("Revproxy : error in destination URL " ^ dest ^ " - "
-                   ^ Printexc.to_string e))
+           (* [dest] is a full URL. Its path is sent as it is, but Uri decodes
+              and encodes again its query, whose encoding may change: "+"
+              becomes "%20", which also means a space in a form, and ";"
+              becomes "%3B". *)
+           let target = Uri.of_string dest in
+           let host, port =
+             match Uri.scheme target, Uri.userinfo target, Uri.host target with
+             | Some (("http" | "https") as scheme), None, Some host
+               when host <> "" ->
+                 ( host
+                 , Option.value (Uri.port target)
+                     ~default:(if scheme = "https" then 443 else 80) )
+             | _ ->
+                 raise
+                   (Ocsigen.Extensions.Error_in_config_file
+                      ("Revproxy : error in destination URL " ^ dest))
            in
            Logs.info ~src:section (fun fmt ->
-             fmt "YES! Redirection to http%s://%s:%d/%s"
-               (if https then "s" else "")
-               host port path);
+             (* Not the query, which may hold secrets. *)
+             fmt "YES! Redirection to %a" Uri.pp (Uri.with_query target []));
            Ocsigen_base.Lib.Ip_address.get_inet_addr host >>= fun _inet_addr ->
            (* It is now safe to start processing next request.
 
@@ -130,7 +123,9 @@ let gen dir = function
                  | Some host -> host
                  | None -> host
                in
-               Uri.make ~scheme ~host ~port ~path ()
+               let uri = Uri.with_scheme target (Some scheme) in
+               let uri = Uri.with_host uri (Some host) in
+               Uri.with_port uri (Some port)
              and body = Ocsigen.Request.body request_info
              and meth = Ocsigen.Request.meth request_info in
              Cohttp_lwt_unix.Client.call ~headers ~body meth uri
