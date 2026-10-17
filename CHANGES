@@ -262,6 +262,12 @@ Bug fixes:
  * An order of the command pipe that fails no longer stops the command pipe.
    The later orders, such as the reopen_logs of a log rotation, used to be
    ignored until the server was restarted.
+ * The size options of the configuration file (<maxrequestbodysize>,
+   <maxuploadfilesize>, <maxrequestbodysizeinmemory>) now refuse a negative
+   size, or one too large to be represented, instead of taking it silently: a
+   negative size made every request body fail. The setters of Config,
+   Server.start, Server.host and Extendconfiguration.maxuploadfilesize raise
+   Invalid_argument for a negative size.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

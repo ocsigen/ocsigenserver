@@ -2,7 +2,8 @@ Size-valued configuration tags: the units accepted by parse_size_tag, and the
 wiring of each tag to its Config value. Then the defaults and the wiring of the
 connection tags and of <commandpipe> and <logdir>, and the log levels set by
 <loglevel> and by the logs: command of the command pipe. Then the warnings for
-the tags that have no effect. Last, the log levels set by the -vv option.
+the tags that have no effect, and the log levels set by the -vv option. Last,
+the check of the sizes given through the API.
 
   $ ../parseconfig/test.exe 2>&1
   parse_size_tag:
@@ -22,6 +23,9 @@ the tags that have no effect. Last, the log levels set by the -vv option.
   "infinity"   -> None
   ""           -> None
   "not-a-size" -> Config_file_error
+  "-1"         -> Config_file_error
+  "-1k"        -> Config_file_error
+  "10000000T"  -> Config_file_error
   
   default in-memory request body size -> 1048576
   
@@ -70,3 +74,10 @@ the tags that have no effect. Last, the log levels set by the -vv option.
   existing Ocsigen source -> info
   existing other source -> warning
   source created afterwards -> info
+  
+  negative sizes from the API:
+  set_maxrequestbodysize (Some (-1L)) -> Invalid_argument: Config.set_maxrequestbodysize: negative size -1
+  set_maxuploadfilesize (Some (-1L)) -> Invalid_argument: Config.set_maxuploadfilesize: negative size -1
+  Server.host ~maxuploadfilesize:(Some (-1L)) -> Invalid_argument: Ocsigen.Server.host ~maxuploadfilesize: negative size -1
+  set_maxrequestbodysize (Some 0L) -> accepted
+  set_maxrequestbodysize None -> accepted

@@ -237,8 +237,12 @@ let fun_site usermode _ _ _ _ _ = function
 
 let () = Ocsigen.Extensions.register ~name ~fun_site ()
 
-let maxuploadfilesize s _ _ _ =
-  gen @@ fun config -> {config with Ocsigen.Extensions.maxuploadfilesize = s}
+let maxuploadfilesize s =
+  let s =
+    Ocsigen.Config.checked_size "Extendconfiguration.maxuploadfilesize" s
+  in
+  fun _ _ _ ->
+    gen @@ fun config -> {config with Ocsigen.Extensions.maxuploadfilesize = s}
 
 let uploaddir d _ _ _ =
   gen @@ fun config -> {config with Ocsigen.Extensions.uploaddir = d}

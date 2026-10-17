@@ -99,7 +99,10 @@ val set_max_connections_per_address : int -> unit
 
 (* val set_keepopen_timeout : int -> unit *)
 val set_filebuffersize : int -> unit
+
 val set_maxrequestbodysize : int64 option -> unit
+(** Raises [Invalid_argument] if the size is negative. *)
+
 val set_maxrequestbodysizeinmemory : int -> unit
 val set_default_charset : string option -> unit
 val set_bindir : string -> unit
@@ -198,8 +201,14 @@ val get_uploaddir : unit -> string option
 
 (* Same thing for upload size *)
 val set_maxuploadfilesize : int64 option -> unit
+(** Raises [Invalid_argument] if the size is negative. *)
+
 val get_maxuploadfilesize : unit -> int64 option
 val has_config_file : bool ref
+
+val checked_size : string -> int64 option -> int64 option
+(** [checked_size name size] is [size], a size limit given to [name].
+    Raises [Invalid_argument] if it is negative. *)
 
 type settings
 (** The settings that the tags of [<server>] set each time the configuration

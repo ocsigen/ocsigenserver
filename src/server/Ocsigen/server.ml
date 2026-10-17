@@ -168,6 +168,11 @@ let host
       ?maxuploadfilesize
       instructions
   =
+  let maxuploadfilesize =
+    Option.map
+      (Config.checked_size "Ocsigen.Server.host ~maxuploadfilesize")
+      maxuploadfilesize
+  in
   let def = Extensions.default_config_info () in
   let default default o = Option.value o ~default in
   let config_info =

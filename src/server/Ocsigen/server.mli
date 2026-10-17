@@ -110,7 +110,8 @@ val start :
     It takes as main parameter a list of virtual hosts (see {!host} below). 
 
 Options behave exactly like their {{!page-"config"}configuration file}
-counterparts.
+counterparts. Raises [Invalid_argument] if [maxuploadfilesize] or
+[maxrequestbodysize] is negative.
 *)
 
 type instruction =
@@ -160,7 +161,8 @@ val host :
   -> instruction list
   -> Extensions.host_config
 (** You can define one or several virtual hosts corresponding to a given
-    server name or port. *)
+    server name or port. Raises [Invalid_argument] if [maxuploadfilesize] is
+    negative. *)
 
 val site :
    ?charset:string

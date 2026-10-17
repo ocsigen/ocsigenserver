@@ -9,7 +9,8 @@
      [<mindatarate>] and [<maxconnectionsperaddress>];
    - the default and the wiring of [<commandpipe>] and [<logdir>];
    - the log levels set by [<loglevel>] and by the [logs:] command;
-   - the warnings for the tags that are accepted but have no effect. *)
+   - the warnings for the tags that are accepted but have no effect;
+   - the check of the sizes given through the API. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
 let show_int64_option = function None -> "None" | Some n -> Int64.to_string n
@@ -43,7 +44,10 @@ let () =
     ; "1M"
     ; "infinity"
     ; ""
-    ; "not-a-size" ]
+    ; "not-a-size"
+    ; "-1"
+    ; "-1k"
+    ; "10000000T" ]
 
 (* Feed a single tag through [later_pass], as if it were a child of
    [<server>] in the configuration file, then read the resulting value. *)
@@ -195,3 +199,26 @@ let () =
   Printf.printf "existing Ocsigen source -> %s\n" (level ocsigen);
   Printf.printf "existing other source -> %s\n" (level library);
   Printf.printf "source created afterwards -> %s\n" (level later)
+
+(* The sizes given through the API are checked as in the configuration file:
+   a negative one would make every request body fail. *)
+let () =
+  print_endline "\nnegative sizes from the API:";
+  let show name set =
+    match set () with
+    | () -> Printf.printf "%s -> accepted\n" name
+    | exception Invalid_argument msg ->
+        Printf.printf "%s -> Invalid_argument: %s\n" name msg
+  in
+  show "set_maxrequestbodysize (Some (-1L))" (fun () ->
+    Ocsigen.Config.set_maxrequestbodysize (Some (-1L)));
+  show "set_maxuploadfilesize (Some (-1L))" (fun () ->
+    Ocsigen.Config.set_maxuploadfilesize (Some (-1L)));
+  show "Server.host ~maxuploadfilesize:(Some (-1L))" (fun () ->
+    ignore
+      (Ocsigen.Server.host ~maxuploadfilesize:(Some (-1L)) []
+       : Ocsigen.Extensions.host_config));
+  show "set_maxrequestbodysize (Some 0L)" (fun () ->
+    Ocsigen.Config.set_maxrequestbodysize (Some 0L));
+  show "set_maxrequestbodysize None" (fun () ->
+    Ocsigen.Config.set_maxrequestbodysize None)
