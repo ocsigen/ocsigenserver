@@ -188,6 +188,9 @@ Bug fixes:
    exits at once, like "shutdown". A delay that is not a number is now
    reported. The exception also stopped the command pipe for good, so that
    the later orders were ignored.
+ * An order of the command pipe that fails no longer stops the command pipe.
+   The later orders, such as the reopen_logs of a log rotation, used to be
+   ignored until the server was restarted.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

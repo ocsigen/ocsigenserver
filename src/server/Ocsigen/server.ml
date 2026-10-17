@@ -470,11 +470,12 @@ let main config =
                    Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
                    Lwt.return ()
                | e ->
+                   (* A failing order must not stop the command pipe: the
+                      later ones, such as the reopen_logs of a log rotation,
+                      would be ignored. *)
                    Logs.err ~src:section (fun fmt ->
-                     fmt
-                       ("Uncaught Exception after command" ^^ "@\n%s")
-                       (Printexc.to_string e));
-                   Lwt.fail e)
+                     fmt "Command %S failed: %s" s (Printexc.to_string e));
+                   Lwt.return ())
            >>= f
          in
          ignore (f () : 'a Lwt.t));
