@@ -92,6 +92,13 @@ Bug fixes:
      in HTTP/1.1, whatever the version of the target. A target that closed
      its connection, or answered in HTTP/1.0, made the connection of the
      client close after each response.
+ * An existing file at the command pipe path is now used only if it is a named
+   pipe that belongs to the user running the server. Anything else is refused,
+   with an error in the logs, and the server runs without a command pipe; until
+   now, another local user could plant a file of commands there. The server's
+   own pipe is replaced with a new one, with a warning, if it has group or
+   other permissions (Ocsigen Server 7 created it with mode 0o660): a process
+   that opened it before loses its access.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

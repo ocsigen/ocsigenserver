@@ -263,6 +263,66 @@ let max_number_of_connections ~ports =
       affordable
   | Some _ | None -> wanted
 
+(* Create the command pipe [path] if needed, and open it. The pipe is a control
+   channel (shutdown, reload <file>, ...), so only the user running the server
+   may write to it. An existing file is checked with [fstat] on the open
+   descriptor, so that it cannot be swapped between the check and its use:
+   anything but a FIFO owned by this user is refused. Our own FIFO with group or
+   other permissions (Ocsigen Server 7 created it with mode 0o660) is replaced
+   with a new one: changing its mode would not revoke a descriptor that another
+   process opened before. The umask can only narrow the 0o600 mode given to
+   [mkfifo]. The descriptor is not inherited by child processes. *)
+let open_command_pipe path =
+  let create () =
+    Unix.mkfifo path 0o600;
+    Logs.warn ~src:section (fun fmt -> fmt "Command pipe created")
+  in
+  let check {Unix.st_kind; st_uid; st_perm; _} =
+    if st_kind <> Unix.S_FIFO
+    then Error (`Refused "it is not a named pipe")
+    else if st_uid <> Unix.geteuid ()
+    then Error (`Refused "it belongs to another user")
+    else if st_perm land 0o077 <> 0
+    then Error `Permissive
+    else Ok ()
+  in
+  let refuse reason =
+    Logs.err ~src:section (fun fmt ->
+      fmt
+        ("Refusing the command pipe %s: %s. Remove it to let the server create"
+       ^^ " a new one. I will continue without.")
+        path reason);
+    None
+  in
+  let rec use ~replace =
+    let fd = Unix.(openfile path [O_RDWR; O_NONBLOCK; O_CLOEXEC]) 0 in
+    match check (Unix.fstat fd) with
+    | Ok () -> Some fd
+    | Error error -> (
+        Unix.close fd;
+        match error with
+        | `Refused reason -> refuse reason
+        | `Permissive when replace ->
+            Logs.warn ~src:section (fun fmt ->
+              fmt "Command pipe %s has group or other permissions: replacing it"
+                path);
+            Unix.unlink path;
+            create ();
+            use ~replace:false
+        | `Permissive -> refuse "it has group or other permissions")
+    | exception e -> Unix.close fd; raise e
+  in
+  try
+    (try create () with Unix.Unix_error (Unix.EEXIST, _, _) -> ());
+    use ~replace:true
+  with Unix.Unix_error _ as e ->
+    Logs.warn ~src:section (fun fmt ->
+      fmt
+        ("Cannot set up the command pipe %s. I will continue without."
+       ^^ "@\n%s")
+        path (Printexc.to_string e));
+    None
+
 let main_loop_is_running = ref false
 
 let main config =
@@ -322,31 +382,7 @@ let main config =
         | _ -> []
       in
       (* A pipe to communicate with the server *)
-      let commandpipe = Config.get_command_pipe () in
-      let with_commandpipe =
-        try
-          ignore (Unix.stat commandpipe : Unix.stats);
-          true
-        with Unix.Unix_error _ -> (
-          try
-            (* The command pipe is a control channel (shutdown, reload,
-               clearcache, ...). Now that <user>/<group> no longer drop
-               privileges, the server runs as the launching user and owns the
-               pipe, so only that user should be able to send commands: hence
-               0o600. (Group administration via the pipe is no longer
-               supported.) A 0o600 mode has no group/other bits, so it is
-               unaffected by the umask and there is no need to force it to 0. *)
-            Unix.mkfifo commandpipe 0o600;
-            Logs.warn ~src:section (fun fmt -> fmt "Command pipe created");
-            true
-          with e ->
-            Logs.warn ~src:section (fun fmt ->
-              fmt
-                ("Cannot create the command pipe %s. I will continue without."
-               ^^ "@\n%s")
-                commandpipe (Printexc.to_string e));
-            false)
-      in
+      let commandpipe = open_command_pipe (Config.get_command_pipe ()) in
       let minthreads = Config.get_minthreads ()
       and maxthreads = Config.get_maxthreads () in
       if minthreads > maxthreads
@@ -376,12 +412,10 @@ let main config =
       (* detach from the terminal *)
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
-      (if with_commandpipe
-       then
+      (commandpipe
+      |> Option.iter @@ fun fd ->
          let pipe =
-           Unix.(openfile commandpipe [O_RDWR; O_NONBLOCK; O_APPEND]) 0o600
-           |> Lwt_unix.of_unix_file_descr
-           |> Lwt_io.(of_fd ~mode:input)
+           Lwt_unix.of_unix_file_descr fd |> Lwt_io.(of_fd ~mode:input)
          in
          let rec f () =
            Lwt_io.read_line pipe >>= fun s ->
