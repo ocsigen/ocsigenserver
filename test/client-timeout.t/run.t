@@ -28,7 +28,9 @@ pool server, which share it and run one after the other.
   >   ./_build/default/client.exe "$@" >"$(echo "$@" | tr ' ' -).out" 2>&1; }
   $ (for s in partial-headers drip-headers idle-keepalive keepalive-reuse \
   >     slow-response slow-body stalled-body drip-body slow-reader per-address \
-  >     no-handshake "partial-headers tls" "idle-keepalive tls" mute abrupt; do
+  >     no-handshake "partial-headers tls" "idle-keepalive tls" mute abrupt \
+  >     connection-close pipelined-after-close close-among-options \
+  >     keep-alive-among-options http-1.0 http-1.0-keep-alive; do
   >    scenario $s &
   >  done
   >  (for s in pool-idle pool-silent pool-handshake pool-busy; do
@@ -159,3 +161,23 @@ which then makes room.
   $ cat pool-busy.out
   a fifth connection, once a busy one was done: HTTP/1.1 200 OK: ok
   busy connections answered: 4
+
+A request with "Connection: close", and an HTTP/1.0 request without
+"Connection: keep-alive", are answered with "Connection: close", and the
+server closes the connection at once (RFC 9112, section 9.6), without serving a
+request sent after it. The Connection header is a list of options, whose case
+does not matter. An HTTP/1.0 request with "Connection: keep-alive" keeps the
+connection open.
+
+  $ cat connection-close.out
+  HTTP/1.1 200 OK, Connection: close, responses: 1, closed by the server at once
+  $ cat pipelined-after-close.out
+  HTTP/1.1 200 OK, Connection: close, responses: 1, closed by the server at once
+  $ cat close-among-options.out
+  HTTP/1.1 200 OK, Connection: close, responses: 1, closed by the server at once
+  $ cat keep-alive-among-options.out
+  HTTP/1.1 200 OK, Connection: keep-alive, responses: 1, kept open
+  $ cat http-1.0.out
+  HTTP/1.1 200 OK, Connection: close, responses: 1, closed by the server at once
+  $ cat http-1.0-keep-alive.out
+  HTTP/1.1 200 OK, Connection: keep-alive, responses: 1, kept open

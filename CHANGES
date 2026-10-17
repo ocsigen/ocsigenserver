@@ -45,6 +45,15 @@ New features:
    exist.
 
 Bug fixes:
+ * A request with "Connection: close", or an HTTP/1.0 request without
+   "Connection: keep-alive", now gets a response with "Connection: close",
+   after which the server closes the connection, as RFC 9112 requires, without
+   serving the requests the client may have sent after it. The connection used
+   to stay open, waiting for a request that would never come. The options of
+   the Connection header are read as a list, whatever their case
+   ("Keep-Alive", "keep-alive, TE"). Responses now always say whether the
+   connection is kept alive, as cohttp does for the responses it writes
+   itself.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

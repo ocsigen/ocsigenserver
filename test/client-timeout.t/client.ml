@@ -67,9 +67,9 @@ let tls port =
       receive_with (fun buffer -> Ssl.read socket buffer 0 (Bytes.length buffer))
   ; readable_within = readable_within fd }
 
-let request ?(meth = "GET") ?(headers = []) path =
+let request ?(meth = "GET") ?(version = "1.1") ?(headers = []) path =
   String.concat "\r\n"
-    ((meth ^ " " ^ path ^ " HTTP/1.1") :: "Host: localhost" :: headers)
+    ((meth ^ " " ^ path ^ " HTTP/" ^ version) :: "Host: localhost" :: headers)
   ^ "\r\n\r\n"
 
 let rec index_of sub s i =
@@ -79,19 +79,18 @@ let rec index_of sub s i =
   then Some i
   else index_of sub s (i + 1)
 
-let content_length header_lines =
+let header_value name lines =
   List.find_map
     (fun line ->
        match String.index_opt line ':' with
-       | Some i
-         when String.equal
-                (String.lowercase_ascii (String.sub line 0 i))
-                "content-length" ->
-           int_of_string_opt
-             (String.trim
-                (String.sub line (i + 1) (String.length line - i - 1)))
+       | Some i when String.lowercase_ascii (String.sub line 0 i) = name ->
+           Some
+             (String.trim (String.sub line (i + 1) (String.length line - i - 1)))
        | Some _ | None -> None)
-    header_lines
+    lines
+
+let content_length header_lines =
+  Option.bind (header_value "content-length" header_lines) int_of_string_opt
 
 (* The status line and the body of the response in [data], if it is complete.
    The test server always sends a content length. *)
@@ -349,6 +348,35 @@ let pool_busy port =
           busy));
   List.iter (fun conn -> Unix.close conn.fd) (fifth :: busy)
 
+let rec occurrences sub s i =
+  match index_of sub s i with
+  | Some j -> 1 + occurrences sub s (j + 1)
+  | None -> 0
+
+(* Requests, sent at once, after which the connection is, or is not, to be
+   kept alive: prints the status and the Connection header of the first
+   response, the number of responses, and whether the server closes the
+   connection at once. *)
+let keep_alive requests conn =
+  conn.send (String.concat "" requests);
+  (* What the server sends until it closes the connection, or until nothing
+     comes for a second, and whether it closed it. *)
+  let rec receive data =
+    if conn.readable_within 1.
+    then
+      match conn.receive () with
+      | Data d -> receive (data ^ d)
+      | Ended -> data, true
+    else data, false
+  in
+  let data, closed = receive "" in
+  let lines = String.split_on_char '\n' data |> List.map String.trim in
+  Printf.printf "%s, Connection: %s, responses: %d, %s\n"
+    (match lines with status :: _ when status <> "" -> status | _ -> "no response")
+    (Option.value ~default:"none" (header_value "connection" lines))
+    (occurrences "HTTP/1.1 " data 0)
+    (if closed then "closed by the server at once" else "kept open")
+
 let () =
   (* A write to a connection the server closed fails instead of killing us. *)
   Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
@@ -374,6 +402,26 @@ let () =
       await_close (plain tls_port) ~bound:timeout ~since:(Unix.gettimeofday ())
   | [|_; "mute"|] -> mute (tls tls_port)
   | [|_; "abrupt"|] -> abrupt (tls tls_port)
+  | [|_; "connection-close"|] ->
+      keep_alive [request ~headers:["Connection: close"] "/"] (plain plain_port)
+  | [|_; "pipelined-after-close"|] ->
+      keep_alive
+        [request ~headers:["Connection: close"] "/"; request "/"]
+        (plain plain_port)
+  | [|_; "close-among-options"|] ->
+      keep_alive
+        [request ~headers:["Connection: TE, Close"; "TE: trailers"] "/"]
+        (plain plain_port)
+  | [|_; "keep-alive-among-options"|] ->
+      keep_alive
+        [request ~headers:["Connection: Keep-Alive, TE"; "TE: trailers"] "/"]
+        (plain plain_port)
+  | [|_; "http-1.0"|] ->
+      keep_alive [request ~version:"1.0" "/"] (plain plain_port)
+  | [|_; "http-1.0-keep-alive"|] ->
+      keep_alive
+        [request ~version:"1.0" ~headers:["Connection: Keep-Alive"] "/"]
+        (plain plain_port)
   | [|_; scenario|] | [|_; scenario; "tls"|] -> (
       let conn =
         if Array.length Sys.argv = 3 then tls tls_port else plain plain_port

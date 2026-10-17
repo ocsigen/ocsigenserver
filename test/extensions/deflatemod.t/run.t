@@ -45,6 +45,7 @@ Without Accept-Encoding the response is not compressed:
   accept-ranges: bytes
   content-length: 12
   server: Ocsigen
+  connection: keep-alive
   
   Hello world
 
@@ -58,6 +59,7 @@ gzip:
   vary: accept-encoding
   server: Ocsigen
   transfer-encoding: chunked
+  connection: keep-alive
   
   Hello world
 
@@ -72,6 +74,7 @@ deflate (zlib format):
   vary: accept-encoding
   server: Ocsigen
   transfer-encoding: chunked
+  connection: keep-alive
   
   Hello world
 
@@ -86,6 +89,7 @@ zstd:
   vary: accept-encoding
   server: Ocsigen
   transfer-encoding: chunked
+  connection: keep-alive
   
   Hello world
 
@@ -100,6 +104,7 @@ When several codecs are offered, zstd is preferred:
   vary: accept-encoding
   server: Ocsigen
   transfer-encoding: chunked
+  connection: keep-alive
   
   Hello world
 
@@ -111,11 +116,13 @@ compression:
   HTTP/1.1 404 Not Found
   server: Ocsigen
   content-length: 16
+  connection: keep-alive
   
   Error: Not Found
   $ curl_ doesnt_exists.html --compressed
   HTTP/1.1 404 Not Found
   server: Ocsigen
   content-length: 16
+  connection: keep-alive
   
   Error: Not Found
