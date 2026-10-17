@@ -66,8 +66,17 @@ let parse_size =
     let l = String.length s in
     let s = Ocsigen_base.Lib.String.remove_spaces s 0 (l - 1) in
     let v l =
-      try Int64.of_string (String.sub s 0 l)
-      with Failure _ -> failwith "Parseconfig.parse_size"
+      match Int64.of_string (String.sub s 0 l) with
+      | n when n >= 0L -> n
+      | _ | (exception Failure _) -> failwith "Parseconfig.parse_size"
+    in
+    (* [scale unit l] is [unit] times the number of the first [l] characters,
+       which must not overflow. *)
+    let scale unit l =
+      let n = v l in
+      if n > Int64.div Int64.max_int unit
+      then failwith "Parseconfig.parse_size"
+      else Int64.mul unit n
     in
     let o l =
       let l1 = l - 1 in
@@ -87,39 +96,39 @@ let parse_size =
          then
            let c1 = String.sub s l1 1 in
            if c1 = "T"
-           then Int64.mul tebi (v l1)
+           then scale tebi l1
            else if c1 = "G"
-           then Int64.mul gibi (v l1)
+           then scale gibi l1
            else if c1 = "M"
-           then Int64.mul mebi (v l1)
+           then scale mebi l1
            else if c1 = "k"
-           then Int64.mul kibi (v l1)
+           then scale kibi l1
            else
              let l2 = l - 2 in
              if l2 > 0
              then
                let c2 = String.sub s l2 2 in
                if c2 = "To" || c2 = "TB"
-               then Int64.mul tera (v l2)
+               then scale tera l2
                else if c2 = "Go" || c2 = "GB"
-               then Int64.mul giga (v l2)
+               then scale giga l2
                else if c2 = "Mo" || c2 = "MB"
-               then Int64.mul mega (v l2)
+               then scale mega l2
                else if c2 = "ko" || c2 = "kB"
-               then Int64.mul kilo (v l2)
+               then scale kilo l2
                else
                  let l3 = l - 3 in
                  if l3 > 0
                  then
                    let c3 = String.sub s l3 3 in
                    if c3 = "Tio" || c3 = "TiB"
-                   then Int64.mul tebi (v l3)
+                   then scale tebi l3
                    else if c3 = "Gio" || c3 = "GiB"
-                   then Int64.mul gibi (v l3)
+                   then scale gibi l3
                    else if c3 = "Mio" || c3 = "MiB"
-                   then Int64.mul mebi (v l3)
+                   then scale mebi l3
                    else if c3 = "kio" || c3 = "kiB"
-                   then Int64.mul kibi (v l3)
+                   then scale kibi l3
                    else o l
                  else o l
              else o l

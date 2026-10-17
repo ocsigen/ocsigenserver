@@ -46,7 +46,10 @@ let () =
     ; "1M"
     ; "infinity"
     ; ""
-    ; "not-a-size" ]
+    ; "not-a-size"
+    ; "-1"
+    ; "-1k"
+    ; "10000000T" ]
 
 (* Feed a single tag through [later_pass], as if it were a child of
    [<server>] in the configuration file, then read the resulting value. *)
