@@ -21,6 +21,11 @@ Incompatible changes:
    through Logs (source ocsigen:main).
  * Ocsigen.Response.to_response_expert takes the method of the request
    (~meth), to send no body in response to HEAD.
+ * The one-command modes (ocsigenserver DIR, --serve, --reverse-proxy) now
+   listen on the loopback interface (127.0.0.1) by default, instead of on all
+   the interfaces, and their startup banner shows the address. The new
+   --address option (and the ?address parameter of Ocsigen.Server.serve and
+   reverse_proxy) chooses another one, such as 0.0.0.0 in a container.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that

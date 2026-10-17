@@ -16,7 +16,14 @@ following options:
          http://localhost:9000), without a configuration file.
 
   -P, --port
-         Port to listen on in serve mode (default 8080).
+         Port to listen on in serve mode or with --reverse-proxy (default
+         8080).
+
+  --address ADDR
+         IP address to listen on in serve mode or with --reverse-proxy
+         (default 127.0.0.1, so the server is only reachable from the same
+         machine). Use 0.0.0.0 to listen on all the IPv4 interfaces, for
+         example in a container.
 
   --directory-listing
          In serve mode, list the contents of directories that have no
