@@ -50,23 +50,27 @@ To make the transition smooth, the [ocsigenserver-compat] package provides every
 old [Ocsigen_xxx] name as an alias to its new module. Existing code keeps
 compiling without changes: just add the package to your [dune] file.
 
-The shims are split to mirror the libraries they alias:
-
-- [ocsigenserver-compat]: old server names ([Ocsigen_server], [Ocsigen_extensions], [Ocsigen_config], ...)
-- [ocsigenserver-compat.baselib]: old base-library names ([Ocsigen_lib], [Ocsigen_cache], ...)
-- [ocsigenserver-compat.http]: old HTTP names ([Ocsigen_header], [Ocsigen_charset_mime])
-
-For example, to keep using the old names in an executable:
+The [ocsigenserver-compat] library provides all the old names. For example, to
+keep using them in an executable:
 {v
 (executable
  (public_name myserver)
  (name main)
- (libraries
-  ocsigenserver
-  ocsigenserver-compat
-  ocsigenserver-compat.baselib
-  ocsigenserver-compat.http))
+ (libraries ocsigenserver ocsigenserver-compat))
 v}
+
+It is made of three parts, which mirror the libraries they alias and can also
+be used on their own:
+
+- old server names ([Ocsigen_server], [Ocsigen_extensions], [Ocsigen_config],
+  ...), only in [ocsigenserver-compat] itself;
+- old base-library names ([Ocsigen_lib], [Ocsigen_cache], ...), in
+  [ocsigenserver-compat.baselib];
+- old HTTP names ([Ocsigen_header], [Ocsigen_charset_mime]), in
+  [ocsigenserver-compat.http].
+
+With Ocsigen Server 8.0.0, [ocsigenserver-compat] did not include the other two
+parts: list the three libraries in your [dune] file if you need to support it.
 
 The compat package is meant as a temporary migration aid: it is recommended to
 update your code to the new module names and drop the dependency once done. The

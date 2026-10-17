@@ -3,8 +3,11 @@
 (library
  (name ocsigenserver_compat)
  (public_name ocsigenserver-compat)
- (synopsis "Backward-compatible Ocsigen_xxx module names (server)")
+ (synopsis "Backward-compatible Ocsigen_xxx module names")
  (wrapped false)
  (flags
   (:standard -w -70))
- (libraries ocsigenserver))
+ (libraries
+  ocsigenserver
+  ocsigenserver-compat.baselib
+  ocsigenserver-compat.http))

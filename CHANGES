@@ -126,6 +126,11 @@ Bug fixes:
  * A response with a status code that Cohttp has no constructor for, such as
    421 relayed by Revproxy from its target, is now sent and logged. Writing
    its access log line failed, and the client got a 500 instead.
+ * The ocsigenserver-compat library now brings the old names of the base
+   library (Ocsigen_lib, ...) and of the HTTP layer (Ocsigen_header, ...) with
+   it, so that code written for Ocsigen Server 7 only needs this one library
+   in its dune file. They used to require ocsigenserver-compat.baselib and
+   ocsigenserver-compat.http as well.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
