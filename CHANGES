@@ -15,6 +15,9 @@ New features:
    exist.
 
 Bug fixes:
+ * In syslog mode, reopening the logs (the reopen_logs order of a log
+   rotation) no longer opens a new socket to syslog each time, which leaked
+   one file descriptor per rotation.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
