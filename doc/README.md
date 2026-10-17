@@ -14,7 +14,7 @@ sources are also what ocaml.org renders.
 | Site configuration (nav, …) | [`doc/wodoc`](wodoc) | wodoc config (S-expression) |
 
 Ocsigen Server has **no client/server split**, so a single `dune build @doc`
-(plain odoc) builds the manual and the API together — no odoc-driver. The left
+(plain odoc) builds the manual and the API together, without odoc-driver. The left
 navigation and page theming are declared in [`doc/wodoc`](wodoc) and produced by
 `wodoc build`.
 
@@ -52,7 +52,7 @@ The CI builds only `dev/`. To publish a stable version, run the **Documentation*
 workflow manually (GitHub → Actions → *Documentation* → "Run workflow") with the
 **version** input (e.g. `1.2.3`). The `release` job freezes the current `dev/`
 docs as `/<version>/`, repoints the `latest` symlink, writes the root redirect
-and refreshes `versions.json` — via `wodoc release --from dev --version <version>`.
+and refreshes `versions.json`, using `wodoc release --from dev --version <version>`.
 No rebuild: the docs of a release are exactly the `dev` docs at that point.
 
 Equivalently, by hand on a `gh-pages` checkout:

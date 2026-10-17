@@ -4,8 +4,8 @@
 ;; (wodoc build runs `dune build @doc` itself when --src is omitted.)
 ;; Ocsigen Server has no client/server split, so plain `dune build @doc` is
 ;; enough (no odoc-driver). Internal links are version-relative via {{base}} and
-;; the version <select> is client-side — fixing the old hardcoded absolute base
-;; (report §14.2 #4) for free. The manual (doc/*.mld) and API live under
+;; the version <select> is client-side. This fixes the old hardcoded absolute
+;; base for free. The manual (doc/*.mld) and API live under
 ;; ocsigenserver/.
 (project ocsigenserver)
 (title Server)

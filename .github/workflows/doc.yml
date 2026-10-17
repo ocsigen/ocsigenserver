@@ -41,8 +41,8 @@ jobs:
       # (the compiler), so they recompiled on every push. Cache the whole _opam
       # switch keyed on the *.opam files (the dep set) and wodoc's HEAD commit; on
       # a cache hit the install is skipped entirely and only ocsigenserver itself
-      # is (re)built by `dune build @doc` in the next step. The key changes — and
-      # the deps/wodoc rebuild once — only when an *.opam file or wodoc move.
+      # is (re)built by `dune build @doc` in the next step. The key changes (and
+      # the deps/wodoc rebuild once) only when an *.opam file or wodoc move.
       - name: Resolve wodoc HEAD commit
         id: wodoc
         run: echo "sha=$(git ls-remote https://github.com/ocsigen/wodoc.git HEAD | cut -f1)" >> "$GITHUB_OUTPUT"
