@@ -254,21 +254,66 @@ let shutdown timeout =
   in
   ignore (Lwt.pick [process (); stop] >>= fun () -> exit 0 : unit Lwt.t)
 
-(* Harden the TLS server context used by Conduit/OpenSSL. Conduit already
-   disables SSLv2/SSLv3 on its default server context; we additionally require
-   TLS 1.2 at minimum (TLS 1.0 and 1.1 are deprecated, RFC 8996) and let the
-   server choose the cipher. The <ciphers>, <dhfile> and <curve> entries of the
-   <ssl> configuration, until now parsed but never applied, are honoured. *)
-let harden_tls_context () =
-  let ctx = Conduit_lwt_unix_ssl.Server.default_ctx in
+(* The TLS context of a service. It requires TLS 1.2 at minimum (TLS 1.0 and
+   1.1 are deprecated, RFC 8996) and lets the server choose the cipher. The
+   <ciphers>, <dhfile> and <curve> entries of the <ssl> configuration are
+   honoured. *)
+let tls_context (crt, key, password) =
+  (* A context for TLS 1.3 only, the protocols that accept all versions being
+     deprecated, then opened to TLS 1.2. *)
+  let ctx = Ssl.create_context Ssl.TLSv1_3 Ssl.Server_context in
   Ssl.set_min_protocol_version ctx Ssl.TLSv1_2;
   Ssl.honor_cipher_order ctx;
-  match Config.get_ssl_info () with
+  (match Config.get_ssl_info () with
   | None -> ()
   | Some {Config.ssl_ciphers; ssl_dhfile; ssl_curve; _} ->
       Option.iter (Ssl.set_cipher_list ctx) ssl_ciphers;
       Option.iter (Ssl.init_dh_from_file ctx) ssl_dhfile;
-      Option.iter (Ssl.init_ec_from_named_curve ctx) ssl_curve
+      Option.iter (Ssl.init_ec_from_named_curve ctx) ssl_curve);
+  Option.iter (Ssl.set_password_callback ctx) password;
+  Ssl.use_certificate ctx crt key;
+  ctx
+
+(* The socket of a connection, for the transports a service listens on. *)
+let fd_of_flow : Conduit_lwt_unix.flow -> Lwt_unix.file_descr option = function
+  | Conduit_lwt_unix.TCP {Conduit_lwt_unix.fd; _}
+  | Conduit_lwt_unix.Domain_socket {Conduit_lwt_unix.fd; _} ->
+      Some fd
+  | Conduit_lwt_unix.Tunnel _ | Conduit_lwt_unix.Vchan _ -> None
+
+(* The TLS session of a connection, or [None] if the handshake failed, as it
+   does for clients that are not speaking TLS. *)
+let accept_tls ctx fd =
+  Lwt.catch
+    (fun () -> Lwt_ssl.ssl_accept fd ctx >|= Option.some)
+    (function
+      | (Ssl.Accept_error _ | Unix.Unix_error _) as exn ->
+          Logs.info ~src:section (fun fmt ->
+            fmt "TLS handshake failed: %s" (Printexc.to_string exn));
+          Lwt.return_none
+      | exn -> Lwt.reraise exn)
+
+let tls_channels sock =
+  ( Lwt_io.make ~mode:Lwt_io.input ~close:Lwt.return (Lwt_ssl.read_bytes sock)
+  , Lwt_io.make ~mode:Lwt_io.output ~close:Lwt.return (Lwt_ssl.write_bytes sock)
+  )
+
+(* Ends a TLS session: what remains of the response is sent, then a single
+   close_notify alert. The close_notify of the client is not waited for (RFC
+   8446, section 6.1), so that a client that never sends it cannot hold the
+   connection. The socket itself is closed by Conduit. *)
+let end_tls sock oc =
+  Lwt.catch
+    (fun () ->
+       Lwt_io.flush oc >>= fun () ->
+       Lwt_ssl.close_notify sock >|= fun (_ : bool) -> ())
+    (function
+      | ( Unix.Unix_error _ | Ssl.Write_error _ | Ssl.Connection_error _
+        | Lwt_io.Channel_closed _ ) as exn ->
+          Logs.debug ~src:section (fun fmt ->
+            fmt "Could not end a TLS session: %s" (Printexc.to_string exn));
+          Lwt.return_unit
+      | exn -> Lwt.reraise exn)
 
 (* What [Cohttp_lwt_unix.Server.create] does, with its handler not exported,
    for an exception that escapes the serving of a connection. *)
@@ -282,14 +327,12 @@ let log_connection_error = function
         fmt "Unhandled exception: %s" (Printexc.to_string exn))
 
 let service ?ssl ~address ~port ~connector () =
-  (match ssl with Some _ -> harden_tls_context () | None -> ());
-  let tls_own_key =
-    match ssl with
-    | Some (crt, key, Some password) ->
-        `TLS (`Crt_file_path crt, `Key_file_path key, `Password password)
-    | Some (crt, key, None) ->
-        `TLS (`Crt_file_path crt, `Key_file_path key, `No_password)
-    | None -> `None
+  (* TLS is handled here rather than by Conduit, so that the handshake and the
+     closing of a session are in the hands of the server. *)
+  let tls =
+    match address, ssl with
+    | `Unix _, _ | _, None -> None
+    | _, Some ssl -> Some (tls_context ssl)
   in
   (* We create a specific context for Conduit. *)
   let src =
@@ -297,25 +340,40 @@ let service ?ssl ~address ~port ~connector () =
     | `Unix _ -> None
     | _ -> Some (Config.Socket_type.to_string address)
   in
-  Conduit_lwt_unix.init ?src ~tls_own_key () >>= fun ctx ->
+  Conduit_lwt_unix.init ?src () >>= fun ctx ->
   (* We catch the INET_ADDR of the server *)
   let callback =
     let ssl = match ssl with Some _ -> true | None -> false in
     handler ~ssl ~address ~port ~connector
   in
   let spec = Cohttp_lwt_unix.Server.make_expert ~conn_closed ~callback () in
+  let serve flow ic oc =
+    Cohttp_lwt_unix.Server.callback spec flow
+      (Cohttp_lwt_unix.Private.Input_channel.create ic)
+      oc
+  in
   let mode =
-    match address, tls_own_key with
-    | `Unix f, _ -> `Unix_domain_socket (`File f)
-    | _, `None -> `TCP (`Port port)
-    | _, `TLS (crt, key, pass) -> `OpenSSL (crt, key, pass, `Port port)
+    match address with
+    | `Unix f -> `Unix_domain_socket (`File f)
+    | _ -> `TCP (`Port port)
   in
   (* Serve each connection here rather than through
      [Cohttp_lwt_unix.Server.create], which does nothing more, so that the
-     input channel can be adjusted before cohttp reads from it. *)
+     channels can be adjusted before cohttp uses them. *)
   Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
     (fun flow ic oc ->
-       Cohttp_lwt_unix.Server.callback spec flow
-         (Cohttp_lwt_unix.Private.Input_channel.create ic)
-         oc)
+       match tls, fd_of_flow flow with
+       | None, _ -> serve flow ic oc
+       | Some _, None ->
+           Logs.err ~src:section (fun fmt ->
+             fmt "TLS is not supported on this kind of connection");
+           Lwt.return_unit
+       | Some tls, Some fd -> (
+           accept_tls tls fd >>= function
+           | None -> Lwt.return_unit
+           | Some sock ->
+               let ic, oc = tls_channels sock in
+               Lwt.finalize
+                 (fun () -> serve flow ic oc)
+                 (fun () -> end_tls sock oc)))
   >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())
