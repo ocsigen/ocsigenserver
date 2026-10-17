@@ -90,10 +90,9 @@ let gen dir = function
                  Cohttp.Request.headers (Ocsigen.Request.to_cohttp request_info)
                in
                let h =
-                 Ocsigen.Request.version request_info
-                 |> Cohttp.Code.string_of_version
-                 |> Cohttp.Header.replace h
-                      Ocsigen_http.Header.Name.(to_string x_forwarded_proto)
+                 Cohttp.Header.replace h
+                   Ocsigen_http.Header.Name.(to_string x_forwarded_proto)
+                   (if Ocsigen.Request.ssl request_info then "https" else "http")
                in
                let h =
                  let forward =

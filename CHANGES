@@ -71,6 +71,8 @@ Bug fixes:
    - an https:// target is contacted over TLS. The scheme of the incoming
      request was used instead, so a request received over HTTP was sent in
      clear to the HTTPS port of the target.
+   - X-Forwarded-Proto is the scheme of the request (http or https), as the
+     target expects. It was the HTTP version (HTTP/1.1).
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
