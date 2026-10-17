@@ -78,6 +78,13 @@ val set_phase : t -> phase -> unit
     the connection has expired, or has been closed, its phase no longer
     changes. *)
 
+val close : t -> unit
+(** [close t] closes the connection of [t] properly, as happens by itself to a
+    connection idle longer than the keep-alive timeout: its reads fail with
+    {!Timed_out}, the pending one and the later ones, and it enters {!Closing}.
+    It is meant for the end of a response after which the connection is not
+    kept alive. *)
+
 val phase : t -> phase
 val expired : t -> bool
 

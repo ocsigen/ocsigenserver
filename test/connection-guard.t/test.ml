@@ -193,6 +193,20 @@ let () =
   run_until_expiry g ~each:(fun i -> if i = 1 then ignore (pending_write t))
 
 let () =
+  section "Closing after a response";
+  let ((t, expired_in) as g) = guard G.Request in
+  let read, _ = pending_read t in
+  G.close t;
+  Printf.printf
+    "the pending read %s, expired: %b, on_expiry called: %b, phase: %s\n"
+    (outcome read) (G.expired t) (!expired_in <> None) (phase_name (G.phase t));
+  Printf.printf "a new read %s, a write %s\n"
+    (outcome (fst (pending_read t)))
+    (outcome (G.write t (fun _ _ _ -> Lwt.return 16) buffer 0 16));
+  print_string "never ended: ";
+  run_until_expiry g
+
+let () =
   section "After the expiry";
   let t, _ = guard G.Headers in
   for _ = 1 to 4 do

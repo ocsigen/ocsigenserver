@@ -37,6 +37,11 @@ timeout.
   a client reading 1 byte every 2 ticks, minimum rate 500 B/s: expired after 4 ticks, in Request
   a write stalled, timeout 0, minimum rate 500 B/s: not expired after 100 ticks
   
+  Closing after a response
+  the pending read failed with Timed_out, expired: false, on_expiry called: false, phase: Closing
+  a new read failed with Timed_out, a write returned 16
+  never ended: expired after 4 ticks, in Closing
+  
   After the expiry
   expired: true
   a new read failed with Timed_out
