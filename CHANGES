@@ -145,6 +145,13 @@ Bug fixes:
    their default level. Since 8.0.0 they only reached the Ocsigen Server
    sources that already existed. The other sources of the libraries linked
    with the server, such as Cohttp's, still keep their level.
+ * A request body shorter than its Content-Length, because the client closed
+   the connection in the middle of it, is no longer handled as if it were
+   complete: reading it fails with Request.Truncated_body, and the request is
+   answered with 400. cohttp takes such an end of connection for the end of
+   the body, so that a raw body, or the last value of a URL-encoded form, was
+   cut short in silence. Multipart bodies were already rejected, for lack of
+   their final boundary. A chunked body cut short is not detected yet.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

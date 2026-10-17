@@ -192,6 +192,8 @@ let to_cohttp ({r_meth; r_encoding; r_version; r_headers; _} as r) =
   Cohttp.Request.make ~meth:r_meth ~encoding:r_encoding ~version:r_version
     ~headers:r_headers (uri r)
 
+exception Truncated_body
+
 let body = function
   | {r_body = {contents = `Unparsed body; _}; _} -> body
   | _ -> failwith "Request.body: body has already been parsed"

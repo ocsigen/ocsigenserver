@@ -152,6 +152,29 @@ let allows_keep_alive version headers =
   | `HTTP_1_1 -> true
   | `HTTP_1_0 | `Other _ -> List.mem "keep-alive" options
 
+(* [body], failing with [Request.Truncated_body] if it ends before the length
+   announced by [request]. cohttp takes the end of the connection in the middle
+   of a body of known length for the end of the body, so that a client that
+   leaves in the middle of an upload would have it handled as if it were
+   complete. A chunked body cannot be checked from here. *)
+let checked_body request body =
+  match
+    body, Http.Header.get_transfer_encoding (Http.Request.headers request)
+  with
+  | `Stream chunks, Http.Transfer.Fixed length ->
+      let received = ref 0L in
+      `Stream
+        (Lwt_stream.from (fun () ->
+           Lwt_stream.get chunks >>= function
+           | Some chunk as c ->
+               received :=
+                 Int64.add !received (Int64.of_int (String.length chunk));
+               Lwt.return c
+           | None when Int64.compare !received length < 0 ->
+               Lwt.fail Request.Truncated_body
+           | None -> Lwt.return_none))
+  | body, _ -> body
+
 let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
   (* cohttp calls this once the headers of [request] have arrived. *)
   Connection_guard.set_phase guard Connection_guard.Request;
@@ -195,6 +218,13 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
       | Unix.Unix_error (Unix.EACCES, _, _) -> None, `Forbidden, None
       | Ext_http_error (code, msg, headers) -> headers, code, msg
       | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request, None
+      (* The body parsers of [Request.post_params] read it through an
+         [Ocsigen_stream], which wraps its failures in [Interrupted]. *)
+      | Request.Truncated_body
+      | Ocsigen_base.Ocsigen_stream.Interrupted Request.Truncated_body ->
+          Logs.info ~src:section (fun fmt ->
+            fmt "The body of a request ended before its Content-Length");
+          None, `Bad_request, None
       | Ocsigen_base.Lib.Ocsigen_Request_too_long ->
           None, `Request_entity_too_large, None
       | Ocsigen_base.Lib.Input_is_too_large ->
@@ -231,7 +261,8 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
-    Request.make ~address ~port ~ssl ~filenames ~client_conn ~body
+    Request.make ~address ~port ~ssl ~filenames ~client_conn
+      ~body:(checked_body request body)
       ~connection_closed request
   in
   Lwt.finalize
