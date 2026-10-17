@@ -114,8 +114,18 @@ let () =
     | ["shutdown"] ->
         Ocsigen_cohttp.shutdown None;
         Lwt.return ()
-    | ["shutdown"; f] ->
-        Ocsigen_cohttp.shutdown (Some (float_of_string f));
+    | ["shutdown"; "notimeout"] ->
+        (* There is no graceful shutdown yet, which this order would wait for
+           without a time limit: the process exits at once, as with no
+           delay. *)
+        Ocsigen_cohttp.shutdown None;
+        Lwt.return ()
+    | ["shutdown"; delay] ->
+        (match float_of_string_opt delay with
+        | Some delay -> Ocsigen_cohttp.shutdown (Some delay)
+        | None ->
+            Logs.err ~src:section (fun fmt ->
+              fmt "shutdown: %S is not a delay in seconds" delay));
         Lwt.return ()
     | ["gc"] ->
         Gc.compact ();

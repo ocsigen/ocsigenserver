@@ -915,13 +915,9 @@ The server process then exits after 10 seconds. During this delay, the server
 keeps working as usual: it still accepts new connections, and it does not wait
 for the requests in progress to finish before exiting.
 
-If you do not want any timeout, do:
-
-{v
-echo shutdown notimeout > /var/run/ocsigenserver_command
-v}
-
-In that case, the server will wait for all the connections to terminate, even if it takes a lot of time.
+The order [shutdown notimeout] is accepted too. It is meant to wait for the
+requests in progress without a time limit, but since the server does not wait
+for them yet, the process exits at once, as with [shutdown].
 
 The [<shutdowntimeout>] option of the configuration file is currently not used
 by this command.
