@@ -148,10 +148,10 @@ type answer =
       of cookies if it wants to set or cookies
       ({!Ocsigen_cookie_map.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
-      subsequent extensions, for example using
-      {!Ocsigen_http_frame.compute_new_ri_cookies}.  The status is
-      usually equal to the one received from preceding extension (but
-      you may want to modify it). *)
+      subsequent extensions, for example using the [cookies_override]
+      argument of {!Ocsigen.Request.update}.  The status is usually equal
+      to the one received from preceding extension (but you may want to
+      modify it). *)
   | Ext_retry_with of request * Ocsigen_cookie_map.t
   (** Used to retry all the extensions with a new request.  The
       extension returns the request (possibly modified) and a set of
@@ -159,7 +159,7 @@ type answer =
       ({!Ocsigen_cookie_map.empty} for no cookies).  You must add
       these cookies yourself in request if you want them to be seen by
       subsequent extensions, for example using
-      {!Ocsigen_http_frame.compute_new_ri_cookies}. *)
+      the [cookies_override] argument of {!Ocsigen.Request.update}. *)
   | Ext_sub_result of extension_composite
   (** Used if your extension want to define option that may contain
       other options from other extensions.  In that case, while
