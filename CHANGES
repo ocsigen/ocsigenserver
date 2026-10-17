@@ -180,17 +180,35 @@ Incompatible changes:
        Ocsigen_config, Ocsigen_extensions, Ocsigen_request,
        Ocsigen_response, Ocsigen_messages, ...)
      * ocsigenserver.baselib: Ocsigen_base.Lib, Ocsigen_base.Cache,
-       Ocsigen_base.Loader (replaces Ocsigen_lib, Ocsigen_cache,
-       Ocsigen_loader)
+       Ocsigen_base.Loader, Ocsigen_base.Config_static (replaces
+       Ocsigen_lib, Ocsigen_cache, Ocsigen_loader, Ocsigen_config_static)
      * ocsigenserver.http: Ocsigen_http.Header,
        Ocsigen_http.Charset_mime (replaces Ocsigen_header,
        Ocsigen_charset_mime)
-   - Modules kept with their existing prefix to avoid name clashes:
-     Ocsigen_cohttp (cohttp conflict), Ocsigen_stream (Stdlib.Stream
-     conflict).
+   - Two modules keep their prefix inside the wrappers, to avoid name
+     clashes: Ocsigen.Ocsigen_cohttp (with Cohttp) and
+     Ocsigen_base.Ocsigen_stream (with Stdlib.Stream).
+   - The migration guide (doc/migration.mld) lists all the renamings.
  * New ocsigenserver-compat opam package: provides the legacy
    Ocsigen_xxx module names as include-aliases of the new wrapped
-   modules. Installing it is enough to keep existing code compiling.
+   modules. Adding the ocsigenserver-compat, ocsigenserver-compat.baselib
+   and ocsigenserver-compat.http libraries to a dune file keeps code that
+   uses the old names compiling, apart from the base library helpers
+   removed below.
+ * OCaml 4.14 or later is required.
+ * Base library: the helpers that duplicate the standard library are removed
+   from Ocsigen_lib_base, and so from Ocsigen_lib (now Ocsigen_base.Lib),
+   which includes it: the Option module (use Stdlib.Option), id (use Fun.id),
+   the leftright type (use Either.t), List.map_filter (use List.filter_map),
+   and the |> and @@ operators (those of Stdlib are the same).
+   ocsigenserver-compat does not restore them.
+ * Logging: the -v, -vv and -vvv options now set the level of the log
+   sources whose name starts with "ocsigen:" and that exist when the command
+   line is read, instead of the level of all the sources, existing or created
+   later. The sources of other libraries, such as Cohttp, are no longer
+   changed. Sources created later, such as those of the extensions loaded
+   from the configuration file, of Eliom or of the applications, stay at the
+   Warning level.
  * Dependencies: the compression backend no longer uses camlzip. The package
    now depends on bytesrw, conf-zlib and conf-zstd instead.
  * Access log: requests are now logged in the standard Apache/nginx Combined
@@ -226,10 +244,17 @@ New features:
    Accept-Ranges, a satisfiable Range yields 206 Partial Content with a
    Content-Range header (honouring If-Range), and an unsatisfiable range gives
    416 (RFC 7233). This enables media streaming and resumable downloads.
+ * OCaml API: Ocsigen.Server.serve and Ocsigen.Server.reverse_proxy start the
+   one-command modes. Also new: Ocsigen.Config.set_global_log_level,
+   set_log_to_stderr and get_log_to_stderr, Ocsigen.Messages.stdio_reporter,
+   Ocsigen.Request.remote_user, set_remote_user and client_ip_to_string,
+   Ocsigen_http.Header.Name.vary, Ocsigen_base.Lib.Url.split_decoded_path and
+   Ocsigen_base.Lib.Date.name_of_month.
  * Documentation: the manual now lives in the main branch as odoc pages
    (doc/*.mld), compiled in place by `dune build @doc`, replacing the
    wikicreole manual of the wikidoc branch. doc/index.mld is the package
-   landing page (manual table of contents + API reference).
+   landing page (manual table of contents), doc/api.mld the API reference
+   and doc/migration.mld the migration guide to 8.0.
 
 Security:
  * The <maxconnected> limit (maximum number of simultaneous connections) is
@@ -261,6 +286,8 @@ Bug fixes:
    uncompressed body, which truncated it, and carried an entity tag that was
    not a valid one. It now drops the stale content-length and announces
    Vary: Accept-Encoding.
+ * An unknown command-line option is now reported with a plain error message,
+   instead of an uncaught exception.
 
 ==== 7.0.0 (2026-02-18) ===
  * Use Log instead og Lwt_logs (by Jules Aguillon)
