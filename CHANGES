@@ -50,7 +50,7 @@ New features:
    such as Eliom RPCs with large parameters, no longer fail.
  * New <loglevel source="name" level="debug"/> configuration option: sets the
    level of a log source by its name, e.g. a debug trace of an extension or an
-   application, which the -v, -vv and -V options do not reach. The levels are
+   application, which the -v, -vv and -vvv options do not reach. The levels are
    set once the configuration is loaded, when the sources of the applications
    exist.
  * The default <maxconnected> is raised from 350 to 10000. Ocsigen Server 8.0
@@ -64,6 +64,10 @@ New features:
    connections any more. This needs Lwt 6.1, to know which engine Lwt uses.
  * Ocsigen Server now depends on conf-libev (except on Windows), so that Lwt
    uses libev, which handles more than the 1024 files of select.
+ * OCaml API: Ocsigen_base.Lib.with_lock runs a function with a mutex held,
+   like Mutex.protect, which OCaml 4.14 does not have.
+   Ocsigen.Messages.level_of_string parses a log level, and set_source_level
+   sets the level of a log source by its name.
 
 Bug fixes:
  * A request with "Connection: close", or an HTTP/1.0 request without
@@ -126,6 +130,10 @@ Bug fixes:
  * A response with a status code that Cohttp has no constructor for, such as
    421 relayed by Revproxy from its target, is now sent and logged. Writing
    its access log line failed, and the client got a 500 instead.
+ * The ssl dependency now requires version 0.7.0 or later, which the TLS
+   hardening of 8.0.0 needs (Ssl.set_min_protocol_version). Ocsigen Server
+   8.0.0 did not build with older versions, although its opam file allowed
+   them.
  * The ocsigenserver-compat library now brings the old names of the base
    library (Ocsigen_lib, ...) and of the HTTP layer (Ocsigen_header, ...) with
    it, so that code written for Ocsigen Server 7 only needs this one library
