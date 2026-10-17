@@ -380,9 +380,9 @@ check_ocamlversion () {
   n1=`echo $version | sed 's/^\([0-9][0-9]*\)\..*$/\1/'`
   n2=`echo $version | sed 's/^[0-9][0-9]*\.\([0-9][0-9]*\)\..*$/\1/'`
   # n3=`echo $version | sed 's/^[0-9][0-9]*\.[0-9][0-9]*\.\([0-9][0-9]*\)\..*$/\1/'`
-  if [ $n1 -eq 3 ] && [ $n2 -lt 12 ]; then
+  if [ $n1 -lt 4 ] || { [ $n1 -eq 4 ] && [ $n2 -lt 14 ]; }; then
       echo;
-      echo "OCaml >= 3.12 is required. Aborting.";
+      echo "OCaml >= 4.14 is required. Aborting.";
       exit 1;
   fi
 
