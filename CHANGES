@@ -15,6 +15,11 @@ New features:
    exist.
 
 Bug fixes:
+ * Errors that the client only sees as a generic status are logged again
+   above the debug level: an internal error (500) as an error, a file the
+   server cannot read (403) as a warning, and a bad or too long request as
+   information. Since error responses no longer carry the exception (8.0.0),
+   a 500 or a 403 could leave no trace in the logs.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

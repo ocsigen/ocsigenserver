@@ -161,6 +161,16 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
       fmt
         ("Got exception while handling request." ^^ "@\n%s")
         (Printexc.to_string exn));
+    (* The client only gets a generic message (below), so the logs must say
+       what went wrong: as an error when the server failed, as a warning when
+       a file could not be read, and as information when the request was bad.
+       The answers an extension chose on purpose stay at the debug level. *)
+    let log level what =
+      Logs.msg ~src:section level (fun fmt ->
+        fmt
+          ("%s while handling request." ^^ "@\n%s")
+          what (Printexc.to_string exn))
+    in
     let headers, ret_code, explicit_msg =
       match exn with
       | Ocsigen_http_error (cookies_to_set, code) ->
@@ -170,22 +180,25 @@ let handler ~ssl ~address ~port ~connector (flow, conn) request body =
           Some headers, code, None
       | Ocsigen_base.Ocsigen_stream.Interrupted
           Ocsigen_base.Ocsigen_stream.Already_read ->
+          log Logs.Error "Error";
           None, `Internal_server_error, None
-      | Unix.Unix_error (Unix.EACCES, _, _) -> None, `Forbidden, None
+      | Unix.Unix_error (Unix.EACCES, _, _) ->
+          log Logs.Warning "Permission denied";
+          None, `Forbidden, None
       | Ext_http_error (code, msg, headers) -> headers, code, msg
-      | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request, None
+      | Ocsigen_base.Lib.Ocsigen_Bad_Request ->
+          log Logs.Info "Bad request";
+          None, `Bad_request, None
       | Ocsigen_base.Lib.Ocsigen_Request_too_long ->
+          log Logs.Info "Request too long";
           None, `Request_entity_too_large, None
       | Ocsigen_base.Lib.Input_is_too_large ->
           Logs.warn ~src:section (fun fmt ->
             fmt
               "Request body too large to be decoded in memory (see the <maxrequestbodysizeinmemory> and <netbuffersize> configuration options)");
           None, `Request_entity_too_large, None
-      | exn ->
-          Logs.err ~src:section (fun fmt ->
-            fmt
-              ("Error while handling request." ^^ "@\n%s")
-              (Printexc.to_string exn));
+      | _ ->
+          log Logs.Error "Error";
           None, `Internal_server_error, None
     in
     let body =
