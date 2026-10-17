@@ -15,7 +15,8 @@ what it received. Self-contained POSIX sh.
 A reverse proxy to the HTTP upstream. The path and the query of the request are
 forwarded. Uri, which builds the request to the target, encodes the query
 again: a "+" becomes "%20", which also means a space in a form, and a ";"
-becomes "%3B". X-Forwarded-Proto gives the scheme of the request:
+becomes "%3B". X-Forwarded-Proto gives the scheme of the request, and
+X-Forwarded-For the address of the client:
 
   $ ocsigenserver --reverse-proxy http://127.0.0.1:8073 --port 8074 \
   >   >proxy.log 2>&1 &
@@ -25,7 +26,7 @@ becomes "%3B". X-Forwarded-Proto gives the scheme of the request:
   path: /a%20b/c?q=1&r=a%20b%2Bc&s=x%3By
   https: false
   x-forwarded-proto: http
-  x-forwarded-for: 127.0.0.1, 0.0.0.0
+  x-forwarded-for: 127.0.0.1
 
 A reverse proxy to the HTTPS upstream contacts it over TLS, whatever the scheme
 of the request it forwards. The proxy checks the certificate of its target, so
@@ -64,4 +65,4 @@ and the scheme of the request it received:
   path: /y
   https: false
   x-forwarded-proto: https
-  x-forwarded-for: forwarded:192.0.2.1, 198.51.100.1, 0.0.0.0
+  x-forwarded-for: 192.0.2.1, 198.51.100.1

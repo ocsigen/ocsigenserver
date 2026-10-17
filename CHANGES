@@ -76,6 +76,10 @@ Bug fixes:
      clear to the HTTPS port of the target.
    - X-Forwarded-Proto is the scheme of the request (http or https), as the
      target expects. It was the HTTP version (HTTP/1.1).
+   - X-Forwarded-For holds bare addresses: the address the server listens on
+     (such as 0.0.0.0) is no longer added at its end, "forwarded:" no longer
+     precedes a client address that comes from a trusted proxy, and a client
+     without an IP address (Unix socket) is "unknown".
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

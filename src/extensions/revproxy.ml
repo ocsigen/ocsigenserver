@@ -45,6 +45,14 @@ let create_redirection
   let regexp = Pcre.regexp ("^" ^ regexp ^ "$") in
   {regexp; dest; full_url; pipeline; keephost}
 
+(* The address of the client, as X-Forwarded-For holds it: an IP address, or
+   "unknown" for a client without one (Unix socket). *)
+let client_address request_info =
+  match Ocsigen.Request.client_conn request_info with
+  | `Inet (ip, _) -> Ipaddr.to_string ip
+  | `Forwarded_for ip -> ip
+  | `Unix _ | `Unknown -> "unknown"
+
 (** Generate the pages from the request *)
 let gen dir = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -96,14 +104,9 @@ let gen dir = function
                in
                let h =
                  let forward =
-                   let address =
-                     Ocsigen.Config.Socket_type.to_string
-                       (Ocsigen.Request.address request_info)
-                   in
                    String.concat ", "
-                     (Ocsigen.Request.client_conn_to_string request_info
-                      :: Ocsigen.Request.forward_ip request_info
-                     @ [address])
+                     (client_address request_info
+                     :: Ocsigen.Request.forward_ip request_info)
                  in
                  Cohttp.Header.replace h
                    Ocsigen_http.Header.Name.(to_string x_forwarded_for)
