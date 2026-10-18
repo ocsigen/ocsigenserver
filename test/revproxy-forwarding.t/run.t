@@ -1,13 +1,17 @@
-What the reverse proxy sends to its target. The upstream server answers with
-what it received. Self-contained POSIX sh.
+What the reverse proxy sends to its target, and what it sends back. The
+upstream server (test.ml) answers with what it received, and the raw one
+(raw.ml) with responses that Ocsigen Server would not send. Self-contained
+POSIX sh.
 
   $ mkdir -p log data
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost \
   >   -addext subjectAltName=DNS:localhost >/dev/null 2>&1
-  $ dune build ./test.exe 2>&1
+  $ dune build ./test.exe ./raw.exe 2>&1
   $ ./_build/default/test.exe >upstream.log 2>&1 &
   $ UPSTREAM="$!"
+  $ ./_build/default/raw.exe >raw.log 2>&1 &
+  $ UPSTREAM="$UPSTREAM $!"
   $ trap 'kill $UPSTREAM $PROXIES 2>/dev/null; wait' EXIT
   $ curl -s -o /dev/null --max-time 10 --retry 20 --retry-delay 1 \
   >   --retry-connrefused http://127.0.0.1:8073/
@@ -82,3 +86,54 @@ connects to the target, not to that host:
   https: false
   x-forwarded-proto: http
   x-forwarded-for: 127.0.0.1
+
+The headers meant for a single connection are not forwarded (RFC 9110, section
+7.6.1): Connection, the headers it names, Keep-Alive, TE and Upgrade.
+Connection cannot name the headers that frame the body, nor those the proxy
+sets or keeps:
+
+  $ curl -s --max-time 10 -H 'X-Hop: 1' -H 'Keep-Alive: timeout=5' \
+  >   -H 'Connection: keep-alive, X-Hop, Content-Length, X-Forwarded-For' \
+  >   -H 'TE: trailers' -H 'Upgrade: h2c' -H 'X-End: 1' --data abc \
+  >   http://127.0.0.1:8074/headers
+  accept: */*
+  content-length: 3
+  content-type: application/x-www-form-urlencoded
+  host: 127.0.0.1:8073
+  x-end: 1
+  x-forwarded-for: 127.0.0.1
+  x-forwarded-proto: http
+  body: abc
+  $ curl -s --max-time 10 -H 'Host: keephost.example' -H 'Connection: Host' \
+  >   http://127.0.0.1:8081/z | grep host
+  host: keephost.example:8073
+
+The response of the target loses its own such headers, and is sent in
+HTTP/1.1. A body that ended with the connection to the target ends with the
+connection to the client (otherwise, curl would fail with its timeout):
+
+  $ ocsigenserver --reverse-proxy http://127.0.0.1:8069 --port 8070 \
+  >   >proxy-raw.log 2>&1 &
+  $ PROXIES="$PROXIES $!"
+  $ curl -s -o /dev/null --max-time 10 --retry 20 --retry-delay 1 \
+  >   --retry-connrefused http://127.0.0.1:8070/length
+  $ curl -si --max-time 10 http://127.0.0.1:8070/http-1.0 >http-1.0.out
+  $ tr -d '\r' <http-1.0.out | grep -iv '^date:'
+  HTTP/1.1 200 OK
+  X-End: 1
+  connection: close
+  server: Ocsigen
+  
+  body ended by the connection
+
+A target that closes its connection after a body of known length does not
+make the proxy close the connection to the client:
+
+  $ curl -si --max-time 10 http://127.0.0.1:8070/length | tr -d '\r' \
+  >   | grep -iv '^date:'
+  HTTP/1.1 200 OK
+  Content-Length: 3
+  server: Ocsigen
+  connection: keep-alive
+  
+  ok

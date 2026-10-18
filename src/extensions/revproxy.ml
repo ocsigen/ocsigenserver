@@ -53,6 +53,44 @@ let client_address request_info =
   | `Forwarded_for ip -> ip
   | `Unix _ | `Unknown -> "unknown"
 
+(* [headers] without those meant for a single connection, which a proxy does
+   not forward (RFC 9110, section 7.6.1): Connection, the headers it names, and
+   those always meant for a single connection. Content-Length,
+   Transfer-Encoding and Host are kept, even when Connection names them: the
+   body is forwarded framed according to the first two, and keephost forwards
+   Host. *)
+let remove_hop_by_hop headers =
+  Ocsigen_http.Header.connection_options headers
+  @ ["connection"; "keep-alive"; "proxy-connection"; "te"; "upgrade"]
+  |> List.filter (fun name ->
+    not (List.mem name ["content-length"; "transfer-encoding"; "host"]))
+  |> List.fold_left Cohttp.Header.remove headers
+
+(* Whether the body of [response], to a request with [meth], is delimited by
+   the end of the connection to the target, having neither a length nor
+   chunks. *)
+let delimited_by_close meth response =
+  match Cohttp.Response.encoding response, meth with
+  | Cohttp.Transfer.Unknown, `HEAD -> false
+  | Cohttp.Transfer.Unknown, _ -> (
+    match Cohttp.Code.code_of_status (Cohttp.Response.status response) with
+    | 204 | 304 -> false
+    | code -> code >= 200)
+  | (Cohttp.Transfer.Chunked | Cohttp.Transfer.Fixed _), _ -> false
+
+(* The response of the target, to a request with [meth], as the server sends
+   it to the client: in its own version of HTTP, without the headers meant for
+   the connection to the target. A body delimited by the end of that
+   connection is delimited by the end of the connection to the client. *)
+let forwarded_response meth response =
+  let headers = remove_hop_by_hop (Cohttp.Response.headers response) in
+  let headers =
+    if delimited_by_close meth response
+    then Cohttp.Header.add headers "connection" "close"
+    else headers
+  in
+  {response with Cohttp.Response.headers; version = `HTTP_1_1}
+
 (** Generate the pages from the request *)
 let gen dir = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -87,8 +125,12 @@ let gen dir = function
             so we return. *)
            let do_request () =
              let headers =
+               (* Removed first, so that Connection cannot name the headers
+                  set below. *)
                let h =
-                 Cohttp.Request.headers (Ocsigen.Request.to_cohttp request_info)
+                 remove_hop_by_hop
+                   (Cohttp.Request.headers
+                      (Ocsigen.Request.to_cohttp request_info))
                in
                let h =
                  Cohttp.Header.replace h
@@ -114,6 +156,7 @@ let gen dir = function
              and body = Ocsigen.Request.body request_info
              and meth = Ocsigen.Request.meth request_info in
              Cohttp_lwt_unix.Client.call ~headers ~body meth target
+             >|= fun (response, body) -> forwarded_response meth response, body
            in
            Lwt.return
            @@ Ocsigen.Extensions.Ext_found
