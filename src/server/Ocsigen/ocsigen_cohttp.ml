@@ -118,8 +118,10 @@ module Access_log = struct
         (Cohttp.Code.string_of_version (Request.version request))
     in
     let status =
+      (* Read from the Cohttp response: [Response.status] fails on a [`Code _]
+         status, such as 421, which Cohttp has no constructor for. *)
       Cohttp.Code.code_of_status
-        (Response.status response :> Cohttp.Code.status_code)
+        (Cohttp.Response.status (Response.response response))
     in
     (* The response size is carried by the body transfer encoding, not a
        header: known for fixed-length bodies (e.g. static files), "-" when
