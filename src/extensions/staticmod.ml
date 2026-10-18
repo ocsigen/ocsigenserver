@@ -24,8 +24,6 @@ module Pcre = Re.Pcre
 let name = "staticmod"
 let section = Logs.Src.create "ocsigen:ext:staticmod"
 
-exception Not_concerned
-
 (* Structures describing the static pages a each virtual server *)
 
 (* A static site is either an entire directory served unconditionally,
@@ -99,7 +97,7 @@ let find_static_page
           match
             Ocsigen_base.Lib.Netstring_pcre.string_match source pathstring 0
           with
-          | None -> raise Not_concerned
+          | None -> raise Ocsigen.Extensions.Not_concerned
           | Some _ -> Ocsigen.Extensions.replace_user_dir source dest pathstring
         and root_checks =
           match rc, usermode with
@@ -113,7 +111,7 @@ let find_static_page
               Some (Ocsigen.Extensions.replace_user_dir source rc pathstring)
         in
         status_filter, file, root_checks
-    | _ -> raise Not_concerned
+    | _ -> raise Ocsigen.Extensions.Not_concerned
   in
   if usermode = None || correct_user_local_file filename
   then

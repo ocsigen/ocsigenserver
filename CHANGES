@@ -106,6 +106,9 @@ Bug fixes:
  * A program that starts Ocsigen Server as a library, and installs no Logs
    reporter, now sees on the terminal the errors that stop the server before
    it configures its logging. Logs dropped them, so the program just exited.
+ * Staticmod: a <static regexp> that does not match the path of the request,
+   or a <static code> that does not match its status, now lets the next
+   instruction answer, instead of failing with a 500.
  * A request with "Connection: close", or an HTTP/1.0 request without
    "Connection: keep-alive", now gets a response with "Connection: close",
    after which the server closes the connection, as RFC 9112 requires, without
