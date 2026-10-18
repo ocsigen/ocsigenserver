@@ -23,12 +23,15 @@ A byte range returns 206 with the right Content-Range and only those bytes:
   $ cat body; echo
   0123
 
-Serve mode compresses text files:
+Serve mode compresses text files, and a compressed response does not offer
+ranges, which are only served from the uncompressed file:
 
   $ curl -s -D h -o /dev/null --max-time 10 -H 'Accept-Encoding: gzip' \
   >   http://127.0.0.1:8066/data.txt
   $ grep -i '^content-encoding:' h | tr -d '\r'
   content-encoding: gzip
+  $ grep -i '^accept-ranges:' h || echo 'no accept-ranges'
+  no accept-ranges
 
 but not a range: it is a part of the uncompressed file, so it goes out as is,
 with its length. The body is shown with od, which keeps a failure readable if

@@ -212,6 +212,14 @@ let stream_filter cfilter contentencoding url choice res =
                        Http.Header.remove headers
                          Ocsigen_http.Header.Name.(to_string content_length)
                      in
+                     (* Byte ranges are only served from the uncompressed
+                        representation (see [may_compress]), so the compressed
+                        one must not offer them: a client resuming a compressed
+                        download would get bytes of the other one. *)
+                     let headers =
+                       Http.Header.remove headers
+                         Ocsigen_http.Header.Name.(to_string accept_ranges)
+                     in
                      Http.Response.make ~headers ~status ~version ()
                    and body =
                      Ocsigen.Response.Body.make Cohttp.Transfer.Chunked

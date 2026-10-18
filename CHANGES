@@ -120,6 +120,9 @@ Bug fixes:
    no chunked framing. This affected byte-range requests for text files in the
    one-command serve mode, where compression is on by default. Responses with
    no body (1xx, 204, 205, 304) are left untouched too.
+ * Deflatemod removes Accept-Ranges from the responses it compresses. Byte
+   ranges are only served from the uncompressed file, so a client resuming a
+   compressed download got bytes of the uncompressed one.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

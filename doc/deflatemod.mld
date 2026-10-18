@@ -132,5 +132,8 @@ sent uncompressed: its range is one of the uncompressed file, and compressing it
 would make the range wrong. Responses with no body (1xx, 204, 205 and 304) are
 left untouched too.
 
+For the same reason, a compressed response does not carry the Accept-Ranges
+header: byte ranges are only served from the uncompressed file.
+
 
 {e Page written by Gabriel Kerneis}
