@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Module Ocsigen.Connection_guard — Server</title>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <link rel="stylesheet" href="/css/ocsigen-odoc.css"/>
+  <link rel="alternate" type="text/markdown" href="../../Ocsigen-Connection_guard.md"/>
+  <script src="../../highlight.pack.js"></script>
+  <script src="../../wodoc-highlight.js"></script>
+</head>
+<body class="wodoc-page wodoc-doc wodoc-project-ocsigenserver">
+  <!-- Shared site menu — THE single source of truth for the header, top menu and
+     drawer of EVERY Ocsigen doc page (vitrine + all projects). Canonical copy
+     lives here in ocsigen.github.io; each project's build fetches it. Injected
+     by `wodoc assemble --menu`. Holes filled by the tool (braces omitted here so
+     this comment is not itself rewritten by the hole-filler):
+       subproject  the sub-project name shown next to the Ocsigen logo
+                   (empty on the vitrine), via --subproject
+       leftnav     the project's left navigation, expanded into BOTH the mobile
+                   drawer (below) and the left column (in the page template),
+                   via --leftnav
+     The current entry is highlighted by adding the `current` class to the
+     element carrying data-wodoc-page=<id>: --current on the vitrine (page id),
+     --menu-current in a project (the project id). Nothing is hardcoded here, so
+     this file is the ONLY place the menu is defined.
+
+     Links are the FINAL site paths (/<project>/, /<page>): the target layout
+     where each project is served at ocsigen.org/<project>/ — no transitional
+     /wodoc/ prefix. -->
+<div class="page-header">
+  <p class="logo-ocsigen"><a href="/"><img src="/img/ocsigen-white.svg" alt="Ocsigen"/></a></p>
+  <p class="logo-subproject">Server</p>
+
+  <div class="mainmenu">
+    <p class="mainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></p>
+    <p class="mainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></p>
+    <p class="mainmenu-blog" data-wodoc-page="blog"><a href="/blog/">Blog</a></p>
+    <p data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></p>
+    <p data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></p>
+    <p data-wodoc-page="ocsigenserver" class="current"><a href="/ocsigenserver/">Server</a></p>
+    <p data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></p>
+    <p data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></p>
+    <p data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></p>
+  </div>
+
+  <form id="googlesearch" action="https://google.com/search">
+    <input name="q" id="gsearch-box" placeholder="Search using Google"/>
+    <label for="gsearch-box"><img src="/img/search.svg" alt="" id="gsearch-icon"/></label>
+    <input type="submit" id="gsearch-submit" onclick="document.getElementById('gsearch-box').value += ' site:ocsigen.org';"/>
+  </form>
+
+  <aside class="how-drawer">
+    <input id="how-drawer-toggle" type="checkbox"/>
+    <label for="how-drawer-toggle" id="how-drawer-label"><span class="how-drawer-icon"></span></label>
+    <nav class="how-drawer-content">
+      <ul class="drawermainmenu">
+        <li class="drawermainmenu-home" data-wodoc-page="githubio"><a href="/">Home</a></li>
+        <li class="drawermainmenu-doc" data-wodoc-page="tuto"><a href="/tuto/">Doc</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="eliom"><a href="/eliom/">Eliom</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="js_of_ocaml"><a href="/js_of_ocaml/">Js_of_ocaml</a></li>
+        <li class="drawermainmenu-project current" data-wodoc-page="ocsigenserver"><a href="/ocsigenserver/">Server</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="lwt"><a href="/lwt/">Lwt</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="tyxml"><a href="/tyxml/">Tyxml</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-toolkit"><a href="/ocsigen-toolkit/">Toolkit</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-start"><a href="/ocsigen-start/">Start</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsipersist"><a href="/ocsipersist/">Ocsipersist</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="reactiveData"><a href="/reactiveData/">ReactiveData</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="ocsigen-i18n"><a href="/ocsigen-i18n/">i18n</a></li>
+        <li class="drawermainmenu-project" data-wodoc-page="wodoc"><a href="/wodoc/">Wodoc</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="projects"><a href="/projects">Other projects</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="papers"><a href="/papers">Research papers</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="credits"><a href="/credits">Who does Ocsigen?</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="contributing"><a href="/contributing">Contributing</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="blog"><a href="/blog/">Blog</a></li>
+        <li class="drawermainmenu-page" data-wodoc-page="install"><a href="/install">Installation</a></li>
+        <li class="drawermainmenu-page"><a href="https://github.com/ocsigen">Source code</a></li>
+      </ul>
+      <!-- On mobile the left column is hidden; its menu lives here in the burger
+           (.how-doctree, shown only on narrow screens), as the old site did.
+           Empty on the vitrine; the leftnav hole is filled (with the same
+           fragment as the left column) only on project pages. -->
+      <nav class="how-doctree"><div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="index.html"><a href="../../index.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching.html"><a href="../../launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config.html"><a href="../../config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink.html"><a href="../../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../../migration.html">Migrating to 8.0</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod.html"><a href="../../staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom.html"><a href="../../eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration.html"><a href="../../extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol.html"><a href="../../accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic.html"><a href="../../authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod.html"><a href="../../deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod.html"><a href="../../redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy.html"><a href="../../revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod.html"><a href="../../rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter.html"><a href="../../outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="securityheaders.html"><a href="../../securityheaders.html">Securityheaders</a></li>
+<li class="ml3" data-wodoc-page="userconf.html"><a href="../../userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors.html"><a href="../../cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend.html"><a href="../../extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api.html"><a href="../../api.html">API reference</a></li>
+</ul>
+</nav>
+</nav>
+    </nav>
+  </aside>
+</div>
+
+
+  <div class="project-page">
+    <div class="twocols">
+      <nav class="leftcol">
+        <div class="docversion">
+  <label>Version:
+    <select class="wodoc-version" onchange="wodocVersion(this.value)">
+      <option value="dev">dev</option>
+    </select>
+  </label>
+</div>
+<div class="page-toc">
+  <h3>On this page</h3>
+  
+</div>
+<nav class="api-nav manual-nav">
+<h3>Usage</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="index.html"><a href="../../index.html">Quick start</a></li>
+<li class="ml3" data-wodoc-page="launching.html"><a href="../../launching.html">Launching the server</a></li>
+<li class="ml3" data-wodoc-page="config.html"><a href="../../config.html">Configuration file</a></li>
+<li class="ml3" data-wodoc-page="staticlink.html"><a href="../../staticlink.html">Using as a library</a></li>
+<li class="ml3" data-wodoc-page="migration.html"><a href="../../migration.html">Migrating to 8.0</a></li>
+</ul>
+<h3>Extensions</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="staticmod.html"><a href="../../staticmod.html">Staticmod</a></li>
+<li class="ml3" data-wodoc-page="eliom.html"><a href="../../eliom.html">Eliom</a></li>
+<li class="ml3" data-wodoc-page="extendconfiguration.html"><a href="../../extendconfiguration.html">Extendconfiguration</a></li>
+<li class="ml3" data-wodoc-page="accesscontrol.html"><a href="../../accesscontrol.html">Accesscontrol</a></li>
+<li class="ml3" data-wodoc-page="authbasic.html"><a href="../../authbasic.html">Authbasic</a></li>
+<li class="ml3" data-wodoc-page="deflatemod.html"><a href="../../deflatemod.html">Deflatemod</a></li>
+<li class="ml3" data-wodoc-page="redirectmod.html"><a href="../../redirectmod.html">Redirectmod</a></li>
+<li class="ml3" data-wodoc-page="revproxy.html"><a href="../../revproxy.html">Revproxy</a></li>
+<li class="ml3" data-wodoc-page="rewritemod.html"><a href="../../rewritemod.html">Rewritemod</a></li>
+<li class="ml3" data-wodoc-page="outputfilter.html"><a href="../../outputfilter.html">Outputfilter</a></li>
+<li class="ml3" data-wodoc-page="securityheaders.html"><a href="../../securityheaders.html">Securityheaders</a></li>
+<li class="ml3" data-wodoc-page="userconf.html"><a href="../../userconf.html">Userconf</a></li>
+<li class="ml3" data-wodoc-page="cors.html"><a href="../../cors.html">CORS</a></li>
+</ul>
+<h3>Developer documentation</h3>
+<ul class="api-section">
+<li class="ml3" data-wodoc-page="extend.html"><a href="../../extend.html">Writing an extension</a></li>
+</ul>
+</nav>
+<nav class="api-nav">
+<h3>API</h3>
+<ul class="api-section">
+<li class="ml2" data-wodoc-page="api.html"><a href="../../api.html">API reference</a></li>
+</ul>
+</nav>
+
+      </nav>
+      <article class="rightcol">
+        <header class="odoc-preamble"><h1>Module <code><span>Ocsigen.Connection_guard</span></code></h1><p>Bounds on how long a connection may wait for its client.</p><p>Each connection is watched by a guard, which knows what the connection is waiting for (its <a href="#val-phase"><code>phase</code></a>) and how long it has been waiting for the client. A single ticker, run once a second for all the connections, expires those that exceed their <a href="#type-limits"><code>limits</code></a>. Reads and writes cost no timer: they only update the counters of their guard.</p><p>Only the time spent waiting for the client counts: the time a read or a write is pending. A request handler that takes long to produce its response, or to read the body of its request, is never cut, and neither is an Eliom comet request waiting for an event.</p></header>
+        <div class="odoc-content"><div class="odoc-spec"><div class="spec exception anchored" id="exception-Timed_out"><code><span><span class="keyword">exception</span> </span><span><span class="exception">Timed_out</span></span></code></div><div class="spec-doc"><p>The failure of a read, a write or an operation on an expired connection.</p></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-limits"><code><span><span class="keyword">type</span> limits</span><span> = </span><span>{</span></code><ol><li id="type-limits.timeout" class="def record field anchored"><code><span>timeout : int;</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>In seconds. It bounds the TLS handshake, the reception of the headers of a request (in total, from the end of the handshake, or from the first byte after an idle period), each read of the body of a request and each write of a response (inactivity), and the end of a connection. <code>0</code> disables these bounds, and the minimum rate.</p><span class="comment-delim">*)</span></div></li><li id="type-limits.keepalive_timeout" class="def record field anchored"><code><span>keepalive_timeout : int;</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>In seconds, how long a connection may stay idle between two requests. <code>0</code> disables this bound.</p><span class="comment-delim">*)</span></div></li><li id="type-limits.min_rate" class="def record field anchored"><code><span>min_rate : int;</span></code><div class="def-doc"><span class="comment-delim">(*</span><p>In bytes per second, the minimum rate of the body of a request, and of a response the client reads, once the client has had <code>timeout</code> seconds of grace. It keeps a client from holding a connection by sending its body, or reading the response, a few bytes at a time. <code>0</code> disables this bound, and so does a <code>timeout</code> of <code>0</code>.</p><span class="comment-delim">*)</span></div></li></ol><code><span>}</span></code></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-phase"><code><span><span class="keyword">type</span> phase</span><span> = </span></code><ol><li id="type-phase.Handshake" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Handshake</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>The TLS handshake.</p><span class="comment-delim">*)</span></div></li><li id="type-phase.Headers" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Headers</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Receiving the headers of a request.</p><span class="comment-delim">*)</span></div></li><li id="type-phase.Idle" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Idle</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Waiting for the next request.</p><span class="comment-delim">*)</span></div></li><li id="type-phase.Request" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Request</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Handling a request: reading its body, producing and sending the response.</p><span class="comment-delim">*)</span></div></li><li id="type-phase.Closing" class="def variant constructor anchored"><code><span>| </span><span><span class="constructor">Closing</span></span></code><div class="def-doc"><span class="comment-delim">(*</span><p>Ending the connection.</p><span class="comment-delim">*)</span></div></li></ol></div></div><div class="odoc-spec"><div class="spec type anchored" id="type-t"><code><span><span class="keyword">type</span> t</span></code></div><div class="spec-doc"><p>The guard of a connection.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-create"><code><span><span class="keyword">val</span> create : <span><a href="#type-limits">limits</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-phase">phase</a> <span class="arrow">&#45;&gt;</span></span> <span><span class="label">on_expiry</span>:<span>(<span><a href="#type-phase">phase</a> <span class="arrow">&#45;&gt;</span></span> unit)</span> <span class="arrow">&#45;&gt;</span></span> <a href="#type-t">t</a></span></code></div><div class="spec-doc"><p><code>create limits phase ~on_expiry</code> is a guard, watched by the ticker from now on, for a connection in <code>phase</code>. When the connection exceeds <code>limits</code>, <code>on_expiry</code> is called with the phase it was in, then the pending operations of the guard fail with <a href="#exception-Timed_out"><code>Timed_out</code></a>, and so do all those that follow.</p><p>A connection that stays <a href="#type-phase.Idle"><code>Idle</code></a> longer than the keep-alive timeout is not expired but closed, its client having done nothing wrong: its reads fail with <a href="#exception-Timed_out"><code>Timed_out</code></a>, the pending one and the later ones, and it enters <a href="#type-phase.Closing"><code>Closing</code></a>, where the server can still end it properly (with a TLS close_notify, for instance) within the timeout. <code>on_expiry</code> is not called then.</p><p>A connection is also closed that way, the oldest first, when the server is full (see <a href="#val-set_capacity"><code>set_capacity</code></a>) and its client is not using it: it is <a href="#type-phase.Idle"><code>Idle</code></a>, in the TLS <a href="#type-phase.Handshake"><code>Handshake</code></a>, or in <a href="#type-phase.Headers"><code>Headers</code></a> without having started a request. A closed handshake fails with <a href="#exception-Timed_out"><code>Timed_out</code></a>. This happens when a new connection fills the server, so that the next client can connect, and at a tick, for connections that became unused once the server was full.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-set_capacity"><code><span><span class="keyword">val</span> set_capacity : <span>int <span class="arrow">&#45;&gt;</span></span> unit</span></code></div><div class="spec-doc"><p><code>set_capacity n</code> records that the server stops accepting connections once <code>n</code> are open. There is no capacity by default.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-release"><code><span><span class="keyword">val</span> release : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> unit</span></code></div><div class="spec-doc"><p><code>release t</code> stops watching <code>t</code>, once its connection has ended.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-set_phase"><code><span><span class="keyword">val</span> set_phase : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><a href="#type-phase">phase</a> <span class="arrow">&#45;&gt;</span></span> unit</span></code></div><div class="spec-doc"><p><code>set_phase t phase</code> records that the connection of <code>t</code> is now in <code>phase</code>. Entering <a href="#type-phase.Request"><code>Request</code></a> resets the counters of the body and of the response. A read of at least one byte while <a href="#type-phase.Idle"><code>Idle</code></a> enters <a href="#type-phase.Headers"><code>Headers</code></a> by itself. Once the connection has expired, or has been closed, its phase no longer changes.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-phase"><code><span><span class="keyword">val</span> phase : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <a href="#type-phase">phase</a></span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-expired"><code><span><span class="keyword">val</span> expired : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> bool</span></code></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-read"><code><span><span class="keyword">val</span> read : 
+  <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<span><span class="xref-unresolved">Lwt_bytes</span>.t <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span>int <a href="../../../../lwt/dev/lwt/Lwt/index.html#val-t">Lwt.t</a></span>)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="xref-unresolved">Lwt_bytes</span>.t <span class="arrow">&#45;&gt;</span></span>
+  <span>int <span class="arrow">&#45;&gt;</span></span>
+  <span>int <span class="arrow">&#45;&gt;</span></span>
+  <span>int <a href="../../../../lwt/dev/lwt/Lwt/index.html#val-t">Lwt.t</a></span></span></code></div><div class="spec-doc"><p><code>read t f</code> is the read function <code>f</code>, watched by <code>t</code>, in the form expected by <code>Lwt_io.make</code>.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-write"><code><span><span class="keyword">val</span> write : 
+  <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span>
+  <span><span>(<span><span class="xref-unresolved">Lwt_bytes</span>.t <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span>int <span class="arrow">&#45;&gt;</span></span> <span>int <a href="../../../../lwt/dev/lwt/Lwt/index.html#val-t">Lwt.t</a></span>)</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="xref-unresolved">Lwt_bytes</span>.t <span class="arrow">&#45;&gt;</span></span>
+  <span>int <span class="arrow">&#45;&gt;</span></span>
+  <span>int <span class="arrow">&#45;&gt;</span></span>
+  <span>int <a href="../../../../lwt/dev/lwt/Lwt/index.html#val-t">Lwt.t</a></span></span></code></div><div class="spec-doc"><p><code>write t f</code> is the write function <code>f</code>, watched by <code>t</code>.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-run"><code><span><span class="keyword">val</span> run : <span><a href="#type-t">t</a> <span class="arrow">&#45;&gt;</span></span> <span><span>(<span>unit <span class="arrow">&#45;&gt;</span></span> <span><span class="type-var">'a</span> <a href="../../../../lwt/dev/lwt/Lwt/index.html#val-t">Lwt.t</a></span>)</span> <span class="arrow">&#45;&gt;</span></span> <span><span class="type-var">'a</span> <a href="../../../../lwt/dev/lwt/Lwt/index.html#val-t">Lwt.t</a></span></span></code></div><div class="spec-doc"><p><code>run t f</code> is <code>f ()</code>, failing with <a href="#exception-Timed_out"><code>Timed_out</code></a> if the connection expires meanwhile. It is meant for the operations bounded by their phase as a whole, such as the TLS handshake.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-start"><code><span><span class="keyword">val</span> start : <span>unit <span class="arrow">&#45;&gt;</span></span> unit</span></code></div><div class="spec-doc"><p><code>start ()</code> starts the ticker, if it is not running yet.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-tick"><code><span><span class="keyword">val</span> tick : <span>unit <span class="arrow">&#45;&gt;</span></span> unit</span></code></div><div class="spec-doc"><p><code>tick ()</code> advances the clock of the guards by one second and expires the connections that exceeded their limits. The ticker calls it every second; it is exposed for tests, which drive the clock themselves instead of calling <a href="#val-start"><code>start</code></a>.</p></div></div><div class="odoc-spec"><div class="spec module anchored" id="module-Per_address"><code><span><span class="keyword">module</span> <a href="Per_address/index.html">Per_address</a></span><span> : <span class="keyword">sig</span> ... <span class="keyword">end</span></span></code></div><div class="spec-doc"><p>Number of simultaneous connections from a single client.</p></div></div></div>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    var wodocPub = "/ocsigenserver";
+    // Switch version: keep the current page, swapping only the version segment,
+    // unless that page does not exist in the target version (a renamed module,
+    // a merged manual page): then go to that version's index.
+    function wodocVersion(v) {
+      if (!v) return;
+      var re = new RegExp('^(' + wodocPub + '/)[^/]+');
+      var p = location.pathname;
+      var home = wodocPub + '/' + v + '/index.html';
+      if (!re.test(p)) { location.href = home; return; }
+      var target = p.replace(re, '$1' + v);
+      fetch(target, { method: 'HEAD' })
+        .then(function (r) { location.href = r.ok ? target : home; })
+        .catch(function () { location.href = target; });
+    }
+    // Build the version <select> from the project's versions.json (the single
+    // source of truth, refreshed on every build/release), so even older frozen
+    // pages list the current set. Falls back to the baked <option>s on failure.
+    (function () {
+      var seg = (location.pathname.match(
+        new RegExp('^' + wodocPub + '/([^/]+)')) || [])[1];
+      function select(sel) {
+        var i;
+        for (i = 0; i < sel.options.length; i++)
+          if (sel.options[i].value === seg) { sel.selectedIndex = i; return; }
+        if (seg) {
+          var o = document.createElement('option');
+          o.value = seg; o.textContent = seg; o.selected = true;
+          sel.insertBefore(o, sel.firstChild);
+        }
+      }
+      fetch(wodocPub + '/versions.json')
+        .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+        .then(function (m) {
+          var list = m.list || [], latest = m.latest;
+          document.querySelectorAll('.wodoc-version').forEach(function (sel) {
+            sel.innerHTML = '';
+            list.forEach(function (v) {
+              var o = document.createElement('option');
+              if (v === latest) { o.value = 'latest'; o.textContent = v + ' (latest)'; }
+              else { o.value = v; o.textContent = v; }
+              sel.appendChild(o);
+            });
+            select(sel);
+          });
+        })
+        .catch(function () {
+          document.querySelectorAll('.wodoc-version').forEach(select);
+        });
+    })();
+  </script>
+</body>
+</html>

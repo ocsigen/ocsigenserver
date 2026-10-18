@@ -92,6 +92,21 @@ val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
 ```
 ```ocaml
+val set_keepalive_timeout : int -> unit
+```
+Seconds a kept-alive connection may stay idle between two requests; 0 for no bound. See `<keepalivetimeout>` in the configuration file.
+
+```ocaml
+val set_min_data_rate : int -> unit
+```
+Bytes per second: the minimum rate of a request body, and of a response the client reads, past a grace of one client timeout; 0 for no minimum. See `<mindatarate>` in the configuration file.
+
+```ocaml
+val set_max_connections_per_address : int -> unit
+```
+The maximum number of simultaneous connections from a single client address; 0 for no limit. See `<maxconnectionsperaddress>` in the configuration file.
+
+```ocaml
 val set_filebuffersize : int -> unit
 ```
 ```ocaml
@@ -195,6 +210,15 @@ val has_configuration_file : unit -> bool
 ```
 returns true if Ocsigen Server is running with a configuration file,
 
+```ocaml
+val get_keepalive_timeout : unit -> int
+```
+```ocaml
+val get_min_data_rate : unit -> int
+```
+```ocaml
+val get_max_connections_per_address : unit -> int
+```
 ```ocaml
 val get_filebuffersize : unit -> int
 ```

@@ -11,6 +11,11 @@ module Config : sig ... end
 Configuring Ocsigen server
 
 ```ocaml
+module Connection_guard : sig ... end
+```
+Bounds on how long a connection may wait for its client.
+
+```ocaml
 module Extensions : sig ... end
 ```
 Extensions interface for Ocsigen Server

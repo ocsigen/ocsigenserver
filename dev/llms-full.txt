@@ -503,7 +503,7 @@ The `logs:` order of the command pipe (see `<commandpipe>` below) sets the level
 
 **Do not launch the server as root.** Run it directly as a dedicated unprivileged user (e.g. `www-data`). To serve a privileged port (80 or 443\) as a non-root user, use one of:
 
-- a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and forwarding to Ocsigenserver on a high port (recommended, see the `<timeout>` note above);
+- a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and forwarding to Ocsigenserver on a high port (recommended, see the `<timeout>` note below);
 - the Linux capability `cap_net_bind_service` on the executable (`setcap 'cap_net_bind_service=+ep' ...`);
 - a firewall/port redirection from 80/443 to a high port.
 
@@ -585,22 +585,64 @@ Use this option for debugging your Web sites. Full error messages will be writte
 
 #### `<maxconnected>` : Maximum number of simultaneous connections
 
-Example:
+The maximum number of connections open at once, on all the ports together. Each port counts as one connection while it waits for a new one, so the server is full slightly before this number. Default: 350\. Example:
 
 ```
 <maxconnected>500</maxconnected>
 ```
+When the server is full, it makes room for a new client by closing the connection that has waited the longest among those that their clients are not using: idle between two requests, without the start of a request, or with a TLS handshake not finished. The closing is logged at the `info` level. When all the connections are in use, new connections wait until others end.
+
+Since a connection counts until it ends, the timeouts below matter: they keep clients that are slow, or pretend to be, from holding connections for ever. A client that sends its requests slowly, and opens a new connection each time one is cut, can still take many connections: `<maxconnectionsperaddress>` limits how many a single client address may take.
 
 #### `<timeout>` : Timeout for connections
 
-Written in seconds. Example:
+Written in seconds; `<clienttimeout>` is an alias. Default: 30\. Example:
 
 ```
 <timeout>20</timeout>
 ```
-**Limitation.** This option (and its aliases `<clienttimeout>` and `<servertimeout>`) is currently parsed but **not enforced**: the cohttp-based connection handling does not yet apply a per-connection idle/read timeout. As a consequence Ocsigenserver does **not** protect against slow-client ("Slowloris") attacks on its own, where a client opens many connections and sends the request very slowly to exhaust resources.
+The timeout bounds how long the server waits for a client, in a way that depends on what the connection is waiting for:
 
-**Recommendation.** For an Internet-facing deployment, place a reverse proxy (nginx, HAProxy, Caddy, ...) in front of Ocsigenserver. The proxy enforces read/idle timeouts, buffers slow clients, terminates TLS and absorbs malformed requests. The `<maxconnected>` limit above does cap the number of simultaneous connections, which mitigates connection exhaustion.
+- the TLS handshake, and the headers of a request, must have arrived in full within the timeout, counted from the opening of the connection (for the headers, from the end of the handshake), or from the first byte of the request after an idle period. A client that sends its request slowly, even one byte at a time ("Slowloris"), cannot hold a connection;
+- the body of a request must keep coming: each part of it must arrive within the timeout after the previous one, and it must also keep the minimum rate set by `<mindatarate>`;
+- likewise, a client must keep reading its response: each part of it must be taken within the timeout, at the minimum rate;
+- producing the response is not bounded: a long computation, a streamed response or an Eliom comet request, which waits for an event, is not cut. Only the time spent waiting for the client counts.
+A connection that exceeds these bounds is closed without an answer, and the closing is logged at the `info` level with the address of the client. The server checks the bounds once a second, so a connection is closed up to two seconds after its bound, never before. A value of `0` disables the timeout, and the minimum rate of `<mindatarate>` with it.
+
+`<servertimeout>` is accepted for compatibility, but has no effect, and a warning says so.
+
+#### `<keepalivetimeout>` : Timeout for idle connections
+
+Written in seconds. Default: 75, as in nginx. Example:
+
+```
+<keepalivetimeout>30</keepalivetimeout>
+```
+How long a connection may stay idle between two requests (HTTP keep-alive) before the server closes it. Once the first byte of the next request arrives, the request is bounded by `<timeout>`. A value of `0` disables this bound.
+
+Behind a reverse proxy that keeps its connections to Ocsigenserver alive, this value must be larger than the idle timeout of the proxy (60 seconds for nginx and for AWS load balancers), so that the proxy closes an idle connection first: otherwise the proxy may send a request on a connection at the moment the server closes it, and answer that request with an error (502).
+
+#### `<mindatarate>` : Minimum data rate
+
+Written in bytes per second. Default: 500, as the `MinRate` of Apache's `mod_reqtimeout`, which bounds requests only. Example:
+
+```
+<mindatarate>1000</mindatarate>
+```
+The minimum rate at which a client must send the body of a request, and read its response, once it has had `<timeout>` seconds of grace. It keeps a client from holding a connection by sending a body, or reading a response, a few bytes at a time ("R-U-Dead-Yet" and "Slow Read" attacks), each within the timeout. Only the time spent waiting for the client counts: a body that the server reads slowly, or a response that it produces slowly, does not make the client too slow. A value of `0` disables this bound, and so does a `<timeout>` of `0`.
+
+#### `<maxconnectionsperaddress>` : Maximum number of connections per client
+
+Default: no limit. Example:
+
+```
+<maxconnectionsperaddress>32</maxconnectionsperaddress>
+```
+The maximum number of connections a single client may have open at once. A further connection is closed as soon as it is accepted, and logged at the `info` level. This keeps a single client from taking all the connections that `<maxconnected>` allows. An IPv6 address counts for its /64 network, the usual allocation to a single site. Connections through Unix domain sockets are not limited.
+
+Browsers open up to six connections per site, and several users may share an address (behind a NAT, in a company or on a mobile network), so the limit should not be too low. Behind a reverse proxy, all the connections come from the address of the proxy: leave this limit out, and set it in the proxy instead.
+
+**Recommendation.** For an Internet-facing deployment, a reverse proxy (nginx, HAProxy, Caddy, ...) in front of Ocsigenserver still brings what the server does not do itself: buffering slow clients, so that they do not hold a connection to the server at all, rate limiting, and obtaining certificates.
 
 #### `<shutdowntimeout>` : Timeout for graceful shutdown *From version 1\.3*
 
@@ -2500,6 +2542,21 @@ val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
 ```
 ```ocaml
+val set_keepalive_timeout : int -> unit
+```
+Seconds a kept-alive connection may stay idle between two requests; 0 for no bound. See `<keepalivetimeout>` in the configuration file.
+
+```ocaml
+val set_min_data_rate : int -> unit
+```
+Bytes per second: the minimum rate of a request body, and of a response the client reads, past a grace of one client timeout; 0 for no minimum. See `<mindatarate>` in the configuration file.
+
+```ocaml
+val set_max_connections_per_address : int -> unit
+```
+The maximum number of simultaneous connections from a single client address; 0 for no limit. See `<maxconnectionsperaddress>` in the configuration file.
+
+```ocaml
 val set_filebuffersize : int -> unit
 ```
 ```ocaml
@@ -2604,6 +2661,15 @@ val has_configuration_file : unit -> bool
 returns true if Ocsigen Server is running with a configuration file,
 
 ```ocaml
+val get_keepalive_timeout : unit -> int
+```
+```ocaml
+val get_min_data_rate : unit -> int
+```
+```ocaml
+val get_max_connections_per_address : unit -> int
+```
+```ocaml
 val get_filebuffersize : unit -> int
 ```
 ```ocaml
@@ -2663,6 +2729,136 @@ val get_ssl_ports : unit -> (socket_type * int) list
 ```ocaml
 val display_version : unit -> 'a
 ```
+
+
+---
+
+# Module `Connection_guard.Per_address`
+
+Number of simultaneous connections from a single client.
+
+```ocaml
+val acquire : limit:int -> Ipaddr.t -> bool
+```
+`acquire ~limit ip` counts a new connection from `ip`, unless `limit` connections from it are already open, in which case it is `false`. Addresses are grouped as clients are: an IPv6 address counts for its /64 network, the usual allocation to a single site, and an IPv4-mapped IPv6 address for its IPv4 address. A `limit` of `0` or less means no limit.
+
+```ocaml
+val release : Ipaddr.t -> unit
+```
+`release ip` counts the end of a connection from `ip` that [`acquire`](./#val-acquire) accepted.
+
+```ocaml
+val count : Ipaddr.t -> int
+```
+`count ip` is the number of connections from the group of `ip`.
+
+
+---
+
+# Module `Ocsigen.Connection_guard`
+
+Bounds on how long a connection may wait for its client.
+
+Each connection is watched by a guard, which knows what the connection is waiting for (its [`phase`](./#val-phase)) and how long it has been waiting for the client. A single ticker, run once a second for all the connections, expires those that exceed their [`limits`](./#type-limits). Reads and writes cost no timer: they only update the counters of their guard.
+
+Only the time spent waiting for the client counts: the time a read or a write is pending. A request handler that takes long to produce its response, or to read the body of its request, is never cut, and neither is an Eliom comet request waiting for an event.
+
+```ocaml
+exception Timed_out
+```
+The failure of a read, a write or an operation on an expired connection.
+
+```ocaml
+type limits = {
+  timeout : int; (* In seconds. It bounds the TLS handshake, the reception of the headers of a request (in total, from the end of the handshake, or from the first byte after an idle period), each read of the body of a request and each write of a response (inactivity), and the end of a connection. 0 disables these bounds, and the minimum rate. *)
+  keepalive_timeout : int; (* In seconds, how long a connection may stay idle between two requests. 0 disables this bound. *)
+  min_rate : int; (* In bytes per second, the minimum rate of the body of a request, and of a response the client reads, once the client has had timeout seconds of grace. It keeps a client from holding a connection by sending its body, or reading the response, a few bytes at a time. 0 disables this bound, and so does a timeout of 0. *)
+}
+```
+```ocaml
+type phase = 
+  | Handshake (* The TLS handshake. *)
+  | Headers (* Receiving the headers of a request. *)
+  | Idle (* Waiting for the next request. *)
+  | Request (* Handling a request: reading its body, producing and sending the response. *)
+  | Closing (* Ending the connection. *)
+```
+```ocaml
+type t
+```
+The guard of a connection.
+
+```ocaml
+val create : limits -> phase -> on_expiry:(phase -> unit) -> t
+```
+`create limits phase ~on_expiry` is a guard, watched by the ticker from now on, for a connection in `phase`. When the connection exceeds `limits`, `on_expiry` is called with the phase it was in, then the pending operations of the guard fail with [`Timed_out`](./#exception-Timed_out), and so do all those that follow.
+
+A connection that stays [`Idle`](./#type-phase.Idle) longer than the keep-alive timeout is not expired but closed, its client having done nothing wrong: its reads fail with [`Timed_out`](./#exception-Timed_out), the pending one and the later ones, and it enters [`Closing`](./#type-phase.Closing), where the server can still end it properly (with a TLS close\_notify, for instance) within the timeout. `on_expiry` is not called then.
+
+A connection is also closed that way, the oldest first, when the server is full (see [`set_capacity`](./#val-set_capacity)) and its client is not using it: it is [`Idle`](./#type-phase.Idle), in the TLS [`Handshake`](./#type-phase.Handshake), or in [`Headers`](./#type-phase.Headers) without having started a request. A closed handshake fails with [`Timed_out`](./#exception-Timed_out). This happens when a new connection fills the server, so that the next client can connect, and at a tick, for connections that became unused once the server was full.
+
+```ocaml
+val set_capacity : int -> unit
+```
+`set_capacity n` records that the server stops accepting connections once `n` are open. There is no capacity by default.
+
+```ocaml
+val release : t -> unit
+```
+`release t` stops watching `t`, once its connection has ended.
+
+```ocaml
+val set_phase : t -> phase -> unit
+```
+`set_phase t phase` records that the connection of `t` is now in `phase`. Entering [`Request`](./#type-phase.Request) resets the counters of the body and of the response. A read of at least one byte while [`Idle`](./#type-phase.Idle) enters [`Headers`](./#type-phase.Headers) by itself. Once the connection has expired, or has been closed, its phase no longer changes.
+
+```ocaml
+val phase : t -> phase
+```
+```ocaml
+val expired : t -> bool
+```
+```ocaml
+val read : 
+  t ->
+  (Lwt_bytes.t -> int -> int -> int Lwt.t) ->
+  Lwt_bytes.t ->
+  int ->
+  int ->
+  int Lwt.t
+```
+`read t f` is the read function `f`, watched by `t`, in the form expected by `Lwt_io.make`.
+
+```ocaml
+val write : 
+  t ->
+  (Lwt_bytes.t -> int -> int -> int Lwt.t) ->
+  Lwt_bytes.t ->
+  int ->
+  int ->
+  int Lwt.t
+```
+`write t f` is the write function `f`, watched by `t`.
+
+```ocaml
+val run : t -> (unit -> 'a Lwt.t) -> 'a Lwt.t
+```
+`run t f` is `f ()`, failing with [`Timed_out`](./#exception-Timed_out) if the connection expires meanwhile. It is meant for the operations bounded by their phase as a whole, such as the TLS handshake.
+
+```ocaml
+val start : unit -> unit
+```
+`start ()` starts the ticker, if it is not running yet.
+
+```ocaml
+val tick : unit -> unit
+```
+`tick ()` advances the clock of the guards by one second and expires the connections that exceeded their limits. The ticker calls it every second; it is exposed for tests, which drive the clock themselves instead of calling [`start`](./#val-start).
+
+```ocaml
+module Per_address : sig ... end
+```
+Number of simultaneous connections from a single client.
 
 
 ---
@@ -3634,6 +3830,9 @@ val start :
   ?maxthreads:int ->
   ?max_number_of_connections:int ->
   ?client_timeout:int ->
+  ?keepalive_timeout:int ->
+  ?min_data_rate:int ->
+  ?max_connections_per_address:int ->
   ?server_timeout:int ->
   ?shutdown_timeout:float option ->
   ?filebuffersize:int ->
@@ -3726,6 +3925,11 @@ Extending server commands
 module Config : sig ... end
 ```
 Configuring Ocsigen server
+
+```ocaml
+module Connection_guard : sig ... end
+```
+Bounds on how long a connection may wait for its client.
 
 ```ocaml
 module Extensions : sig ... end
@@ -7358,6 +7562,21 @@ val set_client_timeout : int -> unit
 val set_server_timeout : int -> unit
 ```
 ```ocaml
+val set_keepalive_timeout : int -> unit
+```
+Seconds a kept-alive connection may stay idle between two requests; 0 for no bound. See `<keepalivetimeout>` in the configuration file.
+
+```ocaml
+val set_min_data_rate : int -> unit
+```
+Bytes per second: the minimum rate of a request body, and of a response the client reads, past a grace of one client timeout; 0 for no minimum. See `<mindatarate>` in the configuration file.
+
+```ocaml
+val set_max_connections_per_address : int -> unit
+```
+The maximum number of simultaneous connections from a single client address; 0 for no limit. See `<maxconnectionsperaddress>` in the configuration file.
+
+```ocaml
 val set_filebuffersize : int -> unit
 ```
 ```ocaml
@@ -7461,6 +7680,15 @@ val has_configuration_file : unit -> bool
 ```
 returns true if Ocsigen Server is running with a configuration file,
 
+```ocaml
+val get_keepalive_timeout : unit -> int
+```
+```ocaml
+val get_min_data_rate : unit -> int
+```
+```ocaml
+val get_max_connections_per_address : unit -> int
+```
 ```ocaml
 val get_filebuffersize : unit -> int
 ```
@@ -8582,6 +8810,9 @@ val start :
   ?maxthreads:int ->
   ?max_number_of_connections:int ->
   ?client_timeout:int ->
+  ?keepalive_timeout:int ->
+  ?min_data_rate:int ->
+  ?max_connections_per_address:int ->
   ?server_timeout:int ->
   ?shutdown_timeout:float option ->
   ?filebuffersize:int ->

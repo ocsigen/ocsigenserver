@@ -35,6 +35,8 @@
 - [Module `Ocsigen.Command`](Ocsigen-Command.md)
 - [Module `Config.Socket_type`](Ocsigen-Config-Socket_type.md)
 - [Module `Ocsigen.Config`](Ocsigen-Config.md)
+- [Module `Connection_guard.Per_address`](Ocsigen-Connection_guard-Per_address.md)
+- [Module `Ocsigen.Connection_guard`](Ocsigen-Connection_guard.md)
 - [Module `Extensions.Configuration`](Ocsigen-Extensions-Configuration.md)
 - [Module `Ocsigen.Extensions`](Ocsigen-Extensions.md)
 - [Module `Ocsigen.Local_files`](Ocsigen-Local_files.md)
