@@ -349,8 +349,10 @@ are [debug], [info], [notice], [warning], [error] and [fatal] (the same as
 children of [<server>].
 
 It is meant for the sources of extensions and applications, a debug trace in
-particular, that the command-line options [-v], [-vv] and [-vvv] do not reach:
-these set the level of Ocsigen Server's own sources only.
+particular. The command-line options [-v], [-vv] and [-vvv] set the level of
+Ocsigen Server's own sources and of the sources created after the command line
+is read, but not of the other sources of the libraries the server is linked
+with; [<loglevel>] sets the level of any source, and takes precedence.
 
 The levels are set once the whole configuration file is loaded, since the
 sources of an application are made when its modules load, and again when it is

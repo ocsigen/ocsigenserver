@@ -49,10 +49,10 @@ New features:
    8192 bytes to 1 MiB, so that urlencoded POST requests larger than 8 kB,
    such as Eliom RPCs with large parameters, no longer fail.
  * New <loglevel source="name" level="debug"/> configuration option: sets the
-   level of a log source by its name, e.g. a debug trace of an extension or an
-   application, which the -v, -vv and -vvv options do not reach. The levels are
-   set once the configuration is loaded, when the sources of the applications
-   exist.
+   level of a log source by its name, e.g. a debug trace of one extension or
+   application only, or a source of a library linked with the server, which
+   the -v, -vv and -vvv options do not reach. The levels are set once the
+   configuration is loaded, when the sources of the applications exist.
  * The default <maxconnected> is raised from 350 to 10000. Ocsigen Server 8.0
    was the first to enforce it, and an Eliom application keeps a connection
    for each page in use, for its comet channel: 350 were too few.
@@ -139,6 +139,12 @@ Bug fixes:
    it, so that code written for Ocsigen Server 7 only needs this one library
    in its dune file. They used to require ocsigenserver-compat.baselib and
    ocsigenserver-compat.http as well.
+ * The -v, -vv and -vvv options set again the level of the log sources
+   created after the command line is read, such as those of the extensions
+   loaded from the configuration file, of Eliom or of the application, as
+   their default level. Since 8.0.0 they only reached the Ocsigen Server
+   sources that already existed. The other sources of the libraries linked
+   with the server, such as Cohttp's, still keep their level.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

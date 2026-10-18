@@ -156,3 +156,21 @@ let () =
   print_endline "tags without effect:";
   Ocsigen.Parseconfig.later_pass
     [Xml.Element ("servertimeout", [], [Xml.PCData "20"])]
+
+(* The -vv option sets the level of the existing Ocsigen Server sources, and
+   the default level of the sources created afterwards (those of the
+   extensions loaded from the configuration file, of Eliom, of the
+   application). The other existing sources keep theirs. *)
+let () =
+  let library = Logs.Src.create "test:library" in
+  let ocsigen =
+    List.find (fun s -> Logs.Src.name s = "ocsigen:config") (Logs.Src.list ())
+  in
+  Ocsigen.Config.set_veryverbose ();
+  let later = Logs.Src.create "test:later" in
+  let level src = Logs.level_to_string (Logs.Src.level src) in
+  print_newline ();
+  print_endline "-vv:";
+  Printf.printf "existing Ocsigen source -> %s\n" (level ocsigen);
+  Printf.printf "existing other source -> %s\n" (level library);
+  Printf.printf "source created afterwards -> %s\n" (level later)

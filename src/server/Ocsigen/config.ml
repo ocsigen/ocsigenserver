@@ -40,7 +40,14 @@ end
 
 type socket_type = Socket_type.t
 
+(* The sources that exist when the command line is read are those of Ocsigen
+   Server and of the libraries it is linked with: only Ocsigen Server's own get
+   the new level, so that, for instance, the debug messages of Cohttp stay
+   hidden. The sources created afterwards, such as those of the extensions
+   loaded from the configuration file, of Eliom or of the application, get it
+   as their default level. *)
 let set_global_log_level lvl =
+  Logs.set_level ~all:false lvl;
   let open Logs.Src in
   List.iter
     (fun src ->
