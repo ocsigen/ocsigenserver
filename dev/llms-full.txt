@@ -1613,6 +1613,12 @@ No, it doesn't. Content-encoding is definitely a better solution, providing end 
 
 As it cannot compute the new content-length, deflatemod uses chunked-encoding. This is the recommended way to go.
 
+### Which responses are compressed?
+
+Only responses that carry a whole representation. A partial response (206, the answer to a byte-range request), or any response with a Content-Range header, is sent uncompressed: its range is one of the uncompressed file, and compressing it would make the range wrong. Responses with no body (1xx, 204, 205 and 304\) are left untouched too.
+
+For the same reason, a compressed response does not carry the Accept-Ranges header: byte ranges are only served from the uncompressed file.
+
 *Page written by Gabriel Kerneis*
 
 
