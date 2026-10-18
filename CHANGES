@@ -114,6 +114,15 @@ Bug fixes:
    temporary directory, where another local user could create it first and send
    orders to the server. These modes have no configuration file to reload and
    log to the terminal; the server is stopped with a signal.
+ * Deflatemod no longer compresses partial responses (206), nor any response
+   with a Content-Range. The compressed body did not match its Content-Range,
+   which counts bytes of the uncompressed file, and went out with no length and
+   no chunked framing. This affected byte-range requests for text files in the
+   one-command serve mode, where compression is on by default. Responses with
+   no body (1xx, 204, 205, 304) are left untouched too.
+ * Deflatemod removes Accept-Ranges from the responses it compresses. Byte
+   ranges are only served from the uncompressed file, so a client resuming a
+   compressed download got bytes of the uncompressed one.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
