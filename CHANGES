@@ -154,6 +154,9 @@ New features:
  * The server warns about <filebuffersize>, <minthreads>, <maxthreads>,
    <disablepartialrequests/> and <respectpipeline/> in the configuration
    file, as it does for <servertimeout>: they are accepted but have no effect.
+ * OCaml API: Ocsigen.Extensions.host_regexp compiles a host pattern of a
+   virtual host, and Ocsigen.Extensions.without_final_dot removes the final
+   dot of a host name.
 
 Bug fixes:
  * In syslog mode, reopening the logs (the reopen_logs order of a log
@@ -296,6 +299,11 @@ Bug fixes:
    negative size made every request body fail. The setters of Config,
    Server.start, Server.host and Extendconfiguration.maxuploadfilesize raise
    Invalid_argument for a negative size.
+ * Virtual hosts now match host names case-insensitively, and ignore a final
+   dot in the host name ("example.org."), in the request as in hostfilter. A
+   request for "EXAMPLE.ORG" used to miss the <host hostfilter="example.org">
+   configuration, and its access restrictions, and could be served by another
+   host.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

@@ -222,7 +222,8 @@ let parse_host_field =
     with Not_found ->
       let r =
         match hostfilter with
-        | None -> ["*", Netstring_pcre.regexp ".*$", None] (* default = "*:*" *)
+        | None ->
+            ["*", Extensions.host_regexp ".*$", None] (* default = "*:*" *)
         | Some s ->
             let parse_one_host ss =
               let host, port =
@@ -239,12 +240,15 @@ let parse_host_field =
                 | Not_found -> ss, None
                 | Failure _ -> raise (Config_file_error "bad port number")
               in
+              (* Host names are matched without their final dot (see
+                 [Extensions.host_match]). *)
+              let host = Extensions.without_final_dot host in
               let split_host = function
                 | Str.Delim _ -> ".*"
                 | Str.Text t -> Re.Pcre.quote t
               in
               ( host
-              , Netstring_pcre.regexp
+              , Extensions.host_regexp
                   (String.concat ""
                      (List.map split_host
                         (Str.full_split (Str.regexp "[*]+") host)
