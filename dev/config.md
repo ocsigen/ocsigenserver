@@ -293,7 +293,7 @@ Example:
 
 Sets the level of a [Logs](https://erratique.ch/software/logs) source, by its name: the messages of that source below this level are not logged. The levels are `debug`, `info`, `notice`, `warning`, `error` and `fatal` (the same as `error`). The tag may appear several times, once per source, anywhere among the children of `<server>`.
 
-It is meant for the sources of extensions and applications, a debug trace in particular, that the command-line options `-v`, `-vv` and `-V` do not reach: these set the level of Ocsigen Server's own sources only.
+It is meant for the sources of extensions and applications, a debug trace in particular, that the command-line options `-v`, `-vv` and `-vvv` do not reach: these set the level of Ocsigen Server's own sources only.
 
 The levels are set once the whole configuration file is loaded, since the sources of an application are made when its modules load, and again when it is reloaded. A warning is logged for a name that no source has.
 

@@ -486,7 +486,7 @@ Example:
 
 Sets the level of a [Logs](https://erratique.ch/software/logs) source, by its name: the messages of that source below this level are not logged. The levels are `debug`, `info`, `notice`, `warning`, `error` and `fatal` (the same as `error`). The tag may appear several times, once per source, anywhere among the children of `<server>`.
 
-It is meant for the sources of extensions and applications, a debug trace in particular, that the command-line options `-v`, `-vv` and `-V` do not reach: these set the level of Ocsigen Server's own sources only.
+It is meant for the sources of extensions and applications, a debug trace in particular, that the command-line options `-v`, `-vv` and `-vvv` do not reach: these set the level of Ocsigen Server's own sources only.
 
 The levels are set once the whole configuration file is loaded, since the sources of an application are made when its modules load, and again when it is reloaded. A warning is logged for a name that no source has.
 
@@ -1096,29 +1096,27 @@ The historical flat `Ocsigen_xxx` modules are now grouped under three namespaces
 
 ### Modules that keep their name
 
-A few public modules are unchanged and need no update: `Ocsigen_lib_base`, `Polytables`, `Ocsigen_cookie_map` and the main `Ocsigenserver` module.
+A few public modules keep their name: `Ocsigen_lib_base`, `Polytables` and `Ocsigen_cookie_map`. Code that uses `Ocsigen_lib_base` needs an update only for the helpers removed from the base library (see below).
 
 ## The ocsigenserver-compat package
 
-To make the transition smooth, the `ocsigenserver-compat` package provides every old `Ocsigen_xxx` name as an alias to its new module. Existing code keeps compiling without changes: just add the package to your `dune` file.
+To make the transition smooth, the `ocsigenserver-compat` package provides every old `Ocsigen_xxx` name as an alias to its new module. Code that uses the old names keeps compiling once the library is added to its `dune` file, apart from the helpers removed from the base library (see below).
 
-The shims are split to mirror the libraries they alias:
-
-- `ocsigenserver-compat`: old server names (`Ocsigen_server`, `Ocsigen_extensions`, `Ocsigen_config`, ...)
-- `ocsigenserver-compat.baselib`: old base-library names (`Ocsigen_lib`, `Ocsigen_cache`, ...)
-- `ocsigenserver-compat.http`: old HTTP names (`Ocsigen_header`, `Ocsigen_charset_mime`)
 For example, to keep using the old names in an executable:
 
 ```
 (executable
  (public_name myserver)
  (name main)
- (libraries
-  ocsigenserver
-  ocsigenserver-compat
-  ocsigenserver-compat.baselib
-  ocsigenserver-compat.http))
+ (libraries ocsigenserver ocsigenserver-compat))
 ```
+It is made of three parts, which mirror the libraries they alias and can also be used on their own:
+
+- old server names (`Ocsigen_server`, `Ocsigen_extensions`, `Ocsigen_config`, ...), only in `ocsigenserver-compat` itself;
+- old base-library names (`Ocsigen_lib`, `Ocsigen_cache`, ...), in `ocsigenserver-compat.baselib`;
+- old HTTP names (`Ocsigen_header`, `Ocsigen_charset_mime`), in `ocsigenserver-compat.http`.
+With Ocsigen Server 8\.0.0, `ocsigenserver-compat` did not include the other two parts: list the three libraries in your `dune` file if you need to support it.
+
 The compat package is meant as a temporary migration aid: it is recommended to update your code to the new module names and drop the dependency once done. The compat modules are intentionally excluded from the [API reference](./api.md), which documents the new names only.
 
 ## Other breaking changes
@@ -1129,13 +1127,22 @@ Ocsigen Server 8\.0 requires OCaml 4\.14 or later.
 
 ### Removed deprecated helpers from the base library
 
-Several helpers that duplicated standard-library features have been removed from `Ocsigen_lib` (now [`Ocsigen_base.Lib`](./Ocsigen_base-Lib.md)). Use the standard library instead:
+Several helpers that duplicated standard-library features have been removed from `Ocsigen_lib_base`, and so from `Ocsigen_lib` (now [`Ocsigen_base.Lib`](./Ocsigen_base-Lib.md)), which includes it. Use the standard library instead:
 
-- `Ocsigen_lib.id` is removed; use `Sys.opaque_identity`
-- `Ocsigen_lib.leftright` is removed; use `Either.t`
+- `Ocsigen_lib.id` is removed; use `Fun.id`
+- `Ocsigen_lib.leftright` is removed; use `Either.t`, whose constructors are `Either.Left` and `Either.Right`
 - `Ocsigen_lib.List.map_filter` is removed; use `List.filter_map`
-- the `Ocsigen_lib.Option` module is removed; use the standard library `Option`
+- the `Ocsigen_lib.Option` module is removed; use the standard library `Option`. `map`, `iter`, `bind` and `to_list` are the same. Replace `Option.get' d o` with `Option.value ~default:d o`, `Option.get f o` (where `f` computes the default) with a `match`, and `Option.return` with `Option.some`. Beware that `Option.get` of the standard library takes only the option, and raises `Invalid_argument` on `None`.
+- the `|>` and `@@` operators are removed; those of the standard library are the same, so only code that names them through `Ocsigen_lib` or `Ocsigen_lib_base` needs a change
 These helpers have no replacement in `ocsigenserver-compat`: their standard equivalents should be used directly.
+
+### Log levels
+
+The `-v`, `-vv` and `-vvv` options now set the level of the log sources whose name starts with `ocsigen:` and that exist when the command line is read. They no longer change the level of all the sources, existing or created later: the sources of other libraries, such as Cohttp, are no longer changed, and the sources created later, such as those of the extensions loaded from the configuration file, of Eliom or of your application, stay at the `Warning` level. From version 8\.1, the `<loglevel>` configuration option sets the level of any source by its name.
+
+### Access log format
+
+Accesses are now logged in the Combined Log Format of Apache and nginx, which common log analysers understand, instead of the previous custom format. Update the scripts that parse the access log.
 
 
 ---
