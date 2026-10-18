@@ -83,6 +83,9 @@ Bug fixes:
    - with keephost, the Host header of the request is sent to the target.
      The server connected to that host instead, so a client could make it
      connect to any host.
+   - the Host header sent to the target no longer carries the default port
+     when the destination URL has none (such as example.org:443), which
+     targets that compare it strictly rejected.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

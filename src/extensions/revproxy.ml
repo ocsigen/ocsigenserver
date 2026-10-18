@@ -72,13 +72,9 @@ let gen dir = function
               becomes "%20", which also means a space in a form, and ";"
               becomes "%3B". *)
            let target = Uri.of_string dest in
-           let host, port =
+           let host =
              match Uri.scheme target, Uri.userinfo target, Uri.host target with
-             | Some (("http" | "https") as scheme), None, Some host
-               when host <> "" ->
-                 ( host
-                 , Option.value (Uri.port target)
-                     ~default:(if scheme = "https" then 443 else 80) )
+             | Some ("http" | "https"), None, Some host when host <> "" -> host
              | _ ->
                  raise
                    (Ocsigen.Extensions.Error_in_config_file
@@ -112,16 +108,15 @@ let gen dir = function
                    Ocsigen_http.Header.Name.(to_string x_forwarded_for)
                    forward
                in
-               (* Without keephost, cohttp sets the Host header from [uri]. *)
+               (* Without keephost, cohttp sets the Host header from [target]. *)
                if dir.keephost
                then h
                else
                  Cohttp.Header.remove h
                    Ocsigen_http.Header.Name.(to_string host)
-             and uri = Uri.with_port target (Some port)
              and body = Ocsigen.Request.body request_info
              and meth = Ocsigen.Request.meth request_info in
-             Cohttp_lwt_unix.Client.call ~headers ~body meth uri
+             Cohttp_lwt_unix.Client.call ~headers ~body meth target
            in
            Lwt.return
            @@ Ocsigen.Extensions.Ext_found
