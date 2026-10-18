@@ -72,18 +72,15 @@ let gen dir = function
               becomes "%20", which also means a space in a form, and ";"
               becomes "%3B". *)
            let target = Uri.of_string dest in
-           let host =
-             match Uri.scheme target, Uri.userinfo target, Uri.host target with
-             | Some ("http" | "https"), None, Some host when host <> "" -> host
-             | _ ->
-                 raise
-                   (Ocsigen.Extensions.Error_in_config_file
-                      ("Revproxy : error in destination URL " ^ dest))
-           in
+           (match Uri.scheme target, Uri.userinfo target, Uri.host target with
+           | Some ("http" | "https"), None, Some host when host <> "" -> ()
+           | _ ->
+               raise
+                 (Ocsigen.Extensions.Error_in_config_file
+                    ("Revproxy : error in destination URL " ^ dest)));
            Logs.info ~src:section (fun fmt ->
              (* Not the query, which may hold secrets. *)
              fmt "YES! Redirection to %a" Uri.pp (Uri.with_query target []));
-           Ocsigen_base.Lib.Ip_address.get_inet_addr host >>= fun _inet_addr ->
            (* It is now safe to start processing next request.
 
             We are sure that the request won't be taken in disorder,
