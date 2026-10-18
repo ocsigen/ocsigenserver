@@ -1,0 +1,7 @@
+; The test builds a program against the installed ocsigenserver-compat. It
+; lives here, outside test/, so that it belongs to this package only.
+
+(cram
+ (package ocsigenserver-compat)
+ (deps
+  (package ocsigenserver-compat)))
