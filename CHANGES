@@ -132,6 +132,9 @@ Bug fixes:
    to each of its files or terminals, under a lock of that destination only.
    With OCaml 5, two domains logging at the same time could make Format raise
    "Unsynchronized access to formatter". Requires logs >= 0.10.0.
+ * A log that cannot be written, on a full disk for instance, no longer makes
+   requests fail with a 500: the line may be lost, and the error is logged once,
+   until a write to that log succeeds again or the logs are reopened.
  * In syslog mode, each message is formatted once, for syslog and for
    stderr: the printers of a message no longer run twice.
  * The logs:name level order of the command pipe now sets the level of the

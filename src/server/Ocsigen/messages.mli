@@ -28,6 +28,10 @@
     finalisers must not log: they may run while a message is written, with
     the lock of its destination held.
 
+    Writing to a destination that fails (full disk, closed pipe...) does not
+    raise: the message may be lost there, and the error is logged once, until a
+    write to that destination succeeds again or the logs are reopened.
+
     The reporter mutex of Logs ([Logs.set_reporter_mutex]) is left to the
     application. The reporters of Ocsigen Server do not need it, and work
     with it if the application installs one. But Logs keeps that mutex

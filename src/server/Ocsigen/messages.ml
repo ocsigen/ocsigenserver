@@ -67,19 +67,23 @@ let pp_date ppf = Format.pp_print_string ppf (date_string ())
    printers run with it locked. *)
 
 let with_lock = Ocsigen_base.Lib.with_lock
+let section = Logs.Src.create "ocsigen:log"
 
 (* A destination of log lines: a terminal, or a log file. *)
 module Sink : sig
   type t
 
-  val make : out_channel option -> t
-  (** [make c] is a destination that writes to [c], or nowhere if [c] is
-      [None]. *)
+  val make : name:string -> out_channel option -> t
+  (** [make ~name c] is a destination named [name] in the error messages,
+      that writes to [c], or nowhere if [c] is [None]. *)
 
   val write : t -> string -> unit
   (** [write sink s] writes [s] to [sink] and flushes it. Several domains or
       threads may write to [sink] at the same time: each [s] is written
-      whole. *)
+      whole. It does not raise: if writing fails with [Sys_error] (full
+      disk, closed pipe...), [s] may be lost, and the error is logged. It is
+      not logged again until a write to [sink] succeeds or its channel is
+      replaced. *)
 
   val replace : t -> out_channel option -> unit
   (** [replace sink c] makes [sink] write to [c] from now on, and closes the
@@ -87,34 +91,64 @@ module Sink : sig
       another domain or thread, goes to one channel or the other, never to a
       closed channel. *)
 end = struct
-  (* [channel] is only read or changed with [mutex] locked. *)
-  type t = {mutex : Mutex.t; mutable channel : out_channel option}
+  (* [channel] and [failing] are only read or changed with [mutex] locked.
+     [failing] is [true] once a write error has been logged, until a write
+     succeeds or the channel is replaced. *)
+  type t =
+    { name : string
+    ; mutex : Mutex.t
+    ; mutable channel : out_channel option
+    ; mutable failing : bool }
 
-  let make channel = {mutex = Mutex.create (); channel}
+  let make ~name channel =
+    {name; mutex = Mutex.create (); channel; failing = false}
 
-  let with_channel sink f =
-    with_lock sink.mutex (fun () -> Option.iter f sink.channel)
-
+  (* The error is logged once [mutex] is unlocked: the message may be written
+     to this sink, and must not be written with the lock of another sink
+     held. If writing it fails too, [failing] stops the recursion. *)
   let write sink s =
-    with_channel sink (fun channel -> output_string channel s; flush channel)
+    let error =
+      with_lock sink.mutex (fun () ->
+        match sink.channel with
+        | None -> None
+        | Some channel -> (
+          match output_string channel s; flush channel with
+          | () ->
+              sink.failing <- false;
+              None
+          | exception Sys_error msg ->
+              if sink.failing
+              then None
+              else (
+                sink.failing <- true;
+                Some msg)))
+    in
+    Option.iter
+      (fun msg ->
+         Logs.err ~src:section (fun fmt ->
+           fmt
+             "Cannot write to %s: %s. Messages to it may be lost until a write succeeds."
+             sink.name msg))
+      error
 
   let replace sink channel =
     with_lock sink.mutex (fun () ->
       (* The old channel is closed with [mutex] locked, so that what it still
          buffers is written before anything written to the new one. *)
       Option.iter close_out_noerr sink.channel;
-      sink.channel <- channel)
+      sink.channel <- channel;
+      sink.failing <- false)
 end
 
-let stdout_sink = Sink.make (Some Stdlib.stdout)
-let stderr_sink = Sink.make (Some Stdlib.stderr)
+let stdout_sink = Sink.make ~name:"the standard output" (Some Stdlib.stdout)
+let stderr_sink = Sink.make ~name:"the standard error" (Some Stdlib.stderr)
 
 (* The log files, opened in the log directory by [open_log_files_in_dir].
    They are kept when the logs are reopened, and their channels replaced, so
    that reopening does not race with the domains or threads that log. *)
-let access_sink = Sink.make None
-let warning_sink = Sink.make None
-let error_sink = Sink.make None
+let access_sink = Sink.make ~name:access_file None
+let warning_sink = Sink.make ~name:warning_file None
+let error_sink = Sink.make ~name:error_file None
 
 let close_log_files () =
   List.iter
@@ -178,8 +212,7 @@ let syslog_mutex = Mutex.create ()
    indented, and a wide prefix does not put the message on a line of its
    own. The tags are printed before the message is sent, so that a message
    logged by a tag printer comes first. The message goes to [syslog], the
-   main destination, before [stderr], so that it is not lost if writing to
-   [stderr] raises, for instance on a closed pipe. *)
+   main destination, before [stderr]. *)
 let syslog_reporter syslog =
   let report src level ~over k msgf =
     msgf @@ fun ?header ?(tags = Logs.Tag.empty) fmt ->

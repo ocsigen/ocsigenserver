@@ -184,9 +184,10 @@ let () =
     Log_test.fail "printer called %d times\nsyslog: %s\nstderr: %s" !count
       received printed
 
-(* A message reaches syslog even if writing to stderr raises: here, stderr is
-   a pipe that nobody reads. It runs within [captured_stderr], so that what
-   [stderr] may still buffer afterwards is written to the file. *)
+(* A message reaches syslog even if writing to stderr fails: here, stderr is
+   a pipe that nobody reads. Writing does not raise, and the error is logged,
+   so it reaches syslog after the message. It runs within [captured_stderr],
+   so that what [stderr] may still buffer afterwards is written to the file. *)
 let () =
   Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
   let raised, (_ : string) =
@@ -209,11 +210,16 @@ let () =
            | exception Sys_error _ -> true))
   in
   let received = receive () in
-  if not (raised && Log_test.contains received "lost on stderr")
+  let error = receive () in
+  if
+    raised
+    || not
+         (Log_test.contains received "lost on stderr"
+         && Log_test.contains error "Cannot write to the standard error")
   then
-    Log_test.fail "writing to stderr %s\nsyslog: %s"
+    Log_test.fail "writing to stderr %s\nsyslog: %s\n%s"
       (if raised then "raised" else "did not raise")
-      received
+      received error
 
 let () =
   let logging =
