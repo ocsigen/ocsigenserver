@@ -291,17 +291,33 @@ let make_cookies_headers path t hds =
          (make_cookies_header path exp name v secure))
     t hds
 
+(* The framing that [headers] announce must be the one [to_response_expert]
+   writes, that of the body. [Header.add_transfer_encoding] trusts the headers
+   instead: it infers a fixed length from a Content-Range alone, so a chunked
+   body with a Content-Range went out with neither chunking nor a length. The
+   body is the only source of truth: a Content-Length set by the producer goes
+   with chunking (RFC 9112 6.1), and is replaced by the length of a fixed-length
+   body, as a wrong one would break the connection just the same. *)
+let set_framing (encoding : Transfer.encoding) headers =
+  match encoding with
+  | Chunked ->
+      Header.replace
+        (Header.remove headers "content-length")
+        "transfer-encoding" "chunked"
+  | Fixed length ->
+      Header.replace
+        (Header.remove headers "transfer-encoding")
+        "content-length" (Int64.to_string length)
+  | Unknown -> headers
+
 let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
   let headers =
     let add name value headers = Header.add_unless_exists headers name value in
-    let add_transfer_encoding h =
-      Header.add_transfer_encoding h body_encoding
-    in
     Response.headers a_response
     |> Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
     |> add "server" Config.server_name
     |> add "date" (Ocsigen_base.Lib.Date.to_string (Unix.time ()))
-    |> add_transfer_encoding
+    |> set_framing body_encoding
   in
   {a_response with Response.headers}
 

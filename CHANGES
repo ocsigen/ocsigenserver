@@ -74,6 +74,11 @@ Bug fixes:
    The weak ETag of a file no longer matches it, and the Last-Modified date
    matches only once the file has not changed for a second. A client could
    otherwise get a range of a different version of the file.
+ * The framing of a response now follows its body. A chunked body sent with a
+   Content-Range, or with a Content-Length set by the code that made it, went
+   out with neither chunking nor its length, so the client could not find its
+   end. A fixed-length body now always gets its own length as Content-Length,
+   even when the response had another one, or only a Content-Range.
  * A request with "Connection: close", or an HTTP/1.0 request without
    "Connection: keep-alive", now gets a response with "Connection: close",
    after which the server closes the connection, as RFC 9112 requires, without
