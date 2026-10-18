@@ -193,7 +193,7 @@ let host
     ; uploaddir = default def.uploaddir uploaddir
     ; maxuploadfilesize = default def.maxuploadfilesize maxuploadfilesize }
   in
-  let vh = [regexp, Ocsigen_base.Lib.Netstring_pcre.regexp regexp, port] in
+  let vh = [regexp, Extensions.host_regexp regexp, port] in
   ( vh
   , config_info
   , Extensions.compose (List.map (fun i -> i vh config_info []) instructions) )

@@ -291,6 +291,11 @@ Bug fixes:
    negative size made every request body fail. The setters of Config,
    Server.start, Server.host and Extendconfiguration.maxuploadfilesize raise
    Invalid_argument for a negative size.
+ * Virtual hosts now match host names case-insensitively, and ignore a final
+   dot in the host name ("example.org."), in the request as in hostfilter. A
+   request for "EXAMPLE.ORG" used to miss the <host hostfilter="example.org">
+   configuration, and its access restrictions, and could be served by another
+   host.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

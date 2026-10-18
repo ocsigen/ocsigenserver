@@ -120,18 +120,25 @@ ignored when matching a host.
   HTTP/1.1 401 Unauthorized
   [idle]
 
-BUG: the virtual host is chosen with a case-sensitive comparison, so
-"ADMIN.TEST" does not reach admin.test and its password, but the catch-all
-host. Expected: 401, as for "admin.test".
+"ADMIN.TEST" reaches admin.test and its password too, not the catch-all host.
 
   $ printf 'GET / HTTP/1.1\r\nHost: ADMIN.TEST\r\n\r\n' | send
-  HTTP/1.1 200 OK
+  HTTP/1.1 401 Unauthorized
+  [idle]
+  $ printf 'GET / HTTP/1.1\r\nHost: %s\r\n\r\n' "Admin.Test:$PORT" | send
+  HTTP/1.1 401 Unauthorized
+  [idle]
+  $ printf 'GET http://ADMIN.TEST/ HTTP/1.1\r\nHost: x\r\n\r\n' | send
+  HTTP/1.1 401 Unauthorized
   [idle]
 
-QUESTION: the fully qualified form "admin.test." (final dot) does not match
-admin.test either.
+The fully qualified form "admin.test." (final dot) names the same host. A
+second final dot does not.
 
   $ printf 'GET / HTTP/1.1\r\nHost: admin.test.\r\n\r\n' | send
+  HTTP/1.1 401 Unauthorized
+  [idle]
+  $ printf 'GET / HTTP/1.1\r\nHost: admin.test..\r\n\r\n' | send
   HTTP/1.1 200 OK
   [idle]
 
