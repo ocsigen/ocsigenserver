@@ -57,7 +57,6 @@ let mimefile = ref _MIMEFILE_
 let datadir = ref _DATADIR_
 let bindir = ref _BINDIR_
 let extdir = ref _EXTDIR_
-let command_pipe = ref _COMMANDPIPE_
 let builtin_packages =
   List.fold_left
     (fun a s -> Lib.String.Set.add s a)
@@ -116,7 +115,6 @@ let static_options = function
   | "EXTDIR" -> str (libdir () // "ocsigenserver" // "extensions")
   | "STATICPAGESDIR" -> str staticpagesdir
   | "UP" -> str uploaddir
-  | "COMMANDPIPE" -> str commandpipe
   | "CONFIGDIR" -> str configdir
   | "CONFIGFILE" -> str (configdir // "ocsigenserver.conf")
   | "MIMEFILE" -> str (configdir // "mime.types")
@@ -127,7 +125,10 @@ let sample_options = function
   | "PORT" -> string_of_int port
   | "LOGDIR" -> logdir
   | "DATADIR" -> datadir
-  | "COMMANDPIPE" -> "<!-- <commandpipe>" ^ commandpipe ^ "</commandpipe> -->"
+  | "COMMANDPIPE" ->
+      if commandpipe = ""
+      then "<!-- <commandpipe>...</commandpipe> -->"
+      else "<commandpipe>" ^ commandpipe ^ "</commandpipe>"
   | "MIMEFILE" -> "<!-- <mimefile>" ^ mimefile ^ "</mimefile> -->"
   | "LIBDIR" | "METADIR" -> libdir ()
   | "EXTPACKAGENAME" -> "ocsigenserver.ext"

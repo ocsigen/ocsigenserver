@@ -1,5 +1,15 @@
 ==== 8.1.0~dev ===
 
+Incompatible changes:
+ * Without <commandpipe> in the configuration file, or ~command_pipe for
+   Ocsigen.Server.start, the server has no command pipe. It used to create one
+   at the path given to ./configure --commandpipe (by default
+   /var/run/ocsigenserver_command), which the generated configuration file now
+   sets explicitly. A configuration file that relies on this default must now
+   give the path, to keep the reload order, and reopen_logs for logrotate.
+   Ocsigen.Config.get_command_pipe returns a string option, and
+   Ocsigen_base.Config_static.command_pipe is removed.
+
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
    slow clients, or clients pretending to be slow, can no longer hold its

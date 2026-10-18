@@ -197,7 +197,8 @@ usage: ./configure [ options ]
   --staticpagesdir DIR	Install default static pages in this directory
   --uploaddir DIR	By default, files will be uploaded in this directory
 
-  --commandpipe FILE	The name of the named pipe used to command the server
+  --commandpipe FILE	The named pipe used to command the server, set in the
+			sample configuration file
 
 Defaults are:
 

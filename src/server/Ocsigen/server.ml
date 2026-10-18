@@ -382,7 +382,9 @@ let main config =
         | _ -> []
       in
       (* A pipe to communicate with the server *)
-      let commandpipe = open_command_pipe (Config.get_command_pipe ()) in
+      let commandpipe =
+        Option.bind (Config.get_command_pipe ()) open_command_pipe
+      in
       let minthreads = Config.get_minthreads ()
       and maxthreads = Config.get_maxthreads () in
       if minthreads > maxthreads
