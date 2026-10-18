@@ -22,7 +22,7 @@ Here are some examples of configuration file options:
 ```
 regexp is a regular expression using PERL syntax (PCRE). The destination URL is built from dest, where \\i corresponds to the i-th part between parenthesis of the regular expression (was \$i in older versions).
 
-Add the attribute `keephost="keephost"` if you want to send the original `Host` header to the distant server. Otherwise, it will be computed from `dest`.
+Add the attribute `keephost="keephost"` if you want to send the original `Host` header to the distant server. Otherwise, it is computed from `dest`. In both cases, the proxy connects to the host of `dest`. With keephost, if `dest` has a port and the header has none, that port is added to the header.
 
 Add the attribute `nopipeline="nopipeline"` if for some reason you don't want to pipeline reverse proxy's requests. With that option, the reverse proxy will open a new connection for all requests, instead of trying to reuse connections. You probably don't need that, but if you do, please contact us to tell us what is the problem. Thank you\!
 
@@ -46,4 +46,5 @@ Note that if you are using ocsigen behind a reverse proxy handling X-Forward-For
 ### Technical details
 
 - The reverse proxy does no caching for now.
+- The query string is decoded, then encoded again before it is sent, so its encoding may change: for instance, `+` is sent as `%20` and `;` as `%3B`. `+` and `%20` both mean a space in a form, but a target that reads `+` literally, or splits the query on `;`, sees something else.
 - The reverse proxy does pipeline the requests for server it trusts for pipelining. But current trusting criteria are probably too strong. They will probably evolve soon.
