@@ -138,9 +138,30 @@ module Access_log = struct
       (header Ocsigen_http.Header.Name.user_agent)
 end
 
+(* Whether a message of [version] with [headers] lets the connection be kept
+   alive (RFC 9112, section 9.3). The Connection header is a list of
+   case-insensitive options, such as "Keep-Alive" or "keep-alive, TE", which
+   [Http.Request.is_keep_alive] takes as a request to close. *)
+let allows_keep_alive version headers =
+  let options =
+    Http.Header.get_multi headers "connection"
+    |> List.concat_map (String.split_on_char ',')
+    |> List.map (fun o -> String.lowercase_ascii (String.trim o))
+  in
+  (not (List.mem "close" options))
+  &&
+  match version with
+  | `HTTP_1_1 -> true
+  | `HTTP_1_0 | `Other _ -> List.mem "keep-alive" options
+
 let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
   (* cohttp calls this once the headers of [request] have arrived. *)
   Connection_guard.set_phase guard Connection_guard.Request;
+  let keep_alive_requested =
+    allows_keep_alive
+      (Http.Request.version request)
+      (Http.Request.headers request)
+  in
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
   let client_conn =
@@ -230,13 +251,41 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
        >>= fun response ->
        Messages.accesslog (Access_log.line request response);
        let res, write_body = Response.to_response_expert response in
-       (* Once the response is written, the connection waits for the next
-          request. *)
+       (* As cohttp does for the responses it writes itself, which expert
+          responses are not: the connection is kept alive if both the request
+          and the response allow it, and the response says whether it is.
+          Once the response is written, the connection waits for the next
+          request, or is closed. *)
+       let keep_alive =
+         keep_alive_requested
+         && allows_keep_alive
+              (Http.Response.version res)
+              (Http.Response.headers res)
+       in
+       let res =
+         let headers = Http.Response.headers res in
+         { res with
+           Http.Response.headers =
+             (if keep_alive
+              then
+                Http.Header.add_unless_exists headers "connection" "keep-alive"
+              else Http.Header.replace headers "connection" "close") }
+       in
        Lwt.return
          ( res
          , fun ic oc ->
-             write_body ic oc >|= fun () ->
-             Connection_guard.set_phase guard Connection_guard.Idle ))
+             write_body ic oc >>= fun () ->
+             if keep_alive
+             then (
+               Connection_guard.set_phase guard Connection_guard.Idle;
+               Lwt.return_unit)
+             else (
+               Connection_guard.close guard;
+               (* cohttp would read the next request, which may already be in
+                  its buffer, out of reach of the guard: no request is served
+                  after this one (RFC 9112, section 9.6). [Timed_out] ends the
+                  connection quietly (see [serve_guarded]). *)
+               Lwt.fail Connection_guard.Timed_out) ))
     (fun () ->
        if !filenames <> []
        then

@@ -207,6 +207,9 @@ let create limits phase ~on_expiry =
   Hashtbl.replace guards t.id t;
   t
 
+let close t =
+  match t.state with Open -> close_side t t.reads | Closed _ | Expired -> ()
+
 let tick () =
   incr now;
   Hashtbl.fold
