@@ -27,7 +27,6 @@ following options:
 
   -d, --daemon
          Daemon mode (detach the process).
-	 This is the default when there are more than 1 process.
          Implies -s, so it needs log files or syslog.
 
   -help, --help
