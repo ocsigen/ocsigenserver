@@ -24,6 +24,7 @@ X-Forwarded-For the address of the client:
   $ curl -s --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
   >   'http://127.0.0.1:8074/a%20b/c?q=1&r=a+b%2Bc&s=x;y'
   path: /a%20b/c?q=1&r=a%20b%2Bc&s=x%3By
+  host: 127.0.0.1:8073
   https: false
   x-forwarded-proto: http
   x-forwarded-for: 127.0.0.1
@@ -50,6 +51,9 @@ and the scheme of the request it received:
   > <commandpipe>proxy.cmd</commandpipe>
   > <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
   > <extension findlib-package="ocsigenserver.ext.revproxy"/>
+  > <host hostfilter="keephost.example">
+  >   <revproxy suburl="(.*)" dest="http://127.0.0.1:8073/\1" keephost="keephost"/>
+  > </host>
   > <host hostfilter="*">
   >   <allow-forward-for/>
   >   <allow-forward-proto/>
@@ -63,6 +67,18 @@ and the scheme of the request it received:
   >   -H 'X-Forwarded-For: 192.0.2.1, 198.51.100.1' \
   >   -H 'X-Forwarded-Proto: https' http://127.0.0.1:8081/y
   path: /y
+  host: 127.0.0.1:8073
   https: false
   x-forwarded-proto: https
   x-forwarded-for: 192.0.2.1, 198.51.100.1
+
+With keephost, the proxy sends the Host header of the request to the target,
+with the port of the target added since the header has none. It still
+connects to the target, not to that host:
+
+  $ curl -s --max-time 10 -H 'Host: keephost.example' http://127.0.0.1:8081/z
+  path: /z
+  host: keephost.example:8073
+  https: false
+  x-forwarded-proto: http
+  x-forwarded-for: 127.0.0.1

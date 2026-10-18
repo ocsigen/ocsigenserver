@@ -112,19 +112,13 @@ let gen dir = function
                    Ocsigen_http.Header.Name.(to_string x_forwarded_for)
                    forward
                in
-               Cohttp.Header.remove h Ocsigen_http.Header.Name.(to_string host)
-             and uri =
-               let host =
-                 match
-                   if dir.keephost
-                   then Ocsigen.Request.host request_info
-                   else None
-                 with
-                 | Some host -> host
-                 | None -> host
-               in
-               let uri = Uri.with_host target (Some host) in
-               Uri.with_port uri (Some port)
+               (* Without keephost, cohttp sets the Host header from [uri]. *)
+               if dir.keephost
+               then h
+               else
+                 Cohttp.Header.remove h
+                   Ocsigen_http.Header.Name.(to_string host)
+             and uri = Uri.with_port target (Some port)
              and body = Ocsigen.Request.body request_info
              and meth = Ocsigen.Request.meth request_info in
              Cohttp_lwt_unix.Client.call ~headers ~body meth uri

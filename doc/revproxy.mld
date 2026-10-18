@@ -28,7 +28,7 @@ v}
 regexp is a regular expression using PERL syntax (PCRE). The destination URL is built from dest, where \i corresponds to the i-th part between parenthesis of the regular expression (was $i in older versions).
 
 Add the attribute [keephost="keephost"] if you want to send the original [Host] header to the distant server.
-Otherwise, it will be computed from [dest].
+Otherwise, it is computed from [dest]. In both cases, the proxy connects to the host of [dest]. With keephost, if [dest] has a port and the header has none, that port is added to the header.
 
 Add the attribute [nopipeline="nopipeline"] if for some reason you don't want to pipeline reverse proxy's requests. With that option, the reverse proxy will open a new connection for all requests, instead of trying to reuse connections. You probably don't need that, but if you do, please contact us to tell us what is the problem. Thank you!
 
