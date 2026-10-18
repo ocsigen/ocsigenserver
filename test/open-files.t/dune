@@ -2,3 +2,8 @@
  (name limits)
  (modules limits)
  (libraries ocsigenserver))
+
+(executable
+ (name server)
+ (modules server)
+ (libraries ocsigenserver))

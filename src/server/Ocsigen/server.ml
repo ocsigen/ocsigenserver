@@ -172,6 +172,97 @@ let site ?charset path instructions vh config_info parent_path =
   in
   Extensions.site_ext composite charset path
 
+(* Files kept for the rest of the server: logs, listening sockets, connections
+   to a database... *)
+let reserved_files = 100
+
+(* The number of files that [connections] connections need: each one may use a
+   second file, a static file it sends or a connection to a proxied server. *)
+let needed_files connections =
+  if connections > (max_int - reserved_files) / 2
+  then max_int
+  else reserved_files + (2 * connections)
+
+(* The number of connections that [files] open files afford. *)
+let affordable_connections files = (files - reserved_files) / 2
+let limit_to_string n = if n = max_int then "none" else string_of_int n
+
+(* The select engine of Lwt handles file descriptors below FD_SETSIZE only,
+   1024 on most systems, and a socket above it would stop the server. *)
+let select_max_files = 1024
+
+let lwt_uses_select () =
+  match Lwt_engine.id () with
+  | Lwt_engine.Engine_id__select -> true
+  | _ -> false
+
+(* The number of files the server may open, once it has raised its soft limit
+   to what [connections] connections need, and no further: the programs that
+   the server runs inherit this limit, and some of them behave badly when it is
+   high. [None] if there is no such limit. *)
+let open_files ~connections =
+  let max_files = if lwt_uses_select () then select_max_files else max_int in
+  let fit (soft, hard) =
+    Logs.debug ~src:section (fun fmt ->
+      fmt "Limit on open files: %s (hard limit: %s)" (limit_to_string soft)
+        (limit_to_string hard));
+    min soft max_files
+  in
+  let limits =
+    try Open_files.raise_soft_limit (min (needed_files connections) max_files)
+    with Unix.Unix_error (error, f, _) ->
+      Logs.warn ~src:section (fun fmt ->
+        fmt "Cannot raise the limit on open files (%s: %s)" f
+          (Unix.error_message error));
+      Open_files.limits ()
+  in
+  match limits with
+  | Some limits -> Some (fit limits)
+  | None -> if max_files = max_int then None else Some max_files
+
+(* How to accept more connections than the limit on open files affords. *)
+let advice () =
+  if not (lwt_uses_select ())
+  then
+    Some
+      "raise the hard limit on open files (ulimit -Hn, or LimitNOFILE with systemd)"
+  else if Lwt_sys.have `libev
+  then Some "use the libev engine of Lwt (Lwt_engine.libev)"
+  else if Sys.win32
+  then None
+  else Some "install conf-libev, so that Lwt uses libev rather than select"
+
+(* The maximum number of simultaneous connections, lowered to what the limit on
+   open files affords: beyond it, the server could not accept connections any
+   more. The server listens on [ports] ports, and each one counts as a
+   connection while it waits for a new one. *)
+let max_number_of_connections ~ports =
+  let wanted = Config.get_max_number_of_connections () in
+  match open_files ~connections:wanted with
+  | Some files when affordable_connections files < wanted ->
+      let affordable = max 0 (affordable_connections files) in
+      let pp_advice fmt =
+        Option.iter (Format.fprintf fmt " To accept more, %s.") (advice ())
+      in
+      if affordable < ports
+      then
+        Logs.err ~src:section (fun fmt ->
+          fmt
+            "%d open files afford %d connections, and the server needs one for each port it listens on (%d): it cannot accept any.%t"
+            files affordable ports pp_advice)
+      else if Config.max_number_of_connections_is_set ()
+      then
+        Logs.warn ~src:section (fun fmt ->
+          fmt
+            "<maxconnected> is %d, but %d open files afford %d connections only, which the server accepts.%t"
+            wanted files affordable pp_advice)
+      else
+        Logs.debug ~src:section (fun fmt ->
+          fmt "Accepting %d connections at most, which %d open files afford.%t"
+            affordable files pp_advice);
+      affordable
+  | Some _ | None -> wanted
+
 let main_loop_is_running = ref false
 
 let main config =
@@ -325,8 +416,12 @@ let main config =
          descriptors are a global resource) while the number of active
          connections exceeds this cap. Without this call the configured limit
          would have no effect. *)
-      Conduit_lwt_server.set_max_active
-        (Config.get_max_number_of_connections ());
+      let max_connections =
+        max_number_of_connections
+          ~ports:(List.length connection + List.length ssl_connection)
+      in
+      Config.set_max_number_of_connections_in_effect max_connections;
+      Conduit_lwt_server.set_max_active max_connections;
       Lwt.join
         (List.map
            (fun (address, port) ->

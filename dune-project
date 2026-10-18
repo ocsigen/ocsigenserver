@@ -27,7 +27,7 @@
   http
   cryptokit
   (ipaddr (>= 2.1))
-  (lwt (>= 5.7.0))
+  (lwt (>= 6.1.0))
   lwt_react
   lwt_ssl
   ocamlfind

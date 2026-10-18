@@ -43,6 +43,15 @@ New features:
    application, which the -v, -vv and -V options do not reach. The levels are
    set once the configuration is loaded, when the sources of the applications
    exist.
+ * The default <maxconnected> is raised from 350 to 10000. Ocsigen Server 8.0
+   was the first to enforce it, and an Eliom application keeps a connection
+   for each page in use, for its comet channel: 350 were too few.
+ * At startup, the server raises its limit on open files to what
+   <maxconnected> needs, as far as the hard limit allows (and 1024 if Lwt uses
+   select), and lowers <maxconnected> to what this limit affords, with a
+   warning if it was set. Each connection may use two files, and 100 are kept
+   for the rest of the server. Beyond the limit, the server could not accept
+   connections any more. This needs Lwt 6.1, to know which engine Lwt uses.
  * Ocsigen Server now depends on conf-libev (except on Windows), so that Lwt
    uses libev, which handles more than the 1024 files of select.
 

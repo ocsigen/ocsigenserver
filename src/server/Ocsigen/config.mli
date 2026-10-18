@@ -116,7 +116,26 @@ val get_veryverbose : unit -> bool
 val get_debug : unit -> bool
 val get_minthreads : unit -> int
 val get_maxthreads : unit -> int
+
 val get_max_number_of_connections : unit -> int
+(** The maximum number of simultaneous connections: the value set, or
+    {!default_max_number_of_connections}. Once the server has started, it is
+    the value in effect, which the server lowers if the limit on open files
+    does not allow as many connections (see {!Open_files}). *)
+
+val default_max_number_of_connections : int
+(** 10 000. *)
+
+val max_number_of_connections_is_set : unit -> bool
+(** Whether the maximum number of simultaneous connections was set, rather
+    than left to its default. *)
+
+val set_max_number_of_connections_in_effect : int -> unit
+(** [set_max_number_of_connections_in_effect n] records [n] as the value in
+    effect, which {!get_max_number_of_connections} is from then on. The server
+    calls it at startup, once it has fitted the value to the limit on open
+    files. *)
+
 val get_client_timeout : unit -> int
 val get_server_timeout : unit -> int
 
