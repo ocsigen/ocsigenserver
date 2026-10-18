@@ -50,6 +50,13 @@ val update :
 
 val to_cohttp : t -> Cohttp.Request.t
 val uri : t -> Uri.t
+
+exception Truncated_body
+(** Reading the body of a request ({!body}, {!post_params}, {!files}) fails with
+    [Truncated_body] when the client closes the connection before the end of a
+    body whose length was announced with Content-Length. The server answers
+    such a request with 400 (Bad Request). *)
+
 val body : t -> Cohttp_lwt.Body.t
 val address : t -> Config.Socket_type.t
 val host : t -> string option
