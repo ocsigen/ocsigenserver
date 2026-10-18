@@ -35,14 +35,16 @@ val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
     [ocsigenserver] executable ([ocsigenserver ./public]). The Staticmod
     extension is loaded dynamically on demand, so it does not need to be linked
     into the program. [port] defaults to 8080. When [directory_listing] is
-    [true], directories without an index file are listed. Never returns. *)
+    [true], directories without an index file are listed. There is no command
+    pipe: the server is stopped with a signal. Never returns. *)
 
 val reverse_proxy : ?port:int -> target:string -> unit -> unit
 (** [reverse_proxy ~target ()] starts a server that forwards every request to
     the [target] base URL (for example [http://localhost:9000]), with no
     configuration file and no log directory required. This backs
     [ocsigenserver --reverse-proxy URL]. The Revproxy extension is loaded
-    dynamically on demand. [port] defaults to 8080. Never returns. *)
+    dynamically on demand. [port] defaults to 8080. There is no command pipe: the
+    server is stopped with a signal. Never returns. *)
 
 val start :
    ?ports:(Config.Socket_type.t * int) list

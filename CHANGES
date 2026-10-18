@@ -1,5 +1,15 @@
 ==== 8.1.0~dev ===
 
+Incompatible changes:
+ * Without <commandpipe> in the configuration file, or ~command_pipe for
+   Ocsigen.Server.start, the server has no command pipe. It used to create one
+   at the path given to ./configure --commandpipe (by default
+   /var/run/ocsigenserver_command), which the generated configuration file now
+   sets explicitly. A configuration file that relies on this default must now
+   give the path, to keep the reload order, and reopen_logs for logrotate.
+   Ocsigen.Config.get_command_pipe returns a string option, and
+   Ocsigen_base.Config_static.command_pipe is removed.
+
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
    slow clients, or clients pretending to be slow, can no longer hold its
@@ -92,6 +102,18 @@ Bug fixes:
      in HTTP/1.1, whatever the version of the target. A target that closed
      its connection, or answered in HTTP/1.0, made the connection of the
      client close after each response.
+ * An existing file at the command pipe path is now used only if it is a named
+   pipe that belongs to the user running the server. Anything else is refused,
+   with an error in the logs, and the server runs without a command pipe; until
+   now, another local user could plant a file of commands there. The server's
+   own pipe is replaced with a new one, with a warning, if it has group or
+   other permissions (Ocsigen Server 7 created it with mode 0o660): a process
+   that opened it before loses its access.
+ * The one-command modes (ocsigenserver DIR, --serve, --reverse-proxy) no
+   longer create a command pipe. It was placed at a predictable path in the
+   temporary directory, where another local user could create it first and send
+   orders to the server. These modes have no configuration file to reload and
+   log to the terminal; the server is stopped with a signal.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

@@ -57,6 +57,7 @@ let veryverbose = ref false
 let debug = ref false
 let version_number = "0000000000000000"
 let pidfile = ref (None : string option)
+let command_pipe = ref (None : string option)
 let server_name = "Ocsigen"
 let full_server_name = server_name ^ "/" ^ version_number
 let native_ext = if is_native then ".exe" else ".bc"
@@ -139,7 +140,7 @@ let set_default_charset o = defaultcharset := o
 let set_datadir o = datadir := o
 let set_bindir o = bindir := o
 let set_extdir o = extdir := o
-let set_command_pipe s = command_pipe := s
+let set_command_pipe s = command_pipe := Some s
 let set_debugmode s = debugmode := s
 let set_disablepartialrequests s = disablepartialrequests := s
 let set_usedefaulthostname s = usedefaulthostname := s

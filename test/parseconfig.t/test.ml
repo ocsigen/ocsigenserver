@@ -7,6 +7,7 @@
      what a missing tag branch would break;
    - the defaults and the wiring of the connection tags [<keepalivetimeout>],
      [<mindatarate>] and [<maxconnectionsperaddress>];
+   - the default and the wiring of [<commandpipe>];
    - the log levels set by [<loglevel>] and by the [logs:] command;
    - the warning for [<servertimeout>], which is accepted but has no effect. *)
 
@@ -84,6 +85,15 @@ let () =
   show_tag "mindatarate" "1000" (int Ocsigen.Config.get_min_data_rate);
   show_tag "maxconnectionsperaddress" "16"
     (int Ocsigen.Config.get_max_connections_per_address)
+
+(* There is no command pipe unless the configuration gives one. *)
+let () =
+  let command_pipe () =
+    Option.value (Ocsigen.Config.get_command_pipe ()) ~default:"none"
+  in
+  print_newline ();
+  Printf.printf "default command pipe -> %s\n" (command_pipe ());
+  show_tag "commandpipe" "local.cmd" command_pipe
 
 (* [<loglevel source="..." level="..."/>] sets the level of the log sources
    of that name once the configuration is loaded; the [logs:] command of

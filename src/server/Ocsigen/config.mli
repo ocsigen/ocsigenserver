@@ -93,7 +93,10 @@ val set_default_charset : string option -> unit
 val set_datadir : string -> unit
 val set_bindir : string -> unit
 val set_extdir : string -> unit
+
 val set_command_pipe : string -> unit
+(** The path of the command pipe. Without it, the server has no command pipe. *)
+
 val set_debugmode : bool -> unit
 val set_disablepartialrequests : bool -> unit
 val set_usedefaulthostname : bool -> unit
@@ -154,7 +157,10 @@ val get_default_charset : unit -> string option
 val get_datadir : unit -> string
 val get_bindir : unit -> string
 val get_extdir : unit -> string
-val get_command_pipe : unit -> string
+
+val get_command_pipe : unit -> string option
+(** The path of the command pipe, or [None] if the server has none. *)
+
 val get_debugmode : unit -> bool
 val get_disablepartialrequests : unit -> bool
 val get_usedefaulthostname : unit -> bool
