@@ -4,6 +4,9 @@
  (name ocsigenserver)
  (public_name ocsigenserver)
  (wrapped false)
+ (foreign_stubs
+  (language c)
+  (names open_files_stubs))
  (libraries
   xml-light
   cohttp-lwt-unix

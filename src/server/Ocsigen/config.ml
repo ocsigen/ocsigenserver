@@ -64,7 +64,9 @@ let (uploaddir : string option ref) = ref None
 let syslog_facility = ref None
 let minthreads = ref 10
 let maxthreads = ref 30
-let max_number_of_connections = ref 350
+let max_number_of_connections = ref None
+let max_number_of_connections_in_effect = ref None
+let default_max_number_of_connections = 10_000
 let silent_client_timeout = ref 30 (* without speaking during sending frame *)
 let silent_server_timeout = ref 30 (* without speaking during sending frame *)
 let keepalive_timeout = ref 75
@@ -121,7 +123,7 @@ let set_debug () =
 
 let set_minthreads i = minthreads := i
 let set_maxthreads i = maxthreads := i
-let set_max_number_of_connections i = max_number_of_connections := i
+let set_max_number_of_connections i = max_number_of_connections := Some i
 let set_client_timeout i = silent_client_timeout := i
 let set_server_timeout i = silent_server_timeout := i
 let set_keepalive_timeout i = keepalive_timeout := i
@@ -166,7 +168,20 @@ let get_veryverbose () = !veryverbose
 let get_debug () = !debug
 let get_minthreads () = !minthreads
 let get_maxthreads () = !maxthreads
-let get_max_number_of_connections () = !max_number_of_connections
+
+let get_max_number_of_connections () =
+  match !max_number_of_connections_in_effect with
+  | Some n -> n
+  | None ->
+      Option.value ~default:default_max_number_of_connections
+        !max_number_of_connections
+
+let max_number_of_connections_is_set () =
+  Option.is_some !max_number_of_connections
+
+let set_max_number_of_connections_in_effect n =
+  max_number_of_connections_in_effect := Some n
+
 let get_client_timeout () = !silent_client_timeout
 let get_server_timeout () = !silent_server_timeout
 let get_keepalive_timeout () = !keepalive_timeout

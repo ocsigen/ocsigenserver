@@ -15,12 +15,13 @@ depends: [
   "bytesrw" {>= "0.3.0"}
   "conf-zlib"
   "conf-zstd"
+  "conf-libev" {os != "win32"}
   "cohttp-lwt-unix" {>= "6.0"}
   "conduit-lwt-unix"
   "http"
   "cryptokit"
   "ipaddr" {>= "2.1"}
-  "lwt" {>= "5.7.0"}
+  "lwt" {>= "6.1.0"}
   "lwt_react"
   "lwt_ssl"
   "ocamlfind"
