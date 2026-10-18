@@ -392,14 +392,20 @@ Use this option for debugging your Web sites. Full error messages will be writte
 
 #### `<maxconnected>` : Maximum number of simultaneous connections
 
-The maximum number of connections open at once, on all the ports together. Each port counts as one connection while it waits for a new one, so the server is full slightly before this number. Default: 350\. Example:
+The maximum number of connections open at once, on all the ports together. Each port counts as one connection while it waits for a new one, so the server is full slightly before this number. Example:
 
 ```
-<maxconnected>500</maxconnected>
+<maxconnected>20000</maxconnected>
 ```
+The default is 10000, or less if the system does not allow as many open files. Each connection is an open file, its socket, and may use a second one: a static file it sends, or a connection to a proxied server. 100 files are kept for the rest of the server. At startup, the server raises its limit on open files (the soft limit) to what `<maxconnected>` needs, as far as the system allows (the hard limit), and no further, since the programs it runs inherit this limit. It then lowers `<maxconnected>` to what this limit affords, with a warning if the value was set in the configuration.
+
+To accept more connections, raise the hard limit: with `ulimit -Hn` in the shell that starts the server, or with `LimitNOFILE=` in its systemd unit. Lwt needs libev for that (the `conf-libev` opam package, a dependency of Ocsigen Server except on Windows): with its `select` engine, which handles 1024 files at most, the server keeps to that.
+
 When the server is full, it makes room for a new client by closing the connection that has waited the longest among those that their clients are not using: idle between two requests, without the start of a request, or with a TLS handshake not finished. The closing is logged at the `info` level. When all the connections are in use, new connections wait until others end.
 
 Since a connection counts until it ends, the timeouts below matter: they keep clients that are slow, or pretend to be, from holding connections for ever. A client that sends its requests slowly, and opens a new connection each time one is cut, can still take many connections: `<maxconnectionsperaddress>` limits how many a single client address may take.
+
+An Eliom application keeps a connection open for each page in use in a browser, for its comet channel: it needs at least as many connections as its users may have pages open at once.
 
 #### `<timeout>` : Timeout for connections
 

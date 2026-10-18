@@ -43,6 +43,7 @@
 - [Module `Ocsigen.Messages`](Ocsigen-Messages.md)
 - [Module `Ocsigen.Multipart`](Ocsigen-Multipart.md)
 - [Module `Ocsigen.Ocsigen_cohttp`](Ocsigen-Ocsigen_cohttp.md)
+- [Module `Ocsigen.Open_files`](Ocsigen-Open_files.md)
 - [Module `Ocsigen.Parseconfig`](Ocsigen-Parseconfig.md)
 - [Module `Ocsigen.Request`](Ocsigen-Request.md)
 - [Module `Response.Body`](Ocsigen-Response-Body.md)

@@ -35,6 +35,11 @@ module Multipart : sig ... end
 module Ocsigen_cohttp : sig ... end
 ```
 ```ocaml
+module Open_files : sig ... end
+```
+Limits on the number of files the server process may have open at once.
+
+```ocaml
 module Parseconfig : sig ... end
 ```
 Config file parsing. See also module `Extensions.​Configuration`
