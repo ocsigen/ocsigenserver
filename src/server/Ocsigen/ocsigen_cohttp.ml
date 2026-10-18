@@ -143,11 +143,7 @@ end
    case-insensitive options, such as "Keep-Alive" or "keep-alive, TE", which
    [Http.Request.is_keep_alive] takes as a request to close. *)
 let allows_keep_alive version headers =
-  let options =
-    Http.Header.get_multi headers "connection"
-    |> List.concat_map (String.split_on_char ',')
-    |> List.map (fun o -> String.lowercase_ascii (String.trim o))
-  in
+  let options = Ocsigen_http.Header.connection_options headers in
   (not (List.mem "close" options))
   &&
   match version with

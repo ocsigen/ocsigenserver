@@ -81,6 +81,14 @@ module Name = struct
   let access_control_allow_headers = of_string "Access-Control-Allow-Headers"
 end
 
+let connection_options h =
+  Cohttp.Header.get_multi h Name.(to_string connection)
+  |> List.concat_map (String.split_on_char ',')
+  |> List.filter_map (fun option ->
+    match String.lowercase_ascii (String.trim option) with
+    | "" -> None
+    | option -> Some option)
+
 let parse_star a = if a = "*" then None else Some a
 
 let parse_quality f s =

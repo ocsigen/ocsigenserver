@@ -73,6 +73,11 @@ module Name : sig
   val access_control_allow_headers : t
 end
 
+val connection_options : t -> string list
+(** [connection_options h] is the list of the options of the Connection header
+    of [h], such as [close], [keep-alive] or the names of the headers meant for
+    the current connection only, in lowercase (RFC 9110, section 7.6.1). *)
+
 module Mime_type : sig
   type t = string option * string option
 
