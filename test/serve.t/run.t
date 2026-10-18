@@ -3,6 +3,9 @@ pre-created log directory.
 
   $ mkdir www
   $ printf '<html>hello</html>' > www/index.html
+  $ mkdir -p www/.git www/.well-known www/sub
+  $ echo secret > www/.env; echo secret > www/.git/config
+  $ echo secret > www/sub/.htpasswd; echo contact > www/.well-known/security.txt
 
 Start the server in serve mode on a TCP port. Logs go to stderr (redirected to
 a file here), so no log directory is created.
@@ -45,6 +48,18 @@ A missing file gives a 404.
   $ curl -s -o /dev/null -w "%{http_code}\n" --max-time 10 \
   >   http://127.0.0.1:8061/nope.html
   404
+
+Files and directories whose name starts with a dot are not served, wherever
+they are, except /.well-known/ (RFC 8615):
+
+  $ for p in .env .git/config sub/.htpasswd .well-known/security.txt; do
+  >   curl -s -o /dev/null -w "$p %{http_code}\n" --max-time 10 \
+  >     http://127.0.0.1:8061/$p
+  > done
+  .env 404
+  .git/config 404
+  sub/.htpasswd 404
+  .well-known/security.txt 200
 
 The server logged a startup banner with the URL:
 

@@ -43,8 +43,10 @@ val serve :
     into the program. The server listens on [address], the loopback interface
     (127.0.0.1) by default, and on [port], 8080 by default. When
     [directory_listing] is [true], directories without an index file are
-    listed. There is no command pipe: the server is stopped with a signal.
-    Never returns. *)
+    listed. As with Staticmod in general, files and directories whose name
+    starts with a dot (such as [.git] or [.env]) are neither served nor
+    listed, except [/.well-known/]. There is no command pipe: the server is
+    stopped with a signal. Never returns. *)
 
 val reverse_proxy :
    ?address:Config.Socket_type.t

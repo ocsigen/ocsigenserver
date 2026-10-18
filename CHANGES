@@ -26,6 +26,11 @@ Incompatible changes:
    the interfaces, and their startup banner shows the address. The new
    --address option (and the ?address parameter of Ocsigen.Server.serve and
    reverse_proxy) chooses another one, such as 0.0.0.0 in a container.
+ * Staticmod no longer serves the files and directories whose name starts with
+   a dot, such as .git/config, .env or .htpasswd, except under /.well-known/
+   (RFC 8615), and directory listings no longer show them. This applies to
+   serve mode too. The new hidedotfiles="false" attribute of <static> (or
+   ~hide_dotfiles:false for Staticmod.run) serves them again.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that

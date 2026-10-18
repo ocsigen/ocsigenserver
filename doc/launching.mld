@@ -10,6 +10,8 @@ following options:
          Serve the static files of directory DIR without a configuration
          file (logs go to the terminal). DIR can also be given as a plain
          positional argument: "ocsigenserver ./public".
+         Files and directories whose name starts with a dot (.git, .env, ...)
+         are neither served nor listed, except /.well-known/.
 
   --reverse-proxy URL
          Forward every request to the base URL given (for example
