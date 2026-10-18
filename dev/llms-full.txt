@@ -2813,6 +2813,11 @@ val set_phase : t -> phase -> unit
 `set_phase t phase` records that the connection of `t` is now in `phase`. Entering [`Request`](./#type-phase.Request) resets the counters of the body and of the response. A read of at least one byte while [`Idle`](./#type-phase.Idle) enters [`Headers`](./#type-phase.Headers) by itself. Once the connection has expired, or has been closed, its phase no longer changes.
 
 ```ocaml
+val close : t -> unit
+```
+`close t` closes the connection of `t` properly, as happens by itself to a connection idle longer than the keep-alive timeout: its reads fail with [`Timed_out`](./#exception-Timed_out), the pending one and the later ones, and it enters [`Closing`](./#type-phase.Closing). It is meant for the end of a response after which the connection is not kept alive.
+
+```ocaml
 val phase : t -> phase
 ```
 ```ocaml
