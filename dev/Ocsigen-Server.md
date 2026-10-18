@@ -16,12 +16,12 @@ Start the server with a configuration file. Never returns.
 ```ocaml
 val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
 ```
-`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
+`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val reverse_proxy : ?port:int -> target:string -> unit -> unit
 ```
-`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. Never returns.
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val start : 

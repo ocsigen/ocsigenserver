@@ -25,8 +25,5 @@ val bindir : string Stdlib.ref
 val extdir : string Stdlib.ref
 ```
 ```ocaml
-val command_pipe : string Stdlib.ref
-```
-```ocaml
 val builtin_packages : Ocsigen_base.Lib.String.Set.t
 ```

@@ -514,6 +514,10 @@ Ocsigenserver is waiting for orders on a pipe. Write the orders on the pipe. Thi
 ```
 <commandpipe>/var/run/ocsigenserver_command</commandpipe>
 ```
+Without this option, the server has no command pipe.
+
+The server creates the pipe with mode 0o600 if it does not exist: only the user running the server can give orders. If the path already exists, it must be a named pipe that belongs to this user, otherwise the server logs an error and runs without a command pipe. A pipe with group or other permissions is replaced with a new one, so that a process that opened it before loses its access.
+
 Each extension can define its own orders.
 
 Predefined orders:
@@ -621,7 +625,7 @@ Example of use:
 
 ### Reloading the configuration file
 
-To reload the modules of the configuration file without stoping the server, write the command `reload` in the server's command pipe (usually `/var/run/ocsigenserver_command`. For example:
+To reload the modules of the configuration file without stoping the server, write the command `reload` in the server's command pipe (the path given by `<commandpipe>`). For example:
 
 ```
 echo reload > /var/run/ocsigenserver_command

@@ -132,6 +132,8 @@ val set_extdir : string -> unit
 ```ocaml
 val set_command_pipe : string -> unit
 ```
+The path of the command pipe. Without it, the server has no command pipe.
+
 ```ocaml
 val set_debugmode : bool -> unit
 ```
@@ -260,8 +262,10 @@ val get_bindir : unit -> string
 val get_extdir : unit -> string
 ```
 ```ocaml
-val get_command_pipe : unit -> string
+val get_command_pipe : unit -> string option
 ```
+The path of the command pipe, or `None` if the server has none.
+
 ```ocaml
 val get_debugmode : unit -> bool
 ```

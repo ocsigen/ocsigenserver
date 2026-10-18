@@ -26,7 +26,7 @@ To serve the static files of a directory without writing any configuration file,
 ```
 ocsigenserver ./public
 ```
-This starts a server on port 8080 serving the files of `./public`. No configuration file and no log directory are needed: the logs go to the terminal. A few options are available:
+This starts a server on port 8080 serving the files of `./public`. No configuration file and no log directory are needed: the logs go to the terminal, and Ctrl-C stops the server (there is no command pipe in this mode). A few options are available:
 
 ```
 ocsigenserver --serve ./public --port 8000 --directory-listing
@@ -707,6 +707,10 @@ Ocsigenserver is waiting for orders on a pipe. Write the orders on the pipe. Thi
 ```
 <commandpipe>/var/run/ocsigenserver_command</commandpipe>
 ```
+Without this option, the server has no command pipe.
+
+The server creates the pipe with mode 0o600 if it does not exist: only the user running the server can give orders. If the path already exists, it must be a named pipe that belongs to this user, otherwise the server logs an error and runs without a command pipe. A pipe with group or other permissions is replaced with a new one, so that a process that opened it before loses its access.
+
 Each extension can define its own orders.
 
 Predefined orders:
@@ -814,7 +818,7 @@ Example of use:
 
 ### Reloading the configuration file
 
-To reload the modules of the configuration file without stoping the server, write the command `reload` in the server's command pipe (usually `/var/run/ocsigenserver_command`. For example:
+To reload the modules of the configuration file without stoping the server, write the command `reload` in the server's command pipe (the path given by `<commandpipe>`). For example:
 
 ```
 echo reload > /var/run/ocsigenserver_command
@@ -2587,6 +2591,8 @@ val set_extdir : string -> unit
 ```ocaml
 val set_command_pipe : string -> unit
 ```
+The path of the command pipe. Without it, the server has no command pipe.
+
 ```ocaml
 val set_debugmode : bool -> unit
 ```
@@ -2715,8 +2721,10 @@ val get_bindir : unit -> string
 val get_extdir : unit -> string
 ```
 ```ocaml
-val get_command_pipe : unit -> string
+val get_command_pipe : unit -> string option
 ```
+The path of the command pipe, or `None` if the server has none.
+
 ```ocaml
 val get_debugmode : unit -> bool
 ```
@@ -3852,12 +3860,12 @@ Start the server with a configuration file. Never returns.
 ```ocaml
 val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
 ```
-`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
+`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val reverse_proxy : ?port:int -> target:string -> unit -> unit
 ```
-`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. Never returns.
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val start : 
@@ -4248,9 +4256,6 @@ val bindir : string Stdlib.ref
 ```
 ```ocaml
 val extdir : string Stdlib.ref
-```
-```ocaml
-val command_pipe : string Stdlib.ref
 ```
 ```ocaml
 val builtin_packages : Ocsigen_base.Lib.String.Set.t
@@ -7664,6 +7669,8 @@ val set_extdir : string -> unit
 ```ocaml
 val set_command_pipe : string -> unit
 ```
+The path of the command pipe. Without it, the server has no command pipe.
+
 ```ocaml
 val set_debugmode : bool -> unit
 ```
@@ -7792,8 +7799,10 @@ val get_bindir : unit -> string
 val get_extdir : unit -> string
 ```
 ```ocaml
-val get_command_pipe : unit -> string
+val get_command_pipe : unit -> string option
 ```
+The path of the command pipe, or `None` if the server has none.
+
 ```ocaml
 val get_debugmode : unit -> bool
 ```
@@ -7859,9 +7868,6 @@ val bindir : string Stdlib.ref
 ```
 ```ocaml
 val extdir : string Stdlib.ref
-```
-```ocaml
-val command_pipe : string Stdlib.ref
 ```
 ```ocaml
 val builtin_packages : Ocsigen_base.Lib.String.Set.t
@@ -8864,12 +8870,12 @@ Start the server with a configuration file. Never returns.
 ```ocaml
 val serve : ?port:int -> ?directory_listing:bool -> dir:string -> unit -> unit
 ```
-`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. Never returns.
+`serve ~dir ()` starts a server that serves the static files of directory `dir`, with no configuration file and no log directory required (logs go to `stdout`/`stderr`). This backs the one-command serve mode of the `ocsigenserver` executable (`ocsigenserver ./public`). The Staticmod extension is loaded dynamically on demand, so it does not need to be linked into the program. `port` defaults to 8080\. When `directory_listing` is `true`, directories without an index file are listed. There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val reverse_proxy : ?port:int -> target:string -> unit -> unit
 ```
-`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. Never returns.
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `port` defaults to 8080\. There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val start : 

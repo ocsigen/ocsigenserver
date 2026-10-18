@@ -19,7 +19,7 @@ To serve the static files of a directory without writing any configuration file,
 ```
 ocsigenserver ./public
 ```
-This starts a server on port 8080 serving the files of `./public`. No configuration file and no log directory are needed: the logs go to the terminal. A few options are available:
+This starts a server on port 8080 serving the files of `./public`. No configuration file and no log directory are needed: the logs go to the terminal, and Ctrl-C stops the server (there is no command pipe in this mode). A few options are available:
 
 ```
 ocsigenserver --serve ./public --port 8000 --directory-listing
