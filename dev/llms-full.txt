@@ -486,7 +486,7 @@ Example:
 
 Sets the level of a [Logs](https://erratique.ch/software/logs) source, by its name: the messages of that source below this level are not logged. The levels are `debug`, `info`, `notice`, `warning`, `error` and `fatal` (the same as `error`). The tag may appear several times, once per source, anywhere among the children of `<server>`.
 
-It is meant for the sources of extensions and applications, a debug trace in particular, that the command-line options `-v`, `-vv` and `-vvv` do not reach: these set the level of Ocsigen Server's own sources only.
+It is meant for the sources of extensions and applications, a debug trace in particular. The command-line options `-v`, `-vv` and `-vvv` set the level of Ocsigen Server's own sources and of the sources created after the command line is read, but not of the other sources of the libraries the server is linked with; `<loglevel>` sets the level of any source, and takes precedence.
 
 The levels are set once the whole configuration file is loaded, since the sources of an application are made when its modules load, and again when it is reloaded. A warning is logged for a name that no source has.
 
@@ -1138,7 +1138,9 @@ These helpers have no replacement in `ocsigenserver-compat`: their standard equi
 
 ### Log levels
 
-The `-v`, `-vv` and `-vvv` options now set the level of the log sources whose name starts with `ocsigen:` and that exist when the command line is read. They no longer change the level of all the sources, existing or created later: the sources of other libraries, such as Cohttp, are no longer changed, and the sources created later, such as those of the extensions loaded from the configuration file, of Eliom or of your application, stay at the `Warning` level. From version 8\.1, the `<loglevel>` configuration option sets the level of any source by its name.
+The `-v`, `-vv` and `-vvv` options now set the level of the log sources whose name starts with `ocsigen:` and that exist when the command line is read. They no longer change the level of all the sources, existing or created later: the sources of other libraries, such as Cohttp, are no longer changed. In 8\.0, the sources created later, such as those of the extensions loaded from the configuration file, of Eliom or of your application, stay at the `Warning` level.
+
+From version 8\.1, these options also set the default level of the sources created later, as before 8\.0, so that they reach the extensions, Eliom and your application again, while the other existing sources keep their level. The `<loglevel>` configuration option, new in 8\.1, sets the level of any source by its name.
 
 ### Access log format
 
@@ -2495,7 +2497,7 @@ exception Config_file_error of string
 ```ocaml
 val set_global_log_level : Logs.level option -> unit
 ```
-Set the log level for all Ocsigen log sources. Using this function is preferable to using `Logs.set_level` directly to avoid the excessive logging from Cohttp and let you use a different log level for your application.
+`set_global_log_level l` sets the level of the existing Ocsigen Server log sources (named `ocsigen:...`) to `l`, and makes `l` the default level of the sources created afterwards. The other existing sources keep their level: unlike `Logs.set_level`, this does not turn on the excessive logging of Cohttp.
 
 ```ocaml
 val server_name : string
@@ -7575,7 +7577,7 @@ exception Config_file_error of string
 ```ocaml
 val set_global_log_level : Logs.level option -> unit
 ```
-Set the log level for all Ocsigen log sources. Using this function is preferable to using `Logs.set_level` directly to avoid the excessive logging from Cohttp and let you use a different log level for your application.
+`set_global_log_level l` sets the level of the existing Ocsigen Server log sources (named `ocsigen:...`) to `l`, and makes `l` the default level of the sources created afterwards. The other existing sources keep their level: unlike `Logs.set_level`, this does not turn on the excessive logging of Cohttp.
 
 ```ocaml
 val server_name : string

@@ -21,7 +21,7 @@ exception Config_file_error of string
 ```ocaml
 val set_global_log_level : Logs.level option -> unit
 ```
-Set the log level for all Ocsigen log sources. Using this function is preferable to using `Logs.set_level` directly to avoid the excessive logging from Cohttp and let you use a different log level for your application.
+`set_global_log_level l` sets the level of the existing Ocsigen Server log sources (named `ocsigen:...`) to `l`, and makes `l` the default level of the sources created afterwards. The other existing sources keep their level: unlike `Logs.set_level`, this does not turn on the excessive logging of Cohttp.
 
 ```ocaml
 val server_name : string

@@ -77,7 +77,9 @@ These helpers have no replacement in `ocsigenserver-compat`: their standard equi
 
 ### Log levels
 
-The `-v`, `-vv` and `-vvv` options now set the level of the log sources whose name starts with `ocsigen:` and that exist when the command line is read. They no longer change the level of all the sources, existing or created later: the sources of other libraries, such as Cohttp, are no longer changed, and the sources created later, such as those of the extensions loaded from the configuration file, of Eliom or of your application, stay at the `Warning` level. From version 8\.1, the `<loglevel>` configuration option sets the level of any source by its name.
+The `-v`, `-vv` and `-vvv` options now set the level of the log sources whose name starts with `ocsigen:` and that exist when the command line is read. They no longer change the level of all the sources, existing or created later: the sources of other libraries, such as Cohttp, are no longer changed. In 8\.0, the sources created later, such as those of the extensions loaded from the configuration file, of Eliom or of your application, stay at the `Warning` level.
+
+From version 8\.1, these options also set the default level of the sources created later, as before 8\.0, so that they reach the extensions, Eliom and your application again, while the other existing sources keep their level. The `<loglevel>` configuration option, new in 8\.1, sets the level of any source by its name.
 
 ### Access log format
 
