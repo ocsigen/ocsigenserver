@@ -43,6 +43,8 @@ New features:
    application, which the -v, -vv and -V options do not reach. The levels are
    set once the configuration is loaded, when the sources of the applications
    exist.
+ * Ocsigen Server now depends on conf-libev (except on Windows), so that Lwt
+   uses libev, which handles more than the 1024 files of select.
 
 Bug fixes:
  * The log reporters that Ocsigen Server installs, and its writes to the

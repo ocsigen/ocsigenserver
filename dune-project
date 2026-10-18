@@ -21,6 +21,7 @@
   (bytesrw (>= 0.3.0))
   conf-zlib
   conf-zstd
+  (conf-libev (<> :os win32))
   (cohttp-lwt-unix (>= 6.0))
   conduit-lwt-unix
   http
