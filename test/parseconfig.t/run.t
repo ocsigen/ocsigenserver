@@ -1,6 +1,7 @@
 Size-valued configuration tags: the units accepted by parse_size_tag, and the
-wiring of each tag to its Config value. Then the log levels set by <loglevel>
-and by the logs: command of the command pipe.
+wiring of each tag to its Config value. Then the defaults and the wiring of the
+connection tags, and the log levels set by <loglevel> and by the logs: command
+of the command pipe. Last, the warning for a tag that has no effect.
 
   $ dune exec ./test.exe 2>&1
   parse_size_tag:
@@ -30,6 +31,11 @@ and by the logs: command of the command pipe.
   <maxrequestbodysizeinmemory>1MB -> 1000000
   <maxrequestbodysizeinmemory>infinity -> max_int
   
+  defaults -> keepalivetimeout 75, mindatarate 500, maxconnectionsperaddress 0
+  <keepalivetimeout>20 -> 20
+  <mindatarate>1000 -> 1000
+  <maxconnectionsperaddress>16 -> 16
+  
   loglevel:
   default -> warning
   <loglevel source="test:app" level="debug"/> -> debug
@@ -41,3 +47,6 @@ and by the logs: command of the command pipe.
   logs:test:app -> quiet
   logs:test:app loud -> quiet
   sources named test:app -> 1
+  
+  tags without effect:
+  warning: Config file: <servertimeout> has no effect and is ignored.

@@ -1,0 +1,9 @@
+(executable
+ (name server)
+ (modules server)
+ (libraries ocsigenserver))
+
+(executable
+ (name client)
+ (modules client)
+ (libraries unix ssl))

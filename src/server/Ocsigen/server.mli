@@ -68,6 +68,9 @@ val start :
   -> ?maxthreads:int
   -> ?max_number_of_connections:int
   -> ?client_timeout:int
+  -> ?keepalive_timeout:int
+  -> ?min_data_rate:int
+  -> ?max_connections_per_address:int
   -> ?server_timeout:int
   -> ?shutdown_timeout:float option
   -> ?filebuffersize:int

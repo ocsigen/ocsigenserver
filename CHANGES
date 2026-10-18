@@ -1,6 +1,36 @@
 ==== 8.1.0~dev ===
 
 New features:
+ * Security: the server now bounds how long it waits for its clients, so that
+   slow clients, or clients pretending to be slow, can no longer hold its
+   connections for ever ("Slowloris", "R-U-Dead-Yet" and "Slow Read" attacks):
+   - the client timeout (<timeout>, its alias <clienttimeout>, and the
+     ~client_timeout argument of Ocsigen.Server.start), until now parsed but
+     never applied, bounds in total the TLS handshake and the headers of a
+     request, and each part of a request body or of a response the client
+     reads;
+   - new <mindatarate> option (~min_data_rate), 500 bytes per second by
+     default: the minimum rate of a request body, and of a response the client
+     reads, past a grace of one timeout;
+   - new <keepalivetimeout> option (~keepalive_timeout), 75 seconds by default:
+     a connection idle between two requests is closed. Behind a reverse proxy
+     that keeps its connections to the server alive, the idle timeout of the
+     proxy must be below this one.
+   Producing a response is not bounded, so that long computations, streamed
+   responses and Eliom's comet requests are not cut. A single ticker checks
+   all the connections once a second; reads and writes cost no timer.
+ * Security: when the server is full (<maxconnected>), it makes room for a new
+   client by closing the oldest connection that its client is not using (idle,
+   without the start of a request, or with a TLS handshake not finished), as
+   nginx does. Clients can no longer keep others from connecting with
+   connections they do not use.
+ * New <maxconnectionsperaddress> option (~max_connections_per_address): the
+   maximum number of simultaneous connections from a single client address
+   (an IPv6 address counts for its /64 network). No limit by default.
+ * TLS is handled by Ocsigen Server instead of Conduit: each TLS port has its
+   own context, and a session ends with a single close_notify alert, without
+   waiting for the client's, which a client could withhold to hold the
+   connection.
  * New <maxrequestbodysizeinmemory> configuration option: sets the maximum size
    of a request body kept in memory while decoding it (for instance form
    parameters), which could previously be set only through the OCaml API.

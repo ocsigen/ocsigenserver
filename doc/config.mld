@@ -377,7 +377,7 @@ unprivileged user (e.g. [www-data]). To serve a privileged port (80 or 443)
 as a non-root user, use one of:
 - a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and
   forwarding to Ocsigenserver on a high port (recommended, see the [<timeout>]
-  note above);
+  note below);
 - the Linux capability [cap_net_bind_service] on the executable
   ([setcap 'cap_net_bind_service=+ep' ...]);
 - a firewall/port redirection from 80/443 to a high port.
@@ -485,34 +485,124 @@ v}
 {3 [<maxconnected>] : Maximum number of simultaneous connections}
 
 
-Example:
-
-
+The maximum number of connections open at once, on all the ports together.
+Each port counts as one connection while it waits for a new one, so the
+server is full slightly before this number. Default: 350. Example:
 
 {v
 <maxconnected>500</maxconnected>
 v}
+
+When the server is full, it makes room for a new client by closing the
+connection that has waited the longest among those that their clients are not
+using: idle between two requests, without the start of a request, or with a TLS
+handshake not finished. The closing is logged at the [info] level. When all
+the connections are in use, new connections wait until others end.
+
+Since a connection counts until it ends, the timeouts below matter: they keep
+clients that are slow, or pretend to be, from holding connections for ever. A
+client that sends its requests slowly, and opens a new connection each time
+one is cut, can still take many connections: [<maxconnectionsperaddress>]
+limits how many a single client address may take.
+
 {3 [<timeout>] : Timeout for connections}
 
 
-Written in seconds. Example:
+Written in seconds; [<clienttimeout>] is an alias. Default: 30. Example:
 
 {v
 <timeout>20</timeout>
 v}
 
-{b Limitation.} This option (and its aliases [<clienttimeout>] and
-[<servertimeout>]) is currently parsed but {b not enforced}: the cohttp-based
-connection handling does not yet apply a per-connection idle/read timeout. As
-a consequence Ocsigenserver does {b not} protect against slow-client
-("Slowloris") attacks on its own, where a client opens many connections and
-sends the request very slowly to exhaust resources.
+The timeout bounds how long the server waits for a client, in a way that
+depends on what the connection is waiting for:
+- the TLS handshake, and the headers of a request, must have arrived in full
+  within the timeout, counted from the opening of the connection (for the
+  headers, from the end of the handshake), or from the first byte of the
+  request after an idle period. A client that sends its request slowly, even
+  one byte at a time ("Slowloris"), cannot hold a connection;
+- the body of a request must keep coming: each part of it must arrive within
+  the timeout after the previous one, and it must also keep the minimum rate
+  set by [<mindatarate>];
+- likewise, a client must keep reading its response: each part of it must be
+  taken within the timeout, at the minimum rate;
+- producing the response is not bounded: a long computation, a streamed
+  response or an Eliom comet request, which waits for an event, is not cut.
+  Only the time spent waiting for the client counts.
 
-{b Recommendation.} For an Internet-facing deployment, place a reverse proxy
-(nginx, HAProxy, Caddy, ...) in front of Ocsigenserver. The proxy enforces
-read/idle timeouts, buffers slow clients, terminates TLS and absorbs malformed
-requests. The [<maxconnected>] limit above does cap the number of
-simultaneous connections, which mitigates connection exhaustion.
+A connection that exceeds these bounds is closed without an answer, and the
+closing is logged at the [info] level with the address of the client. The
+server checks the bounds once a second, so a connection is closed up to two
+seconds after its bound, never before. A value of [0] disables the timeout,
+and the minimum rate of [<mindatarate>] with it.
+
+[<servertimeout>] is accepted for compatibility, but has no effect, and a
+warning says so.
+
+{3 [<keepalivetimeout>] : Timeout for idle connections}
+
+
+Written in seconds. Default: 75, as in nginx. Example:
+
+{v
+<keepalivetimeout>30</keepalivetimeout>
+v}
+
+How long a connection may stay idle between two requests (HTTP keep-alive)
+before the server closes it. Once the first byte of the next request arrives,
+the request is bounded by [<timeout>]. A value of [0] disables this bound.
+
+Behind a reverse proxy that keeps its connections to Ocsigenserver alive, this
+value must be larger than the idle timeout of the proxy (60 seconds for nginx
+and for AWS load balancers), so that the proxy closes an idle connection
+first: otherwise the proxy may send a request on a connection at the moment
+the server closes it, and answer that request with an error (502).
+
+{3 [<mindatarate>] : Minimum data rate}
+
+
+Written in bytes per second. Default: 500, as the [MinRate] of Apache's
+[mod_reqtimeout], which bounds requests only. Example:
+
+{v
+<mindatarate>1000</mindatarate>
+v}
+
+The minimum rate at which a client must send the body of a request, and read
+its response, once it has had [<timeout>] seconds of grace. It keeps a client
+from holding a connection by sending a body, or reading a response, a few
+bytes at a time ("R-U-Dead-Yet" and "Slow Read" attacks), each within the
+timeout. Only the time spent waiting for the client counts: a body that the
+server reads slowly, or a response that it produces slowly, does not make the
+client too slow. A value of [0] disables this bound, and so does a
+[<timeout>] of [0].
+
+{3 [<maxconnectionsperaddress>] : Maximum number of connections per client}
+
+
+Default: no limit. Example:
+
+{v
+<maxconnectionsperaddress>32</maxconnectionsperaddress>
+v}
+
+The maximum number of connections a single client may have open at once. A
+further connection is closed as soon as it is accepted, and logged at the
+[info] level. This keeps a single client from taking all the connections that
+[<maxconnected>] allows. An IPv6 address counts for its /64 network, the usual
+allocation to a single site. Connections through Unix domain sockets are not
+limited.
+
+Browsers open up to six connections per site, and several users may share an
+address (behind a NAT, in a company or on a mobile network), so the limit
+should not be too low. Behind a reverse proxy, all the connections come from
+the address of the proxy: leave this limit out, and set it in the proxy
+instead.
+
+{b Recommendation.} For an Internet-facing deployment, a reverse proxy (nginx,
+HAProxy, Caddy, ...) in front of Ocsigenserver still brings what the server
+does not do itself: buffering slow clients, so that they do not hold a
+connection to the server at all, rate limiting, and obtaining certificates.
 
 {3 [<shutdowntimeout>] : Timeout for graceful shutdown {e From version 1.3}}
 

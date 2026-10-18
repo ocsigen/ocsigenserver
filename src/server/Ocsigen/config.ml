@@ -67,6 +67,9 @@ let maxthreads = ref 30
 let max_number_of_connections = ref 350
 let silent_client_timeout = ref 30 (* without speaking during sending frame *)
 let silent_server_timeout = ref 30 (* without speaking during sending frame *)
+let keepalive_timeout = ref 75
+let min_data_rate = ref 500
+let max_connections_per_address = ref 0
 let filebuffersize = ref 8192
 let maxrequestbodysize = ref (Some (Int64.of_int 8000000))
 let maxrequestbodysizeinmemory = ref 1_048_576 (* 1 MiB *)
@@ -121,9 +124,11 @@ let set_maxthreads i = maxthreads := i
 let set_max_number_of_connections i = max_number_of_connections := i
 let set_client_timeout i = silent_client_timeout := i
 let set_server_timeout i = silent_server_timeout := i
+let set_keepalive_timeout i = keepalive_timeout := i
+let set_min_data_rate i = min_data_rate := i
+let set_max_connections_per_address i = max_connections_per_address := i
 
-(* let set_keepalive_timeout i = keepalive_timeout := i
-let set_keepopen_timeout i = keepopen_timeout := i *)
+(* let set_keepopen_timeout i = keepopen_timeout := i *)
 let set_filebuffersize i = filebuffersize := i
 let set_maxuploadfilesize i = maxuploadfilesize := i
 let set_maxrequestbodysize i = maxrequestbodysize := i
@@ -164,6 +169,9 @@ let get_maxthreads () = !maxthreads
 let get_max_number_of_connections () = !max_number_of_connections
 let get_client_timeout () = !silent_client_timeout
 let get_server_timeout () = !silent_server_timeout
+let get_keepalive_timeout () = !keepalive_timeout
+let get_min_data_rate () = !min_data_rate
+let get_max_connections_per_address () = !max_connections_per_address
 let get_filebuffersize () = !filebuffersize
 let get_maxuploadfilesize () = !maxuploadfilesize
 let get_maxrequestbodysize () = !maxrequestbodysize
