@@ -66,6 +66,11 @@ val to_cohttp : t -> Cohttp.Request.t
 val uri : t -> Uri.t
 ```
 ```ocaml
+exception Truncated_body
+```
+Reading the body of a request ([`body`](./#val-body), [`post_params`](./#val-post_params), [`files`](./#val-files)) fails with `Truncated_body` when the client closes the connection before the end of a body whose length was announced with Content-Length. The server answers such a request with 400 (Bad Request).
+
+```ocaml
 val body : t -> Cohttp_lwt.Body.t
 ```
 ```ocaml
