@@ -69,6 +69,14 @@ let errmsg = function
     try Extensions.get_init_exn_handler () exn, 20
     with exn -> "Fatal - Uncaught exception: " ^ Printexc.to_string exn, 100)
 
+(* Until the server configures its logging, its messages go to the terminal,
+   unless the program has installed a reporter: without one, Logs would drop
+   them, and a program using Ocsigen Server as a library would not see why the
+   server stops at start-up. *)
+let report_to_terminal_by_default () =
+  if Logs.reporter () == Logs.nop_reporter
+  then Logs.set_reporter Messages.stdio_reporter
+
 (* loading new configuration *)
 let reload_conf s =
   try
@@ -333,6 +341,7 @@ let open_command_pipe path =
 let main_loop_is_running = ref false
 
 let main config =
+  report_to_terminal_by_default ();
   if !main_loop_is_running
   then Logs.err (fun fmt -> fmt "Cannot run main loop twice");
   main_loop_is_running := true;
@@ -533,6 +542,7 @@ let main config =
     Messages.errlog msg; exit errno
 
 let exec config =
+  report_to_terminal_by_default ();
   Config.has_config_file := true;
   match config with
   | [] -> ()
@@ -665,7 +675,9 @@ let register_compression f = compression := Some f
 (* Common setup of the one-command modes: no configuration file and no log
    directory are required. Logs go to stderr, and there is no command pipe:
    the server is stopped with a signal (Ctrl-C, SIGTERM). *)
-let one_command_setup () = Config.set_log_to_stderr true
+let one_command_setup () =
+  report_to_terminal_by_default ();
+  Config.set_log_to_stderr true
 
 (* Load the extension [package] on demand. On failure: exit if [required],
    otherwise log a warning and continue. *)

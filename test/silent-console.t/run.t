@@ -16,7 +16,8 @@ The one-command modes always log to the terminal.
 
 With a configuration that gives neither a log directory nor syslog, a server
 built with no default log directory logs to the terminal too. An empty log
-directory does the same here.
+directory does the same here. The program installs no Logs reporter: the
+server reports its errors on the terminal anyway.
 
   $ dune build ./test.exe 2>&1
   $ ./_build/default/test.exe -s >out.log 2>&1; echo "exit $?"

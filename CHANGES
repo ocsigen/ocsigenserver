@@ -85,6 +85,9 @@ Bug fixes:
    out with neither chunking nor its length, so the client could not find its
    end. A fixed-length body now always gets its own length as Content-Length,
    even when the response had another one, or only a Content-Range.
+ * A program that starts Ocsigen Server as a library, and installs no Logs
+   reporter, now sees on the terminal the errors that stop the server before
+   it configures its logging. Logs dropped them, so the program just exited.
  * A request with "Connection: close", or an HTTP/1.0 request without
    "Connection: keep-alive", now gets a response with "Connection: close",
    after which the server closes the connection, as RFC 9112 requires, without
