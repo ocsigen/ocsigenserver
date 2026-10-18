@@ -15,6 +15,10 @@ Incompatible changes:
    built with no default log directory. These modes redirect the standard
    output and error to /dev/null, so nothing at all was logged, errors
    included. With -d, the server fails before it detaches.
+ * Ocsigen.Messages.console is removed. It printed on the standard output,
+   and said it did nothing in silent mode, which it never checked. The
+   "Process N detached" message of daemon mode, its only use, now goes
+   through Logs (source ocsigen:main).
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that

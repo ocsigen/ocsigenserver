@@ -531,8 +531,9 @@ let main config =
       if pid = 0
       then Lwt_main.run (run ())
       else (
-        Messages.console (fun () ->
-          "Process " ^ string_of_int pid ^ " detached");
+        (* Only the detached process is silent: the user who launched the
+           server learns its process id. *)
+        Logs.app ~src:section (fun fmt -> fmt "Process %d detached" pid);
         write_pid pid)
     else (
       write_pid (Unix.getpid ());

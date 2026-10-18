@@ -361,11 +361,6 @@ let unexpected_exception e s =
 
 (****)
 
-let console =
-  if not (Config.get_silent ())
-  then fun s -> print_endline (s ())
-  else fun _s -> ()
-
 let level_of_string = function
   | "debug" -> Some Logs.Debug
   | "info" -> Some Logs.Info

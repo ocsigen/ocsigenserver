@@ -51,9 +51,6 @@ val errlog : ?section:Logs.src -> string -> unit
 val warning : ?section:Logs.src -> string -> unit
 (** Write a message in warnings.log *)
 
-val console : (unit -> string) -> unit
-(** Write a message in the console (if not called in silent mode) *)
-
 val unexpected_exception : exn -> string -> unit
 (** Use that function for all impossible cases in exception handlers
     ([try ... with ... | e -> unexpected_exception ...] or [Lwt.catch ...]).
