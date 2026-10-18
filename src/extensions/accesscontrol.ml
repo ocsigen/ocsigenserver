@@ -225,14 +225,20 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
           Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header
         with
         | original_ip :: proxies ->
-            let last_proxy = List.last proxies in
-            let proxy_ip = Ipaddr.of_string_exn last_proxy in
-            let equal_ip =
-              match Ocsigen.Request.client_conn request_info with
-              | `Inet (r_ip, _) -> Ipaddr.compare proxy_ip r_ip = 0
+            (* A single address, as nginx or Revproxy send, is the client.
+               With [check_equal_ip], the last address must be the one of
+               the proxy that sent the request, so it cannot be missing. *)
+            let equal_ip () =
+              match
+                List.rev proxies, Ocsigen.Request.client_conn request_info
+              with
+              | last_proxy :: _, `Inet (r_ip, _) -> (
+                match Ipaddr.of_string last_proxy with
+                | Ok proxy_ip -> Ipaddr.compare proxy_ip r_ip = 0
+                | Error _ -> false)
               | _ -> false
             in
-            if equal_ip || not check_equal_ip
+            if (not check_equal_ip) || equal_ip ()
             then
               { request with
                 Ocsigen.Extensions.request_info =

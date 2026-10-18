@@ -45,6 +45,14 @@ let create_redirection
   let regexp = Pcre.regexp ("^" ^ regexp ^ "$") in
   {regexp; dest; full_url; pipeline; keephost}
 
+(* The address of the client, as X-Forwarded-For holds it: an IP address, or
+   "unknown" for a client without one (Unix socket). *)
+let client_address request_info =
+  match Ocsigen.Request.client_conn request_info with
+  | `Inet (ip, _) -> Ipaddr.to_string ip
+  | `Forwarded_for ip -> ip
+  | `Unix _ | `Unknown -> "unknown"
+
 (** Generate the pages from the request *)
 let gen dir = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -59,34 +67,20 @@ let gen dir = function
              Ocsigen.Extensions.find_redirection dir.regexp dir.full_url
                dir.dest request_info
            in
-           let https, host, port, path =
-             try
-               (* FIXME: we do not seem to handle GET
-                parameters. Why? *)
-               match Ocsigen_base.Lib.Url.parse dest with
-               | Some https, Some host, port, path, _, _, _ ->
-                   let port =
-                     match port with
-                     | None -> if https then 443 else 80
-                     | Some p -> p
-                   in
-                   https, host, port, path
-               | _ ->
-                   raise
-                     (Ocsigen.Extensions.Error_in_config_file
-                        ("Revproxy : error in destination URL " ^ dest))
-               (*VVV catch only URL-related exceptions? *)
-             with e ->
+           (* [dest] is a full URL. Its path is sent as it is, but Uri decodes
+              and encodes again its query, whose encoding may change: "+"
+              becomes "%20", which also means a space in a form, and ";"
+              becomes "%3B". *)
+           let target = Uri.of_string dest in
+           (match Uri.scheme target, Uri.userinfo target, Uri.host target with
+           | Some ("http" | "https"), None, Some host when host <> "" -> ()
+           | _ ->
                raise
                  (Ocsigen.Extensions.Error_in_config_file
-                    ("Revproxy : error in destination URL " ^ dest ^ " - "
-                   ^ Printexc.to_string e))
-           in
+                    ("Revproxy : error in destination URL " ^ dest)));
            Logs.info ~src:section (fun fmt ->
-             fmt "YES! Redirection to http%s://%s:%d/%s"
-               (if https then "s" else "")
-               host port path);
-           Ocsigen_base.Lib.Ip_address.get_inet_addr host >>= fun _inet_addr ->
+             (* Not the query, which may hold secrets. *)
+             fmt "YES! Redirection to %a" Uri.pp (Uri.with_query target []));
            (* It is now safe to start processing next request.
 
             We are sure that the request won't be taken in disorder,
@@ -97,43 +91,29 @@ let gen dir = function
                  Cohttp.Request.headers (Ocsigen.Request.to_cohttp request_info)
                in
                let h =
-                 Ocsigen.Request.version request_info
-                 |> Cohttp.Code.string_of_version
-                 |> Cohttp.Header.replace h
-                      Ocsigen_http.Header.Name.(to_string x_forwarded_proto)
+                 Cohttp.Header.replace h
+                   Ocsigen_http.Header.Name.(to_string x_forwarded_proto)
+                   (if Ocsigen.Request.ssl request_info then "https" else "http")
                in
                let h =
                  let forward =
-                   let address =
-                     Ocsigen.Config.Socket_type.to_string
-                       (Ocsigen.Request.address request_info)
-                   in
                    String.concat ", "
-                     (Ocsigen.Request.client_conn_to_string request_info
-                      :: Ocsigen.Request.forward_ip request_info
-                     @ [address])
+                     (client_address request_info
+                     :: Ocsigen.Request.forward_ip request_info)
                  in
                  Cohttp.Header.replace h
                    Ocsigen_http.Header.Name.(to_string x_forwarded_for)
                    forward
                in
-               Cohttp.Header.remove h Ocsigen_http.Header.Name.(to_string host)
-             and uri =
-               let scheme =
-                 if Ocsigen.Request.ssl request_info then "https" else "http"
-               and host =
-                 match
-                   if dir.keephost
-                   then Ocsigen.Request.host request_info
-                   else None
-                 with
-                 | Some host -> host
-                 | None -> host
-               in
-               Uri.make ~scheme ~host ~port ~path ()
+               (* Without keephost, cohttp sets the Host header from [target]. *)
+               if dir.keephost
+               then h
+               else
+                 Cohttp.Header.remove h
+                   Ocsigen_http.Header.Name.(to_string host)
              and body = Ocsigen.Request.body request_info
              and meth = Ocsigen.Request.meth request_info in
-             Cohttp_lwt_unix.Client.call ~headers ~body meth uri
+             Cohttp_lwt_unix.Client.call ~headers ~body meth target
            in
            Lwt.return
            @@ Ocsigen.Extensions.Ext_found
