@@ -229,6 +229,10 @@ Bug fixes:
  * An order of the command pipe that fails no longer stops the command pipe.
    The later orders, such as the reopen_logs of a log rotation, used to be
    ignored until the server was restarted.
+ * Virtual hosts now match host names case-insensitively, and ignore a final
+   dot in the host name ("example.org."). A request for "EXAMPLE.ORG" used
+   to miss the <host hostfilter="example.org"> configuration, and its access
+   restrictions, and could be served by another host.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

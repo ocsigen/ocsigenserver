@@ -49,6 +49,10 @@ let badconfig fmt =
 (* virtual hosts: *)
 type virtual_hosts = (string * Pcre.regexp * int option) list
 
+(* Host names are case-insensitive (RFC 9110, section 4.2.3). Not multiline:
+   "$" must only match at the end of the host name, not before a newline. *)
+let host_regexp re = Pcre.regexp ~flags:[`CASELESS] re
+
 (* We cannot use generic comparison, as regexpes are abstract values that
    cannot be compared or hashed. However the string essentially contains
    the value that is compiled into a regexp, and we compare this instead *)
@@ -737,6 +741,12 @@ let host_match ~(virtual_hosts : virtual_hosts) ~host ~port =
   (*VVV Warning! For HTTP/1.0, when host is absent,
      we take the first one, even if it doesn't match!  *)
   | Some host ->
+      (* The fully qualified form "example.org." names the same host. *)
+      let host =
+        match String.ends_with ~suffix:"." host with
+        | true -> String.sub host 0 (String.length host - 1)
+        | false -> host
+      in
       let host_match regexp =
         Ocsigen_base.Lib.Netstring_pcre.string_match regexp host 0 <> None
       in

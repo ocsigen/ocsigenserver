@@ -190,7 +190,8 @@ let parse_host_field =
     with Not_found ->
       let r =
         match hostfilter with
-        | None -> ["*", Netstring_pcre.regexp ".*$", None] (* default = "*:*" *)
+        | None ->
+            ["*", Extensions.host_regexp ".*$", None] (* default = "*:*" *)
         | Some s ->
             let parse_one_host ss =
               let host, port =
@@ -212,7 +213,7 @@ let parse_host_field =
                 | Str.Text t -> Re.Pcre.quote t
               in
               ( host
-              , Netstring_pcre.regexp
+              , Extensions.host_regexp
                   (String.concat ""
                      (List.map split_host
                         (Str.full_split (Str.regexp "[*]+") host)
