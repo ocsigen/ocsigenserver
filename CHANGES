@@ -109,6 +109,11 @@ Bug fixes:
    own pipe is replaced with a new one, with a warning, if it has group or
    other permissions (Ocsigen Server 7 created it with mode 0o660): a process
    that opened it before loses its access.
+ * The one-command modes (ocsigenserver DIR, --serve, --reverse-proxy) no
+   longer create a command pipe. It was placed at a predictable path in the
+   temporary directory, where another local user could create it first and send
+   orders to the server. These modes have no configuration file to reload and
+   log to the terminal; the server is stopped with a signal.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

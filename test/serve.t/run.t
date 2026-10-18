@@ -7,7 +7,8 @@ pre-created log directory.
 Start the server in serve mode on a TCP port. Logs go to stderr (redirected to
 a file here), so no log directory is created.
 
-  $ ocsigenserver --serve www --port 8061 >server.log 2>&1 &
+  $ mkdir tmp
+  $ TMPDIR=$PWD/tmp ocsigenserver --serve www --port 8061 >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
 
@@ -56,4 +57,10 @@ No log directory is created in the current directory.
   body
   headers
   server.log
+  tmp
   www
+
+No command pipe is created in the temporary directory, where this mode used to
+put it (nor in the current directory, listed above).
+
+  $ ls tmp

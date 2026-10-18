@@ -651,14 +651,9 @@ let compression : instruction option ref = ref None
 let register_compression f = compression := Some f
 
 (* Common setup of the one-command modes: no configuration file and no log
-   directory are required. Logs go to stderr and the command pipe is placed in a
-   temporary location so that the usual control commands remain available. *)
-let one_command_setup () =
-  Config.set_log_to_stderr true;
-  Config.set_command_pipe
-    (Filename.concat
-       (Filename.get_temp_dir_name ())
-       (Printf.sprintf "ocsigenserver-%d.cmd" (Unix.getpid ())))
+   directory are required. Logs go to stderr, and there is no command pipe:
+   the server is stopped with a signal (Ctrl-C, SIGTERM). *)
+let one_command_setup () = Config.set_log_to_stderr true
 
 (* Load the extension [package] on demand. On failure: exit if [required],
    otherwise log a warning and continue. *)
