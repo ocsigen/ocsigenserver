@@ -53,8 +53,8 @@ Without Accept-Encoding the response is not compressed:
   HTTP/1.1 200 OK
   content-type: text/html
   accept-ranges: bytes
-  content-length: 12
   server: Ocsigen
+  content-length: 12
   connection: keep-alive
   
   Hello world
@@ -142,8 +142,8 @@ range request goes out as is, with its length:
   content-type: text/html
   accept-ranges: bytes
   content-range: bytes 0-3/11
-  content-length: 4
   server: Ocsigen
+  content-length: 4
   connection: keep-alive
   
   Erro

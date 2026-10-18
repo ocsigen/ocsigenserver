@@ -235,15 +235,6 @@ let respond_file
                       (Http.Header.add_unless_exists headers "content-type"
                          mime_type))
                in
-               (* Announce the length of what we send. [Http.Header] infers a
-                  [Fixed] transfer encoding from [content-range] alone and then
-                  adds no [content-length] of its own, so a [206] would go out
-                  with neither a length nor chunking: the client would wait for
-                  the connection to close. *)
-               let headers =
-                 Http.Header.add_unless_exists headers "content-length"
-                   (string_of_int length)
-               in
                Lwt.return (respond ~headers ~status ~body ()))
     (function
       | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
