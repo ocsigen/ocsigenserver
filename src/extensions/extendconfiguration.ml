@@ -211,12 +211,12 @@ let fun_site usermode _ _ _ _ _ = function
         Ocsigen.Extensions.badconfig "Invalid regexp %s in %s" r "forbidfile")
   | Xml.Element (("forbidfile" as s), _, _) ->
       Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
+  (* An empty element, which Xml-light reads with no content, forbids
+     uploads. *)
+  | Xml.Element ("uploaddir", [], ([] | [Xml.PCData ""])) ->
+      gen (fun config -> {config with Ocsigen.Extensions.uploaddir = None})
   | Xml.Element ("uploaddir", [], [Xml.PCData s]) ->
-      gen
-      @@
-      if s = ""
-      then fun config -> {config with Ocsigen.Extensions.uploaddir = None}
-      else fun config -> {config with Ocsigen.Extensions.uploaddir = Some s}
+      gen (fun config -> {config with Ocsigen.Extensions.uploaddir = Some s})
   | Xml.Element (("uploaddir" as s), _, _) ->
       Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Xml.Element (("maxuploadfilesize" as tag), [], [Xml.PCData s]) ->

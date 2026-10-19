@@ -463,7 +463,9 @@ and later_pass = function
   | Element ("user", [], _p) :: ll -> later_pass ll
   | Element ("group", [], _p) :: ll -> later_pass ll
   | Element (("uploaddir" as st), [], p) :: ll ->
-      set_uploaddir (Some (parse_string_tag st p));
+      (* An empty element forbids uploads, as in Extendconfiguration. *)
+      set_uploaddir
+        (match parse_string_tag st p with "" -> None | dir -> Some dir);
       later_pass ll
   | Element (("datadir" as st), [], p) :: ll ->
       set_datadir (parse_string_tag st p);
