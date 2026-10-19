@@ -40,7 +40,7 @@ Note that the extension should be used with [accesscontrol](./accesscontrol.md) 
   <if>
   <and>
     <header name="origin" regexp="http://localhost:8081"/>
-    <path regexp="eliom_site" />
+    <path regexp="eliom_site(/.*)?" />
   </and>
   <then>
     <cors max_age="86400"

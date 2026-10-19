@@ -12,7 +12,7 @@ This page describes the configuration file options. If you are building a static
 Configure your hosts from the config file as in this example:
 
 ```
-<rewrite regexp="(.*)" url="toto/\1"/>
+<rewrite regexp="old/(.*)" url="new/\1"/>
 ```
 The syntax of regular expression is PCRE's one.
 

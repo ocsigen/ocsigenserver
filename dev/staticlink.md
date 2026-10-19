@@ -43,7 +43,7 @@ let _ =
                      ; method_ `POST ])
                   [forbidden] [])
             ; Authbasic.run ~realm:"myrealm"
-                ~auth:(fun _u p -> Lwt.return (p = "toto"))
+                ~auth:(fun u p -> Lwt.return (u = "admin" && p = "toto"))
                 ()
             ; Staticmod.run ~dir:"local/var/www/otherdir" () ]
         ; Ocsigen.Server.site ["othersubsite"]
@@ -51,11 +51,18 @@ let _ =
                 ~redirection:
                   (Revproxy.create_redirection ~full_url:false ~regexp:"(.*)"
                      ~keephost:true "http://localhost:8888/\\1")
+                ()
+            ; Outputfilter.run
+                ~mode:
+                  (`Rewrite
+                    ( Ocsigen_http.Header.Name.location
+                    , "http://localhost:8888/(.*)"
+                    , "http://mydomain.com/\\1" ))
                 () ]
         ; Redirectmod.run
             ~redirection:
               (Redirectmod.create_redirection ~full_url:false ~regexp:"old(.*)"
-                 "new\\1")
+                 "http://mydomain.com/new\\1")
             ()
         ; Staticmod.run ~dir:"local/var/www/staticdir" ()
         ; Cors.run ~max_age:86400 ~credentials:true ~methods:[`POST; `GET; `HEAD]
@@ -109,7 +116,6 @@ This program corresponds to the following configuration file:
     <logdir>local/var/log/mysite</logdir>
     <datadir>local/var/data/mysite</datadir>
     <charset>utf-8</charset>
-    <debugmode/>
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
     <extension findlib-package="ocsigenserver.ext.authbasic"/>
     <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
@@ -120,7 +126,7 @@ This program corresponds to the following configuration file:
     <extension findlib-package="ocsigenserver.ext.redirectmod"/>
     <extension findlib-package="ocsigenserver.ext.revproxy"/>
     <host hostfilter="mydomain.com">
-      <site dir="subsite">
+      <site path="subsite">
         <if>
           <and>
             <ip value="122.122.122.122"/>
@@ -132,15 +138,15 @@ This program corresponds to the following configuration file:
           </then>
         </if>
         <authbasic realm="myrealm">
-          <plain login="" password="toto"/>
+          <plain login="admin" password="toto"/>
         </authbasic>
         <static dir="local/var/www/otherdir"/>
       </site>
-      <site dir="othersite">
-        <revproxy suburl="(.*)" keephost="true" dest="http://localhost:8888/otherdir/\\1"/>
-        <outputfilter header="location" regexp="http://localhost:8888/(.* )" dest="http://mydomain.com/\\1"/>
+      <site path="othersubsite">
+        <revproxy suburl="(.*)" keephost="keephost" dest="http://localhost:8888/\1"/>
+        <outputfilter header="location" regexp="http://localhost:8888/(.*)" dest="http://mydomain.com/\1"/>
       </site>
-      <redirect suburl="old(.*)" dest="http://mydomain.org/new\\1"/>
+      <redirect suburl="old(.*)" dest="http://mydomain.com/new\1"/>
       <static dir="local/var/www/staticdir"/>
       <cors max_age="86400"
        credentials="true"

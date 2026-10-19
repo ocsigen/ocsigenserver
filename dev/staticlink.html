@@ -208,7 +208,7 @@
                      ; method_ `POST ])
                   [forbidden] [])
             ; Authbasic.run ~realm:&quot;myrealm&quot;
-                ~auth:(fun _u p -&gt; Lwt.return (p = &quot;toto&quot;))
+                ~auth:(fun u p -&gt; Lwt.return (u = &quot;admin&quot; &amp;&amp; p = &quot;toto&quot;))
                 ()
             ; Staticmod.run ~dir:&quot;local/var/www/otherdir&quot; () ]
         ; Ocsigen.Server.site [&quot;othersubsite&quot;]
@@ -216,11 +216,18 @@
                 ~redirection:
                   (Revproxy.create_redirection ~full_url:false ~regexp:&quot;(.*)&quot;
                      ~keephost:true &quot;http://localhost:8888/\\1&quot;)
+                ()
+            ; Outputfilter.run
+                ~mode:
+                  (`Rewrite
+                    ( Ocsigen_http.Header.Name.location
+                    , &quot;http://localhost:8888/(.*)&quot;
+                    , &quot;http://mydomain.com/\\1&quot; ))
                 () ]
         ; Redirectmod.run
             ~redirection:
               (Redirectmod.create_redirection ~full_url:false ~regexp:&quot;old(.*)&quot;
-                 &quot;new\\1&quot;)
+                 &quot;http://mydomain.com/new\\1&quot;)
             ()
         ; Staticmod.run ~dir:&quot;local/var/www/staticdir&quot; ()
         ; Cors.run ~max_age:86400 ~credentials:true ~methods:[`POST; `GET; `HEAD]
@@ -262,7 +269,6 @@
     &lt;logdir&gt;local/var/log/mysite&lt;/logdir&gt;
     &lt;datadir&gt;local/var/data/mysite&lt;/datadir&gt;
     &lt;charset&gt;utf-8&lt;/charset&gt;
-    &lt;debugmode/&gt;
     &lt;extension findlib-package=&quot;ocsigenserver.ext.staticmod&quot;/&gt;
     &lt;extension findlib-package=&quot;ocsigenserver.ext.authbasic&quot;/&gt;
     &lt;extension findlib-package=&quot;ocsigenserver.ext.extendconfiguration&quot;/&gt;
@@ -273,7 +279,7 @@
     &lt;extension findlib-package=&quot;ocsigenserver.ext.redirectmod&quot;/&gt;
     &lt;extension findlib-package=&quot;ocsigenserver.ext.revproxy&quot;/&gt;
     &lt;host hostfilter=&quot;mydomain.com&quot;&gt;
-      &lt;site dir=&quot;subsite&quot;&gt;
+      &lt;site path=&quot;subsite&quot;&gt;
         &lt;if&gt;
           &lt;and&gt;
             &lt;ip value=&quot;122.122.122.122&quot;/&gt;
@@ -285,15 +291,15 @@
           &lt;/then&gt;
         &lt;/if&gt;
         &lt;authbasic realm=&quot;myrealm&quot;&gt;
-          &lt;plain login=&quot;&quot; password=&quot;toto&quot;/&gt;
+          &lt;plain login=&quot;admin&quot; password=&quot;toto&quot;/&gt;
         &lt;/authbasic&gt;
         &lt;static dir=&quot;local/var/www/otherdir&quot;/&gt;
       &lt;/site&gt;
-      &lt;site dir=&quot;othersite&quot;&gt;
-        &lt;revproxy suburl=&quot;(.*)&quot; keephost=&quot;true&quot; dest=&quot;http://localhost:8888/otherdir/\\1&quot;/&gt;
-        &lt;outputfilter header=&quot;location&quot; regexp=&quot;http://localhost:8888/(.* )&quot; dest=&quot;http://mydomain.com/\\1&quot;/&gt;
+      &lt;site path=&quot;othersubsite&quot;&gt;
+        &lt;revproxy suburl=&quot;(.*)&quot; keephost=&quot;keephost&quot; dest=&quot;http://localhost:8888/\1&quot;/&gt;
+        &lt;outputfilter header=&quot;location&quot; regexp=&quot;http://localhost:8888/(.*)&quot; dest=&quot;http://mydomain.com/\1&quot;/&gt;
       &lt;/site&gt;
-      &lt;redirect suburl=&quot;old(.*)&quot; dest=&quot;http://mydomain.org/new\\1&quot;/&gt;
+      &lt;redirect suburl=&quot;old(.*)&quot; dest=&quot;http://mydomain.com/new\1&quot;/&gt;
       &lt;static dir=&quot;local/var/www/staticdir&quot;/&gt;
       &lt;cors max_age=&quot;86400&quot;
        credentials=&quot;true&quot;

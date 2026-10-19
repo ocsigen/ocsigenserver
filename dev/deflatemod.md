@@ -23,23 +23,23 @@ This page describes the configuration file options. If you are building a static
 
 ### How do I configure deflatemod?
 
-Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:
+You can set a few options globally, inside the `<extension>` element that loads deflatemod:
 
 - the compress level: from 0 (no compression) to 9\. The higher, the better compression rate you achieve. Conversely, the lower, the faster it is. Default is 6\. This level applies to `gzip` and `deflate`; `zstd` uses the library default level.
 - the buffer size: default is 8192\. You shouldn't need to change this one, but you can still try a few other values (any feedback welcomed).
 For example:
 
 ```
-<extension module="/home/gabriel/ocsigen/extensions/deflatemod.cmo">
+<extension findlib-package="ocsigenserver.ext.deflatemod">
 <compress level="6" />
 <buffer size="1024" />
 </extension>
 ```
-Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.
+Next, you *have to* specify which pages you wish to deflate, in which host or site (otherwise, deflatemod won't compress anything). See next question to do that.
 
 ### I want to deflate only some files. Is it possible?
 
-To some extent, yes. You can '''exclude''' some files and deflate every other, according to their mime-type or extension (''ie.'' the end of the '''url''' in fact, not really the file name on the disk).
+To some extent, yes. You can *exclude* some files and deflate every other, according to their mime-type or extension (*i.e.* the end of the *URL* in fact, not really the file name on the disk).
 
 Here is an example:
 
@@ -56,9 +56,9 @@ Here is an example:
 </deflate>
 </host>
 ```
-As you can see, you must put the \<deflate\> tag at the very end of the \<host\> element. Indeed, Ocsigen deals with extensions sequentially, so if you put \<site\> or other elements '''after''' \<deflatemod\>, they won't be compressed.
+As you can see, the `<deflate>` element comes after the elements that produce the pages to compress. Indeed, Ocsigen deals with extensions sequentially, so the pages of a `<site>` or of other elements put *after* `<deflate>` won't be compressed.
 
-Conversely, you can choose to deflate '''only''' some files, based on their mime-types or extension:
+Conversely, you can choose to deflate *only* some files, based on their mime-types or extension:
 
 ```
 <host>
@@ -72,9 +72,9 @@ Conversely, you can choose to deflate '''only''' some files, based on their mime
 </deflate>
 </host>
 ```
-Warning: you can use only one contenttype tag\! So you must choose, either the "only" or the "allbut" way.
+Warning: a `<deflate>` element has a single mode. So you must choose, either the "only" or the "allbut" way.
 
-Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please fill a bug report or send a patch.
+Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please file a bug report or send a patch.
 
 ## Technical questions
 

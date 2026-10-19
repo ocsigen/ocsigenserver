@@ -202,14 +202,14 @@
                   [])</code></pre></li></ul><ul><li>I want some actions to handle requests that respect at least one of the following conditions:</li><li>they belong to the subnet 123.123.123.0/24,</li><li>or they want to access a page beginning with the letter 'c',</li><li><p>or they are not doing a <code>GET HTTP</code> request:</p><pre>&lt;if&gt;
   &lt;or&gt;
     &lt;ip value=&quot;123.123.123.0/24&quot; /&gt;
-    &lt;path regexp=&quot;/c.*&quot; /&gt;
+    &lt;path regexp=&quot;c.*&quot; /&gt;
     &lt;not&gt;&lt;method value=&quot;GET&quot; /&gt;&lt;/not&gt;
   &lt;/or&gt;
   &lt;then&gt;
     &lt;!-- put your actions here --&gt;
   &lt;/then&gt;
 &lt;/if&gt;</pre><p>Or, if you are using Ocsigen Server as a library:</p><pre class="language-ocaml"><code>Accesscontrol.(if_ (or_ [(ip &quot;123.123.123.0/24&quot;); 
-                         (path ~regexp:&quot;/c.*&quot;);
+                         (path ~regexp:&quot;c.*&quot;);
                          (not_ (method_ `GET))])
                   [ ... ]
                   [])</code></pre></li></ul><ul><li><p>I want to deny access to 192.168.0.0/24 except 192.168.0.42, and to 192.168.99.0/24:</p><pre>&lt;if&gt;

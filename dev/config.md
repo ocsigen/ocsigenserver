@@ -95,8 +95,8 @@ Here is a simple example:
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
 
-    <extension findlib-package="ocsigenserver.ext.ocsipersist-sqlite"/>
-    <!-- sqlite3.cma will be loaded automatically using findlib -->
+    <extension findlib-package="ocsipersist-sqlite-config"/>
+    <!-- Its dependencies will be loaded automatically using findlib -->
 
     <extension findlib-package="eliom.server"/>
     <!-- Eliom's dependencies will be loaded automatically using findlib -->
@@ -118,7 +118,7 @@ Here is a simple example:
 
 </ocsigen>
 ```
-Here is another example, for use as unprivileged user toto on port 8000\. We use the PostgreSQL (version \>= 9\.5) backend for ocsipersist. Note that the ocsipersist-database under the specified name (default: "ocsipersist") needs to exist. To create it run `psql` and execute `CREATE TABLE ocsipersist;`.
+Here is another example, for use as unprivileged user toto on port 8000\. We use the PostgreSQL (version \>= 9\.5) backend for ocsipersist. Note that the ocsipersist-database under the specified name (default: "ocsipersist") needs to exist. To create it run `psql` and execute `CREATE DATABASE ocsipersist;`. Ocsipersist creates its tables itself.
 
 ```
 <ocsigen>
@@ -134,16 +134,19 @@ Here is another example, for use as unprivileged user toto on port 8000\. We use
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
 
-    <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
-      <database <!-- optional, as each of the following attributes are -->
-        port="3000"
+    <extension findlib-package="ocsipersist-pgsql-config">
+      <!-- <database> is optional, and so is each of its attributes:
+           host, port, user, password, database, unix_domain_socket_dir
+           and size_conn_pool -->
+      <database
+        port="5432"
         user="toto"
         password="toto's secret"
       />
     </extension>
-    <!-- pa_pgsql.cma will be loaded automatically using findlib -->
+    <!-- Its dependencies will be loaded automatically using findlib -->
 
-    <extension findlib-package="ocsigenserver.ext.eliom"/>
+    <extension findlib-package="eliom.server"/>
     <!-- Eliom's dependencies will be loaded automatically using findlib -->
 
     <extconf dir="/home/toto/etc/ocsigenserver/conf.d" />
@@ -471,7 +474,7 @@ Written in seconds, or `notimeout`. Example:
 Size of the input buffer (sockets). It is also the maximum size of headers and post data. Example:
 
 ```
-<netbuffersize>8192B</netbuffersize>
+<netbuffersize>8192</netbuffersize>
 ```
 
 #### `<filebuffersize>` : Size of the buffer for sending files
@@ -479,7 +482,7 @@ Size of the input buffer (sockets). It is also the maximum size of headers and p
 Size of the buffer for reading files to send. Example:
 
 ```
-<filebuffersize>8192B</filebuffersize>
+<filebuffersize>8192</filebuffersize>
 ```
 
 #### `<minthreads> <maxthreads>` : Size of the preemptive thread pool
@@ -489,14 +492,6 @@ Even if Ocsigenserver is implemented with cooperative threads, web site programm
 ```
 <minthreads>10</minthreads>
 <maxthreads>1000</maxthreads>
-```
-
-#### `<maxdetachedcomputationsqueued>` : Size of the queue of waiting detached computations
-
-If the pool of preemptive threads is full, new detached computations will wait for one thread to become available. This is the size of the waiting queue. Only integer values allowed here. Example:
-
-```
-<maxdetachedcomputationsqueued>100</maxdetachedcomputationsqueued>
 ```
 
 #### `<maxretries>` : Maximum number of retries for the same request
@@ -568,9 +563,9 @@ If you don't want to clutter your installation with a lot of Ocsigen-specific pa
 Extensions shipped with Ocsigen Server are available as subpackages of `ocsigenserver.ext` (this package is in an extended search path). For example:
 
 ```
-<extension findlib-package="ocsigenserver.ext.deflatemod">
+<extension findlib-package="ocsigenserver.ext.deflatemod"/>
 ```
-This will load deflatemod, and its dependency camlzip (if not already loaded).
+This will load deflatemod, and its dependencies (bytesrw and its zlib and zstd libraries) if not already loaded.
 
 #### `<require>` : Loading libraries
 

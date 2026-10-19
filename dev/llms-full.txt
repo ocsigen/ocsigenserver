@@ -290,8 +290,8 @@ Here is a simple example:
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
 
-    <extension findlib-package="ocsigenserver.ext.ocsipersist-sqlite"/>
-    <!-- sqlite3.cma will be loaded automatically using findlib -->
+    <extension findlib-package="ocsipersist-sqlite-config"/>
+    <!-- Its dependencies will be loaded automatically using findlib -->
 
     <extension findlib-package="eliom.server"/>
     <!-- Eliom's dependencies will be loaded automatically using findlib -->
@@ -313,7 +313,7 @@ Here is a simple example:
 
 </ocsigen>
 ```
-Here is another example, for use as unprivileged user toto on port 8000\. We use the PostgreSQL (version \>= 9\.5) backend for ocsipersist. Note that the ocsipersist-database under the specified name (default: "ocsipersist") needs to exist. To create it run `psql` and execute `CREATE TABLE ocsipersist;`.
+Here is another example, for use as unprivileged user toto on port 8000\. We use the PostgreSQL (version \>= 9\.5) backend for ocsipersist. Note that the ocsipersist-database under the specified name (default: "ocsipersist") needs to exist. To create it run `psql` and execute `CREATE DATABASE ocsipersist;`. Ocsipersist creates its tables itself.
 
 ```
 <ocsigen>
@@ -329,16 +329,19 @@ Here is another example, for use as unprivileged user toto on port 8000\. We use
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
 
-    <extension findlib-package="ocsigenserver.ext.ocsipersist-pgsql">
-      <database <!-- optional, as each of the following attributes are -->
-        port="3000"
+    <extension findlib-package="ocsipersist-pgsql-config">
+      <!-- <database> is optional, and so is each of its attributes:
+           host, port, user, password, database, unix_domain_socket_dir
+           and size_conn_pool -->
+      <database
+        port="5432"
         user="toto"
         password="toto's secret"
       />
     </extension>
-    <!-- pa_pgsql.cma will be loaded automatically using findlib -->
+    <!-- Its dependencies will be loaded automatically using findlib -->
 
-    <extension findlib-package="ocsigenserver.ext.eliom"/>
+    <extension findlib-package="eliom.server"/>
     <!-- Eliom's dependencies will be loaded automatically using findlib -->
 
     <extconf dir="/home/toto/etc/ocsigenserver/conf.d" />
@@ -666,7 +669,7 @@ Written in seconds, or `notimeout`. Example:
 Size of the input buffer (sockets). It is also the maximum size of headers and post data. Example:
 
 ```
-<netbuffersize>8192B</netbuffersize>
+<netbuffersize>8192</netbuffersize>
 ```
 
 #### `<filebuffersize>` : Size of the buffer for sending files
@@ -674,7 +677,7 @@ Size of the input buffer (sockets). It is also the maximum size of headers and p
 Size of the buffer for reading files to send. Example:
 
 ```
-<filebuffersize>8192B</filebuffersize>
+<filebuffersize>8192</filebuffersize>
 ```
 
 #### `<minthreads> <maxthreads>` : Size of the preemptive thread pool
@@ -684,14 +687,6 @@ Even if Ocsigenserver is implemented with cooperative threads, web site programm
 ```
 <minthreads>10</minthreads>
 <maxthreads>1000</maxthreads>
-```
-
-#### `<maxdetachedcomputationsqueued>` : Size of the queue of waiting detached computations
-
-If the pool of preemptive threads is full, new detached computations will wait for one thread to become available. This is the size of the waiting queue. Only integer values allowed here. Example:
-
-```
-<maxdetachedcomputationsqueued>100</maxdetachedcomputationsqueued>
 ```
 
 #### `<maxretries>` : Maximum number of retries for the same request
@@ -763,9 +758,9 @@ If you don't want to clutter your installation with a lot of Ocsigen-specific pa
 Extensions shipped with Ocsigen Server are available as subpackages of `ocsigenserver.ext` (this package is in an extended search path). For example:
 
 ```
-<extension findlib-package="ocsigenserver.ext.deflatemod">
+<extension findlib-package="ocsigenserver.ext.deflatemod"/>
 ```
-This will load deflatemod, and its dependency camlzip (if not already loaded).
+This will load deflatemod, and its dependencies (bytesrw and its zlib and zstd libraries) if not already loaded.
 
 #### `<require>` : Loading libraries
 
@@ -905,7 +900,7 @@ let _ =
                      ; method_ `POST ])
                   [forbidden] [])
             ; Authbasic.run ~realm:"myrealm"
-                ~auth:(fun _u p -> Lwt.return (p = "toto"))
+                ~auth:(fun u p -> Lwt.return (u = "admin" && p = "toto"))
                 ()
             ; Staticmod.run ~dir:"local/var/www/otherdir" () ]
         ; Ocsigen.Server.site ["othersubsite"]
@@ -913,11 +908,18 @@ let _ =
                 ~redirection:
                   (Revproxy.create_redirection ~full_url:false ~regexp:"(.*)"
                      ~keephost:true "http://localhost:8888/\\1")
+                ()
+            ; Outputfilter.run
+                ~mode:
+                  (`Rewrite
+                    ( Ocsigen_http.Header.Name.location
+                    , "http://localhost:8888/(.*)"
+                    , "http://mydomain.com/\\1" ))
                 () ]
         ; Redirectmod.run
             ~redirection:
               (Redirectmod.create_redirection ~full_url:false ~regexp:"old(.*)"
-                 "new\\1")
+                 "http://mydomain.com/new\\1")
             ()
         ; Staticmod.run ~dir:"local/var/www/staticdir" ()
         ; Cors.run ~max_age:86400 ~credentials:true ~methods:[`POST; `GET; `HEAD]
@@ -971,7 +973,6 @@ This program corresponds to the following configuration file:
     <logdir>local/var/log/mysite</logdir>
     <datadir>local/var/data/mysite</datadir>
     <charset>utf-8</charset>
-    <debugmode/>
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
     <extension findlib-package="ocsigenserver.ext.authbasic"/>
     <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
@@ -982,7 +983,7 @@ This program corresponds to the following configuration file:
     <extension findlib-package="ocsigenserver.ext.redirectmod"/>
     <extension findlib-package="ocsigenserver.ext.revproxy"/>
     <host hostfilter="mydomain.com">
-      <site dir="subsite">
+      <site path="subsite">
         <if>
           <and>
             <ip value="122.122.122.122"/>
@@ -994,15 +995,15 @@ This program corresponds to the following configuration file:
           </then>
         </if>
         <authbasic realm="myrealm">
-          <plain login="" password="toto"/>
+          <plain login="admin" password="toto"/>
         </authbasic>
         <static dir="local/var/www/otherdir"/>
       </site>
-      <site dir="othersite">
-        <revproxy suburl="(.*)" keephost="true" dest="http://localhost:8888/otherdir/\\1"/>
-        <outputfilter header="location" regexp="http://localhost:8888/(.* )" dest="http://mydomain.com/\\1"/>
+      <site path="othersubsite">
+        <revproxy suburl="(.*)" keephost="keephost" dest="http://localhost:8888/\1"/>
+        <outputfilter header="location" regexp="http://localhost:8888/(.*)" dest="http://mydomain.com/\1"/>
       </site>
-      <redirect suburl="old(.*)" dest="http://mydomain.org/new\\1"/>
+      <redirect suburl="old(.*)" dest="http://mydomain.com/new\1"/>
       <static dir="local/var/www/staticdir"/>
       <cors max_age="86400"
        credentials="true"
@@ -1441,7 +1442,7 @@ Combining conditions (all their children must be conditions):
   <if>
   <or>
     <ip value="123.123.123.0/24" />
-    <path regexp="/c.*" />
+    <path regexp="c.*" />
     <not><method value="GET" /></not>
   </or>
   <then>
@@ -1453,7 +1454,7 @@ Combining conditions (all their children must be conditions):
 
   ```ocaml
   Accesscontrol.(if_ (or_ [(ip "123.123.123.0/24"); 
-                         (path ~regexp:"/c.*");
+                         (path ~regexp:"c.*");
                          (not_ (method_ `GET))])
                   [ ... ]
                   [])
@@ -1550,23 +1551,23 @@ This page describes the configuration file options. If you are building a static
 
 ### How do I configure deflatemod?
 
-Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:
+You can set a few options globally, inside the `<extension>` element that loads deflatemod:
 
 - the compress level: from 0 (no compression) to 9\. The higher, the better compression rate you achieve. Conversely, the lower, the faster it is. Default is 6\. This level applies to `gzip` and `deflate`; `zstd` uses the library default level.
 - the buffer size: default is 8192\. You shouldn't need to change this one, but you can still try a few other values (any feedback welcomed).
 For example:
 
 ```
-<extension module="/home/gabriel/ocsigen/extensions/deflatemod.cmo">
+<extension findlib-package="ocsigenserver.ext.deflatemod">
 <compress level="6" />
 <buffer size="1024" />
 </extension>
 ```
-Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.
+Next, you *have to* specify which pages you wish to deflate, in which host or site (otherwise, deflatemod won't compress anything). See next question to do that.
 
 ### I want to deflate only some files. Is it possible?
 
-To some extent, yes. You can '''exclude''' some files and deflate every other, according to their mime-type or extension (''ie.'' the end of the '''url''' in fact, not really the file name on the disk).
+To some extent, yes. You can *exclude* some files and deflate every other, according to their mime-type or extension (*i.e.* the end of the *URL* in fact, not really the file name on the disk).
 
 Here is an example:
 
@@ -1583,9 +1584,9 @@ Here is an example:
 </deflate>
 </host>
 ```
-As you can see, you must put the \<deflate\> tag at the very end of the \<host\> element. Indeed, Ocsigen deals with extensions sequentially, so if you put \<site\> or other elements '''after''' \<deflatemod\>, they won't be compressed.
+As you can see, the `<deflate>` element comes after the elements that produce the pages to compress. Indeed, Ocsigen deals with extensions sequentially, so the pages of a `<site>` or of other elements put *after* `<deflate>` won't be compressed.
 
-Conversely, you can choose to deflate '''only''' some files, based on their mime-types or extension:
+Conversely, you can choose to deflate *only* some files, based on their mime-types or extension:
 
 ```
 <host>
@@ -1599,9 +1600,9 @@ Conversely, you can choose to deflate '''only''' some files, based on their mime
 </deflate>
 </host>
 ```
-Warning: you can use only one contenttype tag\! So you must choose, either the "only" or the "allbut" way.
+Warning: a `<deflate>` element has a single mode. So you must choose, either the "only" or the "allbut" way.
 
-Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please fill a bug report or send a patch.
+Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please file a bug report or send a patch.
 
 ## Technical questions
 
@@ -1741,7 +1742,7 @@ This page describes the configuration file options. If you are building a static
 Configure your hosts from the config file as in this example:
 
 ```
-<rewrite regexp="(.*)" url="toto/\1"/>
+<rewrite regexp="old/(.*)" url="new/\1"/>
 ```
 The syntax of regular expression is PCRE's one.
 
@@ -1864,15 +1865,16 @@ Userconf allows users to have their own configuration files. It is in beta versi
 
 ## Configuration
 
-To use this extension, first load it from the configuration file:
+To use this extension, first load it from the configuration file, with [Redirectmod](./redirectmod.md), which the example below uses:
 
 ```
+<extension findlib-package="ocsigenserver.ext.redirectmod"/>
 <extension findlib-package="ocsigenserver.ext.userconf"/>
 ```
 Then, if you want to allow users to have their own configuration files, put in your hosts something like the lines below. (Unless you understand Userconf well, you probably just want to use those lines as is.)
 
 ```
-<redirect regexp="(https?://[^/]*)/~([^/]*)" dest="\1/~\2/" />
+<redirect fullurl="(https?://[^/]*)/~([^/]*)" dest="\1/~\2/" />
 <userconf regexp="~([^/]*)/(.*)" conf="$u(\1)/.ocsigen" prefix="~\1" url="\2" localpath="$u(\1)/public_html" />
 ```
 The configuration file specified in `conf` will be parsed for each request matching the regular expression `regexp`. Here, as in staticmod, `$u(toto)` is the Unix home directory of user `toto`. Extensions inside the user configuration file will behave as though executed in a `<site>` tag of root `prefix`, while `url` is used to match the remainder of the url (the path `prefix/url` must be equal to `regexp`). Finally, the option `localpath` is used to specify the files the user is allowed to send: in userconf mode, all the paths used in [Staticmod](./staticmod.md) must be relative, and are appended after the evaluation of `localpath`.
@@ -1924,7 +1926,7 @@ Note that the extension should be used with [accesscontrol](./accesscontrol.md) 
   <if>
   <and>
     <header name="origin" regexp="http://localhost:8081"/>
-    <path regexp="eliom_site" />
+    <path regexp="eliom_site(/.*)?" />
   </and>
   <then>
     <cors max_age="86400"

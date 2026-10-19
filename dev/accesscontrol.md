@@ -80,7 +80,7 @@ Combining conditions (all their children must be conditions):
   <if>
   <or>
     <ip value="123.123.123.0/24" />
-    <path regexp="/c.*" />
+    <path regexp="c.*" />
     <not><method value="GET" /></not>
   </or>
   <then>
@@ -92,7 +92,7 @@ Combining conditions (all their children must be conditions):
 
   ```ocaml
   Accesscontrol.(if_ (or_ [(ip "123.123.123.0/24"); 
-                         (path ~regexp:"/c.*");
+                         (path ~regexp:"c.*");
                          (not_ (method_ `GET))])
                   [ ... ]
                   [])

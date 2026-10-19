@@ -4,15 +4,16 @@ Userconf allows users to have their own configuration files. It is in beta versi
 
 ## Configuration
 
-To use this extension, first load it from the configuration file:
+To use this extension, first load it from the configuration file, with [Redirectmod](./redirectmod.md), which the example below uses:
 
 ```
+<extension findlib-package="ocsigenserver.ext.redirectmod"/>
 <extension findlib-package="ocsigenserver.ext.userconf"/>
 ```
 Then, if you want to allow users to have their own configuration files, put in your hosts something like the lines below. (Unless you understand Userconf well, you probably just want to use those lines as is.)
 
 ```
-<redirect regexp="(https?://[^/]*)/~([^/]*)" dest="\1/~\2/" />
+<redirect fullurl="(https?://[^/]*)/~([^/]*)" dest="\1/~\2/" />
 <userconf regexp="~([^/]*)/(.*)" conf="$u(\1)/.ocsigen" prefix="~\1" url="\2" localpath="$u(\1)/public_html" />
 ```
 The configuration file specified in `conf` will be parsed for each request matching the regular expression `regexp`. Here, as in staticmod, `$u(toto)` is the Unix home directory of user `toto`. Extensions inside the user configuration file will behave as though executed in a `<site>` tag of root `prefix`, while `url` is used to match the remainder of the url (the path `prefix/url` must be equal to `regexp`). Finally, the option `localpath` is used to specify the files the user is allowed to send: in userconf mode, all the paths used in [Staticmod](./staticmod.md) must be relative, and are appended after the evaluation of `localpath`.
