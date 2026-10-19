@@ -264,6 +264,13 @@ Bug fixes:
    address given by the proxy. Before, they matched no forwarded address.
    Unless the proxy replaces the X-Forwarded-For header, the client can
    choose this address (see the manual).
+ * Staticmod uses <mimefile>, and the <contenttype> and <charset> rules of
+   Extendconfiguration, again. Since 3.0.0, they were read but not used:
+   the Content-Type of a file came from the built-in table of magic-mime,
+   without a charset. That table now comes after the rules and the file. Text
+   and XML files get the charset of the host again, so a text file served
+   from a configuration file now has "; charset=utf-8" by default (serve mode
+   gives no charset, as before).
 
 ==== 8.0.0 (2026-09-24) ===
 
