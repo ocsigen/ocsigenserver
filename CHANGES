@@ -533,6 +533,12 @@ Bug fixes:
  * Revproxy: a body that the target ends by closing its connection is sent
    chunked to an HTTP/1.1 client, whose connection is no longer closed after
    it.
+ * Authbasic: an authentication method registered with
+   register_basic_authentication_method is now tried. <plain> rejected the
+   other elements with an exception that stopped the search, and the one that
+   lets a method pass on, Authbasic.Bad_config_tag_for_auth, was not exported.
+   An unknown method, or a <plain> whose attributes are not login and
+   password, now gives a clear configuration error.
 
 ==== 8.0.0 (2026-09-24) ===
 

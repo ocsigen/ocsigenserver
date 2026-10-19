@@ -27,6 +27,10 @@
  (deps access-log-status/test.exe))
 
 (cram
+ (applies_to authbasic-plugins)
+ (deps authbasic-plugins/test.exe))
+
+(cram
  (applies_to client-timeout)
  (deps client-timeout/server.exe client-timeout/client.exe))
 
