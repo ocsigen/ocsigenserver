@@ -472,11 +472,13 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 
 The file associating file name extensions to their MIME type. Example:
 
-
-
 {v
 <mimefile>/etc/ocsigenserver/mime.types</mimefile>
 v}
+
+{b Limitation.} The file is read, but currently not used: Staticmod derives
+the [Content-Type] of the files it sends from their names, with the built-in
+table of the [magic-mime] library.
 
 {3 [<debugmode/>] : Debug mode for applications}
 Use this option for debugging your Web sites. Ocsigenserver itself does not
