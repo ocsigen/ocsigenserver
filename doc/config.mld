@@ -862,6 +862,28 @@ Example of use:
 <site path="mysite"> ... </site>
 v}
 
+{2:order Order of the directives}
+
+Inside a [<host>] or a [<site>], the server tries the directives (the tags
+defined by the extensions) in the order of the file:
+- As long as no page has been generated, each directive may generate one
+  (for example [<static>], [<eliom>], [<redirect>] or [<revproxy>]), or
+  change the request for the directives that follow it (for example the
+  options of {{!page-extendconfiguration}Extendconfiguration}, or
+  [<allow-forward-for/>]).
+- Once a page has been generated, the directives that generate pages are
+  skipped, and the output filters ([<outputfilter>], [<deflate>], [<cors>],
+  [<securityheaders>]) may change the response. So an output filter must come
+  after the directives whose responses it changes. The error that the server
+  sends when no directive generated a page (for example a 404) does not go
+  through the output filters.
+- A [<site>] applies only to the requests whose path starts with its path,
+  and only if no page has been generated yet. The changes that its directives
+  make to the request do not last after the end of the site.
+- A request rewritten by [<rewrite>] starts again from the first [<host>],
+  unless the rewriting has the [continue] attribute. A request starts again at
+  most [<maxretries>] times.
+
 {2 Reloading the configuration file}
 
 To reload the modules of the configuration file without stopping the server, write the command [reload] in the server's command pipe (the path given by [<commandpipe>]). For example:
