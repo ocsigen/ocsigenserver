@@ -30,9 +30,12 @@ type post_data = (string * string) list * (string * file_info) list
 ```ocaml
 val post_params : 
   content_type:content_type ->
+  on_file:(string -> unit) ->
   Cohttp_lwt.Body.t ->
   (string option -> Stdlib.Int64.t option -> post_data Lwt.t) option
 ```
+`post_params ~content_type ~on_file body` is the function that decodes `body`, if `content_type` is a form encoding. The returned function takes the directory where to store the uploaded files (`None` forbids uploads) and their maximum size. It calls `on_file` with the name of each file it creates, which the caller removes once it no longer needs it.
+
 ```ocaml
 val parse_content_type : string -> content_type option
 ```
