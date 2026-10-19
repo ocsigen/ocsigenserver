@@ -95,3 +95,32 @@ let valid_field_values headers =
     String.for_all
       (function '\t' -> true | '\000' .. '\031' | '\127' -> false | _ -> true)
       value)
+
+(* tchar (RFC 9110, section 5.6.2). *)
+let is_tchar = function
+  | 'a' .. 'z'
+  | 'A' .. 'Z'
+  | '0' .. '9'
+  | '!' | '#' | '$' | '%' | '&' | '\'' | '*' | '+' | '-' | '.' | '^' | '_' | '`'
+  | '|' | '~' ->
+      true
+  | _ -> false
+
+let request_method = function
+  | `Other name ->
+      let length = String.length name in
+      (* Empty lines end with CRLF, or a bare LF. A bare CR makes the request
+         line invalid (RFC 9112, section 2.2). *)
+      let rec start i =
+        if i + 1 < length && name.[i] = '\r' && name.[i + 1] = '\n'
+        then start (i + 2)
+        else if i < length && name.[i] = '\n'
+        then start (i + 1)
+        else i
+      in
+      let start = start 0 in
+      let name = String.sub name start (length - start) in
+      if name <> "" && String.for_all is_tchar name
+      then Some (Http.Method.of_string name)
+      else None
+  | meth -> Some meth

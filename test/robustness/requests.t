@@ -5,6 +5,46 @@ Request line and header fields (RFC 9112 sections 2 to 5, RFC 9110 section
   $ start_server
   $ send () { rawhttp send --port "$PORT" --idle 0.5 --status; }
 
+Empty lines before a request are ignored (RFC 9112 section 2.2), as after a
+POST body followed by an extra line end: the request is a GET, as the access
+log shows.
+
+  $ printf '\r\n\r\nGET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' | send
+  HTTP/1.1 200 OK
+  [idle]
+  $ printf 'POST /index.html HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\nab\r\nGET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' |
+  >   send
+  HTTP/1.1 200 OK
+  HTTP/1.1 200 OK
+  [idle]
+  $ grep -c '"GET /hello.txt HTTP/1.1" 200' log/access.log
+  2
+
+A HEAD request after an empty line is answered without content.
+
+  $ printf '\r\nHEAD /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' |
+  >   rawhttp send --port "$PORT" --idle 0.5
+  HTTP/1.1 200 OK
+  content-type: text/plain; charset=utf-8
+  accept-ranges: bytes
+  x-content-type-options: nosniff
+  x-frame-options: SAMEORIGIN
+  referrer-policy: strict-origin-when-cross-origin
+  server: Ocsigen
+  content-length: 6
+  connection: keep-alive
+  
+  [idle]
+
+A method that is not a token is rejected.
+
+  $ printf 'G(ET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' | send
+  HTTP/1.1 400 Bad Request
+  [closed]
+  $ printf 'G\001ET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' | send
+  HTTP/1.1 400 Bad Request
+  [closed]
+
 The server is not a forward proxy: CONNECT is answered 501, without a tunnel.
 
   $ printf 'CONNECT 127.0.0.1:22 HTTP/1.1\r\nHost: 127.0.0.1:22\r\n\r\n' | send

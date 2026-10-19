@@ -65,3 +65,17 @@ HTTP/1.1 http://example.org/, (no field): missing Host
 "X-A: a\nb": false
 "X-A: a\027b": false
 "X-A: a\127b": false
+== request_method
+"GET": "GET"
+"PROPFIND": "PROPFIND"
+"get": "get"
+"\r\n\r\nGET": "GET"
+"\nPOST": "POST"
+"\rGET": invalid
+"\n\rGET": invalid
+"\r\r\nGET": invalid
+"\r\nFROB": "FROB"
+"\r\n": invalid
+"G(ET": invalid
+"G\001ET": invalid
+"GET\r\n": invalid
