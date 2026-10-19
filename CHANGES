@@ -34,6 +34,14 @@ Incompatible changes:
    (RFC 8615), and directory listings no longer show them. This applies to
    serve mode too. The new hidedotfiles="false" attribute of <static> (or
    ~hide_dotfiles:false for Staticmod.run) serves them again.
+ * Accesscontrol: <allow-forward-for/> takes as the client the last address of
+   X-Forwarded-For, the one that the proxy added, instead of the first one,
+   which the client can choose when the proxy keeps the header it sent (nginx
+   with $proxy_add_x_forwarded_for). Behind a chain of proxies, the new
+   proxies attribute (?proxies for Accesscontrol.allow_forward_for) gives the
+   trusted ones, whose addresses are skipped from the right. The
+   check-equal-ip attribute (?check_equal_ip) is removed: the server refuses
+   it.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -137,10 +145,13 @@ Bug fixes:
      clear to the HTTPS port of the target.
    - X-Forwarded-Proto is the scheme of the request (http or https), as the
      target expects. It was the HTTP version (HTTP/1.1).
-   - X-Forwarded-For holds bare addresses: the address the server listens on
-     (such as 0.0.0.0) is no longer added at its end, "forwarded:" no longer
-     precedes a client address that comes from a trusted proxy, and a client
-     without an IP address (Unix socket) is "unknown".
+   - X-Forwarded-For holds the bare address of the client alone: the address
+     the server listens on (such as 0.0.0.0) is no longer added at its end,
+     nor the addresses of the proxies before the server (after
+     <allow-forward-for/>), so that the target needs to trust only the server.
+     "forwarded:" no longer precedes a client address that comes from a
+     trusted proxy, and a client without an IP address (Unix socket) is
+     "unknown".
    - with keephost, the Host header of the request is sent to the target.
      The server connected to that host instead, so a client could make it
      connect to any host.
@@ -261,9 +272,13 @@ Bug fixes:
  * ocsigenserver --version prints the version again, instead of
    0000000000000000, a placeholder that the build no longer replaces.
  * Accesscontrol: after <allow-forward-for/>, the <ip> conditions test the
-   address given by the proxy. Before, they matched no forwarded address.
-   Unless the proxy replaces the X-Forwarded-For header, the client can
-   choose this address (see the manual).
+   address given by the proxy, without the port that some proxies add after
+   it (192.0.2.1:4711, [2001:db8::1]:4711). Before, they matched no forwarded
+   address.
+ * Accesscontrol: <allow-forward-for/> reads all the X-Forwarded-For lines of
+   a request as one list. It read only the last one.
+ * Accesscontrol: <allow-forward-for/> accepts tabs around the commas of
+   X-Forwarded-For.
 
 ==== 8.0.0 (2026-09-24) ===
 
