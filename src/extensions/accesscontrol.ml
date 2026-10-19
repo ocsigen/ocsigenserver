@@ -41,7 +41,12 @@ let ip s =
     let r =
       match Ocsigen.Request.client_conn ri with
       | `Inet (ip, _) -> Ipaddr.Prefix.mem ip prefix
-      | _ -> false
+      (* The address given by a trusted proxy, after <allow-forward-for/> *)
+      | `Forwarded_for ip -> (
+        match Ipaddr.of_string ip with
+        | Ok ip -> Ipaddr.Prefix.mem ip prefix
+        | Error _ -> false)
+      | `Unix _ | `Unknown -> false
     in
     if r
     then
