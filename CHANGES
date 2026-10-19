@@ -70,6 +70,10 @@ New features:
    sets the level of a log source by its name.
 
 Bug fixes:
+ * Static files: If-Range now uses a strong comparison, as RFC 9110 requires.
+   The weak ETag of a file no longer matches it, and the Last-Modified date
+   matches only once the file has not changed for a second. A client could
+   otherwise get a range of a different version of the file.
  * A request with "Connection: close", or an HTTP/1.0 request without
    "Connection: keep-alive", now gets a response with "Connection: close",
    after which the server closes the connection, as RFC 9112 requires, without

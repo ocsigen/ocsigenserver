@@ -143,13 +143,17 @@ let respond_file
              (respond ~headers:(add_validators headers) ~status:`Not_modified ())
          else
            (* A [Range] request is honoured only if [If-Range] (when present)
-              matches the current validators (RFC 7233). *)
+              matches the current validators. It calls for a strong comparison
+              (RFC 9110 13.1.5): our entity-tag is weak, so it never matches,
+              and the date matches only when Last-Modified is a strong
+              validator, at least one second older than now (RFC 9110
+              8.8.2.2): the file may have changed again within that second. *)
            let if_range_ok =
              match if_range with
              | None -> true
              | Some v ->
-                 let v = String.trim v in
-                 String.equal v etag || String.equal v last_modified
+                 String.equal (String.trim v) last_modified
+                 && Unix.gettimeofday () -. s.Unix.st_mtime >= 1.
            in
            let range =
              match range with

@@ -2,6 +2,7 @@ Static files support single byte-range requests (RFC 7233).
 
   $ mkdir www
   $ printf '0123456789ABCDEF' > www/data.txt
+  $ touch -t 202001010000 www/data.txt
   $ ocsigenserver --serve www --port 8066 >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
@@ -76,3 +77,23 @@ When If-Range does not match the current ETag, the whole file is served:
   200
   $ cat body; echo
   0123456789ABCDEF
+
+If-Range calls for a strong comparison. The ETag of a static file is weak, so
+it never matches, and the whole file is served:
+
+  $ etag=$(grep -i '^etag:' headers | sed 's/^[^:]*: *//' | tr -d '\r')
+  $ curl -s -o body -w '%{http_code}\n' --max-time 10 -H 'Range: bytes=0-3' \
+  >   -H "If-Range: $etag" http://127.0.0.1:8066/data.txt
+  200
+  $ cat body; echo
+  0123456789ABCDEF
+
+The Last-Modified date of a file that has not changed for at least a second is
+a strong validator, so it matches:
+
+  $ date=$(grep -i '^last-modified:' headers | sed 's/^[^:]*: *//' | tr -d '\r')
+  $ curl -s -o body -w '%{http_code}\n' --max-time 10 -H 'Range: bytes=0-3' \
+  >   -H "If-Range: $date" http://127.0.0.1:8066/data.txt
+  206
+  $ cat body; echo
+  0123
