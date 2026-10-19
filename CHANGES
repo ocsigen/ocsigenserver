@@ -264,6 +264,9 @@ Bug fixes:
    address given by the proxy. Before, they matched no forwarded address.
    Unless the proxy replaces the X-Forwarded-For header, the client can
    choose this address (see the manual).
+ * Revproxy answers 502 Bad Gateway, instead of 500, when it gets no response
+   from its target (refused connection, unknown name, TLS failure, connection
+   closed). The error log gives the target server and the reason.
 
 ==== 8.0.0 (2026-09-24) ===
 

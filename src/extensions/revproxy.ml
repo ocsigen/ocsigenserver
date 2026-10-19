@@ -155,7 +155,29 @@ let gen dir = function
                    Ocsigen_http.Header.Name.(to_string host)
              and body = Ocsigen.Request.body request_info
              and meth = Ocsigen.Request.meth request_info in
-             Cohttp_lwt_unix.Client.call ~headers ~body meth target
+             (* Whatever goes wrong with the target (no route, refused
+                connection, unknown name, TLS failure, connection closed
+                before a response...), the client gets a 502, as from other
+                reverse proxies. The exceptions vary with the step that fails
+                and the library that does it. *)
+             Lwt.catch
+               (fun () ->
+                  Cohttp_lwt_unix.Client.call ~headers ~body meth target)
+               (function
+                 | Lwt.Canceled as exn -> Lwt.reraise exn
+                 | exn ->
+                     (* Not the path and query, which may carry data that
+                        do not belong in the logs. *)
+                     let server =
+                       Uri.make ?scheme:(Uri.scheme target)
+                         ?host:(Uri.host target) ?port:(Uri.port target) ()
+                     in
+                     Logs.err ~src:section (fun fmt ->
+                       fmt "Cannot get a response from %s: %s"
+                         (Uri.to_string server) (Printexc.to_string exn));
+                     Lwt.fail
+                       (Ocsigen.Extensions.Ocsigen_http_error
+                          (Ocsigen_cookie_map.empty, `Bad_gateway)))
              >|= fun (response, body) -> forwarded_response meth response, body
            in
            Lwt.return
