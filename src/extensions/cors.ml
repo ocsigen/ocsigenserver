@@ -136,11 +136,20 @@ let parse_config _ _ _parse_fun config_elem =
         [ Configuration.element ~name:"cors"
             ~attributes:
               [ Configuration.attribute ~name:"credentials" (fun s ->
-                  let s = bool_of_string s in
-                  config := {!config with credentials = s})
+                  match bool_of_string_opt s with
+                  | Some credentials -> config := {!config with credentials}
+                  | None ->
+                      badconfig
+                        "The credentials attribute of <cors> must be true or false, not %S"
+                        s)
               ; Configuration.attribute ~name:"max_age" (fun s ->
-                  let s = Some (int_of_string s) in
-                  config := {!config with max_age = s})
+                  match int_of_string_opt s with
+                  | Some max_age when max_age >= 0 ->
+                      config := {!config with max_age = Some max_age}
+                  | _ ->
+                      badconfig
+                        "The max_age attribute of <cors> must be a non-negative number of seconds, not %S"
+                        s)
               ; Configuration.attribute ~name:"exposed_headers" (fun s ->
                   let s =
                     Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp s
@@ -161,7 +170,11 @@ let () =
     ~fun_site:(fun _ _ _ -> parse_config)
     ()
 
-let run ?credentials ?max_age ?exposed_headers ?methods () _ _ _ =
+let run ?credentials ?max_age ?exposed_headers ?methods () =
+  (match max_age with
+  | Some n when n < 0 ->
+      invalid_arg (Printf.sprintf "Cors.run: negative max_age %d" n)
+  | Some _ | None -> ());
   let credentials = Option.value ~default:false credentials in
   let exposed_headers = Option.value ~default:[] exposed_headers in
-  main {credentials; methods; max_age; exposed_headers}
+  fun _ _ _ -> main {credentials; methods; max_age; exposed_headers}

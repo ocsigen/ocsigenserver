@@ -47,6 +47,10 @@
  (deps content-type/test.exe))
 
 (cram
+ (applies_to cors)
+ (deps cors/test.exe))
+
+(cram
  (applies_to error-logs)
  (deps error-logs/test.exe))
 

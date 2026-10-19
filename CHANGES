@@ -436,6 +436,11 @@ Bug fixes:
    Accept-Encoding was added to the last line and the other lines were
    dropped. A shared cache could then give a page that depends on the
    cookies of a user to another user. All the names are now kept.
+ * CORS: a wrong value of the credentials or max_age attribute is a
+   configuration error that says what is expected. It stopped the server
+   with the name of an exception (credentials="yes", max_age="one day"), or
+   was sent as it was (max_age="-1"). Cors.run raises Invalid_argument for a
+   negative max_age.
 
 ==== 8.0.0 (2026-09-24) ===
 
