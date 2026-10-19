@@ -22,6 +22,9 @@ no effect. Last, the log levels set by the -vv option.
   "infinity"   -> None
   ""           -> None
   "not-a-size" -> Config_file_error
+  "-1"         -> Config_file_error
+  "-1k"        -> Config_file_error
+  "10000000T"  -> Config_file_error
   
   default in-memory request body size -> 1048576
   

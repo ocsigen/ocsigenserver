@@ -34,6 +34,10 @@ Incompatible changes:
    (RFC 8615), and directory listings no longer show them. This applies to
    serve mode too. The new hidedotfiles="false" attribute of <static> (or
    ~hide_dotfiles:false for Staticmod.run) serves them again.
+ * <maxrequestbodysize> is enforced again: reading more than this many bytes
+   of a request body, file uploads included, gives a 413. It had no effect
+   since the move to Cohttp. The default is 8000000 bytes (8 MB): if you
+   raised <maxuploadfilesize> above it, raise <maxrequestbodysize> too.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -153,6 +157,8 @@ Bug fixes:
      in HTTP/1.1, whatever the version of the target. A target that closed
      its connection, or answered in HTTP/1.0, made the connection of the
      client close after each response.
+   - a request whose body cannot be read, or sent to the target, no longer
+     stops the server. cohttp raised the error outside of any promise.
  * An existing file at the command pipe path is now used only if it is a named
    pipe that belongs to the user running the server. Anything else is refused,
    with an error in the logs, and the server runs without a command pipe; until
@@ -207,6 +213,10 @@ Bug fixes:
  * An order of the command pipe that fails no longer stops the command pipe.
    The later orders, such as the reopen_logs of a log rotation, used to be
    ignored until the server was restarted.
+ * The size options of the configuration file (<maxrequestbodysize>,
+   <maxuploadfilesize>, <maxrequestbodysizeinmemory>) now refuse a negative
+   size, or one too large to be represented, instead of taking it silently: a
+   negative size made every request body fail.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

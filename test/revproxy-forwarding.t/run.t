@@ -52,6 +52,7 @@ and the scheme of the request it received:
   > <ocsigen><server>
   > <port>8081</port>
   > <logdir>log</logdir><datadir>data</datadir>
+  > <maxrequestbodysize>1000</maxrequestbodysize>
   > <commandpipe>proxy.cmd</commandpipe>
   > <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
   > <extension findlib-package="ocsigenserver.ext.revproxy"/>
@@ -137,3 +138,19 @@ make the proxy close the connection to the client:
   connection: keep-alive
   
   ok
+
+The proxy configured in a file reads at most 1000 bytes of a request body
+(<maxrequestbodysize>). A larger body gets a 413, whether its length is
+announced or not, and the proxy keeps serving the next requests:
+
+  $ head -c 2000 /dev/zero | tr '\0' a > big
+  $ post () {
+  >   curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
+  >     --data-binary @big "$@" http://127.0.0.1:8081/headers
+  > }
+  $ post
+  413
+  $ post -H 'Transfer-Encoding: chunked'
+  413
+  $ curl -s --max-time 10 --data abc http://127.0.0.1:8081/headers | grep body
+  body: abc

@@ -155,28 +155,47 @@ let allows_keep_alive version headers =
   | `HTTP_1_1 -> true
   | `HTTP_1_0 | `Other _ -> List.mem "keep-alive" options
 
-(* [body], failing with [Request.Truncated_body] if it ends before the length
-   announced by [request]. cohttp takes the end of the connection in the middle
-   of a body of known length for the end of the body, so that a client that
-   leaves in the middle of an upload would have it handled as if it were
-   complete. A chunked body cannot be checked from here. *)
+(* [body], checked against the length announced by [request] and against
+   <maxrequestbodysize>:
+   - Reading more than <maxrequestbodysize> bytes fails with
+     [Ocsigen_Request_too_long], which the server answers with 413. When the
+     announced length is above the limit, the first read fails, before any of
+     the body is read. cohttp still reads and discards the rest of the body
+     before the response is sent.
+   - Reading fails with [Request.Truncated_body] if the body ends before the
+     announced length. cohttp takes the end of the connection in the middle of
+     a body of known length for the end of the body, so that a client that
+     leaves in the middle of an upload would have it handled as if it were
+     complete. A chunked body cannot be checked from here. *)
 let checked_body request body =
-  match
-    body, Http.Header.get_transfer_encoding (Http.Request.headers request)
-  with
-  | `Stream chunks, Http.Transfer.Fixed length ->
+  let length =
+    match Http.Header.get_transfer_encoding (Http.Request.headers request) with
+    | Http.Transfer.Fixed length -> Some length
+    | Http.Transfer.Chunked | Http.Transfer.Unknown -> None
+  and limit = Config.get_maxrequestbodysize () in
+  match body, length, limit with
+  | `Stream _, Some length, Some limit when Int64.compare length limit > 0 ->
+      `Stream
+        (Lwt_stream.from (fun () ->
+           Lwt.fail Ocsigen_base.Lib.Ocsigen_Request_too_long))
+  | `Stream chunks, _, _ when Option.is_some length || Option.is_some limit ->
       let received = ref 0L in
       `Stream
         (Lwt_stream.from (fun () ->
            Lwt_stream.get chunks >>= function
-           | Some chunk as c ->
+           | Some chunk as c -> (
                received :=
                  Int64.add !received (Int64.of_int (String.length chunk));
-               Lwt.return c
-           | None when Int64.compare !received length < 0 ->
-               Lwt.fail Request.Truncated_body
-           | None -> Lwt.return_none))
-  | body, _ -> body
+               match limit with
+               | Some limit when Int64.compare !received limit > 0 ->
+                   Lwt.fail Ocsigen_base.Lib.Ocsigen_Request_too_long
+               | Some _ | None -> Lwt.return c)
+           | None -> (
+             match length with
+             | Some length when Int64.compare !received length < 0 ->
+                 Lwt.fail Request.Truncated_body
+             | Some _ | None -> Lwt.return_none)))
+  | body, _, _ -> body
 
 let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
   (* cohttp calls this once the headers of [request] have arrived. *)
@@ -228,7 +247,9 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
           Logs.info ~src:section (fun fmt ->
             fmt "The body of a request ended before its Content-Length");
           None, `Bad_request, None
-      | Ocsigen_base.Lib.Ocsigen_Request_too_long ->
+      | Ocsigen_base.Lib.Ocsigen_Request_too_long
+      | Ocsigen_base.Ocsigen_stream.Interrupted
+          Ocsigen_base.Lib.Ocsigen_Request_too_long ->
           None, `Request_entity_too_large, None
       | Ocsigen_base.Lib.Input_is_too_large ->
           Logs.warn ~src:section (fun fmt ->
