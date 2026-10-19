@@ -852,7 +852,7 @@ Inside [<host>], write the configuration for your main (root) site. These option
 {3 [<site>] : Configuring sub-sites}
 
 
-In each virtual host, it is possible to define several sub-sites (in sub-paths) between [<site>] and [</site>]. [<site>] has an attribute [dir] to set the home directory for the site. You can also set the default charset for the site using the [charset] attribute. The options between [<site>] and [</site>] are exactly the same as those you can put between [<host>] and [</host>]. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
+In each virtual host, it is possible to define several sub-sites (in sub-paths) between [<site>] and [</site>]. [<site>] has a mandatory attribute [path], the path of the site in the URLs ([dir] is an older name for it). You can also set the default charset for the site using the [charset] attribute. The options between [<site>] and [</site>] are exactly the same as those you can put between [<host>] and [</host>]. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
 
 Example of use:
 {v
