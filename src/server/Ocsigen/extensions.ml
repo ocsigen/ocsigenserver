@@ -419,7 +419,7 @@ let make_parse_config path parse_host l : extension_composite =
            tag at all *)
           badconfig "Unexpected tag <%s> inside <site dir=\"%s\">" t
             (Url.string_of_url_path ~encode:true path)
-      | Error_in_config_file _ as e -> raise e
+      | (Error_in_config_file _ | Error_in_user_config_file _) as e -> raise e
       | e ->
           badconfig "Error while parsing configuration file: %s"
             (try !fun_exn e with e -> Printexc.to_string e))

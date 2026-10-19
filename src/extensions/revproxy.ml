@@ -208,7 +208,14 @@ let parse_config config_elem =
 
 let () =
   Ocsigen.Extensions.register ~name:"revproxy"
-    ~fun_site:(fun _ _ _ _ _ _ -> parse_config)
+    ~fun_site:(fun userconf _ _ _ _ _ -> function
+       (* From a user configuration file, it would reach the services that
+         only the server can reach. *)
+       | Xml.Element ("revproxy", _, _) when Option.is_some userconf ->
+           raise
+             (Ocsigen.Extensions.Error_in_user_config_file
+                "<revproxy> is not allowed in user configuration files")
+       | element -> parse_config element)
     ~respect_pipeline:true
     (* We ask ocsigen to respect pipeline order
                               when sending to extensions! *)
