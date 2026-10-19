@@ -76,6 +76,13 @@ Several X-Forwarded-For lines make one list:
   403
   IP: forwarded:10.1.2.3
 
+Tabs around the commas are white space too (RFC 9110, section 5.6.3):
+
+  $ get -H "$(printf 'X-Forwarded-For: 10.1.2.3\t,\t10.1.2.3')" \
+  >   http://127.0.0.1:$PORT1/index.html
+  403
+  IP: forwarded:10.1.2.3
+
 With check-equal-ip, the last address must be the one of the proxy that sent
 the request:
 
