@@ -20,7 +20,7 @@
 
 open Lwt.Infix
 
-let section = Logs.Src.create "ocsigen:ext:access-control"
+let section = Logs.Src.create "ocsigen:ext:authbasic"
 
 type auth = string -> string -> bool Lwt.t
 

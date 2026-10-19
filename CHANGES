@@ -115,6 +115,12 @@ Incompatible changes:
    hostfilter. A configuration without such a catch-all host now answers
    these requests 404: add one if a load balancer checks the server with
    requests without Host.
+ * The log source of Authbasic is named "ocsigen:ext:authbasic". It used to
+   share the name of the log source of Accesscontrol,
+   "ocsigen:ext:access-control", so
+   <loglevel source="ocsigen:ext:access-control"> also set the level of the
+   messages of Authbasic. They now need
+   <loglevel source="ocsigen:ext:authbasic">.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
