@@ -1,6 +1,4 @@
 Connection management and the Host header (RFC 9112 sections 3.2 and 9).
-Answers marked BUG show the current behaviour, with the expected one in the
-text.
 
   $ . ./fixture/helpers.sh
   $ make_certificate
@@ -163,13 +161,16 @@ checked in the same way.
   HTTP/1.1 400 Bad Request
   [closed]
 
-QUESTION: an HTTP/1.0 request without Host (allowed in HTTP/1.0) goes to the
-first <host> of the configuration (admin.test here, which asks for a
-password), not to the catch-all host. The manual does not say which host
-gets such requests.
+An HTTP/1.0 request without Host (allowed in HTTP/1.0) goes, like a request
+for an unknown name, to the catch-all host, not to the first <host> of the
+configuration (admin.test here). The default health check of HAProxy is
+such a request.
 
   $ printf 'GET /hello.txt HTTP/1.0\r\n\r\n' | send
-  HTTP/1.1 401 Unauthorized
+  HTTP/1.1 200 OK
+  [closed]
+  $ printf 'OPTIONS / HTTP/1.0\r\n\r\n' | send
+  HTTP/1.1 200 OK
   [closed]
 
 Host names are case-insensitive (RFC 9110 section 4.2.3). The port is

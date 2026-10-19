@@ -69,7 +69,8 @@ val host_match :
   -> bool
 (** [host_match ~virtual_hosts ~host ~port] is [true] iff one element of
     [virtual_hosts] matches [host] and [port]. A final dot of [host] (fully
-    qualified form) is ignored. *)
+    qualified form) is ignored. A missing [host] is matched as the empty
+    host name: only patterns that accept any name, such as [*], match it. *)
 
 (*****************************************************************************)
 

@@ -67,6 +67,12 @@ Incompatible changes:
    Other methods, such as POST, TRACE or unknown ones, now get 405 (Method
    Not Allowed) with the same Allow header, instead of the file. Error pages
    (the code attribute) still answer any method.
+ * An HTTP/1.0 request without Host now goes to a virtual host that accepts
+   any name (hostfilter="*" or none), like a request for an unknown name.
+   It used to go to the first <host> of the configuration, whatever its
+   hostfilter. A configuration without such a catch-all host now answers
+   these requests 404: add one if a load balancer checks the server with
+   requests without Host.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that

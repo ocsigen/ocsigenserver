@@ -736,25 +736,22 @@ let ( start_initialisation
 
 let host_match ~(virtual_hosts : virtual_hosts) ~host ~port =
   let port_match = function None -> true | Some p -> p = port in
-  match host with
-  | None -> List.exists (fun (_, _, p) -> port_match p) virtual_hosts
-  (*VVV Warning! For HTTP/1.0, when host is absent,
-     we take the first one, even if it doesn't match!  *)
-  | Some host ->
-      (* The fully qualified form "example.org." names the same host. *)
-      let host =
-        match String.ends_with ~suffix:"." host with
-        | true -> String.sub host 0 (String.length host - 1)
-        | false -> host
-      in
-      let host_match regexp =
-        Ocsigen_base.Lib.Netstring_pcre.string_match regexp host 0 <> None
-      in
-      let rec aux = function
-        | [] -> false
-        | (_, a, p) :: l -> (port_match p && host_match a) || aux l
-      in
-      aux virtual_hosts
+  (* A request without Host (HTTP/1.0) is matched as an empty host name: like
+     a request for an unknown name, it goes to a host that accepts any name.
+     The fully qualified form "example.org." names the same host as
+     "example.org". *)
+  let host =
+    match host with
+    | None -> ""
+    | Some host when String.ends_with ~suffix:"." host ->
+        String.sub host 0 (String.length host - 1)
+    | Some host -> host
+  in
+  List.exists
+    (fun (_, regexp, p) ->
+       port_match p
+       && Ocsigen_base.Lib.Netstring_pcre.string_match regexp host 0 <> None)
+    virtual_hosts
 
 (* Currently used only for error messages. *)
 let string_of_host (h : virtual_hosts) =
