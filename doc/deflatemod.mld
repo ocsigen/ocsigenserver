@@ -35,7 +35,7 @@ module {!Deflatemod}.
 
 {2 How do I configure deflatemod?}
 
-Again, the options are in ocsigen.conf. You can set a few options globally, in the extension tag:
+You can set a few options globally, inside the [<extension>] element that loads deflatemod:
 
 - the compress level: from 0 (no compression) to 9. The higher, the
   better compression rate you achieve. Conversely, the lower, the faster
@@ -47,17 +47,17 @@ Again, the options are in ocsigen.conf. You can set a few options globally, in t
 For example:
 
 {v
-<extension module="/home/gabriel/ocsigen/extensions/deflatemod.cmo">
+<extension findlib-package="ocsigenserver.ext.deflatemod">
 <compress level="6" />
 <buffer size="1024" />
 </extension>
 v}
 
-Next, you '''have to''' specify which pages you whish to deflate, in which host/site (otherwise, deflatemod won't compress anything). See next question to do that.
+Next, you {e have to} specify which pages you wish to deflate, in which host or site (otherwise, deflatemod won't compress anything). See next question to do that.
 
 {2 I want to deflate only some files. Is it possible?}
 
-To some extent, yes. You can '''exclude''' some files and deflate every other, according to their mime-type or extension (''ie.'' the end of the '''url''' in fact, not really the file name on the disk).
+To some extent, yes. You can {e exclude} some files and deflate every other, according to their mime-type or extension ({e i.e.} the end of the {e URL} in fact, not really the file name on the disk).
 
 Here is an example:
 
@@ -75,9 +75,9 @@ Here is an example:
 </host>
 v}
 
-As you can see, you must put the <deflate> tag at the very end of the <host> element. Indeed, Ocsigen deals with extensions sequentially, so if you put <site> or other elements '''after''' <deflatemod>, they won't be compressed.
+As you can see, the [<deflate>] element comes after the elements that produce the pages to compress. Indeed, Ocsigen deals with extensions sequentially, so the pages of a [<site>] or of other elements put {e after} [<deflate>] won't be compressed.
 
-Conversely, you can choose to deflate '''only''' some files, based
+Conversely, you can choose to deflate {e only} some files, based
 on their mime-types or extension:
 
 {v
@@ -94,10 +94,10 @@ on their mime-types or extension:
 v}
 
 
-Warning: you can use only one contenttype tag! So you must choose,
+Warning: a [<deflate>] element has a single mode. So you must choose,
 either the "only" or the "allbut" way.
 
-Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please fill a bug report or send a patch.
+Limitations: you cannot filter by directory or by filename extension (remember extension is the url's extension). If you really need it, please file a bug report or send a patch.
 
 {1 Technical questions}
 
