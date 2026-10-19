@@ -20,8 +20,9 @@ INCS=   -I ${BLD}/server/.ocsigenserver.objs/byte \
 	-I ${BLD}/extensions/.userconf.objs/byte \
 	-I ${BLD}/extensions/deflatemod/.deflatemod.objs/byte
 
-## ${SERVER_PACKAGE} is not only used to build the 'ocsigenserver' executable
-## but also to generate src/baselib/ocsigen_config_static.ml
+## ${SERVER_PACKAGE} is used to build the toplevel (src/server/Makefile). The
+## static configuration (Ocsigen_base.Config_static) lists its own packages, in
+## src/files/ocsigenserver.conf/gen.ml: keep both lists in sync.
 
 SERVER_PACKAGE := lwt_ssl,bytes,lwt.unix,logs,logs-syslog,syslog-message,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix,http
 

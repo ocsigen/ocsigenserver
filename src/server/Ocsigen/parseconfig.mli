@@ -19,7 +19,7 @@
  *)
 
 (** Config file parsing. See also module
-    {! Extensions.​Configuration } *)
+    {!Ocsigen.Extensions.Configuration} *)
 
 (**/**)
 

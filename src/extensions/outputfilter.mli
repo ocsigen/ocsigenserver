@@ -5,7 +5,7 @@
     If you are using Ocsigen Server as a library, use the interface described
     here. Each of these functions behaves exactly as its configuration file
     counterpart. 
-+*)
+*)
 
 (**
 This module belongs to ocamlfind package
