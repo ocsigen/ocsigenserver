@@ -304,6 +304,14 @@ let handler
     in
     error_response ?headers ?msg:explicit_msg ret_code
   in
+  let meth =
+    Ocsigen_http.Http1.request_method (Cohttp.Request.meth cohttp_request)
+  in
+  let cohttp_request =
+    match meth with
+    | Some meth -> {cohttp_request with Http.Request.meth}
+    | None -> cohttp_request
+  in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
     Request.make ~address ~port ~ssl ~filenames ~client_conn
@@ -313,15 +321,15 @@ let handler
   let version = Cohttp.Request.version cohttp_request
   and headers = Cohttp.Request.headers cohttp_request in
   let action =
-    let meth = Cohttp.Request.meth cohttp_request
-    and target = Cohttp.Request.resource cohttp_request in
-    if not (Ocsigen_http.Http1.valid_field_values headers)
-    then `Reject (`Bad_request, "control character in a header field value")
-    else if meth = `CONNECT
-    then
-      (* The server is not a forward proxy. *)
-      `Reject (`Not_implemented, "CONNECT is not supported")
-    else
+    let target = Cohttp.Request.resource cohttp_request in
+    match meth with
+    | None -> `Reject (`Bad_request, "invalid method")
+    | Some _ when not (Ocsigen_http.Http1.valid_field_values headers) ->
+        `Reject (`Bad_request, "control character in a header field value")
+    | Some `CONNECT ->
+        (* The server is not a forward proxy. *)
+        `Reject (`Not_implemented, "CONNECT is not supported")
+    | Some meth -> (
       (* The asterisk-form target is for OPTIONS only, about the whole server
          (RFC 9112, section 3.2.4). *)
       match
@@ -331,7 +339,7 @@ let handler
       | Ok (), `OPTIONS, "*" -> `Server_options
       | Ok (), _, "*" ->
           `Reject (`Bad_request, "asterisk-form target without OPTIONS")
-      | Ok (), _, _ -> `Serve
+      | Ok (), _, _ -> `Serve)
   in
   Lwt.finalize
     (fun () ->
