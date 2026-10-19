@@ -52,7 +52,8 @@ it is told to trust the self-signed one of the upstream:
   https: true
 
 A proxy configured in a file, behind a trusted proxy that announces the client
-and the scheme of the request it received:
+and the scheme of the request it received. Only the client is sent in
+X-Forwarded-For, not the proxies before it:
 
   $ cat > proxy.conf <<EOF
   > <ocsigen><server>
@@ -82,7 +83,7 @@ and the scheme of the request it received:
   host: 127.0.0.1:UPSTREAM_PORT
   https: false
   x-forwarded-proto: https
-  x-forwarded-for: 192.0.2.1, 198.51.100.1
+  x-forwarded-for: 192.0.2.1
 
 With keephost, the proxy sends the Host header of the request to the target,
 with the port of the target added since the header has none. It still

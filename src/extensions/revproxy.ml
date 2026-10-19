@@ -138,14 +138,12 @@ let gen dir = function
                    (if Ocsigen.Request.ssl request_info then "https" else "http")
                in
                let h =
-                 let forward =
-                   String.concat ", "
-                     (client_address request_info
-                     :: Ocsigen.Request.forward_ip request_info)
-                 in
+                 (* The client alone, without the proxies before this
+                    server, so that the target needs to trust only this
+                    server. *)
                  Cohttp.Header.replace h
                    Ocsigen_http.Header.Name.(to_string x_forwarded_for)
-                   forward
+                   (client_address request_info)
                in
                (* Without keephost, cohttp sets the Host header from [target]. *)
                if dir.keephost
