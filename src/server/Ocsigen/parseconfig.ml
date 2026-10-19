@@ -371,6 +371,12 @@ let later_pass_host attrs l =
   (* default site for host *)
   host, conf, parse_config l
 
+(* The tags that are still accepted, so that old configuration files keep
+   working, but that nothing reads any more. *)
+let warn_no_effect tag =
+  Logs.warn ~src:section (fun fmt ->
+    fmt "Config file: <%s> has no effect and is ignored." tag)
+
 let later_pass_extension tag attrs l =
   (* We do not reload extensions *)
   match attrs with
@@ -470,8 +476,9 @@ and later_pass = function
   | Element (("datadir" as st), [], p) :: ll ->
       set_datadir (parse_string_tag st p);
       later_pass ll
-  | Element ("minthreads", [], _p) :: ll -> later_pass ll
-  | Element ("maxthreads", [], _p) :: ll -> later_pass ll
+  (* Read by [first_pass], which comes before the logs are set up. *)
+  | Element ((("minthreads" | "maxthreads") as st), [], _p) :: ll ->
+      warn_no_effect st; later_pass ll
   | Element (("maxconnected" as st), [], p) :: ll ->
       set_max_number_of_connections (int_of_string st (parse_string_tag st p));
       later_pass ll
@@ -495,8 +502,7 @@ and later_pass = function
       set_max_connections_per_address (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("servertimeout" as st), [], p) :: ll ->
-      Logs.warn ~src:section (fun fmt ->
-        fmt "Config file: <servertimeout> has no effect and is ignored.");
+      warn_no_effect st;
       set_server_timeout (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("netbuffersize" as st), [], p) :: ll ->
@@ -504,6 +510,7 @@ and later_pass = function
         (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("filebuffersize" as st), [], p) :: ll ->
+      warn_no_effect st;
       set_filebuffersize (int_of_string st (parse_string_tag st p));
       later_pass ll
   | Element (("maxrequestbodysize" as st), [], p) :: ll ->
@@ -533,11 +540,12 @@ and later_pass = function
   | Element ("usedefaulthostname", [], []) :: ll ->
       set_usedefaulthostname true;
       later_pass ll
-  | Element ("disablepartialrequests", [], []) :: ll ->
+  | Element (("disablepartialrequests" as st), [], []) :: ll ->
+      warn_no_effect st;
       set_disablepartialrequests true;
       later_pass ll
-  | Element ("respectpipeline", [], []) :: ll ->
-      set_respect_pipeline (); later_pass ll
+  | Element (("respectpipeline" as st), [], []) :: ll ->
+      warn_no_effect st; set_respect_pipeline (); later_pass ll
   | Element ("findlib", [("path", p)], []) :: ll ->
       Ocsigen_base.Loader.add_ocamlpath p;
       later_pass ll
