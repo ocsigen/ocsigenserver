@@ -42,7 +42,7 @@ Again for extensions that send local files, you can selectively disallow sending
   <extension ext="php" />
   <extension ext="cgi" />
   <file file=".htaccess" />
-  <regexp regexp=".*hidden_file.*" /> <!-- End the regexp with $ to match the full file name -->
+  <regexp regexp=".*hidden_file.*" /> <!-- Must match the whole path of the file -->
 </hidefile>
 v}
 
