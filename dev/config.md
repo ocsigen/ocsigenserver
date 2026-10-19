@@ -333,7 +333,7 @@ Example:
 ```
 <uploaddir>/var/upload</uploaddir>
 ```
-By default, no directory is specified and uploading is forbidden. Note that the server will remove the files after the request has been served. If the service (the script) want to keep the file, it must create a new hard link on the file itself.
+By default, no directory is specified and uploading is forbidden. An empty element, `<uploaddir></uploaddir>`, forbids it too. Note that the server will remove the files after the request has been served. If the service (the script) want to keep the file, it must create a new hard link on the file itself.
 
 You can specify the maximum size of uploaded files using `<maxuploadfilesize>`. For example :
 
