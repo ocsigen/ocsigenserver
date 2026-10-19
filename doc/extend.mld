@@ -7,12 +7,34 @@ This page describes how to extend Ocsigen's server. This can be used to create n
 
 You can take as example the files [staticmod.ml] or [accesscontrol.ml] from Ocsigen Server's distribution.
 
-The type of request is [Ocsigen.Extensions.request_info]
+The type of request is {!Ocsigen.Extensions.type-request}
 (have a look at it in the interface of module {!Ocsigen.Extensions}).
+Its field [request_info], of type {!Ocsigen.Request.t}, describes the HTTP
+request.
 
-Each extensions loaded in the configuration file tries to handle the request and returns something of type [Extensions.answer]. If the page is not found by the extension ([Ext_not_found]), the following one will try to handle the request. If the page is found, the answer is [Ext_found r].
+Each extension loaded in the configuration file tries to handle the request and returns something of type {!Ocsigen.Extensions.type-answer}. If the page is not found by the extension ([Ext_next status]), the following one will try to handle the request. If the page is found, the answer is [Ext_found f], where [f] is the function that generates the response.
 An extension can also modify the request before giving it to the next one
-(answer [Ext_continue_with of Extensions.request_info]), etc.
+(answer [Ext_continue_with (request, cookies, status)]), etc.
+
+An extension is a function of type {!Ocsigen.Extensions.type-extension}. It receives
+[Req_not_found (status, request)] if no previous extension generated a page,
+and [Req_found (request, response)] otherwise. For example:
+
+{[
+let my_extension = function
+  | Ocsigen.Extensions.Req_not_found
+      (_status, {Ocsigen.Extensions.request_info; _})
+    when Ocsigen.Request.sub_path request_info = ["hello"] ->
+      Lwt.return
+        (Ocsigen.Extensions.Ext_found
+           (fun () ->
+             Lwt.return
+               (Ocsigen.Response.respond_string ~status:`OK ~body:"Hello" ())))
+  | Ocsigen.Extensions.Req_not_found (status, _) ->
+      Lwt.return (Ocsigen.Extensions.Ext_next status)
+  | Ocsigen.Extensions.Req_found _ ->
+      Lwt.return Ocsigen.Extensions.Ext_do_nothing
+]}
 
 
 {2 Filtering the outputs}
@@ -24,22 +46,47 @@ Have a look at the file [deflatemod.ml] for an example.
 
 {3 Extending the configuration file for an extension}
 
- The parsing of Ocsigen's configuration file is using a very basic xml parser (package [xml-light]). The function to be registered by the [Extensions.register_extension] function takes two parameters: the path of the web site and the xml subtree.
+ The parsing of Ocsigen's configuration file is using a very basic xml parser (package [xml-light]). The [fun_site] function given to {!Ocsigen.Extensions.register} receives, among other parameters, the path of the web site and the xml subtree, and returns the extension (see the type {!Ocsigen.Extensions.type-parse_config}).
 
-{v
-let parse_config path = function
-    Xml.Element ("tag", attr, content) -> ...
-      (* Do what you want here *)
-  | Xml.Element _ ->
-      raise (Extensions.Bad_config_tag_for_extension t)
-  | _ -> raise (Extensions.Error_in_config_file "(my extension)")
-v}
+{[
+let parse_config _path _parse_fun = function
+  | Xml.Element ("hello", _attrs, _content) ->
+      (* Read the attributes and the content here *)
+      my_extension
+  | Xml.Element (t, _, _) ->
+      raise (Ocsigen.Extensions.Bad_config_tag_for_extension t)
+  | _ -> raise (Ocsigen.Extensions.Error_in_config_file "(my extension)")
 
-The module [Parseconfig] defines functions to parse strings or sizes (in bytes, GB etc).
+let () =
+  Ocsigen.Extensions.register ~name:"myextension"
+    ~fun_site:(fun _userconf _hosts _config path _parse_host parse_fun ->
+      parse_config path parse_fun)
+    ()
+]}
+
+The module {!Ocsigen.Extensions.Configuration} helps to write such parsers. The
+function [Ocsigen.Parseconfig.parse_size_tag] parses sizes (in bytes, GB etc).
 
 {3 Giving parameters to an extension}
 
-Extensions may take parameters in the configuration file. During the loading of the extension, the function [Extensions.get_config ()] returns the xml tree between [<extension>] and [</extension>] (or [<library>] and [</library>]). Write a parser for that tree.
+Extensions may take parameters in the configuration file. Give an [init_fun] function to {!Ocsigen.Extensions.register}: when the extension is loaded, it receives the xml tree between [<extension>] and [</extension>] (or [<library>] and [</library>]). Write a parser for that tree. Without [init_fun], the extension accepts no parameter.
+
+{[
+let greeting = ref "Hello"
+
+let parse_global_config = function
+  | [] -> ()
+  | [Xml.Element ("greeting", [], [Xml.PCData s])] -> greeting := s
+  | _ ->
+      raise
+        (Ocsigen.Extensions.Error_in_config_file
+           "Unexpected content inside myextension config")
+
+let () =
+  Ocsigen.Extensions.register ~name:"myextension"
+    ~fun_site:(fun _ _ _ path _ parse_fun -> parse_config path parse_fun)
+    ~init_fun:parse_global_config ()
+]}
 
 {2 Catching the request before it is fully read}
 
@@ -49,10 +96,15 @@ For some extensions of the Web server, it is necessary to catch the request befo
 
 If you want to add your own commands for the server command pipe, do something like:
 
-{v
+{[
 let () =
-  Ocsigen.Extensions.register_command_function ~prefix:"yourextensionname"
-    (fun s c -> match c with
-       | ["mycommand"] -> ...
-       | _ -> raise Ocsigen.Extensions.Unknown_command)
-v}
+  Ocsigen.Command.register_command_function ~prefix:"myextension"
+    (fun _command args ->
+       match args with
+       | ["mycommand"] ->
+           (* Do what you want here *)
+           Lwt.return ()
+       | _ -> raise Ocsigen.Command.Unknown_command)
+]}
+
+The command to write in the pipe is then [myextension:mycommand].

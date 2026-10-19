@@ -10,7 +10,7 @@ authentication, etc.
 Ocsigen Server can be used:
 - as an executable: it reads its configuration from a file and dynamically loads
   the extensions and libraries you need for your sites, 
-- or as a library: build your own executable and statically link your the
+- or as a library: build your own executable and statically link the
   modules you need for your pages.
 
 It is written in OCaml and uses the
@@ -111,25 +111,25 @@ The extensions provided are:
 - {{!page-staticmod}Staticmod}: for serving static pages,
 - {{!page-accesscontrol}Accesscontrol}: if you need to restrict the access to the sites,
 - {{!page-eliom}Eliom}: if you want to use dynamic Web and mobile applications written in OCaml with Eliom,
-- {{!page-revproxy}Revproxy}: if you want to redirect some requests to another Web server,.
+- {{!page-revproxy}Revproxy}: if you want to redirect some requests to another Web server,
 - {{!page-redirectmod}Redirectmod}: if you want to define some HTTP redirections,
 - {{!page-deflatemod}Deflatemod}: if you want to compress the content before sending your pages,
 - {{!page-outputfilter}Outputfilter}: allows to change the header of the HTTP response,
-- {{!page-securityheaders}Securityheaders}: adds common security-related HTTP headers (HSTS, nosniff, X-Frame-Options, CSP),
+- {{!page-securityheaders}Securityheaders}: adds common security-related HTTP headers (X-Content-Type-Options, X-Frame-Options and Referrer-Policy by default, HSTS and CSP on request),
 - {{!page-rewritemod}Rewritemod}: allows to rewrite the request before continuing,
 - {{!page-extendconfiguration}Extendconfiguration}: adds many useful configuration options,
 - {{!page-authbasic}Authbasic}: for basic HTTP authentication,
 - {{!page-cors}CORS}: for settings CORS options,
 - {{!page-userconf}Userconf}: for allowing local users to have personal pages,
 
-If you are using a configuration, file, use tag 
-[<extension/>] to load an exetnsion (see examples in the
-manual of each extension). Most extension have configuration
+If you are using a configuration file, use tag
+[<extension/>] to load an extension (see examples in the
+manual of each extension). Most extensions have configuration
 options, and define new tags for the configuration file.
 
 If you are building a static executable, load the extensions
 as any library from your Dune file. Have a look at the API
-documentation of each documentation to see the functions
+documentation of each extension to see the functions
 it defines and the configuration options.
 
 {1 API reference}
@@ -145,7 +145,7 @@ Ocsigen Server 8.0 renamed its modules and modernised its base library. See
 
 {1 Running on port 80 or 443}
 It is not recommended to run a Web server as root.
-If you want to use priviledged ports (port numbers less than 1024), like 80 or
+If you want to use privileged ports (port numbers less than 1024), like 80 or
 443, you can add the capability to ocsigenserver with:
 {v
 setcap 'cap_net_bind_service=+ep' <path to the server executable>
