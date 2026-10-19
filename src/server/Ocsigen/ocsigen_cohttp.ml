@@ -313,12 +313,15 @@ let handler
   let version = Cohttp.Request.version cohttp_request
   and headers = Cohttp.Request.headers cohttp_request in
   let rejection =
-    match
-      Ocsigen_http.Http1.check_host version headers
-        ~target:(Cohttp.Request.resource cohttp_request)
-    with
-    | Ok () -> None
-    | Error reason -> Some (`Bad_request, reason)
+    if not (Ocsigen_http.Http1.valid_field_values headers)
+    then Some (`Bad_request, "control character in a header field value")
+    else
+      match
+        Ocsigen_http.Http1.check_host version headers
+          ~target:(Cohttp.Request.resource cohttp_request)
+      with
+      | Ok () -> None
+      | Error reason -> Some (`Bad_request, reason)
   in
   Lwt.finalize
     (fun () ->

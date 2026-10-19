@@ -86,3 +86,12 @@ let check_host version headers ~target =
         | Some (Some host) when host <> "" -> Ok ()
         | Some (Some _ | None) -> Error "invalid host in the request target"
         | None -> Error "invalid request target")
+
+(* Field values are made of visible characters, spaces, horizontal tabs and
+   non-ASCII bytes (RFC 9110, section 5.5): no other control character. *)
+let valid_field_values headers =
+  Http.Header.to_list headers
+  |> List.for_all (fun (_, value) ->
+    String.for_all
+      (function '\t' -> true | '\000' .. '\031' | '\127' -> false | _ -> true)
+      value)

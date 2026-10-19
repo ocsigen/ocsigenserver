@@ -57,3 +57,11 @@ HTTP/1.1 http://:80/, Host: x: invalid host in the request target
 HTTP/1.1 ftp://example.org/, Host: x: invalid request target
 HTTP/1.1 example.org:443, Host: x: invalid request target
 HTTP/1.1 http://example.org/, (no field): missing Host
+== valid_field_values
+"(no field)": true
+"X-A: a b\tc\233~": true
+"X-A: ok | X-B: a\000b": false
+"X-A: a\rb": false
+"X-A: a\nb": false
+"X-A: a\027b": false
+"X-A: a\127b": false

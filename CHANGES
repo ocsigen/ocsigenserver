@@ -311,6 +311,9 @@ Bug fixes:
  * The error responses of the server, such as 404, and those of
    Response.respond_error, now say that their body is text (Content-Type:
    text/plain; charset=utf-8).
+ * A request with a control character other than a tab in a header field
+   value, such as NUL, is now answered 400 (Bad Request) instead of being
+   served.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

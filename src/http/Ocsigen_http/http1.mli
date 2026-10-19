@@ -16,3 +16,8 @@ val check_host :
     only: neither percent-encoding nor the sub-delimiters of RFC 3986 (such
     as [,]). Otherwise it is [Error reason], for the logs, and the server
     must answer 400. *)
+
+val valid_field_values : Http.Header.t -> bool
+(** [valid_field_values headers] is [true] iff no value of [headers] has a
+    control character other than a horizontal tab (RFC 9110, section 5.5).
+    NUL, CR and LF in particular must be rejected. *)
