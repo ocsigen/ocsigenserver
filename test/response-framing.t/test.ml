@@ -1,5 +1,5 @@
-(* A server whose only instruction answers each path with a body whose framing
-   the headers alone would get wrong. *)
+(* A server whose only instruction answers each path with a response whose
+   framing the headers alone would get wrong. *)
 
 let chunked = Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
 
@@ -34,6 +34,13 @@ let response path =
            ~status:`OK
            ~body:(Ocsigen.Response.Body.of_string "world")
            ())
+  | "no-content" ->
+      Some (Ocsigen.Response.respond ~status:`No_content ())
+  | "not-modified" ->
+      Some
+        (Ocsigen.Response.respond
+           ~headers:(of_list [ ("content-length", "99") ])
+           ~status:`Not_modified ())
   | _ -> None
 
 let respond _vh _config_info _path = function

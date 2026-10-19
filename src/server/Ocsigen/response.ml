@@ -288,18 +288,24 @@ let make_cookies_headers path t hds =
    body with a Content-Range went out with neither chunking nor a length. The
    body is the only source of truth: a Content-Length set by the producer goes
    with chunking (RFC 9112 6.1), and is replaced by the length of a fixed-length
-   body, as a wrong one would break the connection just the same. *)
-let set_framing (encoding : Transfer.encoding) headers =
-  match encoding with
-  | Chunked ->
-      Header.replace
-        (Header.remove headers "content-length")
-        "transfer-encoding" "chunked"
-  | Fixed length ->
-      Header.replace
-        (Header.remove headers "transfer-encoding")
-        "content-length" (Int64.to_string length)
-  | Unknown -> headers
+   body, as a wrong one would break the connection just the same. A response
+   with a 1xx, 204 or 304 status has no body, and no framing headers (RFC 9110
+   8.6, RFC 9112 6.1). *)
+let set_framing status (encoding : Transfer.encoding) headers =
+  if not (Http.Status.body_allowed status)
+  then
+    Header.remove (Header.remove headers "content-length") "transfer-encoding"
+  else
+    match encoding with
+    | Chunked ->
+        Header.replace
+          (Header.remove headers "content-length")
+          "transfer-encoding" "chunked"
+    | Fixed length ->
+        Header.replace
+          (Header.remove headers "transfer-encoding")
+          "content-length" (Int64.to_string length)
+    | Unknown -> headers
 
 let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
   let headers =
@@ -308,11 +314,19 @@ let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
     |> Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
     |> add "server" Config.server_name
     |> add "date" (Ocsigen_base.Lib.Date.to_string (Unix.time ()))
-    |> set_framing body_encoding
+    |> set_framing (Response.status a_response) body_encoding
   in
   {a_response with Response.headers}
 
-let to_response_expert t =
+let sends_body ~meth {a_response; _} =
+  match meth with
+  | `HEAD -> false
+  | _ -> Http.Status.body_allowed (Response.status a_response)
+
+(* The response to HEAD keeps the headers of the response to GET, framing
+   included (RFC 9110 9.3.2), but a client reads no body after it: the bytes of
+   one would be taken for the start of the next response on the connection. *)
+let to_response_expert ~meth t =
   let module R = Cohttp_lwt_unix.Response in
   let write_footer encoding oc =
     (* Copied from [cohttp/response.ml]. *)
@@ -323,10 +337,13 @@ let to_response_expert t =
   let res = to_cohttp_response t in
   ( res
   , fun _ic oc ->
-      let writer = R.make_body_writer ~flush:false res oc in
-      let body, encoding = t.a_body in
-      let* () = body (R.write_body writer) in
-      write_footer encoding oc )
+      if sends_body ~meth t
+      then
+        let writer = R.make_body_writer ~flush:false res oc in
+        let body, encoding = t.a_body in
+        let* () = body (R.write_body writer) in
+        write_footer encoding oc
+      else Lwt.return_unit )
 
 let response t = t.a_response
 let body t = t.a_body

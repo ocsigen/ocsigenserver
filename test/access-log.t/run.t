@@ -38,3 +38,14 @@ Referer and User-Agent.
   > done
   $ grep 'GET /nope.html' server.log | sed 's/\[[^]]*\]/[TIME]/'
   127.0.0.1 - - [TIME] "GET /nope.html HTTP/1.1" 404 16 "-" "-"
+
+A response to HEAD has no body: its size is 0, though its Content-Length is
+that of the file.
+
+  $ curl -s -I -o /dev/null --user-agent "" http://127.0.0.1:8062/index.html
+  $ for _ in $(seq 1 20); do
+  >   grep -q 'HEAD /index.html' server.log && break
+  >   sleep 0.5
+  > done
+  $ grep 'HEAD /index.html' server.log | sed 's/\[[^]]*\]/[TIME]/'
+  127.0.0.1 - - [TIME] "HEAD /index.html HTTP/1.1" 200 0 "-" "-"

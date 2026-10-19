@@ -19,6 +19,8 @@ Incompatible changes:
    and said it did nothing in silent mode, which it never checked. The
    "Process N detached" message of daemon mode, its only use, now goes
    through Logs (source ocsigen:main).
+ * Ocsigen.Response.to_response_expert takes the method of the request
+   (~meth), to send no body in response to HEAD.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -80,6 +82,13 @@ New features:
    sets the level of a log source by its name.
 
 Bug fixes:
+ * Security: a response to HEAD no longer carries the body of the response to
+   GET. The client, or a reverse proxy that keeps its connections to the server
+   alive, took that body for the start of the next response on the connection,
+   which could then be another user's, and even a response forged in a file the
+   server serves. Responses with a 1xx, 204 or 304 status no longer get a
+   "Content-Length: 0" either. The access log gives 0 as the size of a response
+   to HEAD.
  * Static files: If-Range now uses a strong comparison, as RFC 9110 requires.
    The weak ETag of a file no longer matches it, and the Last-Modified date
    matches only once the file has not changed for a second. A client could

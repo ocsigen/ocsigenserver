@@ -125,11 +125,14 @@ module Access_log = struct
     in
     (* The response size is carried by the body transfer encoding, not a
        header: known for fixed-length bodies (e.g. static files), "-" when
-       streamed with an unknown length. *)
+       streamed with an unknown length, and 0 when no body is sent (HEAD). *)
     let bytes =
-      match Response.Body.transfer_encoding (Response.body response) with
-      | Cohttp.Transfer.Fixed n -> Int64.to_string n
-      | Cohttp.Transfer.Chunked | Cohttp.Transfer.Unknown -> "-"
+      if not (Response.sends_body ~meth:(Request.meth request) response)
+      then "0"
+      else
+        match Response.Body.transfer_encoding (Response.body response) with
+        | Cohttp.Transfer.Fixed n -> Int64.to_string n
+        | Cohttp.Transfer.Chunked | Cohttp.Transfer.Unknown -> "-"
     in
     Printf.sprintf "%s - %s %s %s %d %s %s %s"
       (Request.client_ip_to_string request)
@@ -279,7 +282,9 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
            | exn -> Lwt.return (handle_error exn))
        >>= fun response ->
        Messages.accesslog (Access_log.line request response);
-       let res, write_body = Response.to_response_expert response in
+       let res, write_body =
+         Response.to_response_expert ~meth:(Request.meth request) response
+       in
        (* As cohttp does for the responses it writes itself, which expert
           responses are not: the connection is kept alive if both the request
           and the response allow it, and the response says whether it is.
