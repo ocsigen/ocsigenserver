@@ -558,6 +558,9 @@ Bug fixes:
    was sent as it was (max_age="-1"). max_age now takes decimal digits
    only, so "0x3c" or "+60" are refused too. Cors.run raises
    Invalid_argument for a negative max_age.
+ * CORS: a request that another extension answers, and that asks for a
+   method that the methods attribute does not allow, gets its response
+   without CORS headers, instead of a 500.
 
 ==== 8.0.0 (2026-09-24) ===
 

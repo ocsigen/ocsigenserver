@@ -34,11 +34,25 @@ type config =
   ; max_age : int option
   ; exposed_headers : string list }
 
-exception Refused
+(* Whether [r] asks for a method that [config] does not allow. *)
+let method_refused config r =
+  match
+    ( Ocsigen.Request.header r
+        Ocsigen_http.Header.Name.access_control_request_method
+    , config.methods )
+  with
+  | Some m, Some methods ->
+      not (List.mem (Cohttp.Code.method_of_string m) methods)
+  | _, None | None, _ -> false
 
-let add_headers config r response =
+(* The CORS headers of the response to [r]: [`No_origin] if [r] has no
+   Origin, and [`Refused] if the method it asks for is not allowed. *)
+let cors_headers config r =
   match Ocsigen.Request.header r Ocsigen_http.Header.Name.origin with
-  | None -> Lwt.return Ocsigen.Extensions.Ext_do_nothing
+  | None -> `No_origin
+  | Some _ when method_refused config r ->
+      Logs.info ~src:section (fun fmt -> fmt "Method refused");
+      `Refused
   | Some origin ->
       Logs.info ~src:section (fun fmt -> fmt "request with origin: %s" origin);
       let l = [Ocsigen_http.Header.Name.access_control_allow_origin, origin] in
@@ -55,21 +69,9 @@ let add_headers config r response =
             Ocsigen_http.Header.Name.access_control_request_method
         with
         | Some request_method ->
-            let methods =
-              match config.methods with
-              | None -> true
-              | Some l -> (
-                try List.mem (Cohttp.Code.method_of_string request_method) l
-                with _ -> false)
-            in
-            if methods
-            then
-              ( Ocsigen_http.Header.Name.access_control_allow_methods
-              , request_method )
-              :: l
-            else (
-              Logs.info ~src:section (fun fmt -> fmt "Method refused");
-              raise Refused)
+            ( Ocsigen_http.Header.Name.access_control_allow_methods
+            , request_method )
+            :: l
         | None -> l
       in
       let l =
@@ -99,9 +101,10 @@ let add_headers config r response =
             , String.concat ", " exposed_headers )
             :: l
       in
-      Lwt.return
-        (Ocsigen.Extensions.Ext_found
-           (fun () -> Lwt.return @@ Ocsigen.Response.replace_headers response l))
+      `Headers l
+
+let found response =
+  Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return response))
 
 let main config = function
   | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
@@ -109,15 +112,17 @@ let main config = function
     match Ocsigen.Request.meth request_info with
     | `OPTIONS -> (
         Logs.info ~src:section (fun fmt -> fmt "OPTIONS request");
-        try add_headers config request_info (default_frame ())
-        with Refused ->
-          Logs.info ~src:section (fun fmt -> fmt "Refused request");
-          Lwt.return Ocsigen.Extensions.Ext_do_nothing)
+        match cors_headers config request_info with
+        | `Headers l ->
+            found (Ocsigen.Response.replace_headers (default_frame ()) l)
+        | `No_origin | `Refused -> Lwt.return Ocsigen.Extensions.Ext_do_nothing)
     | _ -> Lwt.return Ocsigen.Extensions.Ext_do_nothing)
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info; _}, response)
-    ->
+    -> (
       Logs.info ~src:section (fun fmt -> fmt "answered request");
-      add_headers config request_info response
+      match cors_headers config request_info with
+      | `Headers l -> found (Ocsigen.Response.replace_headers response l)
+      | `No_origin | `Refused -> Lwt.return Ocsigen.Extensions.Ext_do_nothing)
 
 (* Register extension *)
 
