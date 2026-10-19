@@ -718,7 +718,30 @@ let load_one_command_extension package registry =
       Messages.errlog (package ^ " did not register its serving function");
       exit 1
 
-let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
+(* The one-command modes listen on the loopback interface unless told
+   otherwise: a server started in one command, often by mistake in the wrong
+   directory, should not be reachable from the network by default. *)
+let default_one_command_address = `IPv4 Unix.inet_addr_loopback
+
+(* The URL that the startup banner of the one-command modes shows. *)
+let listen_url address port =
+  match address with
+  | `IPv4 a when a = Unix.inet_addr_any ->
+      Printf.sprintf "http://0.0.0.0:%d (all interfaces)" port
+  | `IPv4 a -> Printf.sprintf "http://%s:%d" (Unix.string_of_inet_addr a) port
+  | `IPv6 a when a = Unix.inet6_addr_any ->
+      Printf.sprintf "http://[::]:%d (all interfaces)" port
+  | `IPv6 a -> Printf.sprintf "http://[%s]:%d" (Unix.string_of_inet_addr a) port
+  | `All -> Printf.sprintf "port %d of all interfaces" port
+  | `Unix path -> "unix:" ^ path
+
+let serve
+      ?(address = default_one_command_address)
+      ?(port = 8080)
+      ?(directory_listing = false)
+      ~dir
+      ()
+  =
   one_command_setup ();
   let static =
     load_one_command_extension "ocsigenserver.ext.staticmod" static_server
@@ -736,16 +759,21 @@ let serve ?(port = 8080) ?(directory_listing = false) ~dir () =
     :: (Option.to_list !compression @ Option.to_list !security_headers)
   in
   Logs.app ~src:section (fun fmt ->
-    fmt "Serving %s on http://localhost:%d" dir port);
+    fmt "Serving %s on %s" dir (listen_url address port));
   start
-    ~ports:[`All, port]
+    ~ports:[address, port]
     [host ~list_directory_content:directory_listing instructions]
 
-let reverse_proxy ?(port = 8080) ~target () =
+let reverse_proxy
+      ?(address = default_one_command_address)
+      ?(port = 8080)
+      ~target
+      ()
+  =
   one_command_setup ();
   let proxy =
     load_one_command_extension "ocsigenserver.ext.revproxy" reverse_proxy_server
   in
   Logs.app ~src:section (fun fmt ->
-    fmt "Proxying http://localhost:%d to %s" port target);
-  start ~ports:[`All, port] [host [proxy ~target]]
+    fmt "Proxying %s to %s" (listen_url address port) target);
+  start ~ports:[address, port] [host [proxy ~target]]

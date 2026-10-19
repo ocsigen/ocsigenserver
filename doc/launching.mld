@@ -10,13 +10,22 @@ following options:
          Serve the static files of directory DIR without a configuration
          file (logs go to the terminal). DIR can also be given as a plain
          positional argument: "ocsigenserver ./public".
+         Files and directories whose name starts with a dot (.git, .env, ...)
+         are neither served nor listed, except /.well-known/.
 
   --reverse-proxy URL
          Forward every request to the base URL given (for example
          http://localhost:9000), without a configuration file.
 
   -P, --port
-         Port to listen on in serve mode (default 8080).
+         Port to listen on in serve mode or with --reverse-proxy (default
+         8080).
+
+  --address ADDR
+         IP address to listen on in serve mode or with --reverse-proxy
+         (default 127.0.0.1, so the server is only reachable from the same
+         machine). Use 0.0.0.0 to listen on all the IPv4 interfaces, for
+         example in a container.
 
   --directory-listing
          In serve mode, list the contents of directories that have no

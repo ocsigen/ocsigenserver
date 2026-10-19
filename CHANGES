@@ -21,6 +21,16 @@ Incompatible changes:
    through Logs (source ocsigen:main).
  * Ocsigen.Response.to_response_expert takes the method of the request
    (~meth), to send no body in response to HEAD.
+ * The one-command modes (ocsigenserver DIR, --serve, --reverse-proxy) now
+   listen on the loopback interface (127.0.0.1) by default, instead of on all
+   the interfaces, and their startup banner shows the address. The new
+   --address option (and the ?address parameter of Ocsigen.Server.serve and
+   reverse_proxy) chooses another one, such as 0.0.0.0 in a container.
+ * Staticmod no longer serves the files and directories whose name starts with
+   a dot, such as .git/config, .env or .htpasswd, except under /.well-known/
+   (RFC 8615), and directory listings no longer show them. This applies to
+   serve mode too. The new hidedotfiles="false" attribute of <static> (or
+   ~hide_dotfiles:false for Staticmod.run) serves them again.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -101,6 +111,9 @@ Bug fixes:
  * A program that starts Ocsigen Server as a library, and installs no Logs
    reporter, now sees on the terminal the errors that stop the server before
    it configures its logging. Logs dropped them, so the program just exited.
+ * Staticmod: a <static regexp> that does not match the path of the request,
+   or a <static code> that does not match its status, now lets the next
+   instruction answer, instead of failing with a 500.
  * A request with "Connection: close", or an HTTP/1.0 request without
    "Connection: keep-alive", now gets a response with "Connection: close",
    after which the server closes the connection, as RFC 9112 requires, without

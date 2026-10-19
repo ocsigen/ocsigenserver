@@ -20,6 +20,7 @@ let fatal fmt =
    configuration file. Otherwise the legacy configuration-file path is used. *)
 let serve_dir = ref None
 let serve_port = ref None
+let serve_address = ref None
 let directory_listing = ref false
 let reverse_proxy = ref None
 let config_given = ref false
@@ -29,6 +30,15 @@ let set_serve_dir d =
   | None -> serve_dir := Some d
   | Some d' when d' = d -> ()
   | Some _ -> fatal "only one directory to serve can be given"
+
+(* The address to listen on in the one-command modes: an IPv4 or IPv6 address,
+   such as 0.0.0.0 to listen on all the IPv4 interfaces. *)
+let set_serve_address s =
+  match Unix.inet_addr_of_string s with
+  | a when Unix.domain_of_sockaddr (Unix.ADDR_INET (a, 0)) = Unix.PF_INET6 ->
+      serve_address := Some (`IPv6 a)
+  | a -> serve_address := Some (`IPv4 a)
+  | exception Failure _ -> fatal "--address: %s is not an IP address" s
 
 let set_configfile f =
   config_given := true;
@@ -40,7 +50,9 @@ let () =
   and serve_msg = "Serve the static files of DIR without a configuration file"
   and proxy_msg =
     "Forward every request to the base URL given, without a configuration file"
-  and port_msg = "Port to listen on in serve mode (default 8080)"
+  and port_msg = "Port to listen on in the one-command modes (default 8080)"
+  and address_msg =
+    "IP address to listen on in the one-command modes (default 127.0.0.1; 0.0.0.0 for all interfaces)"
   and listing_msg = "List directory contents in serve mode (when no index file)"
   and silent_msg =
     "Silent mode (error messages in errors.log only; needs log files or syslog)"
@@ -60,6 +72,7 @@ let () =
         , proxy_msg )
       ; "-P", Arg.Int (fun p -> serve_port := Some p), port_msg
       ; "--port", Arg.Int (fun p -> serve_port := Some p), port_msg
+      ; "--address", Arg.String set_serve_address, address_msg
       ; "--directory-listing", Arg.Set directory_listing, listing_msg
       ; "-s", Arg.Unit Ocsigen.Config.set_silent, silent_msg
       ; "--silent", Arg.Unit Ocsigen.Config.set_silent, silent_msg
@@ -109,17 +122,18 @@ let () =
       if !config_given
       then fatal "-c/--config cannot be combined with serve mode";
       let dir = check_serve_dir dir in
-      Ocsigen.Server.serve ~dir ?port:!serve_port
+      Ocsigen.Server.serve ~dir ?address:!serve_address ?port:!serve_port
         ~directory_listing:!directory_listing ()
   | None, Some target ->
       if !config_given
       then fatal "-c/--config cannot be combined with --reverse-proxy";
       if !directory_listing
       then fatal "--directory-listing is only valid when serving a directory";
-      Ocsigen.Server.reverse_proxy ~target ?port:!serve_port ()
+      Ocsigen.Server.reverse_proxy ~target ?address:!serve_address
+        ?port:!serve_port ()
   | None, None ->
-      if !serve_port <> None || !directory_listing
+      if !serve_port <> None || !serve_address <> None || !directory_listing
       then
         fatal
-          "--port and --directory-listing require a directory to serve or --reverse-proxy";
+          "--port, --address and --directory-listing require a directory to serve or --reverse-proxy";
       Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())

@@ -26,11 +26,15 @@ val run :
   -> ?code:string
   -> ?cache:int
   -> ?root:string
+  -> ?hide_dotfiles:bool
   -> unit
   -> Ocsigen.Server.instruction
-(** Run static mod on a specific directory. 
+(** Run static mod on a specific directory.
     Call this if you want to run Ocsigen Server without configuration file.
     The optional parameter correspond to the options of the configuration
-    file described {{!page-"staticmod"}here}.*)
+    file described {{!page-"staticmod"}here}.
+    When [hide_dotfiles] is [true] (the default), the paths with a segment
+    that starts with a dot (such as [.git/config] or [.env]) are neither served
+    nor listed, except under [/.well-known/]. *)
 
 val section : Logs.src
