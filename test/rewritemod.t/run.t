@@ -1,7 +1,7 @@
 Rewritemod rewrites the path of the requests that match its regexp, then
 the request starts again from the beginning. Self-contained POSIX sh.
 
-  $ mkdir -p log data www/new
+  $ mkdir -p log www/new
   $ echo hello > www/new/a.txt
   $ dune build ./test.exe 2>&1
   $ ./_build/default/test.exe >server.log 2>&1 &

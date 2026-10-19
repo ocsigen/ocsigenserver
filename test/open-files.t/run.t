@@ -21,7 +21,7 @@ connections. A <maxconnected> of 1000 is lowered to that, with a warning that
 says how to accept more.
 
   $ start () {
-  >   mkdir -p $1/log $1/data
+  >   mkdir -p $1/log
   >   sh -c "ulimit $2; exec ./_build/default/server.exe $1" \
   >     >$1/server.log 2>&1 &
   >   i=0; while [ ! -e $1.sock ] || [ ! -e $1.cmd ]; do

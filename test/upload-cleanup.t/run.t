@@ -1,7 +1,7 @@
 The files uploaded in a multipart request are removed once the request is
 handled. Self-contained POSIX sh.
 
-  $ mkdir -p log data uploads kept
+  $ mkdir -p log uploads kept
   $ echo hello > a.txt
   $ dune build ./test.exe 2>&1
   $ ./_build/default/test.exe >server.log 2>&1 &

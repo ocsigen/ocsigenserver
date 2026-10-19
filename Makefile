@@ -84,7 +84,6 @@ install.files:
 	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(LOGDIR)
 	 ## Static files
 	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(STATICPAGESDIR)
-	$(INSTALL) -d -m ${INSTALL_MOD_750} ${INSTALL_USER_GROUP} $(TEMPROOT)$(DATADIR)
 	$(INSTALL) -m ${INSTALL_MOD_644} ${INSTALL_USER_GROUP} \
 	  local/var/www/*.html $(TEMPROOT)$(STATICPAGESDIR)
 	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} \
@@ -102,7 +101,6 @@ uninstall:
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(CONFIGDIR)/conf.d
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(CONFIGDIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(LOGDIR)
-	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(DATADIR)
 	-rmdir --ignore-fail-on-non-empty $(TEMPROOT)$(MANDIR)
 
 purge: purge.files

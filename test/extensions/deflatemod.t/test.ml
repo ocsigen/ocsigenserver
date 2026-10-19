@@ -2,7 +2,7 @@ let () =
   Ocsigen.Config.set_global_log_level (Some Logs.Debug);
   Ocsigen.Server.start
     ~ports:[ (`Unix "./local.sock", 0) ]
-    ~veryverbose:() ~debugmode:true ~logdir:"log" ~datadir:"data"
+    ~veryverbose:() ~debugmode:true ~logdir:"log"
     ~uploaddir:None ~usedefaulthostname:true ~command_pipe:"local.cmd"
     ~default_charset:(Some "utf-8")
     [

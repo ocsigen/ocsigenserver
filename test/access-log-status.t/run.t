@@ -1,7 +1,7 @@
 A response with a status code that Cohttp has no constructor for is sent and
 logged like any other.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ dune build ./test.exe 2>&1
   $ ./_build/default/test.exe >server.log 2>&1 &
   $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT

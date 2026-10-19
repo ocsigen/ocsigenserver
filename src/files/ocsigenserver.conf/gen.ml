@@ -12,7 +12,6 @@ let conf_in =
     <port>_PORT_</port>
 
     <logdir>_LOGDIR_</logdir>
-    <datadir>_DATADIR_</datadir>
     _COMMANDPIPE_
     _MIMEFILE_
 
@@ -54,7 +53,6 @@ let config_file = ref _CONFIGFILE_
 let is_native = Sys.backend_type = Sys.Native
 let logdir = ref (Some _LOGDIR_)
 let mimefile = ref _MIMEFILE_
-let datadir = ref _DATADIR_
 let bindir = ref _BINDIR_
 let extdir = ref _EXTDIR_
 let builtin_packages =
@@ -110,7 +108,6 @@ let ( // ) = Filename.concat
 let static_options = function
   | "VERSION" -> str version
   | "LOGDIR" -> str logdir
-  | "DATADIR" -> str datadir
   | "BINDIR" -> str bindir
   | "EXTDIR" -> str (libdir () // "ocsigenserver" // "extensions")
   | "STATICPAGESDIR" -> str staticpagesdir
@@ -124,7 +121,6 @@ let static_options = function
 let sample_options = function
   | "PORT" -> string_of_int port
   | "LOGDIR" -> logdir
-  | "DATADIR" -> datadir
   | "COMMANDPIPE" ->
       if commandpipe = ""
       then "<!-- <commandpipe>...</commandpipe> -->"
@@ -140,7 +136,6 @@ let sample_options = function
 let local_options = function
   | "PORT" -> "8080"
   | "LOGDIR" -> src ^ "/local/var/log"
-  | "DATADIR" -> src ^ "/local/var/lib"
   | "COMMANDPIPE" ->
       "<commandpipe>" ^ src
       ^ "/local/var/run/ocsigenserver_command</commandpipe>"

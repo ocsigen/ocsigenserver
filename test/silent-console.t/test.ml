@@ -12,6 +12,6 @@ let () =
   in
   Ocsigen.Server.start
     ~ports:[ (`Unix "./local.sock", 0) ]
-    ~logdir ~datadir:"data" ~uploaddir:None ~usedefaulthostname:true
+    ~logdir ~uploaddir:None ~usedefaulthostname:true
     ~pidfile:"server.pid" ?silent ?daemon
     [ Ocsigen.Server.host [] ]

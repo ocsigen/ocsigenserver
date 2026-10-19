@@ -1,7 +1,7 @@
 F5: the HTTPS server must require TLS 1.2 at minimum (TLS 1.0/1.1 deprecated).
 Self-contained POSIX sh.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost >/dev/null 2>&1
   $ dune build ./test.exe 2>&1

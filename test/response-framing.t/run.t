@@ -1,7 +1,7 @@
 The headers of a response announce the framing of its body, whatever other
 headers say about its length.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ dune build ./test.exe ./client.exe 2>&1
   $ ./_build/default/test.exe >server.log 2>&1 &
   $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT

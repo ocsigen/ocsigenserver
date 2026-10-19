@@ -143,7 +143,6 @@ let set_maxuploadfilesize i = maxuploadfilesize := i
 let set_maxrequestbodysize i = maxrequestbodysize := i
 let set_maxrequestbodysizeinmemory i = maxrequestbodysizeinmemory := i
 let set_default_charset o = defaultcharset := o
-let set_datadir o = datadir := o
 let set_bindir o = bindir := o
 let set_extdir o = extdir := o
 let set_command_pipe s = command_pipe := Some s
@@ -199,7 +198,6 @@ let get_maxuploadfilesize () = !maxuploadfilesize
 let get_maxrequestbodysize () = !maxrequestbodysize
 let get_maxrequestbodysizeinmemory () = !maxrequestbodysizeinmemory
 let get_default_charset () = !defaultcharset
-let get_datadir () = !datadir
 let get_bindir () = !bindir
 let get_extdir () = !extdir
 let get_command_pipe () = !command_pipe
