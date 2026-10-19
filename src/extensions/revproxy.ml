@@ -91,6 +91,32 @@ let forwarded_response meth response =
   in
   {response with Cohttp.Response.headers; version = `HTTP_1_1}
 
+(* [call ~headers ~body meth uri] sends the request to the target on a
+   connection of its own, closed once the body of the response is read or the
+   call fails. This is what [Cohttp_lwt_unix.Client.call] does, except that
+   cohttp-lwt 6 raises again, outside of any promise, any failure of the call:
+   an error while reading the body of the request (one too large, for
+   instance) or writing it to the target stopped the server. *)
+let call ~headers ~body meth uri =
+  let module Net = Cohttp_lwt_unix.Net in
+  let module Connection = Cohttp_lwt_unix.Connection in
+  Net.resolve ~ctx:(Lazy.force Net.default_ctx) uri
+  (* Persistent, as cohttp does, so that a chunked body is sent chunked. *)
+  >>= Connection.connect ~persistent:true
+  >>= fun connection ->
+  Lwt.catch
+    (fun () -> Connection.call connection ~headers ~body meth uri)
+    (fun exn ->
+       Connection.close connection;
+       Lwt.reraise exn)
+  >|= fun ((_, response_body) as response) ->
+  (match response_body with
+  | `Stream stream ->
+      Lwt.on_termination (Lwt_stream.closed stream) (fun () ->
+        Connection.close connection)
+  | `Empty | `String _ | `Strings _ -> Connection.close connection);
+  response
+
 (** Generate the pages from the request *)
 let gen dir = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -155,8 +181,8 @@ let gen dir = function
                    Ocsigen_http.Header.Name.(to_string host)
              and body = Ocsigen.Request.body request_info
              and meth = Ocsigen.Request.meth request_info in
-             Cohttp_lwt_unix.Client.call ~headers ~body meth target
-             >|= fun (response, body) -> forwarded_response meth response, body
+             call ~headers ~body meth target >|= fun (response, body) ->
+             forwarded_response meth response, body
            in
            Lwt.return
            @@ Ocsigen.Extensions.Ext_found

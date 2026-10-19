@@ -153,6 +153,8 @@ Bug fixes:
      in HTTP/1.1, whatever the version of the target. A target that closed
      its connection, or answered in HTTP/1.0, made the connection of the
      client close after each response.
+   - a request whose body cannot be read, or sent to the target, no longer
+     stops the server. cohttp raised the error outside of any promise.
  * An existing file at the command pipe path is now used only if it is a named
    pipe that belongs to the user running the server. Anything else is refused,
    with an error in the logs, and the server runs without a command pipe; until
