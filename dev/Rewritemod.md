@@ -18,4 +18,4 @@ val run :
   unit ->
   Ocsigen.Server.instruction
 ```
-`run ~realm ~auth ()` makes it possible to use this extension without configuration file.
+`run ~regexp dest ()` makes it possible to use this extension without configuration file.
