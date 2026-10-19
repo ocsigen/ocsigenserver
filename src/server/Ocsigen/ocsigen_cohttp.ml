@@ -312,24 +312,36 @@ let handler
   in
   let version = Cohttp.Request.version cohttp_request
   and headers = Cohttp.Request.headers cohttp_request in
-  let rejection =
+  let action =
+    let meth = Cohttp.Request.meth cohttp_request
+    and target = Cohttp.Request.resource cohttp_request in
     if not (Ocsigen_http.Http1.valid_field_values headers)
-    then Some (`Bad_request, "control character in a header field value")
+    then `Reject (`Bad_request, "control character in a header field value")
+    else if meth = `CONNECT
+    then
+      (* The server is not a forward proxy. *)
+      `Reject (`Not_implemented, "CONNECT is not supported")
     else
+      (* The asterisk-form target is for OPTIONS only, about the whole server
+         (RFC 9112, section 3.2.4). *)
       match
-        Ocsigen_http.Http1.check_host version headers
-          ~target:(Cohttp.Request.resource cohttp_request)
+        Ocsigen_http.Http1.check_host version headers ~target, meth, target
       with
-      | Ok () -> None
-      | Error reason -> Some (`Bad_request, reason)
+      | Error reason, _, _ -> `Reject (`Bad_request, reason)
+      | Ok (), `OPTIONS, "*" -> `Server_options
+      | Ok (), _, "*" ->
+          `Reject (`Bad_request, "asterisk-form target without OPTIONS")
+      | Ok (), _, _ -> `Serve
   in
   Lwt.finalize
     (fun () ->
        Lwt.catch
          (fun () ->
-            match rejection with
-            | None -> connector request
-            | Some (status, reason) ->
+            match action with
+            | `Serve -> connector request
+            | `Server_options ->
+                Lwt.return (Response.respond_string ~status:`OK ~body:"" ())
+            | `Reject (status, reason) ->
                 Logs.info ~src:section (fun fmt ->
                   fmt "Request from %s rejected: %s"
                     (Request.client_ip_to_string request)
@@ -355,7 +367,10 @@ let handler
           request, or is closed. It is closed after a rejected request too,
           which is safer. *)
        let keep_alive =
-         keep_alive_requested && rejection = None
+         keep_alive_requested
+         && (match action with
+           | `Reject _ -> false
+           | `Serve | `Server_options -> true)
          && allows_keep_alive
               (Http.Response.version res)
               (Http.Response.headers res)

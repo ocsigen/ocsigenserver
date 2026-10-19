@@ -314,6 +314,10 @@ Bug fixes:
  * A request with a control character other than a tab in a header field
    value, such as NUL, is now answered 400 (Bad Request) instead of being
    served.
+ * CONNECT requests are now answered 501 (Not Implemented): the server is not
+   a forward proxy. The "*" target is accepted with OPTIONS only, and
+   OPTIONS * is answered by the server itself, without content. Such
+   requests used to be served like requests for the root page.
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
