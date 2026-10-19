@@ -169,7 +169,7 @@ exist. To create it run [psql] and execute [CREATE TABLE ocsipersist;].
       <site path="tuto">
         <eliom module="/usr/local/lib/ocsigenserver/tutoeliom.cmo" />
         <static dir="/home/toto/var/www/ocsigenserver/tutorial" />
-        <!-- Module's path coul be relative but static dir must be absolute -->
+        <!-- Module's path could be relative but static dir must be absolute -->
       </site>
 
     </host>
@@ -281,7 +281,9 @@ v}
 
 Note: HTTP Strict Transport Security (HSTS) is not enabled automatically.
 Once you serve only over HTTPS, add a [Strict-Transport-Security] response
-header (for instance with the {{!page-outputfilter}Outputfilter} extension).
+header. The simplest way is the [hsts] attribute of the
+{{!page-securityheaders}Securityheaders} extension. The
+{{!page-outputfilter}Outputfilter} extension can also add it.
 
 
 {3 [<logdir>] : log files directory}
@@ -630,16 +632,17 @@ HAProxy, Caddy, ...) in front of Ocsigenserver still brings what the server
 does not do itself: buffering slow clients, so that they do not hold a
 connection to the server at all, rate limiting, and obtaining certificates.
 
-{3 [<shutdowntimeout>] : Timeout for graceful shutdown {e From version 1.3}}
+{3 [<shutdowntimeout>] : Timeout for shutdown}
 
-
-Amount of time (in seconds) the server will wait for current requests to terminate before ending the process, when you use the "graceful shutdown" server command (see below).
+Written in seconds, or [notimeout]. Example:
 
 {v
 <shutdowntimeout>10</shutdowntimeout>
 v}
 
-Other possible value: [notimeout] if you don't want to wait all connections even if it takes time.
+{b Limitation.} This option is currently parsed but {b not used}: the
+[shutdown] server command does not read it (see
+{{!section-shutdown}Stopping the server} below).
 
 {3 [<netbuffersize>] : Size of the input buffer}
 
@@ -716,7 +719,7 @@ Each extension can define its own orders.
 Predefined orders:
 - [reload]: will reload the configuration file. Extensions will not be reloaded but all other modules will be reloaded (for example Eliom web sites) {e (see below for more information)}.
 - [gc]: will trigger a heap compaction
-- [shutdown]: will shutdown the server when all the current rerquests are fulfilled {e (see below for more information)}
+- [shutdown]: will stop the server {e (see below for more information)}
 - [reopen_logs]: will reopen the logs files (see logrotate configuration for an example of use)
 - [clearcache]: will empty all the caches defined by the module [Ocsigen_base.Cache]
 - [logs:name level]: will set the level of the log source [name], as
@@ -839,7 +842,7 @@ The [charset] attribute is the default charset for your pages. All attributes ar
 
 
 
-If you do not want to send any charset, explicitely: [charset=""]. In that case, browsers usually use html meta-data (when present).
+If you do not want to send any charset, explicitly: [charset=""]. In that case, browsers usually use html meta-data (when present).
 
 
 
@@ -861,7 +864,7 @@ Inside [<host>], write the configuration for your main (root) site. These option
 {3 [<site>] : Configuring sub-sites}
 
 
-In each virtual host, it is possible to define several sub-sites (in sub-paths) between [<site>] and [</site>]. [<site>] has an attribute [dir] to set the home directory for the site. You can also set the default charset for the site using the [charset] attribute. The options between [<site>] and [</site>] are exactly the same as those you can can put between [<host>] and [</host>]. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
+In each virtual host, it is possible to define several sub-sites (in sub-paths) between [<site>] and [</site>]. [<site>] has an attribute [dir] to set the home directory for the site. You can also set the default charset for the site using the [charset] attribute. The options between [<site>] and [</site>] are exactly the same as those you can put between [<host>] and [</host>]. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
 
 Example of use:
 {v
@@ -870,13 +873,13 @@ v}
 
 {2 Reloading the configuration file}
 
-To reload the modules of the configuration file without stoping the server, write the command [reload] in the server's command pipe (the path given by [<commandpipe>]). For example:
+To reload the modules of the configuration file without stopping the server, write the command [reload] in the server's command pipe (the path given by [<commandpipe>]). For example:
 
 {v
 echo reload > /var/run/ocsigenserver_command
 v}
 
-Form version 1.3, it is possible to give the name of the configuration file as parameter:
+From version 1.3, it is possible to give the name of the configuration file as parameter:
 
 {v
 echo reload /etc/ocsigenserver/ocsigenserver.conf.2 > /var/run/ocsigenserver_command
@@ -888,26 +891,31 @@ Most distributions have a special command to do that automatically
 /etc/init.d/ocsigenserver reload
 v}
 
-The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stoping the server for now. Extensions and libraries loaded using [<extension>] will not be reloaded.
+The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using [<extension>] will not be reloaded.
 
 
-{2 Graceful shutdown {e (From version 1.3)}}
+{2:shutdown Stopping the server}
 
-To end the server cleanly, use the [shutdown] command, for example:
+To stop the server, use the [shutdown] command, for example:
 
 {v
 echo shutdown > /var/run/ocsigenserver_command
 v}
 
-No new connection will be accepted, but all current requests will be terminated (with a timeout). Then the server process will end.
+The server process exits at once. It does not wait for the requests in
+progress to finish.
 
-You can specify the timeout as parameter (in second):
+You can give a delay as parameter (in seconds):
 
 {v
 echo shutdown 10 > /var/run/ocsigenserver_command
 v}
 
-It means that the server process will end after at most 10 seconds, even if some connexions are still alive. If you do not want any timeout, do:
+The server process then exits after 10 seconds. During this delay, the server
+keeps working as usual: it still accepts new connections, and it does not wait
+for the requests in progress to finish before exiting.
+
+If you do not want any timeout, do:
 
 {v
 echo shutdown notimeout > /var/run/ocsigenserver_command
@@ -915,4 +923,5 @@ v}
 
 In that case, the server will wait for all the connections to terminate, even if it takes a lot of time.
 
-The default timeout value can be set in the configuration file (see [shutdowntimeout] option above).
+The [<shutdowntimeout>] option of the configuration file is currently not used
+by this command.
