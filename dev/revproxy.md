@@ -20,7 +20,7 @@ Here are some examples of configuration file options:
 <revproxy suburl="dir/(.*)\.html" dest="https://my.newaddress.org/\1.php"/>
 <revproxy fullurl="http://(.*).mydomain.org:(80|8080)/(.*)" dest="http://\1.my.newdomain.org:\2/\3"/>
 ```
-The value of `suburl` or `fullurl` is a regular expression. The destination URL is built from `dest`, where `\1` to `\9` stand for the parts of the request that match the groups between parentheses of the regular expression.
+The value of `suburl` or `fullurl` is a regular expression, which must match the whole path or URL (see [Regular expressions](./config.md#regexps)). The destination URL is built from `dest`, where `\1` to `\9` stand for the parts of the request that match the groups between parentheses of the regular expression.
 
 Add the attribute `keephost="keephost"` if you want to send the original `Host` header to the distant server. Otherwise, it is computed from `dest`. In both cases, the proxy connects to the host of `dest`. With keephost, if `dest` has a port and the header has none, that port is added to the header.
 

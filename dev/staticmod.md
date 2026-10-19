@@ -33,7 +33,7 @@ You may also want to filter or rewrite URLs, as in this example, that allows use
 ```
 <static regexp="~([^/]*)(.*)" dest="/home/\1/public_html\2"/>
 ```
-`regexp` is a regular expression using PERL syntax (PCRE).
+`regexp` is a regular expression, which must match the whole decoded path, relative to the site (see [Regular expressions](./config.md#regexps)).
 
 Actually, for user's pages, it is better to do:
 

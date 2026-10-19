@@ -815,6 +815,32 @@ Example of use:
 <site path="mysite"> ... </site>
 ```
 
+### Order of the directives
+
+Inside a `<host>` or a `<site>`, the server tries the directives (the tags defined by the extensions) in the order of the file:
+
+- As long as no page has been generated, each directive may generate one (for example `<static>`, `<eliom>`, `<redirect>` or `<revproxy>`), or change the request for the directives that follow it (for example the options of [Extendconfiguration](./extendconfiguration.md), or `<allow-forward-for/>`).
+- Once a page has been generated, the directives that generate pages are skipped, and the output filters (`<outputfilter>`, `<deflate>`, `<cors>`, `<securityheaders>`) may change the response. So an output filter must come after the directives whose responses it changes. The error that the server sends when no directive generated a page (for example a 404\) does not go through the output filters.
+- A `<site>` applies only to the requests whose path starts with its path, and only if no page has been generated yet. The changes that its directives make to the request do not last after the end of the site.
+- A request rewritten by `<rewrite>` starts again from the first `<host>`, unless the rewriting has the `continue` attribute. A request starts again at most `<maxretries>` times.
+
+### Regular expressions
+
+The regular expressions of the configuration file use the Perl syntax as implemented by the [ocaml-re](https://github.com/ocaml/ocaml-re) library (`Re.Pcre`). Unlike PCRE, it has no back-references and no look-around.
+
+They must match the *whole* string, as if they started with `^` and ended with `$`. The exception is `<outputfilter>`, which replaces every match inside the value of a header. To match a site `app` and all the pages below it, write `app(/.*)?`.
+
+The string depends on the directive:
+
+- the path of the request, relative to the enclosing `<site>`, without its leading slash, and decoded: `<static regexp>`;
+- the same path, but percent-encoded (a space is `%20`): `<path>` of Accesscontrol, `<userconf regexp>`;
+- the same encoded path, followed by `?` and the query string if there is one: `<redirect suburl>`, `<revproxy suburl>`, `<rewrite regexp>`;
+- the whole URL, such as `http://example.org:8080/dir/page?a=1`, where the path starts at the root of the host (not of the enclosing site), and where the port is written only when it is not the default port of the protocol: `<redirect fullurl>`, `<revproxy fullurl>`;
+- each value of a header: `<header>` of Accesscontrol, `<outputfilter>`;
+- the path of a local file: `<regexp>` in `<hidefile>` and `<forbidfile>`;
+- the status code of the error, such as `404`: `<static code>`, `<ifnotfound code>`.
+In the destination of a rewriting (`dest`, `url`), `\0` stands for the whole match and `\1` to `\9` for the groups between parentheses, and a backslash escapes the next character. In Staticmod and Userconf, `$u(name)` stands for the home directory of user `name`.
+
 ### Reloading the configuration file
 
 To reload the modules of the configuration file without stopping the server, write the command `reload` in the server's command pipe (the path given by `<commandpipe>`). For example:
@@ -1186,7 +1212,7 @@ You may also want to filter or rewrite URLs, as in this example, that allows use
 ```
 <static regexp="~([^/]*)(.*)" dest="/home/\1/public_html\2"/>
 ```
-`regexp` is a regular expression using PERL syntax (PCRE).
+`regexp` is a regular expression, which must match the whole decoded path, relative to the site (see [Regular expressions](./config.md#regexps)).
 
 Actually, for user's pages, it is better to do:
 
@@ -1423,6 +1449,7 @@ Combining conditions (all their children must be conditions):
 - `<stop/>`: stops parsing configuration file (answers now whether the page has been found or not). *from Ocsigen 1\.2*
 - `<allow-forward-for/>`: if there is an X-Forwarded-For header in the request, its first address is taken as the address of the client. With `check-equal-ip="true"`, the header is used only if its last address is the one of the proxy that sent the request. Nginx and Revproxy do not add their own address, so do not use this option behind them.
 - `<allow-forward-proto/>`: if the X-Forwarded-Proto header is set to https (http), the connection is considered as secured (unsecure) even if the connection is not in ssl (is in ssl).
+**Security.** `<allow-forward-for/>` and `<allow-forward-proto/>` trust headers that any client can send. Use them only for the requests that come from your reverse proxy, for instance inside an `<if>` that checks the address of the proxy with `<ip>` (see the [Revproxy](./revproxy.md) page). Otherwise, a client can choose the address that the server, its logs and the applications take for its own, or make the server believe that a plain HTTP connection is secure.
 
 ## Examples
 
@@ -1665,7 +1692,7 @@ Then configure your hosts as in these examples:
 <redirect suburl="dir/(.*)\.html" dest="http://my.newaddress.org/\1.php"/>
 <redirect fullurl="http://(.*).myserver.org/(.*)" dest="http://\1.mynewserver.org/\2"/>
 ```
-The syntax of regular expression is PCRE's one.
+The regular expression of `suburl` must match the whole path, relative to the site, with the query string, and the one of `fullurl` the whole URL (see [Regular expressions](./config.md#regexps)).
 
 According to the RFC of the HTTP protocol, dest must be an absolute URL. By default, the redirection is permanent. For temporary redirection, use:
 
@@ -1710,7 +1737,7 @@ Here are some examples of configuration file options:
 <revproxy suburl="dir/(.*)\.html" dest="https://my.newaddress.org/\1.php"/>
 <revproxy fullurl="http://(.*).mydomain.org:(80|8080)/(.*)" dest="http://\1.my.newdomain.org:\2/\3"/>
 ```
-The value of `suburl` or `fullurl` is a regular expression. The destination URL is built from `dest`, where `\1` to `\9` stand for the parts of the request that match the groups between parentheses of the regular expression.
+The value of `suburl` or `fullurl` is a regular expression, which must match the whole path or URL (see [Regular expressions](./config.md#regexps)). The destination URL is built from `dest`, where `\1` to `\9` stand for the parts of the request that match the groups between parentheses of the regular expression.
 
 Add the attribute `keephost="keephost"` if you want to send the original `Host` header to the distant server. Otherwise, it is computed from `dest`. In both cases, the proxy connects to the host of `dest`. With keephost, if `dest` has a port and the header has none, that port is added to the header.
 
@@ -1757,7 +1784,7 @@ Configure your hosts from the config file as in this example:
 ```
 <rewrite regexp="old/(.*)" url="new/\1"/>
 ```
-The syntax of regular expression is PCRE's one.
+The regular expression must match the whole path, relative to the site, with the query string (see [Regular expressions](./config.md#regexps)).
 
 By default, the modified request will restart from the beginning, as if it were a new request. If you do not want to restart, but just continue to the next options in the configuration file, add attribute `continue="continue"`.
 
@@ -1894,6 +1921,8 @@ The configuration file specified in `conf` will be parsed for each request match
 
 The syntax of user configuration files is usually the same as the one of the part between `<host>` and `</host>` in the main configuration file. However, the extensions can choose to disallow some options that are unsafe in user mode, or forbid user mode entirely. See their individual documentation for details.
 
+**Security.** Today, only [Staticmod](./staticmod.md) (paths below `localpath`, no `root`) and [Extendconfiguration](./extendconfiguration.md) (no `followsymlinks="always"`) restrict what a user file can do. The other extensions that the server loads can be used in user files as in the main configuration file, with the rights of the server: for instance [Revproxy](./revproxy.md), [Redirectmod](./redirectmod.md), [Accesscontrol](./accesscontrol.md), or Eliom, whose `<eliom module=...>` loads OCaml code. Use Userconf only if you trust your users, or load only the extensions that are safe for them.
+
 
 ---
 
@@ -1921,10 +1950,10 @@ The extension must be used after the extension serving the content (like eliom o
 The attributes of the cors tag are:
 
 - `max_age`: this is a integer telling the browser how long the preflight information are valid: it prevents doing the OPTIONS requests. This option adds the `Access-Control-Max-Age` header.
-- `credentials`: Adds the `Access-Control-Allow-Credentials` header to the preflight request.
+- `credentials`: with `credentials="true"`, adds the header `Access-Control-Allow-Credentials: true` to the responses, so that the browser sends the cookies of the user with the requests of other sites.
 - `exposed_headers`: This is a comma separated list of header names. This is the list of user defined headers accessible from the client. it Adds the `Access-Control-Expose-Headers` header.
 - `methods`: This is a comma separated list of method names. If there is a requested method header in the preflight request, it adds the `Access-Control-Allow-Methods` header if it match, otherwise there is no cors header added.
-Note that the extension should be used with [accesscontrol](./accesscontrol.md) to limit the application having access to the resources. This is done by checking the "origin" header.
+**Security.** The extension allows *any* origin: it copies the `Origin` header of the request into `Access-Control-Allow-Origin`, and the requested headers into `Access-Control-Allow-Headers`. With `credentials="true"`, any Web site may then send requests to your site with the cookies of its users, when their browser sends them, and read the responses. Always restrict the origins with [accesscontrol](./accesscontrol.md), by checking the `origin` header, as in the second example below.
 
 ## Examples
 

@@ -16,7 +16,7 @@ Then configure your hosts as in these examples:
 <redirect suburl="dir/(.*)\.html" dest="http://my.newaddress.org/\1.php"/>
 <redirect fullurl="http://(.*).myserver.org/(.*)" dest="http://\1.mynewserver.org/\2"/>
 ```
-The syntax of regular expression is PCRE's one.
+The regular expression of `suburl` must match the whole path, relative to the site, with the query string, and the one of `fullurl` the whole URL (see [Regular expressions](./config.md#regexps)).
 
 According to the RFC of the HTTP protocol, dest must be an absolute URL. By default, the redirection is permanent. For temporary redirection, use:
 

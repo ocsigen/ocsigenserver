@@ -22,10 +22,10 @@ The extension must be used after the extension serving the content (like eliom o
 The attributes of the cors tag are:
 
 - `max_age`: this is a integer telling the browser how long the preflight information are valid: it prevents doing the OPTIONS requests. This option adds the `Access-Control-Max-Age` header.
-- `credentials`: Adds the `Access-Control-Allow-Credentials` header to the preflight request.
+- `credentials`: with `credentials="true"`, adds the header `Access-Control-Allow-Credentials: true` to the responses, so that the browser sends the cookies of the user with the requests of other sites.
 - `exposed_headers`: This is a comma separated list of header names. This is the list of user defined headers accessible from the client. it Adds the `Access-Control-Expose-Headers` header.
 - `methods`: This is a comma separated list of method names. If there is a requested method header in the preflight request, it adds the `Access-Control-Allow-Methods` header if it match, otherwise there is no cors header added.
-Note that the extension should be used with [accesscontrol](./accesscontrol.md) to limit the application having access to the resources. This is done by checking the "origin" header.
+**Security.** The extension allows *any* origin: it copies the `Origin` header of the request into `Access-Control-Allow-Origin`, and the requested headers into `Access-Control-Allow-Headers`. With `credentials="true"`, any Web site may then send requests to your site with the cookies of its users, when their browser sends them, and read the responses. Always restrict the origins with [accesscontrol](./accesscontrol.md), by checking the `origin` header, as in the second example below.
 
 ## Examples
 

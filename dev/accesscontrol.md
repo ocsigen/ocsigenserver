@@ -47,6 +47,7 @@ Combining conditions (all their children must be conditions):
 - `<stop/>`: stops parsing configuration file (answers now whether the page has been found or not). *from Ocsigen 1\.2*
 - `<allow-forward-for/>`: if there is an X-Forwarded-For header in the request, its first address is taken as the address of the client. With `check-equal-ip="true"`, the header is used only if its last address is the one of the proxy that sent the request. Nginx and Revproxy do not add their own address, so do not use this option behind them.
 - `<allow-forward-proto/>`: if the X-Forwarded-Proto header is set to https (http), the connection is considered as secured (unsecure) even if the connection is not in ssl (is in ssl).
+**Security.** `<allow-forward-for/>` and `<allow-forward-proto/>` trust headers that any client can send. Use them only for the requests that come from your reverse proxy, for instance inside an `<if>` that checks the address of the proxy with `<ip>` (see the [Revproxy](./revproxy.md) page). Otherwise, a client can choose the address that the server, its logs and the applications take for its own, or make the server believe that a plain HTTP connection is secure.
 
 ## Examples
 
