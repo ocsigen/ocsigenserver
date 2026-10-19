@@ -214,7 +214,8 @@ let rec parse_condition = function
 (*****************************************************************************)
 (* Parsing filters *)
 
-let comma_space_regexp = Netstring_pcre.regexp " *, *"
+(* A comma, with the spaces and tabs around it (RFC 9110, section 5.6.3) *)
+let comma_space_regexp = Netstring_pcre.regexp "[ \t]*,[ \t]*"
 
 (* An entry of X-Forwarded-For, without the port that some proxies add:
    "192.0.2.1:4711" and "[2001:db8::1]:4711" give the address alone. An

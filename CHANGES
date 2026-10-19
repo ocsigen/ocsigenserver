@@ -267,6 +267,8 @@ Bug fixes:
    can choose this address (see the manual).
  * Accesscontrol: <allow-forward-for/> reads all the X-Forwarded-For lines of
    a request as one list. It read only the last one.
+ * Accesscontrol: <allow-forward-for/> accepts tabs around the commas of
+   X-Forwarded-For.
 
 ==== 8.0.0 (2026-09-24) ===
 
