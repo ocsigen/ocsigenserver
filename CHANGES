@@ -430,6 +430,13 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Authbasic: an authentication method registered with
+   register_basic_authentication_method is now tried. <plain> rejected the
+   other elements with an exception that stopped the search, and the one that
+   lets a method pass on, Authbasic.Bad_config_tag_for_auth, was not exported.
+   An unknown method, or a <plain> whose attributes are not login and
+   password, now gives a clear configuration error. <plain> accepts its
+   attributes in any order.
 
 ==== 8.0.0 (2026-09-24) ===
 
