@@ -102,7 +102,10 @@ val to_response_expert :
 (** Response for [Cohttp_lwt_unix.Server.make_expert], to a request with method
     [meth]. Set cookie headers, and the framing headers from the body. The body
     is written only if {!sends_body}: the response to [HEAD] has the headers of
-    the response to [GET], without its body. *)
+    the response to [GET], without its body. When the body is not written, it
+    still runs, so that it releases what it holds, such as an open file, but
+    its first write fails, as when the client is gone: a body must stop and
+    release what it holds when a write fails. *)
 
 val response : t -> Cohttp.Response.t
 (** Raw response without cookie headers set. *)

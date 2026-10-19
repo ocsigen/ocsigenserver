@@ -3,6 +3,25 @@
 
 let chunked = Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
 
+(* How many bodies of "counted" released what they hold, as the open file of a
+   static page is closed once its body is written, or its write fails. *)
+let released = ref 0
+
+let counted =
+  Ocsigen.Response.Body.make (Cohttp.Transfer.Fixed 5L) (fun write ->
+    Lwt.finalize
+      (fun () -> write "count")
+      (fun () -> incr released; Lwt.return_unit))
+
+(* A body that never ends, such as a stream of events, waiting between two
+   writes. *)
+let endless =
+  chunked (fun write ->
+    let rec loop () =
+      Lwt.bind (write "tick") (fun () -> Lwt.bind (Lwt.pause ()) loop)
+    in
+    loop ())
+
 let response path =
   let open Cohttp.Header in
   match path with
@@ -34,6 +53,14 @@ let response path =
            ~status:`OK
            ~body:(Ocsigen.Response.Body.of_string "world")
            ())
+  | "counted" -> Some (Ocsigen.Response.respond ~status:`OK ~body:counted ())
+  | "counted-no-content" ->
+      Some (Ocsigen.Response.respond ~status:`No_content ~body:counted ())
+  | "released" ->
+      Some
+        (Ocsigen.Response.respond_string ~status:`OK
+           ~body:(string_of_int !released) ())
+  | "endless" -> Some (Ocsigen.Response.respond ~status:`OK ~body:endless ())
   | "no-content" ->
       Some (Ocsigen.Response.respond ~status:`No_content ())
   | "not-modified" ->
