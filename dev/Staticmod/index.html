@@ -197,8 +197,9 @@
   <span><span class="optlabel">?code</span>:string <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?cache</span>:int <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?root</span>:string <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?hide_dotfiles</span>:bool <span class="arrow">&#45;&gt;</span></span>
   <span>unit <span class="arrow">&#45;&gt;</span></span>
-  <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p>Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described <a href="../staticmod.html" title="staticmod">here</a>.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-section"><code><span><span class="keyword">val</span> section : <span class="xref-unresolved">Logs</span>.src</span></code></div></div></div>
+  <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p>Run static mod on a specific directory. Call this if you want to run Ocsigen Server without configuration file. The optional parameter correspond to the options of the configuration file described <a href="../staticmod.html" title="staticmod">here</a>. When <code>hide_dotfiles</code> is <code>true</code> (the default), the paths with a segment that starts with a dot (such as <code>.git/config</code> or <code>.env</code>) are neither served nor listed, except under <code>/.well-known/</code>.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-section"><code><span><span class="keyword">val</span> section : <span class="xref-unresolved">Logs</span>.src</span></code></div></div></div>
       </article>
     </div>
   </div>

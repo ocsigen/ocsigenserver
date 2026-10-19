@@ -71,6 +71,14 @@ The `cache` argument is given in seconds. (1 month in the example)
 
 When the `cache` argument is `0` or `no`, the `Cache-control: no-cache` header is sent.
 
+### Hidden files
+
+By default, Staticmod does not serve the paths with a segment that starts with a dot, such as `/.git/config`, `/.env` or `/sub/.htpasswd`: these files are seldom meant to be public. Such requests get a 404, as for a missing file, and directory listings leave these files out. The `/.well-known/` directory (RFC 8615\) is the exception, but the dotfiles inside it are hidden too. Error pages (the `code` attribute) are served whatever the path. To serve hidden files anyway:
+
+```
+<static dir="/path/to/the/local/directory" hidedotfiles="false" />
+```
+
 ### Staticmod and userconf
 
 (version 1\.2.0 and greater)
