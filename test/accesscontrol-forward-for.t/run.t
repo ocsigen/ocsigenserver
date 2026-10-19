@@ -56,6 +56,16 @@ A value that is not an address matches no <ip>:
   200
   IP: forwarded:unknown
 
+The port that some proxies add is removed:
+
+  $ get -H 'X-Forwarded-For: 10.1.2.3:4711' http://127.0.0.1:8082/index.html
+  403
+  IP: forwarded:10.1.2.3
+  $ get -H 'X-Forwarded-For: [2001:db8::1]:4711' \
+  >   http://127.0.0.1:8082/index.html
+  200
+  IP: forwarded:2001:db8::1
+
 With check-equal-ip, the last address must be the one of the proxy that sent
 the request:
 
