@@ -254,6 +254,10 @@ Bug fixes:
    moved, to keep it, is left alone without a warning. If the application
    answers before the body is decoded, the files created after the answer
    are removed once it is (see Ocsigen.Request.on_post_data_decoded).
+ * An empty <uploaddir></uploaddir> forbids uploads, as the manual says. In a
+   host or a site, the server refused to start with it. In <server>, it gave
+   an empty directory name, so the server tried to write the uploaded files
+   in the root directory.
 
 ==== 8.0.0 (2026-09-24) ===
 
