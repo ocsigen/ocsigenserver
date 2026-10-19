@@ -46,8 +46,7 @@ The configuration file is an XML file. Its layout is the following:
       ...
     </require>
 
-    <!-- Libraries needed by Web sites, when you want them to be reloaded
-         every times you reload the config files: -->
+    <!-- <library> is equivalent to <extension> too: -->
     <library module=.../>
     <library findlib-package=.../>
     <library module=...>
@@ -391,8 +390,9 @@ as a non-root user, use one of:
 - a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and
   forwarding to Ocsigenserver on a high port (recommended, see the [<timeout>]
   note below);
-- the Linux capability [cap_net_bind_service] on the executable
-  ([setcap 'cap_net_bind_service=+ep' ...]);
+- the Linux capability [cap_net_bind_service] on the native executable
+  ([setcap 'cap_net_bind_service=+ep' ...], on [ocsigenserver.opt]: see the
+  {{!page-index}introduction});
 - a firewall/port redirection from 80/443 to a high port.
 
 {3 [<charset>] : default charset for pages}
@@ -473,14 +473,20 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 
 The file associating file name extensions to their MIME type. Example:
 
-
-
 {v
 <mimefile>/etc/ocsigenserver/mime.types</mimefile>
 v}
 
-{3 [<debugmode/>] : Error messages in pages}
-Use this option for debugging your Web sites. Full error messages will be written in Error 500 pages. Example:
+{b Limitation.} The file is read, but currently not used: Staticmod derives
+the [Content-Type] of the files it sends from their names, with the built-in
+table of the [magic-mime] library.
+
+{3 [<debugmode/>] : Debug mode for applications}
+Use this option for debugging your Web sites. Ocsigenserver itself does not
+use it: error pages never show the details of an exception, which go to the
+logs. Applications may read it with {!Ocsigen.Config.get_debugmode}: Eliom
+then explains its "Wrong parameters" pages, and keeps debugging information
+in the data it sends to the client. Example:
 
 {v
 <debugmode/>
@@ -648,37 +654,26 @@ v}
 [shutdown] server command does not read it (see
 {{!section-shutdown}Stopping the server} below).
 
-{3 [<netbuffersize>] : Size of the input buffer}
+{3 [<netbuffersize>] : Size of the multipart buffer}
 
-
-Size of the input buffer (sockets). It is also the maximum size of headers and post data. Example:
-
-
+Written in bytes, without a unit. Default: 8192. The maximum size of the
+buffer used to read [multipart/form-data] request bodies (forms with files):
+the headers of each part must fit in it, otherwise the request gets
+[413 Request Entity Too Large]. The headers of the request itself are read
+by cohttp, and do not depend on this option. Example:
 
 {v
 <netbuffersize>8192</netbuffersize>
 v}
-{3 [<filebuffersize>] : Size of the buffer for sending files}
 
+{3 Settings with no effect}
 
-Size of the buffer for reading files to send. Example:
-
-
-
-{v
-<filebuffersize>8192</filebuffersize>
-v}
-{3 [<minthreads> <maxthreads>] : Size of the preemptive thread pool}
-
-
-Even if Ocsigenserver is implemented with cooperative threads, web site programmers may want to detach some computation to other preemptive threads. To do that, Ocsigenserver has a pool of preemptive threads running, waiting for computation to do. This options allow to set the size of this pool. Example:
-
-
-
-{v
-<minthreads>10</minthreads>
-<maxthreads>1000</maxthreads>
-v}
+The following settings are accepted for compatibility, but have no effect:
+- [<filebuffersize>], the size of the buffer for reading files to send;
+- [<minthreads>] and [<maxthreads>], the size of the pool of preemptive
+  threads, which Ocsigenserver no longer has since version 7.0. The server
+  still refuses a [<minthreads>] larger than [<maxthreads>];
+- [<disablepartialrequests/>] and [<respectpipeline/>].
 {3 [<maxretries>] : Maximum number of retries for the same request}
 
 
@@ -711,7 +706,7 @@ with a new one, so that a process that opened it before loses its access.
 Each extension can define its own orders.
 
 Predefined orders:
-- [reload]: will reload the configuration file. Extensions will not be reloaded but all other modules will be reloaded (for example Eliom web sites) {e (see below for more information)}.
+- [reload]: will reload the configuration file. Extensions and libraries will not be reloaded, but Eliom loads the modules of its sites ([<eliom module=...>]) again {e (see below for more information)}.
 - [gc]: will trigger a heap compaction
 - [shutdown]: will stop the server {e (see below for more information)}
 - [reopen_logs]: will reopen the logs files (see logrotate configuration for an example of use)
@@ -798,7 +793,9 @@ From version 1.0, [<require>] is a synonymous for [<extension>].
 {3 [<library>] : Loading libraries}
 
 
-If you want to load other OCaml libraries for your extensions or Website, use [<extension>] if you do not want them to be reloaded each time the configuration file is reread, or [<library>] if you need them to be reloaded every time. Extensions like CGImod or Staticmod or Eliom can not be loaded with [<library>]. Use [<library>] only for the modules you want to be able to reload without shutting down the server.
+[<library>] loads OCaml libraries for your extensions or Web sites. It now
+behaves exactly as [<extension>]: a library is loaded once, and is not
+reloaded when the configuration file is reread.
 
 
 
@@ -814,7 +811,7 @@ Example of use:
 <library module="/opt/godi/lib/ocaml/site-lib/mysite/mylib.cma"/>
 v}
 
-As in [<extension>], you can also use [findlib-package=] instead of [module=]. However, remember that dependencies will always be loaded only once (only the last file of the package itself may be reloaded several times).
+As in [<extension>], you can also use [findlib-package=] instead of [module=].
 
 
 {2 Virtual host and site configuration}
@@ -858,7 +855,7 @@ Inside [<host>], write the configuration for your main (root) site. These option
 {3 [<site>] : Configuring sub-sites}
 
 
-In each virtual host, it is possible to define several sub-sites (in sub-paths) between [<site>] and [</site>]. [<site>] has an attribute [dir] to set the home directory for the site. You can also set the default charset for the site using the [charset] attribute. The options between [<site>] and [</site>] are exactly the same as those you can put between [<host>] and [</host>]. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
+In each virtual host, it is possible to define several sub-sites (in sub-paths) between [<site>] and [</site>]. [<site>] has a mandatory attribute [path], the path of the site in the URLs ([dir] is an older name for it). You can also set the default charset for the site using the [charset] attribute. The options between [<site>] and [</site>] are exactly the same as those you can put between [<host>] and [</host>]. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
 
 Example of use:
 {v
