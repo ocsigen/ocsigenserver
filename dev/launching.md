@@ -30,7 +30,7 @@ To run the server, use the command `ocsigenserver`. It has the following options
          Show summary of options.
 
   -p, --pidfile
-         Specify a file where to write the PIDs of the servers.
+         Specify a file where to write the PID of the server.
 
   -s, --silent
          Silent mode (error messages go in errors.log only). Refused when
@@ -38,7 +38,8 @@ To run the server, use the command `ocsigenserver`. It has the following options
          --reverse-proxy.
 
   -v, --verbose
-         Verbose mode.
+         Show the warnings, which the server already does by default.
+         Kept for compatibility.
 
   -vv, --veryverbose
          Very verbose mode (info).

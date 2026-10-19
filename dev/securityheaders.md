@@ -43,7 +43,7 @@ Load the extension and add the `<securityheaders/>` element to a host, after the
   <securityheaders/>
 </host>
 ```
-Each header can be customised or disabled with an attribute. The values `"no"`, `"none"` and the empty string disable a header. HSTS and CSP are added only when their attribute is present:
+Each header can be customised or disabled with an attribute. For `frame-options`, `referrer-policy`, `hsts` and `content-security-policy`, the values `"no"`, `"none"` and the empty string disable the header; any other value is the value of the header. `nosniff` is disabled by `"false"`, `"no"` or `"off"`, and kept with any other value. HSTS and CSP are added only when their attribute is present:
 
 ```
 <securityheaders

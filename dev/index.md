@@ -116,11 +116,12 @@ Ocsigen Server 8\.0 renamed its modules and modernised its base library. See [Mi
 
 ## Running on port 80 or 443
 
-It is not recommended to run a Web server as root. If you want to use privileged ports (port numbers less than 1024\), like 80 or 443, you can add the capability to ocsigenserver with:
+It is not recommended to run a Web server as root. If you want to use privileged ports (port numbers less than 1024\), like 80 or 443, you can add the capability to the native executable, `ocsigenserver.opt`, on Linux:
 
 ```
-setcap 'cap_net_bind_service=+ep' <path to the server executable>
+setcap 'cap_net_bind_service=+ep' "$(which ocsigenserver.opt)"
 ```
+Then run `ocsigenserver.opt` instead of `ocsigenserver`: `ocsigenserver` is a bytecode script, and capabilities have no effect on scripts. If you build your own executable, add the capability to it.
 
 ## If something goes wrong
 

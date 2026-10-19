@@ -37,8 +37,7 @@ The configuration file is an XML file. Its layout is the following:
       ...
     </require>
 
-    <!-- Libraries needed by Web sites, when you want them to be reloaded
-         every times you reload the config files: -->
+    <!-- <library> is equivalent to <extension> too: -->
     <library module=.../>
     <library findlib-package=.../>
     <library module=...>
@@ -314,7 +313,7 @@ The `logs:` order of the command pipe (see `<commandpipe>` below) sets the level
 **Do not launch the server as root.** Run it directly as a dedicated unprivileged user (e.g. `www-data`). To serve a privileged port (80 or 443\) as a non-root user, use one of:
 
 - a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and forwarding to Ocsigenserver on a high port (recommended, see the `<timeout>` note below);
-- the Linux capability `cap_net_bind_service` on the executable (`setcap 'cap_net_bind_service=+ep' ...`);
+- the Linux capability `cap_net_bind_service` on the native executable (`setcap 'cap_net_bind_service=+ep' ...`, on `ocsigenserver.opt`: see the [introduction](./index.md));
 - a firewall/port redirection from 80/443 to a high port.
 
 #### `<charset>` : default charset for pages
@@ -376,10 +375,11 @@ The file associating file name extensions to their MIME type. Example:
 ```
 <mimefile>/etc/ocsigenserver/mime.types</mimefile>
 ```
+**Limitation.** The file is read, but currently not used: Staticmod derives the `Content-Type` of the files it sends from their names, with the built-in table of the `magic-mime` library.
 
-#### `<debugmode/>` : Error messages in pages
+#### `<debugmode/>` : Debug mode for applications
 
-Use this option for debugging your Web sites. Full error messages will be written in Error 500 pages. Example:
+Use this option for debugging your Web sites. Ocsigenserver itself does not use it: error pages never show the details of an exception, which go to the logs. Applications may read it with [`Ocsigen.Config.get_debugmode`](./Ocsigen-Config.md#val-get_debugmode): Eliom then explains its "Wrong parameters" pages, and keeps debugging information in the data it sends to the client. Example:
 
 ```
 <debugmode/>
@@ -469,30 +469,21 @@ Written in seconds, or `notimeout`. Example:
 ```
 **Limitation.** This option is currently parsed but **not used**: the `shutdown` server command does not read it (see [Stopping the server](./#shutdown) below).
 
-#### `<netbuffersize>` : Size of the input buffer
+#### `<netbuffersize>` : Size of the multipart buffer
 
-Size of the input buffer (sockets). It is also the maximum size of headers and post data. Example:
+Written in bytes, without a unit. Default: 8192\. The maximum size of the buffer used to read `multipart/form-data` request bodies (forms with files): the headers of each part must fit in it, otherwise the request gets `413 Request Entity Too Large`. The headers of the request itself are read by cohttp, and do not depend on this option. Example:
 
 ```
 <netbuffersize>8192</netbuffersize>
 ```
 
-#### `<filebuffersize>` : Size of the buffer for sending files
+#### Settings with no effect
 
-Size of the buffer for reading files to send. Example:
+The following settings are accepted for compatibility, but have no effect:
 
-```
-<filebuffersize>8192</filebuffersize>
-```
-
-#### `<minthreads> <maxthreads>` : Size of the preemptive thread pool
-
-Even if Ocsigenserver is implemented with cooperative threads, web site programmers may want to detach some computation to other preemptive threads. To do that, Ocsigenserver has a pool of preemptive threads running, waiting for computation to do. This options allow to set the size of this pool. Example:
-
-```
-<minthreads>10</minthreads>
-<maxthreads>1000</maxthreads>
-```
+- `<filebuffersize>`, the size of the buffer for reading files to send;
+- `<minthreads>` and `<maxthreads>`, the size of the pool of preemptive threads, which Ocsigenserver no longer has since version 7\.0. The server still refuses a `<minthreads>` larger than `<maxthreads>`;
+- `<disablepartialrequests/>` and `<respectpipeline/>`.
 
 #### `<maxretries>` : Maximum number of retries for the same request
 
@@ -517,7 +508,7 @@ Each extension can define its own orders.
 
 Predefined orders:
 
-- `reload`: will reload the configuration file. Extensions will not be reloaded but all other modules will be reloaded (for example Eliom web sites) *(see below for more information)*.
+- `reload`: will reload the configuration file. Extensions and libraries will not be reloaded, but Eliom loads the modules of its sites (`<eliom module=...>`) again *(see below for more information)*.
 - `gc`: will trigger a heap compaction
 - `shutdown`: will stop the server *(see below for more information)*
 - `reopen_logs`: will reopen the logs files (see logrotate configuration for an example of use)
@@ -573,7 +564,7 @@ From version 1\.0, `<require>` is a synonymous for `<extension>`.
 
 #### `<library>` : Loading libraries
 
-If you want to load other OCaml libraries for your extensions or Website, use `<extension>` if you do not want them to be reloaded each time the configuration file is reread, or `<library>` if you need them to be reloaded every time. Extensions like CGImod or Staticmod or Eliom can not be loaded with `<library>`. Use `<library>` only for the modules you want to be able to reload without shutting down the server.
+`<library>` loads OCaml libraries for your extensions or Web sites. It now behaves exactly as `<extension>`: a library is loaded once, and is not reloaded when the configuration file is reread.
 
 Libraries may take parameters between `<library>` and `</library>`.
 
@@ -582,7 +573,7 @@ Example of use:
 ```
 <library module="/opt/godi/lib/ocaml/site-lib/mysite/mylib.cma"/>
 ```
-As in `<extension>`, you can also use `findlib-package=` instead of `module=`. However, remember that dependencies will always be loaded only once (only the last file of the package itself may be reloaded several times).
+As in `<extension>`, you can also use `findlib-package=` instead of `module=`.
 
 ### Virtual host and site configuration
 
@@ -610,7 +601,7 @@ Inside `<host>`, write the configuration for your main (root) site. These option
 
 #### `<site>` : Configuring sub-sites
 
-In each virtual host, it is possible to define several sub-sites (in sub-paths) between `<site>` and `</site>`. `<site>` has an attribute `dir` to set the home directory for the site. You can also set the default charset for the site using the `charset` attribute. The options between `<site>` and `</site>` are exactly the same as those you can put between `<host>` and `</host>`. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
+In each virtual host, it is possible to define several sub-sites (in sub-paths) between `<site>` and `</site>`. `<site>` has a mandatory attribute `path`, the path of the site in the URLs (`dir` is an older name for it). You can also set the default charset for the site using the `charset` attribute. The options between `<site>` and `</site>` are exactly the same as those you can put between `<host>` and `</host>`. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
 
 Example of use:
 

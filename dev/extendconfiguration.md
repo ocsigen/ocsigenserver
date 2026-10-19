@@ -37,7 +37,7 @@ Again for extensions that send local files, you can selectively disallow sending
   <extension ext="php" />
   <extension ext="cgi" />
   <file file=".htaccess" />
-  <regexp regexp=".*hidden_file.*" /> <!-- End the regexp with $ to match the full file name -->
+  <regexp regexp=".*hidden_file.*" /> <!-- Must match the whole path of the file -->
 </hidefile>
 ```
 Using the tag `hidefile` results in 404 error codes. To have 403 errors, use `forbidfile` instead.
@@ -78,6 +78,8 @@ This sets the default charset for text files to `utf8`, while files whose extens
 
 Multiple extension tags can be specified. Both the default attribute and extension tags are optional. Extension tags are cumulative between the various sites.
 
+**Limitation.** Only the `default` attribute is currently used, by Eliom, as the charset of its pages. The charsets of files are ignored: Staticmod sends files without a charset.
+
 ### Content-type
 
 The content-type for the files sent by the server can be specified using the tag
@@ -90,6 +92,8 @@ The content-type for the files sent by the server can be specified using the tag
 </contenttype>
 ```
 The options are similar to the ones for the `charset` tag.
+
+**Limitation.** This option is currently ignored: Staticmod derives the `Content-Type` of the files it sends from their names, with the built-in table of the `magic-mime` library.
 
 ### File uploading
 

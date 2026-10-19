@@ -197,7 +197,7 @@
 &lt;host hostfilter=&quot;*&quot;&gt;
   &lt;static dir=&quot;/path/to/the/local/directory&quot; /&gt;
   &lt;securityheaders/&gt;
-&lt;/host&gt;</pre><p>Each header can be customised or disabled with an attribute. The values <code>&quot;no&quot;</code>, <code>&quot;none&quot;</code> and the empty string disable a header. HSTS and CSP are added only when their attribute is present:</p><pre>&lt;securityheaders
+&lt;/host&gt;</pre><p>Each header can be customised or disabled with an attribute. For <code>frame-options</code>, <code>referrer-policy</code>, <code>hsts</code> and <code>content-security-policy</code>, the values <code>&quot;no&quot;</code>, <code>&quot;none&quot;</code> and the empty string disable the header; any other value is the value of the header. <code>nosniff</code> is disabled by <code>&quot;false&quot;</code>, <code>&quot;no&quot;</code> or <code>&quot;off&quot;</code>, and kept with any other value. HSTS and CSP are added only when their attribute is present:</p><pre>&lt;securityheaders
    frame-options=&quot;DENY&quot;
    referrer-policy=&quot;no-referrer&quot;
    nosniff=&quot;true&quot;

@@ -20,18 +20,18 @@ Here are some examples of configuration file options:
 <revproxy suburl="dir/(.*)\.html" dest="https://my.newaddress.org/\1.php"/>
 <revproxy fullurl="http://(.*).mydomain.org:(80|8080)/(.*)" dest="http://\1.my.newdomain.org:\2/\3"/>
 ```
-regexp is a regular expression using PERL syntax (PCRE). The destination URL is built from dest, where \\i corresponds to the i-th part between parenthesis of the regular expression (was \$i in older versions).
+The value of `suburl` or `fullurl` is a regular expression. The destination URL is built from `dest`, where `\1` to `\9` stand for the parts of the request that match the groups between parentheses of the regular expression.
 
 Add the attribute `keephost="keephost"` if you want to send the original `Host` header to the distant server. Otherwise, it is computed from `dest`. In both cases, the proxy connects to the host of `dest`. With keephost, if `dest` has a port and the header has none, that port is added to the header.
 
-Add the attribute `nopipeline="nopipeline"` if for some reason you don't want to pipeline reverse proxy's requests. With that option, the reverse proxy will open a new connection for all requests, instead of trying to reuse connections. You probably don't need that, but if you do, please contact us to tell us what is the problem. Thank you\!
+The attribute `nopipeline="nopipeline"` is accepted for compatibility, but has no effect: the reverse proxy opens a new connection for each request.
 
 You probably also need to rewrite locations in the output (if the server is doing redirections). For example:
 
 ```
 <outputfilter header="location" regexp="http://my.newaddress.org/(.*)" dest="http://my.publicaddress.org/\1"/>
 ```
-Note that if you are using ocsigen behind a reverse proxy handling X-Forward-For and X-Forward-Proto headers ( like the revproxy module ), you should allow ocsigen to use those informations, using accesscontrol extension
+Note that if you are using ocsigen behind a reverse proxy that sets the X-Forwarded-For and X-Forwarded-Proto headers (like the revproxy module), you should allow ocsigen to use this information, using the [accesscontrol](./accesscontrol.md) extension:
 
 ```
 <if>
@@ -47,4 +47,3 @@ Note that if you are using ocsigen behind a reverse proxy handling X-Forward-For
 
 - The reverse proxy does no caching for now.
 - The query string is decoded, then encoded again before it is sent, so its encoding may change: for instance, `+` is sent as `%20` and `;` as `%3B`. `+` and `%20` both mean a space in a form, but a target that reads `+` literally, or splits the query on `;`, sees something else.
-- The reverse proxy does pipeline the requests for server it trusts for pipelining. But current trusting criteria are probably too strong. They will probably evolve soon.
