@@ -33,14 +33,12 @@ module Pcre = Re.Pcre
 
 let section = Logs.Src.create "ocsigen:ext:rewritemod"
 
-exception Not_concerned
-
 (* The table of rewrites for each virtual server *)
 type assockind = Regexp of Pcre.regexp * string * bool
 
 let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
   ( (match Ocsigen_base.Lib.Netstring_pcre.string_match regexp suburl 0 with
-    | None -> raise Not_concerned
+    | None -> raise Ocsigen.Extensions.Not_concerned
     | Some _ ->
         (* Matching regexp found! *)
         Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest suburl)
