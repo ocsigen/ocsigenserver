@@ -302,9 +302,10 @@ Bug fixes:
  * ocsigenserver --version prints the version again, instead of
    0000000000000000, a placeholder that the build no longer replaces.
  * Accesscontrol: after <allow-forward-for/>, the <ip> conditions test the
-   address given by the proxy. Before, they matched no forwarded address.
-   Unless the proxy replaces the X-Forwarded-For header, the client can
-   choose this address (see the manual).
+   address given by the proxy, without the port that some proxies add after
+   it (192.0.2.1:4711, [2001:db8::1]:4711). Before, they matched no forwarded
+   address. Unless the proxy replaces the X-Forwarded-For header, the client
+   can choose this address (see the manual).
  * Outputfilter.run (`Rewrite ...) replaces every match of its regexp in the
    value of the header, as <outputfilter> does in the configuration file, and
    as its documentation said. It only rewrote a value that the regexp matched

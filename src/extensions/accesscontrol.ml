@@ -216,6 +216,14 @@ let rec parse_condition = function
 
 let comma_space_regexp = Netstring_pcre.regexp " *, *"
 
+(* An entry of X-Forwarded-For, without the port that some proxies add:
+   "192.0.2.1:4711" and "[2001:db8::1]:4711" give the address alone. An
+   entry that is not an address, such as "unknown", is kept as it is. *)
+let forwarded_entry s =
+  match Ipaddr.with_port_of_string ~default:0 s with
+  | Ok (ip, _) -> Ipaddr.to_string ip
+  | Error _ -> s
+
 let allow_forward_for_handler ?(check_equal_ip = false) () =
   let apply ({Ocsigen.Extensions.request_info; _} as request) code =
     Logs.info ~src:section (fun fmt -> fmt "Allowed proxy");
@@ -227,7 +235,8 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
       match header with
       | Some header -> (
         match
-          Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header
+          List.map forwarded_entry
+            (Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header)
         with
         | original_ip :: proxies ->
             (* A single address, as nginx or Revproxy send, is the client.
