@@ -264,6 +264,14 @@ Bug fixes:
    address given by the proxy. Before, they matched no forwarded address.
    Unless the proxy replaces the X-Forwarded-For header, the client can
    choose this address (see the manual).
+ * Authbasic: an authentication method registered with
+   register_basic_authentication_method is used again. <plain> rejected the
+   other elements with an exception that stopped the search, and the one that
+   lets a method pass on, Authbasic.Bad_config_tag_for_auth, was not exported.
+   An unknown method, or a <plain> without login and password, now gives a
+   clear configuration error.
+ * The log source of Authbasic is named "ocsigen:ext:authbasic". It had the
+   name of the one of Accesscontrol, "ocsigen:ext:access-control".
 
 ==== 8.0.0 (2026-09-24) ===
 
