@@ -225,6 +225,10 @@ Bug fixes:
    buffer shared by the whole program, so the date of a log line or of an
    HTTP header could be wrong when two domains needed one at the same time.
    The date of the log lines is computed once per second.
+ * Rewritemod works again. Since 8.0.0, a request that did not match the
+   regexp of a <rewrite> got a 500 instead of going on to the next
+   instruction. As a rewritten request starts again from the beginning, a
+   request that matched got a 500 too, unless it matched again.
 
 ==== 8.0.0 (2026-09-24) ===
 
