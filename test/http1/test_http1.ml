@@ -66,3 +66,17 @@ let () =
   show_host `HTTP_1_1 host ~target:"ftp://example.org/";
   show_host `HTTP_1_1 host ~target:"example.org:443";
   show_host `HTTP_1_1 [] ~target:"http://example.org/"
+
+let show_field_values fields =
+  Printf.printf "%S: %b\n" (fields_text fields)
+    (Ocsigen_http.Http1.valid_field_values (Http.Header.of_list fields))
+
+let () =
+  print_endline "== valid_field_values";
+  show_field_values [];
+  show_field_values ["X-A", "a b\tc\xe9~"];
+  show_field_values ["X-A", "ok"; "X-B", "a\000b"];
+  show_field_values ["X-A", "a\rb"];
+  show_field_values ["X-A", "a\nb"];
+  show_field_values ["X-A", "a\x1bb"];
+  show_field_values ["X-A", "a\x7fb"]
