@@ -90,10 +90,19 @@ val of_cohttp :
   -> Cohttp.Response.t * Cohttp_lwt.Body.t
   -> t
 
+val sends_body : meth:Cohttp.Code.meth -> t -> bool
+(** [sends_body ~meth t] is [true] iff [t], as the response to a request with
+    method [meth], carries a body: never for [HEAD], nor with a 1xx, 204 or 304
+    status (RFC 9110 6.4.1, 9.3.2). *)
+
 val to_response_expert :
-   t
+   meth:Cohttp.Code.meth
+  -> t
   -> Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
-(** Response for [Cohttp_lwt_unix.Server.make_expert]. Set cookie headers. *)
+(** Response for [Cohttp_lwt_unix.Server.make_expert], to a request with method
+    [meth]. Set cookie headers, and the framing headers from the body. The body
+    is written only if {!sends_body}: the response to [HEAD] has the headers of
+    the response to [GET], without its body. *)
 
 val response : t -> Cohttp.Response.t
 (** Raw response without cookie headers set. *)

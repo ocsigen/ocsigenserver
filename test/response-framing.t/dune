@@ -1,3 +1,9 @@
 (executable
  (name test)
+ (modules test)
  (libraries ocsigenserver))
+
+(executable
+ (name client)
+ (modules client)
+ (libraries unix))

@@ -2,7 +2,7 @@ The headers of a response announce the framing of its body, whatever other
 headers say about its length.
 
   $ mkdir -p log data
-  $ dune build ./test.exe 2>&1
+  $ dune build ./test.exe ./client.exe 2>&1
   $ ./_build/default/test.exe >server.log 2>&1 &
   $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
   $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
@@ -67,3 +67,40 @@ The connection stays usable after each of them:
   $ curl --unix-socket local.sock -s --max-time 10 http://x/range-chunked \
   >   http://x/length-chunked http://x/range-fixed http://x/length-fixed; echo
   01234hello56789world
+
+A response to HEAD has the headers of the response to GET, framing included,
+but no body: on a connection, the next response follows its headers.
+
+  $ ./_build/default/client.exe 'HEAD range-chunked' 'HEAD length-fixed' \
+  >   'GET range-fixed' | grep -viE '^date: ' | tr -d '\r'
+  HTTP/1.1 206 Partial Content
+  content-range: bytes 0-4/10
+  server: Ocsigen
+  transfer-encoding: chunked
+  connection: keep-alive
+  
+  HTTP/1.1 200 OK
+  content-length: 5
+  server: Ocsigen
+  connection: keep-alive
+  
+  HTTP/1.1 206 Partial Content
+  content-range: bytes 5-9/10
+  server: Ocsigen
+  content-length: 5
+  connection: close
+  
+  56789
+
+A response with a 204 or 304 status has no body, nor any framing header:
+
+  $ get http://x/no-content
+  HTTP/1.1 204 No Content
+  server: Ocsigen
+  connection: keep-alive
+  
+  $ get http://x/not-modified
+  HTTP/1.1 304 Not Modified
+  server: Ocsigen
+  connection: keep-alive
+  
