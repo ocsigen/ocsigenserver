@@ -59,6 +59,14 @@ Incompatible changes:
    trust headers that any client can send. Such a file now gets a 500, and
    the error log says which directive was refused (it used to report the
    refusals of Extendconfiguration as syntax errors).
+ * Accesscontrol: <allow-forward-for/> takes as the client the last address of
+   X-Forwarded-For, the one that the proxy added, instead of the first one,
+   which the client can choose when the proxy keeps the header it sent (nginx
+   with $proxy_add_x_forwarded_for). Behind a chain of proxies, the new
+   proxies attribute (?proxies for Accesscontrol.allow_forward_for) gives the
+   trusted ones, whose addresses are skipped from the right. The
+   check-equal-ip attribute (?check_equal_ip) is removed: the server refuses
+   it.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -307,8 +315,7 @@ Bug fixes:
  * Accesscontrol: after <allow-forward-for/>, the <ip> conditions test the
    address given by the proxy, without the port that some proxies add after
    it (192.0.2.1:4711, [2001:db8::1]:4711). Before, they matched no forwarded
-   address. Unless the proxy replaces the X-Forwarded-For header, the client
-   can choose this address (see the manual).
+   address.
  * Accesscontrol: <allow-forward-for/> reads all the X-Forwarded-For lines of
    a request as one list, and accepts tabs around the commas. It read only
    the last line, and an address next to a tab was not recognized.

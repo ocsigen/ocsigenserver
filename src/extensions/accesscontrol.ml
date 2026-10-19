@@ -27,16 +27,19 @@ let section = Logs.Src.create "ocsigen:ext:access-control"
 
 type condition = Ocsigen.Request.t -> bool
 
+(* The network [s] of the configuration file, an address or an address with a
+   netmask, found in [where] *)
+let prefix ~where s =
+  match Ipaddr.Prefix.of_string s with
+  | Ok prefix -> prefix
+  | Error _ -> (
+    match Ipaddr.of_string s with
+    | Ok ip -> Ipaddr.Prefix.of_addr ip
+    | Error _ ->
+        Ocsigen.Extensions.badconfig "Bad ip/netmask [%s] in %s" s where)
+
 let ip s =
-  let prefix =
-    try Ipaddr.Prefix.of_string_exn s
-    with Ipaddr.Parse_error _ -> (
-      try
-        let ip = Ipaddr.of_string_exn s in
-        Ipaddr.Prefix.of_addr ip
-      with _ ->
-        Ocsigen.Extensions.badconfig "Bad ip/netmask [%s] in <ip> condition" s)
-  in
+  let prefix = prefix ~where:"<ip> condition" s in
   fun ri ->
     let r =
       match Ocsigen.Request.client_conn ri with
@@ -216,16 +219,45 @@ let rec parse_condition = function
 
 (* A comma, with the spaces and tabs around it (RFC 9110, section 5.6.3) *)
 let comma_space_regexp = Netstring_pcre.regexp "[ \t]*,[ \t]*"
+let blanks_regexp = Netstring_pcre.regexp "[ \t\r\n]+"
 
-(* An entry of X-Forwarded-For, without the port that some proxies add:
-   "192.0.2.1:4711" and "[2001:db8::1]:4711" give the address alone. An
-   entry that is not an address, such as "unknown", is kept as it is. *)
+(* An entry of X-Forwarded-For: an address, or another value, such as
+   "unknown" *)
+type forwarded_entry = Address of Ipaddr.t | Other of string
+
+(* The entry [s], without the port that some proxies add: "192.0.2.1:4711"
+   and "[2001:db8::1]:4711" give the address alone. *)
 let forwarded_entry s =
   match Ipaddr.with_port_of_string ~default:0 s with
-  | Ok (ip, _) -> Ipaddr.to_string ip
-  | Error _ -> s
+  | Ok (ip, _) -> Address ip
+  | Error _ -> Other s
 
-let allow_forward_for_handler ?(check_equal_ip = false) () =
+let string_of_forwarded_entry = function
+  | Address ip -> Ipaddr.to_string ip
+  | Other s -> s
+
+(* [split_client ~proxies entries] is [Some (client, forward)], for the
+   entries of X-Forwarded-For from left to right, or [None] if there is none.
+   Each proxy adds the address of the host that connected to it, so the
+   entries are read from the right, skipping those of the trusted [proxies].
+   The client is the rightmost other one, or the leftmost entry if all are
+   trusted. [forward] are the entries at its right, those of the proxies: the
+   entries at its left come from the client, which can choose them. *)
+let split_client ~proxies entries =
+  let trusted = function
+    | Address ip -> List.exists (Ipaddr.Prefix.mem ip) proxies
+    | Other _ -> false
+  in
+  let rec split client forward = function
+    | next :: before when trusted client ->
+        split next (client :: forward) before
+    | _ -> client, forward
+  in
+  match List.rev entries with
+  | [] -> None
+  | last :: before -> Some (split last [] before)
+
+let allow_forward_for_handler ~proxies =
   let apply ({Ocsigen.Extensions.request_info; _} as request) code =
     Logs.info ~src:section (fun fmt -> fmt "Allowed proxy");
     let request =
@@ -237,39 +269,21 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
       | [] -> request
       | lines -> (
           let header = String.concat ", " lines in
-          match
-            List.map forwarded_entry
-              (Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header)
-          with
-          | original_ip :: proxies ->
-              (* A single address, as nginx or Revproxy send, is the client.
-               With [check_equal_ip], the last address must be the one of
-               the proxy that sent the request, so it cannot be missing. *)
-              let equal_ip () =
-                match
-                  List.rev proxies, Ocsigen.Request.client_conn request_info
-                with
-                | last_proxy :: _, `Inet (r_ip, _) -> (
-                  match Ipaddr.of_string last_proxy with
-                  | Ok proxy_ip -> Ipaddr.compare proxy_ip r_ip = 0
-                  | Error _ -> false)
-                | _ -> false
-              in
-              if (not check_equal_ip) || equal_ip ()
-              then
-                { request with
-                  Ocsigen.Extensions.request_info =
-                    Ocsigen.Request.update ~forward_ip:proxies
-                      ~client_conn:(`Forwarded_for original_ip) request_info }
-              else (
-                (* the announced ip of the proxy is not its real ip *)
-                Logs.warn ~src:section (fun fmt ->
-                  fmt
-                    "X-Forwarded-For: host ip (%s) does not match the header (%s)"
-                    (Ocsigen.Request.client_conn_to_string request_info)
-                    header);
-                request)
-          | _ ->
+          let entries =
+            Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header
+            |> List.filter (fun entry -> entry <> "")
+            |> List.map forwarded_entry
+          in
+          match split_client ~proxies entries with
+          | Some (client, forward) ->
+              { request with
+                Ocsigen.Extensions.request_info =
+                  Ocsigen.Request.update
+                    ~forward_ip:(List.map string_of_forwarded_entry forward)
+                    ~client_conn:
+                      (`Forwarded_for (string_of_forwarded_entry client))
+                    request_info }
+          | None ->
               Logs.info ~src:section (fun fmt ->
                 fmt "Malformed X-Forwarded-For field: %s" header);
               request)
@@ -426,19 +440,21 @@ let parse_config parse_fun = function
   | Element (("ifnotfound" as s), _, _) ->
       Ocsigen.Extensions.badconfig "Bad syntax for tag %s" s
   | Element ("allow-forward-for", param, _) ->
-      let check_equal_ip =
+      let proxies =
         match param with
-        | [] -> false
-        | [("check-equal-ip", b)] -> (
-          try bool_of_string b
-          with Invalid_argument _ ->
+        | _ when List.mem_assoc "check-equal-ip" param ->
             Ocsigen.Extensions.badconfig
-              "Bad syntax for argument of tag allow-forward-for")
+              "check-equal-ip is no longer supported in <allow-forward-for/>: see its proxies attribute"
+        | [] -> []
+        | [("proxies", s)] ->
+            List.map
+              (prefix ~where:"the proxies of <allow-forward-for/>")
+              (Netstring_pcre.split blanks_regexp s)
         | _ ->
             Ocsigen.Extensions.badconfig
               "Bad syntax for argument of tag allow-forward-for"
       in
-      allow_forward_for_handler ~check_equal_ip ()
+      allow_forward_for_handler ~proxies
   | Element ("allow-forward-proto", _, _) -> allow_forward_proto_handler
   | Element (t, _, _) ->
       raise (Ocsigen.Extensions.Bad_config_tag_for_extension t)
@@ -531,7 +547,10 @@ let forbidden _ _ _ _ =
   Lwt.return
     (Ocsigen.Extensions.Ext_stop_all (Ocsigen_cookie_map.empty, `Forbidden))
 
-let allow_forward_for ?check_equal_ip () _ _ _ =
-  allow_forward_for_handler ?check_equal_ip ()
+let allow_forward_for ?(proxies = []) () =
+  let proxies =
+    List.map (prefix ~where:"the proxies of allow_forward_for") proxies
+  in
+  fun _ _ _ -> allow_forward_for_handler ~proxies
 
 let allow_forward_proto () _ _ _ = allow_forward_proto_handler

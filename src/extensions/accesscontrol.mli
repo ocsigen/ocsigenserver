@@ -82,9 +82,15 @@ val stop : Ocsigen.Server.instruction
 val forbidden : Ocsigen.Server.instruction
 
 val allow_forward_for :
-   ?check_equal_ip:bool
+   ?proxies:string list
   -> unit
   -> Ocsigen.Server.instruction
+(** [allow_forward_for ~proxies ()] takes the address of the client from
+    X-Forwarded-For: the rightmost one that is not in [proxies], a list of
+    addresses or networks such as ["10.0.0.0/8"] (none by default), or the
+    leftmost one if all are in [proxies]. It raises
+    [Ocsigen.Extensions.Error_in_config_file] if an element of [proxies] is
+    neither an address nor a network. *)
 
 val allow_forward_proto : unit -> Ocsigen.Server.instruction
 val section : Logs.src
