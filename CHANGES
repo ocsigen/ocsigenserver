@@ -264,6 +264,14 @@ Bug fixes:
    address given by the proxy. Before, they matched no forwarded address.
    Unless the proxy replaces the X-Forwarded-For header, the client can
    choose this address (see the manual).
+ * CORS:
+   - the responses get "Vary: Origin", since their headers depend on the
+     Origin of the request. A shared cache could give the response for one
+     origin, or the one without CORS headers, to another;
+   - an answered request that asks for a refused method is left alone,
+     instead of getting a 500;
+   - a wrong value of credentials or max_age is a clear configuration
+     error.
 
 ==== 8.0.0 (2026-09-24) ===
 

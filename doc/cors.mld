@@ -26,6 +26,8 @@ The extension is activated by the [<cors/>] tag.
 
 The extension must be used after the extension serving the content (like eliom or staticmod) since it adds headers to already answered requests.
 
+The responses that go through [<cors/>] carry [Vary: Origin], with or without CORS headers, so that a cache does not give a response meant for one origin to another. When a preflight request asks for a method that [methods] does not allow, the extension adds no header, and an answered request is left as it is.
+
 The attributes of the cors tag are:
 
 - [max_age]: this is a integer telling the browser how long the

@@ -103,6 +103,17 @@ let cors_headers config r =
       in
       Some l
 
+(* The headers of the response depend on the Origin of the request, even
+   when there is none: a cache must not serve the response to a request
+   without Origin, which has no CORS headers, to one with an Origin. *)
+let vary_origin response =
+  let r = Ocsigen.Response.response response in
+  let headers =
+    Ocsigen_http.Header.add_vary r.Cohttp.Response.headers
+      Ocsigen_http.Header.Name.origin
+  in
+  Ocsigen.Response.update ~response:{r with Cohttp.Response.headers} response
+
 let found response =
   Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return response))
 
@@ -114,7 +125,9 @@ let main config = function
         Logs.info ~src:section (fun fmt -> fmt "OPTIONS request");
         match cors_headers config request_info with
         | Some l ->
-            found (Ocsigen.Response.replace_headers (default_frame ()) l)
+            found
+              (vary_origin
+                 (Ocsigen.Response.replace_headers (default_frame ()) l))
         | None -> Lwt.return Ocsigen.Extensions.Ext_do_nothing
         | exception Refused ->
             Logs.info ~src:section (fun fmt -> fmt "Refused request");
@@ -123,6 +136,7 @@ let main config = function
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info; _}, response)
     -> (
       Logs.info ~src:section (fun fmt -> fmt "answered request");
+      let response = vary_origin response in
       match cors_headers config request_info with
       | Some l -> found (Ocsigen.Response.replace_headers response l)
       | None -> found response
