@@ -66,6 +66,13 @@ The port that some proxies add is removed:
   200
   IP: forwarded:2001:db8::1
 
+Several X-Forwarded-For lines make one list:
+
+  $ get -H "X-Forwarded-For: 10.1.2.3" -H "X-Forwarded-For: 192.0.2.7" \
+  >   http://127.0.0.1:8082/index.html
+  403
+  IP: forwarded:10.1.2.3
+
 With check-equal-ip, the last address must be the one of the proxy that sent
 the request:
 

@@ -265,6 +265,8 @@ Bug fixes:
    it (192.0.2.1:4711, [2001:db8::1]:4711). Before, they matched no forwarded
    address. Unless the proxy replaces the X-Forwarded-For header, the client
    can choose this address (see the manual).
+ * Accesscontrol: <allow-forward-for/> reads all the X-Forwarded-For lines of
+   a request as one list. It read only the last one.
 
 ==== 8.0.0 (2026-09-24) ===
 

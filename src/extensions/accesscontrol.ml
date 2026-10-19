@@ -228,49 +228,50 @@ let allow_forward_for_handler ?(check_equal_ip = false) () =
   let apply ({Ocsigen.Extensions.request_info; _} as request) code =
     Logs.info ~src:section (fun fmt -> fmt "Allowed proxy");
     let request =
-      let header =
-        Ocsigen.Request.header request_info
+      (* Several lines of the header make one list (RFC 9110, section 5.3) *)
+      match
+        Ocsigen.Request.header_multi request_info
           Ocsigen_http.Header.Name.x_forwarded_for
-      in
-      match header with
-      | Some header -> (
-        match
-          List.map forwarded_entry
-            (Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header)
-        with
-        | original_ip :: proxies ->
-            (* A single address, as nginx or Revproxy send, is the client.
+      with
+      | [] -> request
+      | lines -> (
+          let header = String.concat ", " lines in
+          match
+            List.map forwarded_entry
+              (Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp header)
+          with
+          | original_ip :: proxies ->
+              (* A single address, as nginx or Revproxy send, is the client.
                With [check_equal_ip], the last address must be the one of
                the proxy that sent the request, so it cannot be missing. *)
-            let equal_ip () =
-              match
-                List.rev proxies, Ocsigen.Request.client_conn request_info
-              with
-              | last_proxy :: _, `Inet (r_ip, _) -> (
-                match Ipaddr.of_string last_proxy with
-                | Ok proxy_ip -> Ipaddr.compare proxy_ip r_ip = 0
-                | Error _ -> false)
-              | _ -> false
-            in
-            if (not check_equal_ip) || equal_ip ()
-            then
-              { request with
-                Ocsigen.Extensions.request_info =
-                  Ocsigen.Request.update ~forward_ip:proxies
-                    ~client_conn:(`Forwarded_for original_ip) request_info }
-            else (
-              (* the announced ip of the proxy is not its real ip *)
-              Logs.warn ~src:section (fun fmt ->
-                fmt
-                  "X-Forwarded-For: host ip (%s) does not match the header (%s)"
-                  (Ocsigen.Request.client_conn_to_string request_info)
-                  header);
+              let equal_ip () =
+                match
+                  List.rev proxies, Ocsigen.Request.client_conn request_info
+                with
+                | last_proxy :: _, `Inet (r_ip, _) -> (
+                  match Ipaddr.of_string last_proxy with
+                  | Ok proxy_ip -> Ipaddr.compare proxy_ip r_ip = 0
+                  | Error _ -> false)
+                | _ -> false
+              in
+              if (not check_equal_ip) || equal_ip ()
+              then
+                { request with
+                  Ocsigen.Extensions.request_info =
+                    Ocsigen.Request.update ~forward_ip:proxies
+                      ~client_conn:(`Forwarded_for original_ip) request_info }
+              else (
+                (* the announced ip of the proxy is not its real ip *)
+                Logs.warn ~src:section (fun fmt ->
+                  fmt
+                    "X-Forwarded-For: host ip (%s) does not match the header (%s)"
+                    (Ocsigen.Request.client_conn_to_string request_info)
+                    header);
+                request)
+          | _ ->
+              Logs.info ~src:section (fun fmt ->
+                fmt "Malformed X-Forwarded-For field: %s" header);
               request)
-        | _ ->
-            Logs.info ~src:section (fun fmt ->
-              fmt "Malformed X-Forwarded-For field: %s" header);
-            request)
-      | None -> request
     in
     Lwt.return
       (Ocsigen.Extensions.Ext_continue_with
