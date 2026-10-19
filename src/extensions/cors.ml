@@ -136,11 +136,20 @@ let parse_config _ _ _parse_fun config_elem =
         [ Configuration.element ~name:"cors"
             ~attributes:
               [ Configuration.attribute ~name:"credentials" (fun s ->
-                  let s = bool_of_string s in
-                  config := {!config with credentials = s})
+                  match bool_of_string_opt s with
+                  | Some credentials -> config := {!config with credentials}
+                  | None ->
+                      badconfig
+                        "The credentials attribute of <cors> is true or false, not %S"
+                        s)
               ; Configuration.attribute ~name:"max_age" (fun s ->
-                  let s = Some (int_of_string s) in
-                  config := {!config with max_age = s})
+                  match int_of_string_opt s with
+                  | Some max_age when max_age >= 0 ->
+                      config := {!config with max_age = Some max_age}
+                  | _ ->
+                      badconfig
+                        "The max_age attribute of <cors> is a number of seconds, not %S"
+                        s)
               ; Configuration.attribute ~name:"exposed_headers" (fun s ->
                   let s =
                     Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp s
