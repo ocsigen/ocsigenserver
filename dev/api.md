@@ -31,7 +31,7 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 
 [`Ocsigen_base.Lib`](./Ocsigen_base-Lib.md) This module contains some auxiliaries for the Ocsigenserver. In contrast to Ocsigen\_lib\_base, the function may also refer to libraries other than the standard library.
 [`Ocsigen.Messages`](./Ocsigen-Messages.md) Writing messages in the logs
-[`Ocsigen.Parseconfig`](./Ocsigen-Parseconfig.md) Config file parsing. See also module Extensions.​Configuration
+[`Ocsigen.Parseconfig`](./Ocsigen-Parseconfig.md) Config file parsing. See also module Ocsigen.Extensions.Configuration
 [`Polytables`](./Polytables.md) Polymorphic tables (using Map)
 [`Ocsigen_base.Cache`](./Ocsigen_base-Cache.md) Cache. Association tables (from any kind of database) that keep the most recently used values in memory. It is also possible to set a maximum lifetime for data in the cache.
 [`Ocsigen.Config`](./Ocsigen-Config.md) Configuring Ocsigen server

@@ -2,11 +2,8 @@
 
 Accesscontrol: Conditional access to some sites
 
-If you want to use this extension with Ocsigen Server's configuration file,
+If you want to use this extension with Ocsigen Server's configuration file, have a look at the [manual page](./accesscontrol.md). If you are using Ocsigen Server as a library, use the interface described here. Each of these functions behaves exactly as its configuration file counterpart.
 
-1. have a look at the [manual page](./accesscontrol.md).
-2. If you are using Ocsigen Server as a library, use the interface described
-3. here. Each of these functions behaves exactly as its configuration file counterpart.
 This module belongs to ocamlfind package `ocsigenserver.ext.accesscontrol`.
 
 Example of use (with [Redirectmod](./redirectmod.md)):

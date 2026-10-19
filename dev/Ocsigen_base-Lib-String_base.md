@@ -42,6 +42,9 @@ val equal : t -> t -> bool
 val compare : t -> t -> int
 ```
 ```ocaml
+val starts_with : prefix:string -> string -> bool
+```
+```ocaml
 val ends_with : suffix:string -> string -> bool
 ```
 ```ocaml
@@ -235,11 +238,6 @@ Cuts a string to the next separator, removing spaces. Raises `Not_found` if the 
 val split : ?multisep:bool -> char -> string -> string list
 ```
 Splits a string for words with separator, removing spaces. For ex "azert, sdfmlskdf, dfdsfs".
-
-```ocaml
-val starts_with : prefix:string -> string -> bool
-```
-Same as `Stdlib.String.starts_with`.
 
 ```ocaml
 val may_append : string -> sep:string -> string -> string

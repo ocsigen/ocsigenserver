@@ -42,7 +42,7 @@ Limits on the number of files the server process may have open at once.
 ```ocaml
 module Parseconfig : sig ... end
 ```
-Config file parsing. See also module `Extensions.​Configuration`
+Config file parsing. See also module [`Ocsigen.Extensions.Configuration`](./Ocsigen-Extensions-Configuration.md)
 
 ```ocaml
 module Request : sig ... end
