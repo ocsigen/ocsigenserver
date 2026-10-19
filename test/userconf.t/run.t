@@ -4,11 +4,17 @@ that the server cannot parse, or that sets an option refused to users, gets a
 
   $ . ../server-test-helpers.sh
   $ free_ports 1
-  $ mkdir -p log users/alice users/dave users/erin
+  $ mkdir -p log users/alice users/bob users/carol users/dave \
+  >   users/erin users/frank
   $ echo hello > users/alice/a.txt
   $ echo '<static dir="."/>' > users/alice.conf
   $ echo '<followsymlinks value="sometimes"/>' > users/dave.conf
   $ echo '<followsymlinks value="always"/>' > users/erin.conf
+  $ echo '<revproxy suburl="(.*)" dest="http://127.0.0.1:1/\1"/>' \
+  >   > users/bob.conf
+  $ echo '<if><ip value="127.0.0.1"/><then><allow-forward-for/></then></if>' \
+  >   > users/carol.conf
+  $ echo '<allow-forward-proto/>' > users/frank.conf
   $ cat > conf.xml <<EOF
   > <ocsigen><server>
   >   <port>127.0.0.1:$PORT1</port>
@@ -16,6 +22,8 @@ that the server cannot parse, or that sets an option refused to users, gets a
   >   <commandpipe>local.cmd</commandpipe>
   >   <extension findlib-package="ocsigenserver.ext.staticmod"/>
   >   <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
+  >   <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
+  >   <extension findlib-package="ocsigenserver.ext.revproxy"/>
   >   <extension findlib-package="ocsigenserver.ext.userconf"/>
   >   <host hostfilter="*">
   >     <userconf regexp="~([^/]*)/(.*)" conf="users/\1.conf" prefix="~\1"
@@ -46,3 +54,20 @@ that the server cannot parse, or that sets an option refused to users, gets a
   500
   $ errors
   ocsigen:ext:userconf: [ERROR] Unauthorized option in user configuration for url a.txt: Cannot specify value 'always' for option 'followsymlinks' in userconf files
+
+A user cannot forward requests, which would reach the services that only the
+server can reach, nor make the server trust the X-Forwarded-For and
+X-Forwarded-Proto headers, which any client can send:
+
+  $ get '~bob/x'
+  500
+  $ errors
+  ocsigen:ext:userconf: [ERROR] Unauthorized option in user configuration for url x: <revproxy> is not allowed in user configuration files
+  $ get '~carol/a.txt'
+  500
+  $ errors
+  ocsigen:ext:userconf: [ERROR] Unauthorized option in user configuration for url a.txt: <allow-forward-for/> is not allowed in user configuration files
+  $ get '~frank/a.txt'
+  500
+  $ errors
+  ocsigen:ext:userconf: [ERROR] Unauthorized option in user configuration for url a.txt: <allow-forward-proto/> is not allowed in user configuration files
