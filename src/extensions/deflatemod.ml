@@ -144,27 +144,9 @@ let weaken_etag e =
 
 (* The body we send depends on the request's Accept-Encoding, so the response
    must say so: without it a shared cache may serve a compressed response to a
-   client that did not ask for one (RFC 9111 4.1). An existing Vary is extended
-   rather than replaced, and "*" is left alone since it already covers
-   everything. *)
+   client that did not ask for one (RFC 9111 4.1). *)
 let add_vary_accept_encoding headers =
-  let name = Ocsigen_http.Header.Name.(to_string vary) in
-  let value = Ocsigen_http.Header.Name.(to_string accept_encoding) in
-  match Cohttp.Header.get headers name with
-  | None -> Cohttp.Header.add headers name value
-  | Some existing ->
-      let mentions_encoding =
-        String.split_on_char ',' existing
-        |> List.exists (fun field ->
-          let field = String.trim field in
-          String.equal field "*"
-          || String.equal
-               (String.lowercase_ascii field)
-               (String.lowercase_ascii value))
-      in
-      if mentions_encoding
-      then headers
-      else Cohttp.Header.replace headers name (existing ^ ", " ^ value)
+  Ocsigen_http.Header.add_vary headers Ocsigen_http.Header.Name.accept_encoding
 
 (* [cfilter] is the bytesrw writer filter for the negotiated codec, and
    [contentencoding] the matching Content-Encoding token. *)

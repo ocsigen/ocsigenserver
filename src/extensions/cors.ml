@@ -36,9 +36,11 @@ type config =
 
 exception Refused
 
-let add_headers config r response =
+(* The CORS headers of the response to [r], if it has an Origin. Raises
+   [Refused] if the method it asks for is not allowed. *)
+let cors_headers config r =
   match Ocsigen.Request.header r Ocsigen_http.Header.Name.origin with
-  | None -> Lwt.return Ocsigen.Extensions.Ext_do_nothing
+  | None -> None
   | Some origin ->
       Logs.info ~src:section (fun fmt -> fmt "request with origin: %s" origin);
       let l = [Ocsigen_http.Header.Name.access_control_allow_origin, origin] in
@@ -99,9 +101,21 @@ let add_headers config r response =
             , String.concat ", " exposed_headers )
             :: l
       in
-      Lwt.return
-        (Ocsigen.Extensions.Ext_found
-           (fun () -> Lwt.return @@ Ocsigen.Response.replace_headers response l))
+      Some l
+
+(* The headers of the response depend on the Origin of the request, even
+   when there is none: a cache must not serve the response to a request
+   without Origin, which has no CORS headers, to one with an Origin. *)
+let vary_origin response =
+  let r = Ocsigen.Response.response response in
+  let headers =
+    Ocsigen_http.Header.add_vary r.Cohttp.Response.headers
+      Ocsigen_http.Header.Name.origin
+  in
+  Ocsigen.Response.update ~response:{r with Cohttp.Response.headers} response
+
+let found response =
+  Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return response))
 
 let main config = function
   | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
@@ -109,15 +123,26 @@ let main config = function
     match Ocsigen.Request.meth request_info with
     | `OPTIONS -> (
         Logs.info ~src:section (fun fmt -> fmt "OPTIONS request");
-        try add_headers config request_info (default_frame ())
-        with Refused ->
-          Logs.info ~src:section (fun fmt -> fmt "Refused request");
-          Lwt.return Ocsigen.Extensions.Ext_do_nothing)
+        match cors_headers config request_info with
+        | Some l ->
+            found
+              (vary_origin
+                 (Ocsigen.Response.replace_headers (default_frame ()) l))
+        | None -> Lwt.return Ocsigen.Extensions.Ext_do_nothing
+        | exception Refused ->
+            Logs.info ~src:section (fun fmt -> fmt "Refused request");
+            Lwt.return Ocsigen.Extensions.Ext_do_nothing)
     | _ -> Lwt.return Ocsigen.Extensions.Ext_do_nothing)
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info; _}, response)
-    ->
+    -> (
       Logs.info ~src:section (fun fmt -> fmt "answered request");
-      add_headers config request_info response
+      let response = vary_origin response in
+      match cors_headers config request_info with
+      | Some l -> found (Ocsigen.Response.replace_headers response l)
+      | None -> found response
+      | exception Refused ->
+          Logs.info ~src:section (fun fmt -> fmt "Refused request");
+          found response)
 
 (* Register extension *)
 
@@ -136,11 +161,20 @@ let parse_config _ _ _parse_fun config_elem =
         [ Configuration.element ~name:"cors"
             ~attributes:
               [ Configuration.attribute ~name:"credentials" (fun s ->
-                  let s = bool_of_string s in
-                  config := {!config with credentials = s})
+                  match bool_of_string_opt s with
+                  | Some credentials -> config := {!config with credentials}
+                  | None ->
+                      badconfig
+                        "The credentials attribute of <cors> is true or false, not %S"
+                        s)
               ; Configuration.attribute ~name:"max_age" (fun s ->
-                  let s = Some (int_of_string s) in
-                  config := {!config with max_age = s})
+                  match int_of_string_opt s with
+                  | Some max_age when max_age >= 0 ->
+                      config := {!config with max_age = Some max_age}
+                  | _ ->
+                      badconfig
+                        "The max_age attribute of <cors> is a number of seconds, not %S"
+                        s)
               ; Configuration.attribute ~name:"exposed_headers" (fun s ->
                   let s =
                     Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp s
