@@ -258,6 +258,8 @@ Bug fixes:
    host or a site, the server refused to start with it. In <server>, it gave
    an empty directory name, so the server tried to write the uploaded files
    in the root directory.
+ * ocsigenserver --version prints the version again, instead of
+   0000000000000000, a placeholder that the build no longer replaces.
 
 ==== 8.0.0 (2026-09-24) ===
 

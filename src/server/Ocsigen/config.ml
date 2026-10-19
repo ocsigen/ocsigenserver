@@ -62,7 +62,6 @@ let log_to_stderr = ref false
 let daemon = ref false
 let veryverbose = ref false
 let debug = ref false
-let version_number = "0000000000000000"
 let pidfile = ref (None : string option)
 let command_pipe = ref (None : string option)
 let server_name = "Ocsigen"
