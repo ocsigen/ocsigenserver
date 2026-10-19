@@ -4,16 +4,18 @@ from other extensions to disallow unsafe options (for example, in version 1.2 it
 
 {1 Configuration}
 
-To use this extension, first load it from the configuration file:
+To use this extension, first load it from the configuration file, with
+{{!page-redirectmod}Redirectmod}, which the example below uses:
 
 {v
+<extension findlib-package="ocsigenserver.ext.redirectmod"/>
 <extension findlib-package="ocsigenserver.ext.userconf"/>
 v}
 
 Then, if you want to allow users to have their own configuration files, put in your hosts something like the lines
 below. (Unless you understand Userconf well, you probably just want to use those lines as is.)
 {v
-<redirect regexp="(https?://[^/]*)/~([^/]*)" dest="\1/~\2/" />
+<redirect fullurl="(https?://[^/]*)/~([^/]*)" dest="\1/~\2/" />
 <userconf regexp="~([^/]*)/(.*)" conf="$u(\1)/.ocsigen" prefix="~\1" url="\2" localpath="$u(\1)/public_html" />
 v}
 

@@ -87,7 +87,7 @@ Accesscontrol.(if_ (and_ [(ip "127.0.0.1");
 <if>
   <or>
     <ip value="123.123.123.0/24" />
-    <path regexp="/c.*" />
+    <path regexp="c.*" />
     <not><method value="GET" /></not>
   </or>
   <then>
@@ -98,7 +98,7 @@ v}
 Or, if you are using Ocsigen Server as a library:
 {@ocaml[
 Accesscontrol.(if_ (or_ [(ip "123.123.123.0/24"); 
-                         (path ~regexp:"/c.*");
+                         (path ~regexp:"c.*");
                          (not_ (method_ `GET))])
                   [ ... ]
                   [])
