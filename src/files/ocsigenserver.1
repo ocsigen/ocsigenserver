@@ -21,7 +21,8 @@ URLs, and page parameters automatically.
 Alternate configuration file.
 .TP
 .BR \-d ,\  \-\-daemon
-Daemon mode (detach the process). This is the default when there are more than 1 process.
+Daemon mode (detach the process).
+Implies \-s, so it needs log files or syslog.
 .TP
 .BR \-help ,\  \-\-help
 Show summary of options.
@@ -31,6 +32,8 @@ Specify a file where to write the PIDs of the servers.
 .TP
 .BR \-s ,\  \-\-silent
 Silent mode (error messages go in errors.log only).
+Refused when the logs go to the terminal, as in serve mode and with
+\-\-reverse\-proxy.
 .TP
 .BR \-v ,\  \-\-verbose
 Verbose mode (notice).

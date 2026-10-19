@@ -38,8 +38,15 @@ let () =
         ("Uncaught Exception after lwt timeout" ^^ "@\n%s")
         (Printexc.to_string e)))
 
+(* Silent mode (-s) or daemon mode (-d) requested while the logs go to the
+   terminal, which these modes redirect to /dev/null. *)
+exception Silent_with_console_logs
+
 (* fatal errors messages *)
 let errmsg = function
+  | Silent_with_console_logs ->
+      ( "Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d."
+      , 50 )
   | Dynlink_wrapper.Error e ->
       "Fatal - Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
   | Unix.Unix_error _ as e -> "Fatal - " ^ Printexc.to_string e, 9
@@ -61,6 +68,14 @@ let errmsg = function
   | exn -> (
     try Extensions.get_init_exn_handler () exn, 20
     with exn -> "Fatal - Uncaught exception: " ^ Printexc.to_string exn, 100)
+
+(* Until the server configures its logging, its messages go to the terminal,
+   unless the program has installed a reporter: without one, Logs would drop
+   them, and a program using Ocsigen Server as a library would not see why the
+   server stops at start-up. *)
+let report_to_terminal_by_default () =
+  if Logs.reporter () == Logs.nop_reporter
+  then Logs.set_reporter Messages.stdio_reporter
 
 (* loading new configuration *)
 let reload_conf s =
@@ -326,10 +341,16 @@ let open_command_pipe path =
 let main_loop_is_running = ref false
 
 let main config =
+  report_to_terminal_by_default ();
   if !main_loop_is_running
   then Logs.err (fun fmt -> fmt "Cannot run main loop twice");
   main_loop_is_running := true;
   try
+    (* Silent and daemon modes redirect the standard output and error to
+       /dev/null: if the logs go there, nothing at all would be logged, errors
+       included. Checked before detaching, so that -d fails at once. *)
+    if Config.get_silent () && Messages.logs_to_console ()
+    then raise Silent_with_console_logs;
     (* initialization functions for modules (Ocsigen extensions or application
        code) loaded from now on will be executed directly. *)
     Ocsigen_base.Loader.set_init_on_load true;
@@ -510,8 +531,9 @@ let main config =
       if pid = 0
       then Lwt_main.run (run ())
       else (
-        Messages.console (fun () ->
-          "Process " ^ string_of_int pid ^ " detached");
+        (* Only the detached process is silent: the user who launched the
+           server learns its process id. *)
+        Logs.app ~src:section (fun fmt -> fmt "Process %d detached" pid);
         write_pid pid)
     else (
       write_pid (Unix.getpid ());
@@ -521,6 +543,7 @@ let main config =
     Messages.errlog msg; exit errno
 
 let exec config =
+  report_to_terminal_by_default ();
   Config.has_config_file := true;
   match config with
   | [] -> ()
@@ -653,7 +676,9 @@ let register_compression f = compression := Some f
 (* Common setup of the one-command modes: no configuration file and no log
    directory are required. Logs go to stderr, and there is no command pipe:
    the server is stopped with a signal (Ctrl-C, SIGTERM). *)
-let one_command_setup () = Config.set_log_to_stderr true
+let one_command_setup () =
+  report_to_terminal_by_default ();
+  Config.set_log_to_stderr true
 
 (* Load the extension [package] on demand. On failure: exit if [required],
    otherwise log a warning and continue. *)

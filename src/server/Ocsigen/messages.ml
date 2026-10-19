@@ -337,15 +337,17 @@ let open_log_files () =
         Logs.app ~src:access_sect (fun fmt -> fmt "%s" s));
       close_log_files ();
       Lwt.return ()
-  | None ->
-      (* When no log directory is configured, log to stdout/stderr instead of
-         creating files in the current directory. *)
-      if Config.get_logdir () = ""
-      then log_to_stdio ()
-      else open_log_files_in_dir ()
+  | None -> open_log_files_in_dir ()
+
+(* The logs go to stdout/stderr in the one-command modes, and when neither a log
+   directory nor syslog is configured, instead of to files created in the
+   current directory. *)
+let logs_to_console () =
+  Config.get_log_to_stderr ()
+  || (Config.get_syslog_facility () = None && Config.get_logdir () = "")
 
 let open_files () =
-  if Config.get_log_to_stderr () then log_to_stdio () else open_log_files ()
+  if logs_to_console () then log_to_stdio () else open_log_files ()
 
 (****)
 
@@ -358,11 +360,6 @@ let unexpected_exception e s =
     fmt ("Unexpected exception in %s" ^^ "@\n%s") s (Printexc.to_string e))
 
 (****)
-
-let console =
-  if not (Config.get_silent ())
-  then fun s -> print_endline (s ())
-  else fun _s -> ()
 
 let level_of_string = function
   | "debug" -> Some Logs.Debug

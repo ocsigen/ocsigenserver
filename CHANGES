@@ -9,6 +9,16 @@ Incompatible changes:
    give the path, to keep the reload order, and reopen_logs for logrotate.
    Ocsigen.Config.get_command_pipe returns a string option, and
    Ocsigen_base.Config_static.command_pipe is removed.
+ * Silent mode (-s) and daemon mode (-d) are now refused when the logs go to
+   the terminal: always in serve mode and with --reverse-proxy, and with a
+   configuration file that gives neither <logdir> nor <syslog> to a server
+   built with no default log directory. These modes redirect the standard
+   output and error to /dev/null, so nothing at all was logged, errors
+   included. With -d, the server fails before it detaches.
+ * Ocsigen.Messages.console is removed. It printed on the standard output,
+   and said it did nothing in silent mode, which it never checked. The
+   "Process N detached" message of daemon mode, its only use, now goes
+   through Logs (source ocsigen:main).
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -79,6 +89,9 @@ Bug fixes:
    out with neither chunking nor its length, so the client could not find its
    end. A fixed-length body now always gets its own length as Content-Length,
    even when the response had another one, or only a Content-Range.
+ * A program that starts Ocsigen Server as a library, and installs no Logs
+   reporter, now sees on the terminal the errors that stop the server before
+   it configures its logging. Logs dropped them, so the program just exited.
  * A request with "Connection: close", or an HTTP/1.0 request without
    "Connection: keep-alive", now gets a response with "Connection: close",
    after which the server closes the connection, as RFC 9112 requires, without
@@ -246,9 +259,11 @@ Incompatible changes:
    custom format. The line now reports the final status code, the response
    size and the authenticated user. Anything parsing the old format must be
    updated.
- * Logging: when no <logdir> (and no <syslog>) is given in the configuration
-   file, logs now go to the standard output and standard error instead of to
-   files, so that no log directory is required.
+ * Logging: a server built with no default log directory, such as a
+   development build, now logs to the standard output and standard error when
+   the configuration file gives no <logdir> (and no <syslog>), instead of
+   creating log files in the current directory. An installed server (opam)
+   still uses its default log directory.
 
 New features:
  * One-command serve mode: "ocsigenserver ./public" (or
