@@ -132,7 +132,7 @@ make the proxy close the connection to the client:
   $ curl -si --max-time 10 http://127.0.0.1:8070/length | tr -d '\r' \
   >   | grep -iv '^date:'
   HTTP/1.1 200 OK
-  Content-Length: 3
+  content-length: 3
   server: Ocsigen
   connection: keep-alive
   
