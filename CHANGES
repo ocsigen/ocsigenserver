@@ -146,6 +146,8 @@ New features:
    Ocsigen.Server.exec_config_file reads the configuration file and starts
    the server, and reports an error in the file as the ocsigenserver command
    does.
+   Ocsigen_http.Header.add_vary adds a request header name to the Vary
+   header of a response.
  * The server warns about <filebuffersize>, <minthreads>, <maxthreads>,
    <disablepartialrequests/> and <respectpipeline/> in the configuration
    file, as it does for <servertimeout>: they are accepted but have no effect.
