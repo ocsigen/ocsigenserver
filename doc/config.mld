@@ -862,6 +862,60 @@ Example of use:
 <site path="mysite"> ... </site>
 v}
 
+{2:order Order of the directives}
+
+Inside a [<host>] or a [<site>], the server tries the directives (the tags
+defined by the extensions) in the order of the file:
+- As long as no page has been generated, each directive may generate one
+  (for example [<static>], [<eliom>], [<redirect>] or [<revproxy>]), or
+  change the request for the directives that follow it (for example the
+  options of {{!page-extendconfiguration}Extendconfiguration}, or
+  [<allow-forward-for/>]).
+- Once a page has been generated, the directives that generate pages are
+  skipped, and the output filters ([<outputfilter>], [<deflate>], [<cors>],
+  [<securityheaders>]) may change the response. So an output filter must come
+  after the directives whose responses it changes. The error that the server
+  sends when no directive generated a page (for example a 404) does not go
+  through the output filters.
+- A [<site>] applies only to the requests whose path starts with its path,
+  and only if no page has been generated yet. The changes that its directives
+  make to the request do not last after the end of the site.
+- A request rewritten by [<rewrite>] starts again from the first [<host>],
+  unless the rewriting has the [continue] attribute. A request starts again at
+  most [<maxretries>] times.
+
+{2:regexps Regular expressions}
+
+The regular expressions of the configuration file use the Perl syntax as
+implemented by the {{:https://github.com/ocaml/ocaml-re}ocaml-re} library
+([Re.Pcre]). Unlike PCRE, it has no back-references and no look-around.
+
+They must match the {e whole} string, as if they started with [^] and ended
+with [$]. The exception is [<outputfilter>], which replaces every match inside
+the value of a header. To match a site [app] and all the pages below it, write
+[app(/.*)?].
+
+The string depends on the directive:
+- the path of the request, relative to the enclosing [<site>], without its
+  leading slash, and decoded: [<static regexp>];
+- the same path, but percent-encoded (a space is [%20]): [<path>] of
+  Accesscontrol, [<userconf regexp>];
+- the same encoded path, followed by [?] and the query string if there is
+  one: [<redirect suburl>], [<revproxy suburl>], [<rewrite regexp>];
+- the whole URL, such as [http://example.org:8080/dir/page?a=1], where the
+  path starts at the root of the host (not of the enclosing site), and where
+  the port is written only when it is not the default port of the protocol:
+  [<redirect fullurl>], [<revproxy fullurl>];
+- each value of a header: [<header>] of Accesscontrol, [<outputfilter>];
+- the path of a local file: [<regexp>] in [<hidefile>] and [<forbidfile>];
+- the status code of the error, such as [404]: [<static code>],
+  [<ifnotfound code>].
+
+In the destination of a rewriting ([dest], [url]), [\0] stands for the whole
+match and [\1] to [\9] for the groups between parentheses, and a backslash
+escapes the next character. In Staticmod and Userconf, [$u(name)] stands for
+the home directory of user [name].
+
 {2 Reloading the configuration file}
 
 To reload the modules of the configuration file without stopping the server, write the command [reload] in the server's command pipe (the path given by [<commandpipe>]). For example:

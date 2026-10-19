@@ -18,7 +18,7 @@ Configure your hosts from the config file as in this example:
 {v
 <rewrite regexp="old/(.*)" url="new/\1"/>
 v}
-The syntax of regular expression is PCRE's one.
+The regular expression must match the whole path, relative to the site, with the query string (see {{!page-config.regexps}Regular expressions}).
 
 By default, the modified request will restart from the beginning, as if
 it were a new request.
