@@ -16,7 +16,7 @@ module {!Rewritemod}.
 
 Configure your hosts from the config file as in this example:
 {v
-<rewrite regexp="(.*)" url="toto/\1"/>
+<rewrite regexp="old/(.*)" url="new/\1"/>
 v}
 The syntax of regular expression is PCRE's one.
 
