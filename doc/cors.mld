@@ -26,6 +26,8 @@ The extension is activated by the [<cors/>] tag.
 
 The extension must be used after the extension serving the content (like eliom or staticmod) since it adds headers to already answered requests.
 
+The responses that go through [<cors/>] carry [Vary: Origin], with or without CORS headers, since their headers depend on the Origin of the request: a cache then does not give a response meant for one origin to another.
+
 The attributes of the cors tag are:
 
 - [max_age]: this is a integer telling the browser how long the
@@ -55,6 +57,13 @@ when their browser sends them, and read the responses. Always restrict the
 origins with {{!page-accesscontrol}accesscontrol}, by
 checking the [origin] header, as in the second example below.
 
+The responses to the other origins do not go through [<cors/>], so they
+do not carry [Vary: Origin]. A shared cache, such as a CDN, could then give
+such a response, without CORS headers, to a page of an allowed origin, and
+the browser would refuse it. Add [Vary: Origin] to these responses with
+{{!page-outputfilter}outputfilter}, in the [<else>] branch, as in the
+example.
+
 {1 Examples}
 
 - minimal configuration allowing all requests with no credentials.
@@ -65,18 +74,23 @@ v}
 - A configuration allowing access to an eliom application at path "eliom_site", from localhost:8081
 {v
 <if>
-  <and>
-    <header name="origin" regexp="http://localhost:8081"/>
-    <path regexp="eliom_site(/.*)?" />
-  </and>
+  <path regexp="eliom_site(/.*)?" />
   <then>
-    <cors max_age="86400"
-          credentials="true"
-          methods="POST,GET,HEAD"
-          exposed_headers="
-            x-eliom-application,
-            x-eliom-location,
-            x-eliom-set-process-cookies"/>
+    <if>
+      <header name="origin" regexp="http://localhost:8081"/>
+      <then>
+        <cors max_age="86400"
+              credentials="true"
+              methods="POST,GET,HEAD"
+              exposed_headers="
+                x-eliom-application,
+                x-eliom-location,
+                x-eliom-set-process-cookies"/>
+      </then>
+      <else>
+        <outputfilter header="Vary" dest="Origin" replace="false"/>
+      </else>
+    </if>
   </then>
 </if>
 v}

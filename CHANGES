@@ -444,6 +444,12 @@ Bug fixes:
  * CORS: a request that another extension answers, and that asks for a
    method that the methods attribute does not allow, gets its response
    without CORS headers, instead of a 500.
+ * CORS: the responses that go through <cors/> get "Vary: Origin", with or
+   without CORS headers, since these headers depend on the Origin of the
+   request. Without it, a shared cache could give the response for one
+   origin to another. When <cors/> is in an <if> on the Origin, the other
+   responses do not go through it: the manual shows how to add the header
+   to them.
 
 ==== 8.0.0 (2026-09-24) ===
 
