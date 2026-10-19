@@ -260,6 +260,10 @@ Bug fixes:
    in the root directory.
  * ocsigenserver --version prints the version again, instead of
    0000000000000000, a placeholder that the build no longer replaces.
+ * Accesscontrol: after <allow-forward-for/>, the <ip> conditions test the
+   address given by the proxy. Before, they matched no forwarded address.
+   Unless the proxy replaces the X-Forwarded-For header, the client can
+   choose this address (see the manual).
 
 ==== 8.0.0 (2026-09-24) ===
 

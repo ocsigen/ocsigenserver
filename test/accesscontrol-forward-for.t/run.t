@@ -1,5 +1,5 @@
 <allow-forward-for/> takes the client address from X-Forwarded-For. An <ip>
-condition evaluated afterwards logs the address the server retained.
+condition evaluated afterwards tests and logs the address the server retained.
 
   $ mkdir -p www log data
   $ printf 'hello\n' > www/index.html
@@ -43,6 +43,18 @@ With several addresses, the first one is the client:
   >   http://127.0.0.1:8082/index.html
   200
   IP: forwarded:192.0.2.2
+
+The <ip> conditions test this address:
+
+  $ get -H 'X-Forwarded-For: 10.1.2.3' http://127.0.0.1:8082/index.html
+  403
+  IP: forwarded:10.1.2.3
+
+A value that is not an address matches no <ip>:
+
+  $ get -H 'X-Forwarded-For: unknown' http://127.0.0.1:8082/index.html
+  200
+  IP: forwarded:unknown
 
 With check-equal-ip, the last address must be the one of the proxy that sent
 the request:
