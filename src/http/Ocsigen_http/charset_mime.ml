@@ -36,21 +36,25 @@ type 'a assoc_item =
 
 type 'a assoc = {assoc_list : 'a assoc_item list; assoc_default : 'a}
 
-let find_in_assoc file assoc =
+let find_in_assoc_opt file assoc =
   let filename = Filename.basename file in
   let ext =
     try String.lowercase_ascii (Filename.extension_no_directory file)
     with Not_found -> ""
   in
   let rec aux = function
-    | [] -> assoc.assoc_default
-    | Extension (ext', v) :: q -> if ext = ext' then v else aux q
-    | File (filename', v) :: q -> if filename = filename' then v else aux q
+    | [] -> None
+    | Extension (ext', v) :: q -> if ext = ext' then Some v else aux q
+    | File (filename', v) :: q -> if filename = filename' then Some v else aux q
     | Regexp (reg, v) :: q ->
-        if Netstring_pcre.string_match reg file 0 <> None then v else aux q
-    | Map m :: q -> ( try MapString.find ext m with Not_found -> aux q)
+        if Netstring_pcre.string_match reg file 0 <> None then Some v else aux q
+    | Map m :: q -> (
+      match MapString.find_opt ext m with Some v -> Some v | None -> aux q)
   in
   aux assoc.assoc_list
+
+let find_in_assoc file assoc =
+  Option.value (find_in_assoc_opt file assoc) ~default:assoc.assoc_default
 
 let default assoc = assoc.assoc_default
 let set_default assoc default = {assoc with assoc_default = default}
@@ -93,7 +97,26 @@ let update_mime_regexp = update_regexp
 let set_default_mime = set_default
 let set_default_charset = set_default
 let find_charset = find_in_assoc
-let find_mime = find_in_assoc
+
+(* The built-in table of magic-mime comes after the rules and the mime.types
+   file, and before the default type. *)
+let find_mime file assoc =
+  match find_in_assoc_opt file assoc with
+  | Some mime -> mime
+  | None -> Magic_mime.lookup ~default:assoc.assoc_default file
+
+(* As before 3.0.0: the charset is given for text and XML types. *)
+let takes_charset mime =
+  String.starts_with ~prefix:"text/" mime
+  || String.ends_with ~suffix:"/xml" mime
+  || String.ends_with ~suffix:"+xml" mime
+
+let content_type ~mime_assoc ~charset_assoc file =
+  let mime = find_mime file mime_assoc in
+  match find_charset file charset_assoc with
+  | "" -> mime
+  | charset when takes_charset mime -> mime ^ "; charset=" ^ charset
+  | _ -> mime
 
 (* Specific handling of content-type *)
 

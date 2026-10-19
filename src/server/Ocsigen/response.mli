@@ -64,10 +64,13 @@ val respond_file :
   -> ?if_modified_since:string
   -> ?range:string
   -> ?if_range:string
+  -> ?content_type:string
   -> string
   -> t Lwt.t
-(** Respond with the content of a file. The content type is guessed using
-    [Magic_mime]. An [ETag] (weak, derived from the file's modification time and
+(** Respond with the content of a file. The content type is [content_type],
+    by default the one that [Magic_mime] guesses from the name of the file
+    (see {!Ocsigen_http.Charset_mime.content_type} for the one that the
+    configuration chooses). An [ETag] (weak, derived from the file's modification time and
     size), a [Last-Modified] and an [Accept-Ranges: bytes] header are added. If
     the request's [If-None-Match] or [If-Modified-Since] header is passed and
     matches, the response is [304 Not Modified] with an empty body (RFC 7232).

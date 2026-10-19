@@ -105,6 +105,7 @@ let respond_file
       ?if_modified_since
       ?range
       ?if_range
+      ?content_type
       fname
   =
   let exception Isnt_a_file in
@@ -228,7 +229,11 @@ let respond_file
                       Lwt.return_unit)
                in
                let body = Body.make encoding stream in
-               let mime_type = Magic_mime.lookup fname in
+               let mime_type =
+                 match content_type with
+                 | Some content_type -> content_type
+                 | None -> Magic_mime.lookup fname
+               in
                let headers =
                  add_content_range
                    (add_common

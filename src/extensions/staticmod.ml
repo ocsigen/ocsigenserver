@@ -240,7 +240,13 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
         (match page with
           | Ocsigen.Local_files.RFile fname ->
               let header name = Ocsigen.Request.header request_info name in
+              let {Ocsigen.Extensions.mime_assoc; charset_assoc; _} =
+                request.Ocsigen.Extensions.request_config
+              in
               Ocsigen.Response.respond_file
+                ~content_type:
+                  (Ocsigen_http.Charset_mime.content_type ~mime_assoc
+                     ~charset_assoc fname)
                 ?if_none_match:(header Ocsigen_http.Header.Name.if_none_match)
                 ?if_modified_since:
                   (header Ocsigen_http.Header.Name.if_modified_since)
