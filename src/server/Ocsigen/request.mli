@@ -90,6 +90,11 @@ val post_params :
   -> Int64.t option
   -> (string * string) list Lwt.t option
 
+val on_post_data_decoded : t -> (unit -> unit) -> unit
+(** [on_post_data_decoded r f] calls [f] once the decoding of the body of [r]
+    ends, successfully or not, or at once if it has ended. It does nothing if
+    the body is not decoded. *)
+
 val client_conn : t -> client_conn
 (** The way the client connects to the server (for example, its IP address if
     connected over the internet). *)

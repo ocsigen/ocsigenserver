@@ -307,14 +307,19 @@ let post_params_form_urlencoded body_gen _ _ =
           Lwt.fail Ocsigen_base.Lib.Input_is_too_large
       | e -> Lwt.fail e)
 
-let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
+let post_params_multipart_form_data
+      ~on_file
+      ctparams
+      body_gen
+      upload_dir
+      max_size
+  =
   (* Same question here, should this stream be consumed after an
      error? *)
   let body = Ocsigen_base.Ocsigen_stream.get body_gen
   and boundary = get_boundary ctparams
   and params = ref []
-  and files = ref []
-  and filenames = ref [] in
+  and files = ref [] in
   let rec add p s =
     match p with
     | _, `No_file to_buf -> Buffer.add_string to_buf s; Lwt.return ()
@@ -349,7 +354,7 @@ let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
           in
           Logs.info ~src:section (fun fmt ->
             fmt "%s" ("Upload file opened: " ^ fname));
-          filenames := fname :: !filenames;
+          on_file fname;
           p_name, `Some_file (fname, store, fd, content_type)
       | None -> raise Ocsigen_upload_forbidden
     with Not_found -> p_name, `No_file (Buffer.create 1024)
@@ -376,7 +381,7 @@ let post_params_multipart_form_data ctparams body_gen upload_dir max_size =
   Ocsigen_base.Ocsigen_stream.consume body_gen >>= fun () ->
   Lwt.return (!params, !files)
 
-let post_params ~content_type body_gen =
+let post_params ~content_type ~on_file body_gen =
   let (ct, cst), ctparams = content_type in
   match String.lowercase_ascii ct, String.lowercase_ascii cst with
   | "application", "x-www-form-urlencoded" ->
@@ -386,5 +391,5 @@ let post_params ~content_type body_gen =
   | "multipart", "form-data" ->
       Some
         (body_gen |> Ocsigen_base.Ocsigen_stream.of_cohttp_body
-        |> post_params_multipart_form_data ctparams)
+        |> post_params_multipart_form_data ~on_file ctparams)
   | _ -> None

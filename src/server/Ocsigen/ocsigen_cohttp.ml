@@ -321,17 +321,26 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
                   connection quietly (see [serve_guarded]). *)
                Lwt.fail Connection_guard.Timed_out) ))
     (fun () ->
-       if !filenames <> []
-       then
+       (* The uploaded files. This runs once the response is computed, before
+          its body is written, and again once the body is decoded, for the
+          files created in between if the application did not wait for them.
+          The application may have moved them, to keep them. *)
+       let remove_uploaded_files () =
+         let files = !filenames in
+         filenames := [];
          List.iter
            (fun a ->
-              try Unix.unlink a
-              with Unix.Unix_error _ as exn ->
-                Logs.warn ~src:section (fun fmt ->
-                  fmt
-                    ("Error while removing file %s" ^^ "@\n%s")
-                    a (Printexc.to_string exn)))
-           !filenames;
+              try Unix.unlink a with
+              | Unix.Unix_error (Unix.ENOENT, _, _) -> ()
+              | Unix.Unix_error _ as exn ->
+                  Logs.warn ~src:section (fun fmt ->
+                    fmt
+                      ("Error while removing file %s" ^^ "@\n%s")
+                      a (Printexc.to_string exn)))
+           files
+       in
+       remove_uploaded_files ();
+       Request.on_post_data_decoded request remove_uploaded_files;
        Lwt.return_unit)
 
 let conn_closed (_flow, conn) =

@@ -1,6 +1,7 @@
 open Lwt.Infix
 
-let post_data_of_body ~content_type b = Multipart.post_params ~content_type b
+let post_data_of_body ~content_type ~on_file b =
+  Multipart.post_params ~content_type ~on_file b
 
 type content_type = Multipart.content_type
 
@@ -267,12 +268,13 @@ let force_post_data ({r_body; _} as r) s i =
   | `Unparsed body -> (
     match content_type r with
     | Some content_type -> (
-      match post_data_of_body ~content_type body with
-      | Some f ->
-          let v = f s i in
-          r.r_body := `Parsed v;
-          Some v
-      | None -> None)
+        let on_file f = r.r_filenames := f :: !(r.r_filenames) in
+        match post_data_of_body ~content_type ~on_file body with
+        | Some f ->
+            let v = f s i in
+            r.r_body := `Parsed v;
+            Some v
+        | None -> None)
     | None -> None)
 
 let post_params r s i =
@@ -280,6 +282,11 @@ let post_params r s i =
 
 let files r s i =
   match force_post_data r s i with Some v -> Some (v >|= snd) | None -> None
+
+let on_post_data_decoded {r_body; _} f =
+  match !r_body with
+  | `Parsed post_data -> Lwt.on_termination post_data f
+  | `Unparsed _ -> ()
 
 let client_conn {r_client_conn = c; _} = c
 
