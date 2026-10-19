@@ -34,6 +34,12 @@ Incompatible changes:
    (RFC 8615), and directory listings no longer show them. This applies to
    serve mode too. The new hidedotfiles="false" attribute of <static> (or
    ~hide_dotfiles:false for Staticmod.run) serves them again.
+ * User configuration files (Userconf) can no longer use <revproxy>, which
+   let a user reach the services that only the server can reach, nor
+   <allow-forward-for/> and <allow-forward-proto/>, which made the server
+   trust headers that any client can send. Such a file now gets a 500, and
+   the error log says which directive was refused (it used to report the
+   refusals of Extendconfiguration as syntax errors).
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that

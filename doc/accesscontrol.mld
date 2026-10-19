@@ -62,7 +62,8 @@ from your reverse proxy, for instance inside an [<if>] that checks the
 address of the proxy with [<ip>] (see the
 {{!page-revproxy}Revproxy} page). Otherwise, a client can choose the address
 that the server, its logs and the applications take for its own, or make the
-server believe that a plain HTTP connection is secure.
+server believe that a plain HTTP connection is secure. For the same reason,
+these actions are refused in {{!page-userconf}user configuration files}.
 
 Behind the proxy too, the first address of X-Forwarded-For is the one that
 the client chose, if it sent the header and the proxy adds an address to it
