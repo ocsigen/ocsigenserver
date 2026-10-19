@@ -658,27 +658,14 @@ Size of the input buffer (sockets). It is also the maximum size of headers and p
 {v
 <netbuffersize>8192</netbuffersize>
 v}
-{3 [<filebuffersize>] : Size of the buffer for sending files}
+{3 Settings with no effect}
 
-
-Size of the buffer for reading files to send. Example:
-
-
-
-{v
-<filebuffersize>8192</filebuffersize>
-v}
-{3 [<minthreads> <maxthreads>] : Size of the preemptive thread pool}
-
-
-Even if Ocsigenserver is implemented with cooperative threads, web site programmers may want to detach some computation to other preemptive threads. To do that, Ocsigenserver has a pool of preemptive threads running, waiting for computation to do. This options allow to set the size of this pool. Example:
-
-
-
-{v
-<minthreads>10</minthreads>
-<maxthreads>1000</maxthreads>
-v}
+The following settings are accepted for compatibility, but have no effect:
+- [<filebuffersize>], the size of the buffer for reading files to send;
+- [<minthreads>] and [<maxthreads>], the size of the pool of preemptive
+  threads, which Ocsigenserver no longer has since version 7.0. The server
+  still refuses a [<minthreads>] larger than [<maxthreads>];
+- [<disablepartialrequests/>] and [<respectpipeline/>].
 {3 [<maxretries>] : Maximum number of retries for the same request}
 
 
