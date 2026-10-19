@@ -80,3 +80,26 @@ let () =
   show_field_values ["X-A", "a\nb"];
   show_field_values ["X-A", "a\x1bb"];
   show_field_values ["X-A", "a\x7fb"]
+
+let show_method meth =
+  Printf.printf "%S: %s\n"
+    (Http.Method.to_string meth)
+    (match Ocsigen_http.Http1.request_method meth with
+    | Some meth -> Printf.sprintf "%S" (Http.Method.to_string meth)
+    | None -> "invalid")
+
+let () =
+  print_endline "== request_method";
+  show_method `GET;
+  show_method (`Other "PROPFIND");
+  show_method (`Other "get");
+  show_method (`Other "\r\n\r\nGET");
+  show_method (`Other "\nPOST");
+  show_method (`Other "\rGET");
+  show_method (`Other "\n\rGET");
+  show_method (`Other "\r\r\nGET");
+  show_method (`Other "\r\nFROB");
+  show_method (`Other "\r\n");
+  show_method (`Other "G(ET");
+  show_method (`Other "G\001ET");
+  show_method (`Other "GET\r\n")

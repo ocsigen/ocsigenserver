@@ -251,6 +251,10 @@ Bug fixes:
    a forward proxy. The "*" target is accepted with OPTIONS only, and
    OPTIONS * is answered by the server itself, without content. Such
    requests used to be served like requests for the root page.
+ * Empty lines before a request line, as sent by clients that end a POST
+   body with an extra line end, are now ignored: the method used to start
+   with them, so that the request was not seen as a GET. A method that is
+   not a token is answered 400 (Bad Request).
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

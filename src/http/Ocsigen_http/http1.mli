@@ -18,3 +18,11 @@ val valid_field_values : Http.Header.t -> bool
 (** [valid_field_values headers] is [true] iff no value of [headers] has a
     control character other than a horizontal tab (RFC 9110, section 5.5).
     NUL, CR and LF in particular must be rejected. *)
+
+val request_method : Http.Method.t -> Http.Method.t option
+(** [request_method meth] is the method of a request that cohttp read with
+    the method [meth], or [None] if it is not a valid token. Cohttp does not
+    skip the empty lines that may come before a request line (RFC 9112,
+    section 2.2), sent for instance by clients that end a POST body with an
+    extra line end: it takes them as the start of the method. They are
+    removed here. *)
