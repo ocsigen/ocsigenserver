@@ -674,6 +674,9 @@ The following settings are accepted for compatibility, but have no effect:
   threads, which Ocsigenserver no longer has since version 7.0. The server
   still refuses a [<minthreads>] larger than [<maxthreads>];
 - [<disablepartialrequests/>] and [<respectpipeline/>].
+
+The server logs a warning for each of them, as for [<servertimeout>].
+
 {3 [<maxretries>] : Maximum number of retries for the same request}
 
 

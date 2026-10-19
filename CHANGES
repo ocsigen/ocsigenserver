@@ -93,6 +93,9 @@ New features:
    like Mutex.protect, which OCaml 4.14 does not have.
    Ocsigen.Messages.level_of_string parses a log level, and set_source_level
    sets the level of a log source by its name.
+ * The server warns about <filebuffersize>, <minthreads>, <maxthreads>,
+   <disablepartialrequests/> and <respectpipeline/> in the configuration
+   file, as it does for <servertimeout>: they are accepted but have no effect.
 
 Bug fixes:
  * Security: a response to HEAD no longer carries the body of the response to
