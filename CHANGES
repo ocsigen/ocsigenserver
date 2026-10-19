@@ -353,6 +353,13 @@ Bug fixes:
    cannot load no longer starts with "Fatal - ". At start-up, an error that an
    extension describes itself (Eliom, for instance) now starts with
    "Fatal - ", as the other errors that stop the server.
+ * <port>80</port> listens on IPv6 again, as well as IPv4, as the manual says.
+   Since 3.0.0, it listened on IPv4 only, while <port>[::]:80</port> also
+   accepted IPv4 connections where the system allows it (Linux). The server
+   now opens one socket for each family, and its IPv6 sockets accept IPv6
+   connections only. Without IPv6, a port alone listens on IPv4 only. Each
+   listening socket, not each port, counts as one connection in
+   <maxconnected> while it waits for a new one.
 
 ==== 8.0.0 (2026-09-24) ===
 
