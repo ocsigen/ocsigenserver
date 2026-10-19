@@ -12,7 +12,7 @@ Ocsigen Server is a powerful and modular generic purpose Web Server. It supports
 Ocsigen Server can be used:
 
 - as an executable: it reads its configuration from a file and dynamically loads the extensions and libraries you need for your sites,
-- or as a library: build your own executable and statically link your the modules you need for your pages.
+- or as a library: build your own executable and statically link the modules you need for your pages.
 It is written in OCaml and uses the [Cohttp](https://github.com/mirage/ocaml-cohttp) library.
 
 ## Installation
@@ -99,19 +99,19 @@ The extensions provided are:
 - [Staticmod](./staticmod.md): for serving static pages,
 - [Accesscontrol](./accesscontrol.md): if you need to restrict the access to the sites,
 - [Eliom](./eliom.md): if you want to use dynamic Web and mobile applications written in OCaml with Eliom,
-- [Revproxy](./revproxy.md): if you want to redirect some requests to another Web server,.
+- [Revproxy](./revproxy.md): if you want to redirect some requests to another Web server,
 - [Redirectmod](./redirectmod.md): if you want to define some HTTP redirections,
 - [Deflatemod](./deflatemod.md): if you want to compress the content before sending your pages,
 - [Outputfilter](./outputfilter.md): allows to change the header of the HTTP response,
-- [Securityheaders](./securityheaders.md): adds common security-related HTTP headers (HSTS, nosniff, X-Frame-Options, CSP),
+- [Securityheaders](./securityheaders.md): adds common security-related HTTP headers (X-Content-Type-Options, X-Frame-Options and Referrer-Policy by default, HSTS and CSP on request),
 - [Rewritemod](./rewritemod.md): allows to rewrite the request before continuing,
 - [Extendconfiguration](./extendconfiguration.md): adds many useful configuration options,
 - [Authbasic](./authbasic.md): for basic HTTP authentication,
 - [CORS](./cors.md): for settings CORS options,
 - [Userconf](./userconf.md): for allowing local users to have personal pages,
-If you are using a configuration, file, use tag `<extension/>` to load an exetnsion (see examples in the manual of each extension). Most extension have configuration options, and define new tags for the configuration file.
+If you are using a configuration file, use tag `<extension/>` to load an extension (see examples in the manual of each extension). Most extensions have configuration options, and define new tags for the configuration file.
 
-If you are building a static executable, load the extensions as any library from your Dune file. Have a look at the API documentation of each documentation to see the functions it defines and the configuration options.
+If you are building a static executable, load the extensions as any library from your Dune file. Have a look at the API documentation of each extension to see the functions it defines and the configuration options.
 
 ## API reference
 
@@ -123,7 +123,7 @@ Ocsigen Server 8\.0 renamed its modules and modernised its base library. See [Mi
 
 ## Running on port 80 or 443
 
-It is not recommended to run a Web server as root. If you want to use priviledged ports (port numbers less than 1024\), like 80 or 443, you can add the capability to ocsigenserver with:
+It is not recommended to run a Web server as root. If you want to use privileged ports (port numbers less than 1024\), like 80 or 443, you can add the capability to ocsigenserver with:
 
 ```
 setcap 'cap_net_bind_service=+ep' <path to the server executable>
@@ -350,7 +350,7 @@ Here is another example, for use as unprivileged user toto on port 8000\. We use
       <site path="tuto">
         <eliom module="/usr/local/lib/ocsigenserver/tutoeliom.cmo" />
         <static dir="/home/toto/var/www/ocsigenserver/tutorial" />
-        <!-- Module's path coul be relative but static dir must be absolute -->
+        <!-- Module's path could be relative but static dir must be absolute -->
       </site>
 
     </host>
@@ -443,7 +443,7 @@ If you serve both HTTP and HTTPS and want to force HTTPS, redirect plain HTTP re
       </if>
     </host>
 ```
-Note: HTTP Strict Transport Security (HSTS) is not enabled automatically. Once you serve only over HTTPS, add a `Strict-Transport-Security` response header (for instance with the [Outputfilter](./outputfilter.md) extension).
+Note: HTTP Strict Transport Security (HSTS) is not enabled automatically. Once you serve only over HTTPS, add a `Strict-Transport-Security` response header. The simplest way is the `hsts` attribute of the [Securityheaders](./securityheaders.md) extension. The [Outputfilter](./outputfilter.md) extension can also add it.
 
 #### `<logdir>` : log files directory
 
@@ -652,14 +652,14 @@ Browsers open up to six connections per site, and several users may share an add
 
 **Recommendation.** For an Internet-facing deployment, a reverse proxy (nginx, HAProxy, Caddy, ...) in front of Ocsigenserver still brings what the server does not do itself: buffering slow clients, so that they do not hold a connection to the server at all, rate limiting, and obtaining certificates.
 
-#### `<shutdowntimeout>` : Timeout for graceful shutdown *From version 1\.3*
+#### `<shutdowntimeout>` : Timeout for shutdown
 
-Amount of time (in seconds) the server will wait for current requests to terminate before ending the process, when you use the "graceful shutdown" server command (see below).
+Written in seconds, or `notimeout`. Example:
 
 ```
 <shutdowntimeout>10</shutdowntimeout>
 ```
-Other possible value: `notimeout` if you don't want to wait all connections even if it takes time.
+**Limitation.** This option is currently parsed but **not used**: the `shutdown` server command does not read it (see [Stopping the server](./#shutdown) below).
 
 #### `<netbuffersize>` : Size of the input buffer
 
@@ -719,7 +719,7 @@ Predefined orders:
 
 - `reload`: will reload the configuration file. Extensions will not be reloaded but all other modules will be reloaded (for example Eliom web sites) *(see below for more information)*.
 - `gc`: will trigger a heap compaction
-- `shutdown`: will shutdown the server when all the current rerquests are fulfilled *(see below for more information)*
+- `shutdown`: will stop the server *(see below for more information)*
 - `reopen_logs`: will reopen the logs files (see logrotate configuration for an example of use)
 - `clearcache`: will empty all the caches defined by the module `Ocsigen_base.Cache`
 - `logs:name level`: will set the level of the log source `name`, as `<loglevel>` does; `logs:name` turns the source off
@@ -797,7 +797,7 @@ The attribute `defaulthostname` is just an information about the hostname, that 
 ```
 The `charset` attribute is the default charset for your pages. All attributes are optional, but we recommend to set at least `defaulthostname`.
 
-If you do not want to send any charset, explicitely: `charset=""`. In that case, browsers usually use html meta-data (when present).
+If you do not want to send any charset, explicitly: `charset=""`. In that case, browsers usually use html meta-data (when present).
 
 *Warning:* Before version 1\.2.0, `hostfilter` was called: `name` (or `aliases`).
 
@@ -810,7 +810,7 @@ Inside `<host>`, write the configuration for your main (root) site. These option
 
 #### `<site>` : Configuring sub-sites
 
-In each virtual host, it is possible to define several sub-sites (in sub-paths) between `<site>` and `</site>`. `<site>` has an attribute `dir` to set the home directory for the site. You can also set the default charset for the site using the `charset` attribute. The options between `<site>` and `</site>` are exactly the same as those you can can put between `<host>` and `</host>`. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
+In each virtual host, it is possible to define several sub-sites (in sub-paths) between `<site>` and `</site>`. `<site>` has an attribute `dir` to set the home directory for the site. You can also set the default charset for the site using the `charset` attribute. The options between `<site>` and `</site>` are exactly the same as those you can put between `<host>` and `</host>`. They depend on the extensions you loaded. It is also possible to define sub-sites inside sub-sites.
 
 Example of use:
 
@@ -820,12 +820,12 @@ Example of use:
 
 ### Reloading the configuration file
 
-To reload the modules of the configuration file without stoping the server, write the command `reload` in the server's command pipe (the path given by `<commandpipe>`). For example:
+To reload the modules of the configuration file without stopping the server, write the command `reload` in the server's command pipe (the path given by `<commandpipe>`). For example:
 
 ```
 echo reload > /var/run/ocsigenserver_command
 ```
-Form version 1\.3, it is possible to give the name of the configuration file as parameter:
+From version 1\.3, it is possible to give the name of the configuration file as parameter:
 
 ```
 echo reload /etc/ocsigenserver/ocsigenserver.conf.2 > /var/run/ocsigenserver_command
@@ -835,30 +835,27 @@ Most distributions have a special command to do that automatically (for the defa
 ```
 /etc/init.d/ocsigenserver reload
 ```
-The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stoping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
+The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
 
-### Graceful shutdown *(From version 1\.3)*
+### Stopping the server
 
-To end the server cleanly, use the `shutdown` command, for example:
+To stop the server, use the `shutdown` command, for example:
 
 ```
 echo shutdown > /var/run/ocsigenserver_command
 ```
-No new connection will be accepted, but all current requests will be terminated (with a timeout). Then the server process will end.
+The server process exits at once. It does not wait for the requests in progress to finish.
 
-You can specify the timeout as parameter (in second):
+You can give a delay as parameter (in seconds):
 
 ```
 echo shutdown 10 > /var/run/ocsigenserver_command
 ```
-It means that the server process will end after at most 10 seconds, even if some connexions are still alive. If you do not want any timeout, do:
+The server process then exits after 10 seconds. During this delay, the server keeps working as usual: it still accepts new connections, and it does not wait for the requests in progress to finish before exiting.
 
-```
-echo shutdown notimeout > /var/run/ocsigenserver_command
-```
-In that case, the server will wait for all the connections to terminate, even if it takes a lot of time.
+The order `shutdown notimeout` is accepted too. It is meant to wait for the requests in progress without a time limit, but since the server does not wait for them yet, the process exits at once, as with `shutdown`.
 
-The default timeout value can be set in the configuration file (see `shutdowntimeout` option above).
+The `<shutdowntimeout>` option of the configuration file is currently not used by this command.
 
 
 ---
@@ -1241,7 +1238,7 @@ See also module extendconfiguration for some options, like the ability to follow
 
 *Eliom* is a powerful framework for programming Web applications in OCaml.
 
-See the full documentation `here`.
+See the full documentation [here](https://ocsigen.org/eliom/).
 
 
 ---
@@ -1810,13 +1807,13 @@ Securityheaders adds common security-related HTTP headers to responses with a si
 
 By default, to every response that does not already set them:
 
-- `X-Content-Type-Options: nosniff` — forbids the browser from MIME-sniffing, so it honours the declared `Content-Type` instead of guessing. Prevents a file served as, say, `text/plain` from being run as HTML or JavaScript.
-- `X-Frame-Options: SAMEORIGIN` — only the same origin may embed the page in a frame, mitigating clickjacking. (The modern equivalent is the CSP `frame-ancestors` directive; keeping both is common.)
-- `Referrer-Policy: strict-origin-when-cross-origin` — limits how much of the URL is sent in the `Referer` header to other origins.
+- `X-Content-Type-Options: nosniff` forbids the browser from MIME-sniffing, so it honours the declared `Content-Type` instead of guessing. Prevents a file served as, say, `text/plain` from being run as HTML or JavaScript.
+- `X-Frame-Options: SAMEORIGIN` lets only the same origin embed the page in a frame, mitigating clickjacking. (The modern equivalent is the CSP `frame-ancestors` directive; keeping both is common.)
+- `Referrer-Policy: strict-origin-when-cross-origin` limits how much of the URL is sent in the `Referer` header to other origins.
 Two further headers are **opt-in** (added only when you configure them):
 
-- `Strict-Transport-Security` (HSTS) — tells the browser to use HTTPS only for this domain. **Use with care:** it is honoured only over HTTPS, it is sticky (the browser remembers it for the whole `max-age`), and `includeSubDomains` forces *every* subdomain of the registrable domain to HTTPS for that duration — which can take sibling subdomains offline if they are not all on HTTPS. Enable it only when the whole domain is HTTPS-only.
-- `Content-Security-Policy` (CSP) — restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.
+- `Strict-Transport-Security` (HSTS) tells the browser to use HTTPS only for this domain. **Use with care:** it is honoured only over HTTPS, it is sticky (the browser remembers it for the whole `max-age`), and `includeSubDomains` forces *every* subdomain of the registrable domain to HTTPS for that duration. This can take sibling subdomains offline if they are not all on HTTPS. Enable it only when the whole domain is HTTPS-only.
+- `Content-Security-Policy` (CSP) restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.
 Any header already set by the application is left untouched, so you can override a default per response.
 
 ## Ordering
@@ -1952,9 +1949,27 @@ This page describes how to extend Ocsigen's server. This can be used to create n
 
 You can take as example the files `staticmod.ml` or `accesscontrol.ml` from Ocsigen Server's distribution.
 
-The type of request is `Ocsigen.Extensions.request_info` (have a look at it in the interface of module [`Ocsigen.Extensions`](./Ocsigen-Extensions.md)).
+The type of request is [`Ocsigen.Extensions.request`](./Ocsigen-Extensions.md#type-request) (have a look at it in the interface of module [`Ocsigen.Extensions`](./Ocsigen-Extensions.md)). Its field `request_info`, of type [`Ocsigen.Request.t`](./Ocsigen-Request.md#type-t), describes the HTTP request.
 
-Each extensions loaded in the configuration file tries to handle the request and returns something of type `Extensions.answer`. If the page is not found by the extension (`Ext_not_found`), the following one will try to handle the request. If the page is found, the answer is `Ext_found r`. An extension can also modify the request before giving it to the next one (answer `Ext_continue_with of Extensions.request_info`), etc.
+Each extension loaded in the configuration file tries to handle the request and returns something of type [`Ocsigen.Extensions.answer`](./Ocsigen-Extensions.md#type-answer). If the page is not found by the extension (`Ext_next status`), the following one will try to handle the request. If the page is found, the answer is `Ext_found f`, where `f` is the function that generates the response. An extension can also modify the request before giving it to the next one (answer `Ext_continue_with (request, cookies, status)`), etc.
+
+An extension is a function of type [`Ocsigen.Extensions.extension`](./Ocsigen-Extensions.md#type-extension). It receives `Req_not_found (status, request)` if no previous extension generated a page, and `Req_found (request, response)` otherwise. For example:
+
+```ocaml
+let my_extension = function
+  | Ocsigen.Extensions.Req_not_found
+      (_status, {Ocsigen.Extensions.request_info; _})
+    when Ocsigen.Request.sub_path request_info = ["hello"] ->
+      Lwt.return
+        (Ocsigen.Extensions.Ext_found
+           (fun () ->
+             Lwt.return
+               (Ocsigen.Response.respond_string ~status:`OK ~body:"Hello" ())))
+  | Ocsigen.Extensions.Req_not_found (status, _) ->
+      Lwt.return (Ocsigen.Extensions.Ext_next status)
+  | Ocsigen.Extensions.Req_found _ ->
+      Lwt.return Ocsigen.Extensions.Ext_do_nothing
+```
 
 ### Filtering the outputs
 
@@ -1964,21 +1979,45 @@ It is also possible to create extensions that will filter the output of the serv
 
 #### Extending the configuration file for an extension
 
-The parsing of Ocsigen's configuration file is using a very basic xml parser (package `xml-light`). The function to be registered by the `Extensions.register_extension` function takes two parameters: the path of the web site and the xml subtree.
+The parsing of Ocsigen's configuration file is using a very basic xml parser (package `xml-light`). The `fun_site` function given to [`Ocsigen.Extensions.register`](./Ocsigen-Extensions.md#val-register) receives, among other parameters, the path of the web site and the xml subtree, and returns the extension (see the type [`Ocsigen.Extensions.parse_config`](./Ocsigen-Extensions.md#type-parse_config)).
 
+```ocaml
+let parse_config _path _parse_fun = function
+  | Xml.Element ("hello", _attrs, _content) ->
+      (* Read the attributes and the content here *)
+      my_extension
+  | Xml.Element (t, _, _) ->
+      raise (Ocsigen.Extensions.Bad_config_tag_for_extension t)
+  | _ -> raise (Ocsigen.Extensions.Error_in_config_file "(my extension)")
+
+let () =
+  Ocsigen.Extensions.register ~name:"myextension"
+    ~fun_site:(fun _userconf _hosts _config path _parse_host parse_fun ->
+      parse_config path parse_fun)
+    ()
 ```
-let parse_config path = function
-    Xml.Element ("tag", attr, content) -> ...
-      (* Do what you want here *)
-  | Xml.Element _ ->
-      raise (Extensions.Bad_config_tag_for_extension t)
-  | _ -> raise (Extensions.Error_in_config_file "(my extension)")
-```
-The module `Parseconfig` defines functions to parse strings or sizes (in bytes, GB etc).
+The module [`Ocsigen.Extensions.Configuration`](./Ocsigen-Extensions-Configuration.md) helps to write such parsers. The function `Ocsigen.Parseconfig.parse_size_tag` parses sizes (in bytes, GB etc).
 
 #### Giving parameters to an extension
 
-Extensions may take parameters in the configuration file. During the loading of the extension, the function `Extensions.get_config ()` returns the xml tree between `<extension>` and `</extension>` (or `<library>` and `</library>`). Write a parser for that tree.
+Extensions may take parameters in the configuration file. Give an `init_fun` function to [`Ocsigen.Extensions.register`](./Ocsigen-Extensions.md#val-register): when the extension is loaded, it receives the xml tree between `<extension>` and `</extension>` (or `<library>` and `</library>`). Write a parser for that tree. Without `init_fun`, the extension accepts no parameter.
+
+```ocaml
+let greeting = ref "Hello"
+
+let parse_global_config = function
+  | [] -> ()
+  | [Xml.Element ("greeting", [], [Xml.PCData s])] -> greeting := s
+  | _ ->
+      raise
+        (Ocsigen.Extensions.Error_in_config_file
+           "Unexpected content inside myextension config")
+
+let () =
+  Ocsigen.Extensions.register ~name:"myextension"
+    ~fun_site:(fun _ _ _ path _ parse_fun -> parse_config path parse_fun)
+    ~init_fun:parse_global_config ()
+```
 
 ### Catching the request before it is fully read
 
@@ -1988,13 +2027,17 @@ For some extensions of the Web server, it is necessary to catch the request befo
 
 If you want to add your own commands for the server command pipe, do something like:
 
-```
+```ocaml
 let () =
-  Ocsigen.Extensions.register_command_function ~prefix:"yourextensionname"
-    (fun s c -> match c with
-       | ["mycommand"] -> ...
-       | _ -> raise Ocsigen.Extensions.Unknown_command)
+  Ocsigen.Command.register_command_function ~prefix:"myextension"
+    (fun _command args ->
+       match args with
+       | ["mycommand"] ->
+           (* Do what you want here *)
+           Lwt.return ()
+       | _ -> raise Ocsigen.Command.Unknown_command)
 ```
+The command to write in the pipe is then `myextension:mycommand`.
 
 
 ---

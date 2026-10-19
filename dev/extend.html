@@ -188,16 +188,51 @@
       </nav>
       <article class="rightcol">
         <header class="odoc-preamble"><h1 id="writing-an-extension-for-ocsigen-server">Writing an extension for Ocsigen server</h1><p>This page describes how to extend Ocsigen's server. This can be used to create new ways to generate pages (like Apache modules), to filter and change the requests (for example, rewriting of URLS), to extend the syntax of the configuration file.</p></header>
-        <div class="odoc-content"><h3 id="filtering-the-requests-or-writing-a-module-to-generate-pages">Filtering the requests or writing a module to generate pages</h3><p>You can take as example the files <code>staticmod.ml</code> or <code>accesscontrol.ml</code> from Ocsigen Server's distribution.</p><p>The type of request is <code>Ocsigen.Extensions.request_info</code> (have a look at it in the interface of module <a href="Ocsigen/Extensions/index.html"><code>Ocsigen.Extensions</code></a>).</p><p>Each extensions loaded in the configuration file tries to handle the request and returns something of type <code>Extensions.answer</code>. If the page is not found by the extension (<code>Ext_not_found</code>), the following one will try to handle the request. If the page is found, the answer is <code>Ext_found r</code>. An extension can also modify the request before giving it to the next one (answer <code>Ext_continue_with of Extensions.request_info</code>), etc.</p><h3 id="filtering-the-outputs">Filtering the outputs</h3><p>It is also possible to create extensions that will filter the output of the server (for example to compress it). It is very similar to the previous one. Have a look at the file <code>deflatemod.ml</code> for an example.</p><h3 id="extending-the-configuration-file">Extending the configuration file</h3><h4 id="extending-the-configuration-file-for-an-extension">Extending the configuration file for an extension</h4><p>The parsing of Ocsigen's configuration file is using a very basic xml parser (package <code>xml-light</code>). The function to be registered by the <code>Extensions.register_extension</code> function takes two parameters: the path of the web site and the xml subtree.</p><pre>let parse_config path = function
-    Xml.Element (&quot;tag&quot;, attr, content) -&gt; ...
-      (* Do what you want here *)
-  | Xml.Element _ -&gt;
-      raise (Extensions.Bad_config_tag_for_extension t)
-  | _ -&gt; raise (Extensions.Error_in_config_file &quot;(my extension)&quot;)</pre><p>The module <code>Parseconfig</code> defines functions to parse strings or sizes (in bytes, GB etc).</p><h4 id="giving-parameters-to-an-extension">Giving parameters to an extension</h4><p>Extensions may take parameters in the configuration file. During the loading of the extension, the function <code>Extensions.get_config ()</code> returns the xml tree between <code>&lt;extension&gt;</code> and <code>&lt;/extension&gt;</code> (or <code>&lt;library&gt;</code> and <code>&lt;/library&gt;</code>). Write a parser for that tree.</p><h3 id="catching-the-request-before-it-is-fully-read">Catching the request before it is fully read</h3><p>For some extensions of the Web server, it is necessary to catch the request before it has been fully read (especially before the body of the request has been read). For example it is the case if you want to write a (reverse) proxy.</p><h3 id="adding-new-commands-for-the-server">Adding new commands for the server</h3><p>If you want to add your own commands for the server command pipe, do something like:</p><pre>let () =
-  Ocsigen.Extensions.register_command_function ~prefix:&quot;yourextensionname&quot;
-    (fun s c -&gt; match c with
-       | [&quot;mycommand&quot;] -&gt; ...
-       | _ -&gt; raise Ocsigen.Extensions.Unknown_command)</pre></div>
+        <div class="odoc-content"><h3 id="filtering-the-requests-or-writing-a-module-to-generate-pages">Filtering the requests or writing a module to generate pages</h3><p>You can take as example the files <code>staticmod.ml</code> or <code>accesscontrol.ml</code> from Ocsigen Server's distribution.</p><p>The type of request is <a href="Ocsigen/Extensions/index.html#type-request"><code>Ocsigen.Extensions.request</code></a> (have a look at it in the interface of module <a href="Ocsigen/Extensions/index.html"><code>Ocsigen.Extensions</code></a>). Its field <code>request_info</code>, of type <a href="Ocsigen/Request/index.html#type-t"><code>Ocsigen.Request.t</code></a>, describes the HTTP request.</p><p>Each extension loaded in the configuration file tries to handle the request and returns something of type <a href="Ocsigen/Extensions/index.html#type-answer"><code>Ocsigen.Extensions.answer</code></a>. If the page is not found by the extension (<code>Ext_next status</code>), the following one will try to handle the request. If the page is found, the answer is <code>Ext_found f</code>, where <code>f</code> is the function that generates the response. An extension can also modify the request before giving it to the next one (answer <code>Ext_continue_with (request, cookies, status)</code>), etc.</p><p>An extension is a function of type <a href="Ocsigen/Extensions/index.html#type-extension"><code>Ocsigen.Extensions.extension</code></a>. It receives <code>Req_not_found (status, request)</code> if no previous extension generated a page, and <code>Req_found (request, response)</code> otherwise. For example:</p><pre class="language-ocaml"><code>let my_extension = function
+  | Ocsigen.Extensions.Req_not_found
+      (_status, {Ocsigen.Extensions.request_info; _})
+    when Ocsigen.Request.sub_path request_info = [&quot;hello&quot;] -&gt;
+      Lwt.return
+        (Ocsigen.Extensions.Ext_found
+           (fun () -&gt;
+             Lwt.return
+               (Ocsigen.Response.respond_string ~status:`OK ~body:&quot;Hello&quot; ())))
+  | Ocsigen.Extensions.Req_not_found (status, _) -&gt;
+      Lwt.return (Ocsigen.Extensions.Ext_next status)
+  | Ocsigen.Extensions.Req_found _ -&gt;
+      Lwt.return Ocsigen.Extensions.Ext_do_nothing</code></pre><h3 id="filtering-the-outputs">Filtering the outputs</h3><p>It is also possible to create extensions that will filter the output of the server (for example to compress it). It is very similar to the previous one. Have a look at the file <code>deflatemod.ml</code> for an example.</p><h3 id="extending-the-configuration-file">Extending the configuration file</h3><h4 id="extending-the-configuration-file-for-an-extension">Extending the configuration file for an extension</h4><p>The parsing of Ocsigen's configuration file is using a very basic xml parser (package <code>xml-light</code>). The <code>fun_site</code> function given to <a href="Ocsigen/Extensions/index.html#val-register"><code>Ocsigen.Extensions.register</code></a> receives, among other parameters, the path of the web site and the xml subtree, and returns the extension (see the type <a href="Ocsigen/Extensions/index.html#type-parse_config"><code>Ocsigen.Extensions.parse_config</code></a>).</p><pre class="language-ocaml"><code>let parse_config _path _parse_fun = function
+  | Xml.Element (&quot;hello&quot;, _attrs, _content) -&gt;
+      (* Read the attributes and the content here *)
+      my_extension
+  | Xml.Element (t, _, _) -&gt;
+      raise (Ocsigen.Extensions.Bad_config_tag_for_extension t)
+  | _ -&gt; raise (Ocsigen.Extensions.Error_in_config_file &quot;(my extension)&quot;)
+
+let () =
+  Ocsigen.Extensions.register ~name:&quot;myextension&quot;
+    ~fun_site:(fun _userconf _hosts _config path _parse_host parse_fun -&gt;
+      parse_config path parse_fun)
+    ()</code></pre><p>The module <a href="Ocsigen/Extensions/Configuration/index.html"><code>Ocsigen.Extensions.Configuration</code></a> helps to write such parsers. The function <code>Ocsigen.Parseconfig.parse_size_tag</code> parses sizes (in bytes, GB etc).</p><h4 id="giving-parameters-to-an-extension">Giving parameters to an extension</h4><p>Extensions may take parameters in the configuration file. Give an <code>init_fun</code> function to <a href="Ocsigen/Extensions/index.html#val-register"><code>Ocsigen.Extensions.register</code></a>: when the extension is loaded, it receives the xml tree between <code>&lt;extension&gt;</code> and <code>&lt;/extension&gt;</code> (or <code>&lt;library&gt;</code> and <code>&lt;/library&gt;</code>). Write a parser for that tree. Without <code>init_fun</code>, the extension accepts no parameter.</p><pre class="language-ocaml"><code>let greeting = ref &quot;Hello&quot;
+
+let parse_global_config = function
+  | [] -&gt; ()
+  | [Xml.Element (&quot;greeting&quot;, [], [Xml.PCData s])] -&gt; greeting := s
+  | _ -&gt;
+      raise
+        (Ocsigen.Extensions.Error_in_config_file
+           &quot;Unexpected content inside myextension config&quot;)
+
+let () =
+  Ocsigen.Extensions.register ~name:&quot;myextension&quot;
+    ~fun_site:(fun _ _ _ path _ parse_fun -&gt; parse_config path parse_fun)
+    ~init_fun:parse_global_config ()</code></pre><h3 id="catching-the-request-before-it-is-fully-read">Catching the request before it is fully read</h3><p>For some extensions of the Web server, it is necessary to catch the request before it has been fully read (especially before the body of the request has been read). For example it is the case if you want to write a (reverse) proxy.</p><h3 id="adding-new-commands-for-the-server">Adding new commands for the server</h3><p>If you want to add your own commands for the server command pipe, do something like:</p><pre class="language-ocaml"><code>let () =
+  Ocsigen.Command.register_command_function ~prefix:&quot;myextension&quot;
+    (fun _command args -&gt;
+       match args with
+       | [&quot;mycommand&quot;] -&gt;
+           (* Do what you want here *)
+           Lwt.return ()
+       | _ -&gt; raise Ocsigen.Command.Unknown_command)</code></pre><p>The command to write in the pipe is then <code>myextension:mycommand</code>.</p></div>
       </article>
     </div>
   </div>

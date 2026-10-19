@@ -6,13 +6,13 @@ Securityheaders adds common security-related HTTP headers to responses with a si
 
 By default, to every response that does not already set them:
 
-- `X-Content-Type-Options: nosniff` — forbids the browser from MIME-sniffing, so it honours the declared `Content-Type` instead of guessing. Prevents a file served as, say, `text/plain` from being run as HTML or JavaScript.
-- `X-Frame-Options: SAMEORIGIN` — only the same origin may embed the page in a frame, mitigating clickjacking. (The modern equivalent is the CSP `frame-ancestors` directive; keeping both is common.)
-- `Referrer-Policy: strict-origin-when-cross-origin` — limits how much of the URL is sent in the `Referer` header to other origins.
+- `X-Content-Type-Options: nosniff` forbids the browser from MIME-sniffing, so it honours the declared `Content-Type` instead of guessing. Prevents a file served as, say, `text/plain` from being run as HTML or JavaScript.
+- `X-Frame-Options: SAMEORIGIN` lets only the same origin embed the page in a frame, mitigating clickjacking. (The modern equivalent is the CSP `frame-ancestors` directive; keeping both is common.)
+- `Referrer-Policy: strict-origin-when-cross-origin` limits how much of the URL is sent in the `Referer` header to other origins.
 Two further headers are **opt-in** (added only when you configure them):
 
-- `Strict-Transport-Security` (HSTS) — tells the browser to use HTTPS only for this domain. **Use with care:** it is honoured only over HTTPS, it is sticky (the browser remembers it for the whole `max-age`), and `includeSubDomains` forces *every* subdomain of the registrable domain to HTTPS for that duration — which can take sibling subdomains offline if they are not all on HTTPS. Enable it only when the whole domain is HTTPS-only.
-- `Content-Security-Policy` (CSP) — restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.
+- `Strict-Transport-Security` (HSTS) tells the browser to use HTTPS only for this domain. **Use with care:** it is honoured only over HTTPS, it is sticky (the browser remembers it for the whole `max-age`), and `includeSubDomains` forces *every* subdomain of the registrable domain to HTTPS for that duration. This can take sibling subdomains offline if they are not all on HTTPS. Enable it only when the whole domain is HTTPS-only.
+- `Content-Security-Policy` (CSP) restricts where scripts, styles, etc. may come from. Very effective against XSS, but application-specific: there is no safe generic default, and a wrong policy breaks the site. Set one tailored to your application.
 Any header already set by the application is left untouched, so you can override a default per response.
 
 ## Ordering
