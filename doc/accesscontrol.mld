@@ -53,7 +53,7 @@ Combining conditions (all their children must be conditions):
 - [<nextsite/>]: stops parsing current site. If the page has been found, answer. If not, try next site. {e from Ocsigen 1.2}
 - [<nexthost/>]: stops parsing current host. If the page has been found, answer. If not, try next host. {e from Ocsigen 1.2}
 - [<stop/>]: stops parsing configuration file (answers now whether the page has been found or not). {e from Ocsigen 1.2}
-- [<allow-forward-for/>]: if there is an X-Forwarded-For header in the request, its first address is taken as the address of the client, which the [<ip>] conditions that follow then test. A port after an address, as some proxies send, is ignored. With [check-equal-ip="true"], the header is used only if its last address is the one of the proxy that sent the request. Nginx and Revproxy do not add their own address, so do not use this option behind them.
+- [<allow-forward-for/>]: if there is an X-Forwarded-For header in the request, the address of the client is taken from it, and the [<ip>] conditions that follow then test this address. Each proxy adds to this header the address of the host that connected to it, so the client is its last address, the one that the proxy in front of Ocsigen Server added: the addresses at its left come from the client, which can choose them. Behind a chain of proxies, give the addresses or networks of the others, separated by spaces, in the [proxies] attribute, for instance [<allow-forward-for proxies="10.0.0.0/8 192.0.2.1"/>]: their addresses are skipped from the right, and the client is the first other one (the first address if all are proxies). A port after an address, as some proxies send, is ignored. The [check-equal-ip] attribute of older versions is refused.
 - [<allow-forward-proto/>]: if the X-Forwarded-Proto header is set to https (http), the connection is considered as secured (unsecure) even if the connection is not in ssl (is in ssl).
 
 {b Security.} [<allow-forward-for/>] and [<allow-forward-proto/>] trust
@@ -64,13 +64,11 @@ address of the proxy with [<ip>] (see the
 that the server, its logs and the applications take for its own, or make the
 server believe that a plain HTTP connection is secure.
 
-Behind the proxy too, the first address of X-Forwarded-For is the one that
-the client chose, if it sent the header and the proxy adds an address to it
-instead of replacing it. Then, a client can pass the [<ip>] conditions that
-follow [<allow-forward-for/>]. Revproxy replaces the header. With nginx, use
-[proxy_set_header X-Forwarded-For $remote_addr;], not
-[$proxy_add_x_forwarded_for], which keeps the addresses that the client
-sent.
+Only list in [proxies] hosts that you trust: a client whose address is in it
+can choose the address that the server takes, and pass the [<ip>] conditions
+that follow [<allow-forward-for/>]. The [proxies] attribute only applies to
+the addresses of the header: it does not check the host that sent the request,
+which the [<if>] above must still check.
 
 {1 Examples}
 
