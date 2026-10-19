@@ -479,8 +479,12 @@ The file associating file name extensions to their MIME type. Example:
 <mimefile>/etc/ocsigenserver/mime.types</mimefile>
 v}
 
-{3 [<debugmode/>] : Error messages in pages}
-Use this option for debugging your Web sites. Full error messages will be written in Error 500 pages. Example:
+{3 [<debugmode/>] : Debug mode for applications}
+Use this option for debugging your Web sites. Ocsigenserver itself does not
+use it: error pages never show the details of an exception, which go to the
+logs. Applications may read it with {!Ocsigen.Config.get_debugmode}: Eliom
+then explains its "Wrong parameters" pages, and keeps debugging information
+in the data it sends to the client. Example:
 
 {v
 <debugmode/>
