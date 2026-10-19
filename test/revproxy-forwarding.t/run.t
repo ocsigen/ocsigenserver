@@ -148,3 +148,14 @@ make the proxy close the connection to the client:
   connection: keep-alive
   
   ok
+
+A client that leaves before the end of a response makes the proxy close its
+connection to the target, which would otherwise stay open:
+
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT7/endless | head -c 100000 \
+  >   >/dev/null
+  $ for _ in $(seq 1 50); do
+  >   grep -q '/endless' raw.log && break; sleep 0.1
+  > done
+  $ grep '/endless' raw.log
+  /endless: connection closed
