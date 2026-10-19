@@ -53,6 +53,15 @@ Incompatible changes:
    (RFC 8615), and directory listings no longer show them. This applies to
    serve mode too. The new hidedotfiles="false" attribute of <static> (or
    ~hide_dotfiles:false for Staticmod.run) serves them again.
+ * A request is now answered 400 (Bad Request), and its connection closed,
+   when it has no Host in HTTP/1.1, several Host header fields, or an
+   invalid Host: anything but a host name, an IPv4 address or an IPv6
+   address in brackets, with an optional port. Percent-encoded host names
+   are refused, and so are raw non-ASCII names (send the ASCII form of an
+   internationalized name, xn--...), and an invalid or empty host in a
+   request target in absolute form (http://host/...). Such requests used to
+   be served, by the last Host, by the first <host> of the configuration, or
+   by the virtual host of the decoded name.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -233,6 +242,8 @@ Bug fixes:
    dot in the host name ("example.org."). A request for "EXAMPLE.ORG" used
    to miss the <host hostfilter="example.org"> configuration, and its access
    restrictions, and could be served by another host.
+ * The error responses made by the server, such as 400 or 404, now say that
+   their body is text (Content-Type: text/plain; charset=utf-8).
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,

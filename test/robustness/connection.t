@@ -81,25 +81,87 @@ Pipelined requests are answered in order on the same connection.
   index
   [idle]
 
-BUG: an HTTP/1.1 request without Host must be answered 400 (RFC 9112
-section 3.2). It goes to the first <host> of the configuration instead.
+An HTTP/1.1 request without Host is answered 400 (RFC 9112 section 3.2),
+even with an absolute URI.
 
   $ printf 'GET /hello.txt HTTP/1.1\r\n\r\n' | send
-  HTTP/1.1 401 Unauthorized
-  [idle]
+  HTTP/1.1 400 Bad Request
+  [closed]
+  $ printf 'GET http://x/hello.txt HTTP/1.1\r\n\r\n' | send
+  HTTP/1.1 400 Bad Request
+  [closed]
 
-BUG: a request with two Host headers must be answered 400 (RFC 9112 section
-3.2). The last one is used instead. A proxy in front that uses the first one
-would then disagree with the server on the virtual host.
+A request with two Host headers is answered 400 too, in HTTP/1.0 as well: a
+proxy in front that uses the other one would disagree with the server on the
+virtual host.
 
   $ printf 'GET /hello.txt HTTP/1.1\r\nHost: x\r\nHost: admin.test\r\n\r\n' |
   >   send
-  HTTP/1.1 401 Unauthorized
-  [idle]
+  HTTP/1.1 400 Bad Request
+  [closed]
   $ printf 'GET /hello.txt HTTP/1.1\r\nHost: admin.test\r\nHost: x\r\n\r\n' |
   >   send
+  HTTP/1.1 400 Bad Request
+  [closed]
+  $ printf 'GET /hello.txt HTTP/1.0\r\nHost: x\r\nHost: admin.test\r\n\r\n' |
+  >   send
+  HTTP/1.1 400 Bad Request
+  [closed]
+
+So is a Host that is not a host name, an IPv4 address or an IPv6 address in
+brackets, with an optional port. The connection is then closed.
+
+  $ for h in 'x@admin.test' 'admin.test/x' 'x, admin.test' 'x:abc' '[::1' \
+  >   '[admin.test]'; do
+  >   printf 'GET /hello.txt HTTP/1.1\r\nHost: %s\r\n\r\n' "$h" | send; done
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+
+Percent-encoding is refused too: virtual hosts are chosen with the decoded
+name, which a proxy in front of the server does not see. Here, a proxy that
+protects admin.test would let these requests through.
+
+  $ for h in '%61dmin.test' 'admin.test%0Aevil' 'x%41'; do
+  >   printf 'GET / HTTP/1.1\r\nHost: %s\r\n\r\n' "$h" | send; done
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+
+These are valid.
+
+  $ for h in '127.0.0.1:8471' '[::1]:8471' ''; do
+  >   printf 'GET /hello.txt HTTP/1.1\r\nHost: %s\r\n\r\n' "$h" | send; done
   HTTP/1.1 200 OK
   [idle]
+  HTTP/1.1 200 OK
+  [idle]
+  HTTP/1.1 200 OK
+  [idle]
+
+The host of a request target in absolute form, which replaces Host, is
+checked in the same way.
+
+  $ for t in 'http://%61dmin.test/' 'http://user@admin.test/' 'ftp://x/'; do
+  >   printf 'GET %s HTTP/1.1\r\nHost: x\r\n\r\n' "$t" | send; done
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
+  HTTP/1.1 400 Bad Request
+  [closed]
 
 QUESTION: an HTTP/1.0 request without Host (allowed in HTTP/1.0) goes to the
 first <host> of the configuration (admin.test here, which asks for a
