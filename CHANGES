@@ -84,6 +84,11 @@ Incompatible changes:
    limit also applies to the bodies that Revproxy forwards: raise it on a
    reverse proxy in front of a service that accepts larger bodies, with the
    new --max-request-body-size option for ocsigenserver --reverse-proxy.
+ * The log source of Authbasic is named "ocsigen:ext:authbasic". It had the
+   name of the one of Accesscontrol, "ocsigen:ext:access-control", so
+   <loglevel source="ocsigen:ext:access-control"> also set the level of the
+   messages of Authbasic. They now need
+   <loglevel source="ocsigen:ext:authbasic">.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
