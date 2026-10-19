@@ -270,6 +270,8 @@ Bug fixes:
    lets a method pass on, Authbasic.Bad_config_tag_for_auth, was not exported.
    An unknown method, or a <plain> without login and password, now gives a
    clear configuration error.
+ * The log source of Authbasic is named "ocsigen:ext:authbasic". It had the
+   name of the one of Accesscontrol, "ocsigen:ext:access-control".
 
 ==== 8.0.0 (2026-09-24) ===
 
