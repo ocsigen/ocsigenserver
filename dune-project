@@ -30,6 +30,7 @@
   (lwt (>= 6.1.0))
   lwt_react
   lwt_ssl
+  magic-mime
   ocamlfind
   (re (>= 1.11))
   react
