@@ -390,8 +390,9 @@ as a non-root user, use one of:
 - a reverse proxy (nginx, HAProxy, Caddy, ...) terminating ports 80/443 and
   forwarding to Ocsigenserver on a high port (recommended, see the [<timeout>]
   note below);
-- the Linux capability [cap_net_bind_service] on the executable
-  ([setcap 'cap_net_bind_service=+ep' ...]);
+- the Linux capability [cap_net_bind_service] on the native executable
+  ([setcap 'cap_net_bind_service=+ep' ...], on [ocsigenserver.opt]: see the
+  {{!page-index}introduction});
 - a firewall/port redirection from 80/443 to a high port.
 
 {3 [<charset>] : default charset for pages}
