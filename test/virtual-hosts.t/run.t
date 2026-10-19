@@ -2,8 +2,8 @@ Virtual hosts match host names case-insensitively, and ignore a final dot
 (fully qualified form), in the Host header as in the hostfilter attribute.
 
   $ . ../server-test-helpers.sh
-  $ free_ports 1
-  $ trap 'kill $CONF_PID 2>/dev/null; stop_server $LIB_PID' EXIT
+  $ free_ports 2
+  $ trap 'kill $CONF_PID $NOCATCH_PID 2>/dev/null; stop_server $LIB_PID' EXIT
   $ mkdir -p log admin www
   $ echo admin > admin/index.html && echo public > www/index.html
   $ hosts () {
@@ -48,3 +48,26 @@ With hosts given to Ocsigen.Server.host ~regexp:"admin\\.test$":
   ADMIN.Test: admin
   admin.test.: admin
   other.test: public
+
+An HTTP/1.0 request without Host goes to a host that accepts any name, like
+a request for an unknown name. Without such a catch-all host, it gets 404,
+instead of going to the first host whatever its hostfilter:
+
+  $ cat > nocatchall.xml <<EOF
+  > <ocsigen><server>
+  >   <port>127.0.0.1:$PORT2</port>
+  >   <logdir>log</logdir>
+  >   <extension findlib-package="ocsigenserver.ext.staticmod"/>
+  >   <host hostfilter="admin.test"><static dir="admin"/></host>
+  > </server></ocsigen>
+  > EOF
+  $ ocsigenserver -c nocatchall.xml >nocatchall.log 2>&1 &
+  $ NOCATCH_PID=$!
+  $ wait_server $NOCATCH_PID nocatchall.log http://127.0.0.1:$PORT2/
+  $ hosts "" http://127.0.0.1:$PORT2/ admin.test other.test
+  admin.test: admin
+  other.test: Error: Not Found
+  $ curl -s --http1.0 -H 'Host:' -o /dev/null -w '%{http_code}\n' \
+  >   http://127.0.0.1:$PORT2/
+  404
+  $ kill $NOCATCH_PID
