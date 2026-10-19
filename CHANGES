@@ -21,6 +21,9 @@ Incompatible changes:
    through Logs (source ocsigen:main).
  * Ocsigen.Response.to_response_expert takes the method of the request
    (~meth), to send no body in response to HEAD.
+ * Ocsigen.Multipart.post_params takes a function (~on_file) that it calls
+   with the name of each uploaded file it creates, so that the caller can
+   remove it.
  * The one-command modes (ocsigenserver DIR, --serve, --reverse-proxy) now
    listen on the loopback interface (127.0.0.1) by default, instead of on all
    the interfaces, and their startup banner shows the address. The new
@@ -245,6 +248,12 @@ Bug fixes:
    regexp of a <rewrite> got a 500 instead of going on to the next
    instruction. As a rewritten request starts again from the beginning, a
    request that matched got a 500 too, unless it matched again.
+ * The files uploaded in multipart requests are removed again once the
+   request is handled, as the manual says. Since the move to cohttp, they
+   stayed in the upload directory for ever. A file that the application
+   moved, to keep it, is left alone without a warning. If the application
+   answers before the body is decoded, the files created after the answer
+   are removed once it is (see Ocsigen.Request.on_post_data_decoded).
 
 ==== 8.0.0 (2026-09-24) ===
 
