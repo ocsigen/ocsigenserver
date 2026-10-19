@@ -13,10 +13,9 @@ log shows.
   HTTP/1.1 200 OK
   [idle]
   $ printf 'POST /index.html HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\nab\r\nGET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' |
-  >   send
-  HTTP/1.1 200 OK
-  HTTP/1.1 200 OK
-  [idle]
+  >   rawhttp send --port "$PORT" --idle 0.5 | grep -o 'HTTP/1\.1 [0-9]*'
+  HTTP/1.1 405
+  HTTP/1.1 200
   $ grep -c '"GET /hello.txt HTTP/1.1" 200' log/access.log
   2
 
@@ -44,6 +43,48 @@ A method that is not a token is rejected.
   $ printf 'G\001ET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' | send
   HTTP/1.1 400 Bad Request
   [closed]
+
+A static file is only answered to GET and HEAD. OPTIONS gets the allowed
+methods without content, as for the default health check of HAProxy (RFC
+9110 section 9.3.7). Other methods get 405, with the allowed methods
+(section 15.5.6). Methods are case-sensitive: "get" is not GET.
+
+  $ printf 'OPTIONS / HTTP/1.0\r\nHost: x\r\n\r\n' |
+  >   rawhttp send --port "$PORT" --idle 0.5
+  HTTP/1.1 200 OK
+  allow: GET, HEAD, OPTIONS
+  x-content-type-options: nosniff
+  x-frame-options: SAMEORIGIN
+  referrer-policy: strict-origin-when-cross-origin
+  server: Ocsigen
+  content-length: 0
+  connection: close
+  
+  [closed]
+
+  $ printf 'POST /hello.txt HTTP/1.1\r\nHost: x\r\nContent-Length: 0\r\n\r\n' |
+  >   rawhttp send --port "$PORT" --idle 0.5
+  HTTP/1.1 405 Method Not Allowed
+  allow: GET, HEAD, OPTIONS
+  content-type: text/plain; charset=utf-8
+  x-content-type-options: nosniff
+  x-frame-options: SAMEORIGIN
+  referrer-policy: strict-origin-when-cross-origin
+  server: Ocsigen
+  content-length: 25
+  connection: keep-alive
+  
+  Error: Method Not Allowed
+  [idle]
+  $ printf 'get /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' | send
+  HTTP/1.1 405 Method Not Allowed
+  [idle]
+  $ printf 'FROB /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' | send
+  HTTP/1.1 405 Method Not Allowed
+  [idle]
+  $ printf 'TRACE / HTTP/1.1\r\nHost: x\r\n\r\n' | send
+  HTTP/1.1 405 Method Not Allowed
+  [idle]
 
 The server is not a forward proxy: CONNECT is answered 501, without a tunnel.
 
