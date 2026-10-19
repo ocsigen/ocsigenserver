@@ -648,16 +648,18 @@ v}
 [shutdown] server command does not read it (see
 {{!section-shutdown}Stopping the server} below).
 
-{3 [<netbuffersize>] : Size of the input buffer}
+{3 [<netbuffersize>] : Size of the multipart buffer}
 
-
-Size of the input buffer (sockets). It is also the maximum size of headers and post data. Example:
-
-
+Written in bytes, without a unit. Default: 8192. The maximum size of the
+buffer used to read [multipart/form-data] request bodies (forms with files):
+the headers of each part must fit in it, otherwise the request gets
+[413 Request Entity Too Large]. The headers of the request itself are read
+by cohttp, and do not depend on this option. Example:
 
 {v
 <netbuffersize>8192</netbuffersize>
 v}
+
 {3 Settings with no effect}
 
 The following settings are accepted for compatibility, but have no effect:
