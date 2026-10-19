@@ -213,7 +213,7 @@ To make the server listen on all IPv4 and IPv6 interfaces:
    <port>80</port>
 v}
 
-{b Warning:} with versions < 1.3.1, the two previous variants were equivalent and would make the server listen on all IPv6 interfaces, and on IPv4 interfaces as well depending on the operating system (more specifically, the default value of IPV6_V6ONLY). This OS-dependent behaviour has been fixed in version 1.3.1.
+The server then uses one socket for each family. On a system without IPv6, it listens on IPv4 only, and says so in the logs (at the [info] level). The IPv6 sockets accept IPv6 connections only, whatever the default of the system ([IPV6_V6ONLY]).
 
 You can also make the server bind on a specific IPv6 address (it must be between brackets):
 

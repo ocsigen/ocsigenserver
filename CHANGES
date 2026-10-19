@@ -264,6 +264,11 @@ Bug fixes:
    address given by the proxy. Before, they matched no forwarded address.
    Unless the proxy replaces the X-Forwarded-For header, the client can
    choose this address (see the manual).
+ * <port>80</port> listens on IPv6 again, as well as IPv4, as the manual says.
+   Since 3.0.0, it listened on IPv4 only, while <port>[::]:80</port> also
+   accepted IPv4 connections where the system allows it (Linux). The server
+   now opens one socket for each family, and its IPv6 sockets accept IPv6
+   connections only. Without IPv6, a port alone listens on IPv4 only.
 
 ==== 8.0.0 (2026-09-24) ===
 
