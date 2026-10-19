@@ -30,3 +30,13 @@ all the paths used in {{!page-staticmod}Staticmod} must be relative, and are app
 
 The syntax of user configuration files is usually the same as the one of the part between [<host>] and [</host>] in the main configuration file. However, the extensions can choose to disallow some options that are unsafe in user mode,
 or forbid user mode entirely. See their individual documentation for details.
+
+{b Security.} Today, only {{!page-staticmod}Staticmod} (paths below
+[localpath], no [root]) and {{!page-extendconfiguration}Extendconfiguration}
+(no [followsymlinks="always"]) restrict what a user file can do. The other
+extensions that the server loads can be used in user files as in the main
+configuration file, with the rights of the server: for instance
+{{!page-revproxy}Revproxy}, {{!page-redirectmod}Redirectmod},
+{{!page-accesscontrol}Accesscontrol}, or Eliom, whose [<eliom module=...>]
+loads OCaml code. Use Userconf only if you trust your users, or load only the
+extensions that are safe for them.
