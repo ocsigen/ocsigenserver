@@ -60,6 +60,11 @@ the tags that have no effect. Last, the log levels set by the -vv option.
   tags without effect:
   warning: Config file: <servertimeout> has no effect and is ignored.
   warning: Config file: <datadir> has no effect and is ignored. Ocsipersist (DBM or SQLite) takes its location from its own <store> or <database> element.
+  warning: Config file: <filebuffersize> has no effect and is ignored.
+  warning: Config file: <minthreads> has no effect and is ignored.
+  warning: Config file: <maxthreads> has no effect and is ignored.
+  warning: Config file: <disablepartialrequests> has no effect and is ignored.
+  warning: Config file: <respectpipeline> has no effect and is ignored.
   
   -vv:
   existing Ocsigen source -> info

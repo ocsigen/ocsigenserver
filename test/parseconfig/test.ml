@@ -9,8 +9,7 @@
      [<mindatarate>] and [<maxconnectionsperaddress>];
    - the default and the wiring of [<commandpipe>] and [<logdir>];
    - the log levels set by [<loglevel>] and by the [logs:] command;
-   - the warnings for [<servertimeout>] and [<datadir>], which are accepted
-     but have no effect. *)
+   - the warnings for the tags that are accepted but have no effect. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
 let show_int64_option = function None -> "None" | Some n -> Int64.to_string n
@@ -172,7 +171,12 @@ let () =
   print_endline "tags without effect:";
   Ocsigen.Parseconfig.later_pass
     [ Xml.Element ("servertimeout", [], [Xml.PCData "20"])
-    ; Xml.Element ("datadir", [], [Xml.PCData "data"]) ]
+    ; Xml.Element ("datadir", [], [Xml.PCData "data"])
+    ; Xml.Element ("filebuffersize", [], [Xml.PCData "8192"])
+    ; Xml.Element ("minthreads", [], [Xml.PCData "10"])
+    ; Xml.Element ("maxthreads", [], [Xml.PCData "30"])
+    ; Xml.Element ("disablepartialrequests", [], [])
+    ; Xml.Element ("respectpipeline", [], []) ]
 
 (* The -vv option sets the level of the existing Ocsigen Server sources, and
    the default level of the sources created afterwards (those of the
