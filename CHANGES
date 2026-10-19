@@ -15,10 +15,19 @@ Incompatible changes:
    configuration file is ignored with a warning. ~datadir of
    Ocsigen.Server.start, Ocsigen.Config.get_datadir and set_datadir,
    Ocsigen_base.Config_static.datadir and ./configure --datadir are removed.
+ * Without <logdir> (or <syslog>) in the configuration file, or ~logdir for
+   Ocsigen.Server.start, there is no log directory: the logs go to the
+   standard output and standard error, which suits systemd and statically
+   linked programs. They used to go to the directory given to
+   ./configure --logdir (with opam, in the switch), and the server did not
+   start when it was missing or read-only. The generated configuration file
+   sets <logdir> explicitly. An empty path means no log directory.
+   Ocsigen.Config.get_logdir and Ocsigen.Messages.error_log_path return a
+   string option, and Ocsigen_base.Config_static.logdir is removed.
  * Silent mode (-s) and daemon mode (-d) are now refused when the logs go to
    the terminal: always in serve mode and with --reverse-proxy, and with a
-   configuration file that gives neither <logdir> nor <syslog> to a server
-   built with no default log directory. These modes redirect the standard
+   configuration file that gives neither <logdir> nor <syslog>, or
+   Ocsigen.Server.start without ~logdir. These modes redirect the standard
    output and error to /dev/null, so nothing at all was logged, errors
    included. With -d, the server fails before it detaches.
  * Ocsigen.Messages.console is removed. It printed on the standard output,
@@ -101,6 +110,9 @@ New features:
    sets the level of a log source by its name.
 
 Bug fixes:
+ * Ocsigen.Server.start with ~logdir and ~syslog_facility:None no longer
+   fails with "Log directory requested, but not set": choosing no syslog
+   kept no log directory either.
  * Security: a response to HEAD no longer carries the body of the response to
    GET. The client, or a reverse proxy that keeps its connections to the server
    alive, took that body for the start of the next response on the connection,

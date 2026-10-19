@@ -14,13 +14,13 @@ The one-command modes always log to the terminal.
   $ sed 's/^.*\[ERROR\] //' out.log
   -s and -d cannot be combined with serve mode or --reverse-proxy, which log to the terminal
 
-With a configuration that gives neither a log directory nor syslog, a server
-built with no default log directory logs to the terminal too. An empty log
-directory does the same here. The program installs no Logs reporter: the
-server reports its errors on the terminal anyway.
+With neither a log directory nor syslog, in the configuration file or here
+with Ocsigen.Server.start, the logs go to the terminal too. The program
+installs no Logs reporter: the server reports its errors on the terminal
+anyway.
 
   $ dune build ./test.exe 2>&1
-  $ ./_build/default/test.exe -s "" >out.log 2>&1; echo "exit $?"
+  $ ./_build/default/test.exe -s >out.log 2>&1; echo "exit $?"
   exit 50
   $ grep -o 'Fatal - .*' out.log
   Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d.
@@ -28,7 +28,7 @@ server reports its errors on the terminal anyway.
 With -d, the server is refused before it detaches, so the command fails at
 once.
 
-  $ ./_build/default/test.exe -d "" >out.log 2>&1; echo "exit $?"
+  $ ./_build/default/test.exe -d >out.log 2>&1; echo "exit $?"
   exit 50
   $ grep -o 'Fatal - .*' out.log
   Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d.

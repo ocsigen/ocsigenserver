@@ -1,7 +1,6 @@
 val version_number : string
 val config_file : string ref
 val is_native : bool
-val logdir : string option ref
 val mimefile : string ref
 val bindir : string ref
 val extdir : string ref

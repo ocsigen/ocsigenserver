@@ -64,6 +64,7 @@ let veryverbose = ref false
 let debug = ref false
 let pidfile = ref (None : string option)
 let command_pipe = ref (None : string option)
+let logdir = ref (None : string option)
 let server_name = "Ocsigen"
 let full_server_name = server_name ^ "/" ^ version_number
 let native_ext = if is_native then ".exe" else ".bc"
@@ -94,12 +95,10 @@ let ssl_info = ref None
 let ports = ref []
 let ssl_ports = ref []
 let set_uploaddir u = uploaddir := u
-let set_logdir s = logdir := Some s
 
-let set_syslog_facility f =
-  syslog_facility := f;
-  logdir := None
-
+(* An empty path is no log directory, rather than the current directory. *)
+let set_logdir s = logdir := if s = "" then None else Some s
+let set_syslog_facility f = syslog_facility := f
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
 let set_mimefile s = mimefile := s
@@ -156,12 +155,7 @@ let set_ssl_info i = ssl_info := i
 let set_ports l = ports := l
 let set_ssl_ports l = ssl_ports := l
 let get_uploaddir () = !uploaddir
-
-let get_logdir () =
-  match !logdir with
-  | Some s -> s
-  | None -> raise (Config_file_error "Log directory requested, but not set")
-
+let get_logdir () = !logdir
 let get_syslog_facility () = !syslog_facility
 let get_config_file () = !config_file
 let get_pidfile () = !pidfile

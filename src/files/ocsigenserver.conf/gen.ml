@@ -51,7 +51,6 @@ let conf_ml =
 let version_number = _VERSION_
 let config_file = ref _CONFIGFILE_
 let is_native = Sys.backend_type = Sys.Native
-let logdir = ref (Some _LOGDIR_)
 let mimefile = ref _MIMEFILE_
 let bindir = ref _BINDIR_
 let extdir = ref _EXTDIR_
@@ -107,7 +106,6 @@ let ( // ) = Filename.concat
 
 let static_options = function
   | "VERSION" -> str version
-  | "LOGDIR" -> str logdir
   | "BINDIR" -> str bindir
   | "EXTDIR" -> str (libdir () // "ocsigenserver" // "extensions")
   | "STATICPAGESDIR" -> str staticpagesdir
