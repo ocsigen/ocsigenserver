@@ -89,6 +89,22 @@ let connection_options h =
     | "" -> None
     | option -> Some option)
 
+let add_vary h field =
+  let name = Name.(to_string vary) and field = Name.to_string field in
+  match Cohttp.Header.get h name with
+  | None -> Cohttp.Header.add h name field
+  | Some existing ->
+      let covered =
+        String.split_on_char ',' existing
+        |> List.exists (fun f ->
+          match String.lowercase_ascii (String.trim f) with
+          | "*" -> true
+          | f -> String.equal f field)
+      in
+      if covered
+      then h
+      else Cohttp.Header.replace h name (existing ^ ", " ^ field)
+
 let parse_star a = if a = "*" then None else Some a
 
 let parse_quality f s =
