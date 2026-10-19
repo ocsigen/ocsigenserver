@@ -40,10 +40,12 @@ The attributes of the cors tag are:
   names. This is the list of user defined headers accessible from the
   client. it Adds the [Access-Control-Expose-Headers] header.
 
-- [methods]: This is a comma separated list of method names. If
-  there is a requested method header in the preflight request, it adds
-  the [Access-Control-Allow-Methods] header if it match, otherwise
-  there is no cors header added.
+- [methods]: This is a comma separated list of method names. When a
+  request asks for one of them in its [Access-Control-Request-Method]
+  header, the extension adds the [Access-Control-Allow-Methods] header.
+  For another method, it adds no CORS header: it does not answer the
+  preflight request, and leaves the response to any other request as it
+  is.
 
 {b Security.} The extension allows {e any} origin: it copies the [Origin]
 header of the request into [Access-Control-Allow-Origin], and the requested
