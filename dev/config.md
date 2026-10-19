@@ -261,7 +261,7 @@ Requests are logged in the standard Apache/nginx [Combined Log Format](https://h
 ```
 that is, client address, identity (`-`), authenticated user (set by an authentication extension such as [Authbasic](./authbasic.md), `-` otherwise), request time, request line, response status, response size in bytes (`-` when unknown, for example for a streamed response), then the `Referer` and `User-Agent` headers. This format is understood out of the box by log analysers such as GoAccess, AWStats or Apache's own tools.
 
-If `<logdir>` is omitted (and `<syslog>` is not used), the logs are written to the standard output and standard error instead of to files, so that no log directory is required. In that case the access lines go to the standard output in the very same Combined Log Format.
+If `<logdir>` is omitted (and `<syslog>` is not used), the logs go to the default log directory chosen when Ocsigen Server was built (with an opam installation, `var/log/ocsigenserver` in the `lib/ocsigenserver` directory of the switch). Only a server built with no default log directory, such as a development build, writes them to the standard output and standard error instead, as the one-command modes always do. In that case the access lines go to the standard output in the very same Combined Log Format, and the silent (`-s`) and daemon (`-d`) modes, which redirect the standard output and error to `/dev/null`, are refused.
 
 Example :
 

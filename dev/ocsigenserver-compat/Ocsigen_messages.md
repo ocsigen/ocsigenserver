@@ -19,11 +19,6 @@ val warning : ?section:Logs.src -> string -> unit
 Write a message in warnings.log
 
 ```ocaml
-val console : (unit -> string) -> unit
-```
-Write a message in the console (if not called in silent mode)
-
-```ocaml
 val unexpected_exception : exn -> string -> unit
 ```
 Use that function for all impossible cases in exception handlers (`try ... with ... | e -> unexpected_exception ...` or `Lwt.catch ...`). A message will be written in `warnings.log`. Put something in the string to help locating the problem (usually the name of the function where is has been called).
@@ -47,3 +42,8 @@ val level_of_string : string -> Logs.level option
 val set_source_level : string -> Logs.level option -> bool
 ```
 `set_source_level name level` sets the level of every log source named `name` to `level` (`None` turns them off), and is `false` when there is no such source.
+
+```ocaml
+val logs_to_console : unit -> bool
+```
+`logs_to_console ()` is `true` when the logs go to the standard output and standard error rather than to log files or syslog: in the one-command modes, or when the configuration gives neither `<logdir>` nor `<syslog>` and the server has no default log directory.

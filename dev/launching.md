@@ -24,7 +24,7 @@ To run the server, use the command `ocsigenserver`. It has the following options
 
   -d, --daemon
          Daemon mode (detach the process).
-	 This is the default when there are more than 1 process.
+         Implies -s, so it needs log files or syslog.
 
   -help, --help
          Show summary of options.
@@ -33,7 +33,9 @@ To run the server, use the command `ocsigenserver`. It has the following options
          Specify a file where to write the PIDs of the servers.
 
   -s, --silent
-         Silent mode (error messages go in errors.log only).
+         Silent mode (error messages go in errors.log only). Refused when
+         the logs go to the terminal, as in serve mode and with
+         --reverse-proxy.
 
   -v, --verbose
          Verbose mode.
