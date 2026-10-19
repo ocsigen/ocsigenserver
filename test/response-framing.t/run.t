@@ -92,6 +92,29 @@ but no body: on a connection, the next response follows its headers.
   
   56789
 
+A body that is not sent, in response to HEAD or with a 204 status, still
+runs, so that it releases what it holds, such as the open file of a static
+page: two HEAD, one GET and one 204 release it four times.
+
+  $ ../response-framing/client.exe 'HEAD counted' 'HEAD counted' 'GET counted' \
+  >   'GET counted-no-content' 'GET released' | tr -d '\r' | tail -n 1; echo
+  4
+
+But its first write fails, as when the client is gone, so that a body that
+never ends stops. And the next request on the connection does not wait for
+the body: it is answered at once, after a body that never ends as after one
+that waits before its first write, as a stream of events waits for the first
+one.
+
+  $ ../response-framing/client.exe 'HEAD endless' 'GET range-fixed' |
+  >   tr -d '\r' | grep -E '^(HTTP/|\[timeout\])'
+  HTTP/1.1 200 OK
+  HTTP/1.1 206 Partial Content
+  $ ../response-framing/client.exe 'HEAD waiting' 'GET range-fixed' |
+  >   tr -d '\r' | grep -E '^(HTTP/|\[timeout\])'
+  HTTP/1.1 200 OK
+  HTTP/1.1 206 Partial Content
+
 A response with a 204 or 304 status has no body, nor any framing header:
 
   $ get http://x/no-content

@@ -60,6 +60,10 @@ let respond_not_found ?uri () =
   in
   respond_string ~status:`Not_found ~body ()
 
+(* Raised by the first write of a body that is not sent (see
+   [to_response_expert]). *)
+exception Discarded
+
 (* Weak entity-tag built from the file's modification time and size. *)
 let weak_etag ~mtime ~size = Printf.sprintf "W/\"%x-%x\"" mtime size
 
@@ -214,12 +218,18 @@ let respond_file
                    in
                    cat_loop ()
                  in
+                 (* When the response is not sent, as to [HEAD], the first
+                    write fails with [Discarded], which is not an error. The
+                    file has still been read up to [count] bytes (16 KiB), after
+                    a seek to the start of a range. *)
                  let* () =
-                   Lwt.catch send (fun exn ->
-                     Logs.warn (fun m ->
-                       m "Error resolving file %s (%s)" fname
-                         (Printexc.to_string exn));
-                     Lwt.return_unit)
+                   Lwt.catch send (function
+                     | Discarded -> Lwt.return_unit
+                     | exn ->
+                         Logs.warn (fun m ->
+                           m "Error resolving file %s (%s)" fname
+                             (Printexc.to_string exn));
+                         Lwt.return_unit)
                  in
                  Lwt.catch
                    (fun () -> Lwt_io.close ic)
@@ -342,13 +352,30 @@ let to_response_expert ~meth t =
   let res = to_cohttp_response t in
   ( res
   , fun _ic oc ->
+      let body, encoding = t.a_body in
       if sends_body ~meth t
       then
         let writer = R.make_body_writer ~flush:false res oc in
-        let body, encoding = t.a_body in
         let* () = body (R.write_body writer) in
         write_footer encoding oc
-      else Lwt.return_unit )
+      else (
+        (* The body still runs, so that it releases what it holds: the file
+           of a static page is opened when the response is made, and closed
+           once its body is written. But its first write fails, as when the
+           client is gone, so that a body does not go on for nothing: it
+           could be long, or never end. It runs detached: a body may wait
+           before its first write (a stream of events, for instance), and the
+           next request on the connection must not wait for it. The response
+           is complete anyway, so a failure of the body is only logged. *)
+        Lwt.dont_wait
+          (fun () -> body (fun _ -> Lwt.fail Discarded))
+          (function
+            | Discarded -> ()
+            | exn ->
+                Logs.warn (fun m ->
+                  m "The body of a response that is not sent failed: %s"
+                    (Printexc.to_string exn)));
+        Lwt.return_unit) )
 
 let response t = t.a_response
 let body t = t.a_body
