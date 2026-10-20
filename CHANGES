@@ -9,12 +9,12 @@ Incompatible changes:
    give the path, to keep the reload order, and reopen_logs for logrotate.
    Ocsigen.Config.get_command_pipe returns a string option, and
    Ocsigen_base.Config_static.command_pipe is removed.
- * The data directory is removed. The server never used it itself: only
-   Ocsipersist did, when its own <store> or <database> was missing, and it
-   now requires them. <datadir> in the configuration file is ignored with a
-   warning. ~datadir of Ocsigen.Server.start, Ocsigen.Config.get_datadir and
-   set_datadir, Ocsigen_base.Config_static.datadir and ./configure --datadir
-   are removed.
+ * The data directory is removed, and the installation no longer creates it.
+   The server never used it itself: only Ocsipersist did, when its own <store>
+   or <database> was missing, and it now requires them. <datadir> in the
+   configuration file is ignored with a warning. ~datadir of
+   Ocsigen.Server.start, Ocsigen.Config.get_datadir and set_datadir,
+   Ocsigen_base.Config_static.datadir and ./configure --datadir are removed.
  * Silent mode (-s) and daemon mode (-d) are now refused when the logs go to
    the terminal: always in serve mode and with --reverse-proxy, and with a
    configuration file that gives neither <logdir> nor <syslog> to a server
