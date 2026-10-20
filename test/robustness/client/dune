@@ -1,0 +1,18 @@
+; Raw HTTP client used by the robustness tests in the parent
+; directory.
+
+(library
+ (name raw_http)
+ (modules raw_http)
+ (libraries re ssl unix))
+
+(executable
+ (name rawhttp)
+ (modules rawhttp)
+ (libraries raw_http unix))
+
+(test
+ (name test_raw_http)
+ (package ocsigenserver)
+ (modules test_raw_http)
+ (libraries raw_http))
