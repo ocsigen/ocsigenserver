@@ -44,6 +44,8 @@ val builtin_packages : Ocsigen_base.Lib.String.Set.t
 ```ocaml
 val set_logdir : string -> unit
 ```
+The directory of the log files. Without it, or with an empty path, there is no log directory: unless syslog is used, the logs go to `stdout` and `stderr`.
+
 ```ocaml
 val set_syslog_facility : Syslog_message.facility option -> unit
 ```
@@ -157,8 +159,10 @@ val set_ports : (socket_type * int) list -> unit
 val set_ssl_ports : (socket_type * int) list -> unit
 ```
 ```ocaml
-val get_logdir : unit -> string
+val get_logdir : unit -> string option
 ```
+The directory of the log files, or `None` if there is none.
+
 ```ocaml
 val get_syslog_facility : unit -> Syslog_message.facility option
 ```

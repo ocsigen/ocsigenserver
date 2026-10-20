@@ -10,9 +10,6 @@ val config_file : string Stdlib.ref
 val is_native : bool
 ```
 ```ocaml
-val logdir : string option Stdlib.ref
-```
-```ocaml
 val mimefile : string Stdlib.ref
 ```
 ```ocaml

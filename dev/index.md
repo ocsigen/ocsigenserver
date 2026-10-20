@@ -124,6 +124,6 @@ Then run `ocsigenserver.opt` instead of `ocsigenserver`: `ocsigenserver` is a by
 
 ## If something goes wrong
 
-If something goes wrong, first have a look in the logs to see if there is an error message. The directory of logs is set in the configuration file or through option `?logdir` of function [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) (`$OPAM_SWITCH_PREFIX/lib/ocsigenserver/var/log/ocsigenserver` by default).
+If something goes wrong, first have a look in the logs to see if there is an error message. The directory of logs is set in the configuration file or through option `?logdir` of function [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start). Without it, the logs go to the standard output and standard error.
 
 If you cannot solve your problem, if you find a bug, a mistake in the documentation (even a small one), or if you want to make a suggestion, [open an issue on Github](https://github.com/ocsigen/ocsigenserver).
