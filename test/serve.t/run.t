@@ -1,6 +1,7 @@
 Serve a directory with a single command, with no configuration file and no
 pre-created log directory.
 
+  $ . ../server-test-helpers.sh
   $ mkdir www
   $ printf '<html>hello</html>' > www/index.html
   $ mkdir -p www/.git www/.well-known www/sub
@@ -14,11 +15,11 @@ a file here), so no log directory is created.
   $ TMPDIR=$PWD/tmp ocsigenserver --serve www --port 8061 >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
+  $ wait_http http://127.0.0.1:8061/index.html
 
 An existing file is served with the correct status, content type and body:
 
   $ curl -s -D headers -o body -w '%{http_code}\n' --max-time 10 \
-  >   --retry 20 --retry-delay 1 --retry-connrefused \
   >   http://127.0.0.1:8061/index.html
   200
   $ cat body; echo
@@ -86,8 +87,9 @@ above). --address chooses another address:
   $ ocsigenserver --serve www --port 8084 --address 0.0.0.0 \
   >   >server-any.log 2>&1 &
   $ ANY_PID=$!
-  $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 --retry 20 \
-  >   --retry-delay 1 --retry-connrefused http://127.0.0.1:8084/index.html
+  $ wait_http http://127.0.0.1:8084/index.html
+  $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
+  >   http://127.0.0.1:8084/index.html
   200
   $ grep -o 'on http://0.0.0.0:8084 (all interfaces)' server-any.log
   on http://0.0.0.0:8084 (all interfaces)

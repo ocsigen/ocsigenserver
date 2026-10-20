@@ -1,16 +1,17 @@
 Static files are served with validators (ETag and Last-Modified), and
 conditional requests are answered with 304 Not Modified.
 
+  $ . ../server-test-helpers.sh
   $ mkdir www
   $ printf 'cacheable content' > www/f.txt
   $ ocsigenserver --serve www --port 8065 >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
+  $ wait_http http://127.0.0.1:8065/f.txt
 
 A normal request succeeds and carries both validators:
 
-  $ curl -s -D headers -o /dev/null --max-time 10 --retry 20 --retry-delay 1 \
-  >   --retry-connrefused http://127.0.0.1:8065/f.txt
+  $ curl -s -D headers -o /dev/null --max-time 10 http://127.0.0.1:8065/f.txt
   $ grep -io '^etag:' headers
   etag:
   $ grep -io '^last-modified:' headers

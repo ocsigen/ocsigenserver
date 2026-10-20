@@ -30,6 +30,28 @@ run_server ()
   trap 'echo shutdown > local.cmd && wait' EXIT
 }
 
+# Wait until the server answers HTTP requests at URL, whatever the status
+# code. Polls every 20 ms, for about 10 s at most. curl's own --retry waits a
+# whole second before its first retry, hence this loop. The arguments are
+# passed to curl, so options may precede the URL (-k for a self-signed
+# certificate).
+#
+# Usage:
+#   $ ocsigenserver --serve www --port 8061 >server.log 2>&1 &
+#   $ wait_http http://127.0.0.1:8061/
+#
+wait_http ()
+{
+  wait_http_deadline=$(($(date +%s) + 10))
+  while ! curl -s -o /dev/null --max-time 2 "$@"; do
+    if [ "$(date +%s)" -gt "$wait_http_deadline" ]; then
+      echo "wait_http: $* does not answer" >&2
+      return 1
+    fi
+    sleep 0.02
+  done
+}
+
 # Wrapper around 'curl' that connects to the server. First argument is the
 # request path, the other arguments are directly passed to 'curl'.
 #

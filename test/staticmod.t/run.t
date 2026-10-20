@@ -1,5 +1,6 @@
 Staticmod with a configuration file.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p www/.git www/.well-known www/sub open
   $ echo index > www/index.html
   $ echo secret > www/.env; echo secret > www/.git/config
@@ -25,11 +26,11 @@ Staticmod with a configuration file.
   $ ocsigenserver -c site.conf >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
+  $ wait_http http://127.0.0.1:8085/index.html
 
 A <static regexp> that does not match the path lets the next one serve it:
 
-  $ curl -s -w ' %{http_code}\n' --max-time 10 --retry 20 --retry-delay 1 \
-  >   --retry-connrefused http://127.0.0.1:8085/index.html
+  $ curl -s -w ' %{http_code}\n' --max-time 10 http://127.0.0.1:8085/index.html
   index
    200
 
