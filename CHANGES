@@ -286,6 +286,10 @@ Bug fixes:
    address given by the proxy. Before, they matched no forwarded address.
    Unless the proxy replaces the X-Forwarded-For header, the client can
    choose this address (see the manual).
+ * Outputfilter.run (`Rewrite ...) replaces every match of its regexp in the
+   value of the header, as <outputfilter> does in the configuration file, and
+   as its documentation said. It only rewrote a value that the regexp matched
+   as a whole.
 
 ==== 8.0.0 (2026-09-24) ===
 

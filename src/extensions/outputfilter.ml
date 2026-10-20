@@ -116,5 +116,8 @@ let run ~mode () _ _ _ =
   match mode with
   | `Code c -> gen_code c
   | `Rewrite (header, regexp, dest) ->
-      gen (`Rewrite (header, Re.Pcre.regexp ("^" ^ regexp ^ "$"), dest))
+      (* As in the configuration file: every match in the value of the header
+         is replaced. *)
+      gen
+        (`Rewrite (header, Ocsigen_base.Lib.Netstring_pcre.regexp regexp, dest))
   | `Add f -> gen (`Add f)
