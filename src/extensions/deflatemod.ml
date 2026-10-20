@@ -107,13 +107,15 @@ let rec filtermap f = function
   | t :: q -> (
     match f t with Some s -> s :: filtermap f q | None -> filtermap f q)
 
-let convert = function
-  | Some "deflate", v -> Some (Deflate, qvalue v)
-  | Some "gzip", v | Some "x-gzip", v -> Some (Gzip, qvalue v)
-  | Some "zstd", v -> Some (Zstd, qvalue v)
-  | Some "identity", v -> Some (Id, qvalue v)
-  | None, v -> Some (Star, qvalue v)
-  | _ -> None
+(* Content codings are case-insensitive (RFC 9110 8.4.1). *)
+let convert (coding, v) =
+  match Option.map String.lowercase_ascii coding with
+  | Some "deflate" -> Some (Deflate, qvalue v)
+  | Some ("gzip" | "x-gzip") -> Some (Gzip, qvalue v)
+  | Some "zstd" -> Some (Zstd, qvalue v)
+  | Some "identity" -> Some (Id, qvalue v)
+  | None -> Some (Star, qvalue v)
+  | Some _ -> None
 
 (* Follow http's RFC to select the transfer encoding *)
 let select_encoding accept_header =

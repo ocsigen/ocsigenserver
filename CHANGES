@@ -513,6 +513,8 @@ Bug fixes:
    the ETag, Last-Modified and Accept-Ranges of its file.
  * Static files: a HEAD request with a Range header gets 200, as RFC 9110
    requires: ranges are only defined for GET. It got 206.
+ * Deflatemod: content codings are case-insensitive, as RFC 9110 says:
+   "Accept-Encoding: GZIP" now gets gzip.
 
 ==== 8.0.0 (2026-09-24) ===
 
