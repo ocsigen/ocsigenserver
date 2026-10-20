@@ -30,6 +30,7 @@ module Name : sig
   val accept_encoding : t
   val accept_language : t
   val accept_ranges : t
+  val allow : t
   val authorization : t
   val cache_control : t
   val connection : t
