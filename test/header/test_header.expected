@@ -1,0 +1,29 @@
+== Entity_tag.parse_list
+"*" -> *
+" * " -> *
+"\"a\"" -> "a"
+"W/\"a\", \"b\",\"c\"" -> W/"a" "b" "c"
+"\"a\"" | "W/\"b\"" -> "a" W/"b"
+"*" | "\"a\"" -> "a"
+"\"a,b\", \"c\"" -> "a,b" "c"
+"\"\"" -> ""
+"" -> 
+"a, \"b\"" -> "b"
+"\"unterminated" -> 
+"w/\"a\"" -> 
+"\"a\"x, \"b\"" -> "b"
+"\"a\" , \"b\" " -> "a" "b"
+"\"a b\", \"c\"" -> "c"
+"\"a\127\", \"c\"" -> "c"
+== Entity_tag.make
+"a-1" -> valid
+"!#~\128" -> valid
+"a\"b" -> Invalid_argument
+"a b" -> Invalid_argument
+"a\tb" -> Invalid_argument
+"a\127" -> Invalid_argument
+== Entity_tag comparisons
+"1" "1": weak true, strong true
+"1" W/"1": weak true, strong false
+W/"1" W/"1": weak true, strong false
+"1" "2": weak false, strong false
