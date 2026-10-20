@@ -334,6 +334,10 @@ Bug fixes:
  * Static files: If-Modified-Since gives 304 when the file has not changed
    since the date, not only when the date is exactly its Last-Modified one,
    and the obsolete date formats (RFC 850 and asctime) are accepted.
+ * Static files: a false If-Match or If-Unmodified-Since condition is
+   answered with 412, as RFC 9110 requires; they were ignored. As the ETag
+   is weak, If-Match only succeeds with "*". Ocsigen.Response.respond_file
+   takes ~if_match and ~if_unmodified_since.
 
 ==== 8.0.0 (2026-09-24) ===
 

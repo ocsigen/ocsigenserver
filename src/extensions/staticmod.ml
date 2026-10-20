@@ -248,6 +248,9 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
                   | values -> Some (String.concat ", " values)
                 in
                 Ocsigen.Response.respond_file
+                  ?if_match:(list_header Ocsigen_http.Header.Name.if_match)
+                  ?if_unmodified_since:
+                    (header Ocsigen_http.Header.Name.if_unmodified_since)
                   ?if_none_match:
                     (list_header Ocsigen_http.Header.Name.if_none_match)
                   ?if_modified_since:
