@@ -297,19 +297,32 @@ is ignored when the date is invalid, or when If-None-Match is present
   >   'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
   HTTP/1.1 200 OK
 
-Tolerated: only a date equal to Last-Modified gives 304, and a later one
-gives 200. RFC 9110 section 13.1.3 allows servers to honor only exact
-matches, although "not modified since" is more useful.
+A field with more than one value is ignored too (section 13.1.3), whatever
+the values and their order:
+
+  $ status GET /hello.txt 'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT' \
+  >   'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Modified-Since: Wed, 01 Jan 2020 11:59:59 GMT' \
+  >   'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
+  HTTP/1.1 200 OK
+
+The condition of If-Modified-Since is "not modified since": a later date
+gives 304 too (section 13.1.3, which allows honoring only exact matches, but
+this is less useful). The obsolete date formats, RFC 850 and asctime, are
+accepted (section 5.6.7).
 
   $ status GET /hello.txt 'If-Modified-Since: Wed, 01 Jan 2020 12:00:01 GMT'
-  HTTP/1.1 200 OK
-
-BUG: a recipient must accept the obsolete date formats, RFC 850 and asctime
-(section 5.6.7). Expected: 304 for both requests.
-
+  HTTP/1.1 304 Not Modified
   $ status GET /hello.txt 'If-Modified-Since: Wednesday, 01-Jan-20 12:00:00 GMT'
-  HTTP/1.1 200 OK
+  HTTP/1.1 304 Not Modified
   $ status GET /hello.txt 'If-Modified-Since: Wed Jan  1 12:00:00 2020'
+  HTTP/1.1 304 Not Modified
+
+A date later than the time of the request is ignored, as Apache does: the
+file may change before that date, and the client would keep its stale copy.
+
+  $ status GET /hello.txt 'If-Modified-Since: Fri, 01 Jan 2100 00:00:00 GMT'
   HTTP/1.1 200 OK
 
 BUG: If-Match and If-Unmodified-Since are ignored. A false condition must be
