@@ -489,13 +489,55 @@ let log_connection_error = function
       Logs.err ~src:section (fun fmt ->
         fmt "Unhandled exception: %s" (Printexc.to_string exn))
 
-(* The number of services. Conduit stops accepting connections once their
-   number, plus one for each service waiting to accept one, exceeds
+(* The number of listening sockets. Conduit stops accepting connections once
+   their number, plus one for each socket waiting to accept one, exceeds
    <maxconnected>. *)
 let services = ref 0
 
+(* A TCP socket listening on [addr] and [port], as Conduit makes them, except
+   that an IPv6 socket accepts IPv6 connections only, whatever the default of
+   the system: [`All] listens on IPv4 with a socket of its own. *)
+let listening_socket addr port =
+  let sockaddr = Unix.ADDR_INET (addr, port) in
+  let domain = Unix.domain_of_sockaddr sockaddr in
+  let fd = Lwt_unix.socket domain Unix.SOCK_STREAM 0 in
+  Lwt.catch
+    (fun () ->
+       Lwt_unix.setsockopt fd Unix.SO_REUSEADDR true;
+       if domain = Unix.PF_INET6 then Lwt_unix.setsockopt fd Unix.IPV6_ONLY true;
+       Lwt_unix.bind fd sockaddr >|= fun () ->
+       Lwt_unix.listen fd 128;
+       Lwt_unix.set_close_on_exec fd;
+       fd)
+    (fun exn -> Lwt_unix.close fd >>= fun () -> Lwt.reraise exn)
+
+let listening_sockets address port =
+  match address with
+  | `IPv4 addr | `IPv6 addr -> listening_socket addr port >|= fun fd -> [fd]
+  | `All ->
+      listening_socket Unix.inet_addr_any port >>= fun ipv4 ->
+      Lwt.catch
+        (fun () ->
+           listening_socket Unix.inet6_addr_any port >|= fun ipv6 -> [ipv4; ipv6])
+        (function
+          | Unix.Unix_error
+              ( (Unix.EAFNOSUPPORT | Unix.EPROTONOSUPPORT | Unix.EADDRNOTAVAIL)
+              , _
+              , _ ) ->
+              Logs.info ~src:section (fun fmt ->
+                fmt "No IPv6 on this system: listening on port %d in IPv4 only"
+                  port);
+              Lwt.return [ipv4]
+          | exn -> Lwt_unix.close ipv4 >>= fun () -> Lwt.reraise exn)
+
 let service ?ssl ~address ~port ~connector () =
-  incr services;
+  (match address with
+    | `Unix f -> Lwt.return [`Unix_domain_socket (`File f)]
+    | (`All | `IPv4 _ | `IPv6 _) as address ->
+        listening_sockets address port
+        >|= List.map (fun fd -> `TCP (`Socket fd)))
+  >>= fun modes ->
+  services := !services + List.length modes;
   Connection_guard.set_capacity
     (Config.get_max_number_of_connections () - !services + 1);
   (* TLS is handled here rather than by Conduit, so that the handshake and the
@@ -505,13 +547,7 @@ let service ?ssl ~address ~port ~connector () =
     | `Unix _, _ | _, None -> None
     | _, Some ssl -> Some (tls_context ssl)
   in
-  (* We create a specific context for Conduit. *)
-  let src =
-    match address with
-    | `Unix _ -> None
-    | _ -> Some (Config.Socket_type.to_string address)
-  in
-  Conduit_lwt_unix.init ?src () >>= fun ctx ->
+  Conduit_lwt_unix.init () >>= fun ctx ->
   Connection_guard.start ();
   (* We catch the INET_ADDR of the server *)
   let callback =
@@ -541,53 +577,53 @@ let service ?ssl ~address ~port ~connector () =
               ~write:(Lwt_ssl.write_bytes sock) ~finish:(fun () ->
               Lwt_ssl.close_notify sock >|= fun (_ : bool) -> ()))
   in
-  let mode =
-    match address with
-    | `Unix f -> `Unix_domain_socket (`File f)
-    | _ -> `TCP (`Port port)
-  in
   (* Serve each connection here rather than through
      [Cohttp_lwt_unix.Server.create], which does nothing more, so that its
      reads and writes can be watched. The channels made by Conduit are not
      used; Conduit closes the socket once the connection ends. *)
-  Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
-    (fun flow _ic _oc ->
-       match socket_of_flow flow with
-       | None ->
-           Logs.err ~src:section (fun fmt ->
-             fmt "Unsupported kind of connection");
-           Lwt.return_unit
-       | Some (fd, client) ->
-           let limit = Config.get_max_connections_per_address () in
-           if
-             not
-               (Option.fold ~none:true
-                  ~some:(Connection_guard.Per_address.acquire ~limit)
-                  client)
-           then (
-             Logs.info ~src:section (fun fmt ->
-               fmt
-                 "Refusing a connection from %s, which already has %d (see <maxconnectionsperaddress>)"
-                 (client_to_string client) limit);
-             Lwt.return_unit)
-           else
-             (* The address is released whatever happens from now on, even
+  let on_connection flow _ic _oc =
+    match socket_of_flow flow with
+    | None ->
+        Logs.err ~src:section (fun fmt -> fmt "Unsupported kind of connection");
+        Lwt.return_unit
+    | Some (fd, client) ->
+        let limit = Config.get_max_connections_per_address () in
+        if
+          not
+            (Option.fold ~none:true
+               ~some:(Connection_guard.Per_address.acquire ~limit)
+               client)
+        then (
+          Logs.info ~src:section (fun fmt ->
+            fmt
+              "Refusing a connection from %s, which already has %d (see <maxconnectionsperaddress>)"
+              (client_to_string client) limit);
+          Lwt.return_unit)
+        else
+          (* The address is released whatever happens from now on, even
                 if watching the connection fails. *)
-             Lwt.finalize
-               (fun () ->
-                  let guard =
-                    Connection_guard.create (limits ())
-                      (match tls with
-                      | Some _ -> Connection_guard.Handshake
-                      | None -> Connection_guard.Headers)
-                      ~on_expiry:(on_expiry ~fd ~client)
-                  in
-                  Lwt.finalize
-                    (fun () -> serve_socket ~guard flow fd)
-                    (fun () ->
-                       Connection_guard.release guard;
-                       Lwt.return_unit))
-               (fun () ->
-                  Option.iter Connection_guard.Per_address.release client;
-                  Lwt.return_unit))
+          Lwt.finalize
+            (fun () ->
+               let guard =
+                 Connection_guard.create (limits ())
+                   (match tls with
+                   | Some _ -> Connection_guard.Handshake
+                   | None -> Connection_guard.Headers)
+                   ~on_expiry:(on_expiry ~fd ~client)
+               in
+               Lwt.finalize
+                 (fun () -> serve_socket ~guard flow fd)
+                 (fun () ->
+                    Connection_guard.release guard;
+                    Lwt.return_unit))
+            (fun () ->
+               Option.iter Connection_guard.Per_address.release client;
+               Lwt.return_unit)
+  in
+  Lwt.join
+    (List.map
+       (fun mode ->
+          Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
+            on_connection)
+       modes)
   >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())
