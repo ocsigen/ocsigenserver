@@ -132,6 +132,9 @@ New features:
    like Mutex.protect, which OCaml 4.14 does not have.
    Ocsigen.Messages.level_of_string parses a log level, and set_source_level
    sets the level of a log source by its name.
+ * OCaml API: Ocsigen_http.Header.Entity_tag parses lists of entity tags, as
+   in If-Match and If-None-Match, and compares them (weak and strong
+   comparisons of RFC 9110).
 
 Bug fixes:
  * Ocsigen.Server.start with ~logdir and ~syslog_facility:None no longer
@@ -323,6 +326,9 @@ Bug fixes:
    address given by the proxy. Before, they matched no forwarded address.
    Unless the proxy replaces the X-Forwarded-For header, the client can
    choose this address (see the manual).
+ * Static files: If-None-Match uses the weak comparison, as RFC 9110 requires:
+   "x" now matches the ETag W/"x". All the If-None-Match lines of a request
+   are read, and a comma within an entity tag no longer splits it.
 
 ==== 8.0.0 (2026-09-24) ===
 

@@ -241,8 +241,15 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
           (match page with
             | Ocsigen.Local_files.RFile fname ->
                 let header name = Ocsigen.Request.header request_info name in
+                (* A list header may be written on several lines. *)
+                let list_header name =
+                  match Ocsigen.Request.header_multi request_info name with
+                  | [] -> None
+                  | values -> Some (String.concat ", " values)
+                in
                 Ocsigen.Response.respond_file
-                  ?if_none_match:(header Ocsigen_http.Header.Name.if_none_match)
+                  ?if_none_match:
+                    (list_header Ocsigen_http.Header.Name.if_none_match)
                   ?if_modified_since:
                     (header Ocsigen_http.Header.Name.if_modified_since)
                   ?range:(header Ocsigen_http.Header.Name.range)

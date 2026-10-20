@@ -106,3 +106,26 @@ end
 module Content_type : sig
   val choose : Accept.t -> string -> string list -> string
 end
+
+(** Entity tags (RFC 9110, section 8.8.3). *)
+module Entity_tag : sig
+  type t = {weak : bool; opaque : string}
+  (** [opaque] is the tag without its quotes. *)
+
+  val to_string : t -> string
+  (** [to_string t] is [t] as written in a header, such as [W/"1-2"]. *)
+
+  val parse_list : string list -> [`Any | `Tags of t list]
+  (** [parse_list values] is the value of an [If-Match] or [If-None-Match]
+      header field written on the lines [values]: [`Any] when it is just
+      ["*"], otherwise the list of its entity tags. Elements that are not
+      entity tags are ignored. *)
+
+  val weak_equal : t -> t -> bool
+  (** [weak_equal a b] is the weak comparison of [a] and [b]: their opaque tags
+      are equal, whether they are weak or not (section 8.8.3.2). *)
+
+  val strong_equal : t -> t -> bool
+  (** [strong_equal a b] is the strong comparison of [a] and [b]: they are not
+      weak and their opaque tags are equal. *)
+end
