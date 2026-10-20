@@ -66,7 +66,7 @@ val exchange :
 
 (** {1 Rendering} *)
 
-val render : ?status_only:bool -> outcome -> string
+val render : ?status_only:bool -> ?validators:bool -> outcome -> string
 (** [render outcome] is a printable rendering of [outcome] that does not
     depend on the time of the test:
     - line ends ["\r\n"] become ["\n"], other control and non-ASCII bytes
@@ -77,7 +77,9 @@ val render : ?status_only:bool -> outcome -> string
       [[overflow]].
 
     With [~status_only:true], only the status lines ([HTTP/...]) are kept,
-    followed by the ending line. *)
+    followed by the ending line. With [~validators:true], the [ETag] and
+    [Last-Modified] lines are kept, for tests that fix the modification time
+    of the files they request. *)
 
 val status_codes : string -> int list
 (** [status_codes received] is the list of status codes of the responses in

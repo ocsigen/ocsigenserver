@@ -175,13 +175,15 @@ let escape line =
     line;
   Buffer.contents buffer
 
-let variable_header =
+let header_line names =
   Re.compile
     (Re.seq
        [ Re.bos
-       ; Re.no_case
-           (Re.alt [Re.str "date:"; Re.str "etag:"; Re.str "last-modified:"]) ])
+       ; Re.no_case (Re.alt (List.map (fun name -> Re.str (name ^ ":")) names))
+       ])
 
+let date_header = header_line ["date"]
+let validator_header = header_line ["etag"; "last-modified"]
 let is_status_line line = String.starts_with ~prefix:"HTTP/" line
 
 let ending_line = function
@@ -190,9 +192,10 @@ let ending_line = function
   | Idle -> "[idle]"
   | Overflow -> "[overflow]"
 
-let render ?(status_only = false) {received; ending} =
+let render ?(status_only = false) ?(validators = false) {received; ending} =
   let keep line =
-    (not (Re.execp variable_header line))
+    (not (Re.execp date_header line))
+    && (validators || not (Re.execp validator_header line))
     && ((not status_only) || is_status_line line)
   in
   let lines = List.filter keep (split_lines received) in
