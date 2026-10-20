@@ -22,6 +22,7 @@ let first_byte = ref 10.
 let idle = ref 2.
 let trickle = ref None
 let status_only = ref false
+let validators = ref false
 let count = ref 1
 let file = ref None
 
@@ -89,7 +90,10 @@ let send () =
     Raw_http.exchange ?trickle:!trickle ~first_byte:!first_byte ~idle:!idle
       (target ()) request
   with
-  | outcome -> print_string (Raw_http.render ~status_only:!status_only outcome)
+  | outcome ->
+      print_string
+        (Raw_http.render ~status_only:!status_only ~validators:!validators
+           outcome)
   | exception Raw_http.Connect_failed message -> connect_failed message
 
 let ending_name = function
@@ -178,7 +182,10 @@ let commands =
   [ ( "send"
     , send
     , target_options @ exchange_options
-      @ ["--status", Arg.Set status_only, " Only print the status lines"] )
+      @ [ "--status", Arg.Set status_only, " Only print the status lines"
+        ; ( "--validators"
+          , Arg.Set validators
+          , " Keep the ETag and Last-Modified header lines" ) ] )
   ; "repeat", repeat, target_options @ exchange_options @ count_option
   ; "hold", hold, target_options @ count_option @ exchange_options
   ; ( "wait"
