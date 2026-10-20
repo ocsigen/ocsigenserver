@@ -111,7 +111,10 @@ val respond_file :
     (RFC 9110 14); an unsatisfiable range gives [416]. A passed [if_range] (the
     [If-Range] header) must be the [Last-Modified] date, unchanged for at
     least a second, for the range to be honoured: [If-Range] calls for a strong
-    comparison, which the weak [ETag] never passes (RFC 9110 13.1.5). *)
+    comparison, which the weak [ETag] never passes (RFC 9110 13.1.5). Pass
+    [range] and [if_range] only for a GET request: ranges are not defined for
+    other methods, and a HEAD request gets the header section of the whole
+    file (RFC 9110 14.2). *)
 
 val update :
    ?response:Cohttp.Response.t
