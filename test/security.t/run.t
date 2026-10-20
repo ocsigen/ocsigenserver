@@ -2,7 +2,7 @@ Security hardening checks: command pipe permissions (F8) and error-body
 sanitisation (F4). Self-contained (POSIX sh, no bash helper) so it runs
 regardless of the cram shell.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ dune build ./test.exe 2>&1
   $ dune exec -- ./test.exe >server.log 2>&1 &
   $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT

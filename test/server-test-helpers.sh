@@ -12,7 +12,7 @@
 #
 run_server ()
 {
-  mkdir -p log data # Directories that might be required by the server
+  mkdir -p log # Directory that might be required by the server
   dune build "$1"
   # Run the server in the background, cut the datetime out of the log output.
   # Access lines (Combined Log Format) carry their own timestamp, which is not

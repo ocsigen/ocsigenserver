@@ -63,6 +63,6 @@ let () =
          ; ssl_ciphers = None
          ; ssl_dhfile = None
          ; ssl_curve = None })
-    ~logdir:"log" ~datadir:"data" ~uploaddir:None ~usedefaulthostname:true
+    ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
     ~command_pipe:"local.cmd"
     [ Ocsigen.Server.host [ echo ] ]

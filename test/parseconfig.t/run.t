@@ -1,8 +1,8 @@
 Size-valued configuration tags: the units accepted by parse_size_tag, and the
 wiring of each tag to its Config value. Then the defaults and the wiring of the
 connection tags and of <commandpipe>, and the log levels set by <loglevel> and
-by the logs: command of the command pipe. Then the warning for a tag that has
-no effect. Last, the log levels set by the -vv option.
+by the logs: command of the command pipe. Then the warnings for the tags that
+have no effect. Last, the log levels set by the -vv option.
 
   $ dune exec ./test.exe 2>&1
   parse_size_tag:
@@ -54,6 +54,7 @@ no effect. Last, the log levels set by the -vv option.
   
   tags without effect:
   warning: Config file: <servertimeout> has no effect and is ignored.
+  warning: Config file: <datadir> is no longer used and is ignored. Ocsipersist takes its directory from its own configuration (<store> or <database>).
   
   -vv:
   existing Ocsigen source -> info

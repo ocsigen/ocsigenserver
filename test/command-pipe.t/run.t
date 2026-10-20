@@ -4,7 +4,7 @@ checked before it is used. A path that belongs to another user is not tested
 here: it needs a second user. Self-contained (POSIX sh) so it runs regardless
 of the cram shell.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ dune build ./test.exe 2>&1
   $ start_server () {
   >   rm -f local.sock log/*

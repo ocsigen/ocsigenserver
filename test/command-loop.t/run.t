@@ -1,7 +1,7 @@
 An order of the command pipe that fails does not stop the command pipe: the
 later orders are still read. Self-contained POSIX sh.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ dune build ./test.exe 2>&1
   $ ./_build/default/test.exe >server.log 2>&1 &
   $ SERVER_PID=$!

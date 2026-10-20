@@ -7,12 +7,12 @@ Self-contained POSIX sh.
 
 In a host, through Extendconfiguration, the server accepts it:
 
-  $ mkdir -p log data www
+  $ mkdir -p log www
   $ echo hello > www/a.txt
   $ cat > conf.xml <<EOF
   > <ocsigen><server>
   >   <port>8097</port>
-  >   <logdir>log</logdir><datadir>data</datadir><commandpipe>local.cmd</commandpipe>
+  >   <logdir>log</logdir><commandpipe>local.cmd</commandpipe>
   >   <extension findlib-package="ocsigenserver.ext.staticmod"/>
   >   <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
   >   <host hostfilter="*">

@@ -55,7 +55,6 @@ Create your configuration file. You can take this one as an example:
     <port>8080</port>
 
     <logdir>local/var/log/mysite</logdir>
-    <datadir>local/var/data/mysite</datadir>
     <charset>utf-8</charset>
 
     <commandpipe>local/var/run/mysite-cmd</commandpipe>

@@ -6,7 +6,7 @@ timeout of 3 seconds and a minimum data rate of 2 bytes per second. A second
 server, the limit server, accepts 4 connections per address, and a third, the
 pool server, is full at 4 connections. client.ml runs the scenarios.
 
-  $ mkdir -p log data limit/log limit/data pool/log pool/data
+  $ mkdir -p log limit/log pool/log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost >/dev/null 2>&1
   $ dune build ./server.exe ./client.exe 2>&1

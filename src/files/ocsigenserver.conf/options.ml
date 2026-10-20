@@ -7,7 +7,6 @@ let libdir_set = 0
 let logdir = ""
 let configdir = ""
 let staticpagesdir = ""
-let datadir = ""
 let uploaddir = ""
 let commandpipe = ""
 let mimefile = ""

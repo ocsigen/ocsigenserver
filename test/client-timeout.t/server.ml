@@ -56,7 +56,6 @@ let start ~port ~tls_port ~dir ~command_pipe =
          ; ssl_dhfile = None
          ; ssl_curve = None })
     ~logdir:(Filename.concat dir "log")
-    ~datadir:(Filename.concat dir "data")
     ~uploaddir:None ~usedefaulthostname:true ~command_pipe
     ~default_charset:(Some "utf-8")
 

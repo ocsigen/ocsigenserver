@@ -86,7 +86,6 @@ set_defaults () {
     sysconfdir="/etc/ocsigenserver"
     staticpagesdir="/var/www/ocsigenserver"
     uploaddir="/tmp"
-    datadir="/var/lib/ocsigenserver"
     temproot="local"
     root=""
     ocsigen_user="www-data"
@@ -165,7 +164,6 @@ print_options () {
 	echo "    --logdir $logdir2"
 	echo "    --staticpagesdir $staticpagesdir"
 	echo "    --uploaddir $uploaddir"
-	echo "    --datadir $datadir"
 	echo "    --commandpipe $commandpipe"
 }
 
@@ -192,7 +190,6 @@ usage: ./configure [ options ]
   --docdir DIR		Install documentation in this directory
 
   --logdir DIR		Use this directory for Ocsigen's logs
-  --datadir DIR		The directory for data written by the server
 
   --staticpagesdir DIR	Install default static pages in this directory
   --uploaddir DIR	By default, files will be uploaded in this directory
@@ -310,11 +307,6 @@ while [ "$#" -gt 0 ]; do
 			;;
 		--uploaddir)
 			uploaddir="$2"
-			shift
-			shift
-			;;
-		--datadir)
-			datadir="$2"
 			shift
 			shift
 			;;
@@ -507,9 +499,6 @@ CONFIGDIR := $root$sysconfdir
 # Where to put static pages:
 STATICPAGESDIR := $root$staticpagesdir
 
-# Where to put dynamic data:
-DATADIR := $root$datadir
-
 # Default directory for file upload:
 UPLOADDIR := $root$uploaddir
 
@@ -536,7 +525,6 @@ let libdir_set = $libdir_set
 let logdir = "$root$logdir"
 let configdir = "$root$sysconfdir"
 let staticpagesdir = "$root$staticpagesdir"
-let datadir = "$root$datadir"
 let uploaddir = "$root$uploaddir"
 let commandpipe = "$root$commandpipe"
 let mimefile = "$root$sysconfdir/mime.types"

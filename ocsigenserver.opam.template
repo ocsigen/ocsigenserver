@@ -21,8 +21,6 @@ build: [
     "%{lib}%/ocsigenserver/var/run/ocsigenserver_command"
     "--staticpagesdir"
     "%{lib}%/ocsigenserver/var/www"
-    "--datadir"
-    "%{lib}%/ocsigenserver/var/lib/ocsigenserver"
     "--temproot"
     ""
     "--sysconfdir"

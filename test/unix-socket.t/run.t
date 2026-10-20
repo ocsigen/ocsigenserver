@@ -1,7 +1,7 @@
 A server listening on a Unix-domain socket, typically behind a reverse proxy,
 has no port of its own: the absolute URLs it builds use the default port.
 
-  $ mkdir -p log data www/dir
+  $ mkdir -p log www/dir
   $ echo index > www/dir/index.html
   $ dune build ./test.exe 2>&1
   $ dune exec -- ./test.exe >server.log 2>&1 &

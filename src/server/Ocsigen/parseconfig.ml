@@ -467,8 +467,10 @@ and later_pass = function
       set_uploaddir
         (match parse_string_tag st p with "" -> None | dir -> Some dir);
       later_pass ll
-  | Element (("datadir" as st), [], p) :: ll ->
-      set_datadir (parse_string_tag st p);
+  | Element ("datadir", [], _p) :: ll ->
+      Logs.warn ~src:section (fun fmt ->
+        fmt
+          "Config file: <datadir> is no longer used and is ignored. Ocsipersist takes its directory from its own configuration (<store> or <database>).");
       later_pass ll
   | Element ("minthreads", [], _p) :: ll -> later_pass ll
   | Element ("maxthreads", [], _p) :: ll -> later_pass ll

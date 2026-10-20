@@ -1,13 +1,13 @@
 <allow-forward-for/> takes the client address from X-Forwarded-For. An <ip>
 condition evaluated afterwards tests and logs the address the server retained.
 
-  $ mkdir -p www log data
+  $ mkdir -p www log
   $ printf 'hello\n' > www/index.html
   $ cat > site.conf <<'EOF'
   > <ocsigen><server>
   > <port>8082</port>
   > <port>8083</port>
-  > <logdir>log</logdir><datadir>data</datadir>
+  > <logdir>log</logdir>
   > <loglevel source="ocsigen:ext:access-control" level="info"/>
   > <extension findlib-package="ocsigenserver.ext.staticmod"/>
   > <extension findlib-package="ocsigenserver.ext.accesscontrol"/>

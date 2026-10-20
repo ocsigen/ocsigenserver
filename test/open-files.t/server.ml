@@ -30,6 +30,6 @@ let () =
   in
   Ocsigen.Server.start ?max_number_of_connections
     ~ports:[`Unix ("./" ^ name ^ ".sock"), 0]
-    ~logdir:(name ^ "/log") ~datadir:(name ^ "/data") ~uploaddir:None
+    ~logdir:(name ^ "/log") ~uploaddir:None
     ~command_pipe:(name ^ ".cmd")
     [Ocsigen.Server.host [resources]]

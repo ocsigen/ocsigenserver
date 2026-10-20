@@ -3,7 +3,6 @@ val config_file : string ref
 val is_native : bool
 val logdir : string option ref
 val mimefile : string ref
-val datadir : string ref
 val bindir : string ref
 val extdir : string ref
 val builtin_packages : Lib.String.Set.t

@@ -583,7 +583,6 @@ let start
       ?ssl_info
       ?default_charset
       ?logdir
-      ?datadir
       ?uploaddir
       ?maxuploadfilesize
       ?syslog_facility
@@ -623,7 +622,6 @@ let start
   Option.iter Config.set_syslog_facility syslog_facility;
   Option.iter Config.set_uploaddir uploaddir;
   Option.iter Config.set_maxuploadfilesize maxuploadfilesize;
-  Option.iter Config.set_datadir datadir;
   Option.iter Config.set_configfile configfile;
   Option.iter Config.set_pidfile pidfile;
   Option.iter Config.set_mimefile mimefile;

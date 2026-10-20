@@ -41,7 +41,7 @@ once.
 With a log directory, the server detaches. The detached process is silent, but
 the command tells its process id.
 
-  $ mkdir log data
+  $ mkdir log
   $ ./_build/default/test.exe -d log >out.log 2>&1; echo "exit $?"
   exit 0
   $ trap 'kill $(cat server.pid) 2>/dev/null' EXIT

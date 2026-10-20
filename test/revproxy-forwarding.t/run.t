@@ -3,7 +3,7 @@ upstream server (test.ml) answers with what it received, and the raw one
 (raw.ml) with responses that Ocsigen Server would not send. Self-contained
 POSIX sh.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost \
   >   -addext subjectAltName=DNS:localhost >/dev/null 2>&1
@@ -51,7 +51,7 @@ and the scheme of the request it received:
   $ cat > proxy.conf <<'EOF'
   > <ocsigen><server>
   > <port>8081</port>
-  > <logdir>log</logdir><datadir>data</datadir>
+  > <logdir>log</logdir>
   > <commandpipe>proxy.cmd</commandpipe>
   > <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
   > <extension findlib-package="ocsigenserver.ext.revproxy"/>

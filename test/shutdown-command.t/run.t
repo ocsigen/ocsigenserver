@@ -1,6 +1,6 @@
 The shutdown order of the command pipe. Self-contained POSIX sh.
 
-  $ mkdir -p log data
+  $ mkdir -p log
   $ dune build ./test.exe 2>&1
   $ ./_build/default/test.exe >server.log 2>&1 &
   $ SERVER_PID=$!
