@@ -1,20 +1,21 @@
 What the reverse proxy sends to its target, and what it sends back. The
-upstream server (test.ml) answers with what it received, and the raw one
-(raw.ml) with responses that Ocsigen Server would not send. Self-contained
-POSIX sh.
+upstream server (../revproxy-forwarding/test.ml) answers with what it received,
+and the raw one (../revproxy-forwarding/raw.ml) with responses that Ocsigen
+Server would not send. Self-contained POSIX sh.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost \
   >   -addext subjectAltName=DNS:localhost >/dev/null 2>&1
-  $ dune build ./test.exe ./raw.exe 2>&1
-  $ ./_build/default/test.exe >upstream.log 2>&1 &
+  $ ../revproxy-forwarding/test.exe >upstream.log 2>&1 &
   $ UPSTREAM="$!"
-  $ ./_build/default/raw.exe >raw.log 2>&1 &
+  $ ../revproxy-forwarding/raw.exe >raw.log 2>&1 &
   $ UPSTREAM="$UPSTREAM $!"
   $ trap 'kill $UPSTREAM $PROXIES 2>/dev/null; wait' EXIT
-  $ curl -s -o /dev/null --max-time 10 --retry 20 --retry-delay 1 \
-  >   --retry-connrefused http://127.0.0.1:8073/
+  $ wait_http http://127.0.0.1:8073/
+  $ wait_http -k https://localhost:8064/
+  $ wait_http http://127.0.0.1:8069/length
 
 A reverse proxy to the HTTP upstream. The path and the query of the request are
 forwarded. Uri, which builds the request to the target, encodes the query
@@ -25,8 +26,8 @@ X-Forwarded-For the address of the client:
   $ ocsigenserver --reverse-proxy http://127.0.0.1:8073 --port 8074 \
   >   >proxy.log 2>&1 &
   $ PROXIES="$!"
-  $ curl -s --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
-  >   'http://127.0.0.1:8074/a%20b/c?q=1&r=a+b%2Bc&s=x;y'
+  $ wait_http http://127.0.0.1:8074/
+  $ curl -s --max-time 10 'http://127.0.0.1:8074/a%20b/c?q=1&r=a+b%2Bc&s=x;y'
   path: /a%20b/c?q=1&r=a%20b%2Bc&s=x%3By
   host: 127.0.0.1:8073
   https: false
@@ -41,8 +42,8 @@ it is told to trust the self-signed one of the upstream:
   >   ocsigenserver --reverse-proxy https://localhost:8064 --port 8075 \
   >   >proxy-tls.log 2>&1 &
   $ PROXIES="$PROXIES $!"
-  $ curl -s --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
-  >   http://127.0.0.1:8075/x | grep https
+  $ wait_http http://127.0.0.1:8075/
+  $ curl -s --max-time 10 http://127.0.0.1:8075/x | grep https
   https: true
 
 A proxy configured in a file, behind a trusted proxy that announces the client
@@ -67,8 +68,8 @@ and the scheme of the request it received:
   > EOF
   $ ocsigenserver -c proxy.conf >proxy-conf.log 2>&1 &
   $ PROXIES="$PROXIES $!"
-  $ curl -s --max-time 10 --retry 20 --retry-delay 1 --retry-connrefused \
-  >   -H 'X-Forwarded-For: 192.0.2.1, 198.51.100.1' \
+  $ wait_http http://127.0.0.1:8081/
+  $ curl -s --max-time 10 -H 'X-Forwarded-For: 192.0.2.1, 198.51.100.1' \
   >   -H 'X-Forwarded-Proto: https' http://127.0.0.1:8081/y
   path: /y
   host: 127.0.0.1:8073
@@ -115,8 +116,7 @@ connection to the client (otherwise, curl would fail with its timeout):
   $ ocsigenserver --reverse-proxy http://127.0.0.1:8069 --port 8070 \
   >   >proxy-raw.log 2>&1 &
   $ PROXIES="$PROXIES $!"
-  $ curl -s -o /dev/null --max-time 10 --retry 20 --retry-delay 1 \
-  >   --retry-connrefused http://127.0.0.1:8070/length
+  $ wait_http http://127.0.0.1:8070/length
   $ curl -si --max-time 10 http://127.0.0.1:8070/http-1.0 >http-1.0.out
   $ tr -d '\r' <http-1.0.out | grep -iv '^date:'
   HTTP/1.1 200 OK

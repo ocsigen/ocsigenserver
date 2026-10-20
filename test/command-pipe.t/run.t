@@ -5,10 +5,9 @@ here: it needs a second user. Self-contained (POSIX sh) so it runs regardless
 of the cram shell.
 
   $ mkdir -p log
-  $ dune build ./test.exe 2>&1
   $ start_server () {
   >   rm -f local.sock log/*
-  >   ./_build/default/test.exe >server.log 2>&1 &
+  >   ../command-pipe/test.exe >server.log 2>&1 &
   >   SERVER_PID=$!
   >   i=0; while [ ! -e local.sock ]; do
   >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done

@@ -3,8 +3,7 @@ sanitisation (F4). Self-contained (POSIX sh, no bash helper) so it runs
 regardless of the cram shell.
 
   $ mkdir -p log
-  $ dune build ./test.exe 2>&1
-  $ dune exec -- ./test.exe >server.log 2>&1 &
+  $ ../security/test.exe >server.log 2>&1 &
   $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
   $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
   >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done

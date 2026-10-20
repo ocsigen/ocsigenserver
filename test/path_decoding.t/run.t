@@ -2,6 +2,7 @@ Request paths are percent-decoded, so that a file whose name is not made of
 unreserved characters can be reached, and so that an encoded ".." cannot be
 used to escape the served directory.
 
+  $ . ../server-test-helpers.sh
   $ mkdir www
   $ printf 'accented\n' > "www/café.txt"
   $ printf 'secret\n' > secret.txt
@@ -9,11 +10,11 @@ used to escape the served directory.
   $ ocsigenserver --serve www --port 8063 >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
+  $ wait_http http://127.0.0.1:8063/
 
-Warm the server up, and check that a plain request works.
+Check that a plain request works.
 
-  $ curl -s --retry 20 --retry-delay 1 --retry-connrefused \
-  >   -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8063/
+  $ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8063/
   404
 
 A percent-encoded file name is decoded before the file is looked up.

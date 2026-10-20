@@ -1,6 +1,7 @@
 <allow-forward-for/> takes the client address from X-Forwarded-For. An <ip>
 condition evaluated afterwards tests and logs the address the server retained.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p www log
   $ printf 'hello\n' > www/index.html
   $ cat > site.conf <<'EOF'
@@ -24,10 +25,11 @@ condition evaluated afterwards tests and logs the address the server retained.
   $ ocsigenserver -c site.conf >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
+  $ wait_http http://127.0.0.1:8082/index.html
+  $ wait_http http://127.0.0.1:8083/index.html
   $ get () {
   >   seen=$(grep -c 'IP: ' server.log)
-  >   curl -s -o /dev/null -w '%{http_code}\n' --retry 20 --retry-delay 1 \
-  >     --retry-connrefused "$@"
+  >   curl -s -o /dev/null -w '%{http_code}\n' "$@"
   >   grep -o 'IP: [^ ]*' server.log | tail -n +$((seen + 1))
   > }
 

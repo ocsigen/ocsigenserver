@@ -2,8 +2,7 @@ Request bodies decoded in memory (urlencoded POST parameters) are limited by
 <maxrequestbodysizeinmemory>, 1 MiB by default.
 
   $ mkdir -p log
-  $ dune build ./test.exe 2>&1
-  $ dune exec -- ./test.exe >server.log 2>&1 &
+  $ ../request-body-limit/test.exe >server.log 2>&1 &
   $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
   $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
   >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done

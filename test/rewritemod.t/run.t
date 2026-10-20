@@ -3,8 +3,7 @@ the request starts again from the beginning. Self-contained POSIX sh.
 
   $ mkdir -p log www/new
   $ echo hello > www/new/a.txt
-  $ dune build ./test.exe 2>&1
-  $ ./_build/default/test.exe >server.log 2>&1 &
+  $ ../rewritemod/test.exe >server.log 2>&1 &
   $ SERVER_PID=$!
   $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
   >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done

@@ -1,16 +1,17 @@
 Static files support single byte-range requests (RFC 7233).
 
+  $ . ../server-test-helpers.sh
   $ mkdir www
   $ printf '0123456789ABCDEF' > www/data.txt
   $ touch -t 202001010000 www/data.txt
   $ ocsigenserver --serve www --port 8066 >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
+  $ wait_http http://127.0.0.1:8066/data.txt
 
 A full response advertises range support:
 
-  $ curl -s -D headers -o /dev/null --max-time 10 --retry 20 --retry-delay 1 \
-  >   --retry-connrefused http://127.0.0.1:8066/data.txt
+  $ curl -s -D headers -o /dev/null --max-time 10 http://127.0.0.1:8066/data.txt
   $ grep -io '^accept-ranges: bytes' headers
   accept-ranges: bytes
 

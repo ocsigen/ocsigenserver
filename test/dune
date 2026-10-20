@@ -4,9 +4,101 @@
   (package ocsigenserver)
   (deps
    ../server-test-helpers.sh
-   (package ocsigenserver))))
+   (package ocsigenserver)))
+ (cram
+  (applies_to deflatemod)
+  (deps deflatemod/test.exe)))
 
 (cram
  (package ocsigenserver)
  (deps
+  server-test-helpers.sh
   (package ocsigenserver)))
+
+(cram
+ (applies_to access-log-status)
+ (deps access-log-status/test.exe))
+
+(cram
+ (applies_to client-timeout)
+ (deps client-timeout/server.exe client-timeout/client.exe))
+
+(cram
+ (applies_to command-loop)
+ (deps command-loop/test.exe))
+
+(cram
+ (applies_to command-pipe)
+ (deps command-pipe/test.exe))
+
+(cram
+ (applies_to connection-guard)
+ (deps connection-guard/test.exe))
+
+(cram
+ (applies_to logdir-syslog)
+ (deps logdir-syslog/test.exe))
+
+(cram
+ (applies_to open-files)
+ (deps open-files/limits.exe open-files/server.exe))
+
+(cram
+ (applies_to parseconfig)
+ (deps parseconfig/test.exe))
+
+(cram
+ (applies_to request-body-limit)
+ (deps request-body-limit/test.exe))
+
+(cram
+ (applies_to response-framing)
+ (deps response-framing/test.exe response-framing/client.exe))
+
+(cram
+ (applies_to revproxy-forwarding)
+ (deps revproxy-forwarding/test.exe revproxy-forwarding/raw.exe))
+
+(cram
+ (applies_to rewritemod)
+ (deps rewritemod/test.exe))
+
+(cram
+ (applies_to security)
+ (deps security/test.exe))
+
+(cram
+ (applies_to security-tls)
+ (deps security-tls/test.exe))
+
+(cram
+ (applies_to shutdown-command)
+ (deps shutdown-command/test.exe))
+
+(cram
+ (applies_to silent-console)
+ (deps silent-console/test.exe))
+
+(cram
+ (applies_to stream)
+ (deps stream/test.exe))
+
+(cram
+ (applies_to truncated-body)
+ (deps truncated-body/server.exe truncated-body/client.exe))
+
+(cram
+ (applies_to unix-socket)
+ (deps unix-socket/test.exe))
+
+(cram
+ (applies_to upload-cleanup)
+ (deps upload-cleanup/test.exe))
+
+(cram
+ (applies_to upload-dir)
+ (deps upload-dir/test.exe))
+
+(cram
+ (applies_to url_encoding)
+ (deps url_encoding/test.exe))

@@ -1,5 +1,6 @@
 Accesses are logged in the Apache/nginx Combined Log Format.
 
+  $ . ../server-test-helpers.sh
   $ mkdir www
   $ printf '<html>hello</html>' > www/index.html
 
@@ -9,12 +10,12 @@ file), with no date/source prefix so the standard format is preserved.
   $ ocsigenserver --serve www --port 8062 >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
+  $ wait_http http://127.0.0.1:8062/
 
 Request a file with a known User-Agent and Referer.
 
-  $ curl -s -o /dev/null --retry 20 --retry-delay 1 --retry-connrefused \
-  >   --user-agent "test-agent" --referer "http://example.test/" \
-  >   http://127.0.0.1:8062/index.html
+  $ curl -s -o /dev/null --user-agent "test-agent" \
+  >   --referer "http://example.test/" http://127.0.0.1:8062/index.html
 
 The access line follows the Combined Log Format:
 %h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-agent}i". The timestamp is masked
