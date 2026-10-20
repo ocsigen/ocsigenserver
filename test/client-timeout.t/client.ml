@@ -301,13 +301,16 @@ let abrupt conn =
   Unix.close conn.fd
 
 (* The pool server is full at 4 connections (see server.ml). Four connections
-   that their client does not use, opened by [open_unused], then a fifth on
-   [port]: the fifth is answered, the server having closed the oldest unused
-   connections to make room, one when the fourth came, one when the fifth
-   did. *)
-let make_room ~port open_unused =
+   that their client does not use, opened by [open_unused], then a fifth,
+   opened by [open_fifth]: the fifth is answered, the server having closed the
+   oldest unused connections to make room, one when the fourth came, one when
+   the fifth did. All five must be on the same port: the server accepts the
+   connections to a port in order, but not those to different ports, so it
+   could take the fifth first, then close it, answered and idle, as the oldest
+   unused one. *)
+let make_room ~open_fifth open_unused =
   let unused = List.init 4 (fun _ -> open_unused ()) in
-  let fifth = plain port in
+  let fifth = open_fifth () in
   fifth.send (request "/");
   Printf.printf "a fifth connection: %s\n" (response fifth);
   let closed =
@@ -387,15 +390,19 @@ let () =
   match Sys.argv with
   | [|_; "per-address"|] -> per_address limit_port
   | [|_; "pool-idle"|] ->
-      make_room ~port:pool_port (fun () ->
+      make_room ~open_fifth:(fun () -> plain pool_port) (fun () ->
         let conn = plain pool_port in
         conn.send (request "/");
         ignore (response conn : string);
         conn)
-  | [|_; "pool-silent"|] -> make_room ~port:pool_port (fun () -> plain pool_port)
+  | [|_; "pool-silent"|] ->
+      make_room ~open_fifth:(fun () -> plain pool_port) (fun () ->
+        plain pool_port)
   | [|_; "pool-handshake"|] ->
-      (* TCP connections to the TLS port, on which nothing is sent. *)
-      make_room ~port:pool_port (fun () -> plain pool_tls_port)
+      (* TCP connections to the TLS port, on which nothing is sent, then a
+         TLS client. *)
+      make_room ~open_fifth:(fun () -> tls pool_tls_port) (fun () ->
+        plain pool_tls_port)
   | [|_; "pool-busy"|] -> pool_busy pool_port
   | [|_; "no-handshake"|] ->
       (* A TCP connection to the TLS port, on which nothing is sent. *)
