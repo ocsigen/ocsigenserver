@@ -1,11 +1,12 @@
 Request bodies decoded in memory (urlencoded POST parameters) are limited by
 <maxrequestbodysizeinmemory>, 1 MiB by default.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ ../request-body-limit/test.exe >server.log 2>&1 &
-  $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
-  $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ SERVER_PID=$!
+  $ trap 'stop_server $SERVER_PID' EXIT
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
   $ post () {
   >   curl --unix-socket local.sock -s -w ' (%{http_code})\n' \
   >     --data-binary "@$1" http://x/

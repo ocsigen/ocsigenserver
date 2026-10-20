@@ -2,13 +2,12 @@ A request body shorter than its Content-Length, because the client closed its
 side of the connection, is not handled as if it were complete: reading it
 fails, and the request is answered with 400.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ ../truncated-body/server.exe >server.log 2>&1 &
-  $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
-  $ i=0; while [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
-  $ i=0; while ! curl -s --max-time 5 http://127.0.0.1:8079/ >/dev/null 2>&1; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ SERVER_PID=$!
+  $ trap 'stop_server $SERVER_PID' EXIT
+  $ wait_server $SERVER_PID server.log local.cmd http://127.0.0.1:8079/
 
 A raw body, whole, then 10 bytes of the 100 announced:
 

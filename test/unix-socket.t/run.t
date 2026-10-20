@@ -1,12 +1,13 @@
 A server listening on a Unix-domain socket, typically behind a reverse proxy,
 has no port of its own: the absolute URLs it builds use the default port.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log www/dir
   $ echo index > www/dir/index.html
   $ ../unix-socket/test.exe >server.log 2>&1 &
-  $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
-  $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ SERVER_PID=$!
+  $ trap 'stop_server $SERVER_PID' EXIT
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
 
 The redirection of a directory to its URL with a slash has no port 0.
 
