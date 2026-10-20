@@ -25,3 +25,32 @@ HTTP/1.1 200 OK
 [closed]
 == status codes
 200 404
+== framing
+nothing: incomplete
+content-length: complete
+content-length, content missing: incomplete
+head section not finished: incomplete
+two responses: complete
+extra bytes: incomplete
+304 without content: complete
+100 alone: incomplete
+100 then 204: complete
+101: unframed
+no reason phrase: complete
+HTTP/1.0: complete, close
+HTTP/1.0 with keep-alive: complete
+transfer-encoding gzip alone: unframed
+connection: close: complete, close
+close, then a response that does not close: complete
+huge content-length: incomplete
+content-length too large for an int: unframed
+content-length +2: unframed
+content-length 0x2: unframed
+huge chunk size: incomplete
+chunk size 1_0: unframed
+chunked: complete
+chunked, last chunk missing: incomplete
+chunked, bad size: unframed
+chunked wins over content-length: complete
+delimited by the close: unframed
+not a response: unframed

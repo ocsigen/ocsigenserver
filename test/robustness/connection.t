@@ -72,7 +72,7 @@ An HTTP/1.0 request is persistent only with "Connection: keep-alive" (RFC
 Pipelined requests are answered in order on the same connection.
 
   $ printf 'GET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\nGET /index.html HTTP/1.1\r\nHost: x\r\n\r\n' |
-  >   rawhttp send --port 8471 --idle 0.5 | grep -E '^(HTTP/|hello|index|\[)'
+  >   rawhttp send --port 8471 --idle 0.5 --settle 0.5 | grep -E '^(HTTP/|hello|index|\[)'
   HTTP/1.1 200 OK
   hello
   HTTP/1.1 200 OK
