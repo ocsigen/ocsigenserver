@@ -643,6 +643,8 @@ Most distributions have a special command to do that automatically (for the defa
 ```
 The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
 
+If the file has an error, the server logs it, followed by "Config file reload failed", and keeps its sites as they were (the server-wide settings that come before the error in the file may already be applied). Otherwise it logs "Config file reloaded".
+
 ### Stopping the server
 
 To stop the server, use the `shutdown` command, for example:
