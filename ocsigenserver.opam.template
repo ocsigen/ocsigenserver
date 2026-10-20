@@ -17,8 +17,6 @@ build: [
     "%{man}%/man1"
     "--docdir"
     "%{lib}%/ocsigenserver/share/doc/ocsigenserver"
-    "--commandpipe"
-    "%{lib}%/ocsigenserver/var/run/ocsigenserver_command"
     "--staticpagesdir"
     "%{lib}%/ocsigenserver/var/www"
     "--temproot"
