@@ -1,6 +1,6 @@
 Conformance of responses: HEAD, byte ranges, conditional requests and
-compression (RFC 9110 sections 8.4, 9.3.2, 12.5.3, 13 and 14). Answers marked
-BUG show the current behaviour, with the expected one in the text.
+compression (RFC 9110 sections 8.4, 9.3.2, 12.5.3, 13 and 14), and the
+framing of responses to HTTP/1.0 clients (RFC 9112 section 6.1).
 
 The modification time of the files is fixed, so that their validators are
 known: ETag W/"5e0c89c0-6" for hello.txt ("hello\n"), W/"5e0c89c0-4000" for
@@ -465,17 +465,19 @@ connection is answered.
   HTTP/1.1 200 OK
   [idle]
 
-BUG: the chunked transfer coding must not be used in a response to an
-HTTP/1.0 request (RFC 9112 section 6.1): an HTTP/1.0 client takes the chunk
-sizes as part of the content, and the compressed data is corrupted. Expected:
-no Transfer-Encoding, content delimited by closing the connection.
+The chunked transfer coding is not used in a response to an HTTP/1.0 request
+(RFC 9112 section 6.1): an HTTP/1.0 client would take the chunk sizes as part
+of the content. The compressed content is delimited by closing the
+connection, which the response says.
 
   $ printf 'GET /compressed/big.txt HTTP/1.0\r\nHost: x\r\nAccept-Encoding: gzip\r\n\r\n' |
   >   rawhttp send --port 8473 --idle 0.5 |
-  >   grep -iE '^(HTTP/|transfer-encoding|content-length|0$|\[)'
+  >   grep -iE '^(HTTP/|transfer-encoding|content-length|content-encoding|connection|\\x1F\\x8B|\[)' |
+  >   cut -c 1-24
   HTTP/1.1 200 OK
-  transfer-encoding: chunked
-  0
+  content-encoding: gzip
+  connection: close
+  \x1F\x8B\x08\x00\x00\x00
   [closed]
 
 The server still works.

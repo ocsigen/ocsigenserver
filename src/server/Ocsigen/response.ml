@@ -315,7 +315,8 @@ let make_cookies_headers path t hds =
    with chunking (RFC 9112 6.1), and is replaced by the length of a fixed-length
    body, as a wrong one would break the connection just the same. A response
    with a 1xx, 204 or 304 status has no body, and no framing headers (RFC 9110
-   8.6, RFC 9112 6.1). *)
+   8.6, RFC 9112 6.1), and neither has a body of unknown length, delimited by
+   the end of the connection. *)
 let set_framing status (encoding : Transfer.encoding) headers =
   if not (Http.Status.body_allowed status)
   then
@@ -330,16 +331,19 @@ let set_framing status (encoding : Transfer.encoding) headers =
         Header.replace
           (Header.remove headers "transfer-encoding")
           "content-length" (Int64.to_string length)
-    | Unknown -> headers
+    | Unknown ->
+        Header.remove
+          (Header.remove headers "content-length")
+          "transfer-encoding"
 
-let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
+let to_cohttp_response ~encoding {a_response; a_cookies; _} =
   let headers =
     let add name value headers = Header.add_unless_exists headers name value in
     Response.headers a_response
     |> Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
     |> add "server" Config.server_name
     |> add "date" (Ocsigen_base.Lib.Date.to_string (Unix.time ()))
-    |> set_framing (Response.status a_response) body_encoding
+    |> set_framing (Response.status a_response) encoding
   in
   {a_response with Response.headers}
 
@@ -348,10 +352,20 @@ let sends_body ~meth {a_response; _} =
   | `HEAD -> false
   | _ -> Http.Status.body_allowed (Response.status a_response)
 
+(* HTTP/1.0 has no chunked coding (RFC 9112 6.1): a chunked body goes to an
+   HTTP/1.0 client as is, delimited by the end of the connection. *)
+let wire_encoding ~version {a_body = _, encoding; _} =
+  match version, encoding with
+  | (`HTTP_1_0 | `Other _), Transfer.Chunked -> Transfer.Unknown
+  | _, encoding -> encoding
+
 (* The response to HEAD keeps the headers of the response to GET, framing
    included (RFC 9110 9.3.2), but a client reads no body after it: the bytes of
-   one would be taken for the start of the next response on the connection. *)
-let to_response_expert ~meth t =
+   one would be taken for the start of the next response on the connection. A
+   body of unknown length ends with the connection, which the response says,
+   so that the server closes it after the body (not after a response to HEAD,
+   which has no body). *)
+let to_response_expert ~meth ~version t =
   let module R = Cohttp_lwt_unix.Response in
   let write_footer encoding oc =
     (* Copied from [cohttp/response.ml]. *)
@@ -359,14 +373,22 @@ let to_response_expert ~meth t =
     | Transfer.Chunked -> Lwt_io.write oc "0\r\n\r\n"
     | Transfer.Fixed _ | Transfer.Unknown -> Lwt.return_unit
   in
-  let res = to_cohttp_response t in
+  let encoding = wire_encoding ~version t in
+  let res = to_cohttp_response ~encoding t in
+  let res =
+    match encoding with
+    | Transfer.Unknown when sends_body ~meth t ->
+        { res with
+          Response.headers =
+            Header.replace (Response.headers res) "connection" "close" }
+    | Transfer.Unknown | Transfer.Chunked | Transfer.Fixed _ -> res
+  in
   ( res
   , fun _ic oc ->
       if sends_body ~meth t
       then
         let writer = R.make_body_writer ~flush:false res oc in
-        let body, encoding = t.a_body in
-        let* () = body (R.write_body writer) in
+        let* () = fst t.a_body (R.write_body writer) in
         write_footer encoding oc
       else Lwt.return_unit )
 

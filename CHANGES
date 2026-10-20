@@ -39,7 +39,8 @@ Incompatible changes:
    "Process N detached" message of daemon mode, its only use, now goes
    through Logs (source ocsigen:main).
  * Ocsigen.Response.to_response_expert takes the method of the request
-   (~meth), to send no body in response to HEAD.
+   (~meth), to send no body in response to HEAD, and its HTTP version
+   (~version), to send no chunked body to an HTTP/1.0 client.
  * Ocsigen.Multipart.post_params takes a function (~on_file) that it calls
    with the name of each uploaded file it creates, so that the caller can
    remove it.
@@ -351,6 +352,12 @@ Bug fixes:
    compressed one.
  * Deflatemod: 304 responses carry "Vary: Accept-Encoding", as the response
    they stand for would (RFC 9110 15.4.5).
+ * A chunked body, such as a compressed or streamed one, goes to an HTTP/1.0
+   client without the chunked coding, which HTTP/1.0 does not have (RFC 9112
+   6.1), and the connection is closed after it. A body of unknown length (as
+   sent by Eliom's Flow5 module) now goes out with "Connection: close" and
+   without the Content-Length its producer may have set: the connection was
+   kept open, so that the client could not find the end of the response.
 
 ==== 8.0.0 (2026-09-24) ===
 

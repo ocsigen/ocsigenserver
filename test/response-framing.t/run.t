@@ -61,7 +61,52 @@ fixed-length body:
   
   world
 
-The connection stays usable after each of them:
+A body of unknown length goes out without any framing header, and with
+"Connection: close": its end is the end of the connection.
+
+  $ get http://x/unknown-length
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: close
+  
+  unknown
+
+HTTP/1.0 has no chunked coding (RFC 9112 section 6.1): a chunked body goes to
+an HTTP/1.0 client as a body of unknown length.
+
+  $ get --http1.0 http://x/length-chunked
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: close
+  
+  hello
+
+Also when the client asks to keep the connection alive. A fixed-length body
+keeps it alive:
+
+  $ get --http1.0 -H 'Connection: keep-alive' http://x/length-chunked
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: close
+  
+  hello
+  $ get --http1.0 -H 'Connection: keep-alive' http://x/length-fixed
+  HTTP/1.1 200 OK
+  content-length: 5
+  server: Ocsigen
+  connection: keep-alive
+  
+  world
+
+A response to HEAD has no body to delimit: the connection stays open.
+
+  $ get -I http://x/unknown-length
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: keep-alive
+  
+
+The connection stays usable after each of the other ones:
 
   $ curl --unix-socket local.sock -s --max-time 10 http://x/range-chunked \
   >   http://x/length-chunked http://x/range-fixed http://x/length-fixed; echo

@@ -342,7 +342,8 @@ let handler
        >>= fun response ->
        Messages.accesslog (Access_log.line request response);
        let res, write_body =
-         Response.to_response_expert ~meth:(Request.meth request) response
+         Response.to_response_expert ~meth:(Request.meth request) ~version
+           response
        in
        (* As cohttp does for the responses it writes itself, which expert
           responses are not: the connection is kept alive if both the request
