@@ -54,6 +54,11 @@ type virtual_hosts = (string * Re.Pcre.regexp * int option) list
     parsing this pattern, and optionally a port.
 *)
 
+val host_regexp : string -> Re.Pcre.regexp
+(** [host_regexp re] compiles the regular expression [re] for the
+    [virtual_hosts] list: it matches host names case-insensitively, as they
+    are case-insensitive. *)
+
 val hash_virtual_hosts : virtual_hosts -> int
 val equal_virtual_hosts : virtual_hosts -> virtual_hosts -> bool
 
@@ -62,6 +67,10 @@ val host_match :
   -> host:string option
   -> port:int
   -> bool
+(** [host_match ~virtual_hosts ~host ~port] is [true] iff one element of
+    [virtual_hosts] matches [host] and [port]. A final dot of [host] (fully
+    qualified form) is ignored. A missing [host] is matched as the empty
+    host name: only patterns that accept any name, such as [*], match it. *)
 
 (*****************************************************************************)
 

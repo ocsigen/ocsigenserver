@@ -1,0 +1,56 @@
+== headers that vary are removed, CRLF becomes LF
+HTTP/1.1 200 OK
+Content-Length: 5
+
+hello
+[closed]
+== validators kept, Date still removed
+HTTP/1.1 200 OK
+ETag: W/"1-2"
+last-modified: Sat, 17 Oct 2026 09:00:00 GMT
+Content-Length: 5
+
+hello
+[closed]
+== control and non-ASCII bytes are escaped
+a\x00b\x1Bc\xE9	d\x0De
+[idle]
+== empty answer
+[reset]
+== a final line end does not add an empty line
+x
+[overflow]
+== status only; a status line glued to a body is not seen
+HTTP/1.1 200 OK
+[closed]
+== status codes
+200 404
+== framing
+nothing: incomplete
+content-length: complete
+content-length, content missing: incomplete
+head section not finished: incomplete
+two responses: complete
+extra bytes: incomplete
+304 without content: complete
+100 alone: incomplete
+100 then 204: complete
+101: unframed
+no reason phrase: complete
+HTTP/1.0: complete, close
+HTTP/1.0 with keep-alive: complete
+transfer-encoding gzip alone: unframed
+connection: close: complete, close
+close, then a response that does not close: complete
+huge content-length: incomplete
+content-length too large for an int: unframed
+content-length +2: unframed
+content-length 0x2: unframed
+huge chunk size: incomplete
+chunk size 1_0: unframed
+chunked: complete
+chunked, last chunk missing: incomplete
+chunked, bad size: unframed
+chunked wins over content-length: complete
+delimited by the close: unframed
+not a response: unframed

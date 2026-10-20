@@ -58,6 +58,20 @@ This 404 is the one of a missing file: the error page is served.
   $ curl -s --max-time 10 http://127.0.0.1:8085/.env
   error page
 
+The preconditions and the range of the request do not apply to an error
+page (RFC 9110 sections 13.2.1 and 14.2): it is sent whole, with its status.
+
+  $ for h in 'If-None-Match: *' 'If-Match: "x"' 'Range: bytes=0-1'; do
+  >   curl -s -w ' %{http_code}\n' --max-time 10 -H "$h" \
+  >     http://127.0.0.1:8085/missing
+  > done
+  error page
+   404
+  error page
+   404
+  error page
+   404
+
 Directory listings leave the hidden files out, except /.well-known/:
 
   $ rm www/index.html

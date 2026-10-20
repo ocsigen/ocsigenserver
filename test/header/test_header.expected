@@ -1,0 +1,51 @@
+== Entity_tag.parse_list
+"*" -> *
+" * " -> *
+"\"a\"" -> "a"
+"W/\"a\", \"b\",\"c\"" -> W/"a" "b" "c"
+"\"a\"" | "W/\"b\"" -> "a" W/"b"
+"*" | "\"a\"" -> "a"
+"\"a,b\", \"c\"" -> "a,b" "c"
+"\"\"" -> ""
+"" -> 
+"a, \"b\"" -> "b"
+"\"unterminated" -> 
+"w/\"a\"" -> 
+"\"a\"x, \"b\"" -> "b"
+"\"a\" , \"b\" " -> "a" "b"
+== Entity_tag comparisons
+"1" "1": weak true, strong true
+"1" W/"1": weak true, strong false
+W/"1" W/"1": weak true, strong false
+"1" "2": weak false, strong false
+== Date.parse
+"Sun, 06 Nov 1994 08:49:37 GMT" -> 784111777
+"Sunday, 06-Nov-94 08:49:37 GMT" -> 784111777
+"Sun Nov  6 08:49:37 1994" -> 784111777
+"Thu, 01 Jan 1970 00:00:00 GMT" -> 0
+"Wed, 01 Jan 2020 12:00:00 GMT" -> 1577880000
+"Wednesday, 01-Jan-20 12:00:00 GMT" -> 1577880000
+"Wed Jan  1 12:00:00 2020" -> 1577880000
+"Wed Jan 01 12:00:00 2020" -> 1577880000
+"Thu, 29 Feb 2024 23:59:60 GMT" -> 1709251200
+"Sat, 31 Dec 2016 23:59:60 GMT" -> 1483228800
+"Sat, 29 Feb 2025 00:00:00 GMT" -> invalid
+"Thu, 29 Feb 1900 00:00:00 GMT" -> invalid
+"Tue, 29 Feb 2000 00:00:00 GMT" -> 951782400
+"Wed, 01 Jan 2020 24:00:00 GMT" -> invalid
+"Wed, 01 Jan 2020 12:00:00 CET" -> invalid
+"Wed, 01 Foo 2020 12:00:00 GMT" -> invalid
+"Xyz, 01 Jan 2020 12:00:00 GMT" -> invalid
+"wed, 01 jan 2020 12:00:00 GMT" -> invalid
+"Wed, 01 Jan 2020 12:00:00 GMT trailing" -> invalid
+"Sun, 06 Nov 94 08:49:37 GMT" -> invalid
+"Sun Nov  6 08:49:37 94" -> invalid
+"Sun, 06 Nov 1_94 08:49:37 GMT" -> invalid
+"Sun, 6 Nov 1994 08:49:37 GMT" -> invalid
+"Sun, 06 Nov 1994 8:49:37 GMT" -> invalid
+"garbage" -> invalid
+"" -> invalid
+== Date.parse, two-digit years
+"Sunday, 06-Nov-94 08:49:37 GMT" -> 784111777
+"Saturday, 01-Jan-00 00:00:00 GMT" -> 4102444800
+"Saturday, 01-Jan-01 00:00:00 GMT" -> 4133980800

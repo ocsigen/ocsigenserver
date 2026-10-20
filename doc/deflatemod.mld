@@ -122,7 +122,9 @@ providing end to end compression at the content-level.
 {2 How does deflatemod deal with the content-length header?}
 
 As it cannot compute the new content-length, deflatemod uses
-chunked-encoding. This is the recommended way to go.
+chunked-encoding. This is the recommended way to go. An HTTP/1.0 client does
+not know the chunked coding: it gets the compressed content delimited by the
+end of the connection instead.
 
 {2 Which responses are compressed?}
 
@@ -134,6 +136,13 @@ left untouched too.
 
 For the same reason, a compressed response does not carry the Accept-Ranges
 header: byte ranges are only served from the uncompressed file.
+
+A response of a type that deflatemod compresses carries
+[Vary: Accept-Encoding], even when it is not compressed, because the client
+does not accept any of the codings: a shared cache must not serve this
+uncompressed copy to the clients that do. A 304 response carries it too, as
+the response it stands for would: as a 304 has no content type, this is the
+case for all of them.
 
 
 {e Page written by Gabriel Kerneis}

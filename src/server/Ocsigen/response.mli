@@ -60,6 +60,8 @@ val respond_error :
 val respond_file :
    ?headers:Cohttp.Header.t
   -> ?status:Http.Status.t
+  -> ?if_match:string
+  -> ?if_unmodified_since:string
   -> ?if_none_match:string
   -> ?if_modified_since:string
   -> ?range:string
@@ -68,12 +70,19 @@ val respond_file :
   -> t Lwt.t
 (** Respond with the content of a file. The content type is guessed using
     [Magic_mime]. An [ETag] (weak, derived from the file's modification time and
-    size), a [Last-Modified] and an [Accept-Ranges: bytes] header are added. If
-    the request's [If-None-Match] or [If-Modified-Since] header is passed and
-    matches, the response is [304 Not Modified] with an empty body (RFC 7232).
+    size), a [Last-Modified] and an [Accept-Ranges: bytes] header are added.
+    The conditional headers of the request, when passed, are evaluated as RFC
+    9110 13.2.2 says. When [If-Match] (with the strong comparison, which the
+    weak [ETag] never passes: only ["*"] matches) or [If-Unmodified-Since] is
+    false, the response is [412 Precondition Failed]. When [If-None-Match]
+    (with the weak comparison) or [If-Modified-Since] is false, the response
+    is [304 Not Modified] with an empty body. Pass them only for a GET or HEAD
+    request whose response is a success: for other methods, a false
+    [If-None-Match] calls for 412 rather than 304, and the preconditions do
+    not apply to an error page (RFC 9110 13.2.1).
     If a [range] (the [Range] header) is passed and satisfiable, a single byte
     range is returned as [206 Partial Content] with a [Content-Range] header
-    (RFC 7233); an unsatisfiable range gives [416]. A passed [if_range] (the
+    (RFC 9110 14); an unsatisfiable range gives [416]. A passed [if_range] (the
     [If-Range] header) must be the [Last-Modified] date, unchanged for at
     least a second, for the range to be honoured: [If-Range] calls for a strong
     comparison, which the weak [ETag] never passes (RFC 9110 13.1.5). *)
@@ -97,12 +106,17 @@ val sends_body : meth:Cohttp.Code.meth -> t -> bool
 
 val to_response_expert :
    meth:Cohttp.Code.meth
+  -> version:Cohttp.Code.version
   -> t
   -> Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
 (** Response for [Cohttp_lwt_unix.Server.make_expert], to a request with method
-    [meth]. Set cookie headers, and the framing headers from the body. The body
-    is written only if {!sends_body}: the response to [HEAD] has the headers of
-    the response to [GET], without its body. *)
+    [meth] and HTTP version [version]. Set cookie headers, and the framing
+    headers from the body. The body is written only if {!sends_body}: the
+    response to [HEAD] has the headers of the response to [GET], without its
+    body. A body of unknown length, or a chunked body sent to an HTTP/1.0
+    client (which does not know the chunked coding, RFC 9112 6.1), goes out
+    without framing headers and, unless the request is [HEAD], with
+    [Connection: close]: the end of the connection is the end of the body. *)
 
 val response : t -> Cohttp.Response.t
 (** Raw response without cookie headers set. *)

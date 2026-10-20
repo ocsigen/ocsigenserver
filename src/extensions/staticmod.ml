@@ -237,42 +237,97 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
             ~hidden:(hide_dotfiles && is_hidden path)
             ~pathstring
         in
-        (match page with
-          | Ocsigen.Local_files.RFile fname ->
-              let header name = Ocsigen.Request.header request_info name in
-              Ocsigen.Response.respond_file
-                ?if_none_match:(header Ocsigen_http.Header.Name.if_none_match)
-                ?if_modified_since:
-                  (header Ocsigen_http.Header.Name.if_modified_since)
-                ?range:(header Ocsigen_http.Header.Name.range)
-                ?if_range:(header Ocsigen_http.Header.Name.if_range)
-                fname
-          | Ocsigen.Local_files.RDir dname ->
-              let hidden e = hide_dotfiles && is_hidden (path @ [e]) in
-              respond_dir ~hidden pathstring dname >>= fun answer ->
-              Lwt.return @@ Ocsigen.Response.of_cohttp answer)
-        >>= fun answer ->
-        let answer =
-          if not status_filter
-          then answer
-          else Ocsigen.Response.set_status answer err
+        let serve () =
+          (match page with
+            | Ocsigen.Local_files.RFile fname ->
+                (* The preconditions and the range of the request only
+                   apply to a successful answer, not to an error page (RFC
+                   9110 13.2.1 and 14.2). *)
+                let header name =
+                  if status_filter
+                  then None
+                  else Ocsigen.Request.header request_info name
+                in
+                (* A list header may be written on several lines. *)
+                let list_header name =
+                  match
+                    if status_filter
+                    then []
+                    else Ocsigen.Request.header_multi request_info name
+                  with
+                  | [] -> None
+                  | values -> Some (String.concat ", " values)
+                in
+                (* Ranges are only defined for GET (RFC 9110 14.2). *)
+                let range_header name =
+                  match Ocsigen.Request.meth request_info with
+                  | `GET -> header name
+                  | _ -> None
+                in
+                Ocsigen.Response.respond_file
+                  ?if_match:(list_header Ocsigen_http.Header.Name.if_match)
+                  ?if_unmodified_since:
+                    (header Ocsigen_http.Header.Name.if_unmodified_since)
+                  ?if_none_match:
+                    (list_header Ocsigen_http.Header.Name.if_none_match)
+                  ?if_modified_since:
+                    (header Ocsigen_http.Header.Name.if_modified_since)
+                  ?range:(range_header Ocsigen_http.Header.Name.range)
+                  ?if_range:(range_header Ocsigen_http.Header.Name.if_range)
+                  fname
+            | Ocsigen.Local_files.RDir dname ->
+                let hidden e = hide_dotfiles && is_hidden (path @ [e]) in
+                respond_dir ~hidden pathstring dname >>= fun answer ->
+                Lwt.return @@ Ocsigen.Response.of_cohttp answer)
+          >>= fun answer ->
+          let answer =
+            if not status_filter
+            then answer
+            else Ocsigen.Response.set_status answer err
+          in
+          let answer =
+            match cache with
+            | None -> answer
+            | Some duration ->
+                let cache_control, expires =
+                  if duration = 0
+                  then "no-cache", "0"
+                  else
+                    ( "max-age=" ^ string_of_int duration
+                    , Ocsigen_base.Lib.Date.to_string
+                        (Unix.time () +. float_of_int duration) )
+                in
+                Ocsigen.Response.replace_headers answer
+                  [ Ocsigen_http.Header.Name.cache_control, cache_control
+                  ; Ocsigen_http.Header.Name.expires, expires ]
+          in
+          Lwt.return answer
         in
-        let answer =
-          match cache with
-          | None -> answer
-          | Some duration ->
-              let cache_control, expires =
-                if duration = 0
-                then "no-cache", "0"
-                else
-                  ( "max-age=" ^ string_of_int duration
-                  , Ocsigen_base.Lib.Date.to_string
-                      (Unix.time () +. float_of_int duration) )
+        (* A static page is only read: OPTIONS gets the allowed methods, with
+           no content (RFC 9110, section 9.3.7), and other methods 405
+           (section 15.5.6). As an error page, it answers any method. *)
+        let headers =
+          Cohttp.Header.init_with
+            Ocsigen_http.Header.Name.(to_string allow)
+            "GET, HEAD, OPTIONS"
+        in
+        (match Ocsigen.Request.meth request_info with
+          | `GET | `HEAD -> serve ()
+          | _ when status_filter -> serve ()
+          | `OPTIONS ->
+              Lwt.return
+                (Ocsigen.Response.respond_string ~headers ~status:`OK ~body:""
+                   ())
+          | _ ->
+              let headers =
+                Cohttp.Header.add headers
+                  Ocsigen_http.Header.Name.(to_string content_type)
+                  "text/plain; charset=utf-8"
               in
-              Ocsigen.Response.replace_headers answer
-                [ Ocsigen_http.Header.Name.cache_control, cache_control
-                ; Ocsigen_http.Header.Name.expires, expires ]
-        in
+              Lwt.return
+                (Ocsigen.Response.respond_string ~headers
+                   ~status:`Method_not_allowed ~body:"Method Not Allowed" ()))
+        >>= fun answer ->
         Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return answer))
       and catch_block = function
         | Ocsigen.Local_files.Failed_403 ->
