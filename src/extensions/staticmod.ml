@@ -258,6 +258,12 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
                   | [] -> None
                   | values -> Some (String.concat ", " values)
                 in
+                (* Ranges are only defined for GET (RFC 9110 14.2). *)
+                let range_header name =
+                  match Ocsigen.Request.meth request_info with
+                  | `GET -> header name
+                  | _ -> None
+                in
                 Ocsigen.Response.respond_file
                   ?if_match:(list_header Ocsigen_http.Header.Name.if_match)
                   ?if_unmodified_since:
@@ -266,8 +272,8 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
                     (list_header Ocsigen_http.Header.Name.if_none_match)
                   ?if_modified_since:
                     (header Ocsigen_http.Header.Name.if_modified_since)
-                  ?range:(header Ocsigen_http.Header.Name.range)
-                  ?if_range:(header Ocsigen_http.Header.Name.if_range)
+                  ?range:(range_header Ocsigen_http.Header.Name.range)
+                  ?if_range:(range_header Ocsigen_http.Header.Name.if_range)
                   fname
             | Ocsigen.Local_files.RDir dname ->
                 let hidden e = hide_dotfiles && is_hidden (path @ [e]) in

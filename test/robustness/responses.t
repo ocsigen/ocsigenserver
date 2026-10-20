@@ -170,12 +170,11 @@ A missing file gives 404, not 416.
   $ status GET /nothere 'Range: bytes=1-2'
   HTTP/1.1 404 Not Found
 
-BUG: range requests are only defined for GET, and the Range header field of
-any other method must be ignored (section 14.2). HEAD gets 206. Expected:
-200.
+Range requests are only defined for GET, and the Range header field of any
+other method is ignored (section 14.2): HEAD gets 200.
 
   $ status HEAD /hello.txt 'Range: bytes=1-2'
-  HTTP/1.1 206 Partial Content
+  HTTP/1.1 200 OK
 
 POST does not apply to a static file, Range or not.
 
