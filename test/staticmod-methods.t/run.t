@@ -75,7 +75,6 @@ error:
   $ req GET missing.txt
   HTTP/1.1 404 Not Found
   content-type: text/html; charset=utf-8
-  accept-ranges: bytes
   server: Ocsigen
   content-length: 11
   connection: keep-alive
@@ -84,7 +83,6 @@ error:
   $ req POST missing.txt
   HTTP/1.1 404 Not Found
   content-type: text/html; charset=utf-8
-  accept-ranges: bytes
   server: Ocsigen
   content-length: 11
   connection: keep-alive
@@ -93,7 +91,6 @@ error:
   $ req OPTIONS missing.txt
   HTTP/1.1 404 Not Found
   content-type: text/html; charset=utf-8
-  accept-ranges: bytes
   server: Ocsigen
   content-length: 11
   connection: keep-alive
