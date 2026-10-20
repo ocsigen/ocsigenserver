@@ -40,6 +40,10 @@
  (deps logdir-syslog/test.exe))
 
 (cram
+ (applies_to multipart)
+ (deps multipart/test.exe))
+
+(cram
  (applies_to open-files)
  (deps open-files/limits.exe open-files/server.exe))
 

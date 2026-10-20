@@ -229,11 +229,21 @@ let decode_part ~max_size ~create ~add ~stop stream =
           add p stri >>= fun () ->
           Ocsigen_base.Ocsigen_stream.next f >>= while_stream size2
   in
-  Lwt.catch
-    (fun () ->
-       while_stream Int64.zero s >>= fun (size, s) ->
-       stop size p >>= fun r -> Lwt.return (r, s))
-    (fun error -> stop Int64.zero p >>= fun _ -> Lwt.fail error)
+  (* [stop] closes the file of the part, if any. It runs once: when it fails
+     after the body was read, its error is reported without a second call,
+     which could close a descriptor reused in the meantime. *)
+  Lwt.try_bind
+    (fun () -> while_stream Int64.zero s)
+    (fun (size, s) -> stop size p >>= fun r -> Lwt.return (r, s))
+    (fun error ->
+       Lwt.catch
+         (fun () -> stop Int64.zero p >|= ignore)
+         (fun e ->
+            Logs.warn ~src:section (fun fmt ->
+              fmt "Error while closing a part, after another error: %s"
+                (Printexc.to_string e));
+            Lwt.return ())
+       >>= fun () -> Lwt.fail error)
 
 let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
   let decode_part = decode_part ~max_size ~create ~add ~stop in
@@ -338,8 +348,21 @@ let post_params_multipart_form_data
         parse_content_type ct
       with _ -> None
     in
-    let cd = List.assoc "content-disposition" hs in
-    let p_name = field "name" cd in
+    let malformed reason =
+      Logs.info ~src:section (fun fmt ->
+        fmt "Multipart body rejected: a part has no %s" reason);
+      raise Ocsigen_base.Lib.Ocsigen_Bad_Request
+    in
+    let cd =
+      match List.assoc_opt "content-disposition" hs with
+      | Some cd -> cd
+      | None -> malformed "Content-Disposition header"
+    in
+    let p_name =
+      match field "name" cd with
+      | p_name -> p_name
+      | exception Not_found -> malformed "name in its Content-Disposition"
+    in
     try
       let store = field "filename" cd in
       match upload_dir with
