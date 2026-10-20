@@ -1,6 +1,6 @@
 Percent-encoding helpers of Ocsigen_base.Lib.Url.
 
-  $ dune exec ./test.exe 2>&1
+  $ ../url_encoding/test.exe 2>&1
   decode ~plus:false:
   unreserved               -> unreserved
   caf%C3%A9                -> café

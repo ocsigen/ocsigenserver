@@ -2,7 +2,7 @@ An empty <uploaddir> forbids uploads, in <server> as in a host or a site.
 Self-contained POSIX sh.
 
   $ . ../server-test-helpers.sh
-  $ dune exec ./test.exe 2>&1
+  $ ../upload-dir/test.exe 2>&1
   Some "/var/upload"
   None
 

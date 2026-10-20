@@ -1,17 +1,16 @@
 What the reverse proxy sends to its target, and what it sends back. The
-upstream server (test.ml) answers with what it received, and the raw one
-(raw.ml) with responses that Ocsigen Server would not send. Self-contained
-POSIX sh.
+upstream server (../revproxy-forwarding/test.ml) answers with what it received,
+and the raw one (../revproxy-forwarding/raw.ml) with responses that Ocsigen
+Server would not send. Self-contained POSIX sh.
 
   $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost \
   >   -addext subjectAltName=DNS:localhost >/dev/null 2>&1
-  $ dune build ./test.exe ./raw.exe 2>&1
-  $ ./_build/default/test.exe >upstream.log 2>&1 &
+  $ ../revproxy-forwarding/test.exe >upstream.log 2>&1 &
   $ UPSTREAM="$!"
-  $ ./_build/default/raw.exe >raw.log 2>&1 &
+  $ ../revproxy-forwarding/raw.exe >raw.log 2>&1 &
   $ UPSTREAM="$UPSTREAM $!"
   $ trap 'kill $UPSTREAM $PROXIES 2>/dev/null; wait' EXIT
   $ wait_http http://127.0.0.1:8073/

@@ -31,12 +31,11 @@ An empty <logdir> is no log directory, so it is allowed with <syslog>.
 The same with Ocsigen.Server.start: ~logdir with a syslog facility is
 refused, and ~syslog_facility:None is allowed.
 
-  $ dune build ./test.exe 2>&1
-  $ ./_build/default/test.exe syslog >out.log 2>&1; echo "exit $?"
+  $ ../logdir-syslog/test.exe syslog >out.log 2>&1; echo "exit $?"
   exit 50
   $ grep -o 'Fatal - .*' out.log
   Fatal - a log directory and syslog are mutually exclusive: the logs go either to files or to syslog. Set only one of them (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start).
-  $ ./_build/default/test.exe nosyslog >out.log 2>&1; echo "exit $?"
+  $ ../logdir-syslog/test.exe nosyslog >out.log 2>&1; echo "exit $?"
   exit 9
   $ grep -o 'Fatal - .*' out.log
   Fatal - Unix.Unix_error(Unix.ENOENT, "open", "missing/server.pid")

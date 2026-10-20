@@ -1,18 +1,18 @@
 Client timeouts: a client cannot hold a connection by sending its request, or
 reading its response, too slowly, while a response that takes long to be
 produced, or a body that keeps coming fast enough, is not cut. The bounds of the
-test server are small (see server.ml): a timeout of 2 seconds, a keep-alive
-timeout of 3 seconds and a minimum data rate of 2 bytes per second. A second
-server, the limit server, accepts 4 connections per address, and a third, the
-pool server, is full at 4 connections. client.ml runs the scenarios.
+test server are small (see ../client-timeout/server.ml): a timeout of 2
+seconds, a keep-alive timeout of 3 seconds and a minimum data rate of 2 bytes
+per second. A second server, the limit server, accepts 4 connections per
+address, and a third, the pool server, is full at 4 connections.
+../client-timeout/client.ml runs the scenarios.
 
   $ mkdir -p log limit/log pool/log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost >/dev/null 2>&1
-  $ dune build ./server.exe ./client.exe 2>&1
-  $ ./_build/default/server.exe >server.log 2>&1 &
-  $ ./_build/default/server.exe limit >limit/server.log 2>&1 &
-  $ ./_build/default/server.exe pool >pool/server.log 2>&1 &
+  $ ../client-timeout/server.exe >server.log 2>&1 &
+  $ ../client-timeout/server.exe limit >limit/server.log 2>&1 &
+  $ ../client-timeout/server.exe pool >pool/server.log 2>&1 &
   $ trap 'for p in local limit pool; do echo shutdown > $p.cmd 2>/dev/null; done; wait' EXIT
   $ i=0; while [ ! -e local.cmd ] || [ ! -e limit.cmd ] || [ ! -e pool.cmd ]; do
   >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
@@ -25,7 +25,7 @@ at once, each writing what it saw to a file, shown below, except those of the
 pool server, which share it and run one after the other.
 
   $ scenario () {
-  >   ./_build/default/client.exe "$@" >"$(echo "$@" | tr ' ' -).out" 2>&1; }
+  >   ../client-timeout/client.exe "$@" >"$(echo "$@" | tr ' ' -).out" 2>&1; }
   $ (for s in partial-headers drip-headers idle-keepalive keepalive-reuse \
   >     slow-response slow-body stalled-body drip-body slow-reader per-address \
   >     no-handshake "partial-headers tls" "idle-keepalive tls" mute abrupt \

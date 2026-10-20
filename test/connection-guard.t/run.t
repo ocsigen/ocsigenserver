@@ -1,10 +1,10 @@
-Unit tests of Connection_guard (see test.ml): the clock is driven by hand, one
-tick per second, and the reads and writes are promises resolved by hand. With a
-timeout of 3 seconds, a connection expires after 4 ticks: since it may start
-just before a tick, it then has between 3 and 5 seconds, never less than its
-timeout.
+Unit tests of Connection_guard (see ../connection-guard/test.ml): the clock is
+driven by hand, one tick per second, and the reads and writes are promises
+resolved by hand. With a timeout of 3 seconds, a connection expires after 4
+ticks: since it may start just before a tick, it then has between 3 and 5
+seconds, never less than its timeout.
 
-  $ dune exec ./test.exe 2>&1
+  $ ../connection-guard/test.exe 2>&1
   Headers, timeout 3: expired after 4 ticks, in Headers
   Headers, one byte read each tick: expired after 4 ticks, in Headers
   Headers, timeout 0: not expired after 100 ticks

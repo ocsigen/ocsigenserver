@@ -2,8 +2,7 @@ The headers of a response announce the framing of its body, whatever other
 headers say about its length.
 
   $ mkdir -p log
-  $ dune build ./test.exe ./client.exe 2>&1
-  $ ./_build/default/test.exe >server.log 2>&1 &
+  $ ../response-framing/test.exe >server.log 2>&1 &
   $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
   $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
   >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
@@ -71,7 +70,7 @@ The connection stays usable after each of them:
 A response to HEAD has the headers of the response to GET, framing included,
 but no body: on a connection, the next response follows its headers.
 
-  $ ./_build/default/client.exe 'HEAD range-chunked' 'HEAD length-fixed' \
+  $ ../response-framing/client.exe 'HEAD range-chunked' 'HEAD length-fixed' \
   >   'GET range-fixed' | grep -viE '^date: ' | tr -d '\r'
   HTTP/1.1 206 Partial Content
   content-range: bytes 0-4/10

@@ -19,8 +19,7 @@ with Ocsigen.Server.start, the logs go to the terminal too. The program
 installs no Logs reporter: the server reports its errors on the terminal
 anyway.
 
-  $ dune build ./test.exe 2>&1
-  $ ./_build/default/test.exe -s >out.log 2>&1; echo "exit $?"
+  $ ../silent-console/test.exe -s >out.log 2>&1; echo "exit $?"
   exit 50
   $ grep -o 'Fatal - .*' out.log
   Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d.
@@ -28,7 +27,7 @@ anyway.
 With -d, the server is refused before it detaches, so the command fails at
 once.
 
-  $ ./_build/default/test.exe -d >out.log 2>&1; echo "exit $?"
+  $ ../silent-console/test.exe -d >out.log 2>&1; echo "exit $?"
   exit 50
   $ grep -o 'Fatal - .*' out.log
   Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d.
@@ -42,7 +41,7 @@ With a log directory, the server detaches. The detached process is silent, but
 the command tells its process id.
 
   $ mkdir log
-  $ ./_build/default/test.exe -d log >out.log 2>&1; echo "exit $?"
+  $ ../silent-console/test.exe -d log >out.log 2>&1; echo "exit $?"
   exit 0
   $ trap 'kill $(cat server.pid) 2>/dev/null' EXIT
   $ sed 's/^.*: ocsigen:main: *//' out.log | sed "s/$(cat server.pid)/PID/"

@@ -2,22 +2,21 @@
 # Kept free of bashisms: dune runs cram tests with /bin/sh, which is dash on
 # Debian and Ubuntu.
 
-# Run the server using 'dune exec -- "$@"' and doing the necessary setup.
-# The server must listen on the unix-domain socket named "local.sock" and on
-# the command-pipe named "local.cmd".
+# Run the server "$@" in the background and do the necessary setup. The
+# server must listen on the unix-domain socket named "local.sock" and on the
+# command-pipe named "local.cmd".
 #
 # Usage:
-#   $ run_server ./test.exe
+#   $ run_server ../deflatemod/test.exe
 #   $ curl_ "index.html"
 #
 run_server ()
 {
   mkdir -p log # Directory that might be required by the server
-  dune build "$1"
   # Run the server in the background, cut the datetime out of the log output.
   # Access lines (Combined Log Format) carry their own timestamp, which is not
   # reproducible, so drop them from the captured log.
-  dune exec -- "$@" 2>&1 | cut -b 18- | grep -v "^ocsigen:access:" &
+  "$@" 2>&1 | cut -b 18- | grep -v "^ocsigen:access:" &
   # Wait for the unix-domain socket and the command-pipe to be created
   timeout=50 # Don't wait more than 0.5s
   while ! { [ -e ./local.sock ] && [ -e ./local.cmd ]; } && [ "$timeout" -gt 0 ]; do

@@ -4,7 +4,7 @@ connection tags and of <commandpipe> and <logdir>, and the log levels set by
 <loglevel> and by the logs: command of the command pipe. Then the warnings for
 the tags that have no effect. Last, the log levels set by the -vv option.
 
-  $ dune exec ./test.exe 2>&1
+  $ ../parseconfig/test.exe 2>&1
   parse_size_tag:
   "8192"       -> 8192
   "8192B"      -> 8192

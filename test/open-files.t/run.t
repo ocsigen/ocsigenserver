@@ -4,11 +4,10 @@ each connection may use two files (its socket, and a static file it sends or a
 connection to a proxied server), and 100 files are kept for the rest of the
 server.
 
-  $ dune build ./limits.exe ./server.exe 2>&1
 
 Open_files raises the soft limit, never lowers it, and keeps to the hard limit:
 
-  $ (ulimit -Sn 256; ./_build/default/limits.exe)
+  $ (ulimit -Sn 256; ../open-files/limits.exe)
   soft limit: 256
   raised to 300: 300
   not lowered to 100: 300
@@ -22,7 +21,7 @@ says how to accept more.
 
   $ start () {
   >   mkdir -p $1/log
-  >   sh -c "ulimit $2; exec ./_build/default/server.exe $1" \
+  >   sh -c "ulimit $2; exec ../open-files/server.exe $1" \
   >     >$1/server.log 2>&1 &
   >   i=0; while [ ! -e $1.sock ] || [ ! -e $1.cmd ]; do
   >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
