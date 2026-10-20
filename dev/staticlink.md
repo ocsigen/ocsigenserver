@@ -13,6 +13,8 @@ let _ =
 ```
 Have a look at the API documentation for [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start) to see how to provide configuration options.
 
+Without a configuration file, the program must also configure the libraries that the configuration file would set up. For example, if your program uses Ocsipersist (as Eliom does for persistent data), set the location of its database with `Ocsipersist_settings.set_db_file` (SQLite backend, library `ocsipersist-sqlite.settings`) or `Ocsipersist_settings.set_store` (DBM backend, library `ocsipersist-dbm.settings`), then call `Ocsipersist.init ()`. There is no default location.
+
 As with the configuration file, you can define several virtual hosts, for example for different hostnames. See function [`Ocsigen.Server.host`](./Ocsigen-Server.md#val-host) to configure them.
 
 Functions like [`Staticmod.run`](./Staticmod.md#val-run) are defined by extensions.
@@ -193,6 +195,13 @@ by
 ```
 <extension name="staticmod" />
 ```
-This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual.
+This will not load a new module, but merely initializes one which must have been linked statically. Thus it is possible to give configuration options to extensions as usual. For example, a statically linked `ocsipersist-sqlite-config` is initialized with the location of its database (with `ocsipersist-dbm-config`, use `<store dir="..."/>` instead):
+
+```
+<extension name="ocsipersist">
+  <database file="local/var/data/mysite/ocsidb"/>
+</extension>
+```
+Note that the toplevel code of statically linked modules runs when the program starts, before the configuration file is read and the extensions are initialized.
 
 This is an experimental feature. Let us know if you test it (for example by opening an issue on Github).
