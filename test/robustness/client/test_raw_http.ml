@@ -13,6 +13,9 @@ let response =
 let () =
   show "headers that vary are removed, CRLF becomes LF"
     {Raw_http.received = response; ending = Closed};
+  Printf.printf "== validators kept, Date still removed\n%s"
+    (Raw_http.render ~validators:true
+       {Raw_http.received = response; ending = Closed});
   show "control and non-ASCII bytes are escaped"
     {received = "a\x00b\x1bc\xe9\td\re\n"; ending = Idle};
   show "empty answer" {received = ""; ending = Reset};

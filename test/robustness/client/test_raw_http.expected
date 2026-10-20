@@ -4,6 +4,14 @@ Content-Length: 5
 
 hello
 [closed]
+== validators kept, Date still removed
+HTTP/1.1 200 OK
+ETag: W/"1-2"
+last-modified: Sat, 17 Oct 2026 09:00:00 GMT
+Content-Length: 5
+
+hello
+[closed]
 == control and non-ASCII bytes are escaped
 a\x00b\x1Bc\xE9	d\x0De
 [idle]
