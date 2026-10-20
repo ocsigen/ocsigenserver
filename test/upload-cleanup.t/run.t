@@ -40,5 +40,22 @@ the second one is created after the answer:
   >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
   $ ls uploads
 
+A part without a Content-Disposition header, or without a name in it, is a
+bad request. The file of a previous part is removed all the same:
+
+  $ raw () {
+  >   printf %b "$1" | curl --unix-socket local.sock -s -o /dev/null \
+  >     -w '%{http_code}\n' --data-binary @- \
+  >     -H 'Content-Type: multipart/form-data; boundary=B' http://x/; }
+  $ raw '--B\r\nContent-Type: text/plain\r\n\r\nx\r\n--B--\r\n'
+  400
+  $ raw '--B\r\nContent-Disposition: form-data\r\n\r\nx\r\n--B--\r\n'
+  400
+  $ raw '--B\r\nContent-Disposition: form-data; name="f"; filename="a.txt"\r\n\r\nx\r\n--B\r\n\r\ny\r\n--B--\r\n'
+  400
+  $ ls uploads
+  $ grep -c 'a part has no' server.log
+  3
+
   $ echo shutdown > local.cmd
   $ wait $SERVER_PID

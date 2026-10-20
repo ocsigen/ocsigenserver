@@ -2,7 +2,7 @@
    It answers with the field, the name and whether the temporary file
    exists. A field named "keep" is moved to "kept", as an application does
    to keep a file. On the path "early", it answers without waiting for the
-   files. *)
+   files. Its info messages go to the standard output. *)
 
 open Lwt.Infix
 
@@ -37,5 +37,5 @@ let () =
   Ocsigen.Server.start
     ~ports:[`Unix "./local.sock", 0]
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
-    ~command_pipe:"local.cmd"
+    ~command_pipe:"local.cmd" ~veryverbose:()
     [Ocsigen.Server.host [upload]]

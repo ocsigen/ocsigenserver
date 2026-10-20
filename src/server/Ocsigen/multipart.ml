@@ -338,8 +338,21 @@ let post_params_multipart_form_data
         parse_content_type ct
       with _ -> None
     in
-    let cd = List.assoc "content-disposition" hs in
-    let p_name = field "name" cd in
+    let malformed reason =
+      Logs.info ~src:section (fun fmt ->
+        fmt "Multipart body rejected: a part has no %s" reason);
+      raise Ocsigen_base.Lib.Ocsigen_Bad_Request
+    in
+    let cd =
+      match List.assoc_opt "content-disposition" hs with
+      | Some cd -> cd
+      | None -> malformed "Content-Disposition header"
+    in
+    let p_name =
+      match field "name" cd with
+      | p_name -> p_name
+      | exception Not_found -> malformed "name in its Content-Disposition"
+    in
     try
       let store = field "filename" cd in
       match upload_dir with

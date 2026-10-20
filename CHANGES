@@ -295,6 +295,8 @@ Bug fixes:
    of its sites twice), and warnings and errors were logged twice. When the
    file has an error, the server now logs "Config file reload failed" instead
    of "Config file reloaded", and keeps its sites as they were.
+ * A multipart part without a Content-Disposition header, or without a name
+   in it, now gets a 400 Bad Request instead of a 500.
 
 ==== 8.0.0 (2026-09-24) ===
 
