@@ -54,7 +54,7 @@ have no effect. Last, the log levels set by the -vv option.
   
   tags without effect:
   warning: Config file: <servertimeout> has no effect and is ignored.
-  warning: Config file: <datadir> is no longer used and is ignored. Ocsipersist takes its directory from its own configuration (<store> or <database>).
+  warning: Config file: <datadir> has no effect and is ignored. Ocsipersist (DBM or SQLite) takes its location from its own <store> or <database> element.
   
   -vv:
   existing Ocsigen source -> info

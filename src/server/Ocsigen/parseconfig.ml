@@ -470,7 +470,7 @@ and later_pass = function
   | Element ("datadir", [], _p) :: ll ->
       Logs.warn ~src:section (fun fmt ->
         fmt
-          "Config file: <datadir> is no longer used and is ignored. Ocsipersist takes its directory from its own configuration (<store> or <database>).");
+          "Config file: <datadir> has no effect and is ignored. Ocsipersist (DBM or SQLite) takes its location from its own <store> or <database> element.");
       later_pass ll
   | Element ("minthreads", [], _p) :: ll -> later_pass ll
   | Element ("maxthreads", [], _p) :: ll -> later_pass ll
