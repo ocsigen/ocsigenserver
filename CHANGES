@@ -345,6 +345,10 @@ Bug fixes:
    requires: ranges are only defined for GET. It got 206.
  * Deflatemod: content codings are case-insensitive, as RFC 9110 says:
    "Accept-Encoding: GZIP" now gets gzip.
+ * Deflatemod: a response of a type that it compresses carries
+   "Vary: Accept-Encoding" even when it is not compressed, so that a shared
+   cache does not serve the uncompressed copy to the clients that accept a
+   compressed one.
 
 ==== 8.0.0 (2026-09-24) ===
 

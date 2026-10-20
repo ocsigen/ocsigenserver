@@ -283,7 +283,13 @@ let filter choice_list = function
             (Bytesrw_zlib.Gzip.compress_writes ~level:!compress_level ())
             "gzip"
       | Zstd -> compress_if (Bytesrw_zstd.compress_writes ()) "zstd"
-      | Id | Star -> found res
+      | Id | Star ->
+          (* Not compressed for this request, but it would be for another
+           one: caches must know it (RFC 9110 12.5.5). *)
+          found
+            (if is_compressible ()
+             then update_headers add_vary_accept_encoding res
+             else res)
       | Not_acceptable ->
           Lwt.return
             (Ocsigen.Extensions.Ext_stop_all

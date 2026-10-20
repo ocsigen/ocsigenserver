@@ -135,5 +135,10 @@ left untouched too.
 For the same reason, a compressed response does not carry the Accept-Ranges
 header: byte ranges are only served from the uncompressed file.
 
+A response of a type that deflatemod compresses carries
+[Vary: Accept-Encoding], even when it is not compressed, because the client
+does not accept any of the codings: a shared cache must not serve this
+uncompressed copy to the clients that do.
+
 
 {e Page written by Gabriel Kerneis}
