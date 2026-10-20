@@ -272,7 +272,7 @@ Example :
 
 #### `<syslog>` : log to syslog
 
-Specifies which syslog facility to use, instead of logging to files. This option is mutually exclusive with \<logdir\>.
+Specifies which syslog facility to use, instead of logging to files. This option is mutually exclusive with `<logdir>`: the server refuses to start when both are given (an empty `<logdir></logdir>`, which means no log directory, is allowed). The same holds for options `?logdir` and `?syslog_facility` of [`Ocsigen.Server.start`](./Ocsigen-Server.md#val-start).
 
 Example:
 
