@@ -194,7 +194,8 @@ POST does not apply to a static file, Range or not.
   $ status POST /hello.txt 'Range: bytes=1-2' 'Content-Length: 0'
   HTTP/1.1 405 Method Not Allowed
 
-Ranges of a file under deflatemod work as elsewhere.
+Ranges of a file under deflatemod work as elsewhere. A 206 response carries
+the Vary header field that the 200 response would have (section 15.3.7).
 
   $ req GET /compressed/big.txt 'Range: bytes=0-9'
   HTTP/1.1 206 Partial Content
@@ -203,6 +204,7 @@ Ranges of a file under deflatemod work as elsewhere.
   etag: W/"5e0c89c0-4000"
   last-modified: Wed, 01 Jan 2020 12:00:00 GMT
   content-range: bytes 0-9/16384
+  vary: accept-encoding
   content-length: 10
   
   0123456789
@@ -219,6 +221,7 @@ the selected bytes would not match Content-Range.
   etag: W/"5e0c89c0-4000"
   last-modified: Wed, 01 Jan 2020 12:00:00 GMT
   content-range: bytes 0-9/16384
+  vary: accept-encoding
   content-length: 10
   
   0123456789
@@ -267,16 +270,27 @@ have to be the one of the 200 response (section 8.6).
   
   [idle]
 
-BUG: a 304 response must carry the Vary header field that the 200 response
-would have (section 15.4.5). The 304 response for a compressed file has
-none. Expected: "vary: accept-encoding".
+A 304 response carries the Vary header field that the 200 response would
+have (section 15.4.5).
 
   $ req GET /compressed/big.txt 'If-None-Match: W/"5e0c89c0-4000"' \
   >   'Accept-Encoding: gzip'
   HTTP/1.1 304 Not Modified
   etag: W/"5e0c89c0-4000"
   last-modified: Wed, 01 Jan 2020 12:00:00 GMT
+  vary: accept-encoding
   
+  [idle]
+
+So does a 304 response for a type that deflatemod does not compress (it only
+compresses text/plain here): a 304 has no Content-Type, so deflatemod cannot
+tell. This may only make a cache keep more copies than needed.
+
+  $ printf 'page\n' > www/compressed/page.html
+  $ req GET /compressed/page.html 'If-None-Match: *' 'Accept-Encoding: gzip' |
+  >   grep -iE '^(HTTP/|vary|\[)'
+  HTTP/1.1 304 Not Modified
+  vary: accept-encoding
   [idle]
   $ settle=0.1
 
