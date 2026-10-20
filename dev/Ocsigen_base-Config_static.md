@@ -16,9 +16,6 @@ val logdir : string option Stdlib.ref
 val mimefile : string Stdlib.ref
 ```
 ```ocaml
-val datadir : string Stdlib.ref
-```
-```ocaml
 val bindir : string Stdlib.ref
 ```
 ```ocaml

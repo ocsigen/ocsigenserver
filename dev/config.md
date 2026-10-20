@@ -15,7 +15,6 @@ The configuration file is an XML file. Its layout is the following:
     <port>80</port>
 
     <logdir>...</logdir>
-    <datadir>...</datadir>
     <commandpipe>...</commandpipe>
 
     <!-- Extensions to be loaded: -->
@@ -87,14 +86,15 @@ Here is a simple example:
     <port>127.0.0.1:80</port>
 
     <logdir>/var/log/ocsigenserver</logdir>
-    <datadir>/var/lib/ocsigenserver</datadir>
     <commandpipe>/var/run/ocsigenserver/command</commandpipe>
 
     <charset>utf-8</charset>
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
 
-    <extension findlib-package="ocsipersist-sqlite-config"/>
+    <extension findlib-package="ocsipersist-sqlite-config">
+      <database file="/var/lib/ocsigenserver/ocsidb"/>
+    </extension>
     <!-- Its dependencies will be loaded automatically using findlib -->
 
     <extension findlib-package="eliom.server"/>
@@ -126,7 +126,6 @@ Here is another example, for use as unprivileged user toto on port 8000\. We use
     <port>8000</port>
 
     <logdir>/home/toto/var/log/ocsigenserver</logdir>
-    <datadir>/home/toto/var/lib/ocsigenserver</datadir>
     <commandpipe>/home/toto/var/run/ocsigenserver_command</commandpipe>
 
     <charset>utf-8</charset>
@@ -269,16 +268,6 @@ Example :
 
 ```
 <logdir>/var/log/ocsigenserver</logdir>
-```
-
-#### `<datadir>` : directory for server data
-
-This directory is used to store data used by the server or extensions (for example persistent data). Usually `/var/lib/ocsigenserver`.
-
-Example :
-
-```
-<datadir>/var/lib/ocsigenserver</datadir>
 ```
 
 #### `<syslog>` : log to syslog

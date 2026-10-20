@@ -48,7 +48,6 @@ Create your configuration file. You can take this one as an example:
     <port>8080</port>
 
     <logdir>local/var/log/mysite</logdir>
-    <datadir>local/var/data/mysite</datadir>
     <charset>utf-8</charset>
 
     <commandpipe>local/var/run/mysite-cmd</commandpipe>
@@ -221,7 +220,6 @@ The configuration file is an XML file. Its layout is the following:
     <port>80</port>
 
     <logdir>...</logdir>
-    <datadir>...</datadir>
     <commandpipe>...</commandpipe>
 
     <!-- Extensions to be loaded: -->
@@ -293,14 +291,15 @@ Here is a simple example:
     <port>127.0.0.1:80</port>
 
     <logdir>/var/log/ocsigenserver</logdir>
-    <datadir>/var/lib/ocsigenserver</datadir>
     <commandpipe>/var/run/ocsigenserver/command</commandpipe>
 
     <charset>utf-8</charset>
 
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
 
-    <extension findlib-package="ocsipersist-sqlite-config"/>
+    <extension findlib-package="ocsipersist-sqlite-config">
+      <database file="/var/lib/ocsigenserver/ocsidb"/>
+    </extension>
     <!-- Its dependencies will be loaded automatically using findlib -->
 
     <extension findlib-package="eliom.server"/>
@@ -332,7 +331,6 @@ Here is another example, for use as unprivileged user toto on port 8000\. We use
     <port>8000</port>
 
     <logdir>/home/toto/var/log/ocsigenserver</logdir>
-    <datadir>/home/toto/var/lib/ocsigenserver</datadir>
     <commandpipe>/home/toto/var/run/ocsigenserver_command</commandpipe>
 
     <charset>utf-8</charset>
@@ -475,16 +473,6 @@ Example :
 
 ```
 <logdir>/var/log/ocsigenserver</logdir>
-```
-
-#### `<datadir>` : directory for server data
-
-This directory is used to store data used by the server or extensions (for example persistent data). Usually `/var/lib/ocsigenserver`.
-
-Example :
-
-```
-<datadir>/var/lib/ocsigenserver</datadir>
 ```
 
 #### `<syslog>` : log to syslog
@@ -915,7 +903,6 @@ let _ =
     ~ports:[`All, 8080]
     ~command_pipe:"local/var/run/mysite-cmd"
     ~logdir:"local/var/log/mysite"
-    ~datadir:"local/var/data/mysite"
     ~default_charset:(Some "utf-8")
     [ Ocsigen.Server.host
         ~regexp:"mydomain.com"
@@ -999,7 +986,6 @@ This program corresponds to the following configuration file:
     <port>8080</port>
     <commandpipe>local/var/run/mysite-cmd</commandpipe>
     <logdir>local/var/log/mysite</logdir>
-    <datadir>local/var/data/mysite</datadir>
     <charset>utf-8</charset>
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
     <extension findlib-package="ocsigenserver.ext.authbasic"/>
@@ -2680,9 +2666,6 @@ val set_maxrequestbodysizeinmemory : int -> unit
 val set_default_charset : string option -> unit
 ```
 ```ocaml
-val set_datadir : string -> unit
-```
-```ocaml
 val set_bindir : string -> unit
 ```
 ```ocaml
@@ -2810,9 +2793,6 @@ val get_maxrequestbodysizeinmemory : unit -> int
 ```
 ```ocaml
 val get_default_charset : unit -> string option
-```
-```ocaml
-val get_datadir : unit -> string
 ```
 ```ocaml
 val get_bindir : unit -> string
@@ -4006,7 +3986,6 @@ val start :
   ?ssl_info:Config.ssl_info option ->
   ?default_charset:string option ->
   ?logdir:string ->
-  ?datadir:string ->
   ?uploaddir:string option ->
   ?maxuploadfilesize:int64 option ->
   ?syslog_facility:Syslog_message.facility option ->
@@ -4379,9 +4358,6 @@ val logdir : string option Stdlib.ref
 ```
 ```ocaml
 val mimefile : string Stdlib.ref
-```
-```ocaml
-val datadir : string Stdlib.ref
 ```
 ```ocaml
 val bindir : string Stdlib.ref
@@ -7785,9 +7761,6 @@ val set_maxrequestbodysizeinmemory : int -> unit
 val set_default_charset : string option -> unit
 ```
 ```ocaml
-val set_datadir : string -> unit
-```
-```ocaml
 val set_bindir : string -> unit
 ```
 ```ocaml
@@ -7917,9 +7890,6 @@ val get_maxrequestbodysizeinmemory : unit -> int
 val get_default_charset : unit -> string option
 ```
 ```ocaml
-val get_datadir : unit -> string
-```
-```ocaml
 val get_bindir : unit -> string
 ```
 ```ocaml
@@ -7986,9 +7956,6 @@ val logdir : string option Stdlib.ref
 ```
 ```ocaml
 val mimefile : string Stdlib.ref
-```
-```ocaml
-val datadir : string Stdlib.ref
 ```
 ```ocaml
 val bindir : string Stdlib.ref
@@ -9041,7 +9008,6 @@ val start :
   ?ssl_info:Ocsigen.Config.ssl_info option ->
   ?default_charset:string option ->
   ?logdir:string ->
-  ?datadir:string ->
   ?uploaddir:string option ->
   ?maxuploadfilesize:int64 option ->
   ?syslog_facility:Syslog_message.facility option ->

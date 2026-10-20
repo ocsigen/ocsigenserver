@@ -119,9 +119,6 @@ val set_maxrequestbodysizeinmemory : int -> unit
 val set_default_charset : string option -> unit
 ```
 ```ocaml
-val set_datadir : string -> unit
-```
-```ocaml
 val set_bindir : string -> unit
 ```
 ```ocaml
@@ -249,9 +246,6 @@ val get_maxrequestbodysizeinmemory : unit -> int
 ```
 ```ocaml
 val get_default_charset : unit -> string option
-```
-```ocaml
-val get_datadir : unit -> string
 ```
 ```ocaml
 val get_bindir : unit -> string

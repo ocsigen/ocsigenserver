@@ -30,7 +30,6 @@ let _ =
     ~ports:[`All, 8080]
     ~command_pipe:"local/var/run/mysite-cmd"
     ~logdir:"local/var/log/mysite"
-    ~datadir:"local/var/data/mysite"
     ~default_charset:(Some "utf-8")
     [ Ocsigen.Server.host
         ~regexp:"mydomain.com"
@@ -114,7 +113,6 @@ This program corresponds to the following configuration file:
     <port>8080</port>
     <commandpipe>local/var/run/mysite-cmd</commandpipe>
     <logdir>local/var/log/mysite</logdir>
-    <datadir>local/var/data/mysite</datadir>
     <charset>utf-8</charset>
     <extension findlib-package="ocsigenserver.ext.staticmod"/>
     <extension findlib-package="ocsigenserver.ext.authbasic"/>

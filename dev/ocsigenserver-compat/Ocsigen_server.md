@@ -41,7 +41,6 @@ val start :
   ?ssl_info:Ocsigen.Config.ssl_info option ->
   ?default_charset:string option ->
   ?logdir:string ->
-  ?datadir:string ->
   ?uploaddir:string option ->
   ?maxuploadfilesize:int64 option ->
   ?syslog_facility:Syslog_message.facility option ->

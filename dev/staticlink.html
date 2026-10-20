@@ -195,7 +195,6 @@
     ~ports:[`All, 8080]
     ~command_pipe:&quot;local/var/run/mysite-cmd&quot;
     ~logdir:&quot;local/var/log/mysite&quot;
-    ~datadir:&quot;local/var/data/mysite&quot;
     ~default_charset:(Some &quot;utf-8&quot;)
     [ Ocsigen.Server.host
         ~regexp:&quot;mydomain.com&quot;
@@ -267,7 +266,6 @@
     &lt;port&gt;8080&lt;/port&gt;
     &lt;commandpipe&gt;local/var/run/mysite-cmd&lt;/commandpipe&gt;
     &lt;logdir&gt;local/var/log/mysite&lt;/logdir&gt;
-    &lt;datadir&gt;local/var/data/mysite&lt;/datadir&gt;
     &lt;charset&gt;utf-8&lt;/charset&gt;
     &lt;extension findlib-package=&quot;ocsigenserver.ext.staticmod&quot;/&gt;
     &lt;extension findlib-package=&quot;ocsigenserver.ext.authbasic&quot;/&gt;
