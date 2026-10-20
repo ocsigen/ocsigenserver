@@ -135,6 +135,8 @@ New features:
  * OCaml API: Ocsigen_http.Header.Entity_tag parses lists of entity tags, as
    in If-Match and If-None-Match, and compares them (weak and strong
    comparisons of RFC 9110).
+ * OCaml API: Ocsigen_http.Header.Date.parse reads the three formats of HTTP
+   dates.
 
 Bug fixes:
  * Ocsigen.Server.start with ~logdir and ~syslog_facility:None no longer
@@ -329,6 +331,9 @@ Bug fixes:
  * Static files: If-None-Match uses the weak comparison, as RFC 9110 requires:
    "x" now matches the ETag W/"x". All the If-None-Match lines of a request
    are read, and a comma within an entity tag no longer splits it.
+ * Static files: If-Modified-Since gives 304 when the file has not changed
+   since the date, not only when the date is exactly its Last-Modified one,
+   and the obsolete date formats (RFC 850 and asctime) are accepted.
 
 ==== 8.0.0 (2026-09-24) ===
 

@@ -128,15 +128,18 @@ let respond_file
              "last-modified" last_modified
          in
          let headers = Option.value headers ~default:(Http.Header.init ()) in
-         (* [If-None-Match] takes precedence over [If-Modified-Since]
-            (RFC 7232). For the latter we only return [304] on an exact match of
-            our [Last-Modified] value, so we never answer [304] wrongly. *)
+         (* [If-None-Match] takes precedence over [If-Modified-Since], which
+            is ignored when it is not a valid date (RFC 9110 13.1.3). The
+            file is not modified when its Last-Modified date, in whole
+            seconds, is not after the given one. *)
          let not_modified =
            match if_none_match with
            | Some inm -> if_none_match_matches inm etag
            | None -> (
-             match if_modified_since with
-             | Some ims -> String.equal ims last_modified
+             match
+               Option.bind if_modified_since Ocsigen_http.Header.Date.parse
+             with
+             | Some date -> Float.trunc s.Unix.st_mtime <= date
              | None -> false)
          in
          if not_modified
