@@ -138,7 +138,9 @@ header: byte ranges are only served from the uncompressed file.
 A response of a type that deflatemod compresses carries
 [Vary: Accept-Encoding], even when it is not compressed, because the client
 does not accept any of the codings: a shared cache must not serve this
-uncompressed copy to the clients that do.
+uncompressed copy to the clients that do. A partial (206) response carries it
+too, as the complete response would, and so does a 304 response: as a 304
+has no content type, this is the case for all of them.
 
 
 {e Page written by Gabriel Kerneis}

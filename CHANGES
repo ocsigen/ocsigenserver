@@ -502,6 +502,9 @@ Bug fixes:
    "Vary: Accept-Encoding" even when it is not compressed, so that a shared
    cache does not serve the uncompressed copy to the clients that accept a
    compressed one.
+ * Deflatemod: 304 responses, and 206 responses of a type it compresses,
+   carry "Vary: Accept-Encoding", as the complete response would (RFC 9110
+   15.4.5 and 15.3.7).
 
 ==== 8.0.0 (2026-09-24) ===
 

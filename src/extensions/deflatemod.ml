@@ -233,6 +233,14 @@ let compress cfilter contentencoding res =
   in
   Ocsigen.Response.update res ~body
 
+let status_code res =
+  Cohttp.Code.code_of_status
+    (Http.Response.status (Ocsigen.Response.response res))
+
+let has_content_range res =
+  Option.is_some
+    (Ocsigen.Response.header res Ocsigen_http.Header.Name.content_range)
+
 (* Only a complete representation is compressed. A 206 carries a byte range of
    the uncompressed representation, with a Content-Range in its offsets:
    compressing it would make both the range and the framing wrong. The same
@@ -240,20 +248,30 @@ let compress cfilter contentencoding res =
    error page answering a range request, for instance). 1xx, 204, 205 and 304
    responses have no body. *)
 let may_compress res =
-  match
-    Cohttp.Code.code_of_status
-      (Http.Response.status (Ocsigen.Response.response res))
-  with
+  match status_code res with
   | 204 | 205 | 206 | 304 -> false
-  | code ->
-      code >= 200
-      && Option.is_none
-           (Ocsigen.Response.header res Ocsigen_http.Header.Name.content_range)
+  | code -> code >= 200 && not (has_content_range res)
 
 let filter choice_list = function
   | Ocsigen.Extensions.Req_not_found (code, _) ->
       Lwt.return (Ocsigen.Extensions.Ext_next code)
-  | Ocsigen.Extensions.Req_found (_, res) when not (may_compress res) ->
+  | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info = ri; _}, res)
+    when not (may_compress res) ->
+      (* A 304 carries the Vary of the 200 it stands for (RFC 9110
+         15.4.5). It has no Content-Type, so whether the 200 would have
+         been compressed is unknown: Vary is always sent, which may only
+         make caches store more copies than needed. A 206 carries the Vary
+         of the 200 it is a part of (15.3.7): it has its Content-Type. *)
+      let res =
+        if
+          status_code res = 304
+          || has_content_range res
+             && compressible res
+                  (Ocsigen.Request.sub_path_string ri)
+                  choice_list
+        then update_headers add_vary_accept_encoding res
+        else res
+      in
       Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return res))
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info = ri; _}, res)
     -> (
