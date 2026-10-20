@@ -28,7 +28,7 @@ the sites given as argument:
   >   grep -c '<servertimeout> has no effect' log/warnings.log
   > }
   $ reload () {
-  >   echo reload > local.cmd
+  >   send_command $SERVER_PID local.cmd reload
   >   i=0; until [ "$(grep -c "$1" log/warnings.log)" -ge "$2" ]; do
   >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
   > }
@@ -37,7 +37,8 @@ the sites given as argument:
   $ ocsigenserver -c site.conf >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
-  $ wait_http http://127.0.0.1:8091/index.html
+  $ wait_server $SERVER_PID server.log local.cmd \
+  >   http://127.0.0.1:8091/index.html
   $ count_warnings
   1
   $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
@@ -66,7 +67,7 @@ the one that the file no longer has:
 
   $ (sleep 10; kill $SERVER_PID) >/dev/null 2>&1 &
   $ WATCHDOG=$!
-  $ echo shutdown > local.cmd
+  $ send_command $SERVER_PID local.cmd shutdown
   $ wait $SERVER_PID; echo "exit $?"
   exit 0
   $ kill $WATCHDOG

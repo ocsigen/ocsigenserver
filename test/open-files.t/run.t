@@ -4,6 +4,7 @@ each connection may use two files (its socket, and a static file it sends or a
 connection to a proxied server), and 100 files are kept for the rest of the
 server.
 
+  $ . ../server-test-helpers.sh
 
 Open_files raises the soft limit, never lowers it, and keeps to the hard limit:
 
@@ -23,10 +24,10 @@ says how to accept more.
   >   mkdir -p $1/log
   >   sh -c "ulimit $2; exec ../open-files/server.exe $1" \
   >     >$1/server.log 2>&1 &
-  >   i=0; while [ ! -e $1.sock ] || [ ! -e $1.cmd ]; do
-  >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  >   SERVER_PID=$!
+  >   wait_server $SERVER_PID $1/server.log $1.sock $1.cmd
   > }
-  $ stop () { echo shutdown > $1.cmd; wait; }
+  $ stop () { stop_server $SERVER_PID $1.cmd; }
   $ start explicit "-n 300"
   $ curl --unix-socket explicit.sock -s http://localhost/; echo
   100 connections, soft limit 300

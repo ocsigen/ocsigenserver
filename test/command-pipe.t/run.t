@@ -1,16 +1,16 @@
 The command pipe is a control channel (shutdown, reload <file>, ...): only the
 user running the server may write to it. An existing file at the pipe path is
 checked before it is used. A path that belongs to another user is not tested
-here: it needs a second user. Self-contained (POSIX sh) so it runs regardless
-of the cram shell.
+here: it needs a second user. POSIX sh, so that it runs regardless of the
+cram shell.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ start_server () {
   >   rm -f local.sock log/*
   >   ../command-pipe/test.exe >server.log 2>&1 &
   >   SERVER_PID=$!
-  >   i=0; while [ ! -e local.sock ]; do
-  >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  >   wait_server $SERVER_PID server.log local.sock
   > }
   $ wait_for_log () {
   >   i=0; until grep -q "$1" log/warnings.log 2>/dev/null; do
@@ -38,7 +38,7 @@ to it before and after the server starts.
 
 Only the orders written to the new pipe reach the server.
 
-  $ echo hello >local.cmd
+  $ send_command $SERVER_PID local.cmd hello
   $ wait_for_log 'Command received: hello'
   $ grep -o 'Command received: .*' log/warnings.log
   Command received: hello

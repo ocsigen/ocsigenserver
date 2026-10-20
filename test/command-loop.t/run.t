@@ -1,13 +1,13 @@
 An order of the command pipe that fails does not stop the command pipe: the
-later orders are still read. Self-contained POSIX sh.
+later orders are still read. POSIX sh.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ ../command-loop/test.exe >server.log 2>&1 &
   $ SERVER_PID=$!
-  $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
 
-  $ echo 'test:fail' > local.cmd
+  $ send_command $SERVER_PID local.cmd test:fail
   $ for _ in $(seq 1 20); do
   >   grep -q 'this order always fails' log/errors.log 2>/dev/null && break
   >   sleep 0.5
@@ -20,7 +20,7 @@ after 10 seconds, so that the test fails instead of hanging:
 
   $ (sleep 10; kill $SERVER_PID) >/dev/null 2>&1 &
   $ WATCHDOG=$!
-  $ echo 'shutdown' > local.cmd
+  $ send_command $SERVER_PID local.cmd shutdown
   $ wait $SERVER_PID; echo "exit $?"
   exit 0
   $ kill $WATCHDOG
