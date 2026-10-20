@@ -239,11 +239,12 @@ let compress cfilter contentencoding res =
    goes for any response with a Content-Range, whatever its status (a static
    error page answering a range request, for instance). 1xx, 204, 205 and 304
    responses have no body. *)
+let status_code res =
+  Cohttp.Code.code_of_status
+    (Http.Response.status (Ocsigen.Response.response res))
+
 let may_compress res =
-  match
-    Cohttp.Code.code_of_status
-      (Http.Response.status (Ocsigen.Response.response res))
-  with
+  match status_code res with
   | 204 | 205 | 206 | 304 -> false
   | code ->
       code >= 200
@@ -254,6 +255,15 @@ let filter choice_list = function
   | Ocsigen.Extensions.Req_not_found (code, _) ->
       Lwt.return (Ocsigen.Extensions.Ext_next code)
   | Ocsigen.Extensions.Req_found (_, res) when not (may_compress res) ->
+      (* A 304 carries the Vary of the 200 it stands for (RFC 9110
+         15.4.5). It has no Content-Type, so whether the 200 would have
+         been compressed is unknown: Vary is always sent, which may only
+         make caches store more copies than needed. *)
+      let res =
+        if status_code res = 304
+        then update_headers add_vary_accept_encoding res
+        else res
+      in
       Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return res))
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info = ri; _}, res)
     -> (

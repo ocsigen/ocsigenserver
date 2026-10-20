@@ -251,15 +251,15 @@ have to be the one of the 200 response (section 8.6).
   
   [idle]
 
-BUG: a 304 response must carry the Vary header field that the 200 response
-would have (section 15.4.5). The 304 response for a compressed file has
-none. Expected: "vary: accept-encoding".
+A 304 response carries the Vary header field that the 200 response would
+have (section 15.4.5).
 
   $ req GET /compressed/big.txt 'If-None-Match: W/"5e0c89c0-4000"' \
   >   'Accept-Encoding: gzip'
   HTTP/1.1 304 Not Modified
   etag: W/"5e0c89c0-4000"
   last-modified: Wed, 01 Jan 2020 12:00:00 GMT
+  vary: accept-encoding
   
   [idle]
 
