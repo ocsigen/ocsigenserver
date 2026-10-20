@@ -338,6 +338,9 @@ Bug fixes:
    answered with 412, as RFC 9110 requires; they were ignored. As the ETag
    is weak, If-Match only succeeds with "*". Ocsigen.Response.respond_file
    takes ~if_match and ~if_unmodified_since.
+ * Staticmod: the conditional headers and Range of the request no longer
+   apply to an error page (<static code>): it could be answered with an
+   empty 404 instead of a 304, or with a part of it.
 
 ==== 8.0.0 (2026-09-24) ===
 

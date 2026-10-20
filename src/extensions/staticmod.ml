@@ -240,10 +240,21 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
         let serve () =
           (match page with
             | Ocsigen.Local_files.RFile fname ->
-                let header name = Ocsigen.Request.header request_info name in
+                (* The preconditions and the range of the request only
+                   apply to a successful answer, not to an error page (RFC
+                   9110 13.2.1 and 14.2). *)
+                let header name =
+                  if status_filter
+                  then None
+                  else Ocsigen.Request.header request_info name
+                in
                 (* A list header may be written on several lines. *)
                 let list_header name =
-                  match Ocsigen.Request.header_multi request_info name with
+                  match
+                    if status_filter
+                    then []
+                    else Ocsigen.Request.header_multi request_info name
+                  with
                   | [] -> None
                   | values -> Some (String.concat ", " values)
                 in

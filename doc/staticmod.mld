@@ -7,7 +7,8 @@ and size) and a [Last-Modified] header. Conditional requests made with
 when the file is unchanged (RFC 9110), saving bandwidth on revalidation. A
 false [If-Match] or [If-Unmodified-Since] condition is answered with
 [412 Precondition Failed]; as the [ETag] is weak, [If-Match] only succeeds
-with ["*"].
+with ["*"]. These conditions, and ranges, do not apply to error pages (the
+[code] attribute below).
 
 Single byte-range requests are supported (RFC 9110): responses advertise
 [Accept-Ranges: bytes], a [Range] request yields [206 Partial Content] with a

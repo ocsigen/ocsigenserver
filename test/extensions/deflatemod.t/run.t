@@ -45,6 +45,11 @@
   ocsigen:local-file: [INFO] Testing "error.html".
   ocsigen:local-file: [INFO] checking if file error.html can be sent
   ocsigen:local-file: [INFO] Returning "error.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
   application: [WARNING] Command received: shutdown
 
 Without Accept-Encoding the response is not compressed:
@@ -135,17 +140,30 @@ compression:
   
   Error: Not Found
 
-A response with a Content-Range is never compressed, whatever its status: its
-range is one of the uncompressed file. Here, a static error page answering a
-range request goes out as is, with its length:
+A static error page does not answer a range request: it is sent whole, and
+compressed as any other response.
 
-  $ curl_ missing/page.html -H "Range: bytes=0-3" -H "Accept-Encoding: gzip"
+  $ curl_ missing/page.html -H "Range: bytes=0-3" -H "Accept-Encoding: gzip" \
+  >   --compressed
   HTTP/1.1 404 Not Found
   content-type: text/html
-  accept-ranges: bytes
-  content-range: bytes 0-3/11
+  content-encoding: gzip
+  vary: accept-encoding
   server: Ocsigen
-  content-length: 4
+  transfer-encoding: chunked
   connection: keep-alive
   
-  Erro
+  Error page
+
+A response with a Content-Range is never compressed, whatever its status: its
+range is one of the uncompressed file. Here, a 416 for an unsatisfiable
+range:
+
+  $ curl_ index.html -H "Range: bytes=1000-" -H "Accept-Encoding: gzip"
+  HTTP/1.1 416 Requested Range Not Satisfiable
+  accept-ranges: bytes
+  content-range: bytes */12
+  server: Ocsigen
+  content-length: 0
+  connection: keep-alive
+  
