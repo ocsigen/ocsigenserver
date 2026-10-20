@@ -7,18 +7,21 @@ per second. A second server, the limit server, accepts 4 connections per
 address, and a third, the pool server, is full at 4 connections.
 ../client-timeout/client.ml runs the scenarios.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log limit/log pool/log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost >/dev/null 2>&1
   $ ../client-timeout/server.exe >server.log 2>&1 &
+  $ LOCAL=$!
   $ ../client-timeout/server.exe limit >limit/server.log 2>&1 &
+  $ LIMIT=$!
   $ ../client-timeout/server.exe pool >pool/server.log 2>&1 &
-  $ trap 'for p in local limit pool; do echo shutdown > $p.cmd 2>/dev/null; done; wait' EXIT
-  $ i=0; while [ ! -e local.cmd ] || [ ! -e limit.cmd ] || [ ! -e pool.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
-  $ for port in 8076 8077 8078; do
-  >   i=0; while ! curl -s --max-time 5 http://127.0.0.1:$port/ >/dev/null 2>&1; do
-  >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done; done
+  $ POOL=$!
+  $ trap 'stop_server $LOCAL; stop_server $LIMIT limit.cmd;
+  >   stop_server $POOL pool.cmd' EXIT
+  $ wait_server $LOCAL server.log local.cmd http://127.0.0.1:8076/
+  $ wait_server $LIMIT limit/server.log limit.cmd http://127.0.0.1:8077/
+  $ wait_server $POOL pool/server.log pool.cmd http://127.0.0.1:8078/
 
 Each scenario waits several seconds for the bounds of the server. They all run
 at once, each writing what it saw to a file, shown below, except those of the

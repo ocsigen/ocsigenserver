@@ -1,12 +1,12 @@
 Security hardening checks: command pipe permissions (F8) and error-body
-sanitisation (F4). Self-contained (POSIX sh, no bash helper) so it runs
-regardless of the cram shell.
+sanitisation (F4). POSIX sh, so that it runs regardless of the cram shell.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ ../security/test.exe >server.log 2>&1 &
-  $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
-  $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ SERVER_PID=$!
+  $ trap 'stop_server $SERVER_PID' EXIT
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
 
 F8: the command pipe is created with mode 0o600, so that only the server's own
 user can send it control commands.

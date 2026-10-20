@@ -1,11 +1,12 @@
 The headers of a response announce the framing of its body, whatever other
 headers say about its length.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ ../response-framing/test.exe >server.log 2>&1 &
-  $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
-  $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ SERVER_PID=$!
+  $ trap 'stop_server $SERVER_PID' EXIT
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
   $ get () {
   >   curl --unix-socket local.sock -s -i --raw --max-time 10 "$@" \
   >   | grep -viE '^date: ' | tr -d '\r'

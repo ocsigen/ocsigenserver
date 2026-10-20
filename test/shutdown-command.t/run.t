@@ -1,14 +1,14 @@
-The shutdown order of the command pipe. Self-contained POSIX sh.
+The shutdown order of the command pipe. POSIX sh.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ ../shutdown-command/test.exe >server.log 2>&1 &
   $ SERVER_PID=$!
-  $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
 
 A delay that is not a number is reported, and the server keeps running:
 
-  $ echo 'shutdown soon' > local.cmd
+  $ send_command $SERVER_PID local.cmd 'shutdown soon'
   $ for _ in $(seq 1 20); do
   >   grep -q 'is not a delay' log/errors.log 2>/dev/null && break
   >   sleep 0.5
@@ -20,6 +20,6 @@ A delay that is not a number is reported, and the server keeps running:
 
 "shutdown notimeout" stops the server:
 
-  $ echo 'shutdown notimeout' > local.cmd
+  $ send_command $SERVER_PID local.cmd 'shutdown notimeout'
   $ wait $SERVER_PID; echo "exit $?"
   exit 0

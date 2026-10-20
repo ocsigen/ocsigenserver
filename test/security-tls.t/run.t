@@ -1,15 +1,14 @@
 F5: the HTTPS server must require TLS 1.2 at minimum (TLS 1.0/1.1 deprecated).
-Self-contained POSIX sh.
+POSIX sh.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
   >   -out cert.pem -days 2 -subj /CN=localhost >/dev/null 2>&1
   $ ../security-tls/test.exe >server.log 2>&1 &
-  $ trap 'echo shutdown > local.cmd 2>/dev/null; wait' EXIT
-  $ i=0; while [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
-  $ i=0; while ! curl -sk --tls-max 1.2 https://127.0.0.1:8453/ >/dev/null 2>&1; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ SERVER_PID=$!
+  $ trap 'stop_server $SERVER_PID' EXIT
+  $ wait_server $SERVER_PID server.log local.cmd https://127.0.0.1:8453/
 
 A TLS 1.2 client succeeds:
 

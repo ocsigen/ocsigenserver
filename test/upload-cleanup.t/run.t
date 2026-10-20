@@ -1,12 +1,12 @@
 The files uploaded in a multipart request are removed once the request is
-handled. Self-contained POSIX sh.
+handled. POSIX sh.
 
+  $ . ../server-test-helpers.sh
   $ mkdir -p log uploads kept
   $ echo hello > a.txt
   $ ../upload-cleanup/test.exe >server.log 2>&1 &
   $ SERVER_PID=$!
-  $ i=0; while [ ! -e local.sock ] || [ ! -e local.cmd ]; do
-  >   i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
   $ post () { curl --unix-socket local.sock -s "$@" http://x/; }
 
 The file exists while the request is handled, and is gone after:
@@ -57,5 +57,4 @@ bad request. The file of a previous part is removed all the same:
   $ grep -c 'a part has no' server.log
   3
 
-  $ echo shutdown > local.cmd
-  $ wait $SERVER_PID
+  $ stop_server $SERVER_PID
