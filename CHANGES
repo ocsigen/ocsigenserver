@@ -297,6 +297,8 @@ Bug fixes:
    of "Config file reloaded", and keeps its sites as they were.
  * A multipart part without a Content-Disposition header, or without a name
    in it, now gets a 400 Bad Request instead of a 500.
+ * When closing an uploaded file fails, the server no longer closes it a
+   second time, which could close another file, and reports the first error.
 
 ==== 8.0.0 (2026-09-24) ===
 

@@ -229,11 +229,21 @@ let decode_part ~max_size ~create ~add ~stop stream =
           add p stri >>= fun () ->
           Ocsigen_base.Ocsigen_stream.next f >>= while_stream size2
   in
-  Lwt.catch
-    (fun () ->
-       while_stream Int64.zero s >>= fun (size, s) ->
-       stop size p >>= fun r -> Lwt.return (r, s))
-    (fun error -> stop Int64.zero p >>= fun _ -> Lwt.fail error)
+  (* [stop] closes the file of the part, if any. It runs once: when it fails
+     after the body was read, its error is reported without a second call,
+     which could close a descriptor reused in the meantime. *)
+  Lwt.try_bind
+    (fun () -> while_stream Int64.zero s)
+    (fun (size, s) -> stop size p >>= fun r -> Lwt.return (r, s))
+    (fun error ->
+       Lwt.catch
+         (fun () -> stop Int64.zero p >|= ignore)
+         (fun e ->
+            Logs.warn ~src:section (fun fmt ->
+              fmt "Error while closing a part, after another error: %s"
+                (Printexc.to_string e));
+            Lwt.return ())
+       >>= fun () -> Lwt.fail error)
 
 let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
   let decode_part = decode_part ~max_size ~create ~add ~stop in
