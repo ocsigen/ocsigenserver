@@ -457,12 +457,13 @@ none. When identity is excluded too, 406 is allowed (sections 12.4.1 and
   HTTP/1.1 406 Not Acceptable
   content-length: 21
 
-BUG: content-coding names are case-insensitive (section 8.4.1). Expected:
-gzip.
+Content-coding names are case-insensitive (section 8.4.1).
 
   $ coding GZIP
   HTTP/1.1 200 OK
-  content-length: 16384
+  content-encoding: gzip
+  vary: accept-encoding
+  transfer-encoding: chunked
 
 BUG: the response depends on Accept-Encoding, so it should carry
 "Vary: accept-encoding" even when it is not compressed (section 12.5.5).
