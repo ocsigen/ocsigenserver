@@ -55,9 +55,14 @@ val builtin_packages : String.Set.t
 val set_logdir : string -> unit
 (** The directory of the log files. Without it, or with an empty path, there is
     no log directory: unless syslog is used, the logs go to [stdout] and
-    [stderr]. *)
+    [stderr]. The server refuses to start with both a log directory and a
+    syslog facility. *)
 
 val set_syslog_facility : Syslog_message.facility option -> unit
+(** The syslog facility the logs go to, instead of log files. [None] means no
+    syslog. The server refuses to start with both a facility and a log
+    directory. *)
+
 val set_configfile : string -> unit
 val set_pidfile : string -> unit
 val set_mimefile : string -> unit

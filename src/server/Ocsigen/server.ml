@@ -42,10 +42,17 @@ let () =
    terminal, which these modes redirect to /dev/null. *)
 exception Silent_with_console_logs
 
+(* Both a log directory and a syslog facility are set, while the logs go
+   either to files or to syslog. *)
+exception Logdir_with_syslog
+
 (* fatal errors messages *)
 let errmsg = function
   | Silent_with_console_logs ->
       ( "Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d."
+      , 50 )
+  | Logdir_with_syslog ->
+      ( "Fatal - a log directory and syslog are mutually exclusive: the logs go either to files or to syslog. Set only one of them (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start)."
       , 50 )
   | Dynlink_wrapper.Error e ->
       "Fatal - Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
@@ -356,6 +363,12 @@ let main config =
   then Logs.err (fun fmt -> fmt "Cannot run main loop twice");
   main_loop_is_running := true;
   try
+    (* Checked here, where the configuration file and Ocsigen.Server.start
+       meet. An empty <logdir> is no log directory: it is allowed. *)
+    if
+      Option.is_some (Config.get_logdir ())
+      && Option.is_some (Config.get_syslog_facility ())
+    then raise Logdir_with_syslog;
     (* Silent and daemon modes redirect the standard output and error to
        /dev/null: if the logs go there, nothing at all would be logged, errors
        included. Checked before detaching, so that -d fails at once. *)
