@@ -22,8 +22,9 @@ let access_file = "access.log"
 let warning_file = "warnings.log"
 let error_file = "errors.log"
 let access_sect = Logs.Src.create "ocsigen:access"
-let full_path f = Filename.concat (Config.get_logdir ()) f
-let error_log_path () = full_path error_file
+
+let error_log_path () =
+  Option.map (fun dir -> Filename.concat dir error_file) (Config.get_logdir ())
 
 (* The date is computed once per second: [last_date] is the last one, with
    its second. Two domains may compute it at once: either result is kept, and
@@ -269,10 +270,10 @@ let log_to_stdio () =
   close_log_files ();
   Lwt.return ()
 
-(* Write logs to the access/warnings/errors files in the log directory. *)
-let open_log_files_in_dir () =
-  let open_channel path =
-    let path = full_path path in
+(* Write logs to the access/warnings/errors files in the log directory [dir]. *)
+let open_log_files_in_dir dir =
+  let open_channel file =
+    let path = Filename.concat dir file in
     try
       open_out_gen [Open_append; Open_wronly; Open_creat; Open_text] 0o640 path
     with
@@ -320,34 +321,42 @@ let open_log_files_in_dir () =
        | _ -> if silent then [] else [stdout_sink]));
   Lwt.return ()
 
-let open_log_files () =
-  match Config.get_syslog_facility () with
-  | Some facility ->
-      (* log to syslog *)
-      (* Syslog reporter cannot be closed *)
-      let syslog =
-        match Logs_syslog_unix.unix_reporter ~facility () with
-        | Ok r -> r
-        | Error msg -> failwith msg
-      in
-      Logs.set_reporter (syslog_reporter syslog);
-      (* No access.log file in syslog mode: access lines reach syslog (and
-         stderr) through Logs. *)
-      Atomic.set access_out (fun s ->
-        Logs.app ~src:access_sect (fun fmt -> fmt "%s" s));
-      close_log_files ();
-      Lwt.return ()
-  | None -> open_log_files_in_dir ()
+let log_to_syslog facility =
+  (* Syslog reporter cannot be closed *)
+  let syslog =
+    match Logs_syslog_unix.unix_reporter ~facility () with
+    | Ok r -> r
+    | Error msg -> failwith msg
+  in
+  Logs.set_reporter (syslog_reporter syslog);
+  (* No access.log file in syslog mode: access lines reach syslog (and
+     stderr) through Logs. *)
+  Atomic.set access_out (fun s ->
+    Logs.app ~src:access_sect (fun fmt -> fmt "%s" s));
+  close_log_files ();
+  Lwt.return ()
 
-(* The logs go to stdout/stderr in the one-command modes, and when neither a log
-   directory nor syslog is configured, instead of to files created in the
-   current directory. *)
+type destination = Console | Syslog of Syslog_message.facility | Dir of string
+
+(* Where the logs go: stdout/stderr in the one-command modes, and when neither
+   syslog nor a log directory is configured. *)
+let destination () =
+  if Config.get_log_to_stderr ()
+  then Console
+  else
+    match Config.get_syslog_facility (), Config.get_logdir () with
+    | Some facility, _ -> Syslog facility
+    | None, Some dir -> Dir dir
+    | None, None -> Console
+
 let logs_to_console () =
-  Config.get_log_to_stderr ()
-  || (Config.get_syslog_facility () = None && Config.get_logdir () = "")
+  match destination () with Console -> true | Syslog _ | Dir _ -> false
 
 let open_files () =
-  if logs_to_console () then log_to_stdio () else open_log_files ()
+  match destination () with
+  | Console -> log_to_stdio ()
+  | Syslog facility -> log_to_syslog facility
+  | Dir dir -> open_log_files_in_dir dir
 
 (****)
 

@@ -7,7 +7,7 @@
      what a missing tag branch would break;
    - the defaults and the wiring of the connection tags [<keepalivetimeout>],
      [<mindatarate>] and [<maxconnectionsperaddress>];
-   - the default and the wiring of [<commandpipe>];
+   - the default and the wiring of [<commandpipe>] and [<logdir>];
    - the log levels set by [<loglevel>] and by the [logs:] command;
    - the warnings for [<servertimeout>] and [<datadir>], which are accepted
      but have no effect. *)
@@ -95,6 +95,23 @@ let () =
   print_newline ();
   Printf.printf "default command pipe -> %s\n" (command_pipe ());
   show_tag "commandpipe" "local.cmd" command_pipe
+
+(* There is no log directory unless the configuration gives one, and an empty
+   path is none. [<logdir>] is read by [first_pass]. Choosing no syslog keeps
+   the log directory. *)
+let () =
+  let logdir () = Option.value (Ocsigen.Config.get_logdir ()) ~default:"none" in
+  let show_logdir value =
+    Ocsigen.Parseconfig.first_pass
+      [Xml.Element ("logdir", [], [Xml.PCData value])];
+    Printf.printf "<logdir>%s -> %s\n" value (logdir ())
+  in
+  print_newline ();
+  Printf.printf "default log directory -> %s\n" (logdir ());
+  show_logdir "log";
+  Ocsigen.Config.set_syslog_facility None;
+  Printf.printf "no syslog -> %s\n" (logdir ());
+  show_logdir ""
 
 (* [<loglevel source="..." level="..."/>] sets the level of the log sources
    of that name once the configuration is loaded; the [logs:] command of

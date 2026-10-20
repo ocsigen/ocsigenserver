@@ -308,15 +308,12 @@ for example for a streamed response), then the [Referer] and [User-Agent]
 headers. This format is understood out of the box by log analysers such as
 GoAccess, AWStats or Apache's own tools.
 
-If [<logdir>] is omitted (and [<syslog>] is not used), the logs go to the
-default log directory chosen when Ocsigen Server was built (with an opam
-installation, [var/log/ocsigenserver] in the [lib/ocsigenserver] directory of
-the switch). Only a server built with no default log directory, such as a
-development build, writes them to the standard output and standard error
-instead, as the one-command modes always do. In that case the access lines go
-to the standard output in the very same Combined Log Format, and the silent
-([-s]) and daemon ([-d]) modes, which redirect the standard output and error
-to [/dev/null], are refused.
+If [<logdir>] is omitted (and [<syslog>] is not used), there is no log
+directory: the logs go to the standard output and standard error, as in the
+one-command modes. This suits a server run by systemd, or deployed as a
+statically linked program. The access lines go to the standard output in the
+very same Combined Log Format, and the silent ([-s]) and daemon ([-d]) modes,
+which redirect the standard output and error to [/dev/null], are refused.
 
 Example :
 

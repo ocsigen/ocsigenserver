@@ -189,7 +189,8 @@ usage: ./configure [ options ]
   --mandir DIR		Install man pages in this directory
   --docdir DIR		Install documentation in this directory
 
-  --logdir DIR		Use this directory for Ocsigen's logs
+  --logdir DIR		The directory for the log files, set in the sample
+			configuration file
 
   --staticpagesdir DIR	Install default static pages in this directory
   --uploaddir DIR	By default, files will be uploaded in this directory

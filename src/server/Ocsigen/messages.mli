@@ -59,8 +59,8 @@ val unexpected_exception : exn -> string -> unit
     of the function where is has been called).
 *)
 
-val error_log_path : unit -> string
-(** Path to the error log file *)
+val error_log_path : unit -> string option
+(** Path to the error log file, or [None] when there is no log directory. *)
 
 val stdio_reporter : Logs.reporter
 (** A reporter that writes warnings and errors to [stderr] and everything else
@@ -81,8 +81,7 @@ val set_source_level : string -> Logs.level option -> bool
 val logs_to_console : unit -> bool
 (** [logs_to_console ()] is [true] when the logs go to the standard output and
     standard error rather than to log files or syslog: in the one-command
-    modes, or when the configuration gives neither [<logdir>] nor [<syslog>]
-    and the server has no default log directory. *)
+    modes, or when the configuration gives neither [<logdir>] nor [<syslog>]. *)
 
 (**/**)
 

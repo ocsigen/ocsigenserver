@@ -51,7 +51,12 @@ val version_number : string
 val is_native : bool
 val native_ext : string
 val builtin_packages : String.Set.t
+
 val set_logdir : string -> unit
+(** The directory of the log files. Without it, or with an empty path, there is
+    no log directory: unless syslog is used, the logs go to [stdout] and
+    [stderr]. *)
+
 val set_syslog_facility : Syslog_message.facility option -> unit
 val set_configfile : string -> unit
 val set_pidfile : string -> unit
@@ -107,7 +112,10 @@ val set_shutdown_timeout : float option -> unit
 val set_ssl_info : ssl_info option -> unit
 val set_ports : (socket_type * int) list -> unit
 val set_ssl_ports : (socket_type * int) list -> unit
-val get_logdir : unit -> string
+
+val get_logdir : unit -> string option
+(** The directory of the log files, or [None] if there is none. *)
+
 val get_syslog_facility : unit -> Syslog_message.facility option
 val get_config_file : unit -> string
 val get_pidfile : unit -> string option

@@ -1,8 +1,8 @@
 Size-valued configuration tags: the units accepted by parse_size_tag, and the
 wiring of each tag to its Config value. Then the defaults and the wiring of the
-connection tags and of <commandpipe>, and the log levels set by <loglevel> and
-by the logs: command of the command pipe. Then the warnings for the tags that
-have no effect. Last, the log levels set by the -vv option.
+connection tags and of <commandpipe> and <logdir>, and the log levels set by
+<loglevel> and by the logs: command of the command pipe. Then the warnings for
+the tags that have no effect. Last, the log levels set by the -vv option.
 
   $ dune exec ./test.exe 2>&1
   parse_size_tag:
@@ -39,6 +39,11 @@ have no effect. Last, the log levels set by the -vv option.
   
   default command pipe -> none
   <commandpipe>local.cmd -> local.cmd
+  
+  default log directory -> none
+  <logdir>log -> log
+  no syslog -> log
+  <logdir> -> none
   
   loglevel:
   default -> warning

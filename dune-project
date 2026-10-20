@@ -1,6 +1,6 @@
 (lang dune 3.19)
 (name ocsigenserver)
-(version 8.0.0)
+(version 8.1.0~dev)
 
 (generate_opam_files true)
 
@@ -39,7 +39,11 @@
   logs-syslog
   (syslog-message (>= 1.1.0)))
  (conflicts
-  (pgocaml (< 2.2))))
+  (pgocaml (< 2.2))
+  ; Their extensions use the data directory, removed in 8.1, and the dbm one
+  ; also uses Messages.error_log_path, which now returns an option.
+  (ocsipersist-dbm-config (< 3.2.0~))
+  (ocsipersist-sqlite-config (< 3.2.0~))))
 
 (package
  (name ocsigenserver-compat)
