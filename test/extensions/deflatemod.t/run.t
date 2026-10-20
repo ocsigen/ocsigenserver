@@ -58,6 +58,7 @@ Without Accept-Encoding the response is not compressed:
   HTTP/1.1 200 OK
   content-type: text/html
   accept-ranges: bytes
+  vary: accept-encoding
   server: Ocsigen
   content-length: 12
   connection: keep-alive

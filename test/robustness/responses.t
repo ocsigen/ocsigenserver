@@ -437,18 +437,23 @@ none. When identity is excluded too, 406 is allowed (sections 12.4.1 and
 
   $ coding br
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding 'gzip;q=0'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding 'gzip;q=abc'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding 'gzip;q=0, *'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding '*'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding '*;q=0'
   HTTP/1.1 406 Not Acceptable
@@ -465,16 +470,16 @@ Content-coding names are case-insensitive (section 8.4.1).
   vary: accept-encoding
   transfer-encoding: chunked
 
-BUG: the response depends on Accept-Encoding, so it should carry
-"Vary: accept-encoding" even when it is not compressed (section 12.5.5).
-Otherwise a shared cache may serve the uncompressed copy to every client.
+The response depends on Accept-Encoding, so it carries "Vary:
+accept-encoding" even when it is not compressed (section 12.5.5). Otherwise
+a shared cache could serve the uncompressed copy to every client.
 
   $ coding ''
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ req GET /compressed/big.txt | grep -ic '^vary'
-  0
-  [1]
+  1
 
 A compressed response is well framed: a request that follows on the same
 connection is answered.
