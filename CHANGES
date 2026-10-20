@@ -30,6 +30,10 @@ Incompatible changes:
    Ocsigen.Server.start without ~logdir. These modes redirect the standard
    output and error to /dev/null, so nothing at all was logged, errors
    included. With -d, the server fails before it detaches.
+ * <logdir> and <syslog> together in the configuration file, or ~logdir and
+   ~syslog_facility:(Some _) for Ocsigen.Server.start, are now refused at
+   start-up. The manual said they were mutually exclusive, but syslog was
+   silently chosen. An empty <logdir> (no log directory) is still allowed.
  * Ocsigen.Messages.console is removed. It printed on the standard output,
    and said it did nothing in silent mode, which it never checked. The
    "Process N detached" message of daemon mode, its only use, now goes
