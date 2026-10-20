@@ -194,7 +194,7 @@
     <span><span>| `Add</span> of <a href="../Ocsigen_http/Header/Name/index.html#type-t">Ocsigen_http.Header.Name.t</a> * string * <span>bool option</span></span>
     <span><span>| `Code</span> of <span class="xref-unresolved">Cohttp</span>.Code.status</span> ]</span> <span class="arrow">&#45;&gt;</span></span>
   <span>unit <span class="arrow">&#45;&gt;</span></span>
-  <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~mode ()</code> makes it possible to use this extension without configuration file.</p></div></div></div>
+  <a href="../Ocsigen/Server/index.html#type-instruction">Ocsigen.Server.instruction</a></span></code></div><div class="spec-doc"><p><code>run ~mode ()</code> makes it possible to use this extension without configuration file. It changes the response of the instructions before it:</p><ul><li><code>`Rewrite (name, regexp, dest)</code> replaces every match of <code>regexp</code> in the values of header <code>name</code> with <code>dest</code>, where <code>\1</code> to <code>\9</code> stand for the groups of <code>regexp</code>;</li><li><code>`Add (name, value, replace)</code> adds header <code>name</code>: if the response has one already, <code>Some true</code> replaces it, <code>Some false</code> adds another one, and <code>None</code> leaves it;</li><li><code>`Code status</code> sets the status of the response.</li></ul></div></div></div>
       </article>
     </div>
   </div>

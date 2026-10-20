@@ -7087,7 +7087,11 @@ val run :
   unit ->
   Ocsigen.Server.instruction
 ```
-`run ~mode ()` makes it possible to use this extension without configuration file.
+`run ~mode ()` makes it possible to use this extension without configuration file. It changes the response of the instructions before it:
+
+- ``Rewrite (name, regexp, dest)` replaces every match of `regexp` in the values of header `name` with `dest`, where `\1` to `\9` stand for the groups of `regexp`;
+- ``Add (name, value, replace)` adds header `name`: if the response has one already, `Some true` replaces it, `Some false` adds another one, and `None` leaves it;
+- ``Code status` sets the status of the response.
 
 
 ---
