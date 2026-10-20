@@ -60,7 +60,7 @@ val respond_error :
 val respond_file :
    ?headers:Cohttp.Header.t
   -> ?status:Http.Status.t
-  -> ?if_none_match:string
+  -> ?if_none_match:string list
   -> ?if_modified_since:string
   -> ?range:string
   -> ?if_range:string
@@ -73,8 +73,10 @@ val respond_file :
     {!Ocsigen_http.Charset_mime.content_type}. An [ETag] (weak, derived from
     the file's modification time and size), a [Last-Modified] and an
     [Accept-Ranges: bytes] header are added. If the request's [If-None-Match]
-    or [If-Modified-Since] header is passed and matches, the response is
-    [304 Not Modified] with an empty body (RFC 7232).
+    (compared with the weak comparison, RFC 9110 13.1.2) or
+    [If-Modified-Since] header is passed and matches, the response is
+    [304 Not Modified] with an empty body. [if_none_match] is given as the
+    lines of the header field (see {!Ocsigen_http.Header.Entity_tag.parse_list}).
     If a [range] (the [Range] header) is passed and satisfiable, a single byte
     range is returned as [206 Partial Content] with a [Content-Range] header
     (RFC 7233); an unsatisfiable range gives [416]. A passed [if_range] (the

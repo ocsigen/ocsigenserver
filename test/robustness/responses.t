@@ -241,11 +241,16 @@ tag, alone or in a list, or "*", gives 304. Entity tags are case-sensitive.
   $ status GET /hello.txt 'If-None-Match: W/"5E0C89C0-6"'
   HTTP/1.1 200 OK
 
-BUG: with the weak comparison, "5e0c89c0-6" matches W/"5e0c89c0-6" (section
-8.8.3.2). Expected: 304.
+With the weak comparison, "5e0c89c0-6" matches W/"5e0c89c0-6" (section
+8.8.3.2). The list may be written on several lines, and a comma may appear in
+an entity tag.
 
   $ status GET /hello.txt 'If-None-Match: "5e0c89c0-6"'
-  HTTP/1.1 200 OK
+  HTTP/1.1 304 Not Modified
+  $ status GET /hello.txt 'If-None-Match: "a"' "If-None-Match: $E"
+  HTTP/1.1 304 Not Modified
+  $ status GET /hello.txt "If-None-Match: \"a,\", $E"
+  HTTP/1.1 304 Not Modified
 
 A 304 response carries the validators, and no Content-Length, which would
 have to be the one of the 200 response (section 8.6).

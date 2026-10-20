@@ -53,6 +53,8 @@ Incompatible changes:
  * Ocsigen.Multipart.post_params takes a function (~on_file) that it calls
    with the name of each uploaded file it creates, so that the caller can
    remove it.
+ * Ocsigen.Response.respond_file takes ?if_none_match as the list of the
+   lines of the header field, which may be written on several lines.
  * The one-command modes (ocsigenserver DIR, --serve, --reverse-proxy) now
    listen on the loopback interface (127.0.0.1) by default, instead of on all
    the interfaces, and their startup banner shows the address. The new
@@ -172,6 +174,9 @@ New features:
  * The server warns about <filebuffersize>, <minthreads>, <maxthreads>,
    <disablepartialrequests/> and <respectpipeline/> in the configuration
    file, as it does for <servertimeout>: they are accepted but have no effect.
+ * OCaml API: Ocsigen_http.Header.Entity_tag parses lists of entity tags, as
+   in If-Match and If-None-Match, and compares them (weak and strong
+   comparisons of RFC 9110).
 
 Bug fixes:
  * In syslog mode, reopening the logs (the reopen_logs order of a log
@@ -472,6 +477,9 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Static files: If-None-Match uses the weak comparison, as RFC 9110 requires:
+   "x" now matches the ETag W/"x". All the If-None-Match lines of a request
+   are read, and a comma within an entity tag no longer splits it.
 
 ==== 8.0.0 (2026-09-24) ===
 

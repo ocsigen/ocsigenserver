@@ -71,16 +71,16 @@ let respond_not_found ?uri () =
   respond_string ~status:`Not_found ~body ()
 
 (* Weak entity-tag built from the file's modification time and size. *)
-let weak_etag ~mtime ~size = Printf.sprintf "W/\"%x-%x\"" mtime size
+let weak_etag ~mtime ~size =
+  Ocsigen_http.Header.Entity_tag.make ~weak:true
+    (Printf.sprintf "%x-%x" mtime size)
 
-(* Does the [If-None-Match] header value match [etag]? Handles ["*"] and a
-   comma-separated list of entity-tags. *)
-let if_none_match_matches if_none_match etag =
-  let if_none_match = String.trim if_none_match in
-  String.equal if_none_match "*"
-  || List.exists
-       (fun t -> String.equal (String.trim t) etag)
-       (String.split_on_char ',' if_none_match)
+(* Does the [If-Match] or [If-None-Match] header field written on the lines
+   [values] match [etag], with the comparison [equal]? *)
+let etag_matches ~equal values etag =
+  match Ocsigen_http.Header.Entity_tag.parse_list values with
+  | `Any -> true
+  | `Tags tags -> List.exists (equal etag) tags
 
 (* Parse a single byte-range request against the total [size] (RFC 7233).
    Returns the inclusive bounds [`Range (first, last)], [`Full] when there is no
@@ -133,7 +133,8 @@ let respond_file
          (* Validators sent with [200], [206] and [304] responses (RFC 7232). *)
          let add_validators h =
            Http.Header.add
-             (Http.Header.add h "etag" etag)
+             (Http.Header.add h "etag"
+                (Ocsigen_http.Header.Entity_tag.to_string etag))
              "last-modified" last_modified
          in
          let headers = Option.value headers ~default:(Http.Header.init ()) in
@@ -142,7 +143,9 @@ let respond_file
             our [Last-Modified] value, so we never answer [304] wrongly. *)
          let not_modified =
            match if_none_match with
-           | Some inm -> if_none_match_matches inm etag
+           | Some inm ->
+               etag_matches ~equal:Ocsigen_http.Header.Entity_tag.weak_equal inm
+                 etag
            | None -> (
              match if_modified_since with
              | Some ims -> String.equal ims last_modified

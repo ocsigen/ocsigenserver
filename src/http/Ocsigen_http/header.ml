@@ -172,3 +172,69 @@ module Content_type = struct
         (default :: alt)
     with Not_found -> default
 end
+
+module Entity_tag = struct
+  type t = {weak : bool; opaque : string}
+
+  (* The characters of an opaque tag (etagc, RFC 9110 8.8.3): neither a
+     space, a control character nor a double quote. *)
+  let is_etagc c = c = '!' || (c >= '#' && c <> '\x7f')
+
+  let make ~weak opaque =
+    if String.for_all is_etagc opaque
+    then {weak; opaque}
+    else invalid_arg "Ocsigen_http.Header.Entity_tag.make"
+
+  let to_string {weak; opaque} = (if weak then "W/\"" else "\"") ^ opaque ^ "\""
+  let is_space c = c = ' ' || c = '\t'
+
+  (* Parses the comma-separated list of entity-tags of [s] from [pos]. An
+     element that is not an entity-tag is skipped up to the next comma. *)
+  let parse_tags s =
+    let length = String.length s in
+    let rec skip_spaces pos =
+      if pos < length && is_space s.[pos] then skip_spaces (pos + 1) else pos
+    in
+    let rec skip_separators pos =
+      if pos < length && (is_space s.[pos] || s.[pos] = ',')
+      then skip_separators (pos + 1)
+      else pos
+    in
+    let rec skip_element pos =
+      if pos < length && s.[pos] <> ',' then skip_element (pos + 1) else pos
+    in
+    let rec tags acc pos =
+      let pos = skip_separators pos in
+      if pos >= length
+      then List.rev acc
+      else
+        let weak, quote =
+          if pos + 1 < length && s.[pos] = 'W' && s.[pos + 1] = '/'
+          then true, pos + 2
+          else false, pos
+        in
+        match
+          if quote < length && s.[quote] = '"'
+          then String.index_from_opt s (quote + 1) '"'
+          else None
+        with
+        | Some close ->
+            let next = skip_spaces (close + 1) in
+            let opaque = String.sub s (quote + 1) (close - quote - 1) in
+            if next < length && s.[next] <> ','
+            then tags acc (skip_element next)
+            else if String.for_all is_etagc opaque
+            then tags ({weak; opaque} :: acc) next
+            else tags acc next
+        | None -> tags acc (skip_element pos)
+    in
+    tags [] 0
+
+  let parse_list values =
+    match String.trim (String.concat "," values) with
+    | "*" -> `Any
+    | s -> `Tags (parse_tags s)
+
+  let weak_equal a b = String.equal a.opaque b.opaque
+  let strong_equal a b = (not a.weak) && (not b.weak) && weak_equal a b
+end
