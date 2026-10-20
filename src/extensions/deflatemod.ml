@@ -168,70 +168,70 @@ let add_vary_accept_encoding headers =
       then headers
       else Cohttp.Header.replace headers name (existing ^ ", " ^ value)
 
+(* Whether the configuration [choice] asks to compress [res], according to
+   its content type and to the [url] of the request. *)
+let compressible res url choice =
+  match Ocsigen.Response.header res Ocsigen_http.Header.Name.content_type with
+  | None -> false
+  | Some content_type -> (
+      let content_type =
+        match String.index_opt content_type ';' with
+        | Some i -> String.sub content_type 0 i
+        | None -> content_type
+      in
+      match Ocsigen_http.Header.Mime_type.parse content_type with
+      | Some a, Some b -> should_compress (a, b) url choice
+      | None, _ | _, None -> false
+      | exception Not_found -> false)
+
+let update_headers f res =
+  let {Http.Response.headers; status; version} =
+    Ocsigen.Response.response res
+  in
+  Ocsigen.Response.update res
+    ~response:(Http.Response.make ~headers:(f headers) ~status ~version ())
+
 (* [cfilter] is the bytesrw writer filter for the negotiated codec, and
    [contentencoding] the matching Content-Encoding token. *)
-let stream_filter cfilter contentencoding url choice res =
-  Lwt.return
-    (Ocsigen.Extensions.Ext_found
-       (fun () ->
-         try
-           match
-             Ocsigen.Response.header res Ocsigen_http.Header.Name.content_type
-           with
-           | None -> Lwt.return res
-           | Some contenttype -> (
-               let contenttype =
-                 try String.sub contenttype 0 (String.index contenttype ';')
-                 with Not_found -> contenttype
-               in
-               match Ocsigen_http.Header.Mime_type.parse contenttype with
-               | None, _ | _, None -> Lwt.return res
-               | Some a, Some b when should_compress (a, b) url choice ->
-                   let response =
-                     let {Http.Response.headers; status; version} =
-                       Ocsigen.Response.response res
-                     in
-                     let headers =
-                       let name = Ocsigen_http.Header.Name.(to_string etag) in
-                       match Cohttp.Header.get headers name with
-                       | Some e ->
-                           Cohttp.Header.replace headers name (weaken_etag e)
-                       | None -> headers
-                     in
-                     let headers =
-                       Http.Header.replace headers
-                         Ocsigen_http.Header.Name.(to_string content_encoding)
-                         contentencoding
-                     in
-                     let headers = add_vary_accept_encoding headers in
-                     (* The body about to be sent is the compressed one, of a
-                        length we do not know before streaming it, so any
-                        content-length the producer computed is now wrong. The
-                        framing comes from the body when the response is sent,
-                        but the filters that follow should not see a wrong
-                        length either. *)
-                     let headers =
-                       Http.Header.remove headers
-                         Ocsigen_http.Header.Name.(to_string content_length)
-                     in
-                     (* Byte ranges are only served from the uncompressed
-                        representation (see [may_compress]), so the compressed
-                        one must not offer them: a client resuming a compressed
-                        download would get bytes of the other one. *)
-                     let headers =
-                       Http.Header.remove headers
-                         Ocsigen_http.Header.Name.(to_string accept_ranges)
-                     in
-                     Http.Response.make ~headers ~status ~version ()
-                   and body =
-                     Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
-                       (compress_body cfilter
-                          (Ocsigen.Response.Body.write
-                             (Ocsigen.Response.body res)))
-                   in
-                   Lwt.return (Ocsigen.Response.update res ~body ~response)
-               | _ -> Lwt.return res)
-         with Not_found -> Lwt.return res))
+let compress cfilter contentencoding res =
+  let res =
+    update_headers
+      (fun headers ->
+         let headers =
+           let name = Ocsigen_http.Header.Name.(to_string etag) in
+           match Cohttp.Header.get headers name with
+           | Some e -> Cohttp.Header.replace headers name (weaken_etag e)
+           | None -> headers
+         in
+         let headers =
+           Http.Header.replace headers
+             Ocsigen_http.Header.Name.(to_string content_encoding)
+             contentencoding
+         in
+         let headers = add_vary_accept_encoding headers in
+         (* The body about to be sent is the compressed one, of a length we
+            do not know before streaming it, so any content-length the
+            producer computed is now wrong. The framing comes from the body
+            when the response is sent, but the filters that follow should
+            not see a wrong length either. *)
+         let headers =
+           Http.Header.remove headers
+             Ocsigen_http.Header.Name.(to_string content_length)
+         in
+         (* Byte ranges are only served from the uncompressed representation
+            (see [may_compress]), so the compressed one must not offer them:
+            a client resuming a compressed download would get bytes of the
+            other one. *)
+         Http.Header.remove headers
+           Ocsigen_http.Header.Name.(to_string accept_ranges))
+      res
+  in
+  let body =
+    Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
+      (compress_body cfilter
+         (Ocsigen.Response.Body.write (Ocsigen.Response.body res)))
+  in
+  Ocsigen.Response.update res ~body
 
 (* Only a complete representation is compressed. A 206 carries a byte range of
    the uncompressed representation, with a Content-Range in its offsets:
@@ -257,35 +257,37 @@ let filter choice_list = function
       Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return res))
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info = ri; _}, res)
     -> (
-    match
-      Ocsigen.Request.header_multi ri Ocsigen_http.Header.Name.accept_encoding
-      |> Ocsigen_http.Header.Accept_encoding.parse |> select_encoding
-    with
-    | Deflate ->
-        (* HTTP "deflate" is the zlib format (RFC 1950), not raw deflate. *)
-        stream_filter
-          (Bytesrw_zlib.Zlib.compress_writes ~level:!compress_level ())
-          "deflate"
-          (Ocsigen.Request.sub_path_string ri)
-          choice_list res
-    | Gzip ->
-        stream_filter
-          (Bytesrw_zlib.Gzip.compress_writes ~level:!compress_level ())
-          "gzip"
-          (Ocsigen.Request.sub_path_string ri)
-          choice_list res
-    | Zstd ->
-        stream_filter
-          (Bytesrw_zstd.compress_writes ())
-          "zstd"
-          (Ocsigen.Request.sub_path_string ri)
-          choice_list res
-    | Id | Star ->
+      let found res =
         Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return res))
-    | Not_acceptable ->
-        Lwt.return
-          (Ocsigen.Extensions.Ext_stop_all
-             (Ocsigen.Response.cookies res, `Not_acceptable)))
+      in
+      let is_compressible () =
+        compressible res (Ocsigen.Request.sub_path_string ri) choice_list
+      in
+      let compress_if cfilter contentencoding =
+        found
+          (if is_compressible ()
+           then compress cfilter contentencoding res
+           else res)
+      in
+      match
+        Ocsigen.Request.header_multi ri Ocsigen_http.Header.Name.accept_encoding
+        |> Ocsigen_http.Header.Accept_encoding.parse |> select_encoding
+      with
+      | Deflate ->
+          (* HTTP "deflate" is the zlib format (RFC 1950), not raw deflate. *)
+          compress_if
+            (Bytesrw_zlib.Zlib.compress_writes ~level:!compress_level ())
+            "deflate"
+      | Gzip ->
+          compress_if
+            (Bytesrw_zlib.Gzip.compress_writes ~level:!compress_level ())
+            "gzip"
+      | Zstd -> compress_if (Bytesrw_zstd.compress_writes ()) "zstd"
+      | Id | Star -> found res
+      | Not_acceptable ->
+          Lwt.return
+            (Ocsigen.Extensions.Ext_stop_all
+               (Ocsigen.Response.cookies res, `Not_acceptable)))
 
 let rec parse_global_config = function
   | [] -> ()
