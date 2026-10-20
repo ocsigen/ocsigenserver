@@ -290,6 +290,11 @@ Bug fixes:
    value of the header, as <outputfilter> does in the configuration file, and
    as its documentation said. It only rewrote a value that the regexp matched
    as a whole.
+ * The reload order reads and applies the configuration file once, instead of
+   twice. The extensions configured the sites twice (Eliom loaded the modules
+   of its sites twice), and warnings and errors were logged twice. When the
+   file has an error, the server now logs "Config file reload failed" instead
+   of "Config file reloaded", and keeps its sites as they were.
 
 ==== 8.0.0 (2026-09-24) ===
 
