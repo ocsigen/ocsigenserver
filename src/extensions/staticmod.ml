@@ -240,17 +240,28 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
         let serve () =
           (match page with
             | Ocsigen.Local_files.RFile fname ->
-                let header name = Ocsigen.Request.header request_info name in
+                (* The preconditions and the range of the request only
+                   apply to a successful answer, not to an error page (RFC
+                   9110 13.2.1 and 14.2). *)
+                let header name =
+                  if status_filter
+                  then None
+                  else Ocsigen.Request.header request_info name
+                and header_lines name =
+                  if status_filter
+                  then []
+                  else Ocsigen.Request.header_multi request_info name
+                in
                 (* A list header may be written on several lines. *)
                 let list_header name =
-                  match Ocsigen.Request.header_multi request_info name with
+                  match header_lines name with
                   | [] -> None
                   | values -> Some values
                 in
                 (* A date has a single value: the field is ignored when it is
                    written on several lines (RFC 9110 13.1.3 and 13.1.4). *)
                 let date_header name =
-                  match Ocsigen.Request.header_multi request_info name with
+                  match header_lines name with
                   | [value] -> Some value
                   | [] | _ :: _ :: _ -> None
                 in
