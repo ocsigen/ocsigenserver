@@ -343,6 +343,8 @@ Bug fixes:
    empty 404 instead of a 304, or with a part of it.
  * Static files: a HEAD request with a Range header gets 200, as RFC 9110
    requires: ranges are only defined for GET. It got 206.
+ * Deflatemod: content codings are case-insensitive, as RFC 9110 says:
+   "Accept-Encoding: GZIP" now gets gzip.
 
 ==== 8.0.0 (2026-09-24) ===
 
