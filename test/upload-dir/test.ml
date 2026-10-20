@@ -8,4 +8,6 @@ let show content =
     | None -> "None"
     | Some dir -> Printf.sprintf "Some %S" dir)
 
-let () = show [Xml.PCData "/var/upload"]; show []
+let () =
+  show [Xml.PCData "/var/upload"];
+  show []

@@ -1,3 +1,6 @@
 (executable
  (name test)
- (libraries ocsigenserver ocsigenserver.ext.staticmod ocsigenserver.ext.rewritemod))
+ (libraries
+  ocsigenserver
+  ocsigenserver.ext.staticmod
+  ocsigenserver.ext.rewritemod))

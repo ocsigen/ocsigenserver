@@ -30,7 +30,8 @@ let () =
   Unix.setsockopt_float fd Unix.SO_RCVTIMEO 10.;
   let request =
     "POST /length HTTP/1.1\r\nHost: localhost\r\n"
-    ^ Option.fold ~none:"" ~some:(Printf.sprintf "Content-Type: %s\r\n")
+    ^ Option.fold ~none:""
+        ~some:(Printf.sprintf "Content-Type: %s\r\n")
         content_type
     ^ Printf.sprintf "Content-Length: %d\r\n\r\n" length
     ^ String.sub body 0 sent

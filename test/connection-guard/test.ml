@@ -31,7 +31,8 @@ let pending_write t =
   let p, u = Lwt.task () in
   G.write t (fun _ _ _ -> p) buffer 0 16, u
 
-let complete_read t n = ignore (G.read t (fun _ _ _ -> Lwt.return n) buffer 0 16)
+let complete_read t n =
+  ignore (G.read t (fun _ _ _ -> Lwt.return n) buffer 0 16)
 
 let outcome p =
   match Lwt.state p with
@@ -50,14 +51,14 @@ let run_until_expiry ?(max = 100) ?(each = fun _ -> ()) (t, expired_in) =
       each i;
       G.tick ();
       match !expired_in with
-      | Some p -> Printf.printf "expired after %d ticks, in %s\n" i (phase_name p)
+      | Some p ->
+          Printf.printf "expired after %d ticks, in %s\n" i (phase_name p)
       | None ->
           if G.expired t
           then print_endline "expired without calling on_expiry"
           else go (i + 1))
   in
-  go 1;
-  G.release t
+  go 1; G.release t
 
 let section title = Printf.printf "\n%s\n" title
 
@@ -85,8 +86,7 @@ let () =
     G.tick (); incr ticks
   done;
   Printf.printf
-    "keep-alive timeout 5: closed after %d ticks, the read %s, expired: %b, \
-     on_expiry called: %b\n"
+    "keep-alive timeout 5: closed after %d ticks, the read %s, expired: %b, on_expiry called: %b\n"
     !ticks (outcome read) (G.expired t) (!expired_in <> None);
   Printf.printf "a new read %s, a write %s\n"
     (outcome (fst (pending_read t)))
@@ -171,9 +171,7 @@ let () =
 let () =
   section "Writes, in any phase";
   print_string "a write stalled while Idle (no keep-alive bound): ";
-  let ((t, _) as g) =
-    guard ~limits:(limits ~keepalive_timeout:0 ()) G.Idle
-  in
+  let ((t, _) as g) = guard ~limits:(limits ~keepalive_timeout:0 ()) G.Idle in
   let write = ref None in
   run_until_expiry g ~each:(fun i ->
     if i = 1 then write := Some (fst (pending_write t)));
@@ -199,7 +197,8 @@ let () =
   G.close t;
   Printf.printf
     "the pending read %s, expired: %b, on_expiry called: %b, phase: %s\n"
-    (outcome read) (G.expired t) (!expired_in <> None) (phase_name (G.phase t));
+    (outcome read) (G.expired t) (!expired_in <> None)
+    (phase_name (G.phase t));
   Printf.printf "a new read %s, a write %s\n"
     (outcome (fst (pending_read t)))
     (outcome (G.write t (fun _ _ _ -> Lwt.return 16) buffer 0 16));
@@ -238,7 +237,9 @@ let () =
     (outcome handshake);
   G.release t;
   print_string "an exception from on_expiry: ";
-  let t = G.create (limits ()) G.Headers ~on_expiry:(fun _ -> failwith "oops") in
+  let t =
+    G.create (limits ()) G.Headers ~on_expiry:(fun _ -> failwith "oops")
+  in
   let read, _ = pending_read t in
   for _ = 1 to 4 do
     G.tick ()
@@ -287,7 +288,8 @@ let () =
   List.iter
     (fun (name, t) -> show name t)
     ["the busy one", busy; "the fourth", fourth; "the sixth", sixth];
-  print_endline "the server is full; the fourth becomes idle, and a tick passes:";
+  print_endline
+    "the server is full; the fourth becomes idle, and a tick passes:";
   G.set_phase fourth G.Idle;
   G.tick ();
   show "the fourth" fourth;
@@ -299,8 +301,7 @@ let () =
   section "Connections per address";
   let ip = Ipaddr.of_string_exn in
   let acquire s =
-    Printf.printf "acquire %s: %b\n" s
-      (G.Per_address.acquire ~limit:2 (ip s))
+    Printf.printf "acquire %s: %b\n" s (G.Per_address.acquire ~limit:2 (ip s))
   in
   acquire "192.0.2.1";
   acquire "192.0.2.1";

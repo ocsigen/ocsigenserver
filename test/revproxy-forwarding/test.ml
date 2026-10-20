@@ -13,8 +13,7 @@ let echo _vh _config_info _path = function
   | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
     ->
       let header name =
-        Option.value ~default:"-"
-          (Ocsigen.Request.header request_info name)
+        Option.value ~default:"-" (Ocsigen.Request.header request_info name)
       in
       let path_and_query =
         let path = Uri.path (Ocsigen.Request.uri request_info) in
@@ -24,22 +23,21 @@ let echo _vh _config_info _path = function
       in
       let body () =
         match Ocsigen.Request.path request_info with
-        | [ "headers" ] ->
+        | ["headers"] ->
             Cohttp_lwt.Body.to_string (Ocsigen.Request.body request_info)
             >|= fun body ->
             (Ocsigen.Request.to_cohttp request_info
             |> Cohttp.Request.headers |> Cohttp.Header.to_list
             |> List.filter_map (fun (name, value) ->
-                   match String.lowercase_ascii name with
-                   | "user-agent" -> None
-                   | name -> Some (name ^ ": " ^ value ^ "\n"))
+              match String.lowercase_ascii name with
+              | "user-agent" -> None
+              | name -> Some (name ^ ": " ^ value ^ "\n"))
             |> List.sort compare |> String.concat "")
             ^ "body: " ^ body ^ "\n"
         | _ ->
             Lwt.return
               (Printf.sprintf
-                 "path: %s\nhost: %s\nhttps: %b\n\
-                  x-forwarded-proto: %s\nx-forwarded-for: %s\n"
+                 "path: %s\nhost: %s\nhttps: %b\nx-forwarded-proto: %s\nx-forwarded-for: %s\n"
                  path_and_query
                  (header Ocsigen_http.Header.Name.host)
                  (Ocsigen.Request.ssl request_info)
@@ -54,8 +52,8 @@ let echo _vh _config_info _path = function
 
 let () =
   Ocsigen.Server.start
-    ~ports:[ (`All, 8073) ]
-    ~ssl_ports:[ (`All, 8064) ]
+    ~ports:[`All, 8073]
+    ~ssl_ports:[`All, 8064]
     ~ssl_info:
       (Some
          { Ocsigen.Config.ssl_certificate = Some "cert.pem"
@@ -65,4 +63,4 @@ let () =
          ; ssl_curve = None })
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
     ~command_pipe:"local.cmd"
-    [ Ocsigen.Server.host [ echo ] ]
+    [Ocsigen.Server.host [echo]]

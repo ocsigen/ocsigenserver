@@ -3,20 +3,18 @@
    connection. It serves one connection at a time. *)
 
 let responses =
-  [ ( "/http-1.0",
-      "HTTP/1.0 200 OK\r\nConnection: close, X-Hop\r\nX-Hop: 1\r\n\
-       Keep-Alive: timeout=5\r\nX-End: 1\r\n\r\nbody ended by the connection\n"
-    );
-    ( "/length",
-      "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 3\r\n\r\nok\n" )
+  [ ( "/http-1.0"
+    , "HTTP/1.0 200 OK\r\nConnection: close, X-Hop\r\nX-Hop: 1\r\nKeep-Alive: timeout=5\r\nX-End: 1\r\n\r\nbody ended by the connection\n"
+    )
+  ; ( "/length"
+    , "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 3\r\n\r\nok\n" )
   ]
 
 let rec skip_headers ic =
   match input_line ic with "" | "\r" -> () | _ -> skip_headers ic
 
 let answer fd =
-  let ic = Unix.in_channel_of_descr fd
-  and oc = Unix.out_channel_of_descr fd in
+  let ic = Unix.in_channel_of_descr fd and oc = Unix.out_channel_of_descr fd in
   let path =
     match String.split_on_char ' ' (input_line ic) with
     | _ :: path :: _ -> path
@@ -36,6 +34,5 @@ let () =
   Unix.listen socket 16;
   while true do
     let fd, _ = Unix.accept socket in
-    try answer fd
-    with End_of_file | Sys_error _ -> Unix.close fd
+    try answer fd with End_of_file | Sys_error _ -> Unix.close fd
   done

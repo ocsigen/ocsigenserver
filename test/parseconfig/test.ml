@@ -13,10 +13,7 @@
      but have no effect. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
-
-let show_int64_option = function
-  | None -> "None"
-  | Some n -> Int64.to_string n
+let show_int64_option = function None -> "None" | Some n -> Int64.to_string n
 
 let show_size s =
   let result =
@@ -56,8 +53,7 @@ let show_tag tag value get =
   Printf.printf "<%s>%s -> %s\n" tag value (get ())
 
 let () =
-  let in_memory () =
-    show_int (Ocsigen.Config.get_maxrequestbodysizeinmemory ())
+  let in_memory () = show_int (Ocsigen.Config.get_maxrequestbodysizeinmemory ())
   and body_size () =
     show_int64_option (Ocsigen.Config.get_maxrequestbodysize ())
   and upload_size () =
@@ -125,7 +121,9 @@ let () =
       (List.filter (fun s -> Logs.Src.name s = "test:app") (Logs.Src.list ()))
   in
   let loglevel atts =
-    match Ocsigen.Parseconfig.later_pass [Xml.Element ("loglevel", atts, [])] with
+    match
+      Ocsigen.Parseconfig.later_pass [Xml.Element ("loglevel", atts, [])]
+    with
     | () -> Printf.printf "-> %s\n" (level ())
     | exception Ocsigen.Config.Config_file_error msg ->
         Printf.printf "-> Config_file_error: %s\n" msg

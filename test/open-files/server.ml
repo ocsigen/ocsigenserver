@@ -18,18 +18,16 @@ let resources _vh _config_info _path = function
         (Ocsigen.Extensions.Ext_found
            (fun () ->
              Lwt.return
-               (Ocsigen.Response.respond_string ~status:`OK ~body:(answer ())
-                  ())))
+               (Ocsigen.Response.respond_string ~status:`OK ~body:(answer ()) ())))
 
 let () =
   let name, max_number_of_connections =
     match Sys.argv with
-    | [|_; (("explicit" | "fitted") as name)|] -> name, Some 1000
-    | [|_; (("default" | "tiny") as name)|] -> name, None
+    | [|_; ("explicit" | "fitted") as name|] -> name, Some 1000
+    | [|_; ("default" | "tiny") as name|] -> name, None
     | _ -> failwith "usage: server (explicit|fitted|default|tiny)"
   in
   Ocsigen.Server.start ?max_number_of_connections
     ~ports:[`Unix ("./" ^ name ^ ".sock"), 0]
-    ~logdir:(name ^ "/log") ~uploaddir:None
-    ~command_pipe:(name ^ ".cmd")
+    ~logdir:(name ^ "/log") ~uploaddir:None ~command_pipe:(name ^ ".cmd")
     [Ocsigen.Server.host [resources]]

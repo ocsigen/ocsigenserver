@@ -23,21 +23,19 @@ let upload : Ocsigen.Server.instruction =
           (Ocsigen.Extensions.Ext_found
              (fun () ->
                Lwt.return
-                 (Ocsigen.Response.respond_string ~status:`OK ~body:"early\n"
-                    ())))
+                 (Ocsigen.Response.respond_string ~status:`OK ~body:"early\n" ())))
     | Some files ->
         files >|= fun files ->
         let body = String.concat "" (List.map describe files) in
         Ocsigen.Extensions.Ext_found
           (fun () ->
-            Lwt.return
-              (Ocsigen.Response.respond_string ~status:`OK ~body ())))
+            Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())))
   | Ocsigen.Extensions.Req_found _ ->
       Lwt.return Ocsigen.Extensions.Ext_do_nothing
 
 let () =
   Ocsigen.Server.start
-    ~ports:[ (`Unix "./local.sock", 0) ]
+    ~ports:[`Unix "./local.sock", 0]
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
     ~command_pipe:"local.cmd"
-    [ Ocsigen.Server.host [ upload ] ]
+    [Ocsigen.Server.host [upload]]

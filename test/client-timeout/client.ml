@@ -14,8 +14,9 @@ type connection =
   ; send : string -> unit
   ; receive : unit -> event
   ; readable_within : float -> bool
-        (** whether something arrives, possibly the end of the connection,
-            within this delay *) }
+    (** whether something arrives, possibly the end of the connection,
+            within this delay *)
+  }
 
 let connect port =
   let fd = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
@@ -51,7 +52,8 @@ let plain port =
   let fd = connect port in
   { fd
   ; send =
-      send_with (fun s -> ignore (Unix.write_substring fd s 0 (String.length s)))
+      send_with (fun s ->
+        ignore (Unix.write_substring fd s 0 (String.length s)))
   ; receive = raw_receive fd
   ; readable_within = readable_within fd }
 
@@ -64,7 +66,8 @@ let tls port =
   { fd
   ; send = send_with (Ssl.output_string socket)
   ; receive =
-      receive_with (fun buffer -> Ssl.read socket buffer 0 (Bytes.length buffer))
+      receive_with (fun buffer ->
+        Ssl.read socket buffer 0 (Bytes.length buffer))
   ; readable_within = readable_within fd }
 
 let request ?(meth = "GET") ?(version = "1.1") ?(headers = []) path =
@@ -85,7 +88,8 @@ let header_value name lines =
        match String.index_opt line ':' with
        | Some i when String.lowercase_ascii (String.sub line 0 i) = name ->
            Some
-             (String.trim (String.sub line (i + 1) (String.length line - i - 1)))
+             (String.trim
+                (String.sub line (i + 1) (String.length line - i - 1)))
        | Some _ | None -> None)
     lines
 
@@ -99,8 +103,7 @@ let parse_response data =
   | None -> None
   | Some i -> (
       let head =
-        String.sub data 0 i |> String.split_on_char '\n'
-        |> List.map String.trim
+        String.sub data 0 i |> String.split_on_char '\n' |> List.map String.trim
       in
       let body = String.sub data (i + 4) (String.length data - i - 4) in
       match head, content_length head with
@@ -258,7 +261,8 @@ let per_address port =
   let fifth = plain port in
   let since = Unix.gettimeofday () in
   let refused =
-    fifth.readable_within 1. && fifth.receive () = Ended
+    fifth.readable_within 1.
+    && fifth.receive () = Ended
     && Unix.gettimeofday () -. since < 1.
   in
   print_endline
@@ -375,7 +379,9 @@ let keep_alive requests conn =
   let data, closed = receive "" in
   let lines = String.split_on_char '\n' data |> List.map String.trim in
   Printf.printf "%s, Connection: %s, responses: %d, %s\n"
-    (match lines with status :: _ when status <> "" -> status | _ -> "no response")
+    (match lines with
+    | status :: _ when status <> "" -> status
+    | _ -> "no response")
     (Option.value ~default:"none" (header_value "connection" lines))
     (occurrences "HTTP/1.1 " data 0)
     (if closed then "closed by the server at once" else "kept open")
@@ -390,19 +396,23 @@ let () =
   match Sys.argv with
   | [|_; "per-address"|] -> per_address limit_port
   | [|_; "pool-idle"|] ->
-      make_room ~open_fifth:(fun () -> plain pool_port) (fun () ->
-        let conn = plain pool_port in
-        conn.send (request "/");
-        ignore (response conn : string);
-        conn)
+      make_room
+        ~open_fifth:(fun () -> plain pool_port)
+        (fun () ->
+           let conn = plain pool_port in
+           conn.send (request "/");
+           ignore (response conn : string);
+           conn)
   | [|_; "pool-silent"|] ->
-      make_room ~open_fifth:(fun () -> plain pool_port) (fun () ->
-        plain pool_port)
+      make_room
+        ~open_fifth:(fun () -> plain pool_port)
+        (fun () -> plain pool_port)
   | [|_; "pool-handshake"|] ->
       (* TCP connections to the TLS port, on which nothing is sent, then a
          TLS client. *)
-      make_room ~open_fifth:(fun () -> tls pool_tls_port) (fun () ->
-        plain pool_tls_port)
+      make_room
+        ~open_fifth:(fun () -> tls pool_tls_port)
+        (fun () -> plain pool_tls_port)
   | [|_; "pool-busy"|] -> pool_busy pool_port
   | [|_; "no-handshake"|] ->
       (* A TCP connection to the TLS port, on which nothing is sent. *)
