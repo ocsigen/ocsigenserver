@@ -51,8 +51,16 @@ val first_pass : Xml.xml list -> unit
 
 val later_pass : Xml.xml list -> unit
 
+val parse_xml_file : string -> Xml.xml
+(** [parse_xml_file file] is the XML document in [file]. An XML or DTD error
+    raises [Config.Config_file_error], with the name of [file] and the position
+    of the error. [Xml_light_errors.File_not_found file] is left to the caller,
+    as a missing file is not always an error. *)
+
 (**/**)
 
 val parse_config : ?file:string -> unit -> Xml.xml list list
 (** Returns the config file. Use this if you want to read a config file from
-    your own executable. See {!Server.exec}.*)
+    your own executable. See {!Server.exec}. Raises
+    [Config.Config_file_error] on an error, such as a file that cannot be
+    opened or is not well-formed XML. *)

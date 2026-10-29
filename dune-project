@@ -34,7 +34,7 @@
   (re (>= 1.11))
   react
   (ssl (>= 0.7.0))
-  xml-light
+  (xml-light (>= 2.5))
   (logs (>= 0.10.0))
   logs-syslog
   (syslog-message (>= 1.1.0)))

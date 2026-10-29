@@ -136,4 +136,4 @@ let () =
       then
         fatal
           "--port, --address and --directory-listing require a directory to serve or --reverse-proxy";
-      Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
+      Ocsigen.Server.exec_config_file ()

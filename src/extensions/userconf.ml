@@ -31,7 +31,8 @@ let err_500 =
     (Ocsigen_cookie_map.empty, `Internal_server_error)
 
 let handle_parsing_error {Ocsigen.Extensions.request_info; _} = function
-  | Ocsigen.Extensions.Error_in_config_file s ->
+  | Ocsigen.Extensions.Error_in_config_file s
+  | Ocsigen.Config.Config_file_error s ->
       Logs.err ~src:section (fun fmt ->
         fmt "Syntax error in userconf configuration file for url %s: %s"
           (Uri.to_string (Ocsigen.Request.uri request_info))
@@ -89,14 +90,8 @@ let subresult new_req user_parse_site conf previous_err req req_state =
            Lwt.return (answer, Ocsigen_cookie_map.empty)))
 
 let conf_to_xml conf =
-  try [Xml.parse_file conf] with
-  | Sys_error _ -> raise NoConfFile
-  | Xml.Error (s, loc) ->
-      let begin_char, end_char = Xml.range loc and line = Xml.line loc in
-      raise
-        (Ocsigen.Extensions.Error_in_config_file
-           (Printf.sprintf "%s, line %d, characters %d-%d" (Xml.error_msg s)
-              line begin_char end_char))
+  try [Ocsigen.Parseconfig.parse_xml_file conf]
+  with Sys_error _ | Xml_light_errors.File_not_found _ -> raise NoConfFile
 
 let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
   | Ocsigen.Extensions.Req_found _ ->

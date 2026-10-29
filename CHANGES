@@ -112,6 +112,9 @@ New features:
    like Mutex.protect, which OCaml 4.14 does not have.
    Ocsigen.Messages.level_of_string parses a log level, and set_source_level
    sets the level of a log source by its name.
+   Ocsigen.Server.exec_config_file reads the configuration file and starts
+   the server, and reports an error in the file as the ocsigenserver command
+   does.
 
 Bug fixes:
  * Ocsigen_base.Loader.loadfiles, used for <extension findlib-package="...">
@@ -309,6 +312,17 @@ Bug fixes:
    in it, now gets a 400 Bad Request instead of a 500.
  * When closing an uploaded file fails, the server no longer closes it a
    second time, which could close another file, and reports the first error.
+ * A configuration file that is not well-formed XML is reported again, with
+   the name of the file and the position of the error, and the server exits
+   with code 50, as for the other errors in the file. Since xml-light 2.5,
+   which is now required, the server stopped at start-up with an uncaught
+   exception, and the reload order logged "Uncaught exception". A missing
+   configuration file, or one that its DTD rejects, is reported the same way.
+   A file of an <extconf> directory with such an error is still ignored, but
+   its error is now logged with its position.
+   Userconf: a user configuration file that is not well-formed XML is
+   reported the same way, and a missing one lets the next instruction answer
+   again, instead of a 500.
 
 ==== 8.0.0 (2026-09-24) ===
 

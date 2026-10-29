@@ -28,6 +28,12 @@ val reload : ?file:string -> unit -> unit
 val exec : Xml.xml list list -> unit
 (** Start the server with a configuration file. Never returns. *)
 
+val exec_config_file : ?file:string -> unit -> unit
+(** Read the configuration file [file] (by default the one set with
+    {!Ocsigen.Config.set_configfile}) and start the server with it, as
+    {!exec}. An error in the file is logged, and the program exits. Never
+    returns. *)
+
 val serve :
    ?address:Config.Socket_type.t
   -> ?port:int

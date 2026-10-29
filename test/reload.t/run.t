@@ -68,9 +68,19 @@ the one that the file no longer has:
   $ curl -s --max-time 10 http://127.0.0.1:8091/new/index.html
   new
 
-Nor does it apply the settings of <server> that come before the error. With
-<usedefaulthostname/>, the redirection to a directory uses the host name of
-the configuration rather than the one of the request:
+So is a file that is not well-formed XML, with the name of the file and the
+position of the error:
+
+  $ write_conf '<site path="new"><static dir="new" /></sitex>'
+  $ reload 'Config file reload failed' 2
+  $ grep -o 'ocsigen:main: .*' log/errors.log | tail -n 1
+  ocsigen:main: [ERROR] Fatal - Error in configuration file: site.conf, line 9, characters 37-44: End of tag expected : 'site'
+  $ curl -s --max-time 10 http://127.0.0.1:8091/new/index.html
+  new
+
+A failed reload does not apply the settings of <server> that come before the
+error either. With <usedefaulthostname/>, the redirection to a directory uses
+the host name of the configuration rather than the one of the request:
 
   $ redirection () {
   >   curl -s -o /dev/null -w '%{redirect_url}\n' --max-time 10 \
@@ -79,7 +89,7 @@ the configuration rather than the one of the request:
   $ redirection
   http://127.0.0.1:8091/dir/
   $ write_conf '<nosuchtag />' '<usedefaulthostname/>'
-  $ reload 'Config file reload failed' 2
+  $ reload 'Config file reload failed' 3
   $ redirection
   http://127.0.0.1:8091/dir/
   $ write_conf '' '<usedefaulthostname/>'
