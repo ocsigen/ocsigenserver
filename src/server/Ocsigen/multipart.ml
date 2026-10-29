@@ -268,11 +268,79 @@ let counter =
     c := !c + 1;
     !c
 
-let field field content_disp =
-  let (_ : int), res =
-    S.search_forward (S.regexp (field ^ "=.([^\"]*).;?")) content_disp 0
+(* [disposition_params cd] is the list of the parameters of the
+   Content-Disposition header value [cd], with their names in lowercase, or
+   [None] if they are malformed (RFC 7578, RFC 6266). The names are matched
+   whole, so that [filename] is never taken for [name]. Spaces may surround
+   "=" and ";", a trailing ";" is ignored, and a value is a token or a quoted
+   string. In a quoted string, \" and \\ stand for " and \, as some clients
+   escape them (Go, curl --form-escape); any other backslash is kept. Browsers
+   do not escape backslashes (they percent-encode double quotes), so a value
+   ending with a backslash, such as a file name, makes the parameters
+   malformed when read this way: they are then read again with every
+   backslash kept. Two backslashes in a row sent by a browser are still read
+   as one, as nothing tells them from an escaped backslash. *)
+let disposition_params cd =
+  let len = String.length cd in
+  (* [scan p i] is the first position from [i] whose character does not
+     satisfy [p], or [len]. *)
+  let rec scan p i = if i < len && p cd.[i] then scan p (i + 1) else i in
+  let is_space c = c = ' ' || c = '\t' in
+  let is_token c = not (is_space c || c = '=' || c = ';' || c = '"') in
+  (* [quoted ~escapes i] reads a quoted string whose first character is at
+     [i]. With [escapes], \" and \\ stand for " and \. *)
+  let quoted ~escapes i =
+    let b = Buffer.create 16 in
+    let rec loop j =
+      if j >= len
+      then None
+      else
+        match cd.[j] with
+        | '"' -> Some (Buffer.contents b, j + 1)
+        | '\\'
+          when escapes && j + 1 < len && (cd.[j + 1] = '"' || cd.[j + 1] = '\\')
+          ->
+            Buffer.add_char b cd.[j + 1];
+            loop (j + 2)
+        | c ->
+            Buffer.add_char b c;
+            loop (j + 1)
+    in
+    loop i
   in
-  S.matched_group res 1 content_disp
+  let value ~escapes i =
+    if i < len && cd.[i] = '"'
+    then quoted ~escapes (i + 1)
+    else
+      let j = scan is_token i in
+      if j = i then None else Some (String.sub cd i (j - i), j)
+  in
+  let rec params ~escapes acc i =
+    let i = scan is_space i in
+    if i = len
+    then Some (List.rev acc)
+    else if cd.[i] <> ';'
+    then None
+    else
+      let i = scan is_space (i + 1) in
+      if i = len
+      then Some (List.rev acc)
+      else
+        let j = scan is_token i in
+        let k = scan is_space j in
+        if j = i || k = len || cd.[k] <> '='
+        then None
+        else
+          let name = String.lowercase_ascii (String.sub cd i (j - i)) in
+          match value ~escapes (scan is_space (k + 1)) with
+          | Some (v, next) -> params ~escapes ((name, v) :: acc) next
+          | None -> None
+  in
+  (* The parameters follow the disposition type *)
+  let start = scan is_token (scan is_space 0) in
+  match params ~escapes:true [] start with
+  | Some _ as ps -> ps
+  | None -> params ~escapes:false [] start
 
 let parse_content_type s =
   match Ocsigen_base.Lib.String.split ';' s with
@@ -351,21 +419,25 @@ let post_params_multipart_form_data
         parse_content_type ct
       with _ -> None
     in
-    let malformed reason =
-      raise (Multipart_error ("a part has no " ^ reason))
-    in
+    let malformed reason = raise (Multipart_error ("a part has " ^ reason)) in
     let cd =
       match List.assoc_opt "content-disposition" hs with
       | Some cd -> cd
-      | None -> malformed "Content-Disposition header"
+      | None -> malformed "no Content-Disposition header"
+    in
+    let cd_params =
+      match disposition_params cd with
+      | Some cd_params -> cd_params
+      | None -> malformed "a malformed Content-Disposition"
     in
     let p_name =
-      match field "name" cd with
-      | p_name -> p_name
-      | exception Not_found -> malformed "name in its Content-Disposition"
+      match List.assoc_opt "name" cd_params with
+      | Some p_name -> p_name
+      | None -> malformed "no name in its Content-Disposition"
     in
-    try
-      let store = field "filename" cd in
+    match List.assoc_opt "filename" cd_params with
+    | None -> p_name, `No_file (Buffer.create 1024)
+    | Some store -> (
       match upload_dir with
       | Some dname ->
           let fname =
@@ -380,8 +452,7 @@ let post_params_multipart_form_data
             fmt "%s" ("Upload file opened: " ^ fname));
           on_file fname;
           p_name, `Some_file (fname, store, fd, content_type)
-      | None -> raise Ocsigen_upload_forbidden
-    with Not_found -> p_name, `No_file (Buffer.create 1024)
+      | None -> raise Ocsigen_upload_forbidden)
   and stop filesize = function
     | p_name, `No_file to_buf ->
         params := !params @ [p_name, Buffer.contents to_buf];

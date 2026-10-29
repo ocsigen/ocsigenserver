@@ -81,6 +81,41 @@ of 71 characters are refused. One of 70 characters is accepted:
   400
   200
 
+The name of a part is its name parameter, never its filename parameter, so a
+part with only a filename is a bad request, as is a Content-Disposition with
+an unterminated quote. The parameters may come in any order, with spaces
+around "=" and ";", in any case, quoted or not, and with a trailing ";":
+
+  $ raw '--B\r\nContent-Disposition: form-data; filename="a.txt"\r\n\r\nx\r\n--B--\r\n'
+  400
+  $ raw '--B\r\nContent-Disposition: form-data; name="f\r\n\r\nx\r\n--B--\r\n'
+  400
+  $ fields () {
+  >   printf %b "$1" | curl --unix-socket local.sock -s --data-binary @- \
+  >     -H 'Content-Type: multipart/form-data; boundary=B' http://x/; }
+  $ fields '--B\r\nContent-Disposition: form-data; filename="a.txt"; name="f";\r\n\r\nx\r\n--B--\r\n'
+  f a.txt true
+  $ fields '--B\r\nContent-Disposition: form-data ; FileName = "name=g;" ; Name = f\r\n\r\nx\r\n--B--\r\n'
+  f name=g; true
+  $ fields '--B\r\nContent-Disposition: form-data; name=field; filename=a.txt\r\n\r\nx\r\n--B--\r\n'
+  field a.txt true
+
+In a quoted value, \" and \\ are escapes, as some clients send them; another
+backslash is kept (printf %b turns each \\ below into one backslash):
+
+  $ fields '--B\r\nContent-Disposition: form-data; name="f"; filename="a\\"b\\\\c\\d.txt"\r\n\r\nx\r\n--B--\r\n'
+  f a"b\c\d.txt true
+
+Browsers do not escape backslashes, so a name or a file name that ends with
+one comes with a backslash before its closing quote. Read with escapes, the
+parameters are malformed, so they are read again with every backslash kept:
+
+  $ fields '--B\r\nContent-Disposition: form-data; name="f"; filename="dir\\"\r\n\r\nx\r\n--B--\r\n'
+  f dir\ true
+  $ fields '--B\r\nContent-Disposition: form-data; name="f\\"; filename="a.txt"\r\n\r\nx\r\n--B--\r\n'
+  f\ a.txt true
+  $ ls uploads
+
 The reasons are logged:
 
   $ sed -n 's/.*Multipart body rejected: //p' server.log
@@ -92,5 +127,7 @@ The reasons are logged:
   its Content-Type has no boundary
   its boundary is empty
   its boundary is longer than 70 characters
+  a part has no name in its Content-Disposition
+  a part has a malformed Content-Disposition
 
   $ stop_server $SERVER_PID
