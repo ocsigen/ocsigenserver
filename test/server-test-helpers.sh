@@ -1,6 +1,11 @@
 # POSIX shell functions that help test ocsigenserver.
 # Kept free of bashisms: dune runs cram tests with /bin/sh, which is dash on
 # Debian and Ubuntu.
+#
+# A test must not use a fixed TCP port: several test runs may happen at once
+# on one machine, and would then use each other's servers. It listens on a
+# unix-domain socket (see run_server) or on ports given by free_ports, and
+# writes no port number literally.
 
 # Run the server "$@" in the background and do the necessary setup. The
 # server must listen on the unix-domain socket named "local.sock" and on the
@@ -27,6 +32,25 @@ run_server ()
   trap 'stop_server $SERVER_PID; wait' EXIT
 }
 
+# Set PORT1, ..., PORTN to N distinct TCP ports that are free on this machine
+# (see free-port/free_port.ml). A port could still be taken by another process
+# before the server binds it: wait for the server with wait_server, which then
+# fails instead of talking to the other process.
+#
+# Usage:
+#   $ free_ports 2
+#   $ ocsigenserver --serve www --port $PORT1 >server.log 2>&1 &
+#
+free_ports ()
+{
+  free_ports_list=$(free_port "$1") || return 1
+  free_ports_i=0
+  for free_ports_p in $free_ports_list; do
+    free_ports_i=$((free_ports_i + 1))
+    eval "PORT$free_ports_i=$free_ports_p"
+  done
+}
+
 # Wait until the server of process id PID is ready: until each FILE exists
 # (its socket, its command pipe) and each URL (starting with http:// or
 # https://) answers, whatever the status code. If the server exits first, or
@@ -35,7 +59,7 @@ run_server ()
 # Usage:
 #   $ ../security-tls/test.exe >server.log 2>&1 &
 #   $ SERVER_PID=$!
-#   $ wait_server $SERVER_PID server.log local.cmd https://127.0.0.1:8453/
+#   $ wait_server $SERVER_PID server.log local.cmd https://127.0.0.1:$PORT1/
 #
 wait_server ()
 {
@@ -139,11 +163,12 @@ stop_server ()
 # code. Polls every 20 ms, for about 10 s at most. curl's own --retry waits a
 # whole second before its first retry, hence this loop. The arguments are
 # passed to curl, so options may precede the URL (-k for a self-signed
-# certificate).
+# certificate). It does not check that the server it waits for still runs,
+# so another server could answer on its port: prefer wait_server.
 #
 # Usage:
-#   $ ocsigenserver --serve www --port 8061 >server.log 2>&1 &
-#   $ wait_http http://127.0.0.1:8061/
+#   $ ocsigenserver --serve www --port $PORT1 >server.log 2>&1 &
+#   $ wait_http http://127.0.0.1:$PORT1/
 #
 wait_http ()
 {
