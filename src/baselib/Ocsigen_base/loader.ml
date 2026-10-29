@@ -70,10 +70,13 @@ let loadfile pre post force file =
       pre ();
       Logs.info ~src:section (fun fmt ->
         fmt "Loading %s (will be reloaded every times)" file);
-      try
-        Dynlink_wrapper.loadfile file;
-        post ()
-      with e -> post (); raise e)
+      (try
+         Dynlink_wrapper.loadfile file;
+         post ()
+       with e -> post (); raise e);
+      (* Remember it too: a later non-forced request for the same file, as a
+         dependency of another package, must not load it a second time. *)
+      addloaded file)
     else if not (isloaded file)
     then (
       pre ();
@@ -90,12 +93,16 @@ let loadfile pre post force file =
 let id () = ()
 
 let loadfiles pre post force modules =
+  (* [pre] and [post] surround the whole list: the dependencies of a findlib
+     package may belong to the same application as its last file, and read
+     the same configuration when they are loaded. *)
   let rec aux = function
     | [] -> ()
-    | [m] -> loadfile pre post force m
+    | [m] -> loadfile id id force m
     | m :: q -> loadfile id id false m; aux q
   in
-  aux modules
+  pre ();
+  Fun.protect ~finally:post (fun () -> aux modules)
 
 let set_module_init_function name f =
   init_functions := M.add name [f] !init_functions;

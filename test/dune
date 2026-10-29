@@ -36,6 +36,10 @@
  (deps connection-guard/test.exe))
 
 (cram
+ (applies_to loader)
+ (deps loader/test.bc loader/dep.cma loader/dep2.cma loader/app.cma))
+
+(cram
  (applies_to logdir-syslog)
  (deps logdir-syslog/test.exe))
 
