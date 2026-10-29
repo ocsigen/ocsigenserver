@@ -3,7 +3,7 @@ start-up, with the name of the file and the position of the error.
 
   $ cat > bad.conf <<CONF
   > <ocsigen><server>
-  > <port>8094</port>
+  > <port>0</port>
   > <host>
   > </hostx>
   > </server></ocsigen>
@@ -24,7 +24,7 @@ And so does a file that its own DTD rejects:
 
   $ cat > dtd.conf <<CONF
   > <!DOCTYPE ocsigen [ <!ELEMENT ocsigen EMPTY> ]>
-  > <ocsigen><server><port>8094</port></server></ocsigen>
+  > <ocsigen><server><port>0</port></server></ocsigen>
   > CONF
   $ ocsigenserver -c dtd.conf >out.log 2>&1; echo "exit $?"
   exit 50
@@ -40,13 +40,14 @@ error. A user without a configuration file is skipped: the next instruction
 answers.
 
   $ . ../server-test-helpers.sh
+  $ free_ports 1
   $ mkdir -p log www conf.d
   $ echo index > www/index.html
   $ printf '<ocsigen><server>\n<host>\n</hostx>\n</server></ocsigen>\n' \
   >   > conf.d/bad.conf
   $ cat > site.conf <<CONF
   > <ocsigen><server>
-  > <port>8094</port>
+  > <port>127.0.0.1:$PORT1</port>
   > <logdir>log</logdir>
   > <commandpipe>local.cmd</commandpipe>
   > <extension findlib-package="ocsigenserver.ext.staticmod"/>
@@ -64,15 +65,15 @@ answers.
   $ SERVER_PID=$!
   $ trap 'stop_server $SERVER_PID' EXIT
   $ wait_server $SERVER_PID server.log local.cmd \
-  >   http://127.0.0.1:8094/index.html
+  >   http://127.0.0.1:$PORT1/index.html
   $ grep -A 1 'ocsigen:config: \[ERROR\]' log/errors.log | sed 's/^.*: \[ERROR\] //; s/^ *//'
   Error while loading configuration file conf.d/bad.conf (ignored)
   conf.d/bad.conf, line 3, characters 0-7: End of tag expected : 'host'
   $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
-  >   http://127.0.0.1:8094/user/index.html
+  >   http://127.0.0.1:$PORT1/user/index.html
   500
-  $ grep -o 'ocsigen:ext:userconf: .*' log/errors.log
-  ocsigen:ext:userconf: [ERROR] Syntax error in userconf configuration file for url //127.0.0.1:8094/user/index.html: user.conf, line 3, characters 0-6: End of tag expected : 'static'
+  $ grep -o 'ocsigen:ext:userconf: .*' log/errors.log | sed "s/:$PORT1\//:PORT\//"
+  ocsigen:ext:userconf: [ERROR] Syntax error in userconf configuration file for url //127.0.0.1:PORT/user/index.html: user.conf, line 3, characters 0-6: End of tag expected : 'static'
   $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
-  >   http://127.0.0.1:8094/nouser/index.html
+  >   http://127.0.0.1:$PORT1/nouser/index.html
   404

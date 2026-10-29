@@ -1,10 +1,12 @@
 <logdir> and <syslog> are mutually exclusive: the server refuses to start
 when both are given. The pid file is in a missing directory: a server that
-passes the check stops there, before opening any log, rather than run.
+passes the check stops there, before opening any log, rather than run. The
+port is 0 (any free port), so that a server that listens anyway takes no fixed
+port.
 
   $ cat > conf.xml <<EOF
   > <ocsigen><server>
-  >   <port>8098</port>
+  >   <port>0</port>
   >   <logdir>log</logdir>
   >   <syslog>local0</syslog>
   > </server></ocsigen>
@@ -18,7 +20,7 @@ An empty <logdir> is no log directory, so it is allowed with <syslog>.
 
   $ cat > conf.xml <<EOF
   > <ocsigen><server>
-  >   <port>8098</port>
+  >   <port>0</port>
   >   <logdir></logdir>
   >   <syslog>local0</syslog>
   > </server></ocsigen>

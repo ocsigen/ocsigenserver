@@ -1,6 +1,7 @@
 Staticmod with a configuration file.
 
   $ . ../server-test-helpers.sh
+  $ free_ports 1
   $ mkdir -p www/.git www/.well-known www/sub open
   $ echo index > www/index.html
   $ echo secret > www/.env; echo secret > www/.git/config
@@ -9,9 +10,9 @@ Staticmod with a configuration file.
   $ echo secret > www/.well-known/.hidden
   $ echo error page > error.html
   $ echo secret > open/.env
-  $ cat > site.conf <<'CONF'
+  $ cat > site.conf <<CONF
   > <ocsigen><server>
-  > <port>8085</port>
+  > <port>127.0.0.1:$PORT1</port>
   > <extension findlib-package="ocsigenserver.ext.staticmod"/>
   > <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
   > <host hostfilter="*">
@@ -26,11 +27,12 @@ Staticmod with a configuration file.
   $ ocsigenserver -c site.conf >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'kill $SERVER_PID 2>/dev/null' EXIT
-  $ wait_http http://127.0.0.1:8085/index.html
+  $ wait_server $SERVER_PID server.log http://127.0.0.1:$PORT1/index.html
 
 A <static regexp> that does not match the path lets the next one serve it:
 
-  $ curl -s -w ' %{http_code}\n' --max-time 10 http://127.0.0.1:8085/index.html
+  $ curl -s -w ' %{http_code}\n' --max-time 10 \
+  >   http://127.0.0.1:$PORT1/index.html
   index
    200
 
@@ -41,7 +43,7 @@ is, also when it is percent-encoded or when the path is a directory.
   $ for p in .env %2Eenv .git/ .git/config sub/.htpasswd sub%2F.htpasswd \
   >   .well-known/security.txt .well-known/.hidden sub/file; do
   >   curl -s -o /dev/null -w "$p %{http_code}\n" --max-time 10 \
-  >     http://127.0.0.1:8085/$p
+  >     http://127.0.0.1:$PORT1/$p
   > done
   .env 404
   %2Eenv 404
@@ -55,26 +57,27 @@ is, also when it is percent-encoded or when the path is a directory.
 
 This 404 is the one of a missing file: the error page is served.
 
-  $ curl -s --max-time 10 http://127.0.0.1:8085/.env
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT1/.env
   error page
 
 Directory listings leave the hidden files out, except /.well-known/:
 
   $ rm www/index.html
-  $ curl -s --max-time 10 http://127.0.0.1:8085/ | grep -o '<li>[^/]*</a>'
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT1/ | grep -o '<li>[^/]*</a>'
   <li><a href=".well-known">.well-known</a>
   <li><a href="sub">sub</a>
-  $ curl -s --max-time 10 http://127.0.0.1:8085/sub/ | grep -o '<li>[^/]*</a>'
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT1/sub/ | grep -o '<li>[^/]*</a>'
   <li><a href="file">file</a>
-  $ curl -s --max-time 10 http://127.0.0.1:8085/.well-known/ \
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT1/.well-known/ \
   >   | grep -o '<li>[^/]*</a>'
   <li><a href="security.txt">security.txt</a>
 
 With hidedotfiles="false", dotfiles are served and listed:
 
-  $ curl -s --max-time 10 http://127.0.0.1:8085/open/.env
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT1/open/.env
   secret
-  $ curl -s --max-time 10 http://127.0.0.1:8085/open/ | grep -o '<li>[^/]*</a>'
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT1/open/ \
+  >   | grep -o '<li>[^/]*</a>'
   <li><a href=".env">.env</a>
 
 A value other than true or false is refused:
