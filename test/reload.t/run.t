@@ -32,7 +32,7 @@ argument:
   > }
   $ reload () {
   >   send_command $SERVER_PID local.cmd reload
-  >   i=0; until [ "$(grep -c "$1" log/warnings.log)" -ge "$2" ]; do
+  >   i=0; until [ "$(cat log/*.log | grep -c "$1")" -ge "$2" ]; do
   >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
   > }
 
@@ -58,13 +58,16 @@ is served.
   $ curl -s --max-time 10 http://127.0.0.1:8091/new/index.html
   new
 
-A file with an error is reported once, and the server keeps its sites, here
-the one that the file no longer has:
+A file with an error is reported once, in a single error line, and the server
+keeps its sites, here the one that the file no longer has:
 
   $ write_conf '<nosuchtag />'
   $ reload 'Config file reload failed' 1
   $ grep -o 'ocsigen:main: .*' log/errors.log
-  ocsigen:main: [ERROR] Fatal - Error in configuration file: Unexpected tag <nosuchtag> inside <site dir="">
+  ocsigen:main: [ERROR] Config file reload failed: Error in configuration file: Unexpected tag <nosuchtag> inside <site dir="">
+  $ grep -c 'reload failed' log/warnings.log
+  0
+  [1]
   $ curl -s --max-time 10 http://127.0.0.1:8091/new/index.html
   new
 
@@ -74,7 +77,7 @@ position of the error:
   $ write_conf '<site path="new"><static dir="new" /></sitex>'
   $ reload 'Config file reload failed' 2
   $ grep -o 'ocsigen:main: .*' log/errors.log | tail -n 1
-  ocsigen:main: [ERROR] Fatal - Error in configuration file: site.conf, line 9, characters 37-44: End of tag expected : 'site'
+  ocsigen:main: [ERROR] Config file reload failed: Error in configuration file: site.conf, line 9, characters 37-44: End of tag expected : 'site'
   $ curl -s --max-time 10 http://127.0.0.1:8091/new/index.html
   new
 
