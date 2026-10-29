@@ -7,7 +7,7 @@ fails, and the request is answered with 400.
   $ ../truncated-body/server.exe >server.log 2>&1 &
   $ SERVER_PID=$!
   $ trap 'stop_server $SERVER_PID' EXIT
-  $ wait_server $SERVER_PID server.log local.cmd http://127.0.0.1:8079/
+  $ wait_server $SERVER_PID server.log local.sock local.cmd
 
 A raw body, whole, then 10 bytes of the 100 announced:
 

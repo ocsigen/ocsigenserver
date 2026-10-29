@@ -25,8 +25,8 @@ let content kind =
 let () =
   let content_type, body = content Sys.argv.(1) in
   let sent = int_of_string Sys.argv.(2) in
-  let fd = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-  Unix.connect fd (Unix.ADDR_INET (Unix.inet_addr_loopback, 8079));
+  let fd = Unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  Unix.connect fd (Unix.ADDR_UNIX "./local.sock");
   Unix.setsockopt_float fd Unix.SO_RCVTIMEO 10.;
   let request =
     "POST /length HTTP/1.1\r\nHost: localhost\r\n"
