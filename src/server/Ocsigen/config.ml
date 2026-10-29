@@ -216,3 +216,38 @@ let display_version () =
 
 let has_config_file = ref false
 let has_configuration_file () = !has_config_file
+
+(* The settings that the tags of [<server>] set each time the configuration
+   file is read ([Parseconfig.later_pass]), as functions that put back their
+   saved values. [respectpipeline] is not among them: extensions also set it
+   when they are loaded, which a failed reload does not undo. *)
+type settings = (unit -> unit) list
+
+let save_settings () =
+  let saved r =
+    let v = !r in
+    fun () -> r := v
+  in
+  [ saved defaultcharset
+  ; saved uploaddir
+  ; saved mimefile
+  ; saved max_number_of_connections
+  ; saved maxretries
+  ; saved silent_client_timeout
+  ; saved silent_server_timeout
+  ; saved keepalive_timeout
+  ; saved min_data_rate
+  ; saved max_connections_per_address
+  ; saved filebuffersize
+  ; saved maxrequestbodysize
+  ; saved maxrequestbodysizeinmemory
+  ; saved maxuploadfilesize
+  ; saved command_pipe
+  ; saved shutdowntimeout
+  ; saved debugmode
+  ; saved usedefaulthostname
+  ; saved disablepartialrequests
+  ; (let n = Ocsigen_base.Ocsigen_stream.get_net_buffer_size () in
+     fun () -> Ocsigen_base.Ocsigen_stream.set_net_buffer_size n) ]
+
+let restore_settings settings = List.iter (fun restore -> restore ()) settings

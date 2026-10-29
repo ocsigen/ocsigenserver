@@ -52,6 +52,10 @@
  (deps parseconfig/test.exe))
 
 (cram
+ (applies_to reload-settings)
+ (deps reload-settings/test.exe))
+
+(cram
  (applies_to request-body-limit)
  (deps request-body-limit/test.exe))
 

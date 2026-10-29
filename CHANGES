@@ -294,7 +294,10 @@ Bug fixes:
    twice. The extensions configured the sites twice (Eliom loaded the modules
    of its sites twice), and warnings and errors were logged twice. When the
    file has an error, the server now logs "Config file reload failed" instead
-   of "Config file reloaded", and keeps its sites as they were.
+   of "Config file reloaded". It keeps its sites, and the settings of the tags
+   of <server> such as <maxretries>, as they were: the settings before the
+   error used to be applied. What the extensions did before the error, such as
+   loading a new extension, is not undone.
  * A multipart part without a Content-Disposition header, or without a name
    in it, now gets a 400 Bad Request instead of a 500.
  * When closing an uploaded file fails, the server no longer closes it a
