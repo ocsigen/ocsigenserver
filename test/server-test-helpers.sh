@@ -57,7 +57,7 @@ free_ports ()
 # is not ready after about 10 s, print its log LOG ("-" for none) and fail.
 #
 # Usage:
-#   $ ../security-tls/test.exe >server.log 2>&1 &
+#   $ ../security-tls/test.exe $PORT1 >server.log 2>&1 &
 #   $ SERVER_PID=$!
 #   $ wait_server $SERVER_PID server.log local.cmd https://127.0.0.1:$PORT1/
 #

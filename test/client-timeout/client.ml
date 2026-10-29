@@ -1,5 +1,8 @@
 (* Client for the client timeout tests. Each scenario connects to the test
-   server (see server.ml for its bounds) and prints what the server did.
+   server (see server.ml for its bounds) and prints what the server did. The
+   ports of the servers are in the environment: PLAIN_PORT and TLS_PORT for
+   the main server, LIMIT_PORT for the limit server, POOL_PORT and
+   POOL_TLS_PORT for the pool server.
 
    The only timings the output depends on are generous: a connection counts as
    closed in time when the server closes it no earlier than half a second
@@ -390,9 +393,14 @@ let () =
   (* A write to a connection the server closed fails instead of killing us. *)
   Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
   Ssl.init ();
-  let plain_port = 8076 and tls_port = 8454 in
-  let limit_port = 8077 in
-  let pool_port = 8078 and pool_tls_port = 8455 in
+  let port name =
+    match Option.bind (Sys.getenv_opt name) int_of_string_opt with
+    | Some port -> port
+    | None -> failwith (name ^ ": no port in the environment")
+  in
+  let plain_port = port "PLAIN_PORT" and tls_port = port "TLS_PORT" in
+  let limit_port = port "LIMIT_PORT" in
+  let pool_port = port "POOL_PORT" and pool_tls_port = port "POOL_TLS_PORT" in
   match Sys.argv with
   | [|_; "per-address"|] -> per_address limit_port
   | [|_; "pool-idle"|] ->
