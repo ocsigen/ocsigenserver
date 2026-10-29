@@ -310,8 +310,12 @@ Bug fixes:
    extensions did before the error, such as loading a new extension, is not
    undone. The error no longer starts with "Fatal - ", as the server keeps
    running.
- * A multipart part without a Content-Disposition header, or without a name
-   in it, now gets a 400 Bad Request instead of a 500.
+ * A malformed multipart body gets a 400 Bad Request instead of a 500: a part
+   without a Content-Disposition header or without a name in it, a part header
+   line that is not a header, a body cut right after its first boundary, and a
+   multipart Content-Type without a boundary. A boundary that is empty or
+   longer than 70 characters, which RFC 2046 forbids, was accepted and is now
+   refused the same way. The reason is logged at the info level.
  * When closing an uploaded file fails, the server no longer closes it a
    second time, which could close another file, and reports the first error.
  * A configuration file that is not well-formed XML is reported again, with

@@ -10,9 +10,12 @@ module Pcre = Re.Pcre
 
 let section = Logs.Src.create "ocsigen:server:multipart"
 
+(* [Multipart_error reason]: the body is malformed. It becomes a bad request
+   in [scan_multipart_body_from_stream], which logs [reason]. *)
 exception Multipart_error of string
 exception Ocsigen_upload_forbidden
 
+let malformed_header = Multipart_error "a part has a malformed header"
 let match_end result = snd (Pcre.get_substring_ofs result 0)
 let cr_or_lf_re = S.regexp "[\013\n]"
 
@@ -42,7 +45,7 @@ let scan_header
     match S.string_match header_re parstr i with
     | Some r ->
         let i' = match_end r in
-        if i' > end_pos then raise (Multipart_error "Mimestring.scan_header");
+        if i' > end_pos then raise malformed_header;
         let name =
           if downcase
           then String.lowercase_ascii (S.matched_group r 1 parstr)
@@ -59,7 +62,7 @@ let scan_header
       (* The header must end with an empty line *)
       match S.string_match empty_line_re parstr i with
       | Some r' -> List.rev l, match_end r'
-      | None -> raise (Multipart_error "Mimestring.scan_header"))
+      | None -> raise malformed_header)
   in
   parse_header start_pos []
 
@@ -109,21 +112,14 @@ let rec search_window s re start =
     | Ocsigen_base.Ocsigen_stream.Cont _ as s -> search_window s re start)
 
 let search_end_of_line s k =
-  (* Search LF beginning at position k *)
-  Lwt.catch
-    (fun () ->
-       search_window s lf_re k >>= fun (s, x) -> Lwt.return (s, match_end x))
-    (function
-      | Not_found ->
-          Lwt.fail
-            (Multipart_error
-               "read_multipart_body: MIME boundary without line end")
-      | e -> Lwt.fail e)
+  (* Search LF beginning at position k. Without one, as after a boundary
+     without line end, it fails with [Stream_too_small]. *)
+  search_window s lf_re k >>= fun (s, x) -> Lwt.return (s, match_end x)
 
 let search_first_boundary ~boundary s =
   (* Search boundary per regexp; return the position of the
      character immediately following the boundary (on the same
-     line), or raise Not_found. *)
+     line). Without a boundary, it fails with [Stream_too_small]. *)
   let re = S.regexp ("\n--" ^ Pcre.quote boundary) in
   search_window s re 0 >>= fun (s, x) -> Lwt.return (s, match_end x)
 
@@ -136,7 +132,7 @@ let check_beginning_is_boundary ~boundary s =
   | Ocsigen_base.Ocsigen_stream.Cont (ss, _f) as str2 ->
       let long = String.length ss in
       let isdelim = long >= ldel && String.sub ss 0 ldel = del in
-      let islast = isdelim && String.sub ss ldel 2 = "--" in
+      let islast = isdelim && long >= ldel + 2 && String.sub ss ldel 2 = "--" in
       Lwt.return (str2, isdelim, islast)
 
 let rec parse_parts ~boundary ~decode_part s uses_crlf =
@@ -186,22 +182,14 @@ let read_multipart_body ~boundary ~decode_part s =
     parse_parts ~boundary ~decode_part s uses_crlf
   else
     (* Look for the first boundary *)
-    Lwt.catch
-      (fun () ->
-         search_first_boundary ~boundary s >>= fun (s, k_eob) ->
-         search_end_of_line s k_eob >>= fun (s, k_eol) ->
-         let uses_crlf =
-           (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r'
-         in
-         (* Printf.printf "k_eol=%d\n" k_eol; *)
-         Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
-         (* Begin with first part: *)
-         parse_parts ~boundary ~decode_part s uses_crlf)
-      (function
-        | Not_found ->
-            (* No boundary at all, empty body *)
-            Lwt.return []
-        | e -> Lwt.fail e)
+    search_first_boundary ~boundary s >>= fun (s, k_eob) ->
+    search_end_of_line s k_eob >>= fun (s, k_eol) ->
+    let uses_crlf =
+      (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r'
+    in
+    Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
+    (* Begin with first part: *)
+    parse_parts ~boundary ~decode_part s uses_crlf
 
 let empty_stream =
   Ocsigen_base.Ocsigen_stream.get
@@ -245,6 +233,12 @@ let decode_part ~max_size ~create ~add ~stop stream =
             Lwt.return ())
        >>= fun () -> Lwt.fail error)
 
+(* [reject_body reason] logs why a multipart body is rejected, and fails with
+   [Ocsigen_Bad_Request], which the client gets as a 400. *)
+let reject_body reason =
+  Logs.info ~src:section (fun fmt -> fmt "Multipart body rejected: %s" reason);
+  Lwt.fail Ocsigen_base.Lib.Ocsigen_Bad_Request
+
 let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
   let decode_part = decode_part ~max_size ~create ~add ~stop in
   Lwt.catch
@@ -254,10 +248,19 @@ let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
        read_multipart_body ~boundary ~decode_part s >>= fun _ -> Lwt.return ())
     (function
       | Ocsigen_base.Ocsigen_stream.Stream_too_small ->
-          Lwt.fail Ocsigen_base.Lib.Ocsigen_Bad_Request
+          reject_body "the body or one of its parts ends too early"
+      | Multipart_error reason -> reject_body reason
       | e -> Lwt.fail e)
 
-let get_boundary ctparams = List.assoc "boundary" ctparams
+(* [get_boundary ctparams] is the boundary in the parameters [ctparams] of a
+   multipart Content-Type. It has 1 to 70 characters (RFC 2046). *)
+let get_boundary ctparams =
+  match List.assoc_opt "boundary" ctparams with
+  | None -> reject_body "its Content-Type has no boundary"
+  | Some "" -> reject_body "its boundary is empty"
+  | Some boundary when String.length boundary > 70 ->
+      reject_body "its boundary is longer than 70 characters"
+  | Some boundary -> Lwt.return boundary
 
 let counter =
   let c = ref (Random.int 1000000) in
@@ -326,8 +329,8 @@ let post_params_multipart_form_data
   =
   (* Same question here, should this stream be consumed after an
      error? *)
+  get_boundary ctparams >>= fun boundary ->
   let body = Ocsigen_base.Ocsigen_stream.get body_gen
-  and boundary = get_boundary ctparams
   and params = ref []
   and files = ref [] in
   let rec add p s =
@@ -349,9 +352,7 @@ let post_params_multipart_form_data
       with _ -> None
     in
     let malformed reason =
-      Logs.info ~src:section (fun fmt ->
-        fmt "Multipart body rejected: a part has no %s" reason);
-      raise Ocsigen_base.Lib.Ocsigen_Bad_Request
+      raise (Multipart_error ("a part has no " ^ reason))
     in
     let cd =
       match List.assoc_opt "content-disposition" hs with
