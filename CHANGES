@@ -114,6 +114,13 @@ New features:
    sets the level of a log source by its name.
 
 Bug fixes:
+ * Ocsigen_base.Loader.loadfiles, used for <extension findlib-package="...">
+   and by Eliom for <eliommodule findlib-package="...">: the hooks that set
+   the configuration of the element now surround all the files of the
+   package, not only the last one, so that the libraries of an application
+   split into several packages see it. A file loaded with force is now
+   remembered: asking for it again as a dependency of another package no
+   longer fails with "module already loaded".
  * Ocsigen.Server.start with ~logdir and ~syslog_facility:None no longer
    fails with "Log directory requested, but not set": choosing no syslog
    kept no log directory either.

@@ -1,0 +1,34 @@
+; Libraries loaded dynamically by test.bc: dep and dep2 stand for the
+; dependencies of a findlib package, app for the package itself. They read
+; the "configuration" that the loading hooks set in ctx, which is linked into
+; the program.
+
+(library
+ (name ctx)
+ (modules ctx)
+ (modes byte))
+
+(library
+ (name dep)
+ (modules dep)
+ (modes byte)
+ (libraries ctx))
+
+(library
+ (name dep2)
+ (modules dep2)
+ (modes byte)
+ (libraries ctx))
+
+(library
+ (name app)
+ (modules app)
+ (modes byte)
+ (libraries ctx dep))
+
+(executable
+ (name test)
+ (modules test)
+ (modes byte)
+ (link_flags (-linkall))
+ (libraries ocsigenserver.baselib ctx))
