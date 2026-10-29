@@ -29,12 +29,12 @@ If set to `true`, the module initialization functions passed to `set_module_init
 ```ocaml
 val loadfile : (unit -> unit) -> (unit -> unit) -> bool -> string -> unit
 ```
-`loadfile pre post force file` (dynamically) loads `file`. If `force` is `false`, remember `file` so that it isn't loaded twice. If the loading effectively occurs, `pre` (resp. `post`) is called before (resp. after) the loading. `post` will be called even if the loading fails.
+`loadfile pre post force file` (dynamically) loads `file`, and remembers it so that a later call without `force` does not load it twice. With `force`, `file` is loaded even if it was already. If the loading effectively occurs, `pre` (resp. `post`) is called before (resp. after) the loading. `post` will be called even if the loading fails.
 
 ```ocaml
 val loadfiles : (unit -> unit) -> (unit -> unit) -> bool -> string list -> unit
 ```
-`loadfiles pre post force file` loads all the `files`, using `loadfile (fun () -> ()) (fun () -> ()) false` for all the files but the last one, and `loadfile pre post force` for the last one (if any).
+`loadfiles pre post force files` loads all the `files` in order, the last one with `force` and the others without, as `loadfile` does. `pre` is called before loading the first file and `post` after the last one, even if a loading fails, so that the dependencies of a findlib package see the same configuration as the package itself.
 
 ```ocaml
 val add_module_init_function : string -> (unit -> unit) -> unit
