@@ -232,7 +232,7 @@ let respond_file
                let mime_type =
                  match content_type with
                  | Some content_type -> content_type
-                 | None -> Magic_mime.lookup fname
+                 | None -> Magic_mime.lookup (Filename.basename fname)
                in
                let headers =
                  add_content_range

@@ -167,7 +167,8 @@ let find_mime file assoc =
   | None -> (
     match MapString.find_opt (extension file) (Lazy.force !mime_file_table) with
     | Some mime -> mime
-    | None -> Magic_mime.lookup ~default:assoc.assoc_default file)
+    | None ->
+        Magic_mime.lookup ~default:assoc.assoc_default (Filename.basename file))
 
 (* As before 3.0.0: the charset is given for text and XML types. Types are
    case-insensitive, and a rule can give parameters after them. *)
