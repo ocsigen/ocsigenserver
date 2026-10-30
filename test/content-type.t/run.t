@@ -29,6 +29,7 @@ With a configuration file:
   > <ocsigen><server>
   >   <port>127.0.0.1:$PORT1</port>
   >   <logdir>log</logdir>
+  >   <commandpipe>conf.cmd</commandpipe>
   >   <mimefile>my.types</mimefile>
   >   <extension findlib-package="ocsigenserver.ext.staticmod"/>
   >   <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
@@ -66,6 +67,44 @@ An empty charset, in a rule or on a <site> (or <host>), sends no charset:
   $ ctypes "" http://127.0.0.1:$PORT1 i.csv legacy/b.html
   i.csv: content-type: text/csv
   legacy/b.html: content-type: text/html
+
+A reload reads the mime.types file again:
+
+  $ reload () {
+  >   send_command $CONF_PID conf.cmd reload && wait_log "$@"
+  > }
+  $ printf 'text/x-zzz2 zzz\n' > my.types
+  $ reload log/warnings.log 'Config file reloaded' 1
+  $ ctypes "" http://127.0.0.1:$PORT1 c.zzz
+  c.zzz: content-type: text/x-zzz2; charset=utf-8
+
+A failed reload puts the mime.types file back, and reads it again at once.
+Here the configuration names another file, then has an error. Changing
+my.types after the failed reload changes nothing: the types it had at the
+reload stay in use:
+
+  $ cp conf.xml conf.ok
+  $ printf 'text/x-other zzz\n' > other.types
+  $ sed 's|my\.types</mimefile>|other.types</mimefile><nosuchtag/>|' conf.ok \
+  >   > conf.xml
+  $ reload log/errors.log 'Config file reload failed' 1
+  $ grep -o 'reload failed: .*' log/errors.log
+  reload failed: Error in configuration file: tag <nosuchtag> unexpected inside <server>
+  $ printf 'text/x-zzz3 zzz\n' > my.types
+  $ ctypes "" http://127.0.0.1:$PORT1 c.zzz
+  c.zzz: content-type: text/x-zzz2; charset=utf-8
+  $ mv conf.ok conf.xml
+
+A mime.types file that cannot be read is reported when the configuration is
+read, before any request, and the types then come from magic-mime:
+
+  $ sed 's/my\.types/missing.types/' conf.xml > conf.new && mv conf.new conf.xml
+  $ reload log/warnings.log 'Config file reloaded' 2
+  $ grep -o 'ocsigen:mimetype: .*' log/errors.log
+  ocsigen:mimetype: [ERROR] Unable to read the mime.types file: missing.types: No such file or directory
+  $ ctypes "" http://127.0.0.1:$PORT1 c.zzz g.js
+  c.zzz: content-type: text/x-default; charset=utf-8
+  g.js: content-type: application/javascript
   $ kill $CONF_PID
 
 Without <mimefile>, no mime.types file is read: serve mode logs no error
@@ -84,11 +123,14 @@ utf-8:
   $ kill $SERVE_PID
 
 In a program, ~mimefile of Ocsigen.Server.start applies to the hosts given
-to it, which are evaluated before it:
+to it. The file is read at start-up, before the first request: removing it
+then changes nothing.
 
+  $ printf 'text/x-zzz zzz\n' > my.types
   $ ../content-type/test.exe >lib.log 2>&1 &
   $ LIB_PID=$!
   $ wait_server $LIB_PID lib.log local.sock local.cmd
+  $ rm my.types
   $ ctypes "--unix-socket local.sock" http://x c.zzz d.png
   c.zzz: content-type: text/x-zzz; charset=utf-8
   d.png: content-type: image/png
@@ -97,6 +139,7 @@ With ~default_charset:None, the server has no default charset:
 
   $ stop_server $LIB_PID
   $ rm local.sock
+  $ printf 'text/x-zzz zzz\n' > my.types
   $ ../content-type/test.exe --no-charset >lib.log 2>&1 &
   $ LIB_PID=$!
   $ wait_server $LIB_PID lib.log local.sock local.cmd
