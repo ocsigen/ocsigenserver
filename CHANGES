@@ -67,6 +67,12 @@ Incompatible changes:
    trusted ones, whose addresses are skipped from the right. The
    check-equal-ip attribute (?check_equal_ip) is removed: the server refuses
    it.
+ * <maxrequestbodysize> is enforced again: reading more than this many bytes
+   of a request body, file uploads included, gives a 413. It had no effect
+   since the move to Cohttp. The default is 8000000 bytes (8 MB): if you
+   raised <maxuploadfilesize> above it, raise <maxrequestbodysize> too. The
+   limit also applies to the bodies that Revproxy forwards: raise it on a
+   reverse proxy in front of a service that accepts larger bodies.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that

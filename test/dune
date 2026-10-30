@@ -55,6 +55,10 @@
  (deps logdir-syslog/test.exe))
 
 (cram
+ (applies_to maxrequestbodysize)
+ (deps maxrequestbodysize/test.exe))
+
+(cram
  (applies_to multipart)
  (deps multipart/test.exe))
 
