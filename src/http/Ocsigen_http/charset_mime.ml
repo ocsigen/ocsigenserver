@@ -101,6 +101,8 @@ let find_charset = find_in_assoc
 
 (* Specific handling of content-type *)
 
+let whitespace = Netstring_pcre.regexp "\\s+"
+
 let read_mime_types filename =
   let rec read_and_split mimemap in_ch =
     try
@@ -111,9 +113,7 @@ let read_mime_types filename =
           String.sub line 0 upto
         with Not_found -> line
       in
-      let strlist =
-        Netstring_pcre.split (Netstring_pcre.regexp "\\s+") line_upto
-      in
+      let strlist = Netstring_pcre.split whitespace line_upto in
       match strlist with
       | [] | [_] -> (* No extension on this line *) read_and_split mimemap in_ch
       | mime :: extensions ->
