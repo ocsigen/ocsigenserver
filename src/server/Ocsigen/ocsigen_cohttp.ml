@@ -197,13 +197,35 @@ let checked_body request body =
              | Some _ | None -> Lwt.return_none)))
   | body, _, _ -> body
 
-let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
-  (* cohttp calls this once the headers of [request] have arrived. *)
+(* The response for an error [status]. Never leak the OCaml exception
+   (constructor names, file paths, ...) to the client: the details stay in the
+   logs. The client only gets the generic status reason phrase, or the explicit
+   message [msg] an extension chose to expose through [Ext_http_error]. *)
+let error_response ?headers ?msg (status : Cohttp.Code.status) =
+  let status = (status :> Cohttp.Code.status_code) in
+  let body =
+    match msg with
+    | Some msg -> msg
+    | None -> Cohttp.Code.(reason_phrase_of_code (code_of_status status))
+  in
+  Response.respond_error ?headers ~status ~body ()
+
+let handler
+      ~ssl
+      ~address
+      ~port
+      ~connector
+      ~guard
+      (flow, conn)
+      cohttp_request
+      body
+  =
+  (* cohttp calls this once the headers of [cohttp_request] have arrived. *)
   Connection_guard.set_phase guard Connection_guard.Request;
   let keep_alive_requested =
     allows_keep_alive
-      (Http.Request.version request)
-      (Http.Request.headers request)
+      (Http.Request.version cohttp_request)
+      (Http.Request.headers cohttp_request)
   in
   let filenames = ref [] in
   let edn = Conduit_lwt_unix.endp_of_flow flow in
@@ -280,31 +302,36 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
           log Logs.Error "Error";
           None, `Internal_server_error, None
     in
-    let body =
-      (* Never leak the OCaml exception (constructor names, file paths, ...)
-         to the client: the exception detail stays in the logs (above). The
-         client only gets the generic status reason phrase, or the explicit
-         message an extension chose to expose through [Ext_http_error]. *)
-      match explicit_msg with
-      | Some msg -> msg
-      | None ->
-          Cohttp.Code.reason_phrase_of_code
-            (Cohttp.Code.code_of_status (ret_code :> Cohttp.Code.status_code))
-    in
-    Response.respond_error ?headers
-      ~status:(ret_code :> Cohttp.Code.status_code)
-      ~body ()
+    error_response ?headers ?msg:explicit_msg ret_code
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =
     Request.make ~address ~port ~ssl ~filenames ~client_conn
-      ~body:(checked_body request body)
-      ~connection_closed request
+      ~body:(checked_body cohttp_request body)
+      ~connection_closed cohttp_request
+  in
+  let version = Cohttp.Request.version cohttp_request
+  and headers = Cohttp.Request.headers cohttp_request in
+  let rejection =
+    match
+      Ocsigen_http.Http1.check_host version headers
+        ~target:(Cohttp.Request.resource cohttp_request)
+    with
+    | Ok () -> None
+    | Error reason -> Some (`Bad_request, reason)
   in
   Lwt.finalize
     (fun () ->
        Lwt.catch
-         (fun () -> connector request)
+         (fun () ->
+            match rejection with
+            | None -> connector request
+            | Some (status, reason) ->
+                Logs.info ~src:section (fun fmt ->
+                  fmt "Request from %s rejected: %s"
+                    (Request.client_ip_to_string request)
+                    reason);
+                Lwt.return (error_response status))
          (function
            | Ocsigen_is_dir fun_request ->
                let headers =
@@ -322,9 +349,10 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
           responses are not: the connection is kept alive if both the request
           and the response allow it, and the response says whether it is.
           Once the response is written, the connection waits for the next
-          request, or is closed. *)
+          request, or is closed. It is closed after a rejected request too,
+          which is safer. *)
        let keep_alive =
-         keep_alive_requested
+         keep_alive_requested && rejection = None
          && allows_keep_alive
               (Http.Response.version res)
               (Http.Response.headers res)
