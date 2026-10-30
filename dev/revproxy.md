@@ -1,6 +1,6 @@
 # Revproxy
 
-Revproxy is a reverse proxy for Ocsigen.
+Revproxy is a reverse proxy for Ocsigen. It cannot be used in [user configuration files](./userconf.md).
 
 This module allows to transmit some requests to another Web server using the HTTP or HTTPS protocol. For example if you want to use Ocsigen together with another Web server (Apache, Tomcat, etc. or even another Ocsigen).
 

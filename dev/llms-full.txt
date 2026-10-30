@@ -1322,7 +1322,7 @@ Combining conditions (all their children must be conditions):
 - `<stop/>`: stops parsing configuration file (answers now whether the page has been found or not). *from Ocsigen 1\.2*
 - `<allow-forward-for/>`: if there is an X-Forwarded-For header in the request, its first address is taken as the address of the client, which the `<ip>` conditions that follow then test. With `check-equal-ip="true"`, the header is used only if its last address is the one of the proxy that sent the request. Nginx and Revproxy do not add their own address, so do not use this option behind them.
 - `<allow-forward-proto/>`: if the X-Forwarded-Proto header is set to https (http), the connection is considered as secured (unsecure) even if the connection is not in ssl (is in ssl).
-**Security.** `<allow-forward-for/>` and `<allow-forward-proto/>` trust headers that any client can send. Use them only for the requests that come from your reverse proxy, for instance inside an `<if>` that checks the address of the proxy with `<ip>` (see the [Revproxy](./revproxy.md) page). Otherwise, a client can choose the address that the server, its logs and the applications take for its own, or make the server believe that a plain HTTP connection is secure.
+**Security.** `<allow-forward-for/>` and `<allow-forward-proto/>` trust headers that any client can send. Use them only for the requests that come from your reverse proxy, for instance inside an `<if>` that checks the address of the proxy with `<ip>` (see the [Revproxy](./revproxy.md) page). Otherwise, a client can choose the address that the server, its logs and the applications take for its own, or make the server believe that a plain HTTP connection is secure. For the same reason, these actions are refused in [user configuration files](./userconf.md).
 
 Behind the proxy too, the first address of X-Forwarded-For is the one that the client chose, if it sent the header and the proxy adds an address to it instead of replacing it. Then, a client can pass the `<ip>` conditions that follow `<allow-forward-for/>`. Revproxy replaces the header. With nginx, use `proxy_set_header X-Forwarded-For $remote_addr;`, not `$proxy_add_x_forwarded_for`, which keeps the addresses that the client sent.
 
@@ -1592,7 +1592,7 @@ Other example: redirect `https://foobar.org/aaa` (and `https://foobar.net/aaa` e
 
 # Revproxy
 
-Revproxy is a reverse proxy for Ocsigen.
+Revproxy is a reverse proxy for Ocsigen. It cannot be used in [user configuration files](./userconf.md).
 
 This module allows to transmit some requests to another Web server using the HTTP or HTTPS protocol. For example if you want to use Ocsigen together with another Web server (Apache, Tomcat, etc. or even another Ocsigen).
 
@@ -1796,7 +1796,7 @@ The configuration file specified in `conf` will be parsed for each request match
 
 The syntax of user configuration files is usually the same as the one of the part between `<host>` and `</host>` in the main configuration file. However, the extensions can choose to disallow some options that are unsafe in user mode, or forbid user mode entirely. See their individual documentation for details.
 
-**Security.** Today, only [Staticmod](./staticmod.md) (paths below `localpath`, no `root`) and [Extendconfiguration](./extendconfiguration.md) (no `followsymlinks="always"`) restrict what a user file can do. The other extensions that the server loads can be used in user files as in the main configuration file, with the rights of the server: for instance [Revproxy](./revproxy.md), [Redirectmod](./redirectmod.md), [Accesscontrol](./accesscontrol.md), or Eliom, whose `<eliom module=...>` loads OCaml code. Use Userconf only if you trust your users, or load only the extensions that are safe for them.
+**Security.** Some directives are refused in user files: `<revproxy>`, which would reach the services that only the server can reach, and `<allow-forward-for/>` and `<allow-forward-proto/>`, which would make the server trust headers that any client can send. [Staticmod](./staticmod.md) only serves files below `localpath`, without `root`, and [Extendconfiguration](./extendconfiguration.md) refuses `followsymlinks="always"`. Eliom sites cannot be defined in user files. The other extensions that the server loads can be used in user files as in the main configuration file, for instance [Redirectmod](./redirectmod.md) or [Outputfilter](./outputfilter.md). When a user file holds a refused directive or a syntax error, each request that it handles gets a 500, and the error log says why.
 
 
 ---
@@ -2991,12 +2991,12 @@ Xml tag not recognized by an extension (usually not a real error)
 ```ocaml
 exception Error_in_config_file of string
 ```
-Error in a \<site\> tag inside the main ocsigen.conf file
+Error in a configuration file: the main one, or a user configuration file of Userconf
 
 ```ocaml
 exception Error_in_user_config_file of string
 ```
-Option incorrect in a userconf file
+Option refused in a user configuration file of Userconf, which a user must not set. A syntax error is an `Error_in_config_file`.
 
 ```ocaml
 type file_info = Multipart.file_info = {
@@ -7910,12 +7910,12 @@ Xml tag not recognized by an extension (usually not a real error)
 ```ocaml
 exception Error_in_config_file of string
 ```
-Error in a \<site\> tag inside the main ocsigen.conf file
+Error in a configuration file: the main one, or a user configuration file of Userconf
 
 ```ocaml
 exception Error_in_user_config_file of string
 ```
-Option incorrect in a userconf file
+Option refused in a user configuration file of Userconf, which a user must not set. A syntax error is an `Error_in_config_file`.
 
 ```ocaml
 type file_info = Ocsigen.Multipart.file_info = {

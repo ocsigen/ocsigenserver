@@ -25,12 +25,12 @@ Xml tag not recognized by an extension (usually not a real error)
 ```ocaml
 exception Error_in_config_file of string
 ```
-Error in a \<site\> tag inside the main ocsigen.conf file
+Error in a configuration file: the main one, or a user configuration file of Userconf
 
 ```ocaml
 exception Error_in_user_config_file of string
 ```
-Option incorrect in a userconf file
+Option refused in a user configuration file of Userconf, which a user must not set. A syntax error is an `Error_in_config_file`.
 
 ```ocaml
 type file_info = Ocsigen.Multipart.file_info = {
