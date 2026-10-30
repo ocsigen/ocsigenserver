@@ -137,3 +137,7 @@
 (cram
  (applies_to url_encoding)
  (deps url_encoding/test.exe))
+
+(cram
+ (applies_to vary)
+ (deps vary/test.exe))

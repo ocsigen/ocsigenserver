@@ -91,19 +91,20 @@ let connection_options h =
 
 let add_vary h field =
   let name = Name.(to_string vary) and field = Name.to_string field in
-  match Cohttp.Header.get h name with
-  | None -> Cohttp.Header.add h name field
-  | Some existing ->
-      let covered =
-        String.split_on_char ',' existing
-        |> List.exists (fun f ->
-          match String.lowercase_ascii (String.trim f) with
-          | "*" -> true
-          | f -> String.equal f field)
-      in
-      if covered
-      then h
-      else Cohttp.Header.replace h name (existing ^ ", " ^ field)
+  let fields =
+    Cohttp.Header.get_multi h name
+    |> List.concat_map (String.split_on_char ',')
+    |> List.filter_map (fun f ->
+      match String.trim f with "" -> None | f -> Some f)
+  in
+  let covered f =
+    match String.lowercase_ascii f with
+    | "*" -> true
+    | f -> String.equal f field
+  in
+  if List.exists covered fields
+  then h
+  else Cohttp.Header.replace h name (String.concat ", " (fields @ [field]))
 
 let parse_star a = if a = "*" then None else Some a
 
