@@ -20,6 +20,7 @@ let tls_max = ref Raw_http.Tls_1_3
 let sni = ref None
 let first_byte = ref 10.
 let idle = ref 2.
+let settle = ref 0.1
 let trickle = ref None
 let status_only = ref false
 let validators = ref false
@@ -68,6 +69,10 @@ let exchange_options =
   ; ( "--idle"
     , Arg.Set_float idle
     , "SECONDS Stop reading after that long without data (default 2)" )
+  ; ( "--settle"
+    , Arg.Set_float settle
+    , "SECONDS Stop reading after that long without data once complete responses that keep the connection open are received, at most --idle (default 0.1)"
+    )
   ; ( "--trickle"
     , Arg.String parse_trickle
     , "N:SECONDS Send N bytes at a time, pausing between pieces" ) ]
@@ -88,7 +93,7 @@ let send () =
   let request = read_request () in
   match
     Raw_http.exchange ?trickle:!trickle ~first_byte:!first_byte ~idle:!idle
-      (target ()) request
+      ~settle:!settle (target ()) request
   with
   | outcome ->
       print_string
@@ -113,7 +118,7 @@ let repeat () =
     let key =
       match
         Raw_http.exchange ?trickle:!trickle ~first_byte:!first_byte ~idle:!idle
-          target request
+          ~settle:!settle target request
       with
       | {received; ending} ->
           let codes = Raw_http.status_codes received in
@@ -156,7 +161,8 @@ let hold () =
   let held, refused = open_all !count [] 0 in
   Printf.printf "held %d connections, %d refused\n" (List.length held) refused;
   (match
-     Raw_http.exchange ~first_byte:!first_byte ~idle:!idle target probe_request
+     Raw_http.exchange ~first_byte:!first_byte ~idle:!idle ~settle:!settle
+       target probe_request
    with
   | outcome ->
       print_string "probe: ";
