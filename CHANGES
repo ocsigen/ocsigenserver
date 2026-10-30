@@ -430,6 +430,12 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Daemon mode (-d, or ~daemon for Ocsigen.Server.start): the command waits
+   until the detached process is initialised. If the server does not start,
+   for instance on an error in a <host>, the command now fails with the error
+   and its exit code, and writes no pid file. It used to say that the process
+   was detached and succeed, leaving the error in the log files. The
+   listening sockets are still opened after the command returns.
 
 ==== 8.0.0 (2026-09-24) ===
 
