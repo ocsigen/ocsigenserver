@@ -12,13 +12,13 @@ let () =
   then skip "needs /proc/self/fd and /dev/log"
   else (
     Ocsigen.Config.set_syslog_facility (Some Syslog_message.Local0);
-    match Lwt_main.run (Ocsigen.Messages.open_files ()) with
+    match Ocsigen.Messages.open_files () with
     | exception Failure msg ->
         skip ("no syslog daemon at /dev/log: " ^ String.trim msg)
     | () ->
         let before = count_fds () in
         for _ = 1 to 10 do
-          Lwt_main.run (Ocsigen.Messages.open_files ())
+          Ocsigen.Messages.open_files ()
         done;
         let after = count_fds () in
         if after > before
