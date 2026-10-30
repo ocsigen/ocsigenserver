@@ -134,6 +134,9 @@ New features:
    file, as it does for <servertimeout>: they are accepted but have no effect.
 
 Bug fixes:
+ * In syslog mode, reopening the logs (the reopen_logs order of a log
+   rotation) no longer opens a new socket to syslog each time, which leaked
+   one file descriptor per rotation.
  * Ocsigen_base.Loader.loadfiles, used for <extension findlib-package="...">
    and by Eliom for <eliommodule findlib-package="...">: the hooks that set
    the configuration of the element now surround all the files of the

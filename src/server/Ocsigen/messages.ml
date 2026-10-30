@@ -321,12 +321,23 @@ let open_log_files_in_dir dir =
        | _ -> if silent then [] else [stdout_sink]));
   Lwt.return ()
 
+(* The syslog reporter in use, with its facility. Logs_syslog_unix gives no
+   way to close a reporter, so it is made once and kept: a new one at each
+   reopen_logs would leak its socket. Keeping it is safe, since it reconnects
+   by itself when a send fails, for instance after syslog restarts. Only a
+   change of facility makes a new one, and leaves the old socket open. *)
+let current_syslog_reporter = ref None
+
 let log_to_syslog facility =
-  (* Syslog reporter cannot be closed *)
   let syslog =
-    match Logs_syslog_unix.unix_reporter ~facility () with
-    | Ok r -> r
-    | Error msg -> failwith msg
+    match !current_syslog_reporter with
+    | Some (f, r) when f = facility -> r
+    | _ -> (
+      match Logs_syslog_unix.unix_reporter ~facility () with
+      | Ok r ->
+          current_syslog_reporter := Some (facility, r);
+          r
+      | Error msg -> failwith msg)
   in
   Logs.set_reporter (syslog_reporter syslog);
   (* No access.log file in syslog mode: access lines reach syslog (and
