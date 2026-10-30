@@ -43,6 +43,10 @@
  (deps connection-guard/test.exe))
 
 (cram
+ (applies_to content-type)
+ (deps content-type/test.exe))
+
+(cram
  (applies_to error-logs)
  (deps error-logs/test.exe))
 

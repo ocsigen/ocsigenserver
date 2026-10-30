@@ -89,7 +89,17 @@ val find_mime : file -> mime_assoc -> string
 (** [find_mime file assoc] is the MIME type of [file]: the one of the first
     rule of [assoc] that matches [file] (its extension, its name or a regular
     expression), else the one of the mime.types file of {!set_mime_file}, else
-    the default type of [assoc]. *)
+    the one of the built-in table of the [magic-mime] library, else the default
+    type of [assoc]. *)
+
+val content_type :
+   mime_assoc:mime_assoc
+  -> charset_assoc:charset_assoc
+  -> file
+  -> string
+(** [content_type ~mime_assoc ~charset_assoc file] is the value of the
+    [Content-Type] header for [file]: its MIME type, followed by its charset
+    for text and XML types, when [charset_assoc] gives one. *)
 
 val default_mime : mime_assoc -> mime_type
 val set_default_mime : mime_assoc -> mime_type -> mime_assoc

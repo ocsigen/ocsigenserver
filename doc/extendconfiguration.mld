@@ -89,9 +89,9 @@ are [txt], or that are named [bla.text], or whose name contains [text] are sent 
 
 Multiple extension tags can be specified. Both the default attribute and extension tags are optional. Extension tags are cumulative between the various sites.
 
-{b Limitation.} Only the [default] attribute is currently used, by Eliom, as
-the charset of its pages. The charsets of files are ignored: Staticmod sends
-files without a charset.
+Staticmod gives the charset of a file in its [Content-Type] for text and XML
+types ([text/*], [*/xml], [*+xml]). Eliom uses the [default] attribute as the
+charset of its pages.
 
 {2 Content-type}
 
@@ -107,9 +107,9 @@ v}
 
 The options are similar to the ones for the [charset] tag.
 
-{b Limitation.} This option is currently ignored: Staticmod derives the
-[Content-Type] of the files it sends from their names, with the built-in table
-of the [magic-mime] library.
+These rules come first; then come the [<mimefile>] of the
+{{!page-config}configuration}, the built-in table of the [magic-mime]
+library, and last the [default] attribute.
 
 
 {2:upload File uploading}

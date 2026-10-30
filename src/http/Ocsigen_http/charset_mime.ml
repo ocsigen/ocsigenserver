@@ -156,10 +156,25 @@ let set_mime_file file =
 
 let mime_file () = !mime_file
 
+(* The built-in table of magic-mime comes after the rules and the mime.types
+   file, and before the default type. *)
 let find_mime file assoc =
   match find_in_assoc_opt file assoc with
   | Some mime -> mime
   | None -> (
     match MapString.find_opt (extension file) (Lazy.force !mime_file_table) with
     | Some mime -> mime
-    | None -> assoc.assoc_default)
+    | None -> Magic_mime.lookup ~default:assoc.assoc_default file)
+
+(* As before 3.0.0: the charset is given for text and XML types. *)
+let takes_charset mime =
+  String.starts_with ~prefix:"text/" mime
+  || String.ends_with ~suffix:"/xml" mime
+  || String.ends_with ~suffix:"+xml" mime
+
+let content_type ~mime_assoc ~charset_assoc file =
+  let mime = find_mime file mime_assoc in
+  match find_charset file charset_assoc with
+  | "" -> mime
+  | charset when takes_charset mime -> mime ^ "; charset=" ^ charset
+  | _ -> mime
