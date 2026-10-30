@@ -723,7 +723,7 @@ Most distributions have a special command to do that automatically (for the defa
 ```
 The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
 
-If the file has an error, the server logs it, followed by "Config file reload failed", and keeps its sites and its server-wide settings (the tags of `<server>`, such as `<maxretries>`) as they were. What the extensions did before the error is not undone: an extension that the file loads for the first time stays loaded, with its options, and Eliom may already have reloaded the modules of the sites that come before the error. Otherwise it logs "Config file reloaded".
+If the file has an error, the server logs "Config file reload failed: " followed by the error, and keeps its sites and its server-wide settings (the tags of `<server>`, such as `<maxretries>`) as they were. What the extensions did before the error is not undone: an extension that the file loads for the first time stays loaded, with its options, and Eliom may already have reloaded the modules of the sites that come before the error. Otherwise it logs "Config file reloaded".
 
 ### Stopping the server
 
@@ -922,7 +922,7 @@ This program corresponds to the following configuration file:
 If you want to use the configuration file with a statically linked executable, call
 
 ```
-Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
+Ocsigen.Server.exec_config_file ()
 ```
 to launch the server's main loop.
 
@@ -3464,7 +3464,7 @@ Config file parsing. See also module [`Ocsigen.Extensions.Configuration`](./Ocsi
 ```ocaml
 val parse_config : ?file:string -> unit -> Xml.xml list list
 ```
-Returns the config file. Use this if you want to read a config file from your own executable. See [`Server.exec`](./Ocsigen-Server.md#val-exec).
+Returns the config file. Use this if you want to read a config file from your own executable. See [`Server.exec`](./Ocsigen-Server.md#val-exec). Raises `Config.Config_file_error` on an error, such as a file that cannot be opened or is not well-formed XML.
 
 
 ---
@@ -3849,6 +3849,11 @@ Reload the configuration of the server. The optional parameter `?file` may be us
 val exec : Xml.xml list list -> unit
 ```
 Start the server with a configuration file. Never returns.
+
+```ocaml
+val exec_config_file : ?file:string -> unit -> unit
+```
+Read the configuration file `file` (by default the one set with [`Ocsigen.Config.set_configfile`](./Ocsigen-Config.md#val-set_configfile)) and start the server with it, as [`exec`](./#val-exec). An error in the file is logged, and the program exits. Never returns.
 
 ```ocaml
 val serve : 
@@ -8522,7 +8527,7 @@ val parse_content_type : string -> content_type option
 ```ocaml
 val parse_config : ?file:string -> unit -> Xml.xml list list
 ```
-Returns the config file. Use this if you want to read a config file from your own executable. See `Server.exec`.
+Returns the config file. Use this if you want to read a config file from your own executable. See `Server.exec`. Raises `Config.Config_file_error` on an error, such as a file that cannot be opened or is not well-formed XML.
 
 
 ---
@@ -8875,6 +8880,11 @@ Reload the configuration of the server. The optional parameter `?file` may be us
 val exec : Xml.xml list list -> unit
 ```
 Start the server with a configuration file. Never returns.
+
+```ocaml
+val exec_config_file : ?file:string -> unit -> unit
+```
+Read the configuration file `file` (by default the one set with [`Ocsigen.Config.set_configfile`](./../ocsigenserver/Ocsigen-Config.md#val-set_configfile)) and start the server with it, as [`exec`](./#val-exec). An error in the file is logged, and the program exits. Never returns.
 
 ```ocaml
 val serve : 

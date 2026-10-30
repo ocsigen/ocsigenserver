@@ -14,6 +14,11 @@ val exec : Xml.xml list list -> unit
 Start the server with a configuration file. Never returns.
 
 ```ocaml
+val exec_config_file : ?file:string -> unit -> unit
+```
+Read the configuration file `file` (by default the one set with [`Ocsigen.Config.set_configfile`](./../ocsigenserver/Ocsigen-Config.md#val-set_configfile)) and start the server with it, as [`exec`](./#val-exec). An error in the file is logged, and the program exits. Never returns.
+
+```ocaml
 val serve : 
   ?address:Ocsigen.Config.Socket_type.t ->
   ?port:int ->

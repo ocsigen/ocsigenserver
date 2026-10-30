@@ -172,7 +172,7 @@ This program corresponds to the following configuration file:
 If you want to use the configuration file with a statically linked executable, call
 
 ```
-Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
+Ocsigen.Server.exec_config_file ()
 ```
 to launch the server's main loop.
 
