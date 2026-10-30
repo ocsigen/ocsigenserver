@@ -84,6 +84,11 @@ Incompatible changes:
    limit also applies to the bodies that Revproxy forwards: raise it on a
    reverse proxy in front of a service that accepts larger bodies, with the
    new --max-request-body-size option for ocsigenserver --reverse-proxy.
+ * The log source of Authbasic is named "ocsigen:ext:authbasic". It had the
+   name of the one of Accesscontrol, "ocsigen:ext:access-control", so
+   <loglevel source="ocsigen:ext:access-control"> also set the level of the
+   messages of Authbasic. They now need
+   <loglevel source="ocsigen:ext:authbasic">.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -430,6 +435,13 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Authbasic: an authentication method registered with
+   register_basic_authentication_method is now tried. <plain> rejected the
+   other elements with an exception that stopped the search, and the one that
+   lets a method pass on, Authbasic.Bad_config_tag_for_auth, was not exported.
+   An unknown method, or a <plain> whose attributes are not login and
+   password, now gives a clear configuration error. <plain> accepts its
+   attributes in any order.
 
 ==== 8.0.0 (2026-09-24) ===
 

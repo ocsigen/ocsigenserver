@@ -60,6 +60,11 @@ val section : Logs.src
 
 type auth = string -> string -> bool Lwt.t
 
+exception Bad_config_tag_for_auth of string
+(** [Bad_config_tag_for_auth tag] is raised by an authentication parser
+    (see {!register_basic_authentication_method}) for an element [tag] that
+    it does not handle, so that the other parsers are tried. *)
+
 val register_basic_authentication_method : (Xml.xml -> auth) -> unit
 (** This function registers an authentication plugin: it adds a new
     parser to the list of available authentication schemes.
@@ -72,8 +77,15 @@ val register_basic_authentication_method : (Xml.xml -> auth) -> unit
     file) and returns an authentication function [f]. [f] will be
     called for each request with the supplied user and password and
     should return (cooperatively) a boolean telling whether access
-    is granted or not. Exceptions are handled the same way as for
-    extension parsers.
+    is granted or not. For an element that is not its own, a parser
+    raises {!Bad_config_tag_for_auth}, so that the other parsers are
+    tried. For an error in its own element, it calls
+    {!Ocsigen.Extensions.badconfig}, which reports the error in the
+    configuration file. It must not raise
+    {!Ocsigen.Extensions.Bad_config_tag_for_extension}: the whole
+    <authbasic> element would then be refused, with the error
+    "Unexpected tag <authbasic>". Other exceptions are handled the
+    same way as for extension parsers.
 
     The <authbasic> element must have a {i realm} attribute,
     giving some identifier to the resource which is protected
@@ -91,4 +103,7 @@ val run : realm:string -> auth:auth -> unit -> Ocsigen.Server.instruction
 val get_basic_authentication_method : Xml.xml -> auth
 (** This function combines all the parsers registered with
     [register_basic_authentication_method]. It might be useful for
-    other extensions. Not for the casual user. *)
+    other extensions. Not for the casual user.
+
+    @raise Ocsigen.Extensions.Error_in_config_file
+      if no parser handles the element (unknown authentication method). *)
