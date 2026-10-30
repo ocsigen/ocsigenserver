@@ -1,14 +1,18 @@
 The Content-Type of static files comes from the <contenttype> rules, then
-the <mimefile>, then the built-in table of magic-mime. Text and XML types
-get the charset of the <charset> rules.
+the <mimefile>, then the built-in table of magic-mime, then the default of
+<contenttype>. Text and XML types get the charset of the <charset> rules.
 
   $ . ../server-test-helpers.sh
   $ free_ports 2
   $ trap 'kill $CONF_PID $SERVE_PID 2>/dev/null; stop_server $LIB_PID' EXIT
   $ mkdir -p log www
-  $ for f in a.txt b.html c.zzz bla.qqq d.png e.unknownext f.svg g.js; do
+  $ for f in a.txt b.html c.zzz bla.qqq d.png e.unknownext f.svg g.js h.yyy; do
   >   echo x > www/$f; done
-  $ printf 'text/x-zzz zzz\n' > my.types
+
+The mime.types file gives a type to an extension that magic-mime knows (js),
+and to one that a rule gives too (yyy):
+
+  $ printf 'text/x-zzz zzz\ntext/x-custom-js js\ntext/x-yyy yyy\n' > my.types
   $ ctypes () {
   >   ctypes_opts=$1 ctypes_base=$2; shift 2
   >   for f in "$@"; do
@@ -29,7 +33,10 @@ With a configuration file:
   >   <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
   >   <host hostfilter="*">
   >     <charset default="utf-8"><extension ext="txt" value="iso-8859-15"/></charset>
-  >     <contenttype><file file="bla.qqq" value="text/x-foo"/></contenttype>
+  >     <contenttype default="text/x-default">
+  >       <file file="bla.qqq" value="text/x-foo"/>
+  >       <extension ext="yyy" value="text/x-rule"/>
+  >     </contenttype>
   >     <static dir="www"/>
   >   </host>
   > </server></ocsigen>
@@ -38,15 +45,16 @@ With a configuration file:
   $ CONF_PID=$!
   $ wait_server $CONF_PID conf.log http://127.0.0.1:$PORT1/
   $ ctypes "" http://127.0.0.1:$PORT1 \
-  >   a.txt b.html c.zzz bla.qqq d.png e.unknownext f.svg g.js
+  >   a.txt b.html c.zzz bla.qqq d.png e.unknownext f.svg g.js h.yyy
   a.txt: content-type: text/plain; charset=iso-8859-15
   b.html: content-type: text/html; charset=utf-8
   c.zzz: content-type: text/x-zzz; charset=utf-8
   bla.qqq: content-type: text/x-foo; charset=utf-8
   d.png: content-type: image/png
-  e.unknownext: content-type: application/octet-stream
+  e.unknownext: content-type: text/x-default; charset=utf-8
   f.svg: content-type: image/svg+xml; charset=utf-8
-  g.js: content-type: application/javascript
+  g.js: content-type: text/x-custom-js; charset=utf-8
+  h.yyy: content-type: text/x-rule; charset=utf-8
   $ kill $CONF_PID
 
 Without <mimefile>, no mime.types file is read: serve mode logs no error
