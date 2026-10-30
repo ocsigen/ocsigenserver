@@ -18,6 +18,7 @@
   baselib
   ocsigen_http
   logs
+  magic-mime
   logs-syslog.unix
   threads.posix
   syslog-message))
