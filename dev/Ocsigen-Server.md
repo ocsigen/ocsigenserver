@@ -33,11 +33,12 @@ val serve :
 val reverse_proxy : 
   ?address:Config.Socket_type.t ->
   ?port:int ->
+  ?maxrequestbodysize:int64 option ->
   target:string ->
   unit ->
   unit
 ```
-`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve). There is no command pipe: the server is stopped with a signal. Never returns.
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve), and `maxrequestbodysize` as for [`start`](./#val-start). There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val start : 
@@ -82,7 +83,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-Options behave exactly like their [configuration file](./config.md) counterparts.
+Options behave exactly like their [configuration file](./config.md) counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative.
 
 ```ocaml
 type instruction =
@@ -133,7 +134,7 @@ val host :
   instruction list ->
   Extensions.host_config
 ```
-You can define one or several virtual hosts corresponding to a given server name or port.
+You can define one or several virtual hosts corresponding to a given server name or port. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
 
 ```ocaml
 val site : 

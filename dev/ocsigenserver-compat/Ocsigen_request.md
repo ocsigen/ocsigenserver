@@ -177,6 +177,8 @@ The user authenticated for this request, if any. See [`set_remote_user`](./#val-
 ```ocaml
 val forward_ip : t -> string list
 ```
+After `<allow-forward-for/>`, the addresses of the trusted proxies of the X-Forwarded-For header, at the right of the client, from left to right. Otherwise, the empty list.
+
 ```ocaml
 val content_type : t -> content_type option
 ```

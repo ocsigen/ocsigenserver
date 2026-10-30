@@ -60,6 +60,8 @@ val set_pidfile : string -> unit
 ```ocaml
 val set_mimefile : string -> unit
 ```
+The mime.types file whose types come after the `<contenttype>` rules (see [`Ocsigen_http.Charset_mime.find_mime`](./../ocsigenserver/Ocsigen_http-Charset_mime.md#val-find_mime)). An empty path means none.
+
 ```ocaml
 val set_verbose : unit -> unit
 ```
@@ -116,6 +118,8 @@ val set_filebuffersize : int -> unit
 ```ocaml
 val set_maxrequestbodysize : int64 option -> unit
 ```
+Raises `Invalid_argument` if the size is negative.
+
 ```ocaml
 val set_maxrequestbodysizeinmemory : int -> unit
 ```
@@ -175,8 +179,10 @@ val get_config_file : unit -> string
 val get_pidfile : unit -> string option
 ```
 ```ocaml
-val get_mimefile : unit -> string
+val get_mimefile : unit -> string option
 ```
+The mime.types file, or `None` if there is none (the default).
+
 ```ocaml
 val get_verbose : unit -> bool
 ```

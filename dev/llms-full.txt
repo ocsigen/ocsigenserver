@@ -43,6 +43,11 @@ To run the server, use the command `ocsigenserver`. It has the following options
          In serve mode, list the contents of directories that have no
          index file.
 
+  --max-request-body-size SIZE
+         With --reverse-proxy, the maximum size of a request body, as
+         <maxrequestbodysize> in a configuration file: 100MB, 1GiB, or
+         infinity for no limit. A larger body gets a 413. Default: 8MB.
+
   -c, --config
          Alternate configuration file.
 
@@ -417,6 +422,8 @@ Starting from Ocsigenserver 1\.3, you can redefine the options `<uploaddir>` and
 
 #### `<maxrequestbodysize>` : maximum size of the body of incoming requests
 
+This is the maximum size of the body of a request, file uploads included: when an extension or an application reads more, the server answers 413 (Request Entity Too Large). A request whose Content-Length is above the limit is refused as soon as its body is read, without keeping any of it. The server still reads and discards the rest of the body before it sends the 413, so the limit bounds the memory and the disk space a request takes, but not the time and the bandwidth it uses. The default is 8000000 bytes (8 MB): raise it together with `<maxuploadfilesize>` if you accept larger uploads. The limit also applies to the bodies that `<revproxy>` forwards to its target, though it does not keep them: raise it on a reverse proxy in front of a service that accepts larger bodies (with `--max-request-body-size` for `ocsigenserver --reverse-proxy`).
+
 Example:
 
 ```
@@ -439,12 +446,12 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 
 #### `<mimefile>` : MIME type file
 
-The file associating file name extensions to their MIME type. Example:
+A file associating file name extensions to their MIME type, in the format of `/etc/mime.types`. There is none by default. Example:
 
 ```
-<mimefile>/etc/ocsigenserver/mime.types</mimefile>
+<mimefile>/etc/mime.types</mimefile>
 ```
-**Limitation.** The file is read, but currently not used: Staticmod derives the `Content-Type` of the files it sends from their names, with the built-in table of the `magic-mime` library.
+Staticmod takes the `Content-Type` of a file from the `<contenttype>` rules of [Extendconfiguration](./extendconfiguration.md), then from this file, then from the built-in table of the `magic-mime` library, and last from the default type, `application/octet-stream`. The file is read when the first file is served after the server starts or reloads its configuration.
 
 #### `<debugmode/>` : Debug mode for applications
 
@@ -1233,7 +1240,7 @@ This sets the default charset for text files to `utf8`, while files whose extens
 
 Multiple extension tags can be specified. Both the default attribute and extension tags are optional. Extension tags are cumulative between the various sites.
 
-**Limitation.** Only the `default` attribute is currently used, by Eliom, as the charset of its pages. The charsets of files are ignored: Staticmod sends files without a charset.
+Staticmod gives the charset of a file in its `Content-Type` for text and XML types (`text/*`, `*/xml`, `*+xml`). Eliom uses the `default` attribute as the charset of its pages.
 
 ### Content-type
 
@@ -1248,7 +1255,7 @@ The content-type for the files sent by the server can be specified using the tag
 ```
 The options are similar to the ones for the `charset` tag.
 
-**Limitation.** This option is currently ignored: Staticmod derives the `Content-Type` of the files it sends from their names, with the built-in table of the `magic-mime` library.
+These rules come first; then come the `<mimefile>` of the [configuration](./config.md), the built-in table of the `magic-mime` library, and last the `default` attribute.
 
 ### File uploading
 
@@ -1320,11 +1327,11 @@ Combining conditions (all their children must be conditions):
 - `<nextsite/>`: stops parsing current site. If the page has been found, answer. If not, try next site. *from Ocsigen 1\.2*
 - `<nexthost/>`: stops parsing current host. If the page has been found, answer. If not, try next host. *from Ocsigen 1\.2*
 - `<stop/>`: stops parsing configuration file (answers now whether the page has been found or not). *from Ocsigen 1\.2*
-- `<allow-forward-for/>`: if there is an X-Forwarded-For header in the request, its first address is taken as the address of the client, which the `<ip>` conditions that follow then test. With `check-equal-ip="true"`, the header is used only if its last address is the one of the proxy that sent the request. Nginx and Revproxy do not add their own address, so do not use this option behind them.
+- `<allow-forward-for/>`: if there is an X-Forwarded-For header in the request, the address of the client is taken from it, and the `<ip>` conditions that follow then test this address. Each proxy adds to this header the address of the host that connected to it, so the client is its last address, the one that the proxy in front of Ocsigen Server added: the addresses at its left come from the client, which can choose them. Behind a chain of proxies, give the addresses or networks of the others, separated by spaces, in the `proxies` attribute, for instance `<allow-forward-for proxies="10.0.0.0/8 192.0.2.1"/>`: their addresses are skipped from the right, and the client is the rightmost other one (the leftmost address if all are proxies). A port after an address, as some proxies send, is ignored. An entry that is not an address, such as `unknown`, is never a proxy: it is taken as the client, and matches no `<ip>` condition. The `check-equal-ip` attribute of older versions is refused.
 - `<allow-forward-proto/>`: if the X-Forwarded-Proto header is set to https (http), the connection is considered as secured (unsecure) even if the connection is not in ssl (is in ssl).
 **Security.** `<allow-forward-for/>` and `<allow-forward-proto/>` trust headers that any client can send. Use them only for the requests that come from your reverse proxy, for instance inside an `<if>` that checks the address of the proxy with `<ip>` (see the [Revproxy](./revproxy.md) page). Otherwise, a client can choose the address that the server, its logs and the applications take for its own, or make the server believe that a plain HTTP connection is secure. For the same reason, these actions are refused in [user configuration files](./userconf.md).
 
-Behind the proxy too, the first address of X-Forwarded-For is the one that the client chose, if it sent the header and the proxy adds an address to it instead of replacing it. Then, a client can pass the `<ip>` conditions that follow `<allow-forward-for/>`. Revproxy replaces the header. With nginx, use `proxy_set_header X-Forwarded-For $remote_addr;`, not `$proxy_add_x_forwarded_for`, which keeps the addresses that the client sent.
+Only list in `proxies` hosts that you trust: a client whose address is in it can choose the address that the server takes, and pass the `<ip>` conditions that follow `<allow-forward-for/>`. The `proxies` attribute only applies to the addresses of the header: it does not check the host that sent the request, which the `<if>` above must still check.
 
 ## Examples
 
@@ -1639,6 +1646,7 @@ Note that if you are using ocsigen behind a reverse proxy that sets the X-Forwar
 
 - The reverse proxy does no caching for now.
 - When it gets no response from the target (refused connection, unknown name, TLS failure, connection closed...), the client gets a `502 Bad Gateway`, and the error log says why.
+- The X-Forwarded-For header sent to the target holds the address of the client alone: the one of the host that connected to the server, or the one that a trusted proxy gave, after `<allow-forward-for/>`. The addresses of the proxies before the server are not sent, so that the target needs to trust only the server.
 - The query string is decoded, then encoded again before it is sent, so its encoding may change: for instance, `+` is sent as `%20` and `;` as `%3B`. `+` and `%20` both mean a space in a form, but a target that reads `+` literally, or splits the query on `;`, sees something else.
 
 
@@ -2140,10 +2148,12 @@ val forbidden : Ocsigen.Server.instruction
 ```
 ```ocaml
 val allow_forward_for : 
-  ?check_equal_ip:bool ->
+  ?proxies:string list ->
   unit ->
   Ocsigen.Server.instruction
 ```
+`allow_forward_for ~proxies ()` takes the address of the client from X-Forwarded-For: the rightmost one that is not in `proxies`, a list of addresses or networks such as `"10.0.0.0/8"` (none by default), or the leftmost one if all are in `proxies`. It raises `Ocsigen.Extensions.Error_in_config_file` if an element of `proxies` is neither an address nor a network.
+
 ```ocaml
 val allow_forward_proto : unit -> Ocsigen.Server.instruction
 ```
@@ -2349,6 +2359,8 @@ val followsymlinks :
 ```ocaml
 val maxuploadfilesize : int64 option -> Ocsigen.Server.instruction
 ```
+Raises `Invalid_argument` if the size is negative.
+
 ```ocaml
 val uploaddir : string option -> Ocsigen.Server.instruction
 ```
@@ -2495,6 +2507,8 @@ val set_pidfile : string -> unit
 ```ocaml
 val set_mimefile : string -> unit
 ```
+The mime.types file whose types come after the `<contenttype>` rules (see [`Ocsigen_http.Charset_mime.find_mime`](./Ocsigen_http-Charset_mime.md#val-find_mime)). An empty path means none.
+
 ```ocaml
 val set_verbose : unit -> unit
 ```
@@ -2551,6 +2565,8 @@ val set_filebuffersize : int -> unit
 ```ocaml
 val set_maxrequestbodysize : int64 option -> unit
 ```
+Raises `Invalid_argument` if the size is negative.
+
 ```ocaml
 val set_maxrequestbodysizeinmemory : int -> unit
 ```
@@ -2610,8 +2626,10 @@ val get_config_file : unit -> string
 val get_pidfile : unit -> string option
 ```
 ```ocaml
-val get_mimefile : unit -> string
+val get_mimefile : unit -> string option
 ```
+The mime.types file, or `None` if there is none (the default).
+
 ```ocaml
 val get_verbose : unit -> bool
 ```
@@ -3656,6 +3674,8 @@ The user authenticated for this request, if any. See [`set_remote_user`](./#val-
 ```ocaml
 val forward_ip : t -> string list
 ```
+After `<allow-forward-for/>`, the addresses of the trusted proxies of the X-Forwarded-For header, at the right of the client, from left to right. Otherwise, the empty list.
+
 ```ocaml
 val content_type : t -> content_type option
 ```
@@ -3766,10 +3786,11 @@ val respond_file :
   ?if_modified_since:string ->
   ?range:string ->
   ?if_range:string ->
+  ?content_type:string ->
   string ->
   t Lwt.t
 ```
-Respond with the content of a file. The content type is guessed using `Magic_mime`. An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5).
+Respond with the content of a file. The content type is `content_type`. By default, it is the one that `Magic_mime` guesses from the name of the file, without the rules of the configuration: Staticmod passes [`Ocsigen_http.Charset_mime.content_type`](./Ocsigen_http-Charset_mime.md#val-content_type). An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5).
 
 ```ocaml
 val update : 
@@ -3878,11 +3899,12 @@ val serve :
 val reverse_proxy : 
   ?address:Config.Socket_type.t ->
   ?port:int ->
+  ?maxrequestbodysize:int64 option ->
   target:string ->
   unit ->
   unit
 ```
-`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve). There is no command pipe: the server is stopped with a signal. Never returns.
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve), and `maxrequestbodysize` as for [`start`](./#val-start). There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val start : 
@@ -3927,7 +3949,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-Options behave exactly like their [configuration file](./config.md) counterparts.
+Options behave exactly like their [configuration file](./config.md) counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative.
 
 ```ocaml
 type instruction =
@@ -3978,7 +4000,7 @@ val host :
   instruction list ->
   Extensions.host_config
 ```
-You can define one or several virtual hosts corresponding to a given server name or port.
+You can define one or several virtual hosts corresponding to a given server name or port. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
 
 ```ocaml
 val site : 
@@ -4257,9 +4279,6 @@ val config_file : string Stdlib.ref
 ```
 ```ocaml
 val is_native : bool
-```
-```ocaml
-val mimefile : string Stdlib.ref
 ```
 ```ocaml
 val bindir : string Stdlib.ref
@@ -5995,16 +6014,37 @@ association between extensions and mime types, with default value
 ```ocaml
 val default_mime_assoc : unit -> mime_assoc
 ```
-Default values, obtained by reading the file specified by `Ocsigen_base.Config_static.get_mimefile`
+`default_mime_assoc ()` has no rules, and the default type [`default_mime_type`](./#val-default_mime_type). The mime.types file of [`set_mime_file`](./#val-set_mime_file) is not part of it: [`find_mime`](./#val-find_mime) looks it up after the rules.
 
 ```ocaml
 val parse_mime_types : filename:string -> mime_assoc
 ```
-Parsing of a file containing mime associations, such as /etc/mime-types
+Parsing of a file containing mime associations, such as /etc/mime.types
+
+```ocaml
+val set_mime_file : string option -> unit
+```
+`set_mime_file file` sets the mime.types file whose types come after the rules (see [`find_mime`](./#val-find_mime)), or none. The file is read at the next call of [`find_mime`](./#val-find_mime). There is none by default.
+
+```ocaml
+val mime_file : unit -> string option
+```
+`mime_file ()` is the file that [`set_mime_file`](./#val-set_mime_file) sets.
 
 ```ocaml
 val find_mime : file -> mime_assoc -> string
 ```
+`find_mime file assoc` is the MIME type of `file`: the one of the first rule of `assoc` that matches `file` (its extension, its name or a regular expression), else the one of the mime.types file of [`set_mime_file`](./#val-set_mime_file), else the one of the built-in table of the `magic-mime` library, else the default type of `assoc`.
+
+```ocaml
+val content_type : 
+  mime_assoc:mime_assoc ->
+  charset_assoc:charset_assoc ->
+  file ->
+  string
+```
+`content_type ~mime_assoc ~charset_assoc file` is the value of the `Content-Type` header for `file`: its MIME type, followed by its charset for text and XML types, when `charset_assoc` gives one.
+
 ```ocaml
 val default_mime : mime_assoc -> mime_type
 ```
@@ -7455,16 +7495,37 @@ association between extensions and mime types, with default value
 ```ocaml
 val default_mime_assoc : unit -> mime_assoc
 ```
-Default values, obtained by reading the file specified by `Ocsigen_base.Config_static.get_mimefile`
+`default_mime_assoc ()` has no rules, and the default type [`default_mime_type`](./#val-default_mime_type). The mime.types file of [`set_mime_file`](./#val-set_mime_file) is not part of it: [`find_mime`](./#val-find_mime) looks it up after the rules.
 
 ```ocaml
 val parse_mime_types : filename:string -> mime_assoc
 ```
-Parsing of a file containing mime associations, such as /etc/mime-types
+Parsing of a file containing mime associations, such as /etc/mime.types
+
+```ocaml
+val set_mime_file : string option -> unit
+```
+`set_mime_file file` sets the mime.types file whose types come after the rules (see [`find_mime`](./#val-find_mime)), or none. The file is read at the next call of [`find_mime`](./#val-find_mime). There is none by default.
+
+```ocaml
+val mime_file : unit -> string option
+```
+`mime_file ()` is the file that [`set_mime_file`](./#val-set_mime_file) sets.
 
 ```ocaml
 val find_mime : file -> mime_assoc -> string
 ```
+`find_mime file assoc` is the MIME type of `file`: the one of the first rule of `assoc` that matches `file` (its extension, its name or a regular expression), else the one of the mime.types file of [`set_mime_file`](./#val-set_mime_file), else the one of the built-in table of the `magic-mime` library, else the default type of `assoc`.
+
+```ocaml
+val content_type : 
+  mime_assoc:mime_assoc ->
+  charset_assoc:charset_assoc ->
+  file ->
+  string
+```
+`content_type ~mime_assoc ~charset_assoc file` is the value of the `Content-Type` header for `file`: its MIME type, followed by its charset for text and XML types, when `charset_assoc` gives one.
+
 ```ocaml
 val default_mime : mime_assoc -> mime_type
 ```
@@ -7613,6 +7674,8 @@ val set_pidfile : string -> unit
 ```ocaml
 val set_mimefile : string -> unit
 ```
+The mime.types file whose types come after the `<contenttype>` rules (see [`Ocsigen_http.Charset_mime.find_mime`](./../ocsigenserver/Ocsigen_http-Charset_mime.md#val-find_mime)). An empty path means none.
+
 ```ocaml
 val set_verbose : unit -> unit
 ```
@@ -7669,6 +7732,8 @@ val set_filebuffersize : int -> unit
 ```ocaml
 val set_maxrequestbodysize : int64 option -> unit
 ```
+Raises `Invalid_argument` if the size is negative.
+
 ```ocaml
 val set_maxrequestbodysizeinmemory : int -> unit
 ```
@@ -7728,8 +7793,10 @@ val get_config_file : unit -> string
 val get_pidfile : unit -> string option
 ```
 ```ocaml
-val get_mimefile : unit -> string
+val get_mimefile : unit -> string option
 ```
+The mime.types file, or `None` if there is none (the default).
+
 ```ocaml
 val get_verbose : unit -> bool
 ```
@@ -7867,9 +7934,6 @@ val config_file : string Stdlib.ref
 ```
 ```ocaml
 val is_native : bool
-```
-```ocaml
-val mimefile : string Stdlib.ref
 ```
 ```ocaml
 val bindir : string Stdlib.ref
@@ -8725,6 +8789,8 @@ The user authenticated for this request, if any. See [`set_remote_user`](./#val-
 ```ocaml
 val forward_ip : t -> string list
 ```
+After `<allow-forward-for/>`, the addresses of the trusted proxies of the X-Forwarded-For header, at the right of the client, from left to right. Otherwise, the empty list.
+
 ```ocaml
 val content_type : t -> content_type option
 ```
@@ -8803,10 +8869,11 @@ val respond_file :
   ?if_modified_since:string ->
   ?range:string ->
   ?if_range:string ->
+  ?content_type:string ->
   string ->
   t Lwt.t
 ```
-Respond with the content of a file. The content type is guessed using `Magic_mime`. An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5).
+Respond with the content of a file. The content type is `content_type`. By default, it is the one that `Magic_mime` guesses from the name of the file, without the rules of the configuration: Staticmod passes [`Ocsigen_http.Charset_mime.content_type`](./../ocsigenserver/Ocsigen_http-Charset_mime.md#val-content_type). An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5).
 
 ```ocaml
 val update : 
@@ -8915,11 +8982,12 @@ val serve :
 val reverse_proxy : 
   ?address:Ocsigen.Config.Socket_type.t ->
   ?port:int ->
+  ?maxrequestbodysize:int64 option ->
   target:string ->
   unit ->
   unit
 ```
-`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve). There is no command pipe: the server is stopped with a signal. Never returns.
+`reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve), and `maxrequestbodysize` as for [`start`](./#val-start). There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
 val start : 
@@ -8964,7 +9032,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-Options behave exactly like their `configuration file` counterparts.
+Options behave exactly like their `configuration file` counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative.
 
 ```ocaml
 type instruction =
@@ -9015,7 +9083,7 @@ val host :
   instruction list ->
   Ocsigen.Extensions.host_config
 ```
-You can define one or several virtual hosts corresponding to a given server name or port.
+You can define one or several virtual hosts corresponding to a given server name or port. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
 
 ```ocaml
 val site : 

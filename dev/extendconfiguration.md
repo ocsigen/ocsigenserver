@@ -78,7 +78,7 @@ This sets the default charset for text files to `utf8`, while files whose extens
 
 Multiple extension tags can be specified. Both the default attribute and extension tags are optional. Extension tags are cumulative between the various sites.
 
-**Limitation.** Only the `default` attribute is currently used, by Eliom, as the charset of its pages. The charsets of files are ignored: Staticmod sends files without a charset.
+Staticmod gives the charset of a file in its `Content-Type` for text and XML types (`text/*`, `*/xml`, `*+xml`). Eliom uses the `default` attribute as the charset of its pages.
 
 ### Content-type
 
@@ -93,7 +93,7 @@ The content-type for the files sent by the server can be specified using the tag
 ```
 The options are similar to the ones for the `charset` tag.
 
-**Limitation.** This option is currently ignored: Staticmod derives the `Content-Type` of the files it sends from their names, with the built-in table of the `magic-mime` library.
+These rules come first; then come the `<mimefile>` of the [configuration](./config.md), the built-in table of the `magic-mime` library, and last the `default` attribute.
 
 ### File uploading
 

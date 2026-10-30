@@ -337,6 +337,8 @@ Starting from Ocsigenserver 1\.3, you can redefine the options `<uploaddir>` and
 
 #### `<maxrequestbodysize>` : maximum size of the body of incoming requests
 
+This is the maximum size of the body of a request, file uploads included: when an extension or an application reads more, the server answers 413 (Request Entity Too Large). A request whose Content-Length is above the limit is refused as soon as its body is read, without keeping any of it. The server still reads and discards the rest of the body before it sends the 413, so the limit bounds the memory and the disk space a request takes, but not the time and the bandwidth it uses. The default is 8000000 bytes (8 MB): raise it together with `<maxuploadfilesize>` if you accept larger uploads. The limit also applies to the bodies that `<revproxy>` forwards to its target, though it does not keep them: raise it on a reverse proxy in front of a service that accepts larger bodies (with `--max-request-body-size` for `ocsigenserver --reverse-proxy`).
+
 Example:
 
 ```
@@ -359,12 +361,12 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 
 #### `<mimefile>` : MIME type file
 
-The file associating file name extensions to their MIME type. Example:
+A file associating file name extensions to their MIME type, in the format of `/etc/mime.types`. There is none by default. Example:
 
 ```
-<mimefile>/etc/ocsigenserver/mime.types</mimefile>
+<mimefile>/etc/mime.types</mimefile>
 ```
-**Limitation.** The file is read, but currently not used: Staticmod derives the `Content-Type` of the files it sends from their names, with the built-in table of the `magic-mime` library.
+Staticmod takes the `Content-Type` of a file from the `<contenttype>` rules of [Extendconfiguration](./extendconfiguration.md), then from this file, then from the built-in table of the `magic-mime` library, and last from the default type, `application/octet-stream`. The file is read when the first file is served after the server starts or reloads its configuration.
 
 #### `<debugmode/>` : Debug mode for applications
 

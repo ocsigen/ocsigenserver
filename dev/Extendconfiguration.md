@@ -25,6 +25,8 @@ val followsymlinks :
 ```ocaml
 val maxuploadfilesize : int64 option -> Ocsigen.Server.instruction
 ```
+Raises `Invalid_argument` if the size is negative.
+
 ```ocaml
 val uploaddir : string option -> Ocsigen.Server.instruction
 ```

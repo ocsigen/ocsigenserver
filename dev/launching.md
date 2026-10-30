@@ -28,6 +28,11 @@ To run the server, use the command `ocsigenserver`. It has the following options
          In serve mode, list the contents of directories that have no
          index file.
 
+  --max-request-body-size SIZE
+         With --reverse-proxy, the maximum size of a request body, as
+         <maxrequestbodysize> in a configuration file: 100MB, 1GiB, or
+         infinity for no limit. A larger body gets a 413. Default: 8MB.
+
   -c, --config
          Alternate configuration file.
 
