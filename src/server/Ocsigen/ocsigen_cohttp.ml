@@ -559,10 +559,35 @@ let listening_socket sockaddr =
        fd)
     (fun exn -> Lwt_unix.close fd >>= fun () -> Lwt.reraise exn)
 
+(* A Unix-domain socket of this user at [path], which a server left as it
+   stopped and that no server listens on any more, is removed, so that the
+   server can listen there. A socket on which a server listens, or that
+   belongs to another user, and a file that is not a socket are kept: binding
+   then fails. The connection is not blocking: a server whose queue of
+   connections is full listens. *)
+let remove_stale_socket path =
+  match Unix.lstat path with
+  | exception Unix.Unix_error (Unix.ENOENT, _, _) -> ()
+  | {Unix.st_kind = Unix.S_SOCK; st_uid; _} when st_uid = Unix.geteuid () -> (
+      let fd = Unix.socket ~cloexec:true Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+      Fun.protect ~finally:(fun () -> Unix.close fd) @@ fun () ->
+      Unix.set_nonblock fd;
+      match Unix.connect fd (Unix.ADDR_UNIX path) with
+      | ()
+      | (exception Unix.Unix_error ((Unix.EAGAIN | Unix.EINPROGRESS), _, _)) ->
+          ()
+      | exception Unix.Unix_error (Unix.ECONNREFUSED, _, _) ->
+          Logs.info ~src:section (fun fmt ->
+            fmt "Removing the socket %s, which no server listens on" path);
+          Unix.unlink path)
+  | _ -> ()
+
 let listening_sockets address port =
   let inet addr = Unix.ADDR_INET (addr, port) in
   match address with
-  | `Unix path -> listening_socket (Unix.ADDR_UNIX path) >|= fun fd -> [fd]
+  | `Unix path ->
+      Lwt.wrap (fun () -> remove_stale_socket path) >>= fun () ->
+      listening_socket (Unix.ADDR_UNIX path) >|= fun fd -> [fd]
   | `IPv4 addr | `IPv6 addr -> listening_socket (inet addr) >|= fun fd -> [fd]
   | `All ->
       listening_socket (inet Unix.inet_addr_any) >>= fun ipv4 ->

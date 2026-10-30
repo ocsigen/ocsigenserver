@@ -442,6 +442,10 @@ Bug fixes:
  * An error of the system that stops the server is written as "bind
    127.0.0.1:8080: Address already in use", with the address for a socket,
    rather than as the OCaml exception Unix.Unix_error.
+ * A Unix-domain socket left by a server that could not remove it, killed for
+   instance, no longer stops the next server with "Address already in use":
+   the server removes a socket of its user that no server listens on. A
+   socket on which a server listens is kept.
 
 ==== 8.0.0 (2026-09-24) ===
 
