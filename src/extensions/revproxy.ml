@@ -91,6 +91,56 @@ let forwarded_response meth response =
   in
   {response with Cohttp.Response.headers; version = `HTTP_1_1}
 
+(* [tracked body] is [body], read in the same way, with a function that gives
+   the exception raised while reading it, if any. *)
+let tracked body =
+  let failure = ref None in
+  let body =
+    match body with
+    | `Stream chunks ->
+        `Stream
+          (Lwt_stream.from (fun () ->
+             Lwt.catch
+               (fun () -> Lwt_stream.get chunks)
+               (fun exn ->
+                  failure := Some exn;
+                  Lwt.reraise exn)))
+    | (`Empty | `String _ | `Strings _) as body -> body
+  in
+  body, fun () -> !failure
+
+(* [call ~client_closed ~headers ~body meth uri] sends the request to the
+   target on a connection of its own, closed once the body of the response is
+   read, the call fails, or [client_closed] resolves: a client that leaves
+   before the end of the response does not read it to the end. This is what
+   [Cohttp_lwt_unix.Client.call] does, except that cohttp-lwt 6 raises again,
+   outside of any promise, any failure of the call: an error while reading
+   the body of the request (one too large, for instance) or writing it to the
+   target stopped the server. *)
+let call ~client_closed ~headers ~body meth uri =
+  let module Net = Cohttp_lwt_unix.Net in
+  let module Connection = Cohttp_lwt_unix.Connection in
+  Net.resolve ~ctx:(Lazy.force Net.default_ctx) uri
+  (* Persistent, as cohttp does, so that a chunked body is sent chunked. *)
+  >>= Connection.connect ~persistent:true
+  >>= fun connection ->
+  Lwt.catch
+    (fun () -> Connection.call connection ~headers ~body meth uri)
+    (fun exn ->
+       Connection.close connection;
+       Lwt.reraise exn)
+  >|= fun ((_, response_body) as response) ->
+  (match response_body with
+  | `Stream stream ->
+      (* [Lwt.choose] removes its callback from the promise that does not
+         resolve, so that they do not pile up on [client_closed] during a
+         long-lived connection of the client. *)
+      Lwt.on_termination
+        (Lwt.choose [Lwt_stream.closed stream; client_closed])
+        (fun () -> Connection.close connection)
+  | `Empty | `String _ | `Strings _ -> Connection.close connection);
+  response
+
 (** Generate the pages from the request *)
 let gen dir = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -151,31 +201,38 @@ let gen dir = function
                else
                  Cohttp.Header.remove h
                    Ocsigen_http.Header.Name.(to_string host)
-             and body = Ocsigen.Request.body request_info
+             and body, body_failure =
+               tracked (Ocsigen.Request.body request_info)
              and meth = Ocsigen.Request.meth request_info in
-             (* Whatever goes wrong with the target (no route, refused
-                connection, unknown name, TLS failure, connection closed
-                before a response...), the client gets a 502, as from other
-                reverse proxies. The exceptions vary with the step that fails
-                and the library that does it. *)
+             (* An error while reading the body of the request comes from the
+                client (body too large, cut short, too slow), and the server
+                answers it as such. Whatever else goes wrong with the target
+                (no route, refused connection, unknown name, TLS failure,
+                connection closed before a response...), the client gets a
+                502, as from other reverse proxies. The exceptions vary with
+                the step that fails and the library that does it. *)
              Lwt.catch
                (fun () ->
-                  Cohttp_lwt_unix.Client.call ~headers ~body meth target)
-               (function
-                 | Lwt.Canceled as exn -> Lwt.reraise exn
-                 | exn ->
-                     (* Not the path and query, which may carry data that
-                        do not belong in the logs. *)
-                     let server =
-                       Uri.make ?scheme:(Uri.scheme target)
-                         ?host:(Uri.host target) ?port:(Uri.port target) ()
-                     in
-                     Logs.err ~src:section (fun fmt ->
-                       fmt "Cannot get a response from %s: %s"
-                         (Uri.to_string server) (Printexc.to_string exn));
-                     Lwt.fail
-                       (Ocsigen.Extensions.Ocsigen_http_error
-                          (Ocsigen_cookie_map.empty, `Bad_gateway)))
+                  call
+                    ~client_closed:
+                      (Ocsigen.Request.connection_closed request_info)
+                    ~headers ~body meth target)
+               (fun exn ->
+                  match body_failure (), exn with
+                  | Some exn, _ | None, (Lwt.Canceled as exn) -> Lwt.reraise exn
+                  | None, exn ->
+                      (* Not the path and query, which may carry data that
+                         do not belong in the logs. *)
+                      let server =
+                        Uri.make ?scheme:(Uri.scheme target)
+                          ?host:(Uri.host target) ?port:(Uri.port target) ()
+                      in
+                      Logs.err ~src:section (fun fmt ->
+                        fmt "Cannot get a response from %s: %s"
+                          (Uri.to_string server) (Printexc.to_string exn));
+                      Lwt.fail
+                        (Ocsigen.Extensions.Ocsigen_http_error
+                           (Ocsigen_cookie_map.empty, `Bad_gateway)))
              >|= fun (response, body) -> forwarded_response meth response, body
            in
            Lwt.return

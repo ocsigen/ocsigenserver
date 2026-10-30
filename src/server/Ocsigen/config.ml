@@ -138,8 +138,18 @@ let set_max_connections_per_address i = max_connections_per_address := i
 
 (* let set_keepopen_timeout i = keepopen_timeout := i *)
 let set_filebuffersize i = filebuffersize := i
-let set_maxuploadfilesize i = maxuploadfilesize := i
-let set_maxrequestbodysize i = maxrequestbodysize := i
+
+let checked_size name = function
+  | Some size when Int64.compare size 0L < 0 ->
+      invalid_arg (Printf.sprintf "%s: negative size %Ld" name size)
+  | size -> size
+
+let set_maxuploadfilesize i =
+  maxuploadfilesize := checked_size "Config.set_maxuploadfilesize" i
+
+let set_maxrequestbodysize i =
+  maxrequestbodysize := checked_size "Config.set_maxrequestbodysize" i
+
 let set_maxrequestbodysizeinmemory i = maxrequestbodysizeinmemory := i
 let set_default_charset o = defaultcharset := o
 let set_bindir o = bindir := o

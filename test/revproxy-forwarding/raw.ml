@@ -1,7 +1,9 @@
 (* An upstream server for the reverse proxy tests, on the port given as
    argument, that answers
    with raw responses, which Ocsigen Server would not send, then closes the
-   connection. It serves one connection at a time. *)
+   connection. It serves one connection at a time. For /endless, it sends a
+   body that does not end, until the connection is closed from the other side,
+   and then says so on its standard output. *)
 
 let responses =
   [ ( "/http-1.0"
@@ -14,6 +16,17 @@ let responses =
 let rec skip_headers ic =
   match input_line ic with "" | "\r" -> () | _ -> skip_headers ic
 
+let endless oc =
+  output_string oc
+    "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 1000000000000\r\n\r\n";
+  let chunk = String.make 65536 'a' in
+  (try
+     while true do
+       output_string oc chunk; flush oc
+     done
+   with Sys_error _ -> print_endline "/endless: connection closed");
+  close_out_noerr oc
+
 let answer fd =
   let ic = Unix.in_channel_of_descr fd and oc = Unix.out_channel_of_descr fd in
   let path =
@@ -22,10 +35,13 @@ let answer fd =
     | _ -> ""
   in
   skip_headers ic;
-  output_string oc
-    (Option.value ~default:"HTTP/1.0 404 Not Found\r\n\r\n"
-       (List.assoc_opt path responses));
-  close_out oc
+  match path with
+  | "/endless" -> endless oc
+  | _ ->
+      output_string oc
+        (Option.value ~default:"HTTP/1.0 404 Not Found\r\n\r\n"
+           (List.assoc_opt path responses));
+      close_out oc
 
 let () =
   let port =

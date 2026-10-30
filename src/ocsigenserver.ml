@@ -23,6 +23,7 @@ let serve_port = ref None
 let serve_address = ref None
 let directory_listing = ref false
 let reverse_proxy = ref None
+let max_request_body_size = ref None
 let config_given = ref false
 
 let set_serve_dir d =
@@ -40,6 +41,15 @@ let set_serve_address s =
   | a -> serve_address := Some (`IPv4 a)
   | exception Failure _ -> fatal "--address: %s is not an IP address" s
 
+(* The same sizes as in the configuration file: 100MB, 1GiB, infinity... *)
+let set_max_request_body_size s =
+  match Ocsigen.Parseconfig.parse_size_tag "maxrequestbodysize" s with
+  | size -> max_request_body_size := Some size
+  | exception Ocsigen.Config.Config_file_error _ ->
+      fatal
+        "--max-request-body-size: %s is not a size (such as 100MB, 1GiB or infinity)"
+        s
+
 let set_configfile f =
   config_given := true;
   Ocsigen.Config.set_configfile f
@@ -53,6 +63,8 @@ let () =
   and port_msg = "Port to listen on in the one-command modes (default 8080)"
   and address_msg =
     "IP address to listen on in the one-command modes (default 127.0.0.1; 0.0.0.0 for all interfaces)"
+  and body_size_msg =
+    "Maximum size of a request body with --reverse-proxy (default 8MB; such as 100MB, 1GiB or infinity)"
   and listing_msg = "List directory contents in serve mode (when no index file)"
   and silent_msg =
     "Silent mode (error messages in errors.log only; needs log files or syslog)"
@@ -74,6 +86,9 @@ let () =
       ; "--port", Arg.Int (fun p -> serve_port := Some p), port_msg
       ; "--address", Arg.String set_serve_address, address_msg
       ; "--directory-listing", Arg.Set directory_listing, listing_msg
+      ; ( "--max-request-body-size"
+        , Arg.String set_max_request_body_size
+        , body_size_msg )
       ; "-s", Arg.Unit Ocsigen.Config.set_silent, silent_msg
       ; "--silent", Arg.Unit Ocsigen.Config.set_silent, silent_msg
       ; "-p", Arg.String Ocsigen.Config.set_pidfile, pid_msg
@@ -116,6 +131,8 @@ let () =
   then
     fatal
       "-s and -d cannot be combined with serve mode or --reverse-proxy, which log to the terminal";
+  if !max_request_body_size <> None && !reverse_proxy = None
+  then fatal "--max-request-body-size is only valid with --reverse-proxy";
   match !serve_dir, !reverse_proxy with
   | Some _, Some _ -> fatal "--serve and --reverse-proxy cannot be combined"
   | Some dir, None ->
@@ -130,7 +147,7 @@ let () =
       if !directory_listing
       then fatal "--directory-listing is only valid when serving a directory";
       Ocsigen.Server.reverse_proxy ~target ?address:!serve_address
-        ?port:!serve_port ()
+        ?port:!serve_port ?maxrequestbodysize:!max_request_body_size ()
   | None, None ->
       if !serve_port <> None || !serve_address <> None || !directory_listing
       then

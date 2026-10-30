@@ -6,7 +6,7 @@ Server would not send. The upstream server listens on PORT1 (HTTP) and PORT2
 hides PORT1, the port of the target, in the outputs. Self-contained POSIX sh.
 
   $ . ../server-test-helpers.sh
-  $ free_ports 7
+  $ free_ports 8
   $ mask_port () { sed "s/:$PORT1\$/:UPSTREAM_PORT/"; }
   $ mkdir -p log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
@@ -60,6 +60,7 @@ to the target:
   > <ocsigen><server>
   > <port>127.0.0.1:$PORT6</port>
   > <logdir>log</logdir>
+  > <maxrequestbodysize>1000</maxrequestbodysize>
   > <commandpipe>proxy.cmd</commandpipe>
   > <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
   > <extension findlib-package="ocsigenserver.ext.revproxy"/>
@@ -148,3 +149,44 @@ make the proxy close the connection to the client:
   connection: keep-alive
   
   ok
+
+A client that leaves before the end of a response makes the proxy close its
+connection to the target, which would otherwise stay open:
+
+  $ curl -s --max-time 10 http://127.0.0.1:$PORT7/endless | head -c 100000 \
+  >   >/dev/null
+  $ for _ in $(seq 1 50); do
+  >   grep -q '/endless' raw.log && break; sleep 0.1
+  > done
+  $ grep '/endless' raw.log
+  /endless: connection closed
+
+The proxy configured in a file reads at most 1000 bytes of a request body
+(<maxrequestbodysize>). A larger body gets a 413, whether its length is
+announced or not, and the proxy keeps serving the next requests:
+
+  $ head -c 2000 /dev/zero | tr '\0' a > big
+  $ post () {
+  >   curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
+  >     --data-binary @big "$@" http://127.0.0.1:$PORT6/headers
+  > }
+  $ post
+  413
+  $ post -H 'Transfer-Encoding: chunked'
+  413
+  $ curl -s --max-time 10 --data abc http://127.0.0.1:$PORT6/headers | grep body
+  body: abc
+
+The one-command proxy takes the limit from --max-request-body-size:
+
+  $ ocsigenserver --reverse-proxy http://127.0.0.1:$PORT1 --port $PORT8 \
+  >   --max-request-body-size 1kB >proxy-limit.log 2>&1 &
+  $ PROXIES="$PROXIES $!"
+  $ wait_server $! proxy-limit.log http://127.0.0.1:$PORT8/
+  $ for size in 1000 1001; do
+  >   head -c $size /dev/zero | tr '\0' a > body
+  >   curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
+  >     --data-binary @body http://127.0.0.1:$PORT8/headers
+  > done
+  200
+  413

@@ -29,6 +29,8 @@ val followsymlinks :
   -> Ocsigen.Server.instruction
 
 val maxuploadfilesize : int64 option -> Ocsigen.Server.instruction
+(** Raises [Invalid_argument] if the size is negative. *)
+
 val uploaddir : string option -> Ocsigen.Server.instruction
 val listdirs : bool -> Ocsigen.Server.instruction
 
