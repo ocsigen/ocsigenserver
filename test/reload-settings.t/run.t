@@ -4,7 +4,7 @@ they were. The same configuration without the error sets them.
   $ ../reload-settings/test.exe
   tag <nosuchtag> unexpected inside <server>
   accepted
-  <charset>: none, after the error none, then iso-8859-1
+  <charset>: utf-8, after the error utf-8, then iso-8859-1
   <uploaddir>: none, after the error none, then upload
   <mimefile>: none, after the error none, then other.types
   <maxconnected>: 10000, after the error 10000, then 7

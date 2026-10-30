@@ -384,6 +384,9 @@ as a non-root user, use one of:
 
 {3 [<charset>] : default charset for pages}
 
+The charset of the hosts that do not give one with their [charset]
+attribute. Without [<charset>], it is [utf-8]. Staticmod gives it for text
+and XML files, and Eliom for its pages.
 
 Example:
 

@@ -117,7 +117,8 @@ val start :
 
 Options behave exactly like their {{!page-"config"}configuration file}
 counterparts. Raises [Invalid_argument] if [maxuploadfilesize] or
-[maxrequestbodysize] is negative.
+[maxrequestbodysize] is negative. The default charset is utf-8 unless
+[default_charset] gives another one, or [None] for no charset.
 *)
 
 type instruction =
