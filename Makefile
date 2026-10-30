@@ -105,6 +105,8 @@ purge: purge.files
 
 purge.files:
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf
+	 ## Installed by the versions before 8.1.0
+	-rm -f $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	-rm -f $(patsubst local/var/www/ocsigenstuff/%, \
 			  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff/%, \
 			  $(wildcard local/var/www/ocsigenstuff/*))
