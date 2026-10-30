@@ -60,6 +60,8 @@ val respond_error :
 val respond_file :
    ?headers:Cohttp.Header.t
   -> ?status:Http.Status.t
+  -> ?if_match:string list
+  -> ?if_unmodified_since:string
   -> ?if_none_match:string list
   -> ?if_modified_since:string
   -> ?range:string
@@ -72,14 +74,21 @@ val respond_file :
     file, without the rules of the configuration: Staticmod passes
     {!Ocsigen_http.Charset_mime.content_type}. An [ETag] (weak, derived from
     the file's modification time and size), a [Last-Modified] and an
-    [Accept-Ranges: bytes] header are added. If the request's [If-None-Match]
-    (compared with the weak comparison, RFC 9110 13.1.2) or
-    [If-Modified-Since] header is passed and matches, the response is
-    [304 Not Modified] with an empty body. [if_none_match] is given as the
-    lines of the header field (see {!Ocsigen_http.Header.Entity_tag.parse_list}).
+    [Accept-Ranges: bytes] header are added.
+    The conditional headers of the request, when passed, are evaluated as RFC
+    9110 13.2.2 says. When [If-Match] (with the strong comparison, which the
+    weak [ETag] never passes: only ["*"] matches) or [If-Unmodified-Since] is
+    false, the response is [412 Precondition Failed]. When [If-None-Match]
+    (with the weak comparison) or [If-Modified-Since] is false, the response
+    is [304 Not Modified] with an empty body. [if_match] and [if_none_match]
+    are given as the lines of the header field (see
+    {!Ocsigen_http.Header.Entity_tag.parse_list}). Pass them only for a GET or
+    HEAD request whose response is a success: for other methods, a false
+    [If-None-Match] calls for 412 rather than 304, and the preconditions do
+    not apply to an error page (RFC 9110 13.2.1).
     If a [range] (the [Range] header) is passed and satisfiable, a single byte
     range is returned as [206 Partial Content] with a [Content-Range] header
-    (RFC 7233); an unsatisfiable range gives [416]. A passed [if_range] (the
+    (RFC 9110 14); an unsatisfiable range gives [416]. A passed [if_range] (the
     [If-Range] header) must be the [Last-Modified] date, unchanged for at
     least a second, for the range to be honoured: [If-Range] calls for a strong
     comparison, which the weak [ETag] never passes (RFC 9110 13.1.5). *)

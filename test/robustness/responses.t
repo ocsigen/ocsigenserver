@@ -314,16 +314,29 @@ accepted (section 5.6.7).
   $ status GET /hello.txt 'If-Modified-Since: Wed Jan  1 12:00:00 2020'
   HTTP/1.1 304 Not Modified
 
-BUG: If-Match and If-Unmodified-Since are ignored. A false condition must be
-answered 412 (sections 13.1.1, 13.1.4 and 13.2.2). If-Match uses the strong
-comparison, which a weak entity tag never passes. Expected: 412 for the three
-requests.
+A false If-Match or If-Unmodified-Since condition is answered 412 (sections
+13.1.1, 13.1.4 and 13.2.2). If-Match uses the strong comparison, which a weak
+entity tag never passes: only "*" matches. If-Unmodified-Since is ignored
+when the date is invalid, when the field has more than one value (section
+13.1.4), or when If-Match is present (section 13.2.2).
 
   $ status GET /hello.txt 'If-Match: "other"'
-  HTTP/1.1 200 OK
+  HTTP/1.1 412 Precondition Failed
   $ status GET /hello.txt "If-Match: $E"
+  HTTP/1.1 412 Precondition Failed
+  $ status GET /hello.txt 'If-Match: *'
   HTTP/1.1 200 OK
   $ status GET /hello.txt 'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT'
+  HTTP/1.1 412 Precondition Failed
+  $ status GET /hello.txt 'If-Unmodified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Unmodified-Since: garbage'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT' \
+  >   'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Match: *' \
+  >   'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT'
   HTTP/1.1 200 OK
 
 Methods other than GET and HEAD do not apply to a static file: they get 405

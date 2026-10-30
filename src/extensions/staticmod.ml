@@ -248,7 +248,7 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
                   | values -> Some values
                 in
                 (* A date has a single value: the field is ignored when it is
-                   written on several lines (RFC 9110 13.1.3). *)
+                   written on several lines (RFC 9110 13.1.3 and 13.1.4). *)
                 let date_header name =
                   match Ocsigen.Request.header_multi request_info name with
                   | [value] -> Some value
@@ -261,6 +261,9 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
                   ~content_type:
                     (Ocsigen_http.Charset_mime.content_type ~mime_assoc
                        ~charset_assoc fname)
+                  ?if_match:(list_header Ocsigen_http.Header.Name.if_match)
+                  ?if_unmodified_since:
+                    (date_header Ocsigen_http.Header.Name.if_unmodified_since)
                   ?if_none_match:
                     (list_header Ocsigen_http.Header.Name.if_none_match)
                   ?if_modified_since:
