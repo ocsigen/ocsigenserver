@@ -682,7 +682,10 @@ let start
              "Ocsigen.Server.start: ~server_timeout has no effect and is ignored."))
       server_timeout;
     Extensions.start_initialisation ();
-    Extensions.set_hosts instructions)
+    Extensions.set_hosts instructions;
+    (* Read now rather than at the first request, as in
+       [Parseconfig.later_pass]. *)
+    Ocsigen_http.Charset_mime.load_mime_file ())
 
 (* Registries through which the Staticmod and Revproxy extensions, once loaded,
    publish their serving functions. This lets the one-command serve mode use

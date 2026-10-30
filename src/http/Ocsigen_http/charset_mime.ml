@@ -137,9 +137,9 @@ let parse_mime_types ~filename : mime_type assoc =
 
 let default_mime_assoc () = empty_mime_assoc ()
 
-(* The mime.types file of <mimefile>, and its table, read at the first lookup:
-   the logs are open by then, and a reload, which sets the file again, reads
-   it again. *)
+(* The mime.types file of <mimefile>, and its table. The table is read by
+   [load_mime_file], once the logs are open, or else at the first lookup. A
+   reload, which sets the file again, reads it again. *)
 let current_mime_file = ref None
 let mime_file_table = ref (lazy MapString.empty)
 
@@ -155,6 +155,9 @@ let set_mime_file file =
           read_mime_types filename)
 
 let mime_file () = !current_mime_file
+
+let load_mime_file () =
+  ignore (Lazy.force !mime_file_table : mime_type MapString.t)
 
 (* The built-in table of magic-mime comes after the rules and the mime.types
    file, and before the default type. *)

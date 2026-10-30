@@ -613,7 +613,10 @@ and later_pass = function
 
 (* On an error, the settings of the tags of [<server>] are put back as they
    were, and the hosts stay as they were. What the extensions loaded or set
-   up before the error stays. *)
+   up before the error stays.
+   The mime.types file is read here rather than at the first request, which
+   it would delay, so that an error is logged at once. On an error, putting
+   <mimefile> back sets the file again: it is read again too. *)
 let later_pass l =
   log_levels := [];
   let settings = Config.save_settings () in
@@ -621,6 +624,7 @@ let later_pass l =
   | hosts -> Extensions.set_hosts hosts
   | exception e ->
       Config.restore_settings settings;
+      Ocsigen_http.Charset_mime.load_mime_file ();
       raise e);
   List.iter
     (fun (source, level) ->
@@ -628,7 +632,8 @@ let later_pass l =
        then
          Logs.warn ~src:section (fun fmt ->
            fmt "<loglevel>: no log source named %s" source))
-    (List.rev !log_levels)
+    (List.rev !log_levels);
+  Ocsigen_http.Charset_mime.load_mime_file ()
 
 (* Parsing <port> tags *)
 let parse_port =

@@ -29,6 +29,7 @@ With a configuration file:
   > <ocsigen><server>
   >   <port>127.0.0.1:$PORT1</port>
   >   <logdir>log</logdir>
+  >   <commandpipe>conf.cmd</commandpipe>
   >   <mimefile>my.types</mimefile>
   >   <extension findlib-package="ocsigenserver.ext.staticmod"/>
   >   <extension findlib-package="ocsigenserver.ext.extendconfiguration"/>
@@ -66,6 +67,29 @@ An empty charset, in a rule or on a <site> (or <host>), sends no charset:
   $ ctypes "" http://127.0.0.1:$PORT1 i.csv legacy/b.html
   i.csv: content-type: text/csv
   legacy/b.html: content-type: text/html
+
+A reload reads the mime.types file again:
+
+  $ reload () {
+  >   send_command $CONF_PID conf.cmd reload
+  >   i=0; until [ "$(grep -c 'Config file reloaded' log/warnings.log)" -ge $1 ]
+  >   do i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  > }
+  $ printf 'text/x-zzz2 zzz\n' > my.types
+  $ reload 1
+  $ ctypes "" http://127.0.0.1:$PORT1 c.zzz
+  c.zzz: content-type: text/x-zzz2; charset=utf-8
+
+A mime.types file that cannot be read is reported when the configuration is
+read, before any request, and the types then come from magic-mime:
+
+  $ sed 's/my\.types/missing.types/' conf.xml > conf.new && mv conf.new conf.xml
+  $ reload 2
+  $ grep -o 'ocsigen:mimetype: .*' log/errors.log
+  ocsigen:mimetype: [ERROR] Unable to read the mime.types file: missing.types: No such file or directory
+  $ ctypes "" http://127.0.0.1:$PORT1 c.zzz g.js
+  c.zzz: content-type: text/x-default; charset=utf-8
+  g.js: content-type: application/javascript
   $ kill $CONF_PID
 
 Without <mimefile>, no mime.types file is read: serve mode logs no error
@@ -83,11 +107,14 @@ about it, and the types come from magic-mime, without a charset:
   $ kill $SERVE_PID
 
 In a program, ~mimefile of Ocsigen.Server.start applies to the hosts given
-to it, which are evaluated before it:
+to it, which are evaluated before it. The file is read at start-up, before
+the first request: removing it then changes nothing.
 
+  $ printf 'text/x-zzz zzz\n' > my.types
   $ ../content-type/test.exe >lib.log 2>&1 &
   $ LIB_PID=$!
   $ wait_server $LIB_PID lib.log local.sock local.cmd
+  $ rm my.types
   $ ctypes "--unix-socket local.sock" http://x c.zzz d.png
   c.zzz: content-type: text/x-zzz
   d.png: content-type: image/png
