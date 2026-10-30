@@ -15,4 +15,4 @@
  (name test_raw_http)
  (package ocsigenserver)
  (modules test_raw_http)
- (libraries raw_http))
+ (libraries raw_http unix))

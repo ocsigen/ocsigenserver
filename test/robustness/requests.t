@@ -13,7 +13,7 @@ log shows.
   HTTP/1.1 200 OK
   [idle]
   $ printf 'POST /index.html HTTP/1.1\r\nHost: x\r\nContent-Length: 2\r\n\r\nab\r\nGET /hello.txt HTTP/1.1\r\nHost: x\r\n\r\n' |
-  >   rawhttp send --port "$PORT" --idle 0.5 | grep -o 'HTTP/1\.1 [0-9]*'
+  >   rawhttp send --port "$PORT" --idle 0.5 --settle 0.5 | grep -o 'HTTP/1\.1 [0-9]*'
   HTTP/1.1 405
   HTTP/1.1 200
   $ grep -c '"GET /hello.txt HTTP/1.1" 200' log/access.log
