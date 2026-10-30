@@ -204,23 +204,33 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
       connection_closed
   in
   let handle_error exn =
-    Logs.debug ~src:section (fun fmt ->
-      fmt
-        ("Got exception while handling request." ^^ "@\n%s")
-        (Printexc.to_string exn));
+    (* The client only gets a generic message (below), so the logs must say
+       what went wrong: as an error when the server failed, as a warning when
+       a file could not be read, and as information when the request was bad.
+       The answers an extension chose on purpose stay at the debug level. *)
+    let log level what =
+      Logs.msg ~src:section level (fun fmt ->
+        fmt
+          ("%s while handling request." ^^ "@\n%s")
+          what (Printexc.to_string exn))
+    in
     let headers, ret_code, explicit_msg =
       match exn with
       | Ocsigen_http_error (cookies_to_set, code) ->
+          log Logs.Debug "Got exception";
           let headers =
             Cookie.serialize cookies_to_set (Cohttp.Header.init ())
           in
           Some headers, code, None
-      | Ocsigen_base.Ocsigen_stream.Interrupted
-          Ocsigen_base.Ocsigen_stream.Already_read ->
-          None, `Internal_server_error, None
-      | Unix.Unix_error (Unix.EACCES, _, _) -> None, `Forbidden, None
-      | Ext_http_error (code, msg, headers) -> headers, code, msg
-      | Ocsigen_base.Lib.Ocsigen_Bad_Request -> None, `Bad_request, None
+      | Unix.Unix_error (Unix.EACCES, _, _) ->
+          log Logs.Warning "Permission denied";
+          None, `Forbidden, None
+      | Ext_http_error (code, msg, headers) ->
+          log Logs.Debug "Got exception";
+          headers, code, msg
+      | Ocsigen_base.Lib.Ocsigen_Bad_Request ->
+          log Logs.Info "Bad request";
+          None, `Bad_request, None
       (* The body parsers of [Request.post_params] read it through an
          [Ocsigen_stream], which wraps its failures in [Interrupted]. *)
       | Request.Truncated_body
@@ -229,6 +239,7 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
             fmt "The body of a request ended before its Content-Length");
           None, `Bad_request, None
       | Ocsigen_base.Lib.Ocsigen_Request_too_long ->
+          log Logs.Info "Request too long";
           None, `Request_entity_too_large, None
       | Ocsigen_base.Lib.Input_is_too_large ->
           Logs.warn ~src:section (fun fmt ->
@@ -239,12 +250,11 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
          down before this is sent (see [Connection_guard]), and the closing is
          logged then. The access log records the request with this status all
          the same, as nginx and Apache do. *)
-      | Connection_guard.Timed_out -> None, `Request_timeout, None
-      | exn ->
-          Logs.err ~src:section (fun fmt ->
-            fmt
-              ("Error while handling request." ^^ "@\n%s")
-              (Printexc.to_string exn));
+      | Connection_guard.Timed_out ->
+          log Logs.Debug "Got exception";
+          None, `Request_timeout, None
+      | _ ->
+          log Logs.Error "Error";
           None, `Internal_server_error, None
     in
     let body =
