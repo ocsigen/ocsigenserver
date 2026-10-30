@@ -122,6 +122,8 @@ let parse_range size value =
 let respond_file
       ?headers
       ?(status = `OK)
+      ?if_match
+      ?if_unmodified_since
       ?if_none_match
       ?if_modified_since
       ?range
@@ -150,26 +152,44 @@ let respond_file
              "last-modified" last_modified
          in
          let headers = Option.value headers ~default:(Http.Header.init ()) in
-         (* [If-None-Match] takes precedence over [If-Modified-Since], which
-            is ignored when it is not a valid date (RFC 9110 13.1.3), or a
-            date later than now, as Apache does: the file may change before
-            that date, and the client would keep its stale copy. The file is
-            not modified when its Last-Modified date, in whole seconds, is
-            not after the given one. *)
+         (* A date that is not valid is ignored (RFC 9110 13.1.3 and
+            13.1.4). *)
+         let date field = Option.bind field Ocsigen_http.Header.Date.parse in
+         (* The file is not modified since a date when its Last-Modified
+            date, in whole seconds, is not after it. *)
+         let not_modified_since since = Float.trunc s.Unix.st_mtime <= since in
+         (* [If-Match], or else [If-Unmodified-Since], is evaluated first
+            (RFC 9110 13.2.2). [If-Match] uses the strong comparison, which
+            the weak entity-tag never passes: only "*" matches. *)
+         let precondition_failed =
+           match if_match with
+           | Some im ->
+               not
+                 (etag_matches
+                    ~equal:Ocsigen_http.Header.Entity_tag.strong_equal im etag)
+           | None -> (
+             match date if_unmodified_since with
+             | Some since -> not (not_modified_since since)
+             | None -> false)
+         in
+         (* [If-None-Match] takes precedence over [If-Modified-Since]
+            (RFC 9110 13.1.3). A date later than now is ignored, as Apache
+            does: the file may change before that date, and the client would
+            keep its stale copy. *)
          let not_modified =
            match if_none_match with
            | Some inm ->
                etag_matches ~equal:Ocsigen_http.Header.Entity_tag.weak_equal inm
                  etag
            | None -> (
-             match
-               Option.bind if_modified_since Ocsigen_http.Header.Date.parse
-             with
-             | Some date when date <= Unix.gettimeofday () ->
-                 Float.trunc s.Unix.st_mtime <= date
+             match date if_modified_since with
+             | Some since when since <= Unix.gettimeofday () ->
+                 not_modified_since since
              | Some _ | None -> false)
          in
-         if not_modified
+         if precondition_failed
+         then Lwt.return (respond ~headers ~status:`Precondition_failed ())
+         else if not_modified
          then
            Lwt.return
              (respond ~headers:(add_validators headers) ~status:`Not_modified ())
