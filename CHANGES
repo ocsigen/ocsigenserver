@@ -548,6 +548,10 @@ Bug fixes:
    lets a method pass on, Authbasic.Bad_config_tag_for_auth, was not exported.
    An unknown method, or a <plain> whose attributes are not login and
    password, now gives a clear configuration error.
+ * Compression: on a response with several Vary lines, as Revproxy may give,
+   Accept-Encoding was added to the last line and the other lines were
+   dropped. A shared cache could then give a page that depends on the
+   cookies of a user to another user. All the names are now kept.
 
 ==== 8.0.0 (2026-09-24) ===
 

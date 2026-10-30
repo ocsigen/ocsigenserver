@@ -145,3 +145,7 @@
 (cram
  (applies_to virtual-hosts)
  (deps virtual-hosts/test.exe))
+
+(cram
+ (applies_to vary)
+ (deps vary/test.exe))
