@@ -194,7 +194,7 @@ To make the server listen on all IPv4 and IPv6 interfaces:
 ```
    <port>80</port>
 ```
-**Warning:** with versions \< 1\.3.1, the two previous variants were equivalent and would make the server listen on all IPv6 interfaces, and on IPv4 interfaces as well depending on the operating system (more specifically, the default value of IPV6\_V6ONLY). This OS-dependent behaviour has been fixed in version 1\.3.1.
+The server then uses one socket for each family. On a system without IPv6, it listens on IPv4 only, and says so in the logs (at the `info` level). The IPv6 sockets accept IPv6 connections only, whatever the default of the system (`IPV6_V6ONLY`).
 
 You can also make the server bind on a specific IPv6 address (it must be between brackets):
 
@@ -384,7 +384,7 @@ Use this option for debugging your Web sites. Ocsigenserver itself does not use 
 
 #### `<maxconnected>` : Maximum number of simultaneous connections
 
-The maximum number of connections open at once, on all the ports together. Each port counts as one connection while it waits for a new one, so the server is full slightly before this number. Example:
+The maximum number of connections open at once, on all the ports together. Each listening socket counts as one connection while it waits for a new one, so the server is full slightly before this number. A port alone has two sockets, one for IPv4 and one for IPv6; a port with an address has one. Example:
 
 ```
 <maxconnected>20000</maxconnected>

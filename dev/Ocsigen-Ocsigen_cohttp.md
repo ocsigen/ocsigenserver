@@ -27,6 +27,11 @@ val shutdown : float option -> unit
 Shutdown main loop of server
 
 ```ocaml
+val max_listening_sockets : Config.socket_type -> int
+```
+`max_listening_sockets address` is the number of sockets that `service ~address` listens on, at most: two for ``All`, one for IPv4 and one for IPv6, and one otherwise.
+
+```ocaml
 val service : 
   ?ssl:(string * string * (bool -> string) option) ->
   address:Config.socket_type ->
