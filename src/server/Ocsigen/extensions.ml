@@ -621,20 +621,18 @@ module Configuration = struct
     String.iter
       (fun c ->
          if not (List.mem c [' '; '\n'; '\r'; '\t'])
-         then
-           raise
-             (Error_in_user_config_file ("Non-blank PCDATA in tag " ^ in_tag)))
+         then raise (Error_in_config_file ("Non-blank PCDATA in tag " ^ in_tag)))
       str
 
   let refuse_pcdata ~in_tag _ =
-    raise (Error_in_user_config_file ("No PCDATA allowed in tag " ^ in_tag))
+    raise (Error_in_config_file ("No PCDATA allowed in tag " ^ in_tag))
 
   let check_attribute_occurrence ~in_tag attributes = function
     | name, {attribute_obligatory = true; _} ->
         if not (List.mem_assoc name attributes)
         then
           raise
-            (Error_in_user_config_file
+            (Error_in_config_file
                ("Obligatory attribute " ^ name ^ " not in tag " ^ in_tag))
     | _ -> ()
 
@@ -647,7 +645,7 @@ module Configuration = struct
         if not (List.exists corresponding_element elements)
         then
           raise
-            (Error_in_user_config_file
+            (Error_in_config_file
                ("Obligatory element " ^ name ^ " not in tag " ^ in_tag))
     | _ -> ()
 
@@ -663,7 +661,7 @@ module Configuration = struct
       | Some spec_other_attributes -> spec_other_attributes attribute value
       | None ->
           raise
-            (Error_in_user_config_file
+            (Error_in_config_file
                ("Unexpected attribute " ^ attribute ^ " in tag " ^ in_tag)))
 
   let rec process_element
