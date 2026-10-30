@@ -39,3 +39,4 @@ val post_params :
 ```ocaml
 val parse_content_type : string -> content_type option
 ```
+`parse_content_type s` is the media type and the parameters of the Content-Type header value `s`, or `None` if it has no media type. The names of the parameters are in lowercase, and their values without quotes or escapes. Malformed parameters are ignored.
