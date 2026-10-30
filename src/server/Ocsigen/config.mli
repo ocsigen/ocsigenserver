@@ -200,3 +200,14 @@ val get_uploaddir : unit -> string option
 val set_maxuploadfilesize : int64 option -> unit
 val get_maxuploadfilesize : unit -> int64 option
 val has_config_file : bool ref
+
+type settings
+(** The settings that the tags of [<server>] set each time the configuration
+    file is read, such as [<maxretries>] or [<usedefaulthostname/>], unlike
+    those read at start-up only, such as the ports. *)
+
+val save_settings : unit -> settings
+(** [save_settings ()] is the current value of the settings. *)
+
+val restore_settings : settings -> unit
+(** [restore_settings s] sets the settings back to their values in [s]. *)

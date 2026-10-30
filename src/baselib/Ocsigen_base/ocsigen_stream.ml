@@ -41,6 +41,7 @@ type 'a t =
 
 let net_buffer_size = ref 8192
 let set_net_buffer_size i = net_buffer_size := i
+let get_net_buffer_size () = !net_buffer_size
 
 let empty follow =
   match follow with

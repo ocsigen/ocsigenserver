@@ -90,8 +90,9 @@ let reload_conf s =
   Fun.protect ~finally:Extensions.end_initialisation (fun () ->
     Parseconfig.later_pass s)
 
-(* Reloading the config file: it is read and applied once. On an error, the
-   hosts stay as they were, as [Parseconfig.later_pass] sets them last. *)
+(* Reloading the config file: it is read and applied once. On an error,
+   [Parseconfig.later_pass] leaves the hosts and the settings of [<server>]
+   as they were. *)
 let reload ?file () =
   (* That function cannot be interrupted??? *)
   Logs.warn ~src:section (fun fmt -> fmt "Reloading config file");

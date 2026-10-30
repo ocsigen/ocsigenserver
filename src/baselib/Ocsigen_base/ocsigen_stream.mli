@@ -132,3 +132,4 @@ end
 (* Small hack that will allow us to move [Ocsigen.Config] out of
    baselib. Not super-pretty. *)
 val set_net_buffer_size : int -> unit
+val get_net_buffer_size : unit -> int

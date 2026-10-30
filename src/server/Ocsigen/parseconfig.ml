@@ -564,9 +564,17 @@ and later_pass = function
       raise (Config_file_error ("tag <" ^ tag ^ "> unexpected inside <server>"))
   | _ -> raise (Config_file_error "Syntax error")
 
+(* On an error, the settings of the tags of [<server>] are put back as they
+   were, and the hosts stay as they were. What the extensions loaded or set
+   up before the error stays. *)
 let later_pass l =
   log_levels := [];
-  Extensions.set_hosts (later_pass l);
+  let settings = Config.save_settings () in
+  (match later_pass l with
+  | hosts -> Extensions.set_hosts hosts
+  | exception e ->
+      Config.restore_settings settings;
+      raise e);
   List.iter
     (fun (source, level) ->
        if not (Messages.set_source_level source (Some level))

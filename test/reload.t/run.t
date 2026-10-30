@@ -2,12 +2,14 @@ The reload order of the command pipe reads the configuration file once, and
 applies its changes. Self-contained (POSIX sh).
 
   $ . ../server-test-helpers.sh
-  $ mkdir -p log www new
+  $ mkdir -p log www/dir new
   $ echo index > www/index.html
+  $ echo dir > www/dir/index.html
   $ echo new > new/index.html
 
-The configuration has a tag that logs a warning each time it is read, and
-the sites given as argument:
+The configuration has a tag that logs a warning each time it is read, the
+sites given as first argument, and the tags of <server> given as second
+argument:
 
   $ write_conf () {
   >   cat > site.conf <<CONF
@@ -17,7 +19,8 @@ the sites given as argument:
   > <commandpipe>local.cmd</commandpipe>
   > <servertimeout>30</servertimeout>
   > <extension findlib-package="ocsigenserver.ext.staticmod"/>
-  > <host hostfilter="*">
+  > $2
+  > <host hostfilter="*" defaulthostname="example.org">
   > $1
   >   <static dir="www" />
   > </host>
@@ -64,6 +67,25 @@ the one that the file no longer has:
   ocsigen:main: [ERROR] Fatal - Error in configuration file: Unexpected tag <nosuchtag> inside <site dir="">
   $ curl -s --max-time 10 http://127.0.0.1:8091/new/index.html
   new
+
+Nor does it apply the settings of <server> that come before the error. With
+<usedefaulthostname/>, the redirection to a directory uses the host name of
+the configuration rather than the one of the request:
+
+  $ redirection () {
+  >   curl -s -o /dev/null -w '%{redirect_url}\n' --max-time 10 \
+  >     http://127.0.0.1:8091/dir
+  > }
+  $ redirection
+  http://127.0.0.1:8091/dir/
+  $ write_conf '<nosuchtag />' '<usedefaulthostname/>'
+  $ reload 'Config file reload failed' 2
+  $ redirection
+  http://127.0.0.1:8091/dir/
+  $ write_conf '' '<usedefaulthostname/>'
+  $ reload 'Config file reloaded' 2
+  $ redirection
+  http://example.org:8091/dir/
 
   $ (sleep 10; kill $SERVER_PID) >/dev/null 2>&1 &
   $ WATCHDOG=$!
