@@ -1,0 +1,4 @@
+(test
+ (name test_http1)
+ (package ocsigenserver)
+ (libraries ocsigen_http http))

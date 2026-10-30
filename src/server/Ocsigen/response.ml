@@ -49,8 +49,18 @@ let respond_string ?headers ~status ~body () =
   let body = Body.of_string body in
   make ~body response
 
-let respond_error ?headers ?(status = `Internal_server_error) ~body () =
-  respond_string ?headers ~status ~body:("Error: " ^ body) ()
+let respond_error
+      ?(headers = Header.init ())
+      ?(status = `Internal_server_error)
+      ~body
+      ()
+  =
+  let headers =
+    Header.add_unless_exists headers
+      Ocsigen_http.Header.Name.(to_string content_type)
+      "text/plain; charset=utf-8"
+  in
+  respond_string ~headers ~status ~body:("Error: " ^ body) ()
 
 let respond_not_found ?uri () =
   let body =
