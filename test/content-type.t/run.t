@@ -9,6 +9,7 @@ the <mimefile>, then the built-in table of magic-mime, then the default of
   $ for f in a.txt b.html c.zzz bla.qqq d.png e.unknownext f.svg g.js h.yyy \
   >   i.csv j.lat j.tab k.feed; do
   >   echo x > www/$f; done
+  $ echo x > www/README
 
 The mime.types file gives a type to an extension that magic-mime knows (js),
 and to one that a rule gives too (yyy):
@@ -124,31 +125,35 @@ read, before any request, and the types then come from magic-mime:
 
 Without <mimefile>, no mime.types file is read: serve mode logs no error
 about it, and the types come from magic-mime. Text gets the default charset,
-utf-8:
+utf-8. Magic-mime also knows some file names, such as README:
 
   $ ocsigenserver --serve www --port $PORT2 >serve.log 2>&1 &
   $ SERVE_PID=$!
   $ wait_server $SERVE_PID serve.log http://127.0.0.1:$PORT2/
-  $ ctypes "" http://127.0.0.1:$PORT2 a.txt c.zzz g.js
+  $ ctypes "" http://127.0.0.1:$PORT2 a.txt c.zzz g.js README
   a.txt: content-type: text/plain; charset=utf-8
   c.zzz: content-type: application/octet-stream
   g.js: content-type: application/javascript
+  README: content-type: text/x-plain; charset=utf-8
   $ grep -i "mime.types\|mime types" serve.log
   [1]
   $ kill $SERVE_PID
 
 In a program, ~mimefile of Ocsigen.Server.start applies to the hosts given
 to it. The file is read at start-up, before the first request: removing it
-then changes nothing.
+then changes nothing. The program answers the other paths with www/README,
+through Ocsigen.Response.respond_file without ~content_type, which takes the
+type from magic-mime:
 
   $ printf 'text/x-zzz zzz\n' > my.types
   $ ../content-type/test.exe >lib.log 2>&1 &
   $ LIB_PID=$!
   $ wait_server $LIB_PID lib.log local.sock local.cmd
   $ rm my.types
-  $ ctypes "--unix-socket local.sock" http://x c.zzz d.png
+  $ ctypes "--unix-socket local.sock" http://x c.zzz d.png other
   c.zzz: content-type: text/x-zzz; charset=utf-8
   d.png: content-type: image/png
+  other: content-type: text/x-plain
 
 With ~default_charset:None, the server has no default charset:
 

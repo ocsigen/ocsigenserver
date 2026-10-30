@@ -544,6 +544,13 @@ Bug fixes:
    the Content-Type of a file came from the built-in table of magic-mime,
    without a charset. That table now comes after the rules and the file. Text
    and XML files get a charset again (see the incompatible changes).
+   Staticmod and Ocsigen.Response.respond_file now give magic-mime the name
+   of the file rather than its path, so that it finds the names it knows.
+   Such files often have no extension: they were application/octet-stream,
+   and browsers downloaded them. README, LICENSE, META, opam, Changes, _tags
+   and _oasis are now text/x-plain, Makefile text/x-makefile and ChangeLog
+   text/x-changelog (by default with "; charset=utf-8" from Staticmod), and
+   browsers show them.
  * Static files: If-None-Match uses the weak comparison, as RFC 9110 requires:
    "x" now matches the ETag W/"x". All the If-None-Match lines of a request
    are read, and a comma within an entity tag no longer splits it.
