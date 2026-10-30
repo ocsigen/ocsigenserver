@@ -723,7 +723,7 @@ Most distributions have a special command to do that automatically (for the defa
 ```
 The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
 
-If the file has an error, the server logs it, followed by "Config file reload failed", and keeps its sites as they were (the server-wide settings that come before the error in the file may already be applied). Otherwise it logs "Config file reloaded".
+If the file has an error, the server logs it, followed by "Config file reload failed", and keeps its sites and its server-wide settings (the tags of `<server>`, such as `<maxretries>`) as they were. What the extensions did before the error is not undone: an extension that the file loads for the first time stays loaded, with its options, and Eliom may already have reloaded the modules of the sites that come before the error. Otherwise it logs "Config file reloaded".
 
 ### Stopping the server
 
