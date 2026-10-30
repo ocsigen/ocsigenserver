@@ -661,10 +661,87 @@ let listening_socket sockaddr =
     )
     (fun exn -> Lwt_unix.close fd >>= fun () -> Lwt.reraise exn)
 
+(* The locks on the files [path ^ ".lock"] that the server holds while it
+   listens on the Unix-domain sockets [path]. A lock is released when the
+   server stops, however it stops, so a server that gets it knows that no
+   other one uses the socket. The files stay open for the life of the server:
+   closing one releases its lock. *)
+let socket_locks = ref []
+
+(* [lock_socket path] takes the lock of the socket [path]: [`Locked] when the
+   server holds it now, [`Held] when another server holds it or when this one
+   already listens on [path], whatever its spelling (a lock is not exclusive
+   within a process, so its file is compared), and [`Unavailable error] when
+   it cannot be taken, for instance on NFS without a lock daemon, or with a
+   lock file of another user. *)
+let lock_socket path =
+  match
+    Unix.openfile (path ^ ".lock")
+      [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_CLOEXEC]
+      0o600
+  with
+  | exception Unix.Unix_error (error, _, _) -> `Unavailable error
+  | fd -> (
+      let {Unix.st_dev; st_ino; _} = Unix.fstat fd in
+      if List.mem_assoc (st_dev, st_ino) !socket_locks
+      then (Unix.close fd; `Held)
+      else
+        match Unix.lockf fd Unix.F_TLOCK 0 with
+        | () ->
+            socket_locks := ((st_dev, st_ino), fd) :: !socket_locks;
+            `Locked
+        | exception Unix.Unix_error ((Unix.EAGAIN | Unix.EACCES), _, _) ->
+            Unix.close fd; `Held
+        | exception Unix.Unix_error (error, _, _) ->
+            Unix.close fd; `Unavailable error
+    )
+
+(* Whether a program listens on the Unix-domain socket [path]. The connection
+   does not block: a full queue of connections also means that a program
+   listens, except on BSD and macOS, which refuse it. *)
+let socket_listened path =
+  let fd = Unix.socket ~cloexec:true Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+  Fun.protect ~finally:(fun () -> Unix.close fd) @@ fun () ->
+  Unix.set_nonblock fd;
+  match Unix.connect fd (Unix.ADDR_UNIX path) with
+  | () | (exception Unix.Unix_error ((Unix.EAGAIN | Unix.EINPROGRESS), _, _)) ->
+      true
+  | exception Unix.Unix_error (Unix.ECONNREFUSED, _, _) -> false
+
+(* Before listening on the Unix-domain socket [path]: the server fails at once
+   if another server uses it, as its lock tells. If the server gets the lock,
+   a socket of its user left at [path] by a server that could not remove it
+   is removed, unless a program that takes no lock, such as an earlier
+   version of the server, still listens on it. A socket of another user and a
+   file that is not a socket are kept: binding then fails. Without a lock,
+   nothing is removed. *)
+let claim_unix_socket path =
+  match lock_socket path with
+  | `Held -> raise (Unix.Unix_error (Unix.EADDRINUSE, "lock", path))
+  | `Unavailable error ->
+      Logs.warn ~src:section (fun fmt ->
+          fmt "Cannot lock %s.lock (%s): a socket left there is not removed"
+            path (Unix.error_message error)
+      )
+  | `Locked -> (
+    match Unix.lstat path with
+    | exception Unix.Unix_error (Unix.ENOENT, _, _) -> ()
+    | {Unix.st_kind = Unix.S_SOCK; st_uid; _} when st_uid = Unix.geteuid () ->
+        if socket_listened path
+        then raise (Unix.Unix_error (Unix.EADDRINUSE, "connect", path));
+        Logs.info ~src:section (fun fmt ->
+            fmt "Removing the socket %s, which no server uses" path
+        );
+        Unix.unlink path
+    | _ -> ()
+  )
+
 let listening_sockets address port =
   let inet addr = Unix.ADDR_INET (addr, port) in
   match address with
-  | `Unix path -> listening_socket (Unix.ADDR_UNIX path) >|= fun fd -> [fd]
+  | `Unix path ->
+      Lwt.wrap (fun () -> claim_unix_socket path) >>= fun () ->
+      listening_socket (Unix.ADDR_UNIX path) >|= fun fd -> [fd]
   | `IPv4 addr | `IPv6 addr -> listening_socket (inet addr) >|= fun fd -> [fd]
   | `All ->
       listening_socket (inet Unix.inet_addr_any) >>= fun ipv4 ->
