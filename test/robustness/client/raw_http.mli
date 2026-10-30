@@ -83,6 +83,7 @@ val render : ?status_only:bool -> ?validators:bool -> outcome -> string
 
 val status_codes : string -> int list
 (** [status_codes received] is the list of status codes of the responses in
-    [received], in order. Only lines that start with ["HTTP/"] at the
-    beginning of the data or after a line end are considered, so this is a
-    heuristic when bodies contain such lines. *)
+    [received], in order: the three digits that follow the version in status
+    lines. Only lines that start with ["HTTP/"] at the beginning of the data or
+    after a line end are considered, so this is a heuristic when bodies
+    contain such lines. *)

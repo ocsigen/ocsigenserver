@@ -27,4 +27,6 @@ let () =
     (String.concat " "
        (List.map string_of_int
           (Raw_http.status_codes
-             (response ^ "\r\nHTTP/1.1 404 Not Found\r\nHTTP/1.0 bad\r\n"))))
+             (response
+            ^ "\r\nHTTP/1.1 404 Not Found\r\nHTTP/1.0 bad\r\nHTTP/1.1 +20 x\r\nHTTP/1.1 0x1F4\r\nHTTP/1.1 2000\r\n"
+             ))))

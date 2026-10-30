@@ -202,13 +202,18 @@ let render ?(status_only = false) ?(validators = false) {received; ending} =
   String.concat "" (List.map (fun line -> escape line ^ "\n") lines)
   ^ ending_line ending ^ "\n"
 
-let status_codes received =
-  List.filter_map
-    (fun line ->
-       if is_status_line line
-       then
-         match String.split_on_char ' ' line with
-         | _ :: code :: _ -> int_of_string_opt code
-         | _ -> None
-       else None)
-    (split_lines received)
+let is_digit = function '0' .. '9' -> true | _ -> false
+
+(* The status code of a status line, "HTTP/1.1 200 OK". [int_of_string_opt]
+   alone would also accept "+20" or "0x1F4". *)
+let status_code line =
+  if is_status_line line
+  then
+    match String.split_on_char ' ' line with
+    | _ :: code :: _ when String.length code = 3 && String.for_all is_digit code
+      ->
+        int_of_string_opt code
+    | _ -> None
+  else None
+
+let status_codes received = List.filter_map status_code (split_lines received)
