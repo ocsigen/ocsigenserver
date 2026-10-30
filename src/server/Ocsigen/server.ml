@@ -70,11 +70,58 @@ let errmsg = function
     try Extensions.get_init_exn_handler () exn, 20
     with exn -> "Uncaught exception: " ^ Printexc.to_string exn, 100)
 
+(* In the detached process of daemon mode, until it is initialised, the pipe on
+   which it tells the command that launched it whether it started (see
+   [wait_for_daemon]). *)
+let daemon_status = ref None
+
+(* Send [status] to the command that launched the server in daemon mode: "R"
+   once initialised, or "E" and the message of the error that stops it. Only
+   the first status is sent. *)
+let send_daemon_status status =
+  Option.iter
+    (fun fd ->
+       daemon_status := None;
+       let oc = Unix.out_channel_of_descr fd in
+       (* The command may be gone: nobody then waits for the status. *)
+       (try output_string oc status; flush oc with Sys_error _ -> ());
+       close_out_noerr oc)
+    !daemon_status
+
 (* Log the error [e], which stops the server at start-up, and exit. *)
 let exit_with_error e =
   let msg, errno = errmsg e in
   Messages.errlog ("Fatal - " ^ msg);
+  send_daemon_status ("E" ^ msg);
   exit errno
+
+(* In daemon mode, the command that launched the server waits until the
+   detached process [pid] is initialised, reading its status on [fd]. If the
+   server does not start, the command fails with its error and exit code,
+   rather than leave it in the log files of the detached process. *)
+let wait_for_daemon pid fd =
+  let ic = Unix.in_channel_of_descr fd in
+  let error =
+    match In_channel.input_char ic with
+    | Some 'R' -> None
+    | Some 'E' -> Some (In_channel.input_all ic)
+    | _ -> Some "the server stopped during its initialisation; see its logs."
+  in
+  close_in_noerr ic;
+  error
+  |> Option.iter @@ fun msg ->
+     Messages.errlog ("Fatal - " ^ msg);
+     let rec wait () =
+       try snd (Unix.waitpid [] pid)
+       with Unix.Unix_error (Unix.EINTR, _, _) -> wait ()
+     in
+     exit (match wait () with Unix.WEXITED n when n <> 0 -> n | _ -> 1)
+
+let output_to_devnull () =
+  let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
+  Unix.dup2 devnull Unix.stdout;
+  Unix.dup2 devnull Unix.stderr;
+  Unix.close devnull
 
 (* Until the server configures its logging, its messages go to the terminal,
    unless the program has installed a reporter: without one, Logs would drop
@@ -447,18 +494,11 @@ let main config =
                  fmt ("Uncaught Exception" ^^ "@\n%s") (Printexc.to_string e)));
       (* Now apply host configuration: *)
       config ();
-      if Config.get_silent ()
-      then (
-        (* Close stderr, stdout stdin if silent *)
-        (* redirect stdout and stderr to /dev/null *)
-        let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
-        Unix.dup2 devnull Unix.stdout;
-        Unix.dup2 devnull Unix.stderr;
-        Unix.close devnull;
-        Unix.close Unix.stdin);
+      if Config.get_silent () then (output_to_devnull (); Unix.close Unix.stdin);
       (* detach from the terminal *)
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
+      send_daemon_status "R";
       (commandpipe
       |> Option.iter @@ fun fd ->
          let pipe =
@@ -558,10 +598,20 @@ let main config =
     (* set_passwd_if_needed sslinfo; *)
     if Config.get_daemon ()
     then
+      let status_in, status_out = Unix.pipe ~cloexec:true () in
       let pid = Unix.fork () in
       if pid = 0
-      then Lwt_main.run (run ())
+      then (
+        Unix.close status_in;
+        daemon_status := Some status_out;
+        (* The command reports the errors of the detached process on the
+           terminal: those that happen before its logs are open would be
+           written twice. *)
+        output_to_devnull ();
+        Lwt_main.run (run ()))
       else (
+        Unix.close status_out;
+        wait_for_daemon pid status_in;
         (* Only the detached process is silent: the user who launched the
            server learns its process id. *)
         Logs.app ~src:section (fun fmt -> fmt "Process %d detached" pid);
