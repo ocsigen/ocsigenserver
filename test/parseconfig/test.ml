@@ -10,7 +10,8 @@
    - the default and the wiring of [<commandpipe>] and [<logdir>];
    - the log levels set by [<loglevel>] and by the [logs:] command;
    - the warnings for the tags that are accepted but have no effect;
-   - the check of the sizes given through the API. *)
+   - the check of the sizes given through the API;
+   - the default ports, which skip the Unix-domain sockets. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
 let show_int64_option = function None -> "None" | Some n -> Int64.to_string n
@@ -222,3 +223,20 @@ let () =
     Ocsigen.Config.set_maxrequestbodysize (Some 0L));
   show "set_maxrequestbodysize None" (fun () ->
     Ocsigen.Config.set_maxrequestbodysize None)
+
+(* The default ports of the hosts are the first ones of the server that are
+   not Unix-domain sockets, which have no port, or 80 and 443. *)
+let () =
+  print_endline "\ndefault ports (HTTP, HTTPS):";
+  let show name ports ssl_ports =
+    Ocsigen.Config.set_ports ports;
+    Ocsigen.Config.set_ssl_ports ssl_ports;
+    Printf.printf "%s -> %d, %d\n" name
+      (Ocsigen.Config.get_default_port ())
+      (Ocsigen.Config.get_default_sslport ())
+  in
+  show "Unix-domain sockets first"
+    [`Unix "http.sock", 1; `All, 8080]
+    [`Unix "https.sock", 2; `All, 8443];
+  show "Unix-domain sockets only" [`Unix "http.sock", 1] [`Unix "https.sock", 2];
+  show "no ports" [] []
