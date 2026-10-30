@@ -52,10 +52,10 @@ val respond_error :
   -> body:string
   -> unit
   -> t
-(** Like [respond_string] with ["Error: "] appended to the body. The default
-    status is [`Internal_server_error].
-
-    @deprecated Use [respond_string] with a [~status] argument instead. *)
+(** Like [respond_string], with ["Error: "] prepended to the body, which is
+    text: the response has [Content-Type: text/plain; charset=utf-8], unless
+    [headers] gives another one. The default status is
+    [`Internal_server_error]. *)
 
 val respond_file :
    ?headers:Cohttp.Header.t

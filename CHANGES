@@ -296,6 +296,9 @@ Bug fixes:
    request for "EXAMPLE.ORG" used to miss the <host hostfilter="example.org">
    configuration, and its access restrictions, and could be served by another
    host.
+ * The error responses of the server, such as 404, and those of
+   Response.respond_error, now say that their body is text (Content-Type:
+   text/plain; charset=utf-8).
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
