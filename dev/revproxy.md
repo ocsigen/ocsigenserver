@@ -46,4 +46,5 @@ Note that if you are using ocsigen behind a reverse proxy that sets the X-Forwar
 ### Technical details
 
 - The reverse proxy does no caching for now.
+- When it gets no response from the target (refused connection, unknown name, TLS failure, connection closed...), the client gets a `502 Bad Gateway`, and the error log says why.
 - The query string is decoded, then encoded again before it is sent, so its encoding may change: for instance, `+` is sent as `%20` and `;` as `%3B`. `+` and `%20` both mean a space in a form, but a target that reads `+` literally, or splits the query on `;`, sees something else.
