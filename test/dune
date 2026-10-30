@@ -115,6 +115,10 @@
  (deps silent-console/test.exe))
 
 (cram
+ (applies_to start-settings)
+ (deps start-settings/test.exe))
+
+(cram
  (applies_to stream)
  (deps stream/test.exe))
 

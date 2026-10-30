@@ -84,6 +84,30 @@ Incompatible changes:
    limit also applies to the bodies that Revproxy forwards: raise it on a
    reverse proxy in front of a service that accepts larger bodies, with the
    new --max-request-body-size option for ocsigenserver --reverse-proxy.
+ * Ocsigen.Server.host returns an Ocsigen.Server.host_config, which
+   Ocsigen.Server.start makes once it has applied its options, rather than an
+   Ocsigen.Extensions.host_config. A program that only passes the result of
+   host to start still compiles, but:
+   - the instructions of the host are applied at that time, inside start,
+     rather than when host is called. An error raised by an instruction, such
+     as an invalid option of Eliom.App.run, comes from start, which stops the
+     server with it as for an error in a configuration file: it can no longer
+     be caught around host, and in daemon mode it happens in the detached
+     process;
+   - the default port of a host is the first port of ~ports (8080 when
+     ~ports is not given) rather than 80, and its default HTTPS port the
+     first port of ~ssl_ports rather than 443, as for the <port> of a
+     configuration file. These ports appear in the absolute URLs that the
+     server builds, such as the redirection of a directory to its URL with a
+     slash, or the links of Eliom with ~usedefaulthostname. Behind a reverse
+     proxy, give the public ports to host with ~default_httpport and
+     ~default_httpsport.
+ * The default charset of the hosts is utf-8 in every mode, as it was
+   already for a configuration file without <charset>. The hosts of
+   Ocsigen.Server.host, and serve mode, had none, so that the pages of Eliom
+   and the text files of Staticmod had no charset in their Content-Type.
+   ~default_charset:None of Ocsigen.Server.start gives no charset, and
+   Ocsigen.Config.get_default_charset returns Some "utf-8" by default.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -427,9 +451,15 @@ Bug fixes:
    Extendconfiguration, again. Since 3.0.0, they were read but not used:
    the Content-Type of a file came from the built-in table of magic-mime,
    without a charset. That table now comes after the rules and the file. Text
-   and XML files get the charset of the host again, so a text file served
-   from a configuration file now has "; charset=utf-8" by default (serve mode
-   gives no charset, as before).
+   and XML files get the charset of the host again, so a text file now has
+   "; charset=utf-8" by default.
+ * Ocsigen.Server.start: ~default_charset, ~uploaddir, ~maxuploadfilesize,
+   and the first port of ~ports and ~ssl_ports now apply to the hosts given
+   to it. OCaml evaluates these hosts first, and they took the settings in
+   effect before start: Eliom saw no upload directory, for instance, and
+   ports 80 and 443 as the default ones. A setting given to
+   Ocsigen.Server.host still wins. The default port of a host skips the
+   Unix-domain sockets of ~ports, which have no port.
 
 ==== 8.0.0 (2026-09-24) ===
 

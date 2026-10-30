@@ -109,6 +109,10 @@ type config_info =
 (** Configuration options, passed to (and modified by) extensions *)
 
 val default_config_info : unit -> config_info
+(** [default_config_info ()] is the configuration of a host that sets nothing
+    itself: its default charset, ports, upload directory and maximum upload
+    size are the server-wide settings of {!Ocsigen.Config} at the time of the
+    call. *)
 
 type request = {request_info : Request.t; request_config : config_info}
 

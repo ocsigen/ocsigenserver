@@ -81,3 +81,8 @@ the check of the sizes given through the API.
   Server.host ~maxuploadfilesize:(Some (-1L)) -> Invalid_argument: Ocsigen.Server.host ~maxuploadfilesize: negative size -1
   set_maxrequestbodysize (Some 0L) -> accepted
   set_maxrequestbodysize None -> accepted
+  
+  default ports (HTTP, HTTPS):
+  Unix-domain sockets first -> 8080, 8443
+  Unix-domain sockets only -> 80, 443
+  no ports -> 80, 443

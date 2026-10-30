@@ -10,5 +10,5 @@ header, as <outputfilter> does in the configuration file. POSIX sh.
   $ wait_server $SERVER_PID server.log local.sock local.cmd
   $ curl --unix-socket local.sock -s -D - -o /dev/null http://x/a.txt \
   > | grep -i '^content-type' | tr -d '\r'
-  content-type: text/html
+  content-type: text/html; charset=utf-8
   $ stop_server $SERVER_PID

@@ -108,7 +108,11 @@ val set_maxrequestbodysize : int64 option -> unit
 (** Raises [Invalid_argument] if the size is negative. *)
 
 val set_maxrequestbodysizeinmemory : int -> unit
+
 val set_default_charset : string option -> unit
+(** [set_default_charset c] sets the charset of the hosts that give none
+    themselves. [None] is no charset: the text responses then have none. *)
+
 val set_bindir : string -> unit
 val set_extdir : string -> unit
 
@@ -177,7 +181,11 @@ val get_max_connections_per_address : unit -> int
 val get_filebuffersize : unit -> int
 val get_maxrequestbodysize : unit -> int64 option
 val get_maxrequestbodysizeinmemory : unit -> int
+
 val get_default_charset : unit -> string option
+(** [get_default_charset ()] is the charset of the hosts that give none
+    themselves, [Some "utf-8"] unless {!set_default_charset} changed it. *)
+
 val get_bindir : unit -> string
 val get_extdir : unit -> string
 
@@ -188,8 +196,15 @@ val get_debugmode : unit -> bool
 val get_disablepartialrequests : unit -> bool
 val get_usedefaulthostname : unit -> bool
 val get_respect_pipeline : unit -> bool
+
 val get_default_port : unit -> int
+(** [get_default_port ()] is the first port of {!get_ports} that is not a
+    Unix-domain socket, which has no port, or 80 if there is none. *)
+
 val get_default_sslport : unit -> int
+(** [get_default_sslport ()] is as {!get_default_port} for {!get_ssl_ports},
+    or 443. *)
+
 val get_maxretries : unit -> int
 val get_shutdown_timeout : unit -> float option
 val get_ssl_info : unit -> ssl_info option
