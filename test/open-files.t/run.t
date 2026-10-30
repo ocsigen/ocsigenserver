@@ -61,4 +61,4 @@ its 100: it cannot accept any, and says so, even with the default.
   $ start tiny "-n 100"
   $ stop tiny
   $ grep -o "100 open files afford 0 connections, .*: it cannot accept any." tiny/log/errors.log
-  100 open files afford 0 connections, and the server needs one for each port it listens on (1): it cannot accept any.
+  100 open files afford 0 connections, and the server needs one for each socket it listens on (1): it cannot accept any.

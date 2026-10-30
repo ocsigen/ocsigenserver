@@ -262,9 +262,9 @@ let advice () =
 
 (* The maximum number of simultaneous connections, lowered to what the limit on
    open files affords: beyond it, the server could not accept connections any
-   more. The server listens on [ports] ports, and each one counts as a
-   connection while it waits for a new one. *)
-let max_number_of_connections ~ports =
+   more. The server listens on [sockets] sockets at most, and each one counts as
+   a connection while it waits for a new one. *)
+let max_number_of_connections ~sockets =
   let wanted = Config.get_max_number_of_connections () in
   match open_files ~connections:wanted with
   | Some files when affordable_connections files < wanted ->
@@ -272,12 +272,12 @@ let max_number_of_connections ~ports =
       let pp_advice fmt =
         Option.iter (Format.fprintf fmt " To accept more, %s.") (advice ())
       in
-      if affordable < ports
+      if affordable < sockets
       then
         Logs.err ~src:section (fun fmt ->
           fmt
-            "%d open files afford %d connections, and the server needs one for each port it listens on (%d): it cannot accept any.%t"
-            files affordable ports pp_advice)
+            "%d open files afford %d connections, and the server needs one for each socket it listens on (%d): it cannot accept any.%t"
+            files affordable sockets pp_advice)
       else if Config.max_number_of_connections_is_set ()
       then
         Logs.warn ~src:section (fun fmt ->
@@ -495,7 +495,13 @@ let main config =
          would have no effect. *)
       let max_connections =
         max_number_of_connections
-          ~ports:(List.length connection + List.length ssl_connection)
+          ~sockets:
+            (List.fold_left
+               (fun n address ->
+                  n + Ocsigen_cohttp.max_listening_sockets address)
+               0
+               (List.map fst connection
+               @ List.map (fun (address, _, _) -> address) ssl_connection))
       in
       Config.set_max_number_of_connections_in_effect max_connections;
       Conduit_lwt_server.set_max_active max_connections;

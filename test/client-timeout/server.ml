@@ -11,9 +11,12 @@
    the other scenarios run at once, all from the same address.
 
    With the argument [pool], it is instead a server with room for few
-   connections: <maxconnected> is 5, and since each of its two ports counts
-   for one connection while it waits for a new one, it is full at 4
-   connections. Its timeouts are long enough not to interfere.
+   connections: <maxconnected> is 5, and since each of its two listening
+   sockets counts for one connection while it waits for a new one, it is full
+   at 4 connections. Its timeouts are long enough not to interfere.
+
+   The servers listen on 127.0.0.1 only: a port alone would also listen on
+   IPv6, with a socket that counts too, and only where IPv6 is available.
 
    Its resources:
    - /slow answers after four seconds, longer than the timeout, the way a comet
