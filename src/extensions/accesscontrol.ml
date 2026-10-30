@@ -436,7 +436,15 @@ let parse_config parse_fun = function
 (* Registration of the extension for the config file: *)
 let () =
   Ocsigen.Extensions.register ~name:"accesscontrol"
-    ~fun_site:(fun _ _ _ _ _ -> parse_config)
+    ~fun_site:(fun userconf _ _ _ _ parse_fun -> function
+       (* A user must not make the server trust headers that any client can
+         send. *)
+       | Element ((("allow-forward-for" | "allow-forward-proto") as tag), _, _)
+         when Option.is_some userconf ->
+           raise
+             (Ocsigen.Extensions.Error_in_user_config_file
+                ("<" ^ tag ^ "/> is not allowed in user configuration files"))
+       | element -> parse_config parse_fun element)
     ()
 
 let if_ condition ithen ielse vh ci p = function

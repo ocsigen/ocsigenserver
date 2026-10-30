@@ -31,12 +31,15 @@ all the paths used in {{!page-staticmod}Staticmod} must be relative, and are app
 The syntax of user configuration files is usually the same as the one of the part between [<host>] and [</host>] in the main configuration file. However, the extensions can choose to disallow some options that are unsafe in user mode,
 or forbid user mode entirely. See their individual documentation for details.
 
-{b Security.} Today, only {{!page-staticmod}Staticmod} (paths below
-[localpath], no [root]) and {{!page-extendconfiguration}Extendconfiguration}
-(no [followsymlinks="always"]) restrict what a user file can do. The other
-extensions that the server loads can be used in user files as in the main
-configuration file, with the rights of the server: for instance
-{{!page-revproxy}Revproxy}, {{!page-redirectmod}Redirectmod},
-{{!page-accesscontrol}Accesscontrol}, or Eliom, whose [<eliom module=...>]
-loads OCaml code. Use Userconf only if you trust your users, or load only the
-extensions that are safe for them.
+{b Security.} Some directives are refused in user files: [<revproxy>], which
+would reach the services that only the server can reach, and
+[<allow-forward-for/>] and [<allow-forward-proto/>], which would make the
+server trust headers that any client can send. {{!page-staticmod}Staticmod}
+only serves files below [localpath], without [root], and
+{{!page-extendconfiguration}Extendconfiguration} refuses
+[followsymlinks="always"]. Eliom sites cannot be defined in user files. The
+other extensions that the server loads can be used in user files as in the
+main configuration file, for instance {{!page-redirectmod}Redirectmod} or
+{{!page-outputfilter}Outputfilter}. When a user file holds a refused
+directive or a syntax error, each request that it handles gets a 500, and
+the error log says why.
