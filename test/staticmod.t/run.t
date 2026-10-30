@@ -1,7 +1,7 @@
 Staticmod with a configuration file.
 
   $ . ../server-test-helpers.sh
-  $ free_ports 1
+  $ free_ports 2
   $ mkdir -p www/.git www/.well-known www/sub open
   $ echo index > www/index.html
   $ echo secret > www/.env; echo secret > www/.git/config
@@ -87,3 +87,32 @@ A value other than true or false is refused:
   exit 50
   $ grep -o 'Bad value "maybe" in <static hidedotfiles=.*' bad.log
   Bad value "maybe" in <static hidedotfiles="..." />: it should be true or false
+
+A response to HEAD does not leave its file open. With at most 256 open files,
+the server still serves a file after 300 HEAD on it, and logs no error about
+the bodies that it did not send:
+
+  $ mkdir -p limited/log
+  $ cat > limited.conf <<CONF
+  > <ocsigen><server>
+  > <port>127.0.0.1:$PORT2</port>
+  > <logdir>limited/log</logdir>
+  > <extension findlib-package="ocsigenserver.ext.staticmod"/>
+  > <host hostfilter="*"><static dir="www" /></host>
+  > </server></ocsigen>
+  > CONF
+  $ sh -c "ulimit -n 256; exec ocsigenserver -c limited.conf" \
+  >   >limited.log 2>&1 &
+  $ LIMITED_PID=$!
+  $ trap 'kill $SERVER_PID $LIMITED_PID 2>/dev/null' EXIT
+  $ wait_server $LIMITED_PID limited.log http://127.0.0.1:$PORT2/sub/file
+  $ curl -s -I --max-time 30 $(for i in $(seq 300); do
+  >   echo http://127.0.0.1:$PORT2/sub/file; done) |
+  >   tr -d '\r' | grep -c '^HTTP/1.1 200 OK$'
+  300
+  $ curl -s -w ' %{http_code}\n' --max-time 10 http://127.0.0.1:$PORT2/sub/file
+  visible
+   200
+  $ grep -c 'Error resolving file' limited/log/warnings.log
+  0
+  [1]
