@@ -20,7 +20,7 @@ let () =
   in
   let reopened = ref 0 in
   while not (Atomic.get finished) do
-    Lwt_main.run (Ocsigen.Messages.open_files ());
+    Ocsigen.Messages.open_files ();
     incr reopened
   done;
   (match Domain.join logging with

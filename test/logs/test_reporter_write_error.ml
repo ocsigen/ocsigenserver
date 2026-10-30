@@ -37,7 +37,7 @@ let () =
       (Filename.concat dir "stderr")
       [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC]
   in
-  Lwt_main.run (Ocsigen.Messages.open_files ());
+  Ocsigen.Messages.open_files ();
   let src = Logs.Src.create "test:reporter-write-error" in
   let result =
     match

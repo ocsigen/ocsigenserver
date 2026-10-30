@@ -57,7 +57,11 @@ let errmsg = function
       , 50 )
   | Dynlink_wrapper.Error e ->
       "Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
-  | Unix.Unix_error _ as e -> Printexc.to_string e, 9
+  | Unix.Unix_error (error, fn, arg) ->
+      ( Printf.sprintf "%s%s: %s" fn
+          (if arg = "" then "" else " " ^ arg)
+          (Unix.error_message error)
+      , 9 )
   | Ssl.Private_key_error msg -> "bad password: " ^ msg, 10
   | Config.Config_file_error msg | Extensions.Error_in_config_file msg ->
       "Error in configuration file: " ^ msg, 50
@@ -70,11 +74,58 @@ let errmsg = function
     try Extensions.get_init_exn_handler () exn, 20
     with exn -> "Uncaught exception: " ^ Printexc.to_string exn, 100)
 
+(* In the detached process of daemon mode, until it is initialised, the pipe on
+   which it tells the command that launched it whether it started (see
+   [wait_for_daemon]). *)
+let daemon_status = ref None
+
+(* Send [status] to the command that launched the server in daemon mode: "R"
+   once initialised, or "E" and the message of the error that stops it. Only
+   the first status is sent. *)
+let send_daemon_status status =
+  Option.iter
+    (fun fd ->
+       daemon_status := None;
+       let oc = Unix.out_channel_of_descr fd in
+       (* The command may be gone: nobody then waits for the status. *)
+       (try output_string oc status; flush oc with Sys_error _ -> ());
+       close_out_noerr oc)
+    !daemon_status
+
 (* Log the error [e], which stops the server at start-up, and exit. *)
 let exit_with_error e =
   let msg, errno = errmsg e in
   Messages.errlog ("Fatal - " ^ msg);
+  send_daemon_status ("E" ^ msg);
   exit errno
+
+(* In daemon mode, the command that launched the server waits until the
+   detached process [pid] is initialised, reading its status on [fd]. If the
+   server does not start, the command fails with its error and exit code,
+   rather than leave it in the log files of the detached process. *)
+let wait_for_daemon pid fd =
+  let ic = Unix.in_channel_of_descr fd in
+  let error =
+    match In_channel.input_char ic with
+    | Some 'R' -> None
+    | Some 'E' -> Some (In_channel.input_all ic)
+    | _ -> Some "the server stopped during its initialisation; see its logs."
+  in
+  close_in_noerr ic;
+  error
+  |> Option.iter @@ fun msg ->
+     Messages.errlog ("Fatal - " ^ msg);
+     let rec wait () =
+       try snd (Unix.waitpid [] pid)
+       with Unix.Unix_error (Unix.EINTR, _, _) -> wait ()
+     in
+     exit (match wait () with Unix.WEXITED n when n <> 0 -> n | _ -> 1)
+
+let output_to_devnull () =
+  let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
+  Unix.dup2 devnull Unix.stdout;
+  Unix.dup2 devnull Unix.stderr;
+  Unix.close devnull
 
 (* Until the server configures its logging, its messages go to the terminal,
    unless the program has installed a reporter: without one, Logs would drop
@@ -109,7 +160,7 @@ let reload ?file () =
 let () =
   let f _s = function
     | ["reopen_logs"] ->
-        Messages.open_files () >>= fun () ->
+        Messages.open_files ();
         Logs.warn ~src:section (fun fmt -> fmt "Log files reopened");
         Lwt.return ()
     | ["reload"] -> reload (); Lwt.return ()
@@ -400,8 +451,12 @@ let main config =
         raise exn
     in
     let extensions_connector = Extensions.compute_result in
-    let run () =
-      Messages.open_files () >>= fun () ->
+    (* [initialise ()] initialises the server, and is the function that runs
+       it, in the Lwt loop. The initialisation runs before the loop, as some
+       of it runs a loop of its own: the initialisation of Ocsipersist (sqlite
+       and dbm) calls [Lwt_main.run], which cannot be nested. *)
+    let initialise () =
+      Messages.open_files ();
       let ports = Config.get_ports () and ssl_ports = Config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
       let ssl_connection =
@@ -447,80 +502,82 @@ let main config =
                  fmt ("Uncaught Exception" ^^ "@\n%s") (Printexc.to_string e)));
       (* Now apply host configuration: *)
       config ();
-      if Config.get_silent ()
-      then (
-        (* Close stderr, stdout stdin if silent *)
-        (* redirect stdout and stderr to /dev/null *)
-        let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
-        Unix.dup2 devnull Unix.stdout;
-        Unix.dup2 devnull Unix.stderr;
-        Unix.close devnull;
-        Unix.close Unix.stdin);
+      if Config.get_silent () then (output_to_devnull (); Unix.close Unix.stdin);
       (* detach from the terminal *)
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
-      (commandpipe
-      |> Option.iter @@ fun fd ->
-         let pipe =
-           Lwt_unix.of_unix_file_descr fd |> Lwt_io.(of_fd ~mode:input)
-         in
-         let rec f () =
-           Lwt_io.read_line pipe >>= fun s ->
-           Messages.warning ("Command received: " ^ s);
-           Lwt.catch
-             (fun () ->
-                let prefix, c =
-                  match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
-                  | [] -> raise Command.Unknown_command
-                  | a :: l -> (
-                    try
-                      let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
-                      Some aa, ab :: l
-                    with Not_found -> None, a :: l)
-                in
-                Command.get_command_function () ?prefix s c)
-             (function
-               | Command.Unknown_command ->
-                   Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
-                   Lwt.return ()
-               | e ->
-                   (* A failing order must not stop the command pipe: the
+      fun () ->
+        (commandpipe
+        |> Option.iter @@ fun fd ->
+           let pipe =
+             Lwt_unix.of_unix_file_descr fd |> Lwt_io.(of_fd ~mode:input)
+           in
+           let rec f () =
+             Lwt_io.read_line pipe >>= fun s ->
+             Messages.warning ("Command received: " ^ s);
+             Lwt.catch
+               (fun () ->
+                  let prefix, c =
+                    match
+                      Ocsigen_base.Lib.String.split ~multisep:true ' ' s
+                    with
+                    | [] -> raise Command.Unknown_command
+                    | a :: l -> (
+                      try
+                        let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
+                        Some aa, ab :: l
+                      with Not_found -> None, a :: l)
+                  in
+                  Command.get_command_function () ?prefix s c)
+               (function
+                 | Command.Unknown_command ->
+                     Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
+                     Lwt.return ()
+                 | e ->
+                     (* A failing order must not stop the command pipe: the
                       later ones, such as the reopen_logs of a log rotation,
                       would be ignored. *)
-                   Logs.err ~src:section (fun fmt ->
-                     fmt "Command %S failed: %s" s (Printexc.to_string e));
-                   Lwt.return ())
-           >>= f
-         in
-         ignore (f () : 'a Lwt.t));
-      (* Enforce the maximum number of simultaneous connections: conduit
+                     Logs.err ~src:section (fun fmt ->
+                       fmt "Command %S failed: %s" s (Printexc.to_string e));
+                     Lwt.return ())
+             >>= f
+           in
+           ignore (f () : 'a Lwt.t));
+        (* Enforce the maximum number of simultaneous connections: conduit
          throttles its accept loop (across all listening sockets, as file
          descriptors are a global resource) while the number of active
          connections exceeds this cap. Without this call the configured limit
          would have no effect. *)
-      let max_connections =
-        max_number_of_connections
-          ~sockets:
-            (List.fold_left
-               (fun n address ->
-                  n + Ocsigen_cohttp.max_listening_sockets address)
-               0
-               (List.map fst connection
-               @ List.map (fun (address, _, _) -> address) ssl_connection))
-      in
-      Config.set_max_number_of_connections_in_effect max_connections;
-      Conduit_lwt_server.set_max_active max_connections;
-      Lwt.join
-        (List.map
-           (fun (address, port) ->
-              Ocsigen_cohttp.service ~address ~port
-                ~connector:extensions_connector ())
-           connection
-        @ (List.map (fun (address, port, (crt, key)) ->
-             Ocsigen_cohttp.service
-               ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-               ~address ~port ~connector:extensions_connector ()))
-            ssl_connection)
+        let max_connections =
+          max_number_of_connections
+            ~sockets:
+              (List.fold_left
+                 (fun n address ->
+                    n + Ocsigen_cohttp.max_listening_sockets address)
+                 0
+                 (List.map fst connection
+                 @ List.map (fun (address, _, _) -> address) ssl_connection))
+        in
+        Config.set_max_number_of_connections_in_effect max_connections;
+        Conduit_lwt_server.set_max_active max_connections;
+        (* The server is ready once all its sockets are open: the command of
+           daemon mode then fails on a port already in use too. *)
+        Lwt.all
+          (List.map
+             (fun (address, port) -> Ocsigen_cohttp.listen ~address ~port ())
+             connection
+          @ List.map
+              (fun (address, port, (crt, key)) ->
+                 Ocsigen_cohttp.listen
+                   ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+                   ~address ~port ())
+              ssl_connection)
+        >>= fun listening ->
+        send_daemon_status "R";
+        Lwt.join
+          (List.map
+             (Ocsigen_cohttp.serve ~connector:extensions_connector)
+             listening)
       (*
          Messages.warning "Ocsigen has been launched (initialisations ok)";
 
@@ -558,17 +615,29 @@ let main config =
     (* set_passwd_if_needed sslinfo; *)
     if Config.get_daemon ()
     then
+      let status_in, status_out = Unix.pipe ~cloexec:true () in
       let pid = Unix.fork () in
       if pid = 0
-      then Lwt_main.run (run ())
+      then (
+        Unix.close status_in;
+        daemon_status := Some status_out;
+        (* The command reports the errors of the detached process on the
+           terminal: those that happen before its logs are open would be
+           written twice. *)
+        output_to_devnull ();
+        let serve = initialise () in
+        Lwt_main.run (serve ()))
       else (
+        Unix.close status_out;
+        wait_for_daemon pid status_in;
         (* Only the detached process is silent: the user who launched the
            server learns its process id. *)
         Logs.app ~src:section (fun fmt -> fmt "Process %d detached" pid);
         write_pid pid)
     else (
       write_pid (Unix.getpid ());
-      Lwt_main.run (run ()))
+      let serve = initialise () in
+      Lwt_main.run (serve ()))
   with e -> exit_with_error e
 
 let exec config =

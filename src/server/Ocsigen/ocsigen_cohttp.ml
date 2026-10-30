@@ -527,31 +527,74 @@ let log_connection_error = function
    <maxconnected>. *)
 let services = ref 0
 
-(* A TCP socket listening on [addr] and [port], as Conduit makes them, except
-   that an IPv6 socket accepts IPv6 connections only, whatever the default of
-   the system: [`All] listens on IPv4 with a socket of its own. *)
-let listening_socket addr port =
-  let sockaddr = Unix.ADDR_INET (addr, port) in
+let string_of_sockaddr = function
+  | Unix.ADDR_UNIX path -> path
+  | Unix.ADDR_INET (addr, port) ->
+      let addr = Unix.string_of_inet_addr addr in
+      if String.contains addr ':'
+      then Printf.sprintf "[%s]:%d" addr port
+      else Printf.sprintf "%s:%d" addr port
+
+(* A socket listening on [sockaddr], as Conduit makes them, except that an
+   IPv6 socket accepts IPv6 connections only, whatever the default of the
+   system: [`All] listens on IPv4 with a socket of its own. *)
+let listening_socket sockaddr =
   let domain = Unix.domain_of_sockaddr sockaddr in
   Lwt.wrap (fun () -> Lwt_unix.socket domain Unix.SOCK_STREAM 0) >>= fun fd ->
   Lwt.catch
     (fun () ->
        Lwt_unix.setsockopt fd Unix.SO_REUSEADDR true;
        if domain = Unix.PF_INET6 then Lwt_unix.setsockopt fd Unix.IPV6_ONLY true;
-       Lwt_unix.bind fd sockaddr >|= fun () ->
+       Lwt.catch
+         (fun () -> Lwt_unix.bind fd sockaddr)
+         (function
+           | Unix.Unix_error (error, "bind", _) ->
+               (* With the address, which the error does not give. *)
+               Lwt.fail
+                 (Unix.Unix_error (error, "bind", string_of_sockaddr sockaddr))
+           | exn -> Lwt.reraise exn)
+       >|= fun () ->
        Lwt_unix.listen fd 128;
        Lwt_unix.set_close_on_exec fd;
        fd)
     (fun exn -> Lwt_unix.close fd >>= fun () -> Lwt.reraise exn)
 
+(* A Unix-domain socket of this user at [path], which a server left as it
+   stopped and that no server listens on any more, is removed, so that the
+   server can listen there. A socket on which a server listens, or that
+   belongs to another user, and a file that is not a socket are kept: binding
+   then fails. The connection is not blocking: a server whose queue of
+   connections is full listens. *)
+let remove_stale_socket path =
+  match Unix.lstat path with
+  | exception Unix.Unix_error (Unix.ENOENT, _, _) -> ()
+  | {Unix.st_kind = Unix.S_SOCK; st_uid; _} when st_uid = Unix.geteuid () -> (
+      let fd = Unix.socket ~cloexec:true Unix.PF_UNIX Unix.SOCK_STREAM 0 in
+      Fun.protect ~finally:(fun () -> Unix.close fd) @@ fun () ->
+      Unix.set_nonblock fd;
+      match Unix.connect fd (Unix.ADDR_UNIX path) with
+      | ()
+      | (exception Unix.Unix_error ((Unix.EAGAIN | Unix.EINPROGRESS), _, _)) ->
+          ()
+      | exception Unix.Unix_error (Unix.ECONNREFUSED, _, _) ->
+          Logs.info ~src:section (fun fmt ->
+            fmt "Removing the socket %s, which no server listens on" path);
+          Unix.unlink path)
+  | _ -> ()
+
 let listening_sockets address port =
+  let inet addr = Unix.ADDR_INET (addr, port) in
   match address with
-  | `IPv4 addr | `IPv6 addr -> listening_socket addr port >|= fun fd -> [fd]
+  | `Unix path ->
+      Lwt.wrap (fun () -> remove_stale_socket path) >>= fun () ->
+      listening_socket (Unix.ADDR_UNIX path) >|= fun fd -> [fd]
+  | `IPv4 addr | `IPv6 addr -> listening_socket (inet addr) >|= fun fd -> [fd]
   | `All ->
-      listening_socket Unix.inet_addr_any port >>= fun ipv4 ->
+      listening_socket (inet Unix.inet_addr_any) >>= fun ipv4 ->
       Lwt.catch
         (fun () ->
-           listening_socket Unix.inet6_addr_any port >|= fun ipv6 -> [ipv4; ipv6])
+           listening_socket (inet Unix.inet6_addr_any) >|= fun ipv6 ->
+           [ipv4; ipv6])
         (function
           | Unix.Unix_error
               ( (Unix.EAFNOSUPPORT | Unix.EPROTONOSUPPORT | Unix.EADDRNOTAVAIL)
@@ -567,7 +610,15 @@ let max_listening_sockets = function
   | `All -> 2
   | `IPv4 _ | `IPv6 _ | `Unix _ -> 1
 
-let service ?ssl ~address ~port ~connector () =
+type listening =
+  { address : Config.socket_type
+  ; port : int
+  ; ssl : bool
+  ; tls : Ssl.context option
+  ; ctx : Conduit_lwt_unix.ctx
+  ; sockets : Lwt_unix.file_descr list }
+
+let listen ?ssl ~address ~port () =
   (* TLS is handled here rather than by Conduit, so that the handshake and the
      closing of a session are in the hands of the server. Its context is made
      first: if it fails, no socket is left listening without being served. *)
@@ -577,21 +628,16 @@ let service ?ssl ~address ~port ~connector () =
     | _, Some ssl -> Some (tls_context ssl)
   in
   Conduit_lwt_unix.init () >>= fun ctx ->
-  (match address with
-    | `Unix f -> Lwt.return [`Unix_domain_socket (`File f)]
-    | (`All | `IPv4 _ | `IPv6 _) as address ->
-        listening_sockets address port
-        >|= List.map (fun fd -> `TCP (`Socket fd)))
-  >>= fun modes ->
-  services := !services + List.length modes;
+  listening_sockets address port >|= fun sockets ->
+  services := !services + List.length sockets;
   Connection_guard.set_capacity
     (Config.get_max_number_of_connections () - !services + 1);
   Connection_guard.start ();
+  {address; port; ssl = Option.is_some ssl; tls; ctx; sockets}
+
+let serve {address; port; ssl; tls; ctx; sockets} ~connector =
   (* We catch the INET_ADDR of the server *)
-  let callback =
-    let ssl = match ssl with Some _ -> true | None -> false in
-    handler ~ssl ~address ~port ~connector
-  in
+  let callback = handler ~ssl ~address ~port ~connector in
   let serve ~guard flow ic oc =
     let spec =
       Cohttp_lwt_unix.Server.make_expert ~conn_closed
@@ -658,10 +704,16 @@ let service ?ssl ~address ~port ~connector () =
                Option.iter Connection_guard.Per_address.release client;
                Lwt.return_unit)
   in
+  (* Conduit serves a listening socket the same way whatever its domain: it
+     tells a Unix-domain client by its address. *)
   Lwt.join
     (List.map
-       (fun mode ->
-          Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
+       (fun fd ->
+          Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx
+            ~mode:(`TCP (`Socket fd))
             on_connection)
-       modes)
+       sockets)
   >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())
+
+let service ?ssl ~address ~port ~connector () =
+  listen ?ssl ~address ~port () >>= serve ~connector

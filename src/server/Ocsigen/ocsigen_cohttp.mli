@@ -19,8 +19,26 @@ val shutdown : float option -> unit
 
 val max_listening_sockets : Config.socket_type -> int
 (** [max_listening_sockets address] is the number of sockets that
-    [service ~address] listens on, at most: two for [`All], one for IPv4 and
+    [listen ~address] opens, at most: two for [`All], one for IPv4 and
     one for IPv6, and one otherwise. *)
+
+type listening
+(** Sockets listening for the connections of a server, not served yet. *)
+
+val listen :
+   ?ssl:string * string * (bool -> string) option
+  -> address:Config.socket_type
+  -> port:int
+  -> unit
+  -> listening Lwt.t
+(** [listen ?ssl ~address ~port ()] opens the sockets of a server on [address]
+    and [port], with TLS if [ssl] gives a certificate, its key and the
+    function that asks for the password of the key. It fails if a socket
+    cannot be opened, for instance on a port already in use. *)
+
+val serve : listening -> connector:(Request.t -> Response.t Lwt.t) -> unit Lwt.t
+(** [serve l ~connector] serves the connections of [l], answering their
+    requests with [connector], until the server stops. *)
 
 val service :
    ?ssl:string * string * (bool -> string) option
@@ -29,4 +47,5 @@ val service :
   -> connector:(Request.t -> Response.t Lwt.t)
   -> unit
   -> unit Lwt.t
-(** initialize a main loop of http server *)
+(** [service ?ssl ~address ~port ~connector ()] is {!listen}, then
+    {!serve}. *)

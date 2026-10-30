@@ -430,6 +430,22 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Daemon mode (-d, or ~daemon for Ocsigen.Server.start): the command waits
+   until the detached process is initialised and listens. If the server does
+   not start, for instance on an error in a <host> or on a port already in
+   use, the command now fails with the error and its exit code, and writes no
+   pid file. It used to say that the process was detached and succeed,
+   leaving the error in the log files.
+ * A log file that cannot be opened stops the server with "can't open log
+   file" and the reason, and exit code 50, as an error in the configuration.
+   It used to be an uncaught Sys_error, with exit code 100.
+ * An error of the system that stops the server is written as "bind
+   127.0.0.1:8080: Address already in use", with the address for a socket,
+   rather than as the OCaml exception Unix.Unix_error.
+ * A Unix-domain socket left by a server that could not remove it, killed for
+   instance, no longer stops the next server with "Address already in use":
+   the server removes a socket of its user that no server listens on. A
+   socket on which a server listens is kept.
 
 ==== 8.0.0 (2026-09-24) ===
 

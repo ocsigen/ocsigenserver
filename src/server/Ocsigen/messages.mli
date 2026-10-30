@@ -85,7 +85,10 @@ val logs_to_console : unit -> bool
 
 (**/**)
 
-val open_files : unit -> unit Lwt.t
+val open_files : unit -> unit
+(** [open_files ()] sends the logs where the configuration says. It is
+    synchronous, so that the server can open them before its Lwt loop runs. *)
+
 val command_f : exn -> string -> string list -> unit Lwt.t
 
 val syslog_reporter : Logs.reporter -> Logs.reporter
