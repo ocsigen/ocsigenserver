@@ -181,9 +181,25 @@ let takes_charset mime =
   || String.ends_with ~suffix:"/xml" mime
   || String.ends_with ~suffix:"+xml" mime
 
+(* Whether [mime] has a charset parameter, which a rule can give. Parameter
+   names are case-insensitive, and may come after a tab ([String.sep] removes
+   spaces only). *)
+let has_charset mime =
+  match String.split ';' mime with
+  | [] -> false
+  | _ :: parameters ->
+      List.exists
+        (fun parameter ->
+          match String.sep '=' parameter with
+          | name, _ -> String.lowercase_ascii (String.trim name) = "charset"
+          | exception Not_found -> false
+        )
+        parameters
+
 let content_type ~mime_assoc ~charset_assoc file =
   let mime = find_mime file mime_assoc in
   match find_charset file charset_assoc with
   | "" -> mime
-  | charset when takes_charset mime -> mime ^ "; charset=" ^ charset
+  | charset when takes_charset mime && not (has_charset mime) ->
+      mime ^ "; charset=" ^ charset
   | _ -> mime

@@ -101,7 +101,8 @@ val content_type :
   mime_assoc:mime_assoc -> charset_assoc:charset_assoc -> file -> string
 (** [content_type ~mime_assoc ~charset_assoc file] is the value of the
     [Content-Type] header for [file]: its MIME type, followed by its charset
-    for text and XML types, when [charset_assoc] gives one. *)
+    for text and XML types, when [charset_assoc] gives one and the type has
+    no charset parameter yet. *)
 
 val default_mime : mime_assoc -> mime_type
 val set_default_mime : mime_assoc -> mime_type -> mime_assoc
