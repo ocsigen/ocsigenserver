@@ -1,0 +1,3 @@
+(executables
+ (names server chunks)
+ (libraries ocsigenserver cohttp-lwt lwt lwt.unix))

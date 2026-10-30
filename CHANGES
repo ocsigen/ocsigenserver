@@ -310,8 +310,32 @@ Bug fixes:
    extensions did before the error, such as loading a new extension, is not
    undone. The error no longer starts with "Fatal - ", as the server keeps
    running.
- * A multipart part without a Content-Disposition header, or without a name
-   in it, now gets a 400 Bad Request instead of a 500.
+ * A malformed multipart body gets a 400 Bad Request instead of a 500: a part
+   without a Content-Disposition header or without a name in it, a part header
+   line that is not a header, a body cut right after its first boundary, and a
+   multipart Content-Type without a boundary. A boundary that is empty or
+   longer than 70 characters, which RFC 2046 forbids, was accepted and is now
+   refused the same way. The reason is logged at the info level.
+ * The parameters of the Content-Disposition of a multipart part are matched
+   whole: "name" no longer matches "filename". A part whose filename came
+   first got its file name as name, and a part with only a filename is now
+   refused with a 400 Bad Request. Values without quotes are read whole
+   (only their middle was kept). Parameter names are read whatever their
+   case, with spaces allowed around "=" and ";", as RFC 7578 and RFC 6266
+   allow. A malformed Content-Disposition, such as one with an unterminated
+   quote, gets a 400 too.
+   In a quoted value, \" and \\ are read as escapes, as some clients (Go,
+   curl --form-escape) send them; other backslashes are kept. Browsers do not
+   escape backslashes: when the parameters cannot be read with escapes, as
+   when a file name ends with a backslash, they are read again with every
+   backslash kept. Two backslashes in a row that a browser sends are read as
+   one, as nothing tells them from an escaped backslash.
+ * The boundary of a multipart Content-Type may be quoted, as in
+   boundary="a b", and the names of the parameters of a Content-Type are
+   read whatever their case, as RFC 2045 allows. Such bodies got a 400 Bad
+   Request. Ocsigen.Request.content_type and the Content-Type of uploaded
+   files now give the names of the parameters in lowercase, and their values
+   without quotes.
  * When closing an uploaded file fails, the server no longer closes it a
    second time, which could close another file, and reports the first error.
  * A configuration file that is not well-formed XML is reported again, with

@@ -41,12 +41,14 @@ the second one is created after the answer:
   $ ls uploads
 
 A part without a Content-Disposition header, or without a name in it, is a
-bad request. The file of a previous part is removed all the same:
+bad request. The file of a previous part is removed all the same. raw sends
+its first argument as the body, with the Content-Type given as second
+argument, if any, and prints the status:
 
   $ raw () {
   >   printf %b "$1" | curl --unix-socket local.sock -s -o /dev/null \
   >     -w '%{http_code}\n' --data-binary @- \
-  >     -H 'Content-Type: multipart/form-data; boundary=B' http://x/; }
+  >     -H "Content-Type: ${2:-multipart/form-data; boundary=B}" http://x/; }
   $ raw '--B\r\nContent-Type: text/plain\r\n\r\nx\r\n--B--\r\n'
   400
   $ raw '--B\r\nContent-Disposition: form-data\r\n\r\nx\r\n--B--\r\n'
@@ -54,7 +56,83 @@ bad request. The file of a previous part is removed all the same:
   $ raw '--B\r\nContent-Disposition: form-data; name="f"; filename="a.txt"\r\n\r\nx\r\n--B\r\n\r\ny\r\n--B--\r\n'
   400
   $ ls uploads
-  $ grep -c 'a part has no' server.log
-  3
+
+A malformed body is a bad request too: a part header that is not a header,
+a boundary without line end, a multipart Content-Type without boundary. The
+file of a previous part is removed all the same:
+
+  $ raw '--B\r\nContent-Disposition: form-data; name="f"; filename="a.txt"\r\n\r\nx\r\n--B\r\nfoo\r\n\r\ny\r\n--B--\r\n'
+  400
+  $ raw '--B'
+  400
+  $ raw '--B\r\nContent-Disposition: form-data; name="f"\r\n\r\nx\r\n--B--\r\n' multipart/form-data
+  400
+  $ ls uploads
+
+A boundary has 1 to 70 characters (RFC 2046), so an empty boundary and one
+of 71 characters are refused. One of 70 characters is accepted. An empty
+value without quotes makes the parameters malformed, so that the
+Content-Type has no boundary:
+
+  $ raw '--\r\nContent-Disposition: form-data; name="f"\r\n\r\nx\r\n----\r\n' 'multipart/form-data; boundary=""'
+  400
+  $ raw '--\r\nContent-Disposition: form-data; name="f"\r\n\r\nx\r\n----\r\n' 'multipart/form-data; boundary='
+  400
+  $ b70=$(printf %070d 0)
+  $ for b in ${b70}1 $b70; do
+  >   raw "--$b\r\nContent-Disposition: form-data; name=\"f\"\r\n\r\nx\r\n--$b--\r\n" \
+  >     "multipart/form-data; boundary=$b"; done
+  400
+  200
+
+The name of a part is its name parameter, never its filename parameter, so a
+part with only a filename is a bad request, as is a Content-Disposition with
+an unterminated quote. The parameters may come in any order, with spaces
+around "=" and ";", in any case, quoted or not, and with a trailing ";":
+
+  $ raw '--B\r\nContent-Disposition: form-data; filename="a.txt"\r\n\r\nx\r\n--B--\r\n'
+  400
+  $ raw '--B\r\nContent-Disposition: form-data; name="f\r\n\r\nx\r\n--B--\r\n'
+  400
+  $ fields () {
+  >   printf %b "$1" | curl --unix-socket local.sock -s --data-binary @- \
+  >     -H 'Content-Type: multipart/form-data; boundary=B' http://x/; }
+  $ fields '--B\r\nContent-Disposition: form-data; filename="a.txt"; name="f";\r\n\r\nx\r\n--B--\r\n'
+  f a.txt true
+  $ fields '--B\r\nContent-Disposition: form-data ; FileName = "name=g;" ; Name = f\r\n\r\nx\r\n--B--\r\n'
+  f name=g; true
+  $ fields '--B\r\nContent-Disposition: form-data; name=field; filename=a.txt\r\n\r\nx\r\n--B--\r\n'
+  field a.txt true
+
+In a quoted value, \" and \\ are escapes, as some clients send them; another
+backslash is kept (printf %b turns each \\ below into one backslash):
+
+  $ fields '--B\r\nContent-Disposition: form-data; name="f"; filename="a\\"b\\\\c\\d.txt"\r\n\r\nx\r\n--B--\r\n'
+  f a"b\c\d.txt true
+
+Browsers do not escape backslashes, so a name or a file name that ends with
+one comes with a backslash before its closing quote. Read with escapes, the
+parameters are malformed, so they are read again with every backslash kept:
+
+  $ fields '--B\r\nContent-Disposition: form-data; name="f"; filename="dir\\"\r\n\r\nx\r\n--B--\r\n'
+  f dir\ true
+  $ fields '--B\r\nContent-Disposition: form-data; name="f\\"; filename="a.txt"\r\n\r\nx\r\n--B--\r\n'
+  f\ a.txt true
+  $ ls uploads
+
+The reasons are logged:
+
+  $ sed -n 's/.*Multipart body rejected: //p' server.log
+  a part has no Content-Disposition header
+  a part has no name in its Content-Disposition
+  a part has no Content-Disposition header
+  a part has a malformed header
+  the body or one of its parts ends too early
+  its Content-Type has no boundary
+  its boundary is empty
+  its Content-Type has no boundary
+  its boundary is longer than 70 characters
+  a part has no name in its Content-Disposition
+  a part has a malformed Content-Disposition
 
   $ stop_server $SERVER_PID

@@ -10,9 +10,12 @@ module Pcre = Re.Pcre
 
 let section = Logs.Src.create "ocsigen:server:multipart"
 
+(* [Multipart_error reason]: the body is malformed. It becomes a bad request
+   in [scan_multipart_body_from_stream], which logs [reason]. *)
 exception Multipart_error of string
 exception Ocsigen_upload_forbidden
 
+let malformed_header = Multipart_error "a part has a malformed header"
 let match_end result = snd (Pcre.get_substring_ofs result 0)
 let cr_or_lf_re = S.regexp "[\013\n]"
 
@@ -42,7 +45,7 @@ let scan_header
     match S.string_match header_re parstr i with
     | Some r ->
         let i' = match_end r in
-        if i' > end_pos then raise (Multipart_error "Mimestring.scan_header");
+        if i' > end_pos then raise malformed_header;
         let name =
           if downcase
           then String.lowercase_ascii (S.matched_group r 1 parstr)
@@ -59,7 +62,7 @@ let scan_header
       (* The header must end with an empty line *)
       match S.string_match empty_line_re parstr i with
       | Some r' -> List.rev l, match_end r'
-      | None -> raise (Multipart_error "Mimestring.scan_header"))
+      | None -> raise malformed_header)
   in
   parse_header start_pos []
 
@@ -109,21 +112,14 @@ let rec search_window s re start =
     | Ocsigen_base.Ocsigen_stream.Cont _ as s -> search_window s re start)
 
 let search_end_of_line s k =
-  (* Search LF beginning at position k *)
-  Lwt.catch
-    (fun () ->
-       search_window s lf_re k >>= fun (s, x) -> Lwt.return (s, match_end x))
-    (function
-      | Not_found ->
-          Lwt.fail
-            (Multipart_error
-               "read_multipart_body: MIME boundary without line end")
-      | e -> Lwt.fail e)
+  (* Search LF beginning at position k. Without one, as after a boundary
+     without line end, it fails with [Stream_too_small]. *)
+  search_window s lf_re k >>= fun (s, x) -> Lwt.return (s, match_end x)
 
 let search_first_boundary ~boundary s =
   (* Search boundary per regexp; return the position of the
      character immediately following the boundary (on the same
-     line), or raise Not_found. *)
+     line). Without a boundary, it fails with [Stream_too_small]. *)
   let re = S.regexp ("\n--" ^ Pcre.quote boundary) in
   search_window s re 0 >>= fun (s, x) -> Lwt.return (s, match_end x)
 
@@ -136,7 +132,7 @@ let check_beginning_is_boundary ~boundary s =
   | Ocsigen_base.Ocsigen_stream.Cont (ss, _f) as str2 ->
       let long = String.length ss in
       let isdelim = long >= ldel && String.sub ss 0 ldel = del in
-      let islast = isdelim && String.sub ss ldel 2 = "--" in
+      let islast = isdelim && long >= ldel + 2 && String.sub ss ldel 2 = "--" in
       Lwt.return (str2, isdelim, islast)
 
 let rec parse_parts ~boundary ~decode_part s uses_crlf =
@@ -186,22 +182,14 @@ let read_multipart_body ~boundary ~decode_part s =
     parse_parts ~boundary ~decode_part s uses_crlf
   else
     (* Look for the first boundary *)
-    Lwt.catch
-      (fun () ->
-         search_first_boundary ~boundary s >>= fun (s, k_eob) ->
-         search_end_of_line s k_eob >>= fun (s, k_eol) ->
-         let uses_crlf =
-           (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r'
-         in
-         (* Printf.printf "k_eol=%d\n" k_eol; *)
-         Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
-         (* Begin with first part: *)
-         parse_parts ~boundary ~decode_part s uses_crlf)
-      (function
-        | Not_found ->
-            (* No boundary at all, empty body *)
-            Lwt.return []
-        | e -> Lwt.fail e)
+    search_first_boundary ~boundary s >>= fun (s, k_eob) ->
+    search_end_of_line s k_eob >>= fun (s, k_eol) ->
+    let uses_crlf =
+      (Ocsigen_base.Ocsigen_stream.current_buffer s).[k_eol - 2] = '\r'
+    in
+    Ocsigen_base.Ocsigen_stream.skip s (Int64.of_int k_eol) >>= fun s ->
+    (* Begin with first part: *)
+    parse_parts ~boundary ~decode_part s uses_crlf
 
 let empty_stream =
   Ocsigen_base.Ocsigen_stream.get
@@ -245,6 +233,12 @@ let decode_part ~max_size ~create ~add ~stop stream =
             Lwt.return ())
        >>= fun () -> Lwt.fail error)
 
+(* [reject_body reason] logs why a multipart body is rejected, and fails with
+   [Ocsigen_Bad_Request], which the client gets as a 400. *)
+let reject_body reason =
+  Logs.info ~src:section (fun fmt -> fmt "Multipart body rejected: %s" reason);
+  Lwt.fail Ocsigen_base.Lib.Ocsigen_Bad_Request
+
 let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
   let decode_part = decode_part ~max_size ~create ~add ~stop in
   Lwt.catch
@@ -254,10 +248,19 @@ let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
        read_multipart_body ~boundary ~decode_part s >>= fun _ -> Lwt.return ())
     (function
       | Ocsigen_base.Ocsigen_stream.Stream_too_small ->
-          Lwt.fail Ocsigen_base.Lib.Ocsigen_Bad_Request
+          reject_body "the body or one of its parts ends too early"
+      | Multipart_error reason -> reject_body reason
       | e -> Lwt.fail e)
 
-let get_boundary ctparams = List.assoc "boundary" ctparams
+(* [get_boundary ctparams] is the boundary in the parameters [ctparams] of a
+   multipart Content-Type. It has 1 to 70 characters (RFC 2046). *)
+let get_boundary ctparams =
+  match List.assoc_opt "boundary" ctparams with
+  | None -> reject_body "its Content-Type has no boundary"
+  | Some "" -> reject_body "its boundary is empty"
+  | Some boundary when String.length boundary > 70 ->
+      reject_body "its boundary is longer than 70 characters"
+  | Some boundary -> Lwt.return boundary
 
 let counter =
   let c = ref (Random.int 1000000) in
@@ -265,25 +268,97 @@ let counter =
     c := !c + 1;
     !c
 
-let field field content_disp =
-  let (_ : int), res =
-    S.search_forward (S.regexp (field ^ "=.([^\"]*).;?")) content_disp 0
+(* [header_params s] is [(v, params)], where [v] is the value at the start of
+   the header value [s], such as a media type or a disposition type, and
+   [params] the list of the parameters that follow it, with their names in
+   lowercase, or [None] if they are malformed. It reads the parameters of the
+   Content-Type (RFC 2045) and Content-Disposition (RFC 6266, RFC 7578)
+   headers. The names are matched whole, so that [filename] is never taken
+   for [name]. Spaces may surround "=" and ";", a trailing ";" is ignored,
+   and a value is a token or a quoted string. An unquoted value may also
+   contain "=", although RFC 2045 requires quotes then, so that a boundary
+   such as ==a=b is accepted as it always was. In a quoted string, \" and \\
+   stand for " and \, as some clients escape them (Go, curl --form-escape);
+   any other backslash is kept. Browsers do not escape backslashes (they
+   percent-encode double quotes), so a value ending with a backslash, such as
+   a file name, makes the parameters malformed when read this way: they are
+   then read again with every backslash kept. Two backslashes in a row sent
+   by a browser are still read as one, as nothing tells them from an escaped
+   backslash. *)
+let header_params s =
+  let len = String.length s in
+  (* [scan p i] is the first position from [i] whose character does not
+     satisfy [p], or [len]. *)
+  let rec scan p i = if i < len && p s.[i] then scan p (i + 1) else i in
+  let is_space c = c = ' ' || c = '\t' in
+  let is_token c = not (is_space c || c = '=' || c = ';' || c = '"') in
+  (* [quoted ~escapes i] reads a quoted string whose first character is at
+     [i]. With [escapes], \" and \\ stand for " and \. *)
+  let quoted ~escapes i =
+    let b = Buffer.create 16 in
+    let rec loop j =
+      if j >= len
+      then None
+      else
+        match s.[j] with
+        | '"' -> Some (Buffer.contents b, j + 1)
+        | '\\'
+          when escapes && j + 1 < len && (s.[j + 1] = '"' || s.[j + 1] = '\\')
+          ->
+            Buffer.add_char b s.[j + 1];
+            loop (j + 2)
+        | c ->
+            Buffer.add_char b c;
+            loop (j + 1)
+    in
+    loop i
   in
-  S.matched_group res 1 content_disp
+  let value ~escapes i =
+    if i < len && s.[i] = '"'
+    then quoted ~escapes (i + 1)
+    else
+      let j = scan (fun c -> is_token c || c = '=') i in
+      if j = i then None else Some (String.sub s i (j - i), j)
+  in
+  let rec params ~escapes acc i =
+    let i = scan is_space i in
+    if i = len
+    then Some (List.rev acc)
+    else if s.[i] <> ';'
+    then None
+    else
+      let i = scan is_space (i + 1) in
+      if i = len
+      then Some (List.rev acc)
+      else
+        let j = scan is_token i in
+        let k = scan is_space j in
+        if j = i || k = len || s.[k] <> '='
+        then None
+        else
+          let name = String.lowercase_ascii (String.sub s i (j - i)) in
+          match value ~escapes (scan is_space (k + 1)) with
+          | Some (v, next) -> params ~escapes ((name, v) :: acc) next
+          | None -> None
+  in
+  let start = scan is_space 0 in
+  let stop = scan is_token start in
+  ( String.sub s start (stop - start)
+  , match params ~escapes:true [] stop with
+    | Some _ as ps -> ps
+    | None -> params ~escapes:false [] stop )
 
 let parse_content_type s =
-  match Ocsigen_base.Lib.String.split ';' s with
-  | [] -> None
-  | a :: l -> (
-    try
-      let typ, subtype = Ocsigen_base.Lib.String.sep '/' a in
-      let params =
-        try List.map (Ocsigen_base.Lib.String.sep '=') l with Not_found -> []
+  let media_type, params = header_params s in
+  match String.index_opt media_type '/' with
+  | None -> None
+  | Some i ->
+      let typ = String.sub media_type 0 i
+      and subtype =
+        String.sub media_type (i + 1) (String.length media_type - i - 1)
       in
-      (*VVV If syntax error, we return no parameter at all *)
-      Some ((typ, subtype), params)
-      (*VVV If syntax error in type, we return None *)
-    with Not_found -> None)
+      (* Malformed parameters are ignored *)
+      Some ((typ, subtype), Option.value params ~default:[])
 
 type content_type = (string * string) * (string * string) list
 
@@ -326,8 +401,8 @@ let post_params_multipart_form_data
   =
   (* Same question here, should this stream be consumed after an
      error? *)
+  get_boundary ctparams >>= fun boundary ->
   let body = Ocsigen_base.Ocsigen_stream.get body_gen
-  and boundary = get_boundary ctparams
   and params = ref []
   and files = ref [] in
   let rec add p s =
@@ -348,23 +423,25 @@ let post_params_multipart_form_data
         parse_content_type ct
       with _ -> None
     in
-    let malformed reason =
-      Logs.info ~src:section (fun fmt ->
-        fmt "Multipart body rejected: a part has no %s" reason);
-      raise Ocsigen_base.Lib.Ocsigen_Bad_Request
-    in
+    let malformed reason = raise (Multipart_error ("a part has " ^ reason)) in
     let cd =
       match List.assoc_opt "content-disposition" hs with
       | Some cd -> cd
-      | None -> malformed "Content-Disposition header"
+      | None -> malformed "no Content-Disposition header"
+    in
+    let cd_params =
+      match header_params cd with
+      | _, Some cd_params -> cd_params
+      | _, None -> malformed "a malformed Content-Disposition"
     in
     let p_name =
-      match field "name" cd with
-      | p_name -> p_name
-      | exception Not_found -> malformed "name in its Content-Disposition"
+      match List.assoc_opt "name" cd_params with
+      | Some p_name -> p_name
+      | None -> malformed "no name in its Content-Disposition"
     in
-    try
-      let store = field "filename" cd in
+    match List.assoc_opt "filename" cd_params with
+    | None -> p_name, `No_file (Buffer.create 1024)
+    | Some store -> (
       match upload_dir with
       | Some dname ->
           let fname =
@@ -379,8 +456,7 @@ let post_params_multipart_form_data
             fmt "%s" ("Upload file opened: " ^ fname));
           on_file fname;
           p_name, `Some_file (fname, store, fd, content_type)
-      | None -> raise Ocsigen_upload_forbidden
-    with Not_found -> p_name, `No_file (Buffer.create 1024)
+      | None -> raise Ocsigen_upload_forbidden)
   and stop filesize = function
     | p_name, `No_file to_buf ->
         params := !params @ [p_name, Buffer.contents to_buf];

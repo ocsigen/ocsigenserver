@@ -48,6 +48,10 @@
  (deps multipart/test.exe))
 
 (cram
+ (applies_to multipart-decoding)
+ (deps multipart-decoding/server.exe multipart-decoding/chunks.exe))
+
+(cram
  (applies_to open-files)
  (deps open-files/limits.exe open-files/server.exe))
 
