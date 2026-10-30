@@ -163,8 +163,11 @@ val host :
   -> instruction list
   -> Extensions.host_config
 (** You can define one or several virtual hosts corresponding to a given
-    server name or port. Raises [Invalid_argument] if [maxuploadfilesize] is
-    negative. *)
+    server name or port. [regexp] is matched against the host name of the
+    request, case-insensitively, without its final dot if any. It must match
+    from the start of the name, but not up to its end: end it with [$], as in
+    ["example\\.org$"], or it also matches [example.org.evil.net]. Raises
+    [Invalid_argument] if [maxuploadfilesize] is negative. *)
 
 val site :
    ?charset:string

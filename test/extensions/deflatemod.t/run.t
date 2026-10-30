@@ -120,6 +120,7 @@ compression:
 
   $ mkdir empty_dir && curl_ empty_dir/ --compressed
   HTTP/1.1 404 Not Found
+  content-type: text/plain; charset=utf-8
   server: Ocsigen
   content-length: 16
   connection: keep-alive
@@ -127,6 +128,7 @@ compression:
   Error: Not Found
   $ curl_ doesnt_exists.html --compressed
   HTTP/1.1 404 Not Found
+  content-type: text/plain; charset=utf-8
   server: Ocsigen
   content-length: 16
   connection: keep-alive

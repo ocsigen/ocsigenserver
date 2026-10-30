@@ -1,0 +1,81 @@
+== check_host
+HTTP/1.1 /, (no field): missing Host
+HTTP/1.0 /, (no field): ok
+HTTP/1.1 /, Host: example.org: ok
+HTTP/1.1 /, Host: example.org:8080: ok
+HTTP/1.1 /, Host: example.org:: ok
+HTTP/1.1 /, Host: : ok
+HTTP/1.1 /, Host: 192.0.2.1:80: ok
+HTTP/1.1 /, Host: [2001:db8::1]:80: ok
+HTTP/1.1 /, Host: [::1]: ok
+HTTP/1.1 /, Host: example.org:65535: ok
+HTTP/1.1 /, Host: example.org:00080: ok
+HTTP/1.1 /, Host: my_host-1.example.org: ok
+HTTP/1.1 /, Host: :80: ok
+HTTP/1.1 /, Host: a | Host: a: repeated Host
+HTTP/1.0 /, Host: a | Host: b: repeated Host
+-- invalid values
+HTTP/1.1 /, Host: ex%41mple.org: invalid Host
+HTTP/1.1 /, Host: admin.test%0Aevil: invalid Host
+HTTP/1.1 /, Host: [v1.x]: invalid Host
+HTTP/1.1 /, Host: [admin.test]: invalid Host
+HTTP/1.1 /, Host: [192.0.2.1]: invalid Host
+HTTP/1.1 /, Host: user@example.org: invalid Host
+HTTP/1.1 /, Host: example.org/x: invalid Host
+HTTP/1.1 /, Host: example.org:80:80: invalid Host
+HTTP/1.1 /, Host: example.org:123456: invalid Host
+HTTP/1.1 /, Host: example.org:65536: invalid Host
+HTTP/1.1 /, Host: example.org:99999: invalid Host
+HTTP/1.1 /, Host: evil,x.admin.test: invalid Host
+HTTP/1.1 /, Host: a~b: invalid Host
+HTTP/1.1 /, Host: a!b: invalid Host
+HTTP/1.1 /, Host: a$b: invalid Host
+HTTP/1.1 /, Host: a&b: invalid Host
+HTTP/1.1 /, Host: a'b: invalid Host
+HTTP/1.1 /, Host: a(b: invalid Host
+HTTP/1.1 /, Host: a)b: invalid Host
+HTTP/1.1 /, Host: a*b: invalid Host
+HTTP/1.1 /, Host: a+b: invalid Host
+HTTP/1.1 /, Host: a;b: invalid Host
+HTTP/1.1 /, Host: a=b: invalid Host
+HTTP/1.1 /, Host: bücher.example: invalid Host
+HTTP/1.1 /, Host: example.org:x: invalid Host
+HTTP/1.1 /, Host: a b: invalid Host
+HTTP/1.1 /, Host: []: invalid Host
+HTTP/1.1 /, Host: [::1: invalid Host
+HTTP/1.1 /, Host: [::1]x: invalid Host
+-- request targets
+HTTP/1.1 *, Host: x: ok
+HTTP/1.1 http://example.org/a?b, Host: x: ok
+HTTP/1.1 HTTPS://example.org:8443, Host: x: ok
+HTTP/1.1 http://[::1]:8080/, Host: x: ok
+HTTP/1.1 http://%61dmin.test/, Host: x: invalid host in the request target
+HTTP/1.1 http://user@example.org/, Host: x: invalid host in the request target
+HTTP/1.1 http://evil,x.admin.test/, Host: x: invalid host in the request target
+HTTP/1.1 http:///a, Host: x: invalid host in the request target
+HTTP/1.1 http://:80/, Host: x: invalid host in the request target
+HTTP/1.1 ftp://example.org/, Host: x: invalid request target
+HTTP/1.1 example.org:443, Host: x: invalid request target
+HTTP/1.1 http://example.org/, (no field): missing Host
+== valid_field_values
+"(no field)": true
+"X-A: a b\tc\233~": true
+"X-A: ok | X-B: a\000b": false
+"X-A: a\rb": false
+"X-A: a\nb": false
+"X-A: a\027b": false
+"X-A: a\127b": false
+== request_method
+"GET": "GET"
+"PROPFIND": "PROPFIND"
+"get": "get"
+"\r\n\r\nGET": "GET"
+"\nPOST": "POST"
+"\rGET": invalid
+"\n\rGET": invalid
+"\r\r\nGET": invalid
+"\r\nFROB": "FROB"
+"\r\n": invalid
+"G(ET": invalid
+"G\001ET": invalid
+"GET\r\n": invalid
