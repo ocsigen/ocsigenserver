@@ -27,7 +27,7 @@ let resources _vh _config_info _path = function
 
 let () =
   Ocsigen.Server.start
-    ~ports:[`All, 8079]
+    ~ports:[`Unix "./local.sock", 0]
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
     ~command_pipe:"local.cmd" ~default_charset:(Some "utf-8")
     [Ocsigen.Server.host [resources]]

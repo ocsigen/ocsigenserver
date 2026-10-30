@@ -1,9 +1,15 @@
+(env
+ (_
+  (binaries
+   (free-port/free_port.exe as free_port))))
+
 (subdir
  extensions
  (cram
   (package ocsigenserver)
   (deps
    ../server-test-helpers.sh
+   %{bin:free_port}
    (package ocsigenserver)))
  (cram
   (applies_to deflatemod)
@@ -13,6 +19,7 @@
  (package ocsigenserver)
  (deps
   server-test-helpers.sh
+  %{bin:free_port}
   (package ocsigenserver)))
 
 (cram

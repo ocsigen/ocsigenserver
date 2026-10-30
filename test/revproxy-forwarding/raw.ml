@@ -1,4 +1,5 @@
-(* An upstream server for the reverse proxy tests (port 8069) that answers
+(* An upstream server for the reverse proxy tests, on the port given as
+   argument, that answers
    with raw responses, which Ocsigen Server would not send, then closes the
    connection. It serves one connection at a time. *)
 
@@ -27,10 +28,15 @@ let answer fd =
   close_out oc
 
 let () =
+  let port =
+    match Sys.argv with
+    | [|_; port|] -> int_of_string port
+    | _ -> failwith "usage: raw.exe PORT"
+  in
   Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
   let socket = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
   Unix.setsockopt socket Unix.SO_REUSEADDR true;
-  Unix.bind socket (Unix.ADDR_INET (Unix.inet_addr_loopback, 8069));
+  Unix.bind socket (Unix.ADDR_INET (Unix.inet_addr_loopback, port));
   Unix.listen socket 16;
   while true do
     let fd, _ = Unix.accept socket in
