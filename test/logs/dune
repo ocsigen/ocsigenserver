@@ -22,6 +22,14 @@
   unix
   threads.posix))
 
+(test
+ (name test_reporter_syslog_reopen)
+ (modules test_reporter_syslog_reopen)
+ (package ocsigenserver)
+ (enabled_if
+  (<> %{os_type} Win32))
+ (libraries ocsigenserver lwt.unix syslog-message))
+
 (tests
  (names
   test_reporter_over
