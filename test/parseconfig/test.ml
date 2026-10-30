@@ -226,7 +226,7 @@ let () =
   show "Server.host ~maxuploadfilesize:(Some (-1L))" (fun () ->
       ignore
         ( Ocsigen.Server.host ~maxuploadfilesize:(Some (-1L)) []
-          : Ocsigen.Extensions.host_config
+          : Ocsigen.Server.host_config
         )
   );
   show "set_maxrequestbodysize (Some 0L)" (fun () ->

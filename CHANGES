@@ -121,6 +121,24 @@ Incompatible changes:
    <loglevel source="ocsigen:ext:access-control"> also set the level of the
    messages of Authbasic. They now need
    <loglevel source="ocsigen:ext:authbasic">.
+ * Ocsigen.Server.host returns an Ocsigen.Server.host_config, which
+   Ocsigen.Server.start makes once it has applied its options, rather than an
+   Ocsigen.Extensions.host_config. A program that only passes the result of
+   host to start still compiles, but:
+   - the instructions of the host are applied at that time, inside start,
+     rather than when host is called. An error raised by an instruction, such
+     as an invalid option of Eliom.App.run, comes from start, which stops the
+     server with it as for an error in a configuration file: it can no longer
+     be caught around host, and in daemon mode it happens in the detached
+     process;
+   - the default port of a host is the first port of ~ports (8080 when
+     ~ports is not given) rather than 80, and its default HTTPS port the
+     first port of ~ssl_ports rather than 443, as for the <port> of a
+     configuration file. These ports appear in the absolute URLs that the
+     server builds, such as the redirection of a directory to its URL with a
+     slash, or the links of Eliom with ~usedefaulthostname. Behind a reverse
+     proxy, give the public ports to host with ~default_httpport and
+     ~default_httpsport.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -567,6 +585,13 @@ Bug fixes:
    origin to another. When <cors/> is in an <if> on the Origin, the other
    responses do not go through it: the manual shows how to add the header
    to them.
+ * Ocsigen.Server.start: ~default_charset, ~uploaddir, ~maxuploadfilesize,
+   and the first port of ~ports and ~ssl_ports now apply to the hosts given
+   to it. OCaml evaluates these hosts first, and they took the settings in
+   effect before start: Eliom saw no upload directory, for instance, and
+   ports 80 and 443 as the default ones. A setting given to
+   Ocsigen.Server.host still wins. The default port of a host skips the
+   Unix-domain sockets of ~ports given port 0, which have none.
 
 ==== 8.0.0 (2026-09-24) ===
 
