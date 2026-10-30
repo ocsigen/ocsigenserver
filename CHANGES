@@ -157,6 +157,8 @@ New features:
  * OCaml API: Ocsigen.Extensions.host_regexp compiles a host pattern of a
    virtual host, and Ocsigen.Extensions.without_final_dot removes the final
    dot of a host name.
+ * OCaml API: Ocsigen.Response.respond_error is no longer deprecated: the
+   server uses it for its error responses, and it adds their Content-Type.
 
 Bug fixes:
  * In syslog mode, reopening the logs (the reopen_logs order of a log
@@ -304,6 +306,9 @@ Bug fixes:
    request for "EXAMPLE.ORG" used to miss the <host hostfilter="example.org">
    configuration, and its access restrictions, and could be served by another
    host.
+ * The error responses of the server, such as 404, and those of
+   Response.respond_error, now say that their body is text (Content-Type:
+   text/plain; charset=utf-8).
  * The log reporters that Ocsigen Server installs, and its writes to the
    access log, can now be used from several domains or threads at once. Each
    message is formatted with no lock held, then written whole, in one call,
