@@ -80,11 +80,90 @@ let errmsg = function
     with exn -> "Uncaught exception: " ^ Printexc.to_string exn, 100
   )
 
+(* What the server does once it has started, and with the message of an error
+   that stops it before: tell the command of daemon mode (see
+   [wait_for_daemon]), or write or remove the pid file. Only the first of them
+   is done, once. *)
+let on_started = ref ignore
+let on_start_failure = ref (ignore : string -> unit)
+
+let start_outcome f =
+  on_started := ignore;
+  on_start_failure := ignore;
+  f ()
+
+let started () =
+  let f = !on_started in
+  start_outcome f
+
+let start_failed msg =
+  let f = !on_start_failure in
+  start_outcome (fun () -> f msg)
+
+(* Send [status] on [fd] to the command that launched the server in daemon
+   mode: "R" once started, or "E" and the message of the error that stops
+   it. *)
+let send_daemon_status fd status =
+  let oc = Unix.out_channel_of_descr fd in
+  (* The command may be gone: nobody then waits for the status. *)
+  (try output_string oc status; flush oc with Sys_error _ -> ());
+  close_out_noerr oc
+
 (* Log the error [e], which stops the server at start-up, and exit. *)
 let exit_with_error e =
   let msg, errno = errmsg e in
   Messages.errlog ("Fatal - " ^ msg);
+  start_failed msg;
   exit errno
+
+let rec waitpid pid =
+  try snd (Unix.waitpid [] pid)
+  with Unix.Unix_error (Unix.EINTR, _, _) -> waitpid pid
+
+(* Stop the detached process [pid] of daemon mode, and wait for it. *)
+let stop_daemon pid =
+  match Unix.kill pid Sys.sigterm with
+  | () -> ignore (waitpid pid : Unix.process_status)
+  | exception Unix.Unix_error (Unix.ESRCH, _, _) -> ()
+
+(* In daemon mode, the command that launched the server waits until the
+   detached process [pid] has started, reading its status on [fd]. If the
+   server does not start, the command runs [on_failure], then fails with its
+   error and exit code, rather than leave it in the log files of the
+   detached process. Interrupting the command (Ctrl-C) stops the server and
+   fails too. SIGINT is blocked from before the fork, and unblocked by
+   restoring [mask] once its handler is set, so that it cannot be missed.
+   Once the server has started, the handler stays until the caller restores
+   the previous one, which is returned. *)
+let wait_for_daemon pid fd ~mask ~on_failure =
+  let interrupted _ =
+    stop_daemon pid;
+    on_failure ();
+    Messages.errlog "Fatal - interrupted: the server is stopped.";
+    exit 130
+  in
+  let previous = Sys.signal Sys.sigint (Sys.Signal_handle interrupted) in
+  ignore (Unix.sigprocmask Unix.SIG_SETMASK mask : int list);
+  let ic = Unix.in_channel_of_descr fd in
+  let error =
+    match In_channel.input_char ic with
+    | Some 'R' -> None
+    | Some 'E' -> Some (In_channel.input_all ic)
+    | _ -> Some "the server stopped during its initialisation; see its logs."
+  in
+  close_in_noerr ic;
+  match error with
+  | None -> previous
+  | Some msg ->
+      on_failure ();
+      Messages.errlog ("Fatal - " ^ msg);
+      exit (match waitpid pid with Unix.WEXITED n when n <> 0 -> n | _ -> 1)
+
+let output_to_devnull () =
+  let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
+  Unix.dup2 devnull Unix.stdout;
+  Unix.dup2 devnull Unix.stderr;
+  Unix.close devnull
 
 (* Until the server configures its logging, its messages go to the terminal,
    unless the program has installed a reporter: without one, Logs would drop
@@ -492,19 +571,9 @@ let main config =
       );
       (* Now apply host configuration: *)
       config ();
-      if Config.get_silent ()
-      then (
-        (* Close stderr, stdout stdin if silent *)
-        (* redirect stdout and stderr to /dev/null *)
-        let devnull = Unix.openfile "/dev/null" [Unix.O_WRONLY] 0 in
-        Unix.dup2 devnull Unix.stdout;
-        Unix.dup2 devnull Unix.stderr;
-        Unix.close devnull;
-        Unix.close Unix.stdin
-      );
-      (* detach from the terminal *)
-      if Config.get_daemon () then ignore (Unix.setsid () : int);
+      if Config.get_silent () then (output_to_devnull (); Unix.close Unix.stdin);
       Extensions.end_initialisation ();
+      started ();
       (commandpipe
       |> Option.iter @@ fun fd ->
          let pipe =
@@ -601,33 +670,97 @@ let main config =
         Ssl.use_certificate !Server.ssl_context c k
   in
     *)
-    let write_pid pid =
-      match Config.get_pidfile () with
-      | None -> ()
-      | Some p ->
-          let spid = string_of_int pid ^ "\n" in
-          let len = String.length spid in
-          let f =
-            Unix.openfile p [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_TRUNC] 0o640
-          in
-          ignore (Unix.write_substring f spid 0 len : int);
-          Unix.close f
+    (* The pid file is opened before the server starts, so that the server
+       does not start if it cannot be written. The process id is written
+       once the server has started: a server that does not start leaves the
+       file of another one as it was, and removes the file it created. *)
+    let pid_file =
+      ref
+        (Option.map
+           (fun path ->
+             let existed = Sys.file_exists path in
+             ( path
+             , existed
+             , Unix.openfile path
+                 [Unix.O_WRONLY; Unix.O_CREAT; Unix.O_CLOEXEC]
+                 0o640 )
+           )
+           (Config.get_pidfile ())
+        )
     in
+    (* [close_pid_file f] is [f] applied to the pid file, which is then
+       closed, once. *)
+    let close_pid_file f =
+      Option.iter
+        (fun ((_, _, fd) as file) ->
+          pid_file := None;
+          Fun.protect ~finally:(fun () -> Unix.close fd) (fun () -> f file)
+        )
+        !pid_file
+    in
+    let write_pid pid =
+      close_pid_file @@ fun (_, _, fd) ->
+      let spid = string_of_int pid ^ "\n" in
+      Unix.ftruncate fd 0;
+      ignore (Unix.write_substring fd spid 0 (String.length spid) : int)
+    and remove_pid_file () =
+      close_pid_file @@ fun (path, existed, _) ->
+      if not existed
+      then
+        try Unix.unlink path
+        with Unix.Unix_error (error, _, _) ->
+          Logs.warn ~src:section (fun fmt ->
+              fmt "Cannot remove the pid file %s: %s" path
+                (Unix.error_message error)
+          )
+    in
+    (* Also when the process exits before the server has started, for
+       instance on a Ctrl-C or an [exit] during the initialisation. *)
+    at_exit remove_pid_file;
     (* set_passwd_if_needed sslinfo; *)
     if Config.get_daemon ()
     then
+      let status_in, status_out = Unix.pipe ~cloexec:true () in
+      let mask = Unix.sigprocmask Unix.SIG_BLOCK [Sys.sigint] in
       let pid = Unix.fork () in
       if pid = 0
-      then Lwt_main.run (run ())
+      then (
+        ignore (Unix.sigprocmask Unix.SIG_SETMASK mask : int list);
+        Unix.close status_in;
+        Option.iter (fun (_, _, fd) -> Unix.close fd) !pid_file;
+        pid_file := None;
+        (on_started := fun () -> send_daemon_status status_out "R");
+        (on_start_failure := fun msg -> send_daemon_status status_out ("E" ^ msg)
+        );
+        (* Detached from the terminal at once: its signals, such as the
+           Ctrl-C of the command, no longer reach the server. *)
+        ignore (Unix.setsid () : int);
+        (* The command reports the errors of the detached process on the
+           terminal: those that happen before its logs are open would be
+           written twice. *)
+        output_to_devnull ();
+        Lwt_main.run (run ())
+      )
       else (
+        Unix.close status_out;
+        let previous =
+          wait_for_daemon pid status_in ~mask ~on_failure:remove_pid_file
+        in
+        (* Nothing runs without its pid file: if it cannot be written, the
+           server is stopped and the command fails. *)
+        ( match write_pid pid with
+        | () -> ()
+        | exception e -> stop_daemon pid; raise e
+        );
+        Sys.set_signal Sys.sigint previous;
         (* Only the detached process is silent: the user who launched the
            server learns its process id. *)
         Logs.app ~src:section (fun fmt -> fmt "Process %d detached" pid
-        );
-        write_pid pid
+        )
       )
     else (
-      write_pid (Unix.getpid ());
+      (on_started := fun () -> write_pid (Unix.getpid ()));
+      (on_start_failure := fun _ -> remove_pid_file ());
       Lwt_main.run (run ())
     )
   with e -> exit_with_error e
