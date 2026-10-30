@@ -32,6 +32,7 @@ Ocsigen.Response
 Ocsigen.Multipart
 Ocsigen_cookie_map
 Ocsigen_http.Charset_mime
+Ocsigen_http.Http1
 }
 
 {2 Persistent data, writing in the logs, configuration file extension, polymorphic tables}

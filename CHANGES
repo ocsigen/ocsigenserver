@@ -84,6 +84,18 @@ Incompatible changes:
    limit also applies to the bodies that Revproxy forwards: raise it on a
    reverse proxy in front of a service that accepts larger bodies, with the
    new --max-request-body-size option for ocsigenserver --reverse-proxy.
+ * A request is now answered 400 (Bad Request), and its connection closed,
+   when it has no Host in HTTP/1.1, several Host header fields, or an
+   invalid Host: anything but a host name, an IPv4 address or an IPv6
+   address in brackets, with an optional port (at most 65535). A host name
+   is made of letters, digits, "-", "." and "_": the other characters that
+   RFC 3986 allows, such as "," or ";", are refused, as a proxy in front may
+   read the name differently. So are percent-encoded host names, raw
+   non-ASCII names (send the ASCII form of an internationalized name,
+   xn--...), and an invalid or empty host in a request target in absolute
+   form (http://host/...). Such requests used to be served, by the last
+   Host, by the first <host> of the configuration, or by the virtual host of
+   the decoded name.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
