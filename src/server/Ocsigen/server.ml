@@ -502,7 +502,6 @@ let main config =
       (* detach from the terminal *)
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
-      send_daemon_status "R";
       fun () ->
         (commandpipe
         |> Option.iter @@ fun fd ->
@@ -557,17 +556,24 @@ let main config =
         in
         Config.set_max_number_of_connections_in_effect max_connections;
         Conduit_lwt_server.set_max_active max_connections;
+        (* The server is ready once all its sockets are open: the command of
+           daemon mode then fails on a port already in use too. *)
+        Lwt.all
+          (List.map
+             (fun (address, port) -> Ocsigen_cohttp.listen ~address ~port ())
+             connection
+          @ List.map
+              (fun (address, port, (crt, key)) ->
+                 Ocsigen_cohttp.listen
+                   ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+                   ~address ~port ())
+              ssl_connection)
+        >>= fun listening ->
+        send_daemon_status "R";
         Lwt.join
           (List.map
-             (fun (address, port) ->
-                Ocsigen_cohttp.service ~address ~port
-                  ~connector:extensions_connector ())
-             connection
-          @ (List.map (fun (address, port, (crt, key)) ->
-               Ocsigen_cohttp.service
-                 ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-                 ~address ~port ~connector:extensions_connector ()))
-              ssl_connection)
+             (Ocsigen_cohttp.serve ~connector:extensions_connector)
+             listening)
       (*
          Messages.warning "Ocsigen has been launched (initialisations ok)";
 
