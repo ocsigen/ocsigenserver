@@ -115,6 +115,9 @@ New features:
    Ocsigen.Server.exec_config_file reads the configuration file and starts
    the server, and reports an error in the file as the ocsigenserver command
    does.
+ * The server warns about <filebuffersize>, <minthreads>, <maxthreads>,
+   <disablepartialrequests/> and <respectpipeline/> in the configuration
+   file, as it does for <servertimeout>: they are accepted but have no effect.
 
 Bug fixes:
  * Ocsigen_base.Loader.loadfiles, used for <extension findlib-package="...">
