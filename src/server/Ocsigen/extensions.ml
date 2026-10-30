@@ -49,6 +49,17 @@ let badconfig fmt =
 (* virtual hosts: *)
 type virtual_hosts = (string * Pcre.regexp * int option) list
 
+(* Host names are case-insensitive (RFC 9110, section 4.2.3). Not multiline:
+   "$" must only match at the end of the host name, not before a newline. *)
+let host_regexp re = Pcre.regexp ~flags:[`CASELESS] re
+
+(* The fully qualified form "example.org." names the same host as
+   "example.org". *)
+let without_final_dot name =
+  if String.ends_with ~suffix:"." name
+  then String.sub name 0 (String.length name - 1)
+  else name
+
 (* We cannot use generic comparison, as regexpes are abstract values that
    cannot be compared or hashed. However the string essentially contains
    the value that is compiled into a regexp, and we compare this instead *)
@@ -730,19 +741,14 @@ let ( start_initialisation
 
 let host_match ~(virtual_hosts : virtual_hosts) ~host ~port =
   let port_match = function None -> true | Some p -> p = port in
-  match host with
-  | None -> List.exists (fun (_, _, p) -> port_match p) virtual_hosts
-  (*VVV Warning! For HTTP/1.0, when host is absent,
-     we take the first one, even if it doesn't match!  *)
-  | Some host ->
-      let host_match regexp =
-        Ocsigen_base.Lib.Netstring_pcre.string_match regexp host 0 <> None
-      in
-      let rec aux = function
-        | [] -> false
-        | (_, a, p) :: l -> (port_match p && host_match a) || aux l
-      in
-      aux virtual_hosts
+  (* A request without Host (HTTP/1.0) is matched as an empty host name: like
+     a request for an unknown name, it goes to a host that accepts any name. *)
+  let host = Option.fold ~none:"" ~some:without_final_dot host in
+  List.exists
+    (fun (_, regexp, p) ->
+       port_match p
+       && Ocsigen_base.Lib.Netstring_pcre.string_match regexp host 0 <> None)
+    virtual_hosts
 
 (* Currently used only for error messages. *)
 let string_of_host (h : virtual_hosts) =

@@ -49,8 +49,18 @@ let respond_string ?headers ~status ~body () =
   let body = Body.of_string body in
   make ~body response
 
-let respond_error ?headers ?(status = `Internal_server_error) ~body () =
-  respond_string ?headers ~status ~body:("Error: " ^ body) ()
+let respond_error
+      ?(headers = Header.init ())
+      ?(status = `Internal_server_error)
+      ~body
+      ()
+  =
+  let headers =
+    Header.add_unless_exists headers
+      Ocsigen_http.Header.Name.(to_string content_type)
+      "text/plain; charset=utf-8"
+  in
+  respond_string ~headers ~status ~body:("Error: " ^ body) ()
 
 let respond_not_found ?uri () =
   let body =
@@ -61,18 +71,18 @@ let respond_not_found ?uri () =
   respond_string ~status:`Not_found ~body ()
 
 (* Weak entity-tag built from the file's modification time and size. *)
-let weak_etag ~mtime ~size = Printf.sprintf "W/\"%x-%x\"" mtime size
+let weak_etag ~mtime ~size =
+  Ocsigen_http.Header.Entity_tag.make ~weak:true
+    (Printf.sprintf "%x-%x" mtime size)
 
-(* Does the [If-None-Match] header value match [etag]? Handles ["*"] and a
-   comma-separated list of entity-tags. *)
-let if_none_match_matches if_none_match etag =
-  let if_none_match = String.trim if_none_match in
-  String.equal if_none_match "*"
-  || List.exists
-       (fun t -> String.equal (String.trim t) etag)
-       (String.split_on_char ',' if_none_match)
+(* Does the [If-Match] or [If-None-Match] header field written on the lines
+   [values] match [etag], with the comparison [equal]? *)
+let etag_matches ~equal values etag =
+  match Ocsigen_http.Header.Entity_tag.parse_list values with
+  | `Any -> true
+  | `Tags tags -> List.exists (equal etag) tags
 
-(* Parse a single byte-range request against the total [size] (RFC 7233).
+(* Parse a single byte-range request against the total [size] (RFC 9110 14).
    Returns the inclusive bounds [`Range (first, last)], [`Full] when there is no
    usable single range (absent, malformed or multi-range), or [`Unsatisfiable]. *)
 let parse_range size value =
@@ -101,6 +111,8 @@ let parse_range size value =
 let respond_file
       ?headers
       ?(status = `OK)
+      ?if_match
+      ?if_unmodified_since
       ?if_none_match
       ?if_modified_since
       ?range
@@ -120,25 +132,45 @@ let respond_file
          let size = s.Unix.st_size in
          let last_modified = Ocsigen_base.Lib.Date.to_string s.Unix.st_mtime in
          let etag = weak_etag ~mtime:(int_of_float s.Unix.st_mtime) ~size in
-         (* Validators sent with [200], [206] and [304] responses (RFC 7232). *)
+         (* Validators sent with [200], [206] and [304] responses (RFC 9110 8.8). *)
          let add_validators h =
            Http.Header.add
-             (Http.Header.add h "etag" etag)
+             (Http.Header.add h "etag"
+                (Ocsigen_http.Header.Entity_tag.to_string etag))
              "last-modified" last_modified
          in
          let headers = Option.value headers ~default:(Http.Header.init ()) in
+         (* The file is not modified since a date when its Last-Modified
+            date, in whole seconds, is not after it. A date that is not
+            valid is ignored (RFC 9110 13.1.3 and 13.1.4). *)
+         let not_modified_since date =
+           Option.map
+             (fun date -> Float.trunc s.Unix.st_mtime <= date)
+             (Option.bind date Ocsigen_http.Header.Date.parse)
+         in
+         (* [If-Match], or else [If-Unmodified-Since], is evaluated first
+            (RFC 9110 13.2.2). [If-Match] uses the strong comparison, which
+            the weak entity-tag never passes: only "*" matches. *)
+         let precondition_failed =
+           match if_match with
+           | Some im ->
+               not
+                 (etag_matches
+                    ~equal:Ocsigen_http.Header.Entity_tag.strong_equal im etag)
+           | None -> not_modified_since if_unmodified_since = Some false
+         in
          (* [If-None-Match] takes precedence over [If-Modified-Since]
-            (RFC 7232). For the latter we only return [304] on an exact match of
-            our [Last-Modified] value, so we never answer [304] wrongly. *)
+            (RFC 9110 13.1.3). *)
          let not_modified =
            match if_none_match with
-           | Some inm -> if_none_match_matches inm etag
-           | None -> (
-             match if_modified_since with
-             | Some ims -> String.equal ims last_modified
-             | None -> false)
+           | Some inm ->
+               etag_matches ~equal:Ocsigen_http.Header.Entity_tag.weak_equal inm
+                 etag
+           | None -> not_modified_since if_modified_since = Some true
          in
-         if not_modified
+         if precondition_failed
+         then Lwt.return (respond ~headers ~status:`Precondition_failed ())
+         else if not_modified
          then
            Lwt.return
              (respond ~headers:(add_validators headers) ~status:`Not_modified ())
@@ -295,7 +327,10 @@ let make_cookies_headers path t hds =
    with chunking (RFC 9112 6.1), and is replaced by the length of a fixed-length
    body, as a wrong one would break the connection just the same. A response
    with a 1xx, 204 or 304 status has no body, and no framing headers (RFC 9110
-   8.6, RFC 9112 6.1). *)
+   8.6, RFC 9112 6.1), and neither has a body delimited by the end of the
+   connection (sent to an HTTP/1.0 client). If such a body has a
+   Content-Range, cohttp takes it for a fixed length, but adds no
+   Content-Length for it, and writes the body as it comes. *)
 let set_framing status (encoding : Transfer.encoding) headers =
   if not (Http.Status.body_allowed status)
   then
@@ -310,16 +345,19 @@ let set_framing status (encoding : Transfer.encoding) headers =
         Header.replace
           (Header.remove headers "transfer-encoding")
           "content-length" (Int64.to_string length)
-    | Unknown -> headers
+    | Unknown ->
+        Header.remove
+          (Header.remove headers "content-length")
+          "transfer-encoding"
 
-let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
+let to_cohttp_response ~encoding {a_response; a_cookies; _} =
   let headers =
     let add name value headers = Header.add_unless_exists headers name value in
     Response.headers a_response
     |> Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
     |> add "server" Config.server_name
     |> add "date" (Ocsigen_base.Lib.Date.to_string (Unix.time ()))
-    |> set_framing (Response.status a_response) body_encoding
+    |> set_framing (Response.status a_response) encoding
   in
   {a_response with Response.headers}
 
@@ -328,10 +366,25 @@ let sends_body ~meth {a_response; _} =
   | `HEAD -> false
   | _ -> Http.Status.body_allowed (Response.status a_response)
 
+(* The framing of the body on the wire, according to the HTTP version of the
+   request. A body of unknown length is chunked for an HTTP/1.1 client, so that
+   the connection can stay open. HTTP/1.0 has no chunked coding (RFC 9112 6.1):
+   a chunked body goes to an HTTP/1.0 client as is, delimited by the end of the
+   connection, as a body of unknown length. *)
+let wire_encoding ~version {a_body = _, encoding; _} =
+  match version, encoding with
+  | `HTTP_1_1, (Transfer.Chunked | Transfer.Unknown) -> Transfer.Chunked
+  | (`HTTP_1_0 | `Other _), (Transfer.Chunked | Transfer.Unknown) ->
+      Transfer.Unknown
+  | _, Transfer.Fixed length -> Transfer.Fixed length
+
 (* The response to HEAD keeps the headers of the response to GET, framing
    included (RFC 9110 9.3.2), but a client reads no body after it: the bytes of
-   one would be taken for the start of the next response on the connection. *)
-let to_response_expert ~meth t =
+   one would be taken for the start of the next response on the connection. A
+   body delimited by the end of the connection (to an HTTP/1.0 client) is
+   announced with Connection: close, so that the server closes the connection
+   after the body (not after a response to HEAD, which has no body). *)
+let to_response_expert ~meth ~version t =
   let module R = Cohttp_lwt_unix.Response in
   let write_footer encoding oc =
     (* Copied from [cohttp/response.ml]. *)
@@ -339,14 +392,22 @@ let to_response_expert ~meth t =
     | Transfer.Chunked -> Lwt_io.write oc "0\r\n\r\n"
     | Transfer.Fixed _ | Transfer.Unknown -> Lwt.return_unit
   in
-  let res = to_cohttp_response t in
+  let encoding = wire_encoding ~version t in
+  let res = to_cohttp_response ~encoding t in
+  let res =
+    match encoding with
+    | Transfer.Unknown when sends_body ~meth t ->
+        { res with
+          Response.headers =
+            Header.replace (Response.headers res) "connection" "close" }
+    | Transfer.Unknown | Transfer.Chunked | Transfer.Fixed _ -> res
+  in
   ( res
   , fun _ic oc ->
       if sends_body ~meth t
       then
         let writer = R.make_body_writer ~flush:false res oc in
-        let body, encoding = t.a_body in
-        let* () = body (R.write_body writer) in
+        let* () = fst t.a_body (R.write_body writer) in
         write_footer encoding oc
       else Lwt.return_unit )
 

@@ -34,6 +34,15 @@ let response path =
            ~status:`OK
            ~body:(Ocsigen.Response.Body.of_string "world")
            ())
+  | "unknown-length" ->
+      Some
+        (Ocsigen.Response.respond
+           ~headers:(of_list ["content-length", "99"])
+           ~status:`OK
+           ~body:
+             (Ocsigen.Response.Body.make Cohttp.Transfer.Unknown (fun write ->
+                write "unknown"))
+           ())
   | "no-content" -> Some (Ocsigen.Response.respond ~status:`No_content ())
   | "not-modified" ->
       Some
