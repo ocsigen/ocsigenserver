@@ -785,6 +785,7 @@ let serve
 let reverse_proxy
       ?(address = default_one_command_address)
       ?(port = 8080)
+      ?maxrequestbodysize
       ~target
       ()
   =
@@ -794,4 +795,4 @@ let reverse_proxy
   in
   Logs.app ~src:section (fun fmt ->
     fmt "Proxying %s to %s" (listen_url address port) target);
-  start ~ports:[address, port] [host [proxy ~target]]
+  start ?maxrequestbodysize ~ports:[address, port] [host [proxy ~target]]

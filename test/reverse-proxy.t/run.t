@@ -28,3 +28,16 @@ A request to the proxy is forwarded to the upstream and its answer is relayed:
 
   $ curl -s --max-time 10 http://127.0.0.1:$PORT2/hello.txt; echo
   hello from upstream
+
+--max-request-body-size takes the sizes of the configuration file, and is only
+valid with --reverse-proxy:
+
+  $ ocsigenserver --reverse-proxy http://127.0.0.1:$PORT1 \
+  >   --max-request-body-size -1 2>err.log
+  [2]
+  $ sed 's/^.*\] //' err.log
+  --max-request-body-size: -1 is not a size (such as 100MB, 1GiB or infinity)
+  $ ocsigenserver --serve upstream --max-request-body-size 1MB 2>err.log
+  [2]
+  $ sed 's/^.*\] //' err.log
+  --max-request-body-size is only valid with --reverse-proxy

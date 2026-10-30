@@ -57,6 +57,7 @@ val serve :
 val reverse_proxy :
    ?address:Config.Socket_type.t
   -> ?port:int
+  -> ?maxrequestbodysize:int64 option
   -> target:string
   -> unit
   -> unit
@@ -64,8 +65,9 @@ val reverse_proxy :
     the [target] base URL (for example [http://localhost:9000]), with no
     configuration file and no log directory required. This backs
     [ocsigenserver --reverse-proxy URL]. The Revproxy extension is loaded
-    dynamically on demand. [address] and [port] are as for {!serve}. There is
-    no command pipe: the server is stopped with a signal. Never returns. *)
+    dynamically on demand. [address] and [port] are as for {!serve}, and
+    [maxrequestbodysize] as for {!start}. There is no command pipe: the server
+    is stopped with a signal. Never returns. *)
 
 val start :
    ?ports:(Config.Socket_type.t * int) list

@@ -434,7 +434,7 @@ bandwidth it uses. The default is 8000000 bytes (8 MB): raise it together with
 [<maxuploadfilesize>] if you accept larger uploads. The limit also applies to
 the bodies that [<revproxy>] forwards to its target, though it does not keep
 them: raise it on a reverse proxy in front of a service that accepts larger
-bodies.
+bodies (with [--max-request-body-size] for [ocsigenserver --reverse-proxy]).
 
 Example:
 {v

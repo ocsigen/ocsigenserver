@@ -6,7 +6,7 @@ Server would not send. The upstream server listens on PORT1 (HTTP) and PORT2
 hides PORT1, the port of the target, in the outputs. Self-contained POSIX sh.
 
   $ . ../server-test-helpers.sh
-  $ free_ports 7
+  $ free_ports 8
   $ mask_port () { sed "s/:$PORT1\$/:UPSTREAM_PORT/"; }
   $ mkdir -p log
   $ openssl req -x509 -newkey rsa:2048 -nodes -keyout privkey.pem \
@@ -176,3 +176,17 @@ announced or not, and the proxy keeps serving the next requests:
   413
   $ curl -s --max-time 10 --data abc http://127.0.0.1:$PORT6/headers | grep body
   body: abc
+
+The one-command proxy takes the limit from --max-request-body-size:
+
+  $ ocsigenserver --reverse-proxy http://127.0.0.1:$PORT1 --port $PORT8 \
+  >   --max-request-body-size 1kB >proxy-limit.log 2>&1 &
+  $ PROXIES="$PROXIES $!"
+  $ wait_server $! proxy-limit.log http://127.0.0.1:$PORT8/
+  $ for size in 1000 1001; do
+  >   head -c $size /dev/zero | tr '\0' a > body
+  >   curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
+  >     --data-binary @body http://127.0.0.1:$PORT8/headers
+  > done
+  200
+  413

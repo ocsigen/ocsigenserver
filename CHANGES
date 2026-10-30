@@ -72,7 +72,8 @@ Incompatible changes:
    since the move to Cohttp. The default is 8000000 bytes (8 MB): if you
    raised <maxuploadfilesize> above it, raise <maxrequestbodysize> too. The
    limit also applies to the bodies that Revproxy forwards: raise it on a
-   reverse proxy in front of a service that accepts larger bodies.
+   reverse proxy in front of a service that accepts larger bodies, with the
+   new --max-request-body-size option for ocsigenserver --reverse-proxy.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
