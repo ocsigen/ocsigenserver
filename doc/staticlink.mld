@@ -193,7 +193,7 @@ v}
 If you want to use the configuration file with a statically linked executable,
 call
 {v
-Ocsigen.Server.exec (Ocsigen.Parseconfig.parse_config ())
+Ocsigen.Server.exec_config_file ()
 v}
 to launch the server's main loop.
 

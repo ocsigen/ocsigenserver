@@ -46,35 +46,35 @@ exception Silent_with_console_logs
    either to files or to syslog. *)
 exception Logdir_with_syslog
 
-(* fatal errors messages *)
+(* The description of an error that stops the server at start-up, or makes a
+   reload fail, and the exit code at start-up. *)
 let errmsg = function
   | Silent_with_console_logs ->
-      ( "Fatal - silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d."
+      ( "silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d."
       , 50 )
   | Logdir_with_syslog ->
-      ( "Fatal - a log directory and syslog are mutually exclusive: the logs go either to files or to syslog. Set only one of them (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start)."
+      ( "a log directory and syslog are mutually exclusive: the logs go either to files or to syslog. Set only one of them (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start)."
       , 50 )
   | Dynlink_wrapper.Error e ->
-      "Fatal - Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
-  | Unix.Unix_error _ as e -> "Fatal - " ^ Printexc.to_string e, 9
-  | Ssl.Private_key_error msg -> "Fatal - bad password: " ^ msg, 10
+      "Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
+  | Unix.Unix_error _ as e -> Printexc.to_string e, 9
+  | Ssl.Private_key_error msg -> "bad password: " ^ msg, 10
   | Config.Config_file_error msg | Extensions.Error_in_config_file msg ->
-      "Fatal - Error in configuration file: " ^ msg, 50
-  | Xml.Error (s, loc) ->
-      let begin_char, end_char = Xml.range loc and line = Xml.line loc in
-      ( Printf.sprintf
-          "Fatal - Error in configuration file, line %d, characters %d-%d: %s"
-          line begin_char end_char (Xml.error_msg s)
-      , 51 )
+      "Error in configuration file: " ^ msg, 50
   | Ocsigen_base.Loader.Dynlink_error (s, Dynlink.Error err) ->
-      "Fatal - While loading " ^ s ^ ": " ^ Dynlink.error_message err, 52
+      "While loading " ^ s ^ ": " ^ Dynlink.error_message err, 52
   | Ocsigen_base.Loader.Dynlink_error (s, exn) ->
-      "Fatal - While loading " ^ s ^ ": " ^ Printexc.to_string exn, 52
-  | Ocsigen_base.Loader.Findlib_error _ as e ->
-      "Fatal - " ^ Printexc.to_string e, 53
+      "While loading " ^ s ^ ": " ^ Printexc.to_string exn, 52
+  | Ocsigen_base.Loader.Findlib_error _ as e -> Printexc.to_string e, 53
   | exn -> (
     try Extensions.get_init_exn_handler () exn, 20
-    with exn -> "Fatal - Uncaught exception: " ^ Printexc.to_string exn, 100)
+    with exn -> "Uncaught exception: " ^ Printexc.to_string exn, 100)
+
+(* Log the error [e], which stops the server at start-up, and exit. *)
+let exit_with_error e =
+  let msg, errno = errmsg e in
+  Messages.errlog ("Fatal - " ^ msg);
+  exit errno
 
 (* Until the server configures its logging, its messages go to the terminal,
    unless the program has installed a reporter: without one, Logs would drop
@@ -103,8 +103,8 @@ let reload ?file () =
   with
   | () -> Logs.warn ~src:section (fun fmt -> fmt "Config file reloaded")
   | exception e ->
-      Logs.err ~src:section (fun fmt -> fmt "%s" (fst (errmsg e)));
-      Logs.warn ~src:section (fun fmt -> fmt "Config file reload failed")
+      Logs.err ~src:section (fun fmt ->
+        fmt "Config file reload failed: %s" (fst (errmsg e)))
 
 let () =
   let f _s = function
@@ -558,9 +558,7 @@ let main config =
     else (
       write_pid (Unix.getpid ());
       Lwt_main.run (run ()))
-  with e ->
-    let msg, errno = errmsg e in
-    Messages.errlog msg; exit errno
+  with e -> exit_with_error e
 
 let exec config =
   report_to_terminal_by_default ();
@@ -568,10 +566,7 @@ let exec config =
   match config with
   | [] -> ()
   | [h] ->
-      (try Parseconfig.first_pass h
-       with e ->
-         let msg, errno = errmsg e in
-         Messages.errlog msg; exit errno);
+      (try Parseconfig.first_pass h with e -> exit_with_error e);
       main (fun () ->
         (* Now I can load the modules *)
         Dynlink_wrapper.allow_unsafe_modules true;
@@ -585,6 +580,12 @@ let exec config =
       Logs.warn ~src:section (fun fmt ->
         fmt "Multiple servers not supported anymore")
 (* Multiple servers not supported any more *)
+
+let exec_config_file ?file () =
+  report_to_terminal_by_default ();
+  match Parseconfig.parse_config ?file () with
+  | config -> exec config
+  | exception e -> exit_with_error e
 
 let start
       ?(ports = [`All, 8080])
@@ -712,8 +713,7 @@ let load_extension ?(required = true) package =
       false
       (Ocsigen_base.Loader.findfiles package)
   with e ->
-    let msg, errno = errmsg e in
-    if required then (Messages.errlog msg; exit errno) else Messages.warning msg
+    if required then exit_with_error e else Messages.warning (fst (errmsg e))
 
 (* Load the extension [package], which a one-command mode cannot work without,
    and return the serving function it published in [registry]. *)

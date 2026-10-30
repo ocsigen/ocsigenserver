@@ -167,7 +167,30 @@ let parser_config =
   | Element ("ocsigen", [], l) -> parse_servers [] l
   | _ -> raise (Config_file_error "<ocsigen> tag expected")
 
-let parse_ext file = parser_config (Xml.parse_file file)
+let parse_xml_file file =
+  let error fmt =
+    Printf.ksprintf (fun msg -> raise (Config_file_error msg)) fmt
+  in
+  try Xml.parse_file file with
+  | Xml_light_errors.Xml_error (msg, pos) ->
+      let first, last = Xml.range pos in
+      let characters =
+        if first = last
+        then Printf.sprintf "character %d" first
+        else Printf.sprintf "characters %d-%d" first last
+      in
+      error "%s, line %d, %s: %s" file (Xml.line pos) characters
+        (Xml.error_msg msg)
+  | Xml_light_errors.Dtd_parse_error e ->
+      error "%s: %s" file (Dtd.parse_error e)
+  | Xml_light_errors.Dtd_check_error e ->
+      error "%s: %s" file (Dtd.check_error e)
+  | Xml_light_errors.Dtd_prove_error e ->
+      error "%s: %s" file (Dtd.prove_error e)
+  | Xml_light_errors.File_not_found dtd when dtd <> file ->
+      error "%s: cannot open the DTD %s" file dtd
+
+let parse_ext file = parser_config (parse_xml_file file)
 let preloadfile config () = Extensions.set_config config
 let postloadfile () = Extensions.set_config []
 
@@ -429,10 +452,15 @@ let rec later_pass_extconf dir =
             fmt "Parsing configuration file %s" filename);
           parse_ext filename
         with e ->
+          let msg =
+            match e with
+            | Config_file_error msg -> msg
+            | e -> Printexc.to_string e
+          in
           Logs.err ~src:section (fun fmt ->
             fmt
               ("Error while loading configuration file %s (ignored)" ^^ "@\n%s")
-              filename (Printexc.to_string e));
+              filename msg);
           []
       with
       | [] -> acc
@@ -778,4 +806,7 @@ let parse_config ?file () =
   let file =
     match file with None -> Config.get_config_file () | Some f -> f
   in
-  parser_config (Xml.parse_file file)
+  match parse_xml_file file with
+  | xml -> parser_config xml
+  | exception Xml_light_errors.File_not_found _ ->
+      raise (Config_file_error ("cannot open " ^ file))

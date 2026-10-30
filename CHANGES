@@ -112,6 +112,9 @@ New features:
    like Mutex.protect, which OCaml 4.14 does not have.
    Ocsigen.Messages.level_of_string parses a log level, and set_source_level
    sets the level of a log source by its name.
+   Ocsigen.Server.exec_config_file reads the configuration file and starts
+   the server, and reports an error in the file as the ocsigenserver command
+   does.
 
 Bug fixes:
  * Ocsigen_base.Loader.loadfiles, used for <extension findlib-package="...">
@@ -300,15 +303,32 @@ Bug fixes:
  * The reload order reads and applies the configuration file once, instead of
    twice. The extensions configured the sites twice (Eliom loaded the modules
    of its sites twice), and warnings and errors were logged twice. When the
-   file has an error, the server now logs "Config file reload failed" instead
-   of "Config file reloaded". It keeps its sites, and the settings of the tags
-   of <server> such as <maxretries>, as they were: the settings before the
-   error used to be applied. What the extensions did before the error, such as
-   loading a new extension, is not undone.
+   file has an error, the server now logs a single error, "Config file reload
+   failed: " and the error, instead of "Config file reloaded". It keeps its
+   sites, and the settings of the tags of <server> such as <maxretries>, as
+   they were: the settings before the error used to be applied. What the
+   extensions did before the error, such as loading a new extension, is not
+   undone. The error no longer starts with "Fatal - ", as the server keeps
+   running.
  * A multipart part without a Content-Disposition header, or without a name
    in it, now gets a 400 Bad Request instead of a 500.
  * When closing an uploaded file fails, the server no longer closes it a
    second time, which could close another file, and reports the first error.
+ * A configuration file that is not well-formed XML is reported again, with
+   the name of the file and the position of the error, and the server exits
+   with code 50, as for the other errors in the file. Since xml-light 2.5,
+   which is now required, the server stopped at start-up with an uncaught
+   exception, and the reload order logged "Uncaught exception". A missing
+   configuration file, or one that its DTD rejects, is reported the same way.
+   A file of an <extconf> directory with such an error is still ignored, but
+   its error is now logged with its position.
+   Userconf: a user configuration file that is not well-formed XML is
+   reported the same way, and a missing one lets the next instruction answer
+   again, instead of a 500.
+ * The warning for an optional extension that serve mode or --reverse-proxy
+   cannot load no longer starts with "Fatal - ". At start-up, an error that an
+   extension describes itself (Eliom, for instance) now starts with
+   "Fatal - ", as the other errors that stop the server.
 
 ==== 8.0.0 (2026-09-24) ===
 
