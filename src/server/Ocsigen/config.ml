@@ -218,10 +218,16 @@ let get_shutdown_timeout () = !shutdowntimeout
 let get_ssl_info () = !ssl_info
 let get_ports () = !ports
 let get_ssl_ports () = !ssl_ports
-let get_default_port () = match !ports with (_, p) :: _ -> p | [] -> 80
 
-let get_default_sslport () =
-  match !ssl_ports with (_, p) :: _ -> p | [] -> 443
+(* The first port in [ports], skipping the Unix-domain sockets given port 0.
+   The number given with a Unix-domain socket is the port of its requests,
+   and 0 is none (see [Extensions.get_port]). *)
+let first_port ~default ports =
+  List.find_map (function `Unix _, 0 -> None | _, port -> Some port) ports
+  |> Option.value ~default
+
+let get_default_port () = first_port ~default:80 !ports
+let get_default_sslport () = first_port ~default:443 !ssl_ports
 
 let display_version () =
   print_string version_number;

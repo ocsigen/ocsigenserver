@@ -366,12 +366,11 @@ val get_hostname : request -> string
     the configuration file. *)
 
 val get_port : request -> int
-(** Returns the port to be used for absolute links or redirections.
-    It is either:
-    - the port the server is listening at
-    - or the port in the Host header
-    - or the default port set in the configuration file, also when the
-      server listens on a Unix-domain socket, which has no port. *)
+(** Returns the port to be used for absolute links or redirections: the
+    default port of the host (its [default_httpport] or [default_httpsport])
+    with [<usedefaulthostname>], or else the port on which the request came,
+    which is the number given with a Unix-domain socket. A Unix-domain socket
+    given port 0 has none: the default port of the host is used then. *)
 
 val new_url_of_directory_request : request -> Request.t -> Uri.t
 (** new_url_of_directory_request create a redirection and generating a new url

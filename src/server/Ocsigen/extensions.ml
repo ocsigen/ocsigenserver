@@ -295,10 +295,8 @@ let get_hostname {request_info; request_config = {default_hostname; _}; _} =
     | None -> default_hostname
     | Some host -> host
 
-(* Default port is either
-   - the port the server is listening at
-   - or the port in the Host header
-   - or the default port set in the configuration file. *)
+(* The default port of the host with <usedefaulthostname>, else the port on
+   which the request came (see the interface). *)
 let get_port
     {request_info; request_config = {default_httpport; default_httpsport; _}} =
   let default () =
@@ -309,8 +307,8 @@ let get_port
   else
     match Request.port request_info with
     | 0 ->
-        (* A Unix-domain socket, typically behind a reverse proxy, has no
-           port of its own. *)
+        (* A Unix-domain socket given port 0, typically behind a reverse
+           proxy, has no port. *)
         default ()
     | port -> port
 
