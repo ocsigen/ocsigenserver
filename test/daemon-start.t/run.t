@@ -32,9 +32,9 @@ So when it cannot open its logs:
   $ sed 's|<logdir>log|<logdir>notadir|; s|<cors foo="1"/>||' attr.conf \
   >   > nolog.conf
   $ ocsigenserver -c nolog.conf -d -p server.pid >out.log 2>&1; echo "exit $?"
-  exit 100
+  exit 50
   $ grep -o 'Fatal - .*\|detached' out.log
-  Fatal - Uncaught exception: Sys_error("notadir/access.log: Not a directory")
+  Fatal - Error in configuration file: can't open log file notadir/access.log: Not a directory
   $ test -e server.pid
   [1]
 
