@@ -8,7 +8,7 @@ the values they had before the first reading.
   accepted
   tag <nosuchtag> unexpected inside <server>
   accepted
-  <charset>: none, after the error none, then iso-8859-1, after the error iso-8859-1, without it none
+  <charset>: utf-8, after the error utf-8, then iso-8859-1, after the error iso-8859-1, without it utf-8
   <uploaddir>: none, after the error none, then upload, after the error upload, without it none
   <mimefile>: none, after the error none, then other.types, after the error other.types, without it none
   <maxconnected>: 10000, after the error 10000, then 7, after the error 7, without it 10000

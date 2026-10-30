@@ -26,7 +26,7 @@ An existing file is served with the correct status, content type and body:
   $ cat body; echo
   <html>hello</html>
   $ grep -i '^content-type:' headers | tr -d '\r'
-  content-type: text/html
+  content-type: text/html; charset=utf-8
 
 The safe-by-default security headers are present:
 
