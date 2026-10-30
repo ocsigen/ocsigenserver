@@ -34,6 +34,15 @@ Incompatible changes:
    Ocsigen_base.Config_static.mimefile is removed.
    Ocsigen_http.Charset_mime.default_mime_assoc no longer holds the file:
    find_mime looks it up after the rules, and set_mime_file sets it.
+ * Text and XML files (text/*, */xml, *+xml) served by Staticmod from a
+   configuration file get the charset of their host again: by default, their
+   Content-Type ends with "; charset=utf-8". This charset takes precedence
+   over the <meta charset> of an HTML page and over the encoding of an XML
+   declaration. A site with files in another encoding must now say so, with a
+   <charset> rule of Extendconfiguration for their extensions
+   (<extension ext="html" value="iso-8859-1"/>, or value="" for no charset),
+   or with charset="" on its <host> or <site> to send no charset. Serve mode
+   gives no charset, as before.
  * Silent mode (-s) and daemon mode (-d) are now refused when the logs go to
    the terminal: always in serve mode and with --reverse-proxy, and with a
    configuration file that gives neither <logdir> nor <syslog>, or
@@ -427,9 +436,7 @@ Bug fixes:
    Extendconfiguration, again. Since 3.0.0, they were read but not used:
    the Content-Type of a file came from the built-in table of magic-mime,
    without a charset. That table now comes after the rules and the file. Text
-   and XML files get the charset of the host again, so a text file served
-   from a configuration file now has "; charset=utf-8" by default (serve mode
-   gives no charset, as before).
+   and XML files get a charset again (see the incompatible changes).
 
 ==== 8.0.0 (2026-09-24) ===
 
