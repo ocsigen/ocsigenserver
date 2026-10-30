@@ -24,6 +24,16 @@ Incompatible changes:
    sets <logdir> explicitly. An empty path means no log directory.
    Ocsigen.Config.get_logdir and Ocsigen.Messages.error_log_path return a
    string option, and Ocsigen_base.Config_static.logdir is removed.
+ * Without <mimefile> in the configuration file, or ~mimefile for
+   Ocsigen.Server.start, the server reads no mime.types file. It read the one
+   that the installation put in its configuration directory, an old copy that
+   is no longer installed, and logged an error when it was missing. The file
+   is now read at the first lookup of a type, rather than for each <host>, so
+   ~mimefile also applies to the hosts given to Ocsigen.Server.start. An empty path means no file.
+   Ocsigen.Config.get_mimefile returns a string option, and
+   Ocsigen_base.Config_static.mimefile is removed.
+   Ocsigen_http.Charset_mime.default_mime_assoc no longer holds the file:
+   find_mime looks it up after the rules, and set_mime_file sets it.
  * Silent mode (-s) and daemon mode (-d) are now refused when the logs go to
    the terminal: always in serve mode and with --reverse-proxy, and with a
    configuration file that gives neither <logdir> nor <syslog>, or

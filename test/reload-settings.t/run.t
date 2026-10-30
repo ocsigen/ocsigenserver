@@ -6,7 +6,7 @@ they were. The same configuration without the error sets them.
   accepted
   <charset>: none, after the error none, then iso-8859-1
   <uploaddir>: none, after the error none, then upload
-  <mimefile>: mime.types, after the error mime.types, then other.types
+  <mimefile>: none, after the error none, then other.types
   <maxconnected>: 10000, after the error 10000, then 7
   <maxretries>: 10, after the error 10, then 3
   <clienttimeout>: 30, after the error 30, then 5

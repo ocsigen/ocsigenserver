@@ -101,7 +101,10 @@ let set_logdir s = logdir := if s = "" then None else Some s
 let set_syslog_facility f = syslog_facility := f
 let set_configfile s = config_file := s
 let set_pidfile s = pidfile := Some s
-let set_mimefile s = mimefile := s
+
+let set_mimefile s =
+  Ocsigen_http.Charset_mime.set_mime_file (if s = "" then None else Some s)
+
 let () = set_global_log_level (Some Logs.Warning)
 (* without --verbose *)
 
@@ -159,7 +162,7 @@ let get_logdir () = !logdir
 let get_syslog_facility () = !syslog_facility
 let get_config_file () = !config_file
 let get_pidfile () = !pidfile
-let get_mimefile () = !mimefile
+let get_mimefile = Ocsigen_http.Charset_mime.mime_file
 let get_verbose () = !verbose
 let get_silent () = !silent
 let get_log_to_stderr () = !log_to_stderr
@@ -230,7 +233,8 @@ let save_settings () =
   in
   [ saved defaultcharset
   ; saved uploaddir
-  ; saved mimefile
+  ; (let m = get_mimefile () in
+     fun () -> Ocsigen_http.Charset_mime.set_mime_file m)
   ; saved max_number_of_connections
   ; saved maxretries
   ; saved silent_client_timeout

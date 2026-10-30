@@ -458,13 +458,14 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 {3 [<mimefile>] : MIME type file}
 
 
-The file associating file name extensions to their MIME type. Example:
+A file associating file name extensions to their MIME type, in the format of
+[/etc/mime.types]. There is none by default. Example:
 
 {v
-<mimefile>/etc/ocsigenserver/mime.types</mimefile>
+<mimefile>/etc/mime.types</mimefile>
 v}
 
-{b Limitation.} The file is read, but currently not used: Staticmod derives
+{b Limitation.} The file is currently not used: Staticmod derives
 the [Content-Type] of the files it sends from their names, with the built-in
 table of the [magic-mime] library.
 

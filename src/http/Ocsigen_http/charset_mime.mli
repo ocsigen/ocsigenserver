@@ -68,15 +68,29 @@ type mime_assoc
 (** association between extensions and mime types, with default value *)
 
 val default_mime_assoc : unit -> mime_assoc
-(** Default values, obtained by reading the file specified by
-    [Ocsigen_base.Config_static.get_mimefile] *)
+(** [default_mime_assoc ()] has no rules, and the default type
+    {!default_mime_type}. The mime.types file of {!set_mime_file} is not part of
+    it: {!find_mime} looks it up after the rules. *)
 
 val parse_mime_types : filename:string -> mime_assoc
-(** Parsing of a file containing mime associations, such as /etc/mime-types *)
+(** Parsing of a file containing mime associations, such as /etc/mime.types *)
+
+val set_mime_file : string option -> unit
+(** [set_mime_file file] sets the mime.types file whose types come after the
+    rules (see {!find_mime}), or none. The file is read at the next call of
+    {!find_mime}. There is none by default. *)
+
+val mime_file : unit -> string option
+(** [mime_file ()] is the file that {!set_mime_file} sets. *)
 
 (* The other functions are as for charsets *)
 
 val find_mime : file -> mime_assoc -> string
+(** [find_mime file assoc] is the MIME type of [file]: the one of the first
+    rule of [assoc] that matches [file] (its extension, its name or a regular
+    expression), else the one of the mime.types file of {!set_mime_file}, else
+    the default type of [assoc]. *)
+
 val default_mime : mime_assoc -> mime_type
 val set_default_mime : mime_assoc -> mime_type -> mime_assoc
 val update_mime_ext : mime_assoc -> extension -> mime_type -> mime_assoc

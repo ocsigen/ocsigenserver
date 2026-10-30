@@ -65,7 +65,11 @@ val set_syslog_facility : Syslog_message.facility option -> unit
 
 val set_configfile : string -> unit
 val set_pidfile : string -> unit
+
 val set_mimefile : string -> unit
+(** The mime.types file whose types come after the [<contenttype>] rules (see
+    {!Ocsigen_http.Charset_mime.find_mime}). An empty path means none. *)
+
 val set_verbose : unit -> unit
 val set_silent : unit -> unit
 
@@ -124,7 +128,10 @@ val get_logdir : unit -> string option
 val get_syslog_facility : unit -> Syslog_message.facility option
 val get_config_file : unit -> string
 val get_pidfile : unit -> string option
-val get_mimefile : unit -> string
+
+val get_mimefile : unit -> string option
+(** The mime.types file, or [None] if there is none (the default). *)
+
 val get_verbose : unit -> bool
 val get_silent : unit -> bool
 val get_log_to_stderr : unit -> bool
