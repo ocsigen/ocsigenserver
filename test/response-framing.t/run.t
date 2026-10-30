@@ -62,11 +62,85 @@ fixed-length body:
   
   world
 
-The connection stays usable after each of them:
+A body of unknown length is sent chunked, without the Content-Length set by
+its producer, and the connection stays open:
+
+  $ get http://x/unknown-length
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  transfer-encoding: chunked
+  connection: keep-alive
+  
+  7
+  unknown
+  0
+  
+
+HTTP/1.0 has no chunked coding (RFC 9112 section 6.1): a chunked body, or a
+body of unknown length, goes to an HTTP/1.0 client without framing header,
+and with "Connection: close": its end is the end of the connection.
+
+  $ get --http1.0 http://x/length-chunked
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: close
+  
+  hello
+  $ get --http1.0 http://x/unknown-length
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: close
+  
+  unknown
+
+Also when the client asks to keep the connection alive. A fixed-length body
+keeps it alive:
+
+  $ get --http1.0 -H 'Connection: keep-alive' http://x/length-chunked
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: close
+  
+  hello
+  $ get --http1.0 -H 'Connection: keep-alive' http://x/length-fixed
+  HTTP/1.1 200 OK
+  content-length: 5
+  server: Ocsigen
+  connection: keep-alive
+  
+  world
+
+A Content-Range does not give such a body a Content-Length:
+
+  $ get --http1.0 http://x/range-chunked
+  HTTP/1.1 206 Partial Content
+  content-range: bytes 0-4/10
+  server: Ocsigen
+  connection: close
+  
+  01234
+
+A response to HEAD has the framing headers of the response to GET. To an
+HTTP/1.0 client, it has no body to delimit, so the connection stays open:
+
+  $ get -I http://x/unknown-length
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  transfer-encoding: chunked
+  connection: keep-alive
+  
+  $ get --http1.0 -H 'Connection: keep-alive' -I http://x/unknown-length
+  HTTP/1.1 200 OK
+  server: Ocsigen
+  connection: keep-alive
+  
+
+The connection stays usable after each of the responses to HTTP/1.1:
 
   $ curl --unix-socket local.sock -s --max-time 10 http://x/range-chunked \
-  >   http://x/length-chunked http://x/range-fixed http://x/length-fixed; echo
-  01234hello56789world
+  >   http://x/length-chunked http://x/range-fixed http://x/length-fixed \
+  >   http://x/unknown-length; echo
+  01234hello56789worldunknown
 
 A response to HEAD has the headers of the response to GET, framing included,
 but no body: on a connection, the next response follows its headers.

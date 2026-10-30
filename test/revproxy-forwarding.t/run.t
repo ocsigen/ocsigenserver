@@ -140,6 +140,7 @@ connection to the client (otherwise, curl would fail with its timeout):
   X-End: 1
   connection: close
   server: Ocsigen
+  transfer-encoding: chunked
   
   body ended by the connection
 

@@ -141,13 +141,19 @@ val sends_body : meth:Cohttp.Code.meth -> t -> bool
 
 val to_response_expert :
    meth:Cohttp.Code.meth
+  -> version:Cohttp.Code.version
   -> t
   -> Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
 (** Response for [Cohttp_lwt_unix.Server.make_expert], to a request with method
-    [meth]. Set cookie headers, and the framing headers from the body. The body
-    is written only if {!sends_body}: the response to [HEAD] has the headers of
-    the response to [GET], without its body. Otherwise the body is released
-    ({!Body.release}), and a failure to release it is logged. *)
+    [meth] and HTTP version [version]. Set cookie headers, and the framing
+    headers from the body. The body is written only if {!sends_body}: the
+    response to [HEAD] has the headers of the response to [GET], without its
+    body. Otherwise the body is released ({!Body.release}), and a failure to
+    release it is logged. A body of unknown length is sent chunked to an
+    HTTP/1.1 client. To an HTTP/1.0 client, which does not know the chunked
+    coding (RFC 9112 6.1), a body of unknown length or a chunked one goes out
+    without framing headers and, unless the request is [HEAD], with
+    [Connection: close]: the end of the connection is the end of the body. *)
 
 val response : t -> Cohttp.Response.t
 (** Raw response without cookie headers set. *)
