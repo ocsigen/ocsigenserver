@@ -8,7 +8,7 @@ let open_log_dir () =
   let dir = temp_dir () in
   Ocsigen.Config.set_logdir dir;
   Ocsigen.Config.set_silent ();
-  Lwt_main.run (Ocsigen.Messages.open_files ());
+  Ocsigen.Messages.open_files ();
   dir
 
 let read dir file =

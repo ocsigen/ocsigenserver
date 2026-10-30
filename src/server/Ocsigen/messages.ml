@@ -267,8 +267,7 @@ let log_to_stdio () =
   Logs.set_reporter stdio_reporter;
   (* In serve mode the terminal is the access log. *)
   Atomic.set access_out (fun s -> Sink.write stdout_sink (s ^ "\n"));
-  close_log_files ();
-  Lwt.return ()
+  close_log_files ()
 
 (* Write logs to the access/warnings/errors files in the log directory [dir]. *)
 let open_log_files_in_dir dir =
@@ -314,8 +313,7 @@ let open_log_files_in_dir dir =
        | Logs.Error -> if silent then [error_sink] else [error_sink; stderr_sink]
        | Logs.Warning ->
            if silent then [warning_sink] else [warning_sink; stderr_sink]
-       | _ -> if silent then [] else [stdout_sink]));
-  Lwt.return ()
+       | _ -> if silent then [] else [stdout_sink]))
 
 (* The syslog reporter in use, with its facility. Logs_syslog_unix gives no
    way to close a reporter, so it is made once and kept: a new one at each
@@ -340,8 +338,7 @@ let log_to_syslog facility =
      stderr) through Logs. *)
   Atomic.set access_out (fun s ->
     Logs.app ~src:access_sect (fun fmt -> fmt "%s" s));
-  close_log_files ();
-  Lwt.return ()
+  close_log_files ()
 
 type destination = Console | Syslog of Syslog_message.facility | Dir of string
 

@@ -22,7 +22,7 @@ let () =
   Ocsigen.Config.set_log_to_stderr true;
   let saved_stdout = redirect Unix.stdout (Filename.concat dir "stdout") in
   let saved_stderr = redirect Unix.stderr (Filename.concat dir "stderr") in
-  Lwt_main.run (Ocsigen.Messages.open_files ());
+  Ocsigen.Messages.open_files ();
   let src = Logs.Src.create "test:reporter-stdio" in
   List.init domains (fun d ->
     Domain.spawn (fun () ->

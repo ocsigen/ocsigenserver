@@ -156,7 +156,7 @@ let reload ?file () =
 let () =
   let f _s = function
     | ["reopen_logs"] ->
-        Messages.open_files () >>= fun () ->
+        Messages.open_files ();
         Logs.warn ~src:section (fun fmt -> fmt "Log files reopened");
         Lwt.return ()
     | ["reload"] -> reload (); Lwt.return ()
@@ -447,8 +447,12 @@ let main config =
         raise exn
     in
     let extensions_connector = Extensions.compute_result in
-    let run () =
-      Messages.open_files () >>= fun () ->
+    (* [initialise ()] initialises the server, and is the function that runs
+       it, in the Lwt loop. The initialisation runs before the loop, as some
+       of it runs a loop of its own: the initialisation of Ocsipersist (sqlite
+       and dbm) calls [Lwt_main.run], which cannot be nested. *)
+    let initialise () =
+      Messages.open_files ();
       let ports = Config.get_ports () and ssl_ports = Config.get_ssl_ports () in
       let connection = match ports with [] -> [`All, 80] | l -> l in
       let ssl_connection =
@@ -499,68 +503,71 @@ let main config =
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
       send_daemon_status "R";
-      (commandpipe
-      |> Option.iter @@ fun fd ->
-         let pipe =
-           Lwt_unix.of_unix_file_descr fd |> Lwt_io.(of_fd ~mode:input)
-         in
-         let rec f () =
-           Lwt_io.read_line pipe >>= fun s ->
-           Messages.warning ("Command received: " ^ s);
-           Lwt.catch
-             (fun () ->
-                let prefix, c =
-                  match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
-                  | [] -> raise Command.Unknown_command
-                  | a :: l -> (
-                    try
-                      let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
-                      Some aa, ab :: l
-                    with Not_found -> None, a :: l)
-                in
-                Command.get_command_function () ?prefix s c)
-             (function
-               | Command.Unknown_command ->
-                   Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
-                   Lwt.return ()
-               | e ->
-                   (* A failing order must not stop the command pipe: the
+      fun () ->
+        (commandpipe
+        |> Option.iter @@ fun fd ->
+           let pipe =
+             Lwt_unix.of_unix_file_descr fd |> Lwt_io.(of_fd ~mode:input)
+           in
+           let rec f () =
+             Lwt_io.read_line pipe >>= fun s ->
+             Messages.warning ("Command received: " ^ s);
+             Lwt.catch
+               (fun () ->
+                  let prefix, c =
+                    match
+                      Ocsigen_base.Lib.String.split ~multisep:true ' ' s
+                    with
+                    | [] -> raise Command.Unknown_command
+                    | a :: l -> (
+                      try
+                        let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
+                        Some aa, ab :: l
+                      with Not_found -> None, a :: l)
+                  in
+                  Command.get_command_function () ?prefix s c)
+               (function
+                 | Command.Unknown_command ->
+                     Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
+                     Lwt.return ()
+                 | e ->
+                     (* A failing order must not stop the command pipe: the
                       later ones, such as the reopen_logs of a log rotation,
                       would be ignored. *)
-                   Logs.err ~src:section (fun fmt ->
-                     fmt "Command %S failed: %s" s (Printexc.to_string e));
-                   Lwt.return ())
-           >>= f
-         in
-         ignore (f () : 'a Lwt.t));
-      (* Enforce the maximum number of simultaneous connections: conduit
+                     Logs.err ~src:section (fun fmt ->
+                       fmt "Command %S failed: %s" s (Printexc.to_string e));
+                     Lwt.return ())
+             >>= f
+           in
+           ignore (f () : 'a Lwt.t));
+        (* Enforce the maximum number of simultaneous connections: conduit
          throttles its accept loop (across all listening sockets, as file
          descriptors are a global resource) while the number of active
          connections exceeds this cap. Without this call the configured limit
          would have no effect. *)
-      let max_connections =
-        max_number_of_connections
-          ~sockets:
-            (List.fold_left
-               (fun n address ->
-                  n + Ocsigen_cohttp.max_listening_sockets address)
-               0
-               (List.map fst connection
-               @ List.map (fun (address, _, _) -> address) ssl_connection))
-      in
-      Config.set_max_number_of_connections_in_effect max_connections;
-      Conduit_lwt_server.set_max_active max_connections;
-      Lwt.join
-        (List.map
-           (fun (address, port) ->
-              Ocsigen_cohttp.service ~address ~port
-                ~connector:extensions_connector ())
-           connection
-        @ (List.map (fun (address, port, (crt, key)) ->
-             Ocsigen_cohttp.service
-               ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-               ~address ~port ~connector:extensions_connector ()))
-            ssl_connection)
+        let max_connections =
+          max_number_of_connections
+            ~sockets:
+              (List.fold_left
+                 (fun n address ->
+                    n + Ocsigen_cohttp.max_listening_sockets address)
+                 0
+                 (List.map fst connection
+                 @ List.map (fun (address, _, _) -> address) ssl_connection))
+        in
+        Config.set_max_number_of_connections_in_effect max_connections;
+        Conduit_lwt_server.set_max_active max_connections;
+        Lwt.join
+          (List.map
+             (fun (address, port) ->
+                Ocsigen_cohttp.service ~address ~port
+                  ~connector:extensions_connector ())
+             connection
+          @ (List.map (fun (address, port, (crt, key)) ->
+               Ocsigen_cohttp.service
+                 ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+                 ~address ~port ~connector:extensions_connector ()))
+              ssl_connection)
       (*
          Messages.warning "Ocsigen has been launched (initialisations ok)";
 
@@ -608,7 +615,8 @@ let main config =
            terminal: those that happen before its logs are open would be
            written twice. *)
         output_to_devnull ();
-        Lwt_main.run (run ()))
+        let serve = initialise () in
+        Lwt_main.run (serve ()))
       else (
         Unix.close status_out;
         wait_for_daemon pid status_in;
@@ -618,7 +626,8 @@ let main config =
         write_pid pid)
     else (
       write_pid (Unix.getpid ());
-      Lwt_main.run (run ()))
+      let serve = initialise () in
+      Lwt_main.run (serve ()))
   with e -> exit_with_error e
 
 let exec config =
