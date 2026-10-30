@@ -101,6 +101,8 @@ let find_charset = find_in_assoc
 
 (* Specific handling of content-type *)
 
+let whitespace = Netstring_pcre.regexp "\\s+"
+
 let read_mime_types filename =
   let rec read_and_split mimemap in_ch =
     try
@@ -111,9 +113,7 @@ let read_mime_types filename =
           String.sub line 0 upto
         with Not_found -> line
       in
-      let strlist =
-        Netstring_pcre.split (Netstring_pcre.regexp "\\s+") line_upto
-      in
+      let strlist = Netstring_pcre.split whitespace line_upto in
       match strlist with
       | [] | [_] -> (* No extension on this line *) read_and_split mimemap in_ch
       | mime :: extensions ->
@@ -137,14 +137,14 @@ let parse_mime_types ~filename : mime_type assoc =
 
 let default_mime_assoc () = empty_mime_assoc ()
 
-(* The mime.types file of <mimefile>, and its table, read at the first lookup:
-   the logs are open by then, and a reload, which sets the file again, reads
-   it again. *)
-let mime_file = ref None
+(* The mime.types file of <mimefile>, and its table. The table is read by
+   [load_mime_file], once the logs are open, or else at the first lookup. A
+   reload, which sets the file again, reads it again. *)
+let current_mime_file = ref None
 let mime_file_table = ref (lazy MapString.empty)
 
 let set_mime_file file =
-  mime_file := file;
+  current_mime_file := file;
   mime_file_table :=
     lazy
       (match file with
@@ -154,7 +154,10 @@ let set_mime_file file =
             fmt "Loading mime types in '%s'" filename);
           read_mime_types filename)
 
-let mime_file () = !mime_file
+let mime_file () = !current_mime_file
+
+let load_mime_file () =
+  ignore (Lazy.force !mime_file_table : mime_type MapString.t)
 
 (* The built-in table of magic-mime comes after the rules and the mime.types
    file, and before the default type. *)
@@ -164,17 +167,36 @@ let find_mime file assoc =
   | None -> (
     match MapString.find_opt (extension file) (Lazy.force !mime_file_table) with
     | Some mime -> mime
-    | None -> Magic_mime.lookup ~default:assoc.assoc_default file)
+    | None ->
+        Magic_mime.lookup ~default:assoc.assoc_default (Filename.basename file))
 
-(* As before 3.0.0: the charset is given for text and XML types. *)
+(* As before 3.0.0: the charset is given for text and XML types. Types are
+   case-insensitive, and a rule can give parameters after them. *)
 let takes_charset mime =
-  String.starts_with ~prefix:"text/" mime
-  || String.ends_with ~suffix:"/xml" mime
-  || String.ends_with ~suffix:"+xml" mime
+  match String.split ';' (String.lowercase_ascii mime) with
+  | [] -> false
+  | media_type :: _ ->
+      String.starts_with ~prefix:"text/" media_type
+      || String.ends_with ~suffix:"/xml" media_type
+      || String.ends_with ~suffix:"+xml" media_type
+
+(* Whether [mime] has a charset parameter, which a rule can give. Parameter
+   names are case-insensitive. *)
+let has_charset mime =
+  match String.split ';' mime with
+  | [] -> false
+  | _ :: parameters ->
+      List.exists
+        (fun parameter ->
+           match String.sep '=' parameter with
+           | name, _ -> String.lowercase_ascii name = "charset"
+           | exception Not_found -> false)
+        parameters
 
 let content_type ~mime_assoc ~charset_assoc file =
   let mime = find_mime file mime_assoc in
   match find_charset file charset_assoc with
   | "" -> mime
-  | charset when takes_charset mime -> mime ^ "; charset=" ^ charset
+  | charset when takes_charset mime && not (has_charset mime) ->
+      mime ^ "; charset=" ^ charset
   | _ -> mime

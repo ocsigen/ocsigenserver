@@ -480,8 +480,9 @@ v}
 Staticmod takes the [Content-Type] of a file from the [<contenttype>] rules
 of {{!page-extendconfiguration}Extendconfiguration}, then from this file,
 then from the built-in table of the [magic-mime] library, and last from the
-default type, [application/octet-stream]. The file is read when the first
-file is served after the server starts or reloads its configuration.
+default type, [application/octet-stream]. The file is read when the server
+starts, and again each time it reloads its configuration. If it cannot be
+read, an error is logged, and the types come from the other sources.
 
 {3 [<debugmode/>] : Debug mode for applications}
 Use this option for debugging your Web sites. Ocsigenserver itself does not

@@ -93,6 +93,12 @@ Staticmod gives the charset of a file in its [Content-Type] for text and XML
 types ([text/*], [*/xml], [*+xml]). Eliom uses the [default] attribute as the
 charset of its pages.
 
+Browsers give this charset precedence over the [<meta charset>] of an HTML
+page and over the encoding of an XML declaration. For files in another
+encoding than the default one, give theirs with a rule, or an empty value
+([value=""]) to send no charset. [charset=""] on a [<host>] or a [<site>]
+sends no charset by default.
+
 {2 Content-type}
 
 The content-type for the files sent by the server can be specified using the tag

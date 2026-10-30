@@ -78,10 +78,18 @@ val parse_mime_types : filename:string -> mime_assoc
 val set_mime_file : string option -> unit
 (** [set_mime_file file] sets the mime.types file whose types come after the
     rules (see {!find_mime}), or none. The file is read at the next call of
-    {!find_mime}. There is none by default. *)
+    {!load_mime_file} or {!find_mime}. There is none by default. *)
 
 val mime_file : unit -> string option
 (** [mime_file ()] is the file that {!set_mime_file} sets. *)
+
+val load_mime_file : unit -> unit
+(** [load_mime_file ()] reads the file that {!set_mime_file} sets, unless it
+    has been read since. When it cannot be read, an error is logged, and the
+    file gives no types. The server calls it once its logs are open and its
+    hosts are set, at start-up and at each reload of its configuration: an
+    error is then reported at once, and the file is not read while a request
+    is served. *)
 
 (* The other functions are as for charsets *)
 
@@ -89,8 +97,9 @@ val find_mime : file -> mime_assoc -> string
 (** [find_mime file assoc] is the MIME type of [file]: the one of the first
     rule of [assoc] that matches [file] (its extension, its name or a regular
     expression), else the one of the mime.types file of {!set_mime_file}, else
-    the one of the built-in table of the [magic-mime] library, else the default
-    type of [assoc]. *)
+    the one of the built-in table of the [magic-mime] library (from the
+    extension, or from the name of some files, such as [README]), else the
+    default type of [assoc]. *)
 
 val content_type :
    mime_assoc:mime_assoc
@@ -99,7 +108,8 @@ val content_type :
   -> string
 (** [content_type ~mime_assoc ~charset_assoc file] is the value of the
     [Content-Type] header for [file]: its MIME type, followed by its charset
-    for text and XML types, when [charset_assoc] gives one. *)
+    for text and XML types, when [charset_assoc] gives one and the type has
+    no charset parameter yet. *)
 
 val default_mime : mime_assoc -> mime_type
 val set_default_mime : mime_assoc -> mime_type -> mime_assoc
