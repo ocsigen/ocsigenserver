@@ -122,20 +122,35 @@ sets or keeps:
   host: keephost.example:UPSTREAM_PORT
 
 The response of the target loses its own such headers, and is sent in
-HTTP/1.1. A body that ended with the connection to the target ends with the
-connection to the client (otherwise, curl would fail with its timeout):
+HTTP/1.1. A body that ended with the connection to the target is sent
+chunked to an HTTP/1.1 client, whose connection stays open, and delimited by
+the end of the connection to an HTTP/1.0 client (otherwise, curl would fail
+with its timeout):
 
   $ ocsigenserver --reverse-proxy http://127.0.0.1:$PORT3 --port $PORT7 \
   >   >proxy-raw.log 2>&1 &
   $ PROXIES="$PROXIES $!"
   $ wait_server $! proxy-raw.log http://127.0.0.1:$PORT7/length
-  $ curl -si --max-time 10 http://127.0.0.1:$PORT7/http-1.0 >http-1.0.out
+  $ curl -si --raw --max-time 10 http://127.0.0.1:$PORT7/http-1.0 \
+  >   >http-1.0.out
   $ tr -d '\r' <http-1.0.out | grep -iv '^date:'
   HTTP/1.1 200 OK
   X-End: 1
-  connection: close
   server: Ocsigen
   transfer-encoding: chunked
+  connection: keep-alive
+  
+  1d
+  body ended by the connection
+  
+  0
+  
+  $ curl -si --http1.0 --max-time 10 http://127.0.0.1:$PORT7/http-1.0 \
+  >   | tr -d '\r' | grep -iv '^date:'
+  HTTP/1.1 200 OK
+  X-End: 1
+  server: Ocsigen
+  connection: close
   
   body ended by the connection
 

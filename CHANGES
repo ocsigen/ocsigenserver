@@ -513,6 +513,9 @@ Bug fixes:
    and to an HTTP/1.0 client with "Connection: close", in both cases without
    the Content-Length its producer may have set: the connection was kept
    open, so that the client could not find the end of the response.
+ * Revproxy: a body that the target ends by closing its connection is sent
+   chunked to an HTTP/1.1 client, whose connection is no longer closed after
+   it.
 
 ==== 8.0.0 (2026-09-24) ===
 

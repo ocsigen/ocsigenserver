@@ -66,29 +66,13 @@ let remove_hop_by_hop headers =
     not (List.mem name ["content-length"; "transfer-encoding"; "host"]))
   |> List.fold_left Cohttp.Header.remove headers
 
-(* Whether the body of [response], to a request with [meth], is delimited by
-   the end of the connection to the target, having neither a length nor
-   chunks. *)
-let delimited_by_close meth response =
-  match Cohttp.Response.encoding response, meth with
-  | Cohttp.Transfer.Unknown, `HEAD -> false
-  | Cohttp.Transfer.Unknown, _ -> (
-    match Cohttp.Code.code_of_status (Cohttp.Response.status response) with
-    | 204 | 304 -> false
-    | code -> code >= 200)
-  | (Cohttp.Transfer.Chunked | Cohttp.Transfer.Fixed _), _ -> false
-
-(* The response of the target, to a request with [meth], as the server sends
-   it to the client: in its own version of HTTP, without the headers meant for
-   the connection to the target. A body delimited by the end of that
-   connection is delimited by the end of the connection to the client. *)
-let forwarded_response meth response =
+(* The response of the target as the server sends it to the client: in its own
+   version of HTTP, without the headers meant for the connection to the target.
+   A body delimited by the end of that connection is of unknown length, which
+   the server frames for the client (chunked, or delimited by the end of the
+   connection to an HTTP/1.0 client). *)
+let forwarded_response response =
   let headers = remove_hop_by_hop (Cohttp.Response.headers response) in
-  let headers =
-    if delimited_by_close meth response
-    then Cohttp.Header.add headers "connection" "close"
-    else headers
-  in
   {response with Cohttp.Response.headers; version = `HTTP_1_1}
 
 (* [tracked body] is [body], read in the same way, with a function that gives
@@ -233,7 +217,7 @@ let gen dir = function
                       Lwt.fail
                         (Ocsigen.Extensions.Ocsigen_http_error
                            (Ocsigen_cookie_map.empty, `Bad_gateway)))
-             >|= fun (response, body) -> forwarded_response meth response, body
+             >|= fun (response, body) -> forwarded_response response, body
            in
            Lwt.return
            @@ Ocsigen.Extensions.Ext_found
