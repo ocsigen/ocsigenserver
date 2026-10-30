@@ -369,6 +369,9 @@ Bug fixes:
    connections only. Without IPv6, a port alone listens on IPv4 only. Each
    listening socket, not each port, counts as one connection in
    <maxconnected> while it waits for a new one.
+ * Revproxy answers 502 Bad Gateway, instead of 500, when it gets no response
+   from its target (refused connection, unknown name, TLS failure, connection
+   closed). The error log gives the target server and the reason.
 
 ==== 8.0.0 (2026-09-24) ===
 
