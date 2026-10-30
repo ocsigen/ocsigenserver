@@ -54,5 +54,6 @@ v}
 
 - The reverse proxy does no caching for now.
 - When it gets no response from the target (refused connection, unknown name, TLS failure, connection closed...), the client gets a [502 Bad Gateway], and the error log says why.
+- The X-Forwarded-For header sent to the target holds the address of the client alone: the one of the host that connected to the server, or the one that a trusted proxy gave, after [<allow-forward-for/>]. The addresses of the proxies before the server are not sent, so that the target needs to trust only the server.
 - The query string is decoded, then encoded again before it is sent, so its encoding may change: for instance, [+] is sent as [%20] and [;] as [%3B]. [+] and [%20] both mean a space in a form, but a target that reads [+] literally, or splits the query on [;], sees something else.
 

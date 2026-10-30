@@ -52,7 +52,9 @@ it is told to trust the self-signed one of the upstream:
   https: true
 
 A proxy configured in a file, behind a trusted proxy that announces the client
-and the scheme of the request it received:
+and the scheme of the request it received. The client is the rightmost address
+of X-Forwarded-For that is not a trusted proxy, and only this address is sent
+to the target:
 
   $ cat > proxy.conf <<EOF
   > <ocsigen><server>
@@ -66,7 +68,7 @@ and the scheme of the request it received:
   >     keephost="keephost"/>
   > </host>
   > <host hostfilter="*">
-  >   <allow-forward-for/>
+  >   <allow-forward-for proxies="198.51.100.0/24"/>
   >   <allow-forward-proto/>
   >   <revproxy suburl="(.*)" dest="http://127.0.0.1:$PORT1/\1"/>
   > </host>
@@ -75,14 +77,15 @@ and the scheme of the request it received:
   $ ocsigenserver -c proxy.conf >proxy-conf.log 2>&1 &
   $ PROXIES="$PROXIES $!"
   $ wait_server $! proxy-conf.log proxy.cmd http://127.0.0.1:$PORT6/
-  $ curl -s --max-time 10 -H 'X-Forwarded-For: 192.0.2.1, 198.51.100.1' \
+  $ curl -s --max-time 10 \
+  >   -H 'X-Forwarded-For: 10.1.2.3, 192.0.2.1, 198.51.100.1' \
   >   -H 'X-Forwarded-Proto: https' http://127.0.0.1:$PORT6/y \
   >   | mask_port
   path: /y
   host: 127.0.0.1:UPSTREAM_PORT
   https: false
   x-forwarded-proto: https
-  x-forwarded-for: 192.0.2.1, 198.51.100.1
+  x-forwarded-for: 192.0.2.1
 
 With keephost, the proxy sends the Host header of the request to the target,
 with the port of the target added since the header has none. It still
