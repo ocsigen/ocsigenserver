@@ -169,11 +169,15 @@ let find_mime file assoc =
     | Some mime -> mime
     | None -> Magic_mime.lookup ~default:assoc.assoc_default file)
 
-(* As before 3.0.0: the charset is given for text and XML types. *)
+(* As before 3.0.0: the charset is given for text and XML types. Types are
+   case-insensitive, and a rule can give parameters after them. *)
 let takes_charset mime =
-  String.starts_with ~prefix:"text/" mime
-  || String.ends_with ~suffix:"/xml" mime
-  || String.ends_with ~suffix:"+xml" mime
+  match String.split ';' (String.lowercase_ascii mime) with
+  | [] -> false
+  | media_type :: _ ->
+      String.starts_with ~prefix:"text/" media_type
+      || String.ends_with ~suffix:"/xml" media_type
+      || String.ends_with ~suffix:"+xml" media_type
 
 (* Whether [mime] has a charset parameter, which a rule can give. Parameter
    names are case-insensitive. *)
