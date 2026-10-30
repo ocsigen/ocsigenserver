@@ -36,21 +36,26 @@ type 'a assoc_item =
 
 type 'a assoc = {assoc_list : 'a assoc_item list; assoc_default : 'a}
 
-let find_in_assoc file assoc =
+let extension file =
+  try String.lowercase_ascii (Filename.extension_no_directory file)
+  with Not_found -> ""
+
+let find_in_assoc_opt file assoc =
   let filename = Filename.basename file in
-  let ext =
-    try String.lowercase_ascii (Filename.extension_no_directory file)
-    with Not_found -> ""
-  in
+  let ext = extension file in
   let rec aux = function
-    | [] -> assoc.assoc_default
-    | Extension (ext', v) :: q -> if ext = ext' then v else aux q
-    | File (filename', v) :: q -> if filename = filename' then v else aux q
+    | [] -> None
+    | Extension (ext', v) :: q -> if ext = ext' then Some v else aux q
+    | File (filename', v) :: q -> if filename = filename' then Some v else aux q
     | Regexp (reg, v) :: q ->
-        if Netstring_pcre.string_match reg file 0 <> None then v else aux q
-    | Map m :: q -> ( try MapString.find ext m with Not_found -> aux q)
+        if Netstring_pcre.string_match reg file 0 <> None then Some v else aux q
+    | Map m :: q -> (
+      match MapString.find_opt ext m with Some v -> Some v | None -> aux q)
   in
   aux assoc.assoc_list
+
+let find_in_assoc file assoc =
+  Option.value (find_in_assoc_opt file assoc) ~default:assoc.assoc_default
 
 let default assoc = assoc.assoc_default
 let set_default assoc default = {assoc with assoc_default = default}
@@ -93,11 +98,10 @@ let update_mime_regexp = update_regexp
 let set_default_mime = set_default
 let set_default_charset = set_default
 let find_charset = find_in_assoc
-let find_mime = find_in_assoc
 
 (* Specific handling of content-type *)
 
-let parse_mime_types ~filename : mime_type assoc =
+let read_mime_types filename =
   let rec read_and_split mimemap in_ch =
     try
       let line = input_line in_ch in
@@ -121,31 +125,56 @@ let parse_mime_types ~filename : mime_type assoc =
           read_and_split mimemap in_ch
     with End_of_file -> mimemap
   in
-  { assoc_list =
-      [ Map
-          (try
-             let in_ch = open_in filename in
-             let map =
-               try read_and_split MapString.empty in_ch
-               with e -> close_in in_ch; raise e
-             in
-             close_in in_ch; map
-           with exn ->
-             Logs.err ~src:section (fun fmt ->
-               fmt
-                 ("unable to read the mime.types file" ^^ "@\n%s")
-                 (Printexc.to_string exn));
-             MapString.empty) ]
+  try In_channel.with_open_text filename (read_and_split MapString.empty)
+  with Sys_error msg ->
+    Logs.err ~src:section (fun fmt ->
+      fmt "Unable to read the mime.types file: %s" msg);
+    MapString.empty
+
+let parse_mime_types ~filename : mime_type assoc =
+  { assoc_list = [Map (read_mime_types filename)]
   ; assoc_default = default_mime_type }
 
-let default_mime_assoc () =
-  let parsed = ref None in
-  match !parsed with
-  | None ->
-      let filename = !Ocsigen_base.Config_static.mimefile in
-      Logs.info ~src:section (fun fmt ->
-        fmt "Loading mime types in '%s'" filename);
-      let map = parse_mime_types ~filename in
-      parsed := Some map;
-      map
-  | Some map -> map
+let default_mime_assoc () = empty_mime_assoc ()
+
+(* The mime.types file of <mimefile>, and its table, read at the first lookup:
+   the logs are open by then, and a reload, which sets the file again, reads
+   it again. *)
+let mime_file = ref None
+let mime_file_table = ref (lazy MapString.empty)
+
+let set_mime_file file =
+  mime_file := file;
+  mime_file_table :=
+    lazy
+      (match file with
+      | None -> MapString.empty
+      | Some filename ->
+          Logs.info ~src:section (fun fmt ->
+            fmt "Loading mime types in '%s'" filename);
+          read_mime_types filename)
+
+let mime_file () = !mime_file
+
+(* The built-in table of magic-mime comes after the rules and the mime.types
+   file, and before the default type. *)
+let find_mime file assoc =
+  match find_in_assoc_opt file assoc with
+  | Some mime -> mime
+  | None -> (
+    match MapString.find_opt (extension file) (Lazy.force !mime_file_table) with
+    | Some mime -> mime
+    | None -> Magic_mime.lookup ~default:assoc.assoc_default file)
+
+(* As before 3.0.0: the charset is given for text and XML types. *)
+let takes_charset mime =
+  String.starts_with ~prefix:"text/" mime
+  || String.ends_with ~suffix:"/xml" mime
+  || String.ends_with ~suffix:"+xml" mime
+
+let content_type ~mime_assoc ~charset_assoc file =
+  let mime = find_mime file mime_assoc in
+  match find_charset file charset_assoc with
+  | "" -> mime
+  | charset when takes_charset mime -> mime ^ "; charset=" ^ charset
+  | _ -> mime

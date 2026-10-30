@@ -14,7 +14,7 @@ let option f get () = Option.fold ~none:"none" ~some:f (get ())
 let tags =
   [ "charset", "iso-8859-1", option Fun.id C.get_default_charset
   ; "uploaddir", "upload", option Fun.id C.get_uploaddir
-  ; "mimefile", "other.types", C.get_mimefile
+  ; "mimefile", "other.types", option Fun.id C.get_mimefile
   ; "maxconnected", "7", int C.get_max_number_of_connections
   ; "maxretries", "3", int C.get_maxretries
   ; "clienttimeout", "5", int C.get_client_timeout

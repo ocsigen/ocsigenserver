@@ -470,15 +470,18 @@ The value may be "infinity" or written using SI or binary units, e.g. 10 10B 10k
 {3 [<mimefile>] : MIME type file}
 
 
-The file associating file name extensions to their MIME type. Example:
+A file associating file name extensions to their MIME type, in the format of
+[/etc/mime.types]. There is none by default. Example:
 
 {v
-<mimefile>/etc/ocsigenserver/mime.types</mimefile>
+<mimefile>/etc/mime.types</mimefile>
 v}
 
-{b Limitation.} The file is read, but currently not used: Staticmod derives
-the [Content-Type] of the files it sends from their names, with the built-in
-table of the [magic-mime] library.
+Staticmod takes the [Content-Type] of a file from the [<contenttype>] rules
+of {{!page-extendconfiguration}Extendconfiguration}, then from this file,
+then from the built-in table of the [magic-mime] library, and last from the
+default type, [application/octet-stream]. The file is read when the first
+file is served after the server starts or reloads its configuration.
 
 {3 [<debugmode/>] : Debug mode for applications}
 Use this option for debugging your Web sites. Ocsigenserver itself does not

@@ -13,7 +13,6 @@ let conf_in =
 
     <logdir>_LOGDIR_</logdir>
     _COMMANDPIPE_
-    _MIMEFILE_
 
     <charset>utf-8</charset>
 
@@ -51,7 +50,6 @@ let conf_ml =
 let version_number = _VERSION_
 let config_file = ref _CONFIGFILE_
 let is_native = Sys.backend_type = Sys.Native
-let mimefile = ref _MIMEFILE_
 let bindir = ref _BINDIR_
 let extdir = ref _EXTDIR_
 let builtin_packages =
@@ -112,7 +110,6 @@ let static_options = function
   | "UP" -> str uploaddir
   | "CONFIGDIR" -> str configdir
   | "CONFIGFILE" -> str (configdir // "ocsigenserver.conf")
-  | "MIMEFILE" -> str (configdir // "mime.types")
   | "DEPS" -> String.concat ";" (List.map (Format.asprintf "%S") (deps ()))
   | _ as s -> failwith s
 
@@ -123,7 +120,6 @@ let sample_options = function
       if commandpipe = ""
       then "<!-- <commandpipe>...</commandpipe> -->"
       else "<commandpipe>" ^ commandpipe ^ "</commandpipe>"
-  | "MIMEFILE" -> "<!-- <mimefile>" ^ mimefile ^ "</mimefile> -->"
   | "LIBDIR" | "METADIR" -> libdir ()
   | "EXTPACKAGENAME" -> "ocsigenserver.ext"
   | "CONFIGDIR" -> configdir
@@ -137,7 +133,6 @@ let local_options = function
   | "COMMANDPIPE" ->
       "<commandpipe>" ^ src
       ^ "/local/var/run/ocsigenserver_command</commandpipe>"
-  | "MIMEFILE" -> "<mimefile>" ^ src ^ "/src/files/mime.types</mimefile>"
   | "LIBDIR" | "METADIR" -> libdir ()
   | "EXTPACKAGENAME" -> "ocsigenserver.ext"
   | "CONFIGDIR" -> src ^ "/local/etc/ocsigenserver"

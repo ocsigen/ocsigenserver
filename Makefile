@@ -78,9 +78,7 @@ install.files:
 	[ -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf ] || \
 	  { $(INSTALL) -m ${INSTALL_MOD_644} _build/install/default/etc/ocsigenserver/ocsigenserver.conf.sample \
 		$(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf;  }
-	-mv $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	 ## Log directory
-	$(INSTALL) -m ${INSTALL_MOD_644} src/files/mime.types $(TEMPROOT)$(CONFIGDIR)
 	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(LOGDIR)
 	 ## Static files
 	$(INSTALL) -d -m ${INSTALL_MOD_755} ${INSTALL_USER_GROUP} $(TEMPROOT)$(STATICPAGESDIR)
@@ -106,7 +104,6 @@ uninstall:
 purge: purge.files
 
 purge.files:
-	-rm -f $(TEMPROOT)$(CONFIGDIR)/mime.types $(TEMPROOT)$(CONFIGDIR)/mime.types.old
 	-rm -f $(TEMPROOT)$(CONFIGDIR)/ocsigenserver.conf
 	-rm -f $(patsubst local/var/www/ocsigenstuff/%, \
 			  $(TEMPROOT)$(STATICPAGESDIR)/ocsigenstuff/%, \

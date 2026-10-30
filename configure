@@ -528,7 +528,6 @@ let configdir = "$root$sysconfdir"
 let staticpagesdir = "$root$staticpagesdir"
 let uploaddir = "$root$uploaddir"
 let commandpipe = "$root$commandpipe"
-let mimefile = "$root$sysconfdir/mime.types"
 _EOF_
 
 ######################################################################
