@@ -78,6 +78,13 @@ val connection_options : t -> string list
     of [h], such as [close], [keep-alive] or the names of the headers meant for
     the current connection only, in lowercase (RFC 9110, section 7.6.1). *)
 
+val add_vary : t -> Name.t -> t
+(** [add_vary h name] adds [name] to the Vary field of [h], which says that
+    the response depends on the request header [name] (RFC 9110, section
+    12.5.5). [h] is unchanged if one of its Vary lines already lists [name],
+    in any case, or ["*"]. Otherwise, its Vary lines are replaced by a single
+    one that lists their names, then [name]. *)
+
 module Mime_type : sig
   type t = string option * string option
 

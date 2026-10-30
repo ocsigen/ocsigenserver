@@ -146,6 +146,8 @@ New features:
    Ocsigen.Server.exec_config_file reads the configuration file and starts
    the server, and reports an error in the file as the ocsigenserver command
    does.
+   Ocsigen_http.Header.add_vary adds a request header name to the Vary
+   header of a response.
  * The server warns about <filebuffersize>, <minthreads>, <maxthreads>,
    <disablepartialrequests/> and <respectpipeline/> in the configuration
    file, as it does for <servertimeout>: they are accepted but have no effect.
@@ -430,6 +432,24 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Compression: on a response with several Vary lines, as Revproxy may give,
+   Accept-Encoding was added to the last line and the other lines were
+   dropped. A shared cache could then give a page that depends on the
+   cookies of a user to another user. All the names are now kept.
+ * CORS: a wrong value of the credentials or max_age attribute is a
+   configuration error that says what is expected. It stopped the server
+   with the name of an exception (credentials="yes", max_age="one day"), or
+   was sent as it was (max_age="-1"). Cors.run raises Invalid_argument for a
+   negative max_age.
+ * CORS: a request that another extension answers, and that asks for a
+   method that the methods attribute does not allow, gets its response
+   without CORS headers, instead of a 500.
+ * CORS: the responses that go through <cors/> get "Vary: Origin", with or
+   without CORS headers, since these headers depend on the Origin of the
+   request. Without it, a shared cache could give the response for one
+   origin to another. When <cors/> is in an <if> on the Origin, the other
+   responses do not go through it: the manual shows how to add the header
+   to them.
 
 ==== 8.0.0 (2026-09-24) ===
 

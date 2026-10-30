@@ -34,11 +34,25 @@ type config =
   ; max_age : int option
   ; exposed_headers : string list }
 
-exception Refused
+(* Whether [r] asks for a method that [config] does not allow. *)
+let method_refused config r =
+  match
+    ( Ocsigen.Request.header r
+        Ocsigen_http.Header.Name.access_control_request_method
+    , config.methods )
+  with
+  | Some m, Some methods ->
+      not (List.mem (Cohttp.Code.method_of_string m) methods)
+  | _, None | None, _ -> false
 
-let add_headers config r response =
+(* The CORS headers of the response to [r]: [`No_origin] if [r] has no
+   Origin, and [`Refused] if the method it asks for is not allowed. *)
+let cors_headers config r =
   match Ocsigen.Request.header r Ocsigen_http.Header.Name.origin with
-  | None -> Lwt.return Ocsigen.Extensions.Ext_do_nothing
+  | None -> `No_origin
+  | Some _ when method_refused config r ->
+      Logs.info ~src:section (fun fmt -> fmt "Method refused");
+      `Refused
   | Some origin ->
       Logs.info ~src:section (fun fmt -> fmt "request with origin: %s" origin);
       let l = [Ocsigen_http.Header.Name.access_control_allow_origin, origin] in
@@ -55,21 +69,9 @@ let add_headers config r response =
             Ocsigen_http.Header.Name.access_control_request_method
         with
         | Some request_method ->
-            let methods =
-              match config.methods with
-              | None -> true
-              | Some l -> (
-                try List.mem (Cohttp.Code.method_of_string request_method) l
-                with _ -> false)
-            in
-            if methods
-            then
-              ( Ocsigen_http.Header.Name.access_control_allow_methods
-              , request_method )
-              :: l
-            else (
-              Logs.info ~src:section (fun fmt -> fmt "Method refused");
-              raise Refused)
+            ( Ocsigen_http.Header.Name.access_control_allow_methods
+            , request_method )
+            :: l
         | None -> l
       in
       let l =
@@ -99,9 +101,21 @@ let add_headers config r response =
             , String.concat ", " exposed_headers )
             :: l
       in
-      Lwt.return
-        (Ocsigen.Extensions.Ext_found
-           (fun () -> Lwt.return @@ Ocsigen.Response.replace_headers response l))
+      `Headers l
+
+(* The headers of the response depend on the Origin of the request, even
+   when there is none: a cache must not serve the response to a request
+   without Origin, which has no CORS headers, to one with an Origin. *)
+let vary_origin response =
+  let r = Ocsigen.Response.response response in
+  let headers =
+    Ocsigen_http.Header.add_vary r.Cohttp.Response.headers
+      Ocsigen_http.Header.Name.origin
+  in
+  Ocsigen.Response.update ~response:{r with Cohttp.Response.headers} response
+
+let found response =
+  Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return response))
 
 let main config = function
   | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
@@ -109,15 +123,20 @@ let main config = function
     match Ocsigen.Request.meth request_info with
     | `OPTIONS -> (
         Logs.info ~src:section (fun fmt -> fmt "OPTIONS request");
-        try add_headers config request_info (default_frame ())
-        with Refused ->
-          Logs.info ~src:section (fun fmt -> fmt "Refused request");
-          Lwt.return Ocsigen.Extensions.Ext_do_nothing)
+        match cors_headers config request_info with
+        | `Headers l ->
+            found
+              (vary_origin
+                 (Ocsigen.Response.replace_headers (default_frame ()) l))
+        | `No_origin | `Refused -> Lwt.return Ocsigen.Extensions.Ext_do_nothing)
     | _ -> Lwt.return Ocsigen.Extensions.Ext_do_nothing)
   | Ocsigen.Extensions.Req_found ({Ocsigen.Extensions.request_info; _}, response)
-    ->
+    -> (
       Logs.info ~src:section (fun fmt -> fmt "answered request");
-      add_headers config request_info response
+      let response = vary_origin response in
+      match cors_headers config request_info with
+      | `Headers l -> found (Ocsigen.Response.replace_headers response l)
+      | `No_origin | `Refused -> found response)
 
 (* Register extension *)
 
@@ -136,11 +155,20 @@ let parse_config _ _ _parse_fun config_elem =
         [ Configuration.element ~name:"cors"
             ~attributes:
               [ Configuration.attribute ~name:"credentials" (fun s ->
-                  let s = bool_of_string s in
-                  config := {!config with credentials = s})
+                  match bool_of_string_opt s with
+                  | Some credentials -> config := {!config with credentials}
+                  | None ->
+                      badconfig
+                        "The credentials attribute of <cors> must be true or false, not %S"
+                        s)
               ; Configuration.attribute ~name:"max_age" (fun s ->
-                  let s = Some (int_of_string s) in
-                  config := {!config with max_age = s})
+                  match int_of_string_opt s with
+                  | Some max_age when max_age >= 0 ->
+                      config := {!config with max_age = Some max_age}
+                  | _ ->
+                      badconfig
+                        "The max_age attribute of <cors> must be a non-negative number of seconds, not %S"
+                        s)
               ; Configuration.attribute ~name:"exposed_headers" (fun s ->
                   let s =
                     Ocsigen_base.Lib.Netstring_pcre.split comma_space_regexp s
@@ -161,7 +189,11 @@ let () =
     ~fun_site:(fun _ _ _ -> parse_config)
     ()
 
-let run ?credentials ?max_age ?exposed_headers ?methods () _ _ _ =
+let run ?credentials ?max_age ?exposed_headers ?methods () =
+  (match max_age with
+  | Some n when n < 0 ->
+      invalid_arg (Printf.sprintf "Cors.run: negative max_age %d" n)
+  | Some _ | None -> ());
   let credentials = Option.value ~default:false credentials in
   let exposed_headers = Option.value ~default:[] exposed_headers in
-  main {credentials; methods; max_age; exposed_headers}
+  fun _ _ _ -> main {credentials; methods; max_age; exposed_headers}
