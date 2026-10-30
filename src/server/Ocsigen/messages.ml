@@ -276,13 +276,9 @@ let open_log_files_in_dir dir =
     let path = Filename.concat dir file in
     try
       open_out_gen [Open_append; Open_wronly; Open_creat; Open_text] 0o640 path
-    with
-    | Unix.Unix_error (error, _, _) ->
-        raise
-          (Config.Config_file_error
-             (Printf.sprintf "can't open log file %s: %s" path
-                (Unix.error_message error)))
-    | exn -> raise exn
+    with Sys_error msg ->
+      (* [msg] is the path and the reason. *)
+      raise (Config.Config_file_error ("can't open log file " ^ msg))
   in
   (* [with_channel file f] is [f c], [c] being a new channel to [file], which
      is closed if [f] raises: no channel is left open when a later file

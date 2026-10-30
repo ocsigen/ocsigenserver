@@ -436,6 +436,9 @@ Bug fixes:
    and its exit code, and writes no pid file. It used to say that the process
    was detached and succeed, leaving the error in the log files. The
    listening sockets are still opened after the command returns.
+ * A log file that cannot be opened stops the server with "can't open log
+   file" and the reason, and exit code 50, as an error in the configuration.
+   It used to be an uncaught Sys_error, with exit code 100.
 
 ==== 8.0.0 (2026-09-24) ===
 
