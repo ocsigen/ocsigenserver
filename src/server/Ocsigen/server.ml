@@ -57,7 +57,11 @@ let errmsg = function
       , 50 )
   | Dynlink_wrapper.Error e ->
       "Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
-  | Unix.Unix_error _ as e -> Printexc.to_string e, 9
+  | Unix.Unix_error (error, fn, arg) ->
+      ( Printf.sprintf "%s%s: %s" fn
+          (if arg = "" then "" else " " ^ arg)
+          (Unix.error_message error)
+      , 9 )
   | Ssl.Private_key_error msg -> "bad password: " ^ msg, 10
   | Config.Config_file_error msg | Extensions.Error_in_config_file msg ->
       "Error in configuration file: " ^ msg, 50

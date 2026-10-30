@@ -527,6 +527,14 @@ let log_connection_error = function
    <maxconnected>. *)
 let services = ref 0
 
+let string_of_sockaddr = function
+  | Unix.ADDR_UNIX path -> path
+  | Unix.ADDR_INET (addr, port) ->
+      let addr = Unix.string_of_inet_addr addr in
+      if String.contains addr ':'
+      then Printf.sprintf "[%s]:%d" addr port
+      else Printf.sprintf "%s:%d" addr port
+
 (* A socket listening on [sockaddr], as Conduit makes them, except that an
    IPv6 socket accepts IPv6 connections only, whatever the default of the
    system: [`All] listens on IPv4 with a socket of its own. *)
@@ -537,7 +545,15 @@ let listening_socket sockaddr =
     (fun () ->
        Lwt_unix.setsockopt fd Unix.SO_REUSEADDR true;
        if domain = Unix.PF_INET6 then Lwt_unix.setsockopt fd Unix.IPV6_ONLY true;
-       Lwt_unix.bind fd sockaddr >|= fun () ->
+       Lwt.catch
+         (fun () -> Lwt_unix.bind fd sockaddr)
+         (function
+           | Unix.Unix_error (error, "bind", _) ->
+               (* With the address, which the error does not give. *)
+               Lwt.fail
+                 (Unix.Unix_error (error, "bind", string_of_sockaddr sockaddr))
+           | exn -> Lwt.reraise exn)
+       >|= fun () ->
        Lwt_unix.listen fd 128;
        Lwt_unix.set_close_on_exec fd;
        fd)

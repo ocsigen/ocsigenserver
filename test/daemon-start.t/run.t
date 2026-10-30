@@ -61,7 +61,7 @@ A port already in use, here by the server above, makes the command fail too:
   >   good.conf > busy.conf
   $ ocsigenserver -c busy.conf -d -p busy.pid >out.log 2>&1; echo "exit $?"
   exit 9
-  $ grep -o 'Fatal - .*\|detached' out.log
-  Fatal - Unix.Unix_error(Unix.EADDRINUSE, "bind", "")
+  $ grep -o 'Fatal - .*\|detached' out.log | sed "s/:$PORT1:/:PORT:/"
+  Fatal - bind 127.0.0.1:PORT: Address already in use
   $ test -e busy.pid
   [1]
