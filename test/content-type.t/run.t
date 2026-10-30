@@ -7,7 +7,7 @@ the <mimefile>, then the built-in table of magic-mime, then the default of
   $ trap 'kill $CONF_PID $SERVE_PID 2>/dev/null; stop_server $LIB_PID' EXIT
   $ mkdir -p log www
   $ for f in a.txt b.html c.zzz bla.qqq d.png e.unknownext f.svg g.js h.yyy \
-  >   i.csv; do
+  >   i.csv j.lat; do
   >   echo x > www/$f; done
 
 The mime.types file gives a type to an extension that magic-mime knows (js),
@@ -41,6 +41,7 @@ With a configuration file:
   >     <contenttype default="text/x-default">
   >       <file file="bla.qqq" value="text/x-foo"/>
   >       <extension ext="yyy" value="text/x-rule"/>
+  >       <extension ext="lat" value="text/plain; Charset=iso-8859-1"/>
   >     </contenttype>
   >     <site path="legacy" charset=""><static dir="www"/></site>
   >     <static dir="www"/>
@@ -67,6 +68,11 @@ An empty charset, in a rule or on a <site> (or <host>), sends no charset:
   $ ctypes "" http://127.0.0.1:$PORT1 i.csv legacy/b.html
   i.csv: content-type: text/csv
   legacy/b.html: content-type: text/html
+
+A type that has a charset already gets no other one:
+
+  $ ctypes "" http://127.0.0.1:$PORT1 j.lat
+  j.lat: content-type: text/plain; Charset=iso-8859-1
 
 A reload reads the mime.types file again:
 
