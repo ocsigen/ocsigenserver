@@ -148,6 +148,12 @@ type instruction =
   -> Ocsigen_base.Lib.Url.path
   -> Extensions.extension
 
+(* Made by [start], once it has set the server-wide settings that the host
+   takes as defaults: OCaml evaluates the hosts given to [start] before it
+   runs. Lazy rather than a function, so that a host given twice is made, and
+   its instructions applied, only once. *)
+type host_config = Extensions.host_config Lazy.t
+
 let default_re_string = ".*"
 
 let host
@@ -173,30 +179,33 @@ let host
       (Config.checked_size "Ocsigen.Server.host ~maxuploadfilesize")
       maxuploadfilesize
   in
-  let def = Extensions.default_config_info () in
-  let default default o = Option.value o ~default in
-  let config_info =
-    { Extensions.default_hostname = default def.default_hostname default_hostname
-    ; default_httpport = default def.default_httpport default_httpport
-    ; default_httpsport = default def.default_httpsport default_httpsport
-    ; default_protocol_is_https =
-        default def.default_protocol_is_https default_protocol_is_https
-    ; mime_assoc = default def.mime_assoc mime_assoc
-    ; charset_assoc = default def.charset_assoc charset_assoc
-    ; default_directory_index =
-        default def.default_directory_index default_directory_index
-    ; list_directory_content =
-        default def.list_directory_content list_directory_content
-    ; follow_symlinks = default def.follow_symlinks follow_symlinks
-    ; do_not_serve_404 = default def.do_not_serve_404 do_not_serve_404
-    ; do_not_serve_403 = default def.do_not_serve_403 do_not_serve_403
-    ; uploaddir = default def.uploaddir uploaddir
-    ; maxuploadfilesize = default def.maxuploadfilesize maxuploadfilesize }
-  in
   let vh = [regexp, Ocsigen_base.Lib.Netstring_pcre.regexp regexp, port] in
-  ( vh
-  , config_info
-  , Extensions.compose (List.map (fun i -> i vh config_info []) instructions) )
+  lazy
+    (let def = Extensions.default_config_info () in
+     let default default o = Option.value o ~default in
+     let config_info =
+       { Extensions.default_hostname =
+           default def.default_hostname default_hostname
+       ; default_httpport = default def.default_httpport default_httpport
+       ; default_httpsport = default def.default_httpsport default_httpsport
+       ; default_protocol_is_https =
+           default def.default_protocol_is_https default_protocol_is_https
+       ; mime_assoc = default def.mime_assoc mime_assoc
+       ; charset_assoc = default def.charset_assoc charset_assoc
+       ; default_directory_index =
+           default def.default_directory_index default_directory_index
+       ; list_directory_content =
+           default def.list_directory_content list_directory_content
+       ; follow_symlinks = default def.follow_symlinks follow_symlinks
+       ; do_not_serve_404 = default def.do_not_serve_404 do_not_serve_404
+       ; do_not_serve_403 = default def.do_not_serve_403 do_not_serve_403
+       ; uploaddir = default def.uploaddir uploaddir
+       ; maxuploadfilesize = default def.maxuploadfilesize maxuploadfilesize }
+     in
+     ( vh
+     , config_info
+     , Extensions.compose (List.map (fun i -> i vh config_info []) instructions)
+     ))
 
 let site ?charset path instructions vh config_info parent_path =
   let path = parent_path @ Extensions.preprocess_site_path path in
@@ -635,7 +644,7 @@ let start
       ?disablepartialrequests
       ?respect_pipeline
       ?maxretries
-      instructions
+      hosts
   =
   Config.set_ports ports;
   Option.iter Config.set_ssl_ports ssl_ports;
@@ -682,7 +691,9 @@ let start
              "Ocsigen.Server.start: ~server_timeout has no effect and is ignored."))
       server_timeout;
     Extensions.start_initialisation ();
-    Extensions.set_hosts instructions)
+    (* As the <host> of a configuration file, now that the server-wide
+       settings are set. *)
+    Extensions.set_hosts (List.map Lazy.force hosts))
 
 (* Registries through which the Staticmod and Revproxy extensions, once loaded,
    publish their serving functions. This lets the one-command serve mode use

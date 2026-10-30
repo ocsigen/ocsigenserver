@@ -69,6 +69,10 @@ val reverse_proxy :
     [maxrequestbodysize] as for {!start}. There is no command pipe: the server
     is stopped with a signal. Never returns. *)
 
+type host_config
+(** A virtual host, as {!host} describes it. {!start} makes it once it has
+    applied its own options, so that they apply to the host. *)
+
 val start :
    ?ports:(Config.Socket_type.t * int) list
   -> ?ssl_ports:(Config.Socket_type.t * int) list
@@ -106,7 +110,7 @@ val start :
   -> ?disablepartialrequests:bool
   -> ?respect_pipeline:unit
   -> ?maxretries:int
-  -> Extensions.host_config list
+  -> host_config list
   -> unit
 (** Start the server with some instructions. Never returns.
     It takes as main parameter a list of virtual hosts (see {!host} below). 
@@ -161,10 +165,20 @@ val host :
   -> ?uploaddir:string option
   -> ?maxuploadfilesize:int64 option
   -> instruction list
-  -> Extensions.host_config
+  -> host_config
 (** You can define one or several virtual hosts corresponding to a given
     server name or port. Raises [Invalid_argument] if [maxuploadfilesize] is
-    negative. *)
+    negative.
+
+    {!start} makes the host once it has applied its options, although OCaml
+    evaluates [host] first. A setting not given here is then the one of the
+    server: [default_charset], [uploaddir] and [maxuploadfilesize] of
+    {!start}, and the first port of its [ports] and [ssl_ports] for
+    [default_httpport] and [default_httpsport] (see
+    {!Ocsigen.Config.get_default_port}). The instructions are applied to the
+    host at that time too: an error raised by an instruction comes from
+    {!start}, which stops the server with it, as for an error in a
+    configuration file. *)
 
 val site :
    ?charset:string
