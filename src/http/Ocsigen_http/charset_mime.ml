@@ -140,11 +140,11 @@ let default_mime_assoc () = empty_mime_assoc ()
 (* The mime.types file of <mimefile>, and its table, read at the first lookup:
    the logs are open by then, and a reload, which sets the file again, reads
    it again. *)
-let mime_file = ref None
+let current_mime_file = ref None
 let mime_file_table = ref (lazy MapString.empty)
 
 let set_mime_file file =
-  mime_file := file;
+  current_mime_file := file;
   mime_file_table :=
     lazy
       (match file with
@@ -154,7 +154,7 @@ let set_mime_file file =
             fmt "Loading mime types in '%s'" filename);
           read_mime_types filename)
 
-let mime_file () = !mime_file
+let mime_file () = !current_mime_file
 
 (* The built-in table of magic-mime comes after the rules and the mime.types
    file, and before the default type. *)
