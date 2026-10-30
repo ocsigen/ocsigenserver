@@ -43,6 +43,10 @@
  (deps connection-guard/test.exe))
 
 (cram
+ (applies_to error-logs)
+ (deps error-logs/test.exe))
+
+(cram
  (applies_to loader)
  (deps loader/test.bc loader/dep.cma loader/dep2.cma loader/app.cma))
 
