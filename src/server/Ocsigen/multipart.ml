@@ -268,23 +268,28 @@ let counter =
     c := !c + 1;
     !c
 
-(* [disposition_params cd] is the list of the parameters of the
-   Content-Disposition header value [cd], with their names in lowercase, or
-   [None] if they are malformed (RFC 7578, RFC 6266). The names are matched
-   whole, so that [filename] is never taken for [name]. Spaces may surround
-   "=" and ";", a trailing ";" is ignored, and a value is a token or a quoted
-   string. In a quoted string, \" and \\ stand for " and \, as some clients
-   escape them (Go, curl --form-escape); any other backslash is kept. Browsers
-   do not escape backslashes (they percent-encode double quotes), so a value
-   ending with a backslash, such as a file name, makes the parameters
-   malformed when read this way: they are then read again with every
-   backslash kept. Two backslashes in a row sent by a browser are still read
-   as one, as nothing tells them from an escaped backslash. *)
-let disposition_params cd =
-  let len = String.length cd in
+(* [header_params s] is [(v, params)], where [v] is the value at the start of
+   the header value [s], such as a media type or a disposition type, and
+   [params] the list of the parameters that follow it, with their names in
+   lowercase, or [None] if they are malformed. It reads the parameters of the
+   Content-Type (RFC 2045) and Content-Disposition (RFC 6266, RFC 7578)
+   headers. The names are matched whole, so that [filename] is never taken
+   for [name]. Spaces may surround "=" and ";", a trailing ";" is ignored,
+   and a value is a token or a quoted string. An unquoted value may also
+   contain "=", although RFC 2045 requires quotes then, so that a boundary
+   such as ==a=b is accepted as it always was. In a quoted string, \" and \\
+   stand for " and \, as some clients escape them (Go, curl --form-escape);
+   any other backslash is kept. Browsers do not escape backslashes (they
+   percent-encode double quotes), so a value ending with a backslash, such as
+   a file name, makes the parameters malformed when read this way: they are
+   then read again with every backslash kept. Two backslashes in a row sent
+   by a browser are still read as one, as nothing tells them from an escaped
+   backslash. *)
+let header_params s =
+  let len = String.length s in
   (* [scan p i] is the first position from [i] whose character does not
      satisfy [p], or [len]. *)
-  let rec scan p i = if i < len && p cd.[i] then scan p (i + 1) else i in
+  let rec scan p i = if i < len && p s.[i] then scan p (i + 1) else i in
   let is_space c = c = ' ' || c = '\t' in
   let is_token c = not (is_space c || c = '=' || c = ';' || c = '"') in
   (* [quoted ~escapes i] reads a quoted string whose first character is at
@@ -295,12 +300,12 @@ let disposition_params cd =
       if j >= len
       then None
       else
-        match cd.[j] with
+        match s.[j] with
         | '"' -> Some (Buffer.contents b, j + 1)
         | '\\'
-          when escapes && j + 1 < len && (cd.[j + 1] = '"' || cd.[j + 1] = '\\')
+          when escapes && j + 1 < len && (s.[j + 1] = '"' || s.[j + 1] = '\\')
           ->
-            Buffer.add_char b cd.[j + 1];
+            Buffer.add_char b s.[j + 1];
             loop (j + 2)
         | c ->
             Buffer.add_char b c;
@@ -309,17 +314,17 @@ let disposition_params cd =
     loop i
   in
   let value ~escapes i =
-    if i < len && cd.[i] = '"'
+    if i < len && s.[i] = '"'
     then quoted ~escapes (i + 1)
     else
-      let j = scan is_token i in
-      if j = i then None else Some (String.sub cd i (j - i), j)
+      let j = scan (fun c -> is_token c || c = '=') i in
+      if j = i then None else Some (String.sub s i (j - i), j)
   in
   let rec params ~escapes acc i =
     let i = scan is_space i in
     if i = len
     then Some (List.rev acc)
-    else if cd.[i] <> ';'
+    else if s.[i] <> ';'
     then None
     else
       let i = scan is_space (i + 1) in
@@ -328,33 +333,32 @@ let disposition_params cd =
       else
         let j = scan is_token i in
         let k = scan is_space j in
-        if j = i || k = len || cd.[k] <> '='
+        if j = i || k = len || s.[k] <> '='
         then None
         else
-          let name = String.lowercase_ascii (String.sub cd i (j - i)) in
+          let name = String.lowercase_ascii (String.sub s i (j - i)) in
           match value ~escapes (scan is_space (k + 1)) with
           | Some (v, next) -> params ~escapes ((name, v) :: acc) next
           | None -> None
   in
-  (* The parameters follow the disposition type *)
-  let start = scan is_token (scan is_space 0) in
-  match params ~escapes:true [] start with
-  | Some _ as ps -> ps
-  | None -> params ~escapes:false [] start
+  let start = scan is_space 0 in
+  let stop = scan is_token start in
+  ( String.sub s start (stop - start)
+  , match params ~escapes:true [] stop with
+    | Some _ as ps -> ps
+    | None -> params ~escapes:false [] stop )
 
 let parse_content_type s =
-  match Ocsigen_base.Lib.String.split ';' s with
-  | [] -> None
-  | a :: l -> (
-    try
-      let typ, subtype = Ocsigen_base.Lib.String.sep '/' a in
-      let params =
-        try List.map (Ocsigen_base.Lib.String.sep '=') l with Not_found -> []
+  let media_type, params = header_params s in
+  match String.index_opt media_type '/' with
+  | None -> None
+  | Some i ->
+      let typ = String.sub media_type 0 i
+      and subtype =
+        String.sub media_type (i + 1) (String.length media_type - i - 1)
       in
-      (*VVV If syntax error, we return no parameter at all *)
-      Some ((typ, subtype), params)
-      (*VVV If syntax error in type, we return None *)
-    with Not_found -> None)
+      (* Malformed parameters are ignored *)
+      Some ((typ, subtype), Option.value params ~default:[])
 
 type content_type = (string * string) * (string * string) list
 
@@ -426,9 +430,9 @@ let post_params_multipart_form_data
       | None -> malformed "no Content-Disposition header"
     in
     let cd_params =
-      match disposition_params cd with
-      | Some cd_params -> cd_params
-      | None -> malformed "a malformed Content-Disposition"
+      match header_params cd with
+      | _, Some cd_params -> cd_params
+      | _, None -> malformed "a malformed Content-Disposition"
     in
     let p_name =
       match List.assoc_opt "name" cd_params with

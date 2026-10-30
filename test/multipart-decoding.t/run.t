@@ -228,17 +228,28 @@ expressions:
   $ check special 'multipart/form-data; boundary=a.b+c?(d)'
   param "a" "\r\n--aXbbd\r\n"
 
-A quoted boundary, and a boundary parameter name not in lowercase, are not
-supported yet, although RFC 2045 allows them: the body is rejected.
+A quoted boundary, and a boundary parameter name in any case, as RFC 2045
+allows. Then a quoted boundary with characters that need the quotes, and an
+unquoted one with "=", accepted although RFC 2045 requires quotes there:
 
   $ check simple 'multipart/form-data; boundary="B"'
-  status 400
-  chunks.exe:
-  error Bad request
+  param "a" "1"
+  file "f" "a.txt" - 6 bytes b1946ac92492d2347c6235b4d2611184
   $ check simple 'multipart/form-data; Boundary=B'
-  status 400
-  chunks.exe:
-  error Bad request
+  param "a" "1"
+  file "f" "a.txt" - 6 bytes b1946ac92492d2347c6235b4d2611184
+  $ { part 'name="a"' 1 'a b:c;d'; printf %s '--a b:c;d--'; } > quoted
+  $ check quoted 'multipart/form-data; boundary="a b:c;d"'
+  param "a" "1"
+  $ { part 'name="a"' 1 '==a=b'; printf %s '--==a=b--'; } > equal
+  $ check equal 'multipart/form-data; boundary===a=b'
+  param "a" "1"
+
+The parameters of the Content-Type of a part are read the same way:
+
+  $ printf %b '--B\r\nContent-Disposition: form-data; name="f"; filename="a.txt"\r\nContent-Type: text/plain; Charset="utf-8"\r\n\r\nx\r\n--B--\r\n' > part-type
+  $ check part-type
+  file "f" "a.txt" text/plain; charset=utf-8 1 bytes 9dd4e461268c8034f5c8564e155c67a6
 
 A line that starts with the delimiter (CRLF, "--" and the boundary) but is
 not one, as "--BX" for the boundary "B", or a value that starts with "--B",

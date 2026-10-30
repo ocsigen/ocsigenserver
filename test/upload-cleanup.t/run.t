@@ -70,8 +70,12 @@ file of a previous part is removed all the same:
   $ ls uploads
 
 A boundary has 1 to 70 characters (RFC 2046), so an empty boundary and one
-of 71 characters are refused. One of 70 characters is accepted:
+of 71 characters are refused. One of 70 characters is accepted. An empty
+value without quotes makes the parameters malformed, so that the
+Content-Type has no boundary:
 
+  $ raw '--\r\nContent-Disposition: form-data; name="f"\r\n\r\nx\r\n----\r\n' 'multipart/form-data; boundary=""'
+  400
   $ raw '--\r\nContent-Disposition: form-data; name="f"\r\n\r\nx\r\n----\r\n' 'multipart/form-data; boundary='
   400
   $ b70=$(printf %070d 0)
@@ -126,6 +130,7 @@ The reasons are logged:
   the body or one of its parts ends too early
   its Content-Type has no boundary
   its boundary is empty
+  its Content-Type has no boundary
   its boundary is longer than 70 characters
   a part has no name in its Content-Disposition
   a part has a malformed Content-Disposition

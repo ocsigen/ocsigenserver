@@ -330,6 +330,12 @@ Bug fixes:
    when a file name ends with a backslash, they are read again with every
    backslash kept. Two backslashes in a row that a browser sends are read as
    one, as nothing tells them from an escaped backslash.
+ * The boundary of a multipart Content-Type may be quoted, as in
+   boundary="a b", and the names of the parameters of a Content-Type are
+   read whatever their case, as RFC 2045 allows. Such bodies got a 400 Bad
+   Request. Ocsigen.Request.content_type and the Content-Type of uploaded
+   files now give the names of the parameters in lowercase, and their values
+   without quotes.
  * When closing an uploaded file fails, the server no longer closes it a
    second time, which could close another file, and reports the first error.
  * A configuration file that is not well-formed XML is reported again, with
