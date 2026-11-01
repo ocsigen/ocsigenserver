@@ -421,15 +421,17 @@ let handler
           | exn -> Lwt.return (handle_error exn)
           )
       >>= fun response ->
-      let response =
-        match Field_check.response_error response with
-        | None -> response
+      ( match Field_check.response_error response with
+        | None -> Lwt.return response
         | Some what ->
             Logs.err ~src:section (fun fmt ->
                 fmt "Response replaced by a 500 error: %s" what
             );
+            (* Its body, which will not be sent, may hold a file open. *)
+            Response.Body.release (Response.body response) >|= fun () ->
             error_response `Internal_server_error
-      in
+        )
+      >>= fun response ->
       Messages.accesslog (Access_log.line request response);
       let res, write_body =
         Response.to_response_expert ~meth:(Request.meth request) ~version

@@ -1,6 +1,8 @@
 (* A server whose only instruction answers each path with a response carrying
    the header or the cookie that the path names. *)
 
+open Lwt.Syntax
+
 let with_header name value =
   Ocsigen.Response.respond_string
     ~headers:(Cohttp.Header.of_list [name, value])
@@ -52,6 +54,29 @@ let respond _vh _config_info _path = function
   | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
     -> (
     match Ocsigen.Request.sub_path_string request_info with
+    | "open-files" ->
+        (* The number of files open in the server, on Linux and macOS *)
+        let n = Array.length (Sys.readdir "/dev/fd") in
+        Lwt.return
+          (Ocsigen.Extensions.Ext_found
+             (fun () ->
+               Lwt.return
+                 (Ocsigen.Response.respond_string ~status:`OK
+                    ~body:(string_of_int n) ()
+                 )
+             )
+          )
+    | "file-with-bad-cookie" ->
+        (* The body of a file response holds the file open. *)
+        let* response = Ocsigen.Response.respond_file "file.txt" in
+        let response =
+          Ocsigen.Response.add_cookies response
+            (Ocsigen_cookie_map.add ~path:[] "c"
+               (Ocsigen_cookie_map.OSet (None, injected, false))
+               Ocsigen_cookie_map.empty
+            )
+        in
+        Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return response))
     | "error-with-cookie" -> error_with_cookie "v"
     | "error-with-secure-cookie" -> error_with_cookie ~secure:true "v"
     | "error-with-bad-cookie" -> error_with_cookie injected
