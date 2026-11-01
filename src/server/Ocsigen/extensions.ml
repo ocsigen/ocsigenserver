@@ -339,7 +339,31 @@ let default_extension_composite : extension_composite =
 let compose_step (f : extension) (g : extension_composite) : extension_composite
   =
  fun cookies_to_set req_state ->
-  f req_state >>= fun res ->
+  (* The page found before [f], if any, is dropped when [f], or the page it
+     gives, fails, or when [f] answers without a page, and its body may hold a
+     file open. This concerns the answer of [f] only: those of an
+     [Ext_sub_result] come from extensions that released it already. *)
+  let release_found () =
+    match req_state with
+    | Req_found (_, response) -> Response.Body.release (Response.body response)
+    | Req_not_found _ -> Lwt.return_unit
+  in
+  let releasing_on_failure p =
+    Lwt.catch p (fun exn -> release_found () >>= fun () -> Lwt.reraise exn)
+  in
+  releasing_on_failure (fun () -> f req_state) >>= fun res ->
+  (match res with
+    | Ext_next _ | Ext_continue_with _ | Ext_stop_site _ | Ext_stop_host _
+    | Ext_stop_all _ | Ext_retry_with _ ->
+        release_found () >|= fun () -> res
+    | Ext_found r -> Lwt.return (Ext_found (fun () -> releasing_on_failure r))
+    | Ext_found_stop r ->
+        Lwt.return (Ext_found_stop (fun () -> releasing_on_failure r))
+    | Ext_found_continue_with r ->
+        Lwt.return (Ext_found_continue_with (fun () -> releasing_on_failure r))
+    | Ext_do_nothing | Ext_found_continue_with' _ | Ext_sub_result _ ->
+        Lwt.return res)
+  >>= fun res ->
   let rec aux cookies_to_set = function
     | Ext_do_nothing -> g cookies_to_set req_state
     | Ext_found r ->

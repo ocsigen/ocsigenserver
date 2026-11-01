@@ -164,6 +164,9 @@ Bug fixes:
  * In syslog mode, reopening the logs (the reopen_logs order of a log
    rotation) no longer opens a new socket to syslog each time, which leaked
    one file descriptor per rotation.
+ * A static file found by an extension, then dropped by a later one, is
+   closed. For example, <forbidden/> of Accesscontrol after <static/> left
+   the file open at each request.
  * Ocsigen_base.Loader.loadfiles, used for <extension findlib-package="...">
    and by Eliom for <eliommodule findlib-package="...">: the hooks that set
    the configuration of the element now surround all the files of the
