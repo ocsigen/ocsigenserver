@@ -8,10 +8,10 @@ user pages with local configuration, page compression,
 authentication, etc.
 
 Ocsigen Server can be used:
-- as an executable: it reads its configuration from a file and dynamically loads
-  the extensions and libraries you need for your sites, 
+- with the [ocsigenserver] command: it usually reads its configuration from a
+  file, and dynamically loads the extensions and the code of your sites,
 - or as a library: build your own executable and statically link the
-  modules you need for your pages.
+  extensions and the code of your sites.
 
 It is written in OCaml and uses the
 {{:https://github.com/mirage/ocaml-cohttp}Cohttp} library.
@@ -46,7 +46,7 @@ This is the simplest way to get started. For anything more elaborate (several
 hosts, extensions, fine-grained reverse proxy rules, etc.) use a configuration
 file or the library API, as described below.
 
-{1 Using Ocsigen Server as an executable}
+{1 Using the [ocsigenserver] command}
 
 Create your configuration file. You can take this one as an example:
 {v
@@ -79,7 +79,7 @@ needs.
 
 {1 Using Ocsigen Server as a library}
 
-If you want to include a Web Server in your OCaml app,
+If you want to include a Web Server in your own executable,
 add library [ocsigenserver] and the extensions you need 
 (here [ocsigenserver.ext.staticmod]) in your Dune file:
 {v
@@ -127,8 +127,8 @@ If you are using a configuration file, use tag
 manual of each extension). Most extensions have configuration
 options, and define new tags for the configuration file.
 
-If you are building a static executable, load the extensions
-as any library from your Dune file. Have a look at the API
+If you are building your own executable, link the extensions
+as libraries from your Dune file. Have a look at the API
 documentation of each extension to see the functions
 it defines and the configuration options.
 
