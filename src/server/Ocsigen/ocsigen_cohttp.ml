@@ -432,6 +432,21 @@ let handler
             error_response `Internal_server_error
         )
       >>= fun response ->
+      (* cohttp drops the response without calling its writer if it fails to
+         read the rest of the body of the request (a client too slow, or that
+         leaves) or to write the headers; an exception raised below drops it
+         too. Its body is then released once the connection is closed. On a
+         connection kept alive, [Lwt.choose] detaches the callback from
+         [connection_closed] once the writer starts, so that callbacks do not
+         pile up there, one for each request. *)
+      let writing, start_writing = Lwt.wait () in
+      Lwt.on_success
+        (Lwt.choose [writing; connection_closed])
+        (fun () ->
+          if Lwt.is_sleeping writing
+          then
+            Lwt.async (fun () -> Response.Body.release (Response.body response))
+        );
       Messages.accesslog (Access_log.line request response);
       let res, write_body =
         Response.to_response_expert ~meth:(Request.meth request) ~version
@@ -467,6 +482,7 @@ let handler
       Lwt.return
         ( res
         , fun ic oc ->
+            Lwt.wakeup start_writing ();
             write_body ic oc >>= fun () ->
             if keep_alive
             then (

@@ -12,7 +12,7 @@
    The other paths keep the response. When the second segment is "nested",
    the response is dropped by an extension composed in another one
    ([Ext_sub_result]). [open-files] gives the number of open files
-   (../fd-count). *)
+   (../fd-count). The timeout of the clients is 2 seconds. *)
 
 let file _vh _config_info _path = function
   | Ocsigen.Extensions.Req_not_found (err, {Ocsigen.Extensions.request_info; _})
@@ -80,5 +80,5 @@ let () =
   Ocsigen.Server.start
     ~ports:[`Unix "./local.sock", 0]
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
-    ~command_pipe:"local.cmd"
+    ~command_pipe:"local.cmd" ~client_timeout:2
     [Ocsigen.Server.host [Fd_count.instruction; file; nested; drop]]
