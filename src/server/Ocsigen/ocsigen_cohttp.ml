@@ -364,14 +364,7 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
              Logs.err ~src:section (fun fmt ->
                fmt "Response replaced by a 500 error: %s" what);
              (* Its body, which will not be sent, may hold a file open. *)
-             Lwt.catch
-               (fun () -> Response.Body.release (Response.body response))
-               (fun exn ->
-                  Logs.warn ~src:section (fun fmt ->
-                    fmt "Releasing the body of a replaced response failed: %s"
-                      (Printexc.to_string exn));
-                  Lwt.return_unit)
-             >|= fun () ->
+             Response.Body.release (Response.body response) >|= fun () ->
              Response.respond_error
                ~body:(reason_phrase `Internal_server_error)
                () )

@@ -54,7 +54,8 @@ Incompatible changes:
    (for example to close a file). Ocsigen.Response.of_cohttp and
    Ocsigen.Response.Body.of_cohttp take one too; by default, they release
    the body by reading it to the end. An extension that replaces a body
-   without writing it must free it with Ocsigen.Response.Body.release.
+   without writing it must free it with Ocsigen.Response.Body.release, which
+   logs a failure instead of raising it.
  * Ocsigen.Multipart.post_params takes a function (~on_file) that it calls
    with the name of each uploaded file it creates, so that the caller can
    remove it.

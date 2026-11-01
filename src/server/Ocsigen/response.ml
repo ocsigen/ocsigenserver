@@ -31,7 +31,14 @@ module Body = struct
 
   let write {write; _} = write
   let transfer_encoding {encoding; _} = encoding
-  let release {release; _} = release ()
+
+  (* The body is dropped whatever happens: whoever drops it can do nothing
+     about a failure, which is only logged. *)
+  let release {release; _} =
+    Lwt.catch release (fun exn ->
+      Logs.warn (fun f ->
+        f "Releasing the body of a response failed: %s" (Printexc.to_string exn));
+      Lwt.return_unit)
 end
 
 type t =
@@ -361,16 +368,7 @@ let to_response_expert ~meth t =
         let writer = R.make_body_writer ~flush:false res oc in
         let* () = Body.write t.a_body (R.write_body writer) in
         write_footer (Body.transfer_encoding t.a_body) oc
-      else
-        (* The response is complete: a failure to free its body does not
-           concern the client. *)
-        Lwt.catch
-          (fun () -> Body.release t.a_body)
-          (fun exn ->
-             Logs.warn (fun f ->
-               f "Releasing the body of a response failed: %s"
-                 (Printexc.to_string exn));
-             Lwt.return_unit) )
+      else Body.release t.a_body )
 
 let response t = t.a_response
 let body t = t.a_body
