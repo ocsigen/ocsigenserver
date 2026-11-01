@@ -6,9 +6,14 @@ module Body = struct
      because it is closer to [Lwt_stream] which was used before. This type
      forces data to be copied from buffers (usually [bytes]) to immutable
      strings, which is unecessary. *)
-  type t = ((string -> unit Lwt.t) -> unit Lwt.t) * Transfer.encoding
+  type t =
+    { write : (string -> unit Lwt.t) -> unit Lwt.t
+    ; encoding : Transfer.encoding
+    ; release : unit -> unit Lwt.t }
 
-  let make encoding writer : t = writer, encoding
+  let make ?(release = fun () -> Lwt.return_unit) encoding write =
+    {write; encoding; release}
+
   let empty = make (Fixed 0L) (fun _write -> Lwt.return_unit)
 
   let of_string s =
@@ -16,11 +21,17 @@ module Body = struct
       (Transfer.Fixed (Int64.of_int (String.length s)))
       (fun write -> write s)
 
-  let of_cohttp ~encoding body =
-    (fun write -> Cohttp_lwt.Body.write_body write body), encoding
+  let of_cohttp ?release ~encoding body =
+    let release =
+      match release with
+      | Some release -> release
+      | None -> fun () -> Cohttp_lwt.Body.drain_body body
+    in
+    make ~release encoding (fun write -> Cohttp_lwt.Body.write_body write body)
 
-  let write (w, _) = w
-  let transfer_encoding = snd
+  let write {write; _} = write
+  let transfer_encoding {encoding; _} = encoding
+  let release {release; _} = release ()
 end
 
 type t =
@@ -190,6 +201,14 @@ let respond_file
                    ~mode:Lwt_io.input fname
                in
                let encoding = Http.Transfer.Fixed (Int64.of_int length) in
+               let close () =
+                 Lwt.catch
+                   (fun () -> Lwt_io.close ic)
+                   (fun e ->
+                      Logs.warn (fun f ->
+                        f "Closing channel failed: %s" (Printexc.to_string e));
+                      Lwt.return_unit)
+               in
                let stream write =
                  let send () =
                    let* () =
@@ -221,14 +240,11 @@ let respond_file
                          (Printexc.to_string exn));
                      Lwt.return_unit)
                  in
-                 Lwt.catch
-                   (fun () -> Lwt_io.close ic)
-                   (fun e ->
-                      Logs.warn (fun f ->
-                        f "Closing channel failed: %s" (Printexc.to_string e));
-                      Lwt.return_unit)
+                 close ()
                in
-               let body = Body.make encoding stream in
+               (* Without its body, as for HEAD, the response still closes the
+                  file. *)
+               let body = Body.make ~release:close encoding stream in
                let mime_type =
                  match content_type with
                  | Some content_type -> content_type
@@ -256,9 +272,9 @@ let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   in
   {a_response; a_body; a_cookies}
 
-let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) (a_response, body) =
+let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) ?release (a_response, body) =
   let encoding = Response.encoding a_response in
-  let a_body = Body.of_cohttp ~encoding body in
+  let a_body = Body.of_cohttp ?release ~encoding body in
   {a_response; a_body; a_cookies = cookies}
 
 (* FIXME: secure *)
@@ -312,14 +328,14 @@ let set_framing status (encoding : Transfer.encoding) headers =
           "content-length" (Int64.to_string length)
     | Unknown -> headers
 
-let to_cohttp_response {a_response; a_cookies; a_body = _, body_encoding} =
+let to_cohttp_response {a_response; a_cookies; a_body} =
   let headers =
     let add name value headers = Header.add_unless_exists headers name value in
     Response.headers a_response
     |> Ocsigen_cookie_map.Map_path.fold make_cookies_headers a_cookies
     |> add "server" Config.server_name
     |> add "date" (Ocsigen_base.Lib.Date.to_string (Unix.time ()))
-    |> set_framing (Response.status a_response) body_encoding
+    |> set_framing (Response.status a_response) (Body.transfer_encoding a_body)
   in
   {a_response with Response.headers}
 
@@ -345,10 +361,18 @@ let to_response_expert ~meth t =
       if sends_body ~meth t
       then
         let writer = R.make_body_writer ~flush:false res oc in
-        let body, encoding = t.a_body in
-        let* () = body (R.write_body writer) in
-        write_footer encoding oc
-      else Lwt.return_unit )
+        let* () = Body.write t.a_body (R.write_body writer) in
+        write_footer (Body.transfer_encoding t.a_body) oc
+      else
+        (* The response is complete: a failure to free its body does not
+           concern the client. *)
+        Lwt.catch
+          (fun () -> Body.release t.a_body)
+          (fun exn ->
+             Logs.warn (fun f ->
+               f "Releasing the body of a response failed: %s"
+                 (Printexc.to_string exn));
+             Lwt.return_unit) )
 
 let response t = t.a_response
 let body t = t.a_body

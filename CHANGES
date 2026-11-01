@@ -49,7 +49,12 @@ Incompatible changes:
    "Process N detached" message of daemon mode, its only use, now goes
    through Logs (source ocsigen:main).
  * Ocsigen.Response.to_response_expert takes the method of the request
-   (~meth), to send no body in response to HEAD.
+   (~meth), to send no body in response to HEAD. A body that is not sent is
+   released instead: Ocsigen.Response.Body.make takes a function ~release
+   (for example to close a file). Ocsigen.Response.of_cohttp and
+   Ocsigen.Response.Body.of_cohttp take one too; by default, they release
+   the body by reading it to the end. An extension that replaces a body
+   without writing it must free it with Ocsigen.Response.Body.release.
  * Ocsigen.Multipart.post_params takes a function (~on_file) that it calls
    with the name of each uploaded file it creates, so that the caller can
    remove it.

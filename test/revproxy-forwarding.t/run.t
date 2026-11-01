@@ -64,6 +64,11 @@ to the target:
   > <commandpipe>proxy.cmd</commandpipe>
   > <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
   > <extension findlib-package="ocsigenserver.ext.revproxy"/>
+  > <extension findlib-package="ocsigenserver.ext.outputfilter"/>
+  > <host hostfilter="no-content.example">
+  >   <revproxy suburl="(.*)" dest="http://127.0.0.1:$PORT3/\1"/>
+  >   <sethttpcode code="204"/>
+  > </host>
   > <host hostfilter="keephost.example">
   >   <revproxy suburl="(.*)" dest="http://127.0.0.1:$PORT1/\1"
   >     keephost="keephost"/>
@@ -160,6 +165,19 @@ connection to the target, which would otherwise stay open:
   > done
   $ grep '/endless' raw.log
   /endless: connection closed
+
+A response whose body is not sent, here one turned into a 204 by
+<sethttpcode>, closes the connection to the target instead of reading the body
+to its end, which never comes:
+
+  $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
+  >   -H 'Host: no-content.example' http://127.0.0.1:$PORT6/endless
+  204
+  $ for _ in $(seq 1 50); do
+  >   [ "$(grep -c '/endless' raw.log)" = 2 ] && break; sleep 0.1
+  > done
+  $ grep -c '/endless' raw.log
+  2
 
 The proxy configured in a file reads at most 1000 bytes of a request body
 (<maxrequestbodysize>). A larger body gets a 413, whether its length is

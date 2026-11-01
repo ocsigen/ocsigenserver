@@ -3,4 +3,5 @@
  (libraries
   ocsigenserver
   ocsigenserver.ext.staticmod
-  ocsigenserver.ext.deflatemod))
+  ocsigenserver.ext.deflatemod
+  unix))
