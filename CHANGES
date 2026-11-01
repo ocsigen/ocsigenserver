@@ -89,6 +89,10 @@ Incompatible changes:
    limit also applies to the bodies that Revproxy forwards: raise it on a
    reverse proxy in front of a service that accepts larger bodies, with the
    new --max-request-body-size option for ocsigenserver --reverse-proxy.
+ * A cookie set as secure now has the Secure attribute (see "Bug fixes"), so
+   browsers refuse it from a site served over HTTP: such a site must not ask
+   for secure cookies, for example with <securecookies value="true"/> or the
+   secure scopes of Eliom.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -435,6 +439,19 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Security: a response whose headers or cookies cannot be written as they
+   are is replaced by a 500 error, and the error log names the header or the
+   cookie. A CR or LF in a value ended the header, so that a client whose text
+   reached a header, a cookie for example, could add other headers to the
+   response. Header names must be tokens, and header values must not contain
+   control characters other than tab. Cookie names and values must not
+   contain ";" or control characters other than tab, and cookie names must
+   not contain "=".
+ * Security: a cookie set as secure now has the Secure attribute, so that the
+   browser sends it only through HTTPS. The attribute was only written on
+   error responses: the cookies of the secure sessions of Eliom were also sent
+   in clear. Browsers refuse such cookies from a site served over HTTP
+   (Chrome and Firefox make an exception for localhost, Safari does not).
 
 ==== 8.0.0 (2026-09-24) ===
 

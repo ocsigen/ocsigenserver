@@ -25,8 +25,9 @@ module Map_inner : Map.S with type key := string
 
 (** Type used for cookies to set. The float option is the timestamp
     for the expiration date. The string is the value. If the bool is
-    true and the protocol is https, the cookie will be secure (will ask
-    the browser to send it only through secure connections). *)
+    true, the cookie has the Secure attribute: the browser sends it only
+    through secure connections, and does not accept it from an insecure
+    origin other than localhost. *)
 type cookie = OSet of float option * string * bool | OUnset
 
 type t = cookie Map_inner.t Map_path.t
