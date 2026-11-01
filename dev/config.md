@@ -500,7 +500,7 @@ Each extension can define its own orders.
 
 Predefined orders:
 
-- `reload`: will reload the configuration file. Extensions and libraries will not be reloaded, but Eliom loads the modules of its sites (`<eliom module=...>`) again *(see below for more information)*.
+- `reload`: will reload the configuration file. Extensions and libraries will not be reloaded, but Eliom loads the Eliom modules of its sites (`<eliom module=...>`) again *(see below for more information)*.
 - `gc`: will trigger a heap compaction
 - `shutdown`: will stop the server *(see below for more information)*
 - `reopen_logs`: will reopen the logs files (see logrotate configuration for an example of use)
