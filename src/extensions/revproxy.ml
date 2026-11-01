@@ -116,7 +116,10 @@ let tracked body =
    [Cohttp_lwt_unix.Client.call] does, except that cohttp-lwt 6 raises again,
    outside of any promise, any failure of the call: an error while reading
    the body of the request (one too large, for instance) or writing it to the
-   target stopped the server. *)
+   target stopped the server. The response comes with a function that closes
+   the connection, for a body that is not sent: reading it to the end could
+   take forever. The body then ends with what was already received, so that
+   its stream is closed. *)
 let call ~client_closed ~headers ~body meth uri =
   let module Net = Cohttp_lwt_unix.Net in
   let module Connection = Cohttp_lwt_unix.Connection in
@@ -139,7 +142,10 @@ let call ~client_closed ~headers ~body meth uri =
         (Lwt.choose [Lwt_stream.closed stream; client_closed])
         (fun () -> Connection.close connection)
   | `Empty | `String _ | `Strings _ -> Connection.close connection);
-  response
+  ( response
+  , fun () ->
+      Connection.close connection;
+      Cohttp_lwt.Body.drain_body response_body )
 
 (** Generate the pages from the request *)
 let gen dir = function
@@ -233,11 +239,11 @@ let gen dir = function
                       Lwt.fail
                         (Ocsigen.Extensions.Ocsigen_http_error
                            (Ocsigen_cookie_map.empty, `Bad_gateway)))
-             >|= fun (response, body) -> forwarded_response meth response, body
+             >|= fun ((response, body), release) ->
+             Ocsigen.Response.of_cohttp ~release
+               (forwarded_response meth response, body)
            in
-           Lwt.return
-           @@ Ocsigen.Extensions.Ext_found
-                (fun () -> do_request () >|= Ocsigen.Response.of_cohttp))
+           Lwt.return @@ Ocsigen.Extensions.Ext_found do_request)
         (function
           | Ocsigen.Extensions.Not_concerned ->
               Lwt.return (Ocsigen.Extensions.Ext_next err)

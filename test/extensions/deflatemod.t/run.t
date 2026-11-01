@@ -45,6 +45,33 @@
   ocsigen:local-file: [INFO] Testing "error.html".
   ocsigen:local-file: [INFO] checking if file error.html can be sent
   ocsigen:local-file: [INFO] Returning "error.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
+  ocsigen:ext:staticmod: [INFO] Is it a static file?
+  ocsigen:local-file: [INFO] Testing "./index.html".
+  ocsigen:local-file: [INFO] checking if file index.html can be sent
+  ocsigen:local-file: [INFO] Returning "./index.html".
+  ocsigen:ext: [INFO] host found! local-test:0 matches .* 
   application: [WARNING] Command received: shutdown
 
 Without Accept-Encoding the response is not compressed:
@@ -147,3 +174,17 @@ range request goes out as is, with its length:
   connection: keep-alive
   
   Erro
+
+The response to HEAD has no body. The compressed body that it would have had
+reads a file, and still closes it:
+
+  $ open_files () { curl --unix-socket ./local.sock -s http://local-test/open-files; }
+  $ before=$(open_files)
+  $ for i in 1 2 3 4 5; do
+  >   curl_ index.html -I -H "Accept-Encoding: gzip" >head.out
+  > done
+  $ grep content-encoding head.out
+  content-encoding: gzip
+  $ echo "$before" | grep -qE "^[0-9]+$" && test "$(open_files)" = "$before" \
+  >   && echo released
+  released

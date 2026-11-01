@@ -222,10 +222,12 @@ let stream_filter cfilter contentencoding url choice res =
                      in
                      Http.Response.make ~headers ~status ~version ()
                    and body =
-                     Ocsigen.Response.Body.make Cohttp.Transfer.Chunked
+                     let body = Ocsigen.Response.body res in
+                     Ocsigen.Response.Body.make
+                       ~release:(fun () -> Ocsigen.Response.Body.release body)
+                       Cohttp.Transfer.Chunked
                        (compress_body cfilter
-                          (Ocsigen.Response.Body.write
-                             (Ocsigen.Response.body res)))
+                          (Ocsigen.Response.Body.write body))
                    in
                    Lwt.return (Ocsigen.Response.update res ~body ~response)
                | _ -> Lwt.return res)

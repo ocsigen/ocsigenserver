@@ -1,0 +1,8 @@
+; /dev/fd lists the open file descriptors of the process, on Linux and macOS.
+
+(test
+ (name test_body_release)
+ (package ocsigenserver)
+ (enabled_if
+  (<> %{os_type} Win32))
+ (libraries ocsigenserver cohttp lwt lwt.unix))
