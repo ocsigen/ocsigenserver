@@ -39,7 +39,7 @@ module Body : sig
 
   val release : t -> unit Lwt.t
   (** [release body] frees the resources of [body], which will not be
-      written. *)
+      written. A failure is logged, not raised. *)
 end
 
 val make :
@@ -138,12 +138,12 @@ val to_response_expert :
     [meth] and HTTP version [version]. Set cookie headers, and the framing
     headers from the body. The body is written only if {!sends_body}: the
     response to [HEAD] has the headers of the response to [GET], without its
-    body. Otherwise the body is released ({!Body.release}), and a failure to
-    release it is logged. A body of unknown length is sent chunked to an
-    HTTP/1.1 client. To an HTTP/1.0 client, which does not know the chunked
-    coding (RFC 9112 6.1), a body of unknown length or a chunked one goes out
-    without framing headers and, unless the request is [HEAD], with
-    [Connection: close]: the end of the connection is the end of the body. *)
+    body. Otherwise the body is released ({!Body.release}). A body of unknown
+    length is sent chunked to an HTTP/1.1 client. To an HTTP/1.0 client,
+    which does not know the chunked coding (RFC 9112 6.1), a body of unknown
+    length or a chunked one goes out without framing headers and, unless the
+    request is [HEAD], with [Connection: close]: the end of the connection is
+    the end of the body. *)
 
 val response : t -> Cohttp.Response.t
 (** Raw response without cookie headers set. *)
