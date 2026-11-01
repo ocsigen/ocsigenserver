@@ -29,6 +29,13 @@ which contain the path of the site:
   HTTP/1.1 200 OK
   set-cookie: c=a b; path=/
 
+A secure cookie has the Secure attribute, even through HTTP, as the server
+may be behind a proxy that terminates TLS:
+
+  $ get secure-cookie
+  HTTP/1.1 200 OK
+  set-cookie: c=v; path=/; secure
+
 A CR or LF in a header, or in a cookie, would add a header. Other control
 characters are refused too:
 

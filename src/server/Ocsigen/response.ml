@@ -277,17 +277,15 @@ let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) ?release (a_response, body) 
   let a_body = Body.of_cohttp ?release ~encoding body in
   {a_response; a_body; a_cookies = cookies}
 
-(* FIXME: secure *)
-let make_cookies_header path exp name c _secure =
-  Format.sprintf "%s=%s%s%s" name c
-    (*VVV encode = true? *)
-    ("; path=/" ^ Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
-    (* (if secure && slot.sl_ssl then "; secure" else "")^ *)
-    ""
-  ^
-  match exp with
-  | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
-  | None -> ""
+(* The Secure attribute is written whatever the protocol of the connection:
+   behind a proxy that terminates TLS, the server only sees HTTP. *)
+let make_cookies_header path exp name c secure =
+  Format.sprintf "%s=%s; path=/%s%s%s" name c
+    (Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
+    (if secure then "; secure" else "")
+    (match exp with
+    | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
+    | None -> "")
 
 let make_cookies_headers path t hds =
   Ocsigen_cookie_map.Map_inner.fold
