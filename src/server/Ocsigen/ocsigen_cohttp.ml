@@ -373,6 +373,18 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
        let res, write_body =
          Response.to_response_expert ~meth:(Request.meth request) response
        in
+       (* cohttp drops the response without calling its writer if it fails to
+          read the rest of the body of the request (a client too slow, or that
+          leaves) or to write the headers. Its body is then released once the
+          connection is closed. *)
+       let writing, start_writing = Lwt.wait () in
+       Lwt.on_success
+         (Lwt.choose [writing; connection_closed])
+         (fun () ->
+            if Lwt.is_sleeping writing
+            then
+              Lwt.async (fun () ->
+                Response.Body.release (Response.body response)));
        (* As cohttp does for the responses it writes itself, which expert
           responses are not: the connection is kept alive if both the request
           and the response allow it, and the response says whether it is.
@@ -396,6 +408,7 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
        Lwt.return
          ( res
          , fun ic oc ->
+             Lwt.wakeup start_writing ();
              write_body ic oc >>= fun () ->
              if keep_alive
              then (

@@ -49,3 +49,17 @@ failing:
   500
   $ test "$(open_files)" = "$before" && echo released
   released
+
+A response that cohttp drops: it reads the rest of the body of the request
+before it writes the response, and this body never comes: one byte is sent
+out of the 100 announced. The server closes the connection after its
+timeout, without answering:
+
+  $ curl --unix-socket ./local.sock -s -H 'Content-Length: 100' -H 'Expect:' \
+  >   --data-binary x http://local-test/keep/file || echo "no answer"
+  no answer
+  $ for _ in $(seq 1 50); do
+  >   test "$(open_files)" = "$before" && break; sleep 0.1
+  > done
+  $ test "$(open_files)" = "$before" && echo released
+  released

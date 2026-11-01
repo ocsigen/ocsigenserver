@@ -166,7 +166,9 @@ Bug fixes:
    one file descriptor per rotation.
  * A static file found by an extension, then dropped by a later one, is
    closed. For example, <forbidden/> of Accesscontrol after <static/> left
-   the file open at each request.
+   the file open at each request. So is the file of a response that is
+   never sent, because the client does not send the rest of the body of its
+   request.
  * Ocsigen_base.Loader.loadfiles, used for <extension findlib-package="...">
    and by Eliom for <eliommodule findlib-package="...">: the hooks that set
    the configuration of the element now surround all the files of the
