@@ -33,31 +33,6 @@ exception Ocsigen_is_dir of (Request.t -> Uri.t)
 let reason_phrase status =
   Cohttp.Code.reason_phrase_of_code (Cohttp.Code.code_of_status status)
 
-module Cookie = struct
-  let serialize_cookie_raw path exp name c secure =
-    Format.sprintf "%s=%s; path=/%s%s%s" name c
-      (Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
-      (if secure then "; secure" else "")
-      (match exp with
-      | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
-      | None -> "")
-
-  let serialize_cookies path =
-    Ocsigen_cookie_map.Map_inner.fold @@ fun name c h ->
-    let open Ocsigen_cookie_map in
-    let exp, v, secure =
-      match c with
-      | OUnset -> Some 0., "", false
-      | OSet (t, v, secure) -> t, v, secure
-    in
-    Cohttp.Header.add h
-      Ocsigen_http.Header.Name.(to_string set_cookie)
-      (serialize_cookie_raw path exp name v secure)
-
-  let serialize cookies headers =
-    Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
-end
-
 (* cohttp writes the headers as they are: a CR or LF in a value ends the
    header, and text injected by a client in a value could add other headers
    (response splitting). A [;] in a cookie would add attributes to it. The
@@ -301,12 +276,9 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
     in
     let headers, ret_code, explicit_msg =
       match exn with
-      | Ocsigen_http_error (cookies_to_set, code) ->
+      | Ocsigen_http_error (_, code) ->
           log Logs.Debug "Got exception";
-          let headers =
-            Cookie.serialize cookies_to_set (Cohttp.Header.init ())
-          in
-          Some headers, code, None
+          None, code, None
       | Unix.Unix_error (Unix.EACCES, _, _) ->
           log Logs.Warning "Permission denied";
           None, `Forbidden, None
@@ -355,9 +327,16 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
       | Some msg -> msg
       | None -> reason_phrase (ret_code :> Cohttp.Code.status_code)
     in
-    Response.respond_error ?headers
-      ~status:(ret_code :> Cohttp.Code.status_code)
-      ~body ()
+    let cookies =
+      match exn with
+      | Ocsigen_http_error (cookies, _) -> cookies
+      | _ -> Ocsigen_cookie_map.empty
+    in
+    Response.add_cookies
+      (Response.respond_error ?headers
+         ~status:(ret_code :> Cohttp.Code.status_code)
+         ~body ())
+      cookies
   in
   (* TODO: equivalent of Ocsigen_range *)
   let request =

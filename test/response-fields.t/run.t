@@ -79,7 +79,7 @@ The log names what was not sent, without its value:
   Response replaced by a 500 error: the header name "x a" is not a token
   Response replaced by a 500 error: the value of cookie c has a forbidden character
   Response replaced by a 500 error: the cookie name "a=b" has a forbidden character
-  Response replaced by a 500 error: the value of header set-cookie has a forbidden character
+  Response replaced by a 500 error: the value of cookie c has a forbidden character
   $ grep -c injected log/errors.log
   0
   [1]
