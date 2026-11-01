@@ -68,12 +68,17 @@ val update :
   t ->
   t
 ```
+`update ~response ~body ~cookies t` is `t` with the given parts replaced. `update` does not release the former body of `t`: if `body` does not write it, the caller releases it ([`Body.release`](./../ocsigenserver/Ocsigen-Response-Body.md#val-release)).
+
 ```ocaml
 val of_cohttp : 
   ?cookies:Ocsigen_cookie_map.t ->
+  ?release:(unit -> unit Lwt.t) ->
   (Cohttp.Response.t * Cohttp_lwt.Body.t) ->
   t
 ```
+`of_cohttp ~cookies ~release (response, body)` is `response` with `body`, released as [`Body.of_cohttp`](./../ocsigenserver/Ocsigen-Response-Body.md#val-of_cohttp) says.
+
 ```ocaml
 val sends_body : meth:Cohttp.Code.meth -> t -> bool
 ```
@@ -85,7 +90,7 @@ val to_response_expert :
   t ->
   Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
 ```
-Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body.
+Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body. Otherwise the body is released ([`Body.release`](./../ocsigenserver/Ocsigen-Response-Body.md#val-release)), and a failure to release it is logged.
 
 ```ocaml
 val response : t -> Cohttp.Response.t
