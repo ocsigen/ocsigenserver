@@ -435,6 +435,14 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Security: a response whose headers or cookies cannot be written as they
+   are is replaced by a 500 error, and the error log names the header or the
+   cookie. A CR or LF in a value ended the header, so that a client whose text
+   reached a header, a cookie for example, could add other headers to the
+   response. Header names must be tokens, and header values must not contain
+   control characters other than tab. Cookie names and values must not
+   contain ";" or control characters other than tab, and cookie names must
+   not contain "=".
 
 ==== 8.0.0 (2026-09-24) ===
 

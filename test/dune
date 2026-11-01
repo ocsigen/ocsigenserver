@@ -87,6 +87,10 @@
  (deps request-body-limit/test.exe))
 
 (cram
+ (applies_to response-fields)
+ (deps response-fields/test.exe))
+
+(cram
  (applies_to response-framing)
  (deps response-framing/test.exe response-framing/client.exe))
 
