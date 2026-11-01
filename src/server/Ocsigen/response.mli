@@ -1,4 +1,9 @@
 type t
+(** A response. The server sends a 500 error instead of a response whose
+    headers or cookies cannot be written as they are: a header name that is
+    not a token (RFC 9110, section 5.6.2), a header value with a control
+    character other than a tab, a cookie name with [=], or a cookie name or
+    value with [;] or such a control character. *)
 
 module Body : sig
   type t

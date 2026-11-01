@@ -55,6 +55,69 @@ module Cookie = struct
     Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
 end
 
+(* cohttp writes the headers as they are: a CR or LF in a value ends the
+   header, and text injected by a client in a value could add other headers
+   (response splitting). A [;] in a cookie would add attributes to it. The
+   response is checked before it is sent, and replaced by an error if
+   something cannot be written. *)
+module Field_check = struct
+  let is_tchar = Ocsigen_http.Http1.is_tchar
+  let is_field_value_char = Ocsigen_http.Http1.is_field_value_char
+
+  (* Cookie names are not always tokens: those of Eliom contain the path of
+     the site, with "/" and possibly spaces. *)
+  let is_cookie_name_char = function
+    | ';' | '=' -> false
+    | c -> is_field_value_char c
+
+  let is_cookie_value_char c = c <> ';' && is_field_value_char c
+
+  let header_error headers =
+    Cohttp.Header.to_list headers
+    |> List.find_map (fun (name, value) ->
+        if name = "" || not (String.for_all is_tchar name)
+        then Some (Printf.sprintf "the header name %S is not a token" name)
+        else if not (String.for_all is_field_value_char value)
+        then Some ("the value of header " ^ name ^ " has a forbidden character")
+        else None
+    )
+
+  let cookie_error cookies =
+    Ocsigen_cookie_map.Map_path.to_seq cookies
+    |> Seq.find_map (fun (_, cookies) ->
+        Ocsigen_cookie_map.Map_inner.to_seq cookies
+        |> Seq.find_map (fun (name, cookie) ->
+            if name = ""
+            then Some "a cookie has an empty name"
+            else if not (String.for_all is_cookie_name_char name)
+            then
+              Some
+                (Printf.sprintf "the cookie name %S has a forbidden character"
+                   name
+                )
+            else
+              match cookie with
+              | Ocsigen_cookie_map.OSet (_, value, _)
+                when not (String.for_all is_cookie_value_char value) ->
+                  Some
+                    ("the value of cookie " ^ name
+                   ^ " has a forbidden character"
+                    )
+              | Ocsigen_cookie_map.OSet _ | Ocsigen_cookie_map.OUnset -> None
+        )
+    )
+
+  (* [response_error response] describes the first header or cookie of
+     [response] that cannot be sent, without its value, which may be
+     private. *)
+  let response_error response =
+    match
+      header_error (Cohttp.Response.headers (Response.response response))
+    with
+    | Some _ as e -> e
+    | None -> cookie_error (Response.cookies response)
+end
+
 (* Access log in the Apache/nginx Combined Log Format:
    %h %l %u %t "%r" %>s %b "%{Referer}i" "%{User-agent}i"
    https://httpd.apache.org/docs/current/logs.html#combined *)
@@ -385,6 +448,15 @@ let handler
           | exn -> Lwt.return (handle_error exn)
           )
       >>= fun response ->
+      let response =
+        match Field_check.response_error response with
+        | None -> response
+        | Some what ->
+            Logs.err ~src:section (fun fmt ->
+                fmt "Response replaced by a 500 error: %s" what
+            );
+            error_response `Internal_server_error
+      in
       Messages.accesslog (Access_log.line request response);
       let res, write_body =
         Response.to_response_expert ~meth:(Request.meth request) ~version

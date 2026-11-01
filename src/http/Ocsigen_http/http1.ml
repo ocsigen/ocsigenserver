@@ -97,15 +97,14 @@ let check_host version headers ~target =
 
 (* Field values are made of visible characters, spaces, horizontal tabs and
    non-ASCII bytes (RFC 9110, section 5.5): no other control character. *)
+let is_field_value_char = function
+  | '\t' -> true
+  | '\000' .. '\031' | '\127' -> false
+  | _ -> true
+
 let valid_field_values headers =
   Http.Header.to_list headers
-  |> List.for_all (fun (_, value) ->
-      String.for_all
-        (function
-          | '\t' -> true | '\000' .. '\031' | '\127' -> false | _ -> true
-          )
-        value
-  )
+  |> List.for_all (fun (_, value) -> String.for_all is_field_value_char value)
 
 (* tchar (RFC 9110, section 5.6.2). *)
 let is_tchar = function

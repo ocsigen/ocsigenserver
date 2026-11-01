@@ -15,6 +15,15 @@ val check_host :
     Otherwise it is [Error reason], for the logs, and the server
     must answer 400. *)
 
+val is_tchar : char -> bool
+(** [is_tchar c] is [true] iff [c] may appear in a token, such as a field
+    name (RFC 9110, section 5.6.2). *)
+
+val is_field_value_char : char -> bool
+(** [is_field_value_char c] is [true] iff [c] may appear in a field value:
+    any byte but the control characters, except the horizontal tab (RFC 9110,
+    section 5.5). *)
+
 val valid_field_values : Http.Header.t -> bool
 (** [valid_field_values headers] is [true] iff no value of [headers] has a
     control character other than a horizontal tab (RFC 9110, section 5.5).

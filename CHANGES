@@ -626,6 +626,16 @@ Bug fixes:
    the server, still listens on it. A server that does not get the lock
    fails at once, the socket being in use. Where locks are not available, as
    on NFS without a lock daemon, nothing is removed, as before.
+ * Security: a response whose headers or cookies cannot be written as they
+   are is replaced by a 500 error, and the error log names the header or the
+   cookie. A CR or LF in a value ended the header, so that a client whose text
+   reached a header, a cookie for example, could add other headers to the
+   response. Header names must be tokens, and header values must not contain
+   control characters other than tab. Cookie names and values must not
+   contain ";" or control characters other than tab, and cookie names must
+   not contain "=". As Eliom puts the path of a site in the names of its
+   cookies, a site whose path has a ";" or "=" gets this 500 when it sets
+   one: browsers could not send such a cookie back anyway.
 
 ==== 8.0.0 (2026-09-24) ===
 
