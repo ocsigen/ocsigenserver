@@ -5,7 +5,6 @@
 open Lwt.Syntax
 
 let fail fmt = Printf.ksprintf (fun s -> prerr_endline s; exit 1) fmt
-let open_files () = Array.length (Sys.readdir "/dev/fd")
 
 let send ~meth response =
   let _, write = Ocsigen.Response.to_response_expert ~meth response in
@@ -14,7 +13,7 @@ let send ~meth response =
 let check what f =
   let n = 20 in
   let* () = f () in
-  let before = open_files () in
+  let before = Fd_count.open_files () in
   let rec loop i =
     if i = 0
     then Lwt.return_unit
@@ -23,7 +22,7 @@ let check what f =
       loop (i - 1)
   in
   let* () = loop n in
-  let after = open_files () in
+  let after = Fd_count.open_files () in
   if after <> before
   then
     fail "%s: %d files open before %d responses, %d after" what before n after;

@@ -1,5 +1,6 @@
-(* A server whose only instruction answers each path with a response carrying
-   the header or the cookie that the path names. *)
+(* A server whose first instruction answers each path with a response carrying
+   the header or the cookie that the path names. The second one counts the
+   open files (../fd-count). *)
 
 open Lwt.Syntax
 
@@ -38,15 +39,6 @@ let respond _vh _config_info _path = function
   | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
     -> (
     match Ocsigen.Request.sub_path_string request_info with
-    | "open-files" ->
-        (* The number of files open in the server, on Linux and macOS *)
-        let n = Array.length (Sys.readdir "/dev/fd") in
-        Lwt.return
-          (Ocsigen.Extensions.Ext_found
-             (fun () ->
-               Lwt.return
-                 (Ocsigen.Response.respond_string ~status:`OK
-                    ~body:(string_of_int n) ())))
     | "file-with-bad-cookie" ->
         (* The body of a file response holds the file open. *)
         let* response = Ocsigen.Response.respond_file "file.txt" in
@@ -81,4 +73,4 @@ let () =
     ~ports:[`Unix "./local.sock", 0]
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
     ~command_pipe:"local.cmd"
-    [Ocsigen.Server.host [respond]]
+    [Ocsigen.Server.host [respond; Fd_count.instruction]]

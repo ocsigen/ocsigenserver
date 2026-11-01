@@ -1,0 +1,5 @@
+; /dev/fd lists the open file descriptors of the process, on Linux and macOS.
+
+(library
+ (name fd_count)
+ (libraries ocsigenserver unix))

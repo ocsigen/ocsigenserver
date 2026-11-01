@@ -90,7 +90,8 @@ its file open.
   $ echo content > file.txt
   $ count () { curl --unix-socket local.sock -s --max-time 10 http://x/open-files; }
   $ before=$(count)
+  $ echo "$before" | grep -qE '^[0-9]+$' && echo counted
+  counted
   $ for i in $(seq 20); do get file-with-bad-cookie > /dev/null; done
-  $ after=$(count)
-  $ test $((after - before)) -lt 10 && echo released
+  $ test "$(count)" = "$before" && echo released
   released
