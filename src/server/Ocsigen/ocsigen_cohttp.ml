@@ -346,27 +346,36 @@ let handler ~ssl ~address ~port ~connector ~guard (flow, conn) request body =
   in
   Lwt.finalize
     (fun () ->
-       Lwt.catch
-         (fun () -> connector request)
-         (function
-           | Ocsigen_is_dir fun_request ->
-               let headers =
-                 fun_request request |> Uri.to_string
-                 |> Cohttp.Header.init_with "location"
-               and status = `Moved_permanently in
-               Lwt.return (Response.respond_string ~headers ~status ~body:"" ())
-           | exn -> Lwt.return (handle_error exn))
+       ( Lwt.catch
+           (fun () -> connector request)
+           (function
+             | Ocsigen_is_dir fun_request ->
+                 let headers =
+                   fun_request request |> Uri.to_string
+                   |> Cohttp.Header.init_with "location"
+                 and status = `Moved_permanently in
+                 Lwt.return
+                   (Response.respond_string ~headers ~status ~body:"" ())
+             | exn -> Lwt.return (handle_error exn))
        >>= fun response ->
-       let response =
          match Field_check.response_error response with
-         | None -> response
+         | None -> Lwt.return response
          | Some what ->
              Logs.err ~src:section (fun fmt ->
                fmt "Response replaced by a 500 error: %s" what);
+             (* Its body, which will not be sent, may hold a file open. *)
+             Lwt.catch
+               (fun () -> Response.Body.release (Response.body response))
+               (fun exn ->
+                  Logs.warn ~src:section (fun fmt ->
+                    fmt "Releasing the body of a replaced response failed: %s"
+                      (Printexc.to_string exn));
+                  Lwt.return_unit)
+             >|= fun () ->
              Response.respond_error
                ~body:(reason_phrase `Internal_server_error)
-               ()
-       in
+               () )
+       >>= fun response ->
        Messages.accesslog (Access_log.line request response);
        let res, write_body =
          Response.to_response_expert ~meth:(Request.meth request) response

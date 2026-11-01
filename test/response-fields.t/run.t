@@ -83,3 +83,14 @@ The log names what was not sent, without its value:
   $ grep -c injected log/errors.log
   0
   [1]
+
+The body of a replaced response is released: a file response does not leave
+its file open.
+
+  $ echo content > file.txt
+  $ count () { curl --unix-socket local.sock -s --max-time 10 http://x/open-files; }
+  $ before=$(count)
+  $ for i in $(seq 20); do get file-with-bad-cookie > /dev/null; done
+  $ after=$(count)
+  $ test $((after - before)) -lt 10 && echo released
+  released
