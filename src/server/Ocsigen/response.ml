@@ -31,7 +31,14 @@ module Body = struct
 
   let write {write; _} = write
   let transfer_encoding {encoding; _} = encoding
-  let release {release; _} = release ()
+
+  (* The body is dropped whatever happens: whoever drops it can do nothing
+     about a failure, which is only logged. *)
+  let release {release; _} =
+    Lwt.catch release (fun exn ->
+      Logs.warn (fun f ->
+        f "Releasing the body of a response failed: %s" (Printexc.to_string exn));
+      Lwt.return_unit)
 end
 
 type t =
@@ -277,17 +284,15 @@ let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) ?release (a_response, body) 
   let a_body = Body.of_cohttp ?release ~encoding body in
   {a_response; a_body; a_cookies = cookies}
 
-(* FIXME: secure *)
-let make_cookies_header path exp name c _secure =
-  Format.sprintf "%s=%s%s%s" name c
-    (*VVV encode = true? *)
-    ("; path=/" ^ Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
-    (* (if secure && slot.sl_ssl then "; secure" else "")^ *)
-    ""
-  ^
-  match exp with
-  | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
-  | None -> ""
+(* The Secure attribute is written whatever the protocol of the connection:
+   behind a proxy that terminates TLS, the server only sees HTTP. *)
+let make_cookies_header path exp name c secure =
+  Format.sprintf "%s=%s; path=/%s%s%s" name c
+    (Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
+    (if secure then "; secure" else "")
+    (match exp with
+    | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
+    | None -> "")
 
 let make_cookies_headers path t hds =
   Ocsigen_cookie_map.Map_inner.fold
@@ -363,16 +368,7 @@ let to_response_expert ~meth t =
         let writer = R.make_body_writer ~flush:false res oc in
         let* () = Body.write t.a_body (R.write_body writer) in
         write_footer (Body.transfer_encoding t.a_body) oc
-      else
-        (* The response is complete: a failure to free its body does not
-           concern the client. *)
-        Lwt.catch
-          (fun () -> Body.release t.a_body)
-          (fun exn ->
-             Logs.warn (fun f ->
-               f "Releasing the body of a response failed: %s"
-                 (Printexc.to_string exn));
-             Lwt.return_unit) )
+      else Body.release t.a_body )
 
 let response t = t.a_response
 let body t = t.a_body

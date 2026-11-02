@@ -5,4 +5,4 @@
  (package ocsigenserver)
  (enabled_if
   (<> %{os_type} Win32))
- (libraries ocsigenserver cohttp lwt lwt.unix))
+ (libraries ocsigenserver cohttp fd_count lwt lwt.unix))
