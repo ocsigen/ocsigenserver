@@ -40,4 +40,4 @@ val run :
   -> unit
   -> Ocsigen.Server.instruction
 (** [run] makes it possible to use this extension without
-    configuration file.  *)
+    configuration file. Raises [Invalid_argument] if [max_age] is negative. *)
