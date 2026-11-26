@@ -6,7 +6,7 @@ Beware, passwords are transmitted in cleartext with this scheme, so the medium s
 
 This module implements only the HTTP-related part of the protocol, and is meant to be extended with various authentication plugins.
 
-A very naive one is provided as an example. See the developer's documentation if you want to make your own one.
+A very naive one is provided as an example. To write your own one, see [`Authbasic.register_basic_authentication_method`](./Authbasic.md#val-register_basic_authentication_method).
 
 To use that extension, load OCamlfind package `ocsigenserver.ext.authbasic`, either from your Dune file (if you are using static linking), or from the configuration file:
 

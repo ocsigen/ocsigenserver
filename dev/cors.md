@@ -19,13 +19,17 @@ The extension is activated by the `<cors/>` tag.
 
 The extension must be used after the extension serving the content (like eliom or staticmod) since it adds headers to already answered requests.
 
+The responses that go through `<cors/>` carry `Vary: Origin`, with or without CORS headers, since their headers depend on the Origin of the request: a cache then does not give a response meant for one origin to another.
+
 The attributes of the cors tag are:
 
 - `max_age`: this is a integer telling the browser how long the preflight information are valid: it prevents doing the OPTIONS requests. This option adds the `Access-Control-Max-Age` header.
 - `credentials`: with `credentials="true"`, adds the header `Access-Control-Allow-Credentials: true` to the responses, so that the browser sends the cookies of the user with the requests of other sites.
 - `exposed_headers`: This is a comma separated list of header names. This is the list of user defined headers accessible from the client. it Adds the `Access-Control-Expose-Headers` header.
-- `methods`: This is a comma separated list of method names. If there is a requested method header in the preflight request, it adds the `Access-Control-Allow-Methods` header if it match, otherwise there is no cors header added.
+- `methods`: This is a comma separated list of method names. When a request asks for one of them in its `Access-Control-Request-Method` header, the extension adds the `Access-Control-Allow-Methods` header. For another method, it adds no CORS header: it does not answer the preflight request, and adds only `Vary: Origin` to the response to any other request.
 **Security.** The extension allows *any* origin: it copies the `Origin` header of the request into `Access-Control-Allow-Origin`, and the requested headers into `Access-Control-Allow-Headers`. With `credentials="true"`, any Web site may then send requests to your site with the cookies of its users, when their browser sends them, and read the responses. Always restrict the origins with [accesscontrol](./accesscontrol.md), by checking the `origin` header, as in the second example below.
+
+The responses to the other origins do not go through `<cors/>`, so they do not carry `Vary: Origin`. A shared cache, such as a CDN, could then give such a response, without CORS headers, to a page of an allowed origin, and the browser would refuse it. Add `Vary: Origin` to these responses with [outputfilter](./outputfilter.md), in the `<else>` branch, as in the example.
 
 ## Examples
 
@@ -38,18 +42,23 @@ The attributes of the cors tag are:
 
   ```
   <if>
-  <and>
-    <header name="origin" regexp="http://localhost:8081"/>
-    <path regexp="eliom_site(/.*)?" />
-  </and>
+  <path regexp="eliom_site(/.*)?" />
   <then>
-    <cors max_age="86400"
-          credentials="true"
-          methods="POST,GET,HEAD"
-          exposed_headers="
-            x-eliom-application,
-            x-eliom-location,
-            x-eliom-set-process-cookies"/>
+    <if>
+      <header name="origin" regexp="http://localhost:8081"/>
+      <then>
+        <cors max_age="86400"
+              credentials="true"
+              methods="POST,GET,HEAD"
+              exposed_headers="
+                x-eliom-application,
+                x-eliom-location,
+                x-eliom-set-process-cookies"/>
+      </then>
+      <else>
+        <outputfilter header="Vary" dest="Origin" replace="false"/>
+      </else>
+    </if>
   </then>
 </if>
   ```

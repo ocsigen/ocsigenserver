@@ -28,13 +28,18 @@ val section : Logs.src
 type auth = string -> string -> bool Lwt.t
 ```
 ```ocaml
+exception Bad_config_tag_for_auth of string
+```
+`Bad_config_tag_for_auth tag` is raised by an authentication parser (see [`register_basic_authentication_method`](./#val-register_basic_authentication_method)) for an element that it does not handle, so that the other parsers are tried. `tag` is the name of the element, or `"#text"` for text.
+
+```ocaml
 val register_basic_authentication_method : (Xml.xml -> auth) -> unit
 ```
 This function registers an authentication plugin: it adds a new parser to the list of available authentication schemes.
 
 This is only applied if you are running the server with an XML configuration file. Use the realm, auth variables otherwise.
 
-A parser takes as argument an XML tree (corresponding to the first son of an \<authbasic\> element in the configuration file) and returns an authentication function `f`. `f` will be called for each request with the supplied user and password and should return (cooperatively) a boolean telling whether access is granted or not. Exceptions are handled the same way as for extension parsers.
+A parser takes as argument an XML tree (corresponding to the first son of an \<authbasic\> element in the configuration file) and returns an authentication function `f`. `f` will be called for each request with the supplied user and password and should return (cooperatively) a boolean telling whether access is granted or not. For an element that is not its own, a parser raises [`Bad_config_tag_for_auth`](./#exception-Bad_config_tag_for_auth), so that the other parsers are tried. For an error in its own element, it calls [`Ocsigen.Extensions.badconfig`](./Ocsigen-Extensions.md#val-badconfig), which reports the error in the configuration file. It must not raise [`Ocsigen.Extensions.Bad_config_tag_for_extension`](./Ocsigen-Extensions.md#exception-Bad_config_tag_for_extension): the whole \<authbasic\> element would then be refused as an unexpected tag. Other exceptions are handled the same way as for extension parsers.
 
 The \<authbasic\> element must have a *realm* attribute, giving some identifier to the resource which is protected (several resources on the same hostname can share the same realm). This gives a general customization scheme "for free" from the point of view of plugin developers and is totally transparent to the plugin.
 

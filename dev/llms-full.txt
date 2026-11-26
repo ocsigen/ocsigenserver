@@ -1412,7 +1412,7 @@ Beware, passwords are transmitted in cleartext with this scheme, so the medium s
 
 This module implements only the HTTP-related part of the protocol, and is meant to be extended with various authentication plugins.
 
-A very naive one is provided as an example. See the developer's documentation if you want to make your own one.
+A very naive one is provided as an example. To write your own one, see [`Authbasic.register_basic_authentication_method`](./Authbasic.md#val-register_basic_authentication_method).
 
 To use that extension, load OCamlfind package `ocsigenserver.ext.authbasic`, either from your Dune file (if you are using static linking), or from the configuration file:
 
@@ -1835,13 +1835,17 @@ The extension is activated by the `<cors/>` tag.
 
 The extension must be used after the extension serving the content (like eliom or staticmod) since it adds headers to already answered requests.
 
+The responses that go through `<cors/>` carry `Vary: Origin`, with or without CORS headers, since their headers depend on the Origin of the request: a cache then does not give a response meant for one origin to another.
+
 The attributes of the cors tag are:
 
 - `max_age`: this is a integer telling the browser how long the preflight information are valid: it prevents doing the OPTIONS requests. This option adds the `Access-Control-Max-Age` header.
 - `credentials`: with `credentials="true"`, adds the header `Access-Control-Allow-Credentials: true` to the responses, so that the browser sends the cookies of the user with the requests of other sites.
 - `exposed_headers`: This is a comma separated list of header names. This is the list of user defined headers accessible from the client. it Adds the `Access-Control-Expose-Headers` header.
-- `methods`: This is a comma separated list of method names. If there is a requested method header in the preflight request, it adds the `Access-Control-Allow-Methods` header if it match, otherwise there is no cors header added.
+- `methods`: This is a comma separated list of method names. When a request asks for one of them in its `Access-Control-Request-Method` header, the extension adds the `Access-Control-Allow-Methods` header. For another method, it adds no CORS header: it does not answer the preflight request, and adds only `Vary: Origin` to the response to any other request.
 **Security.** The extension allows *any* origin: it copies the `Origin` header of the request into `Access-Control-Allow-Origin`, and the requested headers into `Access-Control-Allow-Headers`. With `credentials="true"`, any Web site may then send requests to your site with the cookies of its users, when their browser sends them, and read the responses. Always restrict the origins with [accesscontrol](./accesscontrol.md), by checking the `origin` header, as in the second example below.
+
+The responses to the other origins do not go through `<cors/>`, so they do not carry `Vary: Origin`. A shared cache, such as a CDN, could then give such a response, without CORS headers, to a page of an allowed origin, and the browser would refuse it. Add `Vary: Origin` to these responses with [outputfilter](./outputfilter.md), in the `<else>` branch, as in the example.
 
 ## Examples
 
@@ -1854,18 +1858,23 @@ The attributes of the cors tag are:
 
   ```
   <if>
-  <and>
-    <header name="origin" regexp="http://localhost:8081"/>
-    <path regexp="eliom_site(/.*)?" />
-  </and>
+  <path regexp="eliom_site(/.*)?" />
   <then>
-    <cors max_age="86400"
-          credentials="true"
-          methods="POST,GET,HEAD"
-          exposed_headers="
-            x-eliom-application,
-            x-eliom-location,
-            x-eliom-set-process-cookies"/>
+    <if>
+      <header name="origin" regexp="http://localhost:8081"/>
+      <then>
+        <cors max_age="86400"
+              credentials="true"
+              methods="POST,GET,HEAD"
+              exposed_headers="
+                x-eliom-application,
+                x-eliom-location,
+                x-eliom-set-process-cookies"/>
+      </then>
+      <else>
+        <outputfilter header="Vary" dest="Origin" replace="false"/>
+      </else>
+    </if>
   </then>
 </if>
   ```
@@ -2199,13 +2208,18 @@ val section : Logs.src
 type auth = string -> string -> bool Lwt.t
 ```
 ```ocaml
+exception Bad_config_tag_for_auth of string
+```
+`Bad_config_tag_for_auth tag` is raised by an authentication parser (see [`register_basic_authentication_method`](./#val-register_basic_authentication_method)) for an element that it does not handle, so that the other parsers are tried. `tag` is the name of the element, or `"#text"` for text.
+
+```ocaml
 val register_basic_authentication_method : (Xml.xml -> auth) -> unit
 ```
 This function registers an authentication plugin: it adds a new parser to the list of available authentication schemes.
 
 This is only applied if you are running the server with an XML configuration file. Use the realm, auth variables otherwise.
 
-A parser takes as argument an XML tree (corresponding to the first son of an \<authbasic\> element in the configuration file) and returns an authentication function `f`. `f` will be called for each request with the supplied user and password and should return (cooperatively) a boolean telling whether access is granted or not. Exceptions are handled the same way as for extension parsers.
+A parser takes as argument an XML tree (corresponding to the first son of an \<authbasic\> element in the configuration file) and returns an authentication function `f`. `f` will be called for each request with the supplied user and password and should return (cooperatively) a boolean telling whether access is granted or not. For an element that is not its own, a parser raises [`Bad_config_tag_for_auth`](./#exception-Bad_config_tag_for_auth), so that the other parsers are tried. For an error in its own element, it calls [`Ocsigen.Extensions.badconfig`](./Ocsigen-Extensions.md#val-badconfig), which reports the error in the configuration file. It must not raise [`Ocsigen.Extensions.Bad_config_tag_for_extension`](./Ocsigen-Extensions.md#exception-Bad_config_tag_for_extension): the whole \<authbasic\> element would then be refused as an unexpected tag. Other exceptions are handled the same way as for extension parsers.
 
 The \<authbasic\> element must have a *realm* attribute, giving some identifier to the resource which is protected (several resources on the same hostname can share the same realm). This gives a general customization scheme "for free" from the point of view of plugin developers and is totally transparent to the plugin.
 
@@ -2253,7 +2267,7 @@ val run :
   unit ->
   Ocsigen.Server.instruction
 ```
-`run` makes it possible to use this extension without configuration file.
+`run` makes it possible to use this extension without configuration file. Raises `Invalid_argument` if `max_age` is negative.
 
 
 ---
@@ -6385,6 +6399,11 @@ val connection_options : t -> string list
 `connection_options h` is the list of the options of the Connection header of `h`, such as `close`, `keep-alive` or the names of the headers meant for the current connection only, in lowercase (RFC 9110, section 7\.6.1).
 
 ```ocaml
+val add_vary : t -> Name.t -> t
+```
+`add_vary h name` adds `name` to the Vary field of `h`, which says that the response depends on the request header `name` (RFC 9110, section 12\.5.5). `h` is unchanged if one of its Vary lines already lists `name`, case-insensitively, or `"*"`. Otherwise, its Vary lines are replaced by a single one that lists their names, then `name`.
+
+```ocaml
 module Mime_type : sig ... end
 ```
 ```ocaml
@@ -8383,6 +8402,11 @@ module Name = Ocsigen_http.Header.Name
 val connection_options : t -> string list
 ```
 `connection_options h` is the list of the options of the Connection header of `h`, such as `close`, `keep-alive` or the names of the headers meant for the current connection only, in lowercase (RFC 9110, section 7\.6.1).
+
+```ocaml
+val add_vary : t -> Name.t -> t
+```
+`add_vary h name` adds `name` to the Vary field of `h`, which says that the response depends on the request header `name` (RFC 9110, section 12\.5.5). `h` is unchanged if one of its Vary lines already lists `name`, case-insensitively, or `"*"`. Otherwise, its Vary lines are replaced by a single one that lists their names, then `name`.
 
 ```ocaml
 module Mime_type = Ocsigen_http.Header.Mime_type
