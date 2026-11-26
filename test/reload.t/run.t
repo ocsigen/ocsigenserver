@@ -32,9 +32,7 @@ argument:
   >   grep -c '<servertimeout> has no effect' log/warnings.log
   > }
   $ reload () {
-  >   send_command $SERVER_PID local.cmd reload
-  >   i=0; until [ "$(cat log/*.log | grep -c "$1")" -ge "$2" ]; do
-  >     i=$((i+1)); [ $i -gt 200 ] && break; sleep 0.05; done
+  >   send_command $SERVER_PID local.cmd reload && wait_log "$@"
   > }
 
   $ write_conf ''
@@ -53,7 +51,7 @@ A reload reads the file once: the warning appears once more. The new site
 is served.
 
   $ write_conf '<site path="new"><static dir="new" /></site>'
-  $ reload 'Config file reloaded' 1
+  $ reload log/warnings.log 'Config file reloaded' 1
   $ count_warnings
   2
   $ curl -s --max-time 10 http://127.0.0.1:$PORT1/new/index.html
@@ -63,7 +61,7 @@ A file with an error is reported once, in a single error line, and the server
 keeps its sites, here the one that the file no longer has:
 
   $ write_conf '<nosuchtag />'
-  $ reload 'Config file reload failed' 1
+  $ reload log/errors.log 'Config file reload failed' 1
   $ grep -o 'ocsigen:main: .*' log/errors.log
   ocsigen:main: [ERROR] Config file reload failed: Error in configuration file: Unexpected tag <nosuchtag> inside <site dir="">
   $ grep -c 'reload failed' log/warnings.log
@@ -76,7 +74,7 @@ So is a file that is not well-formed XML, with the name of the file and the
 position of the error:
 
   $ write_conf '<site path="new"><static dir="new" /></sitex>'
-  $ reload 'Config file reload failed' 2
+  $ reload log/errors.log 'Config file reload failed' 2
   $ grep -o 'ocsigen:main: .*' log/errors.log | tail -n 1
   ocsigen:main: [ERROR] Config file reload failed: Error in configuration file: site.conf, line 9, characters 37-44: End of tag expected : 'site'
   $ curl -s --max-time 10 http://127.0.0.1:$PORT1/new/index.html
@@ -94,11 +92,11 @@ port is shown as PORT):
   $ redirection
   http://127.0.0.1:PORT/dir/
   $ write_conf '<nosuchtag />' '<usedefaulthostname/>'
-  $ reload 'Config file reload failed' 3
+  $ reload log/errors.log 'Config file reload failed' 3
   $ redirection
   http://127.0.0.1:PORT/dir/
   $ write_conf '' '<usedefaulthostname/>'
-  $ reload 'Config file reloaded' 2
+  $ reload log/warnings.log 'Config file reloaded' 2
   $ redirection
   http://example.org:PORT/dir/
 
