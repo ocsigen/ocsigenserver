@@ -39,7 +39,7 @@ type filter = [`Type of string option * string option | `Extension of string]
    or file extension  *)
 
 val run :
-   mode:[`All_but of filter list | `Only of filter list]
+     mode:[`All_but of filter list | `Only of filter list]
   -> unit
   -> Ocsigen.Server.instruction
 (** [run ~mode ()] makes it possible to use this extension without

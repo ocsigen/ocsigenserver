@@ -16,16 +16,16 @@ exception Timed_out
 
 type limits =
   { timeout : int
-    (** In seconds. It bounds the TLS handshake, the reception of the
+        (** In seconds. It bounds the TLS handshake, the reception of the
             headers of a request (in total, from the end of the handshake, or
             from the first byte after an idle period), each read of the body of
             a request and each write of a response (inactivity), and the end of
             a connection. [0] disables these bounds, and the minimum rate. *)
   ; keepalive_timeout : int
-    (** In seconds, how long a connection may stay idle between two
+        (** In seconds, how long a connection may stay idle between two
             requests. [0] disables this bound. *)
   ; min_rate : int
-    (** In bytes per second, the minimum rate of the body of a request, and
+        (** In bytes per second, the minimum rate of the body of a request, and
             of a response the client reads, once the client has had [timeout]
             seconds of grace. It keeps a client from holding a connection by
             sending its body, or reading the response, a few bytes at a time.
@@ -37,7 +37,7 @@ type phase =
   | Headers  (** Receiving the headers of a request. *)
   | Idle  (** Waiting for the next request. *)
   | Request
-  (** Handling a request: reading its body, producing and sending the
+      (** Handling a request: reading its body, producing and sending the
           response. *)
   | Closing  (** Ending the connection. *)
 
@@ -89,7 +89,7 @@ val phase : t -> phase
 val expired : t -> bool
 
 val read :
-   t
+     t
   -> (Lwt_bytes.t -> int -> int -> int Lwt.t)
   -> Lwt_bytes.t
   -> int
@@ -99,7 +99,7 @@ val read :
     [Lwt_io.make]. *)
 
 val write :
-   t
+     t
   -> (Lwt_bytes.t -> int -> int -> int Lwt.t)
   -> Lwt_bytes.t
   -> int

@@ -1,10 +1,7 @@
 (** Rules of HTTP/1.1 messages (RFC 9112) that cohttp does not enforce. *)
 
 val check_host :
-   Http.Version.t
-  -> Http.Header.t
-  -> target:string
-  -> (unit, string) result
+  Http.Version.t -> Http.Header.t -> target:string -> (unit, string) result
 (** [check_host version headers ~target] is [Ok ()] iff a request with these
     version, header fields and request target names its host as RFC 9112
     (section 3.2) asks, with stricter host names: exactly one [Host] field,

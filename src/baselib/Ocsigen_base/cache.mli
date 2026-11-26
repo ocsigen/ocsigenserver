@@ -35,11 +35,11 @@
 *)
 
 module Make : functor
-    (A : sig
-       type key
-       type value
-     end)
-    -> sig
+  (A : sig
+     type key
+     type value
+   end)
+  -> sig
   (** [new cache finder ?timer size] creates a cache object where [finder]
         is the function responsible for retrieving non-cached data, [timer]
         (if any) is the life span of cached values (in seconds) (values in the

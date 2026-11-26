@@ -6,9 +6,10 @@
 let answer () =
   Printf.sprintf "%d connections, soft limit %s"
     (Ocsigen.Config.get_max_number_of_connections ())
-    (match Ocsigen.Open_files.limits () with
+    ( match Ocsigen.Open_files.limits () with
     | Some (soft, _) -> string_of_int soft
-    | None -> "none")
+    | None -> "none"
+    )
 
 let resources _vh _config_info _path = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -18,7 +19,9 @@ let resources _vh _config_info _path = function
         (Ocsigen.Extensions.Ext_found
            (fun () ->
              Lwt.return
-               (Ocsigen.Response.respond_string ~status:`OK ~body:(answer ()) ())))
+               (Ocsigen.Response.respond_string ~status:`OK ~body:(answer ()) ())
+           )
+        )
 
 let () =
   let name, max_number_of_connections =

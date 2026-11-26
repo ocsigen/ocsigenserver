@@ -5,9 +5,10 @@ module Entity_tag = Ocsigen_http.Header.Entity_tag
 let show_list values =
   Printf.printf "%s -> %s\n"
     (String.concat " | " (List.map (Printf.sprintf "%S") values))
-    (match Entity_tag.parse_list values with
+    ( match Entity_tag.parse_list values with
     | `Any -> "*"
-    | `Tags tags -> String.concat " " (List.map Entity_tag.to_string tags))
+    | `Tags tags -> String.concat " " (List.map Entity_tag.to_string tags)
+    )
 
 let tag weak opaque = Entity_tag.make ~weak opaque
 
@@ -32,22 +33,26 @@ let () =
   print_endline "== Entity_tag.make";
   List.iter
     (fun opaque ->
-       Printf.printf "%S -> %s\n" opaque
-         (match Entity_tag.make ~weak:false opaque with
-         | (_ : Entity_tag.t) -> "valid"
-         | exception Invalid_argument _ -> "Invalid_argument"))
+      Printf.printf "%S -> %s\n" opaque
+        ( match Entity_tag.make ~weak:false opaque with
+        | (_ : Entity_tag.t) -> "valid"
+        | exception Invalid_argument _ -> "Invalid_argument"
+        )
+    )
     ["a-1"; "!#~\x80"; "a\"b"; "a b"; "a\tb"; "a\x7f"];
   print_endline "== Entity_tag comparisons";
   List.iter
     (fun (a, b) ->
-       Printf.printf "%s %s: weak %b, strong %b\n" (Entity_tag.to_string a)
-         (Entity_tag.to_string b)
-         (Entity_tag.weak_equal a b)
-         (Entity_tag.strong_equal a b))
+      Printf.printf "%s %s: weak %b, strong %b\n" (Entity_tag.to_string a)
+        (Entity_tag.to_string b)
+        (Entity_tag.weak_equal a b)
+        (Entity_tag.strong_equal a b)
+    )
     [ tag false "1", tag false "1"
     ; tag false "1", tag true "1"
     ; tag true "1", tag true "1"
-    ; tag false "1", tag false "2" ]
+    ; tag false "1", tag false "2"
+    ]
 
 (* Times of 2026-10-17, 2044-01-01 and 2051-01-01, 00:00 GMT. *)
 let now_2026 = 1792195200.
@@ -56,9 +61,10 @@ let now_2051 = 2556144000.
 
 let show_date ?(now = now_2026) s =
   Printf.printf "%S -> %s\n" s
-    (match Ocsigen_http.Header.Date.parse ~now s with
+    ( match Ocsigen_http.Header.Date.parse ~now s with
     | Some t -> Printf.sprintf "%.0f" t
-    | None -> "invalid")
+    | None -> "invalid"
+    )
 
 let () =
   print_endline "== Date.parse";
@@ -96,7 +102,8 @@ let () =
     ; "Wed Jan  01 12:00:00 2020"
     ; "Wed Jan 01  12:00:00 2020"
     ; "garbage"
-    ; "" ];
+    ; ""
+    ];
   print_endline "== Date.parse, two-digit years";
   show_date ~now:now_2044 "Sunday, 06-Nov-94 08:49:37 GMT";
   show_date ~now:now_2051 "Saturday, 01-Jan-00 00:00:00 GMT";

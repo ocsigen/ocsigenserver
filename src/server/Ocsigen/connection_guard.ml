@@ -15,11 +15,12 @@ let now = ref 0
 (* The reads, or the writes, of a connection. *)
 type side =
   { mutable pending : (unit -> unit) option
-    (* How to cancel the pending operation, if there is one. *)
+        (* How to cancel the pending operation, if there is one. *)
   ; mutable since : int (* When the pending operation started. *)
   ; mutable waited : int
-    (* Seconds spent on the completed operations since the last reset. *)
-  ; mutable bytes : int (* Bytes transferred since the last reset. *) }
+        (* Seconds spent on the completed operations since the last reset. *)
+  ; mutable bytes : int (* Bytes transferred since the last reset. *)
+  }
 
 type state =
   | Open
@@ -36,7 +37,8 @@ type t =
   ; mutable state : state
   ; reads : side
   ; writes : side
-  ; other : side (* The operations of [run]. *) }
+  ; other : side (* The operations of [run]. *)
+  }
 
 let guards : (int, t) Hashtbl.t = Hashtbl.create 256
 let last_id = ref 0
@@ -57,7 +59,8 @@ let set_phase t phase =
       t.phase_since <- !now;
       match phase with
       | Request -> reset t.reads; reset t.writes
-      | Handshake | Headers | Idle | Closing -> ())
+      | Handshake | Headers | Idle | Closing -> ()
+    )
   | Closed _ | Expired -> ()
 
 (* Whether a client that has transferred [side.bytes] in [waited] seconds of
@@ -91,11 +94,12 @@ let action t =
   let limits = t.limits in
   let elapsed = !now - t.phase_since in
   let overdue =
-    (match t.phase with
+    ( match t.phase with
       | Handshake | Headers | Closing ->
           limits.timeout > 0 && elapsed > limits.timeout
       | Idle -> false
-      | Request -> lagging limits t.reads)
+      | Request -> lagging limits t.reads
+      )
     || lagging limits t.writes
   in
   match t.phase with
@@ -117,10 +121,12 @@ let expire t =
   t.state <- Expired;
   (* [on_expiry] is given by the server; an exception from it must not stop the
      ticker, nor keep the pending operations from failing. *)
-  (try t.on_expiry phase
-   with exn ->
-     Logs.err ~src:section (fun fmt ->
-       fmt "Error while expiring a connection: %s" (Printexc.to_string exn)));
+  ( try t.on_expiry phase
+    with exn ->
+      Logs.err ~src:section (fun fmt ->
+          fmt "Error while expiring a connection: %s" (Printexc.to_string exn)
+      )
+  );
   cancel t.reads; cancel t.writes; cancel t.other
 
 (* A connection whose client did nothing wrong is closed rather than expired, by
@@ -163,10 +169,11 @@ let older a b =
 let oldest_unused () =
   Hashtbl.fold
     (fun _ t oldest ->
-       match unused t, oldest with
-       | None, _ -> oldest
-       | Some _, Some (o, _) when older o t -> oldest
-       | Some why, (Some _ | None) -> Some (t, why))
+      match unused t, oldest with
+      | None, _ -> oldest
+      | Some _, Some (o, _) when older o t -> oldest
+      | Some why, (Some _ | None) -> Some (t, why)
+    )
     guards None
 
 (* If the server, with [incoming] new connections, would be full, closes the
@@ -184,9 +191,11 @@ let make_room ~incoming =
     match oldest_unused () with
     | Some (t, (why, side)) ->
         Logs.info ~src:section (fun fmt ->
-          fmt
-            "The server is full (see <maxconnected>): closing a connection that %s, to make room"
-            why);
+            fmt
+              "The server is full (see <maxconnected>): closing a connection \
+               that %s, to make room"
+              why
+        );
         close_side t side
     | None -> ()
 
@@ -202,7 +211,8 @@ let create limits phase ~on_expiry =
     ; state = Open
     ; reads = new_side ()
     ; writes = new_side ()
-    ; other = new_side () }
+    ; other = new_side ()
+    }
   in
   Hashtbl.replace guards t.id t;
   t
@@ -214,13 +224,16 @@ let tick () =
   incr now;
   Hashtbl.fold
     (fun _ t acc ->
-       match t.state with
-       | Expired -> acc
-       | Open | Closed _ -> (
-         match action t with Some a -> (t, a) :: acc | None -> acc))
+      match t.state with
+      | Expired -> acc
+      | Open | Closed _ -> (
+        match action t with Some a -> (t, a) :: acc | None -> acc
+      )
+    )
     guards []
   |> List.iter (fun (t, a) ->
-    match a with Close_idle -> close_side t t.reads | Expire -> expire t);
+      match a with Close_idle -> close_side t t.reads | Expire -> expire t
+  );
   (* Busy connections that filled the server may have become idle since. *)
   make_room ~incoming:0
 
@@ -256,17 +269,19 @@ let watch t side ~count p =
       Lwt.try_bind
         (fun () -> p)
         (fun x ->
-           finish ();
-           (* An operation that could not be cancelled may still complete after
+          finish ();
+          (* An operation that could not be cancelled may still complete after
               the expiry, for instance with the end of file that follows the
               shutdown of the socket. It fails all the same, so that a
               truncated body is never taken for a complete one. *)
-           if refused t side
-           then Lwt.fail Timed_out
-           else (count t x; Lwt.return x))
+          if refused t side
+          then Lwt.fail Timed_out
+          else (count t x; Lwt.return x)
+        )
         (fun exn ->
-           finish ();
-           Lwt.fail (if refused t side then Timed_out else exn))
+          finish ();
+          Lwt.fail (if refused t side then Timed_out else exn)
+        )
 
 let read t f buf pos len =
   if refused t t.reads
@@ -290,7 +305,8 @@ let start () =
   then (
     started := true;
     let rec loop () = Lwt_unix.sleep 1. >>= fun () -> tick (); loop () in
-    Lwt.async loop)
+    Lwt.async loop
+  )
 
 module Per_address = struct
   let counts : (Ipaddr.t, int) Hashtbl.t = Hashtbl.create 64
@@ -301,7 +317,8 @@ module Per_address = struct
       match Ipaddr.v4_of_v6 v6 with
       | Some v4 -> Ipaddr.V4 v4
       | None ->
-          Ipaddr.V6 (Ipaddr.V6.Prefix.network (Ipaddr.V6.Prefix.make 64 v6)))
+          Ipaddr.V6 (Ipaddr.V6.Prefix.network (Ipaddr.V6.Prefix.make 64 v6))
+    )
 
   let count ip = Option.value ~default:0 (Hashtbl.find_opt counts (group ip))
 
@@ -312,7 +329,8 @@ module Per_address = struct
     then false
     else (
       Hashtbl.replace counts group (n + 1);
-      true)
+      true
+    )
 
   let release ip =
     let group = group ip in

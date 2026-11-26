@@ -21,7 +21,11 @@ let cr_or_lf_re = S.regexp "[\013\n]"
 
 let header_stripped_re =
   S.regexp
-    "([^ \t\r\n:]+):[ \t]*((.*[^ \t\r\n])?([ \t\r]*\n[ \t](.*[^ \t\r\n])?)*)[ \t\r]*\n"
+    "([^ \t\r\n\
+     :]+):[ \t]*((.*[^ \t\r\n\
+     ])?([ \t\r]*\n\
+     [ \t](.*[^ \t\r\n\
+     ])?)*)[ \t\r]*\n"
 
 let header_unstripped_re = S.regexp "([^ \t\r\n:]+):([ \t]*.*\n([ \t].*\n)*)"
 (* This much simpler expression returns the name and the unstripped
@@ -31,13 +35,12 @@ let empty_line_re = S.regexp "\013?\n"
 let end_of_header_re = S.regexp "\n\013?\n"
 
 let scan_header
-      ?(downcase = true)
-      ?(unfold = true)
-      ?(strip = false)
-      parstr
-      ~start_pos
-      ~end_pos
-  =
+    ?(downcase = true)
+    ?(unfold = true)
+    ?(strip = false)
+    parstr
+    ~start_pos
+    ~end_pos =
   let header_re =
     if unfold || strip then header_stripped_re else header_unstripped_re
   in
@@ -62,7 +65,8 @@ let scan_header
       (* The header must end with an empty line *)
       match S.string_match empty_line_re parstr i with
       | Some r' -> List.rev l, match_end r'
-      | None -> raise malformed_header)
+      | None -> raise malformed_header
+    )
   in
   parse_header start_pos []
 
@@ -70,22 +74,25 @@ let read_header ?downcase ?unfold ?strip s =
   let rec find_end_of_header s =
     Lwt.catch
       (fun () ->
-         let b = Ocsigen_base.Ocsigen_stream.current_buffer s in
-         (* Maybe the header is empty. In this case, there is an empty
+        let b = Ocsigen_base.Ocsigen_stream.current_buffer s in
+        (* Maybe the header is empty. In this case, there is an empty
             line right at the beginning *)
-         match S.string_match empty_line_re b 0 with
-         | Some r -> Lwt.return (s, match_end r)
-         | None ->
-             (* Search for an empty line *)
-             Lwt.return
-               (s, match_end (snd (S.search_forward end_of_header_re b 0))))
+        match S.string_match empty_line_re b 0 with
+        | Some r -> Lwt.return (s, match_end r)
+        | None ->
+            (* Search for an empty line *)
+            Lwt.return
+              (s, match_end (snd (S.search_forward end_of_header_re b 0)))
+      )
       (function
         | Not_found -> (
             Ocsigen_base.Ocsigen_stream.enlarge_stream s >>= function
             | Ocsigen_base.Ocsigen_stream.Finished _ ->
                 Lwt.fail Ocsigen_base.Ocsigen_stream.Stream_too_small
-            | Ocsigen_base.Ocsigen_stream.Cont _ as s -> find_end_of_header s)
-        | e -> Lwt.fail e)
+            | Ocsigen_base.Ocsigen_stream.Cont _ as s -> find_end_of_header s
+          )
+        | e -> Lwt.fail e
+        )
   in
   find_end_of_header s >>= fun (s, end_pos) ->
   let b = Ocsigen_base.Ocsigen_stream.current_buffer s in
@@ -104,12 +111,15 @@ let rec search_window s re start =
       , snd
           (S.search_forward re
              (Ocsigen_base.Ocsigen_stream.current_buffer s)
-             start) )
+             start
+          )
+      )
   with Not_found -> (
     Ocsigen_base.Ocsigen_stream.enlarge_stream s >>= function
     | Ocsigen_base.Ocsigen_stream.Finished _ ->
         Lwt.fail Ocsigen_base.Ocsigen_stream.Stream_too_small
-    | Ocsigen_base.Ocsigen_stream.Cont _ as s -> search_window s re start)
+    | Ocsigen_base.Ocsigen_stream.Cont _ as s -> search_window s re start
+  )
 
 let search_end_of_line s k =
   (* Search LF beginning at position k. Without one, as after a boundary
@@ -194,7 +204,9 @@ let read_multipart_body ~boundary ~decode_part s =
 let empty_stream =
   Ocsigen_base.Ocsigen_stream.get
     (Ocsigen_base.Ocsigen_stream.make (fun () ->
-       Ocsigen_base.Ocsigen_stream.empty None))
+         Ocsigen_base.Ocsigen_stream.empty None
+     )
+    )
 
 let decode_part ~max_size ~create ~add ~stop stream =
   read_header stream >>= fun (s, header) ->
@@ -224,14 +236,17 @@ let decode_part ~max_size ~create ~add ~stop stream =
     (fun () -> while_stream Int64.zero s)
     (fun (size, s) -> stop size p >>= fun r -> Lwt.return (r, s))
     (fun error ->
-       Lwt.catch
-         (fun () -> stop Int64.zero p >|= ignore)
-         (fun e ->
-            Logs.warn ~src:section (fun fmt ->
+      Lwt.catch
+        (fun () -> stop Int64.zero p >|= ignore)
+        (fun e ->
+          Logs.warn ~src:section (fun fmt ->
               fmt "Error while closing a part, after another error: %s"
-                (Printexc.to_string e));
-            Lwt.return ())
-       >>= fun () -> Lwt.fail error)
+                (Printexc.to_string e)
+          );
+          Lwt.return ()
+        )
+      >>= fun () -> Lwt.fail error
+    )
 
 (* [reject_body reason] logs why a multipart body is rejected, and fails with
    [Ocsigen_Bad_Request], which the client gets as a 400. *)
@@ -243,14 +258,16 @@ let scan_multipart_body_from_stream ?max_size ~boundary ~create ~add ~stop s =
   let decode_part = decode_part ~max_size ~create ~add ~stop in
   Lwt.catch
     (fun () ->
-       (* read the multipart body: *)
-       Ocsigen_base.Ocsigen_stream.next s >>= fun s ->
-       read_multipart_body ~boundary ~decode_part s >>= fun _ -> Lwt.return ())
+      (* read the multipart body: *)
+      Ocsigen_base.Ocsigen_stream.next s >>= fun s ->
+      read_multipart_body ~boundary ~decode_part s >>= fun _ -> Lwt.return ()
+    )
     (function
       | Ocsigen_base.Ocsigen_stream.Stream_too_small ->
           reject_body "the body or one of its parts ends too early"
       | Multipart_error reason -> reject_body reason
-      | e -> Lwt.fail e)
+      | e -> Lwt.fail e
+      )
 
 (* [get_boundary ctparams] is the boundary in the parameters [ctparams] of a
    multipart Content-Type. It has 1 to 70 characters (RFC 2046). *)
@@ -366,39 +383,37 @@ type file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
-  ; file_content_type : ((string * string) * (string * string) list) option }
+  ; file_content_type : ((string * string) * (string * string) list) option
+  }
 
 type post_data = (string * string) list * (string * file_info) list
 
 let post_params_form_urlencoded body_gen _ _ =
   Lwt.catch
     (fun () ->
-       let body = Ocsigen_base.Ocsigen_stream.get body_gen in
-       (* BY, adapted from a previous comment. Should this stream be
+      let body = Ocsigen_base.Ocsigen_stream.get body_gen in
+      (* BY, adapted from a previous comment. Should this stream be
           consumed in case of error? *)
-       Ocsigen_base.Ocsigen_stream.string_of_stream
-         (Config.get_maxrequestbodysizeinmemory ())
-         body
-       >>= fun r ->
-       let r = Ocsigen_base.Lib.Url.fixup_url_string r in
-       let l =
-         Uri.query_of_encoded r
-         |> List.map (fun (s, l) -> List.map (fun v -> s, v) l)
-         |> List.concat
-       in
-       Lwt.return (l, []))
+      Ocsigen_base.Ocsigen_stream.string_of_stream
+        (Config.get_maxrequestbodysizeinmemory ())
+        body
+      >>= fun r ->
+      let r = Ocsigen_base.Lib.Url.fixup_url_string r in
+      let l =
+        Uri.query_of_encoded r
+        |> List.map (fun (s, l) -> List.map (fun v -> s, v) l)
+        |> List.concat
+      in
+      Lwt.return (l, [])
+    )
     (function
       | Ocsigen_base.Ocsigen_stream.String_too_large ->
           Lwt.fail Ocsigen_base.Lib.Input_is_too_large
-      | e -> Lwt.fail e)
+      | e -> Lwt.fail e
+      )
 
 let post_params_multipart_form_data
-      ~on_file
-      ctparams
-      body_gen
-      upload_dir
-      max_size
-  =
+    ~on_file ctparams body_gen upload_dir max_size =
   (* Same question here, should this stream be consumed after an
      error? *)
   get_boundary ctparams >>= fun boundary ->
@@ -453,10 +468,12 @@ let post_params_multipart_form_data
               0o666
           in
           Logs.info ~src:section (fun fmt ->
-            fmt "%s" ("Upload file opened: " ^ fname));
+              fmt "%s" ("Upload file opened: " ^ fname)
+          );
           on_file fname;
           p_name, `Some_file (fname, store, fd, content_type)
-      | None -> raise Ocsigen_upload_forbidden)
+      | None -> raise Ocsigen_upload_forbidden
+    )
   and stop filesize = function
     | p_name, `No_file to_buf ->
         params := !params @ [p_name, Buffer.contents to_buf];
@@ -486,9 +503,11 @@ let post_params ~content_type ~on_file body_gen =
   | "application", "x-www-form-urlencoded" ->
       Some
         (body_gen |> Ocsigen_base.Ocsigen_stream.of_cohttp_body
-       |> post_params_form_urlencoded)
+       |> post_params_form_urlencoded
+        )
   | "multipart", "form-data" ->
       Some
         (body_gen |> Ocsigen_base.Ocsigen_stream.of_cohttp_body
-        |> post_params_multipart_form_data ~on_file ctparams)
+        |> post_params_multipart_form_data ~on_file ctparams
+        )
   | _ -> None

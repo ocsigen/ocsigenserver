@@ -26,7 +26,7 @@ let _ =
  *)
 
 val run :
-   ?nosniff:bool
+     ?nosniff:bool
   -> ?frame_options:string option
   -> ?referrer_policy:string option
   -> ?hsts:string option

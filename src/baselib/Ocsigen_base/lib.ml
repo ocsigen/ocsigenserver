@@ -32,9 +32,11 @@ module Ip_address = struct
       | _ :: l -> aux l
     in
     let options =
-      [ (if v6
-         then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6
-         else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET) ]
+      [ ( if v6
+          then Lwt_unix.AI_FAMILY Lwt_unix.PF_INET6
+          else Lwt_unix.AI_FAMILY Lwt_unix.PF_INET
+        )
+      ]
     in
     Lwt.bind (Lwt_unix.getaddrinfo host "" options) aux
 end
@@ -189,7 +191,8 @@ module Url = struct
 
   let fixup_url_string1 =
     Netstring_pcre.global_substitute problem_re1 (fun m s ->
-      Printf.sprintf "%%%02x" (Char.code s.[fst (Pcre.get_substring_ofs m 0)]))
+        Printf.sprintf "%%%02x" (Char.code s.[fst (Pcre.get_substring_ofs m 0)])
+    )
 
   (* I add this fixup to handle %uxxxx sent by browsers.
      Translated to %xx%xx *)
@@ -199,12 +202,15 @@ module Url = struct
     fixup_url_string1
       (Netstring_pcre.global_substitute problem_re2
          (fun m s ->
-            String.concat ""
-              [ "%"
-              ; Netstring_pcre.matched_group m 1 s
-              ; "%"
-              ; Netstring_pcre.matched_group m 2 s ])
-         s)
+           String.concat ""
+             [ "%"
+             ; Netstring_pcre.matched_group m 1 s
+             ; "%"
+             ; Netstring_pcre.matched_group m 2 s
+             ]
+         )
+         s
+      )
 
   (*VVV This is in Netencoding but we have a problem with ~
         (not encoded by browsers). Here is a patch that does not encode '~': *)
@@ -239,7 +245,8 @@ module Url = struct
             else (
               Bytes.set s' !j '%';
               Bytes.set s' (!j + 1) hex.[n lsr 4];
-              Bytes.set s' (!j + 2) hex.[n land 0xf]);
+              Bytes.set s' (!j + 2) hex.[n land 0xf]
+            );
             j := !j + d
           done;
           Bytes.unsafe_to_string s'
@@ -271,7 +278,8 @@ module Url = struct
           else (
             Bytes.set s' !j '%';
             Bytes.set s' (!j + 1) hex.[n lsr 4];
-            Bytes.set s' (!j + 2) hex.[n land 0xf]);
+            Bytes.set s' (!j + 2) hex.[n land 0xf]
+          );
           j := !j + d
         done;
         Bytes.unsafe_to_string s'
@@ -306,19 +314,21 @@ module Url = struct
     let l = String.length s1 in
     Netstring_pcre.global_substitute url_decoding_re
       (fun r _ ->
-         match Netstring_pcre.matched_string r s1 with
-         | "+" -> if plus then " " else "+"
-         | _ -> (
-             let i = fst (Pcre.get_substring_ofs r 0) in
-             (* Assertion: s1.[i] = '%' *)
-             if i + 2 >= l then failwith "decode";
-             let c1 = s1.[i + 1] in
-             let c2 = s1.[i + 2] in
-             try
-               let k1 = of_hex1 c1 in
-               let k2 = of_hex1 c2 in
-               String.make 1 (Char.chr ((k1 lsl 4) lor k2))
-             with Not_found -> failwith "decode"))
+        match Netstring_pcre.matched_string r s1 with
+        | "+" -> if plus then " " else "+"
+        | _ -> (
+            let i = fst (Pcre.get_substring_ofs r 0) in
+            (* Assertion: s1.[i] = '%' *)
+            if i + 2 >= l then failwith "decode";
+            let c1 = s1.[i + 1] in
+            let c2 = s1.[i + 2] in
+            try
+              let k1 = of_hex1 c1 in
+              let k2 = of_hex1 c2 in
+              String.make 1 (Char.chr ((k1 lsl 4) lor k2))
+            with Not_found -> failwith "decode"
+          )
+      )
       s1
 
   let make_encoded_parameters params =
@@ -333,14 +343,16 @@ module Url = struct
       remove_dotdot
         (List.concat_map
            (fun seg -> String.split_on_char '/' (decode_segment seg))
-           (split_path s))
+           (split_path s)
+        )
 
   let string_of_url_path ~encode l =
     if encode
     then
       fixup_url_string
         (String.concat "/"
-           (List.map (*Netencoding.Url.encode*) (MyUrl.encode ~plus:false) l))
+           (List.map (*Netencoding.Url.encode*) (MyUrl.encode ~plus:false) l)
+        )
       (* ' ' are not encoded to '+' in paths *)
     else String.concat "/" l
   (* BYXXX : check illicit characters *)
@@ -391,7 +403,8 @@ module Url = struct
                   Some (fixup_url_string (Netstring_pcre.matched_group m 3 url))
                 with Not_found -> None
               in
-              None, None, None, path, query)
+              None, None, None, path, query
+        )
         | Some m ->
             let path =
               fixup_url_string (Netstring_pcre.matched_group m 5 url)
@@ -428,7 +441,8 @@ module Url = struct
         lazy
           (let params_string = match query with None -> "" | Some s -> s in
            try dest_url_encoded_parameters params_string
-           with Failure _ -> raise Ocsigen_Bad_Request)
+           with Failure _ -> raise Ocsigen_Bad_Request
+          )
       in
       let path = List.map (decode ~plus:false) (split_path pathstring) in
       let path =

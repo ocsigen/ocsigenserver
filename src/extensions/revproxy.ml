@@ -32,16 +32,12 @@ type redirection =
   ; full_url : bool
   ; dest : string
   ; pipeline : bool
-  ; keephost : bool }
+  ; keephost : bool
+  }
 (** The table of redirections for each virtual server *)
 
 let create_redirection
-      ?(full_url = true)
-      ?(pipeline = true)
-      ?(keephost = false)
-      ~regexp
-      dest
-  =
+    ?(full_url = true) ?(pipeline = true) ?(keephost = false) ~regexp dest =
   let regexp = Pcre.regexp ("^" ^ regexp ^ "$") in
   {regexp; dest; full_url; pipeline; keephost}
 
@@ -63,7 +59,8 @@ let remove_hop_by_hop headers =
   Ocsigen_http.Header.connection_options headers
   @ ["connection"; "keep-alive"; "proxy-connection"; "te"; "upgrade"]
   |> List.filter (fun name ->
-    not (List.mem name ["content-length"; "transfer-encoding"; "host"]))
+      not (List.mem name ["content-length"; "transfer-encoding"; "host"])
+  )
   |> List.fold_left Cohttp.Header.remove headers
 
 (* The response of the target as the server sends it to the client: in its own
@@ -84,11 +81,14 @@ let tracked body =
     | `Stream chunks ->
         `Stream
           (Lwt_stream.from (fun () ->
-             Lwt.catch
-               (fun () -> Lwt_stream.get chunks)
-               (fun exn ->
-                  failure := Some exn;
-                  Lwt.reraise exn)))
+               Lwt.catch
+                 (fun () -> Lwt_stream.get chunks)
+                 (fun exn ->
+                   failure := Some exn;
+                   Lwt.reraise exn
+                 )
+           )
+          )
     | (`Empty | `String _ | `Strings _) as body -> body
   in
   body, fun () -> !failure
@@ -114,10 +114,11 @@ let call ~client_closed ~headers ~body meth uri =
   Lwt.catch
     (fun () -> Connection.call connection ~headers ~body meth uri)
     (fun exn ->
-       Connection.close connection;
-       Lwt.reraise exn)
+      Connection.close connection;
+      Lwt.reraise exn
+    )
   >|= fun ((_, response_body) as response) ->
-  (match response_body with
+  ( match response_body with
   | `Stream stream ->
       (* [Lwt.choose] removes its callback from the promise that does not
          resolve, so that they do not pile up on [client_closed] during a
@@ -125,7 +126,8 @@ let call ~client_closed ~headers ~body meth uri =
       Lwt.on_termination
         (Lwt.choose [Lwt_stream.closed stream; client_closed])
         (fun () -> Connection.close connection)
-  | `Empty | `String _ | `Strings _ -> Connection.close connection);
+  | `Empty | `String _ | `Strings _ -> Connection.close connection
+  );
   ( response
   , fun () ->
       Connection.close connection;
@@ -140,98 +142,105 @@ let gen dir = function
       Lwt.catch
         (* Is it a redirection? *)
         (fun () ->
-           Logs.info ~src:section (fun fmt -> fmt "Is it a redirection?");
-           let dest =
-             Ocsigen.Extensions.find_redirection dir.regexp dir.full_url
-               dir.dest request_info
-           in
-           (* [dest] is a full URL. Its path is sent as it is, but Uri decodes
+          Logs.info ~src:section (fun fmt -> fmt "Is it a redirection?");
+          let dest =
+            Ocsigen.Extensions.find_redirection dir.regexp dir.full_url dir.dest
+              request_info
+          in
+          (* [dest] is a full URL. Its path is sent as it is, but Uri decodes
               and encodes again its query, whose encoding may change: "+"
               becomes "%20", which also means a space in a form, and ";"
               becomes "%3B". *)
-           let target = Uri.of_string dest in
-           (match Uri.scheme target, Uri.userinfo target, Uri.host target with
-           | Some ("http" | "https"), None, Some host when host <> "" -> ()
-           | _ ->
-               raise
-                 (Ocsigen.Extensions.Error_in_config_file
-                    ("Revproxy : error in destination URL " ^ dest)));
-           Logs.info ~src:section (fun fmt ->
-             (* Not the query, which may hold secrets. *)
-             fmt "YES! Redirection to %a" Uri.pp (Uri.with_query target []));
-           (* It is now safe to start processing next request.
+          let target = Uri.of_string dest in
+          ( match Uri.scheme target, Uri.userinfo target, Uri.host target with
+          | Some ("http" | "https"), None, Some host when host <> "" -> ()
+          | _ ->
+              raise
+                (Ocsigen.Extensions.Error_in_config_file
+                   ("Revproxy : error in destination URL " ^ dest)
+                )
+          );
+          Logs.info ~src:section (fun fmt ->
+              (* Not the query, which may hold secrets. *)
+              fmt "YES! Redirection to %a" Uri.pp (Uri.with_query target [])
+          );
+          (* It is now safe to start processing next request.
 
             We are sure that the request won't be taken in disorder,
             so we return. *)
-           let do_request () =
-             let headers =
-               (* Removed first, so that Connection cannot name the headers
+          let do_request () =
+            let headers =
+              (* Removed first, so that Connection cannot name the headers
                   set below. *)
-               let h =
-                 remove_hop_by_hop
-                   (Cohttp.Request.headers
-                      (Ocsigen.Request.to_cohttp request_info))
-               in
-               let h =
-                 Cohttp.Header.replace h
-                   Ocsigen_http.Header.Name.(to_string x_forwarded_proto)
-                   (if Ocsigen.Request.ssl request_info then "https" else "http")
-               in
-               let h =
-                 (* The client alone, without the proxies before this
+              let h =
+                remove_hop_by_hop
+                  (Cohttp.Request.headers
+                     (Ocsigen.Request.to_cohttp request_info)
+                  )
+              in
+              let h =
+                Cohttp.Header.replace h
+                  Ocsigen_http.Header.Name.(to_string x_forwarded_proto)
+                  (if Ocsigen.Request.ssl request_info then "https" else "http")
+              in
+              let h =
+                (* The client alone, without the proxies before this
                     server, so that the target needs to trust only this
                     server. *)
-                 Cohttp.Header.replace h
-                   Ocsigen_http.Header.Name.(to_string x_forwarded_for)
-                   (client_address request_info)
-               in
-               (* Without keephost, cohttp sets the Host header from [target]. *)
-               if dir.keephost
-               then h
-               else
-                 Cohttp.Header.remove h
-                   Ocsigen_http.Header.Name.(to_string host)
-             and body, body_failure =
-               tracked (Ocsigen.Request.body request_info)
-             and meth = Ocsigen.Request.meth request_info in
-             (* An error while reading the body of the request comes from the
+                Cohttp.Header.replace h
+                  Ocsigen_http.Header.Name.(to_string x_forwarded_for)
+                  (client_address request_info)
+              in
+              (* Without keephost, cohttp sets the Host header from [target]. *)
+              if dir.keephost
+              then h
+              else
+                Cohttp.Header.remove h Ocsigen_http.Header.Name.(to_string host)
+            and body, body_failure = tracked (Ocsigen.Request.body request_info)
+            and meth = Ocsigen.Request.meth request_info in
+            (* An error while reading the body of the request comes from the
                 client (body too large, cut short, too slow), and the server
                 answers it as such. Whatever else goes wrong with the target
                 (no route, refused connection, unknown name, TLS failure,
                 connection closed before a response...), the client gets a
                 502, as from other reverse proxies. The exceptions vary with
                 the step that fails and the library that does it. *)
-             Lwt.catch
-               (fun () ->
-                  call
-                    ~client_closed:
-                      (Ocsigen.Request.connection_closed request_info)
-                    ~headers ~body meth target)
-               (fun exn ->
-                  match body_failure (), exn with
-                  | Some exn, _ | None, (Lwt.Canceled as exn) -> Lwt.reraise exn
-                  | None, exn ->
-                      (* Not the path and query, which may carry data that
+            Lwt.catch
+              (fun () ->
+                call
+                  ~client_closed:(Ocsigen.Request.connection_closed request_info)
+                  ~headers ~body meth target
+              )
+              (fun exn ->
+                match body_failure (), exn with
+                | Some exn, _ | None, (Lwt.Canceled as exn) -> Lwt.reraise exn
+                | None, exn ->
+                    (* Not the path and query, which may carry data that
                          do not belong in the logs. *)
-                      let server =
-                        Uri.make ?scheme:(Uri.scheme target)
-                          ?host:(Uri.host target) ?port:(Uri.port target) ()
-                      in
-                      Logs.err ~src:section (fun fmt ->
+                    let server =
+                      Uri.make ?scheme:(Uri.scheme target)
+                        ?host:(Uri.host target) ?port:(Uri.port target) ()
+                    in
+                    Logs.err ~src:section (fun fmt ->
                         fmt "Cannot get a response from %s: %s"
-                          (Uri.to_string server) (Printexc.to_string exn));
-                      Lwt.fail
-                        (Ocsigen.Extensions.Ocsigen_http_error
-                           (Ocsigen_cookie_map.empty, `Bad_gateway)))
-             >|= fun ((response, body), release) ->
-             Ocsigen.Response.of_cohttp ~release
-               (forwarded_response response, body)
-           in
-           Lwt.return @@ Ocsigen.Extensions.Ext_found do_request)
+                          (Uri.to_string server) (Printexc.to_string exn)
+                    );
+                    Lwt.fail
+                      (Ocsigen.Extensions.Ocsigen_http_error
+                         (Ocsigen_cookie_map.empty, `Bad_gateway)
+                      )
+              )
+            >|= fun ((response, body), release) ->
+            Ocsigen.Response.of_cohttp ~release
+              (forwarded_response response, body)
+          in
+          Lwt.return @@ Ocsigen.Extensions.Ext_found do_request
+        )
         (function
           | Ocsigen.Extensions.Not_concerned ->
               Lwt.return (Ocsigen.Extensions.Ext_next err)
-          | e -> Lwt.fail e)
+          | e -> Lwt.fail e
+          )
 
 let parse_config config_elem =
   let regexp = ref None in
@@ -246,20 +255,27 @@ let parse_config config_elem =
         [ Configuration.element ~name:"revproxy"
             ~attributes:
               [ Configuration.attribute ~name:"fullurl" (fun s ->
-                  regexp := Some s;
-                  full_url := true)
+                    regexp := Some s;
+                    full_url := true
+                )
               ; Configuration.attribute ~name:"suburl" (fun s ->
-                  regexp := Some s;
-                  full_url := false)
+                    regexp := Some s;
+                    full_url := false
+                )
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"keephost" (function
                   | "keephost" -> keephost := true
-                  | _ -> ())
+                  | _ -> ()
+                )
               ; Configuration.attribute ~name:"nopipeline" (function
                   | "nopipeline" -> pipeline := false
-                  | _ -> ()) ]
-            () ]
-      config_elem);
+                  | _ -> ()
+                )
+              ]
+            ()
+        ]
+      config_elem
+  );
   match !regexp, !full_url, !dest, !pipeline, !keephost with
   | None, _, _, _, _ ->
       Ocsigen.Extensions.badconfig "Missing attribute 'regexp' for <revproxy>"
@@ -271,18 +287,21 @@ let parse_config config_elem =
         ; full_url
         ; dest
         ; pipeline
-        ; keephost }
+        ; keephost
+        }
 
 let () =
   Ocsigen.Extensions.register ~name:"revproxy"
     ~fun_site:(fun userconf _ _ _ _ _ -> function
-       (* From a user configuration file, it would reach the services that
+      (* From a user configuration file, it would reach the services that
          only the server can reach. *)
-       | Xml.Element ("revproxy", _, _) when Option.is_some userconf ->
-           raise
-             (Ocsigen.Extensions.Error_in_user_config_file
-                "<revproxy> is not allowed in user configuration files")
-       | element -> parse_config element)
+      | Xml.Element ("revproxy", _, _) when Option.is_some userconf ->
+          raise
+            (Ocsigen.Extensions.Error_in_user_config_file
+               "<revproxy> is not allowed in user configuration files"
+            )
+      | element -> parse_config element
+    )
     ~respect_pipeline:true
     (* We ask ocsigen to respect pipeline order
                               when sending to extensions! *)
@@ -295,8 +314,9 @@ let run ~redirection () _ _ _ = gen redirection
    without a static dependency. *)
 let () =
   Ocsigen.Server.register_reverse_proxy_server (fun ~target ->
-    let target = Ocsigen_base.Lib.Url.remove_end_slash target in
-    run
-      ~redirection:
-        (create_redirection ~full_url:false ~regexp:"(.*)" (target ^ "/\\1"))
-      ())
+      let target = Ocsigen_base.Lib.Url.remove_end_slash target in
+      run
+        ~redirection:
+          (create_redirection ~full_url:false ~regexp:"(.*)" (target ^ "/\\1"))
+        ()
+  )

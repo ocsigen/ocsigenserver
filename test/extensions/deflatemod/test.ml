@@ -20,7 +20,10 @@ let open_files _vh _config_info _path = function
              (fun () ->
                Lwt.return
                  (Ocsigen.Response.respond_string ~status:`OK
-                    ~body:(string_of_int n) ())))
+                    ~body:(string_of_int n) ()
+                 )
+             )
+          )
       else Lwt.return (Ocsigen.Extensions.Ext_next err)
   | Ocsigen.Extensions.Req_found _ ->
       Lwt.return Ocsigen.Extensions.Ext_do_nothing
@@ -37,4 +40,6 @@ let () =
         ; Staticmod.run ~dir:"." ()
         ; Ocsigen.Server.site ["missing"]
             [Staticmod.run ~code:"404" ~regexp:".*" ~dest:"error.html" ()]
-        ; Deflatemod.run ~mode:(`All_but []) () ] ]
+        ; Deflatemod.run ~mode:(`All_but []) ()
+        ]
+    ]

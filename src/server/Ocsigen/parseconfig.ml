@@ -32,7 +32,8 @@ let blah_of_string f tag s =
   with Failure _ ->
     raise
       (Config.Config_file_error
-         ("While parsing <" ^ tag ^ "> - " ^ s ^ " is not a valid value."))
+         ("While parsing <" ^ tag ^ "> - " ^ s ^ " is not a valid value.")
+      )
 
 let int_of_string = blah_of_string int_of_string
 let float_of_string = blah_of_string float_of_string
@@ -43,13 +44,18 @@ let default_default_hostname =
     (*VVV Is it ok? Is it reliable? *)
     (List.hd
        (Unix.getaddrinfo hostname "www"
-          [Unix.AI_CANONNAME; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]))
+          [Unix.AI_CANONNAME; Unix.AI_SOCKTYPE Unix.SOCK_STREAM]
+       )
+    )
       .Unix.ai_canonname
   with Failure _ ->
     Logs.warn ~src:section (fun fmt ->
-      fmt
-        "Cannot determine default host name. Will use \"%s\" to create absolute links or redirections dynamically if you do not set <host defaulthostname=\"...\" ...> in config file."
-        hostname);
+        fmt
+          "Cannot determine default host name. Will use \"%s\" to create \
+           absolute links or redirections dynamically if you do not set <host \
+           defaulthostname=\"...\" ...> in config file."
+          hostname
+    );
     (*VVV Is it the right behaviour? *)
     hostname
 
@@ -132,14 +138,16 @@ let parse_size =
                    else o l
                  else o l
              else o l
-         else o l)
+         else o l
+        )
 
 let parse_size_tag tag s =
   try parse_size s
   with Failure _ ->
     raise
       (Config.Config_file_error
-         ("While parsing <" ^ tag ^ "> - " ^ s ^ " is not a valid size."))
+         ("While parsing <" ^ tag ^ "> - " ^ s ^ " is not a valid size.")
+      )
 
 let rec parse_string = function
   | [] -> ""
@@ -151,21 +159,26 @@ let parse_string_tag tag s =
   with Failure _ ->
     raise
       (Config.Config_file_error
-         ("While parsing <" ^ tag ^ "> - String expected."))
+         ("While parsing <" ^ tag ^ "> - String expected.")
+      )
 
 let parser_config =
   let rec parse_servers n = function
     | [] -> (
       match n with
       | [] -> raise (Config_file_error "<server> tag expected")
-      | _ -> n)
+      | _ -> n
+    )
     | Element ("server", [], nouveau) :: ll ->
-        (match ll with
+        ( match ll with
         | [] -> ()
         | _ ->
             Logs.warn ~src:section (fun fmt ->
-              fmt
-                "At most one <server> tag possible in config file. Ignoring trailing data."));
+                fmt
+                  "At most one <server> tag possible in config file. Ignoring \
+                   trailing data."
+            )
+        );
         parse_servers (n @ [nouveau]) []
         (* ll *)
         (* Multiple server not supported any more *)
@@ -190,12 +203,9 @@ let parse_xml_file file =
       in
       error "%s, line %d, %s: %s" file (Xml.line pos) characters
         (Xml.error_msg msg)
-  | Xml_light_errors.Dtd_parse_error e ->
-      error "%s: %s" file (Dtd.parse_error e)
-  | Xml_light_errors.Dtd_check_error e ->
-      error "%s: %s" file (Dtd.check_error e)
-  | Xml_light_errors.Dtd_prove_error e ->
-      error "%s: %s" file (Dtd.prove_error e)
+  | Xml_light_errors.Dtd_parse_error e -> error "%s: %s" file (Dtd.parse_error e)
+  | Xml_light_errors.Dtd_check_error e -> error "%s: %s" file (Dtd.check_error e)
+  | Xml_light_errors.Dtd_prove_error e -> error "%s: %s" file (Dtd.prove_error e)
   | Xml_light_errors.File_not_found dtd when dtd <> file ->
       error "%s: cannot open the DTD %s" file dtd
 
@@ -252,7 +262,9 @@ let parse_host_field =
                   (String.concat ""
                      (List.map split_host
                         (Str.full_split (Str.regexp "[*]+") host)
-                     @ ["$"]))
+                     @ ["$"]
+                     )
+                  )
               , port )
             in
             List.map parse_one_host (Str.split (Str.regexp "[ \t]+") s)
@@ -275,21 +287,18 @@ let get_defaulthostname ~defaulthostname ~host =
       in
       let host = aux host in
       Logs.warn ~src:section (fun fmt ->
-        fmt
-          "While parsing config file, tag <host>: No defaulthostname, assuming it is \"%s\""
-          host);
+          fmt
+            "While parsing config file, tag <host>: No defaulthostname, \
+             assuming it is \"%s\""
+            host
+      );
       if correct_hostname host
       then host
       else raise (Config.Config_file_error ("Incorrect hostname " ^ host))
 
 let later_pass_host_attr
-      ( name
-      , charset
-      , defaulthostname
-      , defaulthttpport
-      , defaulthttpsport
-      , ishttps )
-  = function
+    (name, charset, defaulthostname, defaulthttpport, defaulthttpsport, ishttps)
+    = function
   | "hostfilter", s -> (
     match name with
     | None ->
@@ -300,7 +309,7 @@ let later_pass_host_attr
         , defaulthttpsport
         , ishttps )
     | _ -> raise (Config.Config_file_error "Duplicate attribute name in <host>")
-    )
+  )
   | "charset", s -> (
     match charset with
     | None ->
@@ -312,7 +321,7 @@ let later_pass_host_attr
         , ishttps )
     | _ ->
         raise (Config.Config_file_error "Duplicate attribute charset in <host>")
-    )
+  )
   | "defaulthostname", s -> (
     match defaulthostname with
     | None ->
@@ -322,21 +331,27 @@ let later_pass_host_attr
     | _ ->
         raise
           (Config.Config_file_error
-             "Duplicate attribute defaulthostname in <host>"))
+             "Duplicate attribute defaulthostname in <host>"
+          )
+  )
   | "defaulthttpport", s -> (
     match defaulthttpport with
     | None -> name, charset, defaulthostname, Some s, defaulthttpsport, ishttps
     | _ ->
         raise
           (Config.Config_file_error
-             "Duplicate attribute defaulthttpport in <host>"))
+             "Duplicate attribute defaulthttpport in <host>"
+          )
+  )
   | "defaulthttpsport", s -> (
     match defaulthttpsport with
     | None -> name, charset, defaulthostname, defaulthttpport, Some s, ishttps
     | _ ->
         raise
           (Config.Config_file_error
-             "Duplicate attribute defaulthttpsport in <host>"))
+             "Duplicate attribute defaulthttpsport in <host>"
+          )
+  )
   | "defaultprotocol", s -> (
     match ishttps with
     | None ->
@@ -349,7 +364,9 @@ let later_pass_host_attr
     | _ ->
         raise
           (Config.Config_file_error
-             "Duplicate attribute defaultprotocol in <host>"))
+             "Duplicate attribute defaultprotocol in <host>"
+          )
+  )
   | attr, _ ->
       raise (Config.Config_file_error ("Wrong attribute for <host>: " ^ attr))
 
@@ -359,8 +376,7 @@ let later_pass_host attrs l =
       , defaulthostname
       , defaulthttpport
       , defaulthttpsport
-      , defaultprotocol )
-    =
+      , defaultprotocol ) =
     List.fold_left later_pass_host_attr
       (None, None, None, None, None, None)
       (List.rev attrs)
@@ -382,7 +398,8 @@ let later_pass_host attrs l =
   and serve_everything =
     { Extensions.do_not_serve_regexps = []
     ; do_not_serve_files = []
-    ; do_not_serve_extensions = [] }
+    ; do_not_serve_extensions = []
+    }
   in
   let conf =
     { Extensions.default_hostname = defaulthostname
@@ -398,11 +415,11 @@ let later_pass_host attrs l =
     ; do_not_serve_404 = serve_everything
     ; do_not_serve_403 = serve_everything
     ; uploaddir = Config.get_uploaddir ()
-    ; maxuploadfilesize = Config.get_maxuploadfilesize () }
+    ; maxuploadfilesize = Config.get_maxuploadfilesize ()
+    }
   in
   let parse_config =
-    Extensions.make_parse_config []
-      (Extensions.parse_config_item None host conf)
+    Extensions.make_parse_config [] (Extensions.parse_config_item None host conf)
   in
   (* default site for host *)
   host, conf, parse_config l
@@ -413,7 +430,8 @@ let later_pass_host attrs l =
 let warn_no_effect ?hint tag =
   let hint = match hint with None -> "" | Some hint -> " " ^ hint in
   Logs.warn ~src:section (fun fmt ->
-    fmt "Config file: <%s> has no effect and is ignored.%s" tag hint)
+      fmt "Config file: <%s> has no effect and is ignored.%s" tag hint
+  )
 
 let later_pass_extension tag attrs l =
   (* We do not reload extensions *)
@@ -421,7 +439,8 @@ let later_pass_extension tag attrs l =
   | [] ->
       raise
         (Config_file_error
-           ("missing module, name or findlib-package attribute in " ^ tag))
+           ("missing module, name or findlib-package attribute in " ^ tag)
+        )
   | [("name", s)] ->
       Ocsigen_base.Loader.init_module (preloadfile l) postloadfile false s
   | [("module", s)] ->
@@ -442,12 +461,14 @@ let parse_loglevel atts =
   let source, level =
     List.fold_left
       (fun (source, level) -> function
-         | "source", s -> Some s, level
-         | "level", l -> source, Some l
-         | att, _ ->
-             raise
-               (Config_file_error
-                  ("unexpected attribute " ^ att ^ " in <loglevel>")))
+        | "source", s -> Some s, level
+        | "level", l -> source, Some l
+        | att, _ ->
+            raise
+              (Config_file_error
+                 ("unexpected attribute " ^ att ^ " in <loglevel>")
+              )
+      )
       (None, None) atts
   in
   match source, level with
@@ -460,7 +481,10 @@ let parse_loglevel atts =
         raise
           (Config_file_error
              ("<loglevel level=\"" ^ level
-            ^ "\">: expected debug, info, notice, warning, error or fatal")))
+            ^ "\">: expected debug, info, notice, warning, error or fatal"
+             )
+          )
+  )
 
 let rec later_pass_extconf dir =
   let f acc s =
@@ -470,7 +494,8 @@ let rec later_pass_extconf dir =
         let filename = dir ^ "/" ^ s in
         try
           Logs.info ~src:section (fun fmt ->
-            fmt "Parsing configuration file %s" filename);
+              fmt "Parsing configuration file %s" filename
+          );
           parse_ext filename
         with e ->
           let msg =
@@ -479,9 +504,12 @@ let rec later_pass_extconf dir =
             | e -> Printexc.to_string e
           in
           Logs.err ~src:section (fun fmt ->
-            fmt
-              ("Error while loading configuration file %s (ignored)" ^^ "@\n%s")
-              filename msg);
+              fmt
+                ("Error while loading configuration file %s (ignored)"
+               ^^ "@\n%s"
+                )
+                filename msg
+          );
           []
       with
       | [] -> acc
@@ -493,9 +521,10 @@ let rec later_pass_extconf dir =
     Array.sort compare files; Array.fold_left f [] files
   with Sys_error _ as e ->
     Logs.err ~src:section (fun fmt ->
-      fmt
-        ("Error while loading configuration file (ignored)" ^^ "@\n%s")
-        (Printexc.to_string e));
+        fmt
+          ("Error while loading configuration file (ignored)" ^^ "@\n%s")
+          (Printexc.to_string e)
+    );
     []
 
 (* Config file is parsed twice. This is the second parsing (site
@@ -519,7 +548,8 @@ and later_pass = function
   | Element (("datadir" as st), [], _p) :: ll ->
       warn_no_effect st
         ~hint:
-          "Ocsipersist (DBM or SQLite) takes its location from its own <store> or <database> element.";
+          "Ocsipersist (DBM or SQLite) takes its location from its own <store> \
+           or <database> element.";
       later_pass ll
   (* Read by [first_pass], which comes before the logs are set up. *)
   | Element ((("minthreads" | "maxthreads") as st), [], _p) :: ll ->
@@ -565,9 +595,10 @@ and later_pass = function
       (* The in-memory cap is a plain [int]; "infinity"/empty (i.e. [None])
          means no in-memory limit, bounded in practice by <maxrequestbodysize>. *)
       set_maxrequestbodysizeinmemory
-        (match parse_size_tag st (parse_string_tag st p) with
+        ( match parse_size_tag st (parse_string_tag st p) with
         | None -> max_int
-        | Some v -> Int64.to_int v);
+        | Some v -> Int64.to_int v
+        );
       later_pass ll
   | Element (("maxuploadfilesize" as st), [], p) :: ll ->
       set_maxuploadfilesize (parse_size_tag st (parse_string_tag st p));
@@ -577,9 +608,10 @@ and later_pass = function
       later_pass ll
   | Element (("shutdowntimeout" as st), [], p) :: ll ->
       set_shutdown_timeout
-        (match parse_string_tag st p with
+        ( match parse_string_tag st p with
         | "notimeout" -> None
-        | p -> Some (float_of_string st p));
+        | p -> Some (float_of_string st p)
+        );
       later_pass ll
   | Element ("debugmode", [], []) :: ll -> set_debugmode true; later_pass ll
   | Element ("usedefaulthostname", [], []) :: ll ->
@@ -621,17 +653,20 @@ and later_pass = function
 let later_pass l =
   log_levels := [];
   let settings = Config.save_settings () in
-  (match later_pass l with
+  ( match later_pass l with
   | hosts -> Extensions.set_hosts hosts
   | exception e ->
       Config.restore_settings settings;
-      raise e);
+      raise e
+  );
   List.iter
     (fun (source, level) ->
-       if not (Messages.set_source_level source (Some level))
-       then
-         Logs.warn ~src:section (fun fmt ->
-           fmt "<loglevel>: no log source named %s" source))
+      if not (Messages.set_source_level source (Some level))
+      then
+        Logs.warn ~src:section (fun fmt ->
+            fmt "<loglevel>: no log source named %s" source
+        )
+    )
     (List.rev !log_levels)
 
 (* Parsing <port> tags *)
@@ -658,7 +693,10 @@ let parse_port =
           | Some r ->
               ( `IPv4 (Unix.inet_addr_of_string (get r 1))
               , int_of_string "port" (get r 2) )
-          | None -> `All, int_of_string "port" s)))
+          | None -> `All, int_of_string "port" s
+        )
+      )
+    )
 
 let parse_lwt_log_facility = function
   | "auth" -> `Auth
@@ -730,7 +768,8 @@ let make_ssl_info ~certificate ~privatekey ~ciphers ~dhfile ~curve =
   ; ssl_privatekey = privatekey
   ; ssl_ciphers = ciphers
   ; ssl_dhfile = dhfile
-  ; ssl_curve = curve }
+  ; ssl_curve = curve
+  }
 
 let rec parse_ssl l ~certificate ~privatekey ~ciphers ~dhfile ~curve =
   match l with
@@ -785,7 +824,8 @@ let first_pass c =
               raise (Config_file_error "Wrong value for <port> tag")
           in
           aux ssl ports (po :: sslports) ll
-      | _ -> raise (Config_file_error "Wrong attribute for <port>"))
+      | _ -> raise (Config_file_error "Wrong attribute for <port>")
+    )
     | Element (("minthreads" as st), [], p) :: ll ->
         set_minthreads (int_of_string st (parse_string_tag st p));
         aux ssl ports sslports ll
@@ -807,11 +847,15 @@ let first_pass c =
       | _ ->
           raise
             (Config_file_error
-               "Only one ssl certificate for each server supported for now"))
+               "Only one ssl certificate for each server supported for now"
+            )
+    )
     | Element ("user", [], _) :: ll | Element ("group", [], _) :: ll ->
         Logs.warn ~src:section (fun fmt ->
-          fmt
-            "Config file: <user> and <group> deprecated. Please do not launch as root.");
+            fmt
+              "Config file: <user> and <group> deprecated. Please do not \
+               launch as root."
+        );
         aux ssl ports sslports ll
     | Element (("commandpipe" as st), [], p) :: ll ->
         set_command_pipe (parse_string_tag st p);

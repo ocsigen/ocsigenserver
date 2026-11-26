@@ -69,23 +69,28 @@ let loadfile pre post force file =
     then (
       pre ();
       Logs.info ~src:section (fun fmt ->
-        fmt "Loading %s (will be reloaded every times)" file);
-      (try
-         Dynlink_wrapper.loadfile file;
-         post ()
-       with e -> post (); raise e);
+          fmt "Loading %s (will be reloaded every times)" file
+      );
+      ( try
+          Dynlink_wrapper.loadfile file;
+          post ()
+        with e -> post (); raise e
+      );
       (* Remember it too: a later non-forced request for the same file, as a
          dependency of another package, must not load it a second time. *)
-      addloaded file)
+      addloaded file
+    )
     else if not (isloaded file)
     then (
       pre ();
       Logs.info ~src:section (fun fmt -> fmt "Loading extension %s" file);
-      (try
-         Dynlink_wrapper.loadfile file;
-         post ()
-       with e -> post (); raise e);
-      addloaded file)
+      ( try
+          Dynlink_wrapper.loadfile file;
+          post ()
+        with e -> post (); raise e
+      );
+      addloaded file
+    )
     else
       Logs.info ~src:section (fun fmt -> fmt "Extension %s already loaded" file)
   with e -> raise (Dynlink_error (file, e))
@@ -123,24 +128,27 @@ let init_module pre post force name =
       fun () -> List.iter (fun f -> f ()) l
     with Not_found ->
       Logs.info ~src:section (fun fmt ->
-        fmt "No init function for named module %s." name);
+          fmt "No init function for named module %s." name
+      );
       fun () -> ()
   in
   if force
   then (
     pre ();
     Logs.info ~src:section (fun fmt ->
-      fmt "Initializing %s (will be initialized every time)" name);
-    try f (); post () with e -> post (); raise e)
+        fmt "Initializing %s (will be initialized every time)" name
+    );
+    try f (); post () with e -> post (); raise e
+  )
   else if not (isloaded name)
   then (
     pre ();
     Logs.info ~src:section (fun fmt -> fmt "Initializing module %s " name);
     (try f (); post () with e -> post (); raise e);
-    addloaded name)
+    addloaded name
+  )
   else
-    Logs.info ~src:section (fun fmt ->
-      fmt "Module %s already initialized." name)
+    Logs.info ~src:section (fun fmt -> fmt "Module %s already initialized." name)
 
 (************************************************************************)
 (* Manipulating Findlib's search path *)
@@ -179,7 +187,8 @@ let findfiles =
           (Findlib.package_deep_ancestors preds [package])
       in
       Logs.info ~src:section (fun fmt ->
-        fmt "Dependencies of %s: %s" package (String.concat ", " deps));
+          fmt "Dependencies of %s: %s" package (String.concat ", " deps)
+      );
       let rec aux = function
         | [] -> []
         | a :: q ->
@@ -196,7 +205,8 @@ let findfiles =
       in
       let res = aux deps in
       Logs.info ~src:section (fun fmt ->
-        fmt "Needed: %s" (String.concat ", " res));
+          fmt "Needed: %s" (String.concat ", " res)
+      );
       res
     with e -> raise (Findlib_error (package, e))
 
@@ -218,7 +228,8 @@ let () =
       let additional = if msg = "" then "" else sprintf " (%s)" msg in
       let msg =
         sprintf
-          "Findlib package %s not found%s: maybe you forgot <findlib path=\"...\"/>?"
+          "Findlib package %s not found%s: maybe you forgot <findlib \
+           path=\"...\"/>?"
           pkg additional
       in
       Some msg

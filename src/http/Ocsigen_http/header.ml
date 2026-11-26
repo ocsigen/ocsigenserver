@@ -86,9 +86,10 @@ let connection_options h =
   Cohttp.Header.get_multi h Name.(to_string connection)
   |> List.concat_map (String.split_on_char ',')
   |> List.filter_map (fun option ->
-    match String.lowercase_ascii (String.trim option) with
-    | "" -> None
-    | option -> Some option)
+      match String.lowercase_ascii (String.trim option) with
+      | "" -> None
+      | option -> Some option
+  )
 
 let add_vary h field =
   let name = Name.(to_string vary) and field = Name.to_string field in
@@ -96,7 +97,8 @@ let add_vary h field =
     Cohttp.Header.get_multi h name
     |> List.concat_map (String.split_on_char ',')
     |> List.filter_map (fun f ->
-      match String.trim f with "" -> None | f -> Some f)
+        match String.trim f with "" -> None | f -> Some f
+    )
   in
   let covered f =
     match String.lowercase_ascii f with
@@ -181,11 +183,12 @@ module Content_type = struct
     try
       List.find
         (fun content_type ->
-           let f = function
-             | (Some a, Some b), _, _ -> a ^ "/" ^ b = content_type
-             | _ -> false
-           in
-           List.exists f accept)
+          let f = function
+            | (Some a, Some b), _, _ -> a ^ "/" ^ b = content_type
+            | _ -> false
+          in
+          List.exists f accept
+        )
         (default :: alt)
     with Not_found -> default
 end
@@ -383,11 +386,13 @@ module Date = struct
             let* month = month_of_name month in
             let* two_digits = number ~length:2 year in
             time hms (fun ~hour ~minute ~second ->
-              let year =
-                full_year ~now ~two_digits ~month ~day ~hour ~minute ~second
-              in
-              make ~year ~month ~day ~hour ~minute ~second)
-        | _ -> None)
+                let year =
+                  full_year ~now ~two_digits ~month ~day ~hour ~minute ~second
+                in
+                make ~year ~month ~day ~hour ~minute ~second
+            )
+        | _ -> None
+      )
     | [day_name; month; ""; day; hms; year] ->
         asctime ~day_length:1 day_name month day hms year
     | [day_name; month; day; hms; year] ->

@@ -33,7 +33,8 @@ let bind_ipv6 port =
     with
     | () -> `Bound
     | exception Unix.Unix_error (Unix.EADDRNOTAVAIL, _, _) -> `No_ipv6
-    | exception Unix.Unix_error (Unix.EADDRINUSE, _, _) -> `In_use)
+    | exception Unix.Unix_error (Unix.EADDRINUSE, _, _) -> `In_use
+  )
 
 (* [choose ~attempts] is a port free on IPv4 and on IPv6. A port free on IPv4
    only stays held, so that it is not chosen again. *)

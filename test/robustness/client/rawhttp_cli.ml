@@ -42,7 +42,8 @@ let parse_trickle s =
     match int_of_string_opt size, float_of_string_opt delay with
     | Some size, Some delay when size > 0 && delay >= 0. ->
         trickle := Some (size, delay)
-    | _ -> raise (Arg.Bad ("invalid --trickle " ^ s)))
+    | _ -> raise (Arg.Bad ("invalid --trickle " ^ s))
+  )
   | _ -> raise (Arg.Bad ("invalid --trickle " ^ s))
 
 let parse_tls_max = function
@@ -59,23 +60,26 @@ let target_options =
     , "VERSION Highest TLS version offered: 1.2 or 1.3 (default 1.3)" )
   ; ( "--sni"
     , Arg.String (fun s -> sni := Some s)
-    , "NAME Server name sent in the TLS handshake" ) ]
+    , "NAME Server name sent in the TLS handshake" )
+  ]
 
 let exchange_options =
   [ ( "--first-byte"
     , Arg.Set_float first_byte
-    , "SECONDS Wait that long for the first byte of the answer, or --idle if longer (default 10)"
-    )
+    , "SECONDS Wait that long for the first byte of the answer, or --idle if \
+       longer (default 10)" )
   ; ( "--idle"
     , Arg.Set_float idle
     , "SECONDS Stop reading after that long without data (default 2)" )
   ; ( "--settle"
     , Arg.Set_float settle
-    , "SECONDS Stop reading after that long without data once complete responses that keep the connection open are received, at most --idle (default 0.1)"
-    )
+    , "SECONDS Stop reading after that long without data once complete \
+       responses that keep the connection open are received, at most --idle \
+       (default 0.1)" )
   ; ( "--trickle"
     , Arg.String parse_trickle
-    , "N:SECONDS Send N bytes at a time, pausing between pieces" ) ]
+    , "N:SECONDS Send N bytes at a time, pausing between pieces" )
+  ]
 
 let count_option =
   ["-n", Arg.Set_int count, "N Number of connections or requests"]
@@ -98,7 +102,8 @@ let send () =
   | outcome ->
       print_string
         (Raw_http.render ~status_only:!status_only ~validators:!validators
-           outcome)
+           outcome
+        )
   | exception Raw_http.Connect_failed message -> connect_failed message
 
 let ending_name = function
@@ -123,9 +128,10 @@ let repeat () =
       | {received; ending} ->
           let codes = Raw_http.status_codes received in
           Printf.sprintf "%s [%s]"
-            (if codes = []
-             then "-"
-             else String.concat "," (List.map string_of_int codes))
+            ( if codes = []
+              then "-"
+              else String.concat "," (List.map string_of_int codes)
+            )
             (ending_name ending)
       | exception Raw_http.Connect_failed message ->
           Printf.sprintf "[connect failed: %s]" message
@@ -160,15 +166,16 @@ let hold () =
   in
   let held, refused = open_all !count [] 0 in
   Printf.printf "held %d connections, %d refused\n" (List.length held) refused;
-  (match
-     Raw_http.exchange ~first_byte:!first_byte ~idle:!idle ~settle:!settle
-       target probe_request
-   with
+  ( match
+      Raw_http.exchange ~first_byte:!first_byte ~idle:!idle ~settle:!settle
+        target probe_request
+    with
   | outcome ->
       print_string "probe: ";
       print_string (Raw_http.render ~status_only:true outcome)
   | exception Raw_http.Connect_failed message ->
-      Printf.printf "probe: [connect failed: %s]\n" message);
+      Printf.printf "probe: [connect failed: %s]\n" message
+  );
   List.iter Raw_http.close held
 
 let wait () =
@@ -191,7 +198,8 @@ let commands =
       @ [ "--status", Arg.Set status_only, " Only print the status lines"
         ; ( "--validators"
           , Arg.Set validators
-          , " Keep the ETag and Last-Modified header lines" ) ] )
+          , " Keep the ETag and Last-Modified header lines" )
+        ] )
   ; "repeat", repeat, target_options @ exchange_options @ count_option
   ; "hold", hold, target_options @ count_option @ exchange_options
   ; ( "wait"
@@ -199,7 +207,9 @@ let commands =
     , target_options
       @ [ ( "--idle"
           , Arg.Set_float idle
-          , "SECONDS Give up after that long (default 2)" ) ] ) ]
+          , "SECONDS Give up after that long (default 2)" )
+        ] )
+  ]
 
 let usage = "usage: rawhttp (send|repeat|hold|wait) [options] [FILE]"
 
@@ -210,12 +220,15 @@ let () =
     | None -> prerr_endline usage; exit 2
     | Some (_, run, options) -> (
         let argv = Array.sub Sys.argv 1 (Array.length Sys.argv - 1) in
-        (try
-           Arg.parse_argv argv (Arg.align options)
-             (fun path -> file := Some path)
-             (Printf.sprintf "usage: rawhttp %s [options] [FILE]" name)
-         with
+        ( try
+            Arg.parse_argv argv (Arg.align options)
+              (fun path -> file := Some path)
+              (Printf.sprintf "usage: rawhttp %s [options] [FILE]" name)
+          with
         | Arg.Help message -> print_string message; exit 0
-        | Arg.Bad message -> prerr_string message; exit 2);
-        try run () with Arg.Bad message -> prerr_endline message; exit 2))
+        | Arg.Bad message -> prerr_string message; exit 2
+        );
+        try run () with Arg.Bad message -> prerr_endline message; exit 2
+      )
+  )
   | _ -> prerr_endline usage; exit 2

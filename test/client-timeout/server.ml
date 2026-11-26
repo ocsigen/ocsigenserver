@@ -31,7 +31,9 @@ let respond body =
   Lwt.return
     (Ocsigen.Extensions.Ext_found
        (fun () ->
-         Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())))
+         Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())
+       )
+    )
 
 let big = lazy (String.make (32 * 1024 * 1024) 'x')
 
@@ -46,7 +48,8 @@ let resources _vh _config_info _path = function
         Cohttp_lwt.Body.to_string (Ocsigen.Request.body request_info)
         >>= fun body -> respond (string_of_int (String.length body))
     | ["big"] -> respond (Lazy.force big)
-    | _ -> respond "ok")
+    | _ -> respond "ok"
+  )
 
 let start ~port ~tls_port ~dir ~command_pipe =
   Ocsigen.Server.start
@@ -58,7 +61,9 @@ let start ~port ~tls_port ~dir ~command_pipe =
          ; ssl_privatekey = Some "privkey.pem"
          ; ssl_ciphers = None
          ; ssl_dhfile = None
-         ; ssl_curve = None })
+         ; ssl_curve = None
+         }
+      )
     ~logdir:(Filename.concat dir "log")
     ~uploaddir:None ~usedefaulthostname:true ~command_pipe
     ~default_charset:(Some "utf-8")

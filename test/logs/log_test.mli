@@ -22,16 +22,12 @@ val contains : string -> string -> bool
 (** [contains s sub] is [true] if [sub] occurs in [s]. *)
 
 val check_file :
-   string
-  -> string
-  -> present:string list
-  -> absent:string list
-  -> unit
+  string -> string -> present:string list -> absent:string list -> unit
 (** [check_file dir file ~present ~absent] fails unless [file] in [dir]
     contains every message of [present] and none of [absent]. *)
 
 val check_lines :
-   what:string
+     what:string
   -> writers:int
   -> messages:int
   -> (string -> int * int)

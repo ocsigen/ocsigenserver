@@ -41,10 +41,7 @@ let follow_symlinks_if_owner_match : symlink_policy =
    If supplied, [stat] must be the result of calling [Unix.stat] on
    [filename] *)
 let check_symlinks_aux
-      filename
-      ?(stat = Unix.LargeFile.stat filename)
-      (policy : symlink_policy)
-  =
+    filename ?(stat = Unix.LargeFile.stat filename) (policy : symlink_policy) =
   let lstat = Unix.LargeFile.lstat filename in
   if lstat.Unix.LargeFile.st_kind = Unix.S_LNK
   then policy ~stat ~lstat
@@ -53,10 +50,7 @@ let check_symlinks_aux
 (* Check that there are no invalid symlinks in the directories leading to
    [filename]. Paths upwards [no_check_for] are not checked. *)
 let rec check_symlinks_parent_directories
-          ~filename
-          ~no_check_for
-          (policy : symlink_policy)
-  =
+    ~filename ~no_check_for (policy : symlink_policy) =
   if filename = "/" || filename = "." || Some filename = no_check_for
   then true
   else
@@ -101,8 +95,9 @@ let check_dotdot =
        but the filename may come from somewhere else than URLs ... *)
     try
       ignore
-        (Ocsigen_base.Lib.Netstring_pcre.search_forward regexp filename 0
-         : int * 'groups);
+        ( Ocsigen_base.Lib.Netstring_pcre.search_forward regexp filename 0
+          : int * 'groups
+        );
       false
     with Not_found -> true
 
@@ -112,7 +107,8 @@ let can_send filename request =
     |> Ocsigen_base.Lib.Url.norm_path |> Ocsigen_base.Lib.Url.join_path
   in
   Logs.info ~src:section (fun fmt ->
-    fmt "checking if file %s can be sent" filename);
+      fmt "checking if file %s can be sent" filename
+  );
   let matches arg =
     Ocsigen_base.Lib.Netstring_pcre.string_match
       (Extensions.do_not_serve_to_regexp arg)
@@ -122,11 +118,13 @@ let can_send filename request =
   if matches request.Extensions.do_not_serve_403
   then (
     Logs.info ~src:section (fun fmt -> fmt "this file is forbidden");
-    raise Failed_403)
+    raise Failed_403
+  )
   else if matches request.Extensions.do_not_serve_404
   then (
     Logs.info ~src:section (fun fmt -> fmt "this file must be hidden");
-    raise Failed_404)
+    raise Failed_404
+  )
 
 (* Return type of a request for a local file. The string argument
    represents the real file/directory to serve, eg. foo/index.html
@@ -149,11 +147,10 @@ type resolved = RFile of string | RDir of string
 *)
 (* See also module Files in eliom.ml *)
 let resolve
-      ?no_check_for
-      ~request:({Extensions.request_config; _} as request)
-      ~filename
-      ()
-  =
+    ?no_check_for
+    ~request:({Extensions.request_config; _} as request)
+    ~filename
+    () =
   (* We only accept absolute filenames in daemon mode,
      as we do not really know what is the current directory *)
   let filename =
@@ -174,10 +171,13 @@ let resolve
               (* In this case, [filename] is a directory but this is not visible in
              its name as there is no final slash. We signal this fact to
              Ocsigen, which will then issue a 301 redirection to "filename/" *)
-              section (fun fmt -> fmt "LocalFiles: %s is a directory" filename);
+              section (fun fmt -> fmt "LocalFiles: %s is a directory" filename
+          );
           raise
             (Extensions.Ocsigen_is_dir
-               (Extensions.new_url_of_directory_request request)))
+               (Extensions.new_url_of_directory_request request)
+            )
+        )
         else
           let rec find_index = function
             | [] ->
@@ -185,20 +185,26 @@ let resolve
                 if request_config.Extensions.list_directory_content
                 then (
                   Logs.info ~src:section (fun fmt ->
-                    fmt "Displaying directory content");
-                  filename, stat)
+                      fmt "Displaying directory content"
+                  );
+                  filename, stat
+                )
                 else (
                   Logs.info
                     ~src:
                       (* No suitable index *)
-                      section (fun fmt -> fmt "No index and no listing");
-                  raise NotReadableDirectory)
+                      section (fun fmt -> fmt "No index and no listing"
+                  );
+                  raise NotReadableDirectory
+                )
             | e :: q -> (
                 let index = filename ^ e in
                 Logs.info ~src:section (fun fmt ->
-                  fmt "Testing \"%s\" as possible index." index);
+                    fmt "Testing \"%s\" as possible index." index
+                );
                 try index, Unix.LargeFile.stat index
-                with Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q)
+                with Unix.Unix_error (Unix.ENOENT, _, _) -> find_index q
+              )
           in
           find_index request_config.Extensions.default_directory_index
       else filename, stat
@@ -206,8 +212,10 @@ let resolve
     if not (check_dotdot ~filename)
     then (
       Logs.info ~src:section (fun fmt ->
-        fmt "Filenames cannot contain .. as in \"%s\"." filename);
-      raise Failed_403)
+          fmt "Filenames cannot contain .. as in \"%s\"." filename
+      );
+      raise Failed_403
+    )
     else if
       check_symlinks ~filename ~no_check_for
         request_config.Extensions.follow_symlinks
@@ -215,19 +223,23 @@ let resolve
       can_send filename request_config;
       (* If the previous function did not fail, we are authorized to
          send this file *)
-      Logs.info ~src:section (fun fmt -> fmt "Returning \"%s\"." filename);
+      Logs.info ~src:section (fun fmt -> fmt "Returning \"%s\"." filename
+      );
       if stat.Unix.LargeFile.st_kind = Unix.S_REG
       then RFile filename
       else if stat.Unix.LargeFile.st_kind = Unix.S_DIR
       then RDir filename
-      else raise Failed_404)
+      else raise Failed_404
+    )
     else (
       Logs.info
         ~src:
           (* [filename] is accessed through as symlink which we should not
          follow according to the current policy *)
-          section (fun fmt -> fmt "Failed symlink check for \"%s\"." filename);
-      raise Failed_403)
+          section (fun fmt -> fmt "Failed symlink check for \"%s\"." filename
+      );
+      raise Failed_403
+    )
   with
   (* We can get an EACCESS here, if are missing some rights on a directory *)
   | Unix.Unix_error (Unix.EACCES, _, _) -> raise Failed_403

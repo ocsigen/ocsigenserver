@@ -8,4 +8,6 @@ let () =
     ~command_pipe:"local.cmd"
     [ Ocsigen.Server.host
         [ Rewritemod.run ~regexp:"old/(.*)" "new/\\1" ()
-        ; Staticmod.run ~dir:"www" () ] ]
+        ; Staticmod.run ~dir:"www" ()
+        ]
+    ]

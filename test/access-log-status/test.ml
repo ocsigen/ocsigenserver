@@ -7,7 +7,9 @@ let respond _vh _config_info _path _request_state =
     (Ocsigen.Extensions.Ext_found
        (fun () ->
          Lwt.return
-           (Ocsigen.Response.respond_string ~status:(`Code 421) ~body:"x" ())))
+           (Ocsigen.Response.respond_string ~status:(`Code 421) ~body:"x" ())
+       )
+    )
 
 let () =
   Ocsigen.Server.start

@@ -39,14 +39,15 @@ let check_lines ~what ~writers ~messages parse lines =
   let seen = Hashtbl.create (writers * messages) in
   List.iter
     (fun line ->
-       let ((w, i) as msg) =
-         try parse line
-         with Scanf.Scan_failure _ | Failure _ | End_of_file ->
-           fail "%s: malformed line %S" what line
-       in
-       if w < 0 || w >= writers || i < 1 || i > messages || Hashtbl.mem seen msg
-       then fail "%s: unexpected line %S" what line;
-       Hashtbl.add seen msg ())
+      let ((w, i) as msg) =
+        try parse line
+        with Scanf.Scan_failure _ | Failure _ | End_of_file ->
+          fail "%s: malformed line %S" what line
+      in
+      if w < 0 || w >= writers || i < 1 || i > messages || Hashtbl.mem seen msg
+      then fail "%s: unexpected line %S" what line;
+      Hashtbl.add seen msg ()
+    )
     lines;
   if Hashtbl.length seen <> writers * messages
   then
@@ -77,8 +78,9 @@ let try_on_other_thread f =
   let (_ : Thread.t) =
     Thread.create
       (fun () ->
-         Atomic.set result
-           (Some (match f () with () -> Ok () | exception exn -> Error exn)))
+        Atomic.set result
+          (Some (match f () with () -> Ok () | exception exn -> Error exn))
+      )
       ()
   in
   match poll 1000 (fun () -> Atomic.get result) with

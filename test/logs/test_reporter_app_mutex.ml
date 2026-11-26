@@ -13,12 +13,14 @@ let () =
   let src = Logs.Src.create "test:reporter-app-mutex" in
   Logs.warn ~src (fun m -> m "first message");
   let pp_raising _ () = raise Exit in
-  (match Logs.warn ~src (fun m -> m "raising message %a" pp_raising ()) with
+  ( match Logs.warn ~src (fun m -> m "raising message %a" pp_raising ()) with
   | () -> Log_test.fail "the raising printer did not raise"
-  | exception Exit -> ());
+  | exception Exit -> ()
+  );
   Log_test.on_other_thread (fun () ->
-    Logs.warn ~src (fun m -> m "message from a thread");
-    Ocsigen.Messages.accesslog "access line from a thread");
+      Logs.warn ~src (fun m -> m "message from a thread");
+      Ocsigen.Messages.accesslog "access line from a thread"
+  );
   Log_test.check_file dir "warnings.log"
     ~present:["first message"; "message from a thread"]
     ~absent:[];

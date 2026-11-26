@@ -15,10 +15,10 @@ This module belongs to ocamlfind package
 (** See an example of use on the API documentation of {!Revproxy}. *)
 
 val run :
-   mode:
-     [ `Rewrite of Ocsigen_http.Header.Name.t * string * string
-     | `Add of Ocsigen_http.Header.Name.t * string * bool option
-     | `Code of Cohttp.Code.status ]
+     mode:
+       [ `Rewrite of Ocsigen_http.Header.Name.t * string * string
+       | `Add of Ocsigen_http.Header.Name.t * string * bool option
+       | `Code of Cohttp.Code.status ]
   -> unit
   -> Ocsigen.Server.instruction
 (** [run ~mode ()] makes it possible to use this extension without

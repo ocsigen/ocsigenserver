@@ -71,7 +71,8 @@ let libdir () =
     let inp = Unix.open_process_in "ocamlfind printconf destdir" in
     let libdir = input_line inp in
     ignore (Unix.close_process_in inp);
-    libdir)
+    libdir
+  )
   else libdir
 
 let deps () =
@@ -81,7 +82,8 @@ let deps () =
     ; "ocsigenserver.baselib.base"
     ; "ocsigenserver.baselib"
     ; "ocsigenserver.http"
-    ; "ocsigenserver" ]
+    ; "ocsigenserver"
+    ]
   in
   let packages =
     "lwt_ssl,bytes,lwt.unix,logs,logs-syslog.unix,syslog-message,ipaddr,findlib,cryptokit,re,str,xml-light,dynlink,cohttp-lwt-unix,http"
@@ -89,11 +91,12 @@ let deps () =
   let deps = ref [] in
   let cmd = "ocamlfind query -p-format -recursive " ^ packages in
   let inp = Unix.open_process_in cmd in
-  (try
-     while true do
-       deps := input_line inp :: !deps
-     done
-   with End_of_file -> ());
+  ( try
+      while true do
+        deps := input_line inp :: !deps
+      done
+    with End_of_file -> ()
+  );
   match Unix.close_process_in inp with
   | WEXITED 0 -> !deps @ extra_deps
   | _ -> failwith ("Command failed: " ^ cmd)

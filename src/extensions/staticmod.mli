@@ -20,7 +20,7 @@ let _ =
  *)
 
 val run :
-   ?dir:string
+     ?dir:string
   -> ?regexp:string
   -> ?dest:string
   -> ?code:string

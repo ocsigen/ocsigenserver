@@ -23,10 +23,10 @@
 
 include
   module type of Ocsigen_lib_base
-  with type poly = Ocsigen_lib_base.poly
-   and type yesnomaybe = Ocsigen_lib_base.yesnomaybe
-   and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
-   and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
+    with type poly = Ocsigen_lib_base.poly
+     and type yesnomaybe = Ocsigen_lib_base.yesnomaybe
+     and type 'a Clist.t = 'a Ocsigen_lib_base.Clist.t
+     and type 'a Clist.node = 'a Ocsigen_lib_base.Clist.node
 
 val make_cryptographic_safe_string : unit -> string
 (** Generate an unique and cryptographically safe random string.
@@ -74,7 +74,7 @@ module Url : sig
       encoded ".." can be used to walk up the tree. *)
 
   val parse :
-     t
+       t
     -> bool option
        * string option
        * int option

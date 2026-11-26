@@ -50,7 +50,8 @@ let find_in_assoc_opt file assoc =
     | Regexp (reg, v) :: q ->
         if Netstring_pcre.string_match reg file 0 <> None then Some v else aux q
     | Map m :: q -> (
-      match MapString.find_opt ext m with Some v -> Some v | None -> aux q)
+      match MapString.find_opt ext m with Some v -> Some v | None -> aux q
+    )
   in
   aux assoc.assoc_list
 
@@ -128,12 +129,14 @@ let read_mime_types filename =
   try In_channel.with_open_text filename (read_and_split MapString.empty)
   with Sys_error msg ->
     Logs.err ~src:section (fun fmt ->
-      fmt "Unable to read the mime.types file: %s" msg);
+        fmt "Unable to read the mime.types file: %s" msg
+    );
     MapString.empty
 
 let parse_mime_types ~filename : mime_type assoc =
   { assoc_list = [Map (read_mime_types filename)]
-  ; assoc_default = default_mime_type }
+  ; assoc_default = default_mime_type
+  }
 
 let default_mime_assoc () = empty_mime_assoc ()
 
@@ -147,12 +150,14 @@ let set_mime_file file =
   mime_file := file;
   mime_file_table :=
     lazy
-      (match file with
+      ( match file with
       | None -> MapString.empty
       | Some filename ->
           Logs.info ~src:section (fun fmt ->
-            fmt "Loading mime types in '%s'" filename);
-          read_mime_types filename)
+              fmt "Loading mime types in '%s'" filename
+          );
+          read_mime_types filename
+      )
 
 let mime_file () = !mime_file
 
@@ -164,7 +169,8 @@ let find_mime file assoc =
   | None -> (
     match MapString.find_opt (extension file) (Lazy.force !mime_file_table) with
     | Some mime -> mime
-    | None -> Magic_mime.lookup ~default:assoc.assoc_default file)
+    | None -> Magic_mime.lookup ~default:assoc.assoc_default file
+  )
 
 (* As before 3.0.0: the charset is given for text and XML types. *)
 let takes_charset mime =

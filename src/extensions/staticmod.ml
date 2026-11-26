@@ -37,7 +37,8 @@ and regexp_site =
   { source_regexp : Pcre.regexp
   ; dest : Ocsigen.Extensions.ud_string
   ; http_status_filter : Pcre.regexp option
-  ; root_checks : Ocsigen.Extensions.ud_string option }
+  ; root_checks : Ocsigen.Extensions.ud_string option
+  }
 
 (* Finding files *)
 
@@ -58,8 +59,9 @@ let correct_user_local_file =
   fun path ->
     try
       ignore
-        (Ocsigen_base.Lib.Netstring_pcre.search_forward regexp path 0
-         : int * 'groups);
+        ( Ocsigen_base.Lib.Netstring_pcre.search_forward regexp path 0
+          : int * 'groups
+        );
       false
     with Not_found -> true
 
@@ -85,30 +87,27 @@ let is_hidden path =
    is valid.
 *)
 let find_static_page
-      ~request
-      ~usermode
-      ~dir
-      ~(err : Cohttp.Code.status)
-      ~hidden
-      ~pathstring
-  =
+    ~request ~usermode ~dir ~(err : Cohttp.Code.status) ~hidden ~pathstring =
   let status_filter, filename, root =
     match dir with
     | (Dir _ | Regexp {http_status_filter = None; _}) when hidden ->
         Logs.info ~src:section (fun fmt ->
-          fmt "Not serving a path with a segment that starts with a dot");
+            fmt "Not serving a path with a segment that starts with a dot"
+        );
         raise Ocsigen.Extensions.Not_concerned
     | Dir d -> (
         ( false
         , Filename.concat d pathstring
         , match usermode with
           | None -> Some d
-          | Some {Ocsigen.Extensions.localfiles_root} -> Some localfiles_root ))
+          | Some {Ocsigen.Extensions.localfiles_root} -> Some localfiles_root )
+      )
     | Regexp
         { source_regexp = source
         ; dest
         ; http_status_filter = status_filter
-        ; root_checks = rc }
+        ; root_checks = rc
+        }
       when http_status_match status_filter err ->
         let status_filter = status_filter <> None
         and file =
@@ -123,7 +122,9 @@ let find_static_page
           | Some _, Some _ ->
               raise
                 (Ocsigen.Extensions.Error_in_user_config_file
-                   "Staticmod: cannot specify option 'root' in user configuration files")
+                   "Staticmod: cannot specify option 'root' in user \
+                    configuration files"
+                )
           | None, None -> None
           | Some rc, None ->
               Some (Ocsigen.Extensions.replace_user_dir source rc pathstring)
@@ -138,7 +139,8 @@ let find_static_page
   else
     raise
       (Ocsigen.Extensions.Error_in_user_config_file
-         "Staticmod: cannot use '..' in user paths")
+         "Staticmod: cannot use '..' in user paths"
+      )
 
 (* Borrowed from TyXML:lib/xml_print.ml (and wrapped) to avoid the dependency *)
 let html_of_string s =
@@ -168,8 +170,7 @@ let html_of_string s =
 (* The listing of directory [dname], requested as [relpath]. The entries for
    which [hidden] is true are left out. *)
 let respond_dir ~hidden relpath dname :
-  (Cohttp.Response.t * Cohttp_lwt.Body.t) Lwt.t
-  =
+    (Cohttp.Response.t * Cohttp_lwt.Body.t) Lwt.t =
   let readsortdir =
     (* Read a complete directory and sort its entries *)
     let chunk_size = 1024 in
@@ -183,43 +184,49 @@ let respond_dir ~hidden relpath dname :
     Lwt_unix.opendir dname >>= fun dir ->
     Lwt.finalize
       (fun () ->
-         aux [] dir >|= fun entries ->
-         List.sort compare (List.concat_map Array.to_list entries))
+        aux [] dir >|= fun entries ->
+        List.sort compare (List.concat_map Array.to_list entries)
+      )
       (fun () -> Lwt_unix.closedir dir)
   in
   Lwt.catch
     (fun () ->
-       readsortdir >>= fun entries ->
-       let title = html_of_string ("Directory listing for /" ^ relpath) in
-       let entries =
-         List.filter_map
-           (function
-             | "." | ".." -> None
-             | e when hidden e -> None
-             | e ->
-                 Some
-                   (Printf.sprintf "<li><a href=\"%t\">%t</a></li>"
-                      (fun () -> Ocsigen_base.Lib.Url.encode ~plus:false e)
-                      (fun () -> html_of_string e)))
-           entries
-       in
-       (* Chunks of [html (head (title x) []) (body [h1 [x]; ul y])] *)
-       let chunk1 =
-         {|<!DOCTYPE html>
+      readsortdir >>= fun entries ->
+      let title = html_of_string ("Directory listing for /" ^ relpath) in
+      let entries =
+        List.filter_map
+          (function
+            | "." | ".." -> None
+            | e when hidden e -> None
+            | e ->
+                Some
+                  (Printf.sprintf "<li><a href=\"%t\">%t</a></li>"
+                     (fun () -> Ocsigen_base.Lib.Url.encode ~plus:false e)
+                     (fun () -> html_of_string e)
+                  )
+            )
+          entries
+      in
+      (* Chunks of [html (head (title x) []) (body [h1 [x]; ul y])] *)
+      let chunk1 =
+        {|<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"><head><title>|}
-       and chunk2 = {|</title></head><body><h1>|}
-       and chunk3 = {|</h1><ul>|}
-       and chunkend = {|</ul></body></html>|} in
-       let doc =
-         chunk1 :: title :: chunk2 :: title :: chunk3 :: (entries @ [chunkend])
-       in
-       let headers = Cohttp.Header.init_with "content-type" "text/html" in
-       Lwt.return
-         ( Cohttp.Response.make ~status:`OK ~headers ()
-         , Cohttp_lwt.Body.of_string_list doc ))
+      and chunk2 = {|</title></head><body><h1>|}
+      and chunk3 = {|</h1><ul>|}
+      and chunkend = {|</ul></body></html>|} in
+      let doc =
+        chunk1 :: title :: chunk2 :: title :: chunk3 :: (entries @ [chunkend])
+      in
+      let headers = Cohttp.Header.init_with "content-type" "text/html" in
+      Lwt.return
+        ( Cohttp.Response.make ~status:`OK ~headers ()
+        , Cohttp_lwt.Body.of_string_list doc
+        )
+    )
     (function
       | Unix.Unix_error _ -> Cohttp_lwt_unix.Server.respond_not_found ()
-      | exn -> Lwt.fail exn)
+      | exn -> Lwt.fail exn
+      )
 
 let gen ~usermode ~hide_dotfiles ?cache dir = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -238,7 +245,7 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
             ~pathstring
         in
         let serve () =
-          (match page with
+          ( match page with
             | Ocsigen.Local_files.RFile fname ->
                 (* The preconditions and the range of the request only
                    apply to a successful answer, not to an error page (RFC
@@ -277,7 +284,8 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
                 Ocsigen.Response.respond_file
                   ~content_type:
                     (Ocsigen_http.Charset_mime.content_type ~mime_assoc
-                       ~charset_assoc fname)
+                       ~charset_assoc fname
+                    )
                   ?if_match:(list_header Ocsigen_http.Header.Name.if_match)
                   ?if_unmodified_since:
                     (date_header Ocsigen_http.Header.Name.if_unmodified_since)
@@ -291,7 +299,8 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
             | Ocsigen.Local_files.RDir dname ->
                 let hidden e = hide_dotfiles && is_hidden (path @ [e]) in
                 respond_dir ~hidden pathstring dname >>= fun answer ->
-                Lwt.return @@ Ocsigen.Response.of_cohttp answer)
+                Lwt.return @@ Ocsigen.Response.of_cohttp answer
+            )
           >>= fun answer ->
           let answer =
             if not status_filter
@@ -317,7 +326,8 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
                 in
                 Ocsigen.Response.replace_headers answer
                   [ Ocsigen_http.Header.Name.cache_control, cache_control
-                  ; Ocsigen_http.Header.Name.expires, expires ]
+                  ; Ocsigen_http.Header.Name.expires, expires
+                  ]
           in
           Lwt.return answer
         in
@@ -329,17 +339,20 @@ let gen ~usermode ~hide_dotfiles ?cache dir = function
             Ocsigen_http.Header.Name.(to_string allow)
             "GET, HEAD, OPTIONS"
         in
-        (match Ocsigen.Request.meth request_info with
+        ( match Ocsigen.Request.meth request_info with
           | `GET | `HEAD -> serve ()
           | _ when status_filter -> serve ()
           | `OPTIONS ->
               Lwt.return
                 (Ocsigen.Response.respond_string ~headers ~status:`OK ~body:""
-                   ())
+                   ()
+                )
           | _ ->
               Lwt.return
                 (Ocsigen.Response.respond_error ~headers
-                   ~status:`Method_not_allowed ~body:"Method Not Allowed" ()))
+                   ~status:`Method_not_allowed ~body:"Method Not Allowed" ()
+                )
+          )
         >>= fun answer ->
         Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return answer))
       and catch_block = function
@@ -372,7 +385,8 @@ type options =
   ; opt_dest : Ocsigen.Extensions.ud_string option
   ; opt_root_checks : Ocsigen.Extensions.ud_string option
   ; opt_cache : int option
-  ; opt_hide_dotfiles : bool }
+  ; opt_hide_dotfiles : bool
+  }
 
 let kind dir regexp code dest root_checks =
   match dir, regexp, code, dest, root_checks with
@@ -386,13 +400,15 @@ let kind dir regexp code dest root_checks =
         { source_regexp = r
         ; dest = t
         ; http_status_filter = code
-        ; root_checks = rc }
+        ; root_checks = rc
+        }
   | None, None, (Some _ as code), Some t, None ->
       Regexp
         { dest = t
         ; http_status_filter = code
         ; root_checks = None
-        ; source_regexp = Ocsigen_base.Lib.Netstring_pcre.regexp "^.*$" }
+        ; source_regexp = Ocsigen_base.Lib.Netstring_pcre.regexp "^.*$"
+        }
   | _ -> Ocsigen.Extensions.badconfig "Wrong attributes for <static>"
 
 let parse_config userconf _ : Ocsigen.Extensions.parse_config_aux =
@@ -405,7 +421,8 @@ let parse_config userconf _ : Ocsigen.Extensions.parse_config_aux =
       ; opt_dest = None
       ; opt_root_checks = None
       ; opt_cache = None
-      ; opt_hide_dotfiles = true }
+      ; opt_hide_dotfiles = true
+      }
   in
   Ocsigen.Extensions.(
     Configuration.process_element ~in_tag:"host"
@@ -414,51 +431,64 @@ let parse_config userconf _ : Ocsigen.Extensions.parse_config_aux =
         [ Configuration.element ~name:"static"
             ~attributes:
               [ Configuration.attribute ~name:"dir" (fun s ->
-                  opt :=
-                    {!opt with opt_dir = Some (rewrite_local_path userconf s)})
+                    opt :=
+                      {!opt with opt_dir = Some (rewrite_local_path userconf s)}
+                )
               ; Configuration.attribute ~name:"regexp" (fun s ->
-                  let s =
-                    try Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                    with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
-                      badconfig "Bad regexp \"%s\" in <static regexp=\"...\" />"
-                        s
-                  in
-                  opt := {!opt with opt_regexp = Some s})
-              ; Configuration.attribute ~name:"code" (fun s ->
-                  let c =
-                    try Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                    with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
-                      badconfig "Bad regexp \"%s\" in <static code=\"...\" />" s
-                  in
-                  opt := {!opt with opt_code = Some c})
-              ; Configuration.attribute ~name:"dest" (fun s ->
-                  let s =
-                    Some (parse_user_dir (rewrite_local_path userconf s))
-                  in
-                  opt := {!opt with opt_dest = s})
-              ; Configuration.attribute ~name:"root" (fun s ->
-                  let s = Some (parse_user_dir s) in
-                  opt := {!opt with opt_root_checks = s})
-              ; Configuration.attribute ~name:"cache" (fun s ->
-                  let duration =
-                    match s with
-                    | "no" -> 0
-                    | s -> (
-                      try int_of_string s
-                      with Failure _ ->
+                    let s =
+                      try Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
+                      with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
                         badconfig
-                          "Bad integer \"%s\" in <static cache=\"...\" />" s)
-                  in
-                  opt := {!opt with opt_cache = Some duration})
+                          "Bad regexp \"%s\" in <static regexp=\"...\" />" s
+                    in
+                    opt := {!opt with opt_regexp = Some s}
+                )
+              ; Configuration.attribute ~name:"code" (fun s ->
+                    let c =
+                      try Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
+                      with Re.Pcre.Parse_error | Re.Pcre.Not_supported ->
+                        badconfig "Bad regexp \"%s\" in <static code=\"...\" />"
+                          s
+                    in
+                    opt := {!opt with opt_code = Some c}
+                )
+              ; Configuration.attribute ~name:"dest" (fun s ->
+                    let s =
+                      Some (parse_user_dir (rewrite_local_path userconf s))
+                    in
+                    opt := {!opt with opt_dest = s}
+                )
+              ; Configuration.attribute ~name:"root" (fun s ->
+                    let s = Some (parse_user_dir s) in
+                    opt := {!opt with opt_root_checks = s}
+                )
+              ; Configuration.attribute ~name:"cache" (fun s ->
+                    let duration =
+                      match s with
+                      | "no" -> 0
+                      | s -> (
+                        try int_of_string s
+                        with Failure _ ->
+                          badconfig
+                            "Bad integer \"%s\" in <static cache=\"...\" />" s
+                      )
+                    in
+                    opt := {!opt with opt_cache = Some duration}
+                )
               ; Configuration.attribute ~name:"hidedotfiles" (fun s ->
-                  match bool_of_string_opt s with
-                  | Some b -> opt := {!opt with opt_hide_dotfiles = b}
-                  | None ->
-                      badconfig
-                        "Bad value \"%s\" in <static hidedotfiles=\"...\" />: it should be true or false"
-                        s) ]
-            () ]
-      element);
+                    match bool_of_string_opt s with
+                    | Some b -> opt := {!opt with opt_hide_dotfiles = b}
+                    | None ->
+                        badconfig
+                          "Bad value \"%s\" in <static hidedotfiles=\"...\" \
+                           />: it should be true or false"
+                          s
+                )
+              ]
+            ()
+        ]
+      element
+  );
   gen ~usermode:userconf ~hide_dotfiles:!opt.opt_hide_dotfiles
     ?cache:!opt.opt_cache
   @@ kind !opt.opt_dir !opt.opt_regexp !opt.opt_code !opt.opt_dest
@@ -480,13 +510,13 @@ let run ?dir ?regexp ?dest ?code ?cache ?root ?(hide_dotfiles = true) () =
       (Option.map (fun x -> Pcre.regexp (preprocess x)) regexp)
       (Option.map (fun x -> Pcre.regexp (preprocess x)) code)
       (Option.map
-         (fun x ->
-            Ocsigen.Extensions.parse_user_dir (rewrite_local_path None x))
-         dest)
+         (fun x -> Ocsigen.Extensions.parse_user_dir (rewrite_local_path None x))
+         dest
+      )
       (Option.map
-         (fun x ->
-            Ocsigen.Extensions.parse_user_dir (rewrite_local_path None x))
-         root)
+         (fun x -> Ocsigen.Extensions.parse_user_dir (rewrite_local_path None x))
+         root
+      )
   in
   fun _ _ _ -> gen ~usermode:None ~hide_dotfiles ?cache kind
 

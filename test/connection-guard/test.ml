@@ -31,8 +31,7 @@ let pending_write t =
   let p, u = Lwt.task () in
   G.write t (fun _ _ _ -> p) buffer 0 16, u
 
-let complete_read t n =
-  ignore (G.read t (fun _ _ _ -> Lwt.return n) buffer 0 16)
+let complete_read t n = ignore (G.read t (fun _ _ _ -> Lwt.return n) buffer 0 16)
 
 let outcome p =
   match Lwt.state p with
@@ -56,7 +55,8 @@ let run_until_expiry ?(max = 100) ?(each = fun _ -> ()) (t, expired_in) =
       | None ->
           if G.expired t
           then print_endline "expired without calling on_expiry"
-          else go (i + 1))
+          else go (i + 1)
+    )
   in
   go 1; G.release t
 
@@ -86,7 +86,8 @@ let () =
     G.tick (); incr ticks
   done;
   Printf.printf
-    "keep-alive timeout 5: closed after %d ticks, the read %s, expired: %b, on_expiry called: %b\n"
+    "keep-alive timeout 5: closed after %d ticks, the read %s, expired: %b, \
+     on_expiry called: %b\n"
     !ticks (outcome read) (G.expired t) (!expired_in <> None);
   Printf.printf "a new read %s, a write %s\n"
     (outcome (fst (pending_read t)))
@@ -101,10 +102,12 @@ let () =
   print_string "a byte after 4 ticks starts the headers: ";
   let ((t, _) as g) = guard G.Idle in
   run_until_expiry g ~each:(fun i ->
-    if i = 5
-    then (
-      complete_read t 1;
-      Printf.printf "(now %s) " (phase_name (G.phase t))));
+      if i = 5
+      then (
+        complete_read t 1;
+        Printf.printf "(now %s) " (phase_name (G.phase t))
+      )
+  );
   print_string "an empty read does not start the headers: ";
   let ((t, _) as g) = guard G.Idle in
   run_until_expiry g ~each:(fun i -> if i = 5 then complete_read t 0)
@@ -117,7 +120,8 @@ let () =
   let ((t, _) as g) = guard G.Request in
   let read = ref None in
   run_until_expiry g ~each:(fun i ->
-    if i = 10 then read := Some (fst (pending_read t)));
+      if i = 10 then read := Some (fst (pending_read t))
+  );
   Option.iter (fun r -> Printf.printf "the read %s\n" (outcome r)) !read;
   print_string "one byte every 2 ticks, no minimum rate: ";
   let slow = ref None in
@@ -125,7 +129,8 @@ let () =
     if i mod 2 = 1
     then (
       Option.iter (fun u -> Lwt.wakeup u 1) !slow;
-      slow := Some (snd (pending_read t)))
+      slow := Some (snd (pending_read t))
+    )
   in
   let ((t, _) as g) = guard G.Request in
   run_until_expiry g ~each:(drip t);
@@ -143,8 +148,9 @@ let () =
   let fast = ref None in
   let ((t, _) as g) = guard ~limits:(limits ~min_rate:500 ()) G.Request in
   run_until_expiry g ~each:(fun _ ->
-    Option.iter (fun u -> Lwt.wakeup u 1000) !fast;
-    fast := Some (snd (pending_read t)));
+      Option.iter (fun u -> Lwt.wakeup u 1000) !fast;
+      fast := Some (snd (pending_read t))
+  );
   (* 10 ticks at 1000 bytes a tick earn 20 seconds of credit at 500 B/s, which
      the next request does not inherit. *)
   let fast_then_drip ~new_request =
@@ -152,16 +158,20 @@ let () =
     let fast = ref None in
     slow := None;
     run_until_expiry g ~each:(fun i ->
-      if i <= 10
-      then (
-        Option.iter (fun u -> Lwt.wakeup u 1000) !fast;
-        fast := Some (snd (pending_read t)))
-      else (
-        if i = 11
+        if i <= 10
         then (
           Option.iter (fun u -> Lwt.wakeup u 1000) !fast;
-          if new_request then G.set_phase t G.Request);
-        drip t i))
+          fast := Some (snd (pending_read t))
+        )
+        else (
+          if i = 11
+          then (
+            Option.iter (fun u -> Lwt.wakeup u 1000) !fast;
+            if new_request then G.set_phase t G.Request
+          );
+          drip t i
+        )
+    )
   in
   print_string "a fast body, then one byte every 2 ticks: ";
   fast_then_drip ~new_request:false;
@@ -174,16 +184,19 @@ let () =
   let ((t, _) as g) = guard ~limits:(limits ~keepalive_timeout:0 ()) G.Idle in
   let write = ref None in
   run_until_expiry g ~each:(fun i ->
-    if i = 1 then write := Some (fst (pending_write t)));
+      if i = 1 then write := Some (fst (pending_write t))
+  );
   Option.iter (fun w -> Printf.printf "the write %s\n" (outcome w)) !write;
   print_string "a client reading 1 byte every 2 ticks, minimum rate 500 B/s: ";
   let slow = ref None in
   let ((t, _) as g) = guard ~limits:(limits ~min_rate:500 ()) G.Request in
   run_until_expiry g ~each:(fun i ->
-    if i mod 2 = 1
-    then (
-      Option.iter (fun u -> Lwt.wakeup u 1) !slow;
-      slow := Some (snd (pending_write t))));
+      if i mod 2 = 1
+      then (
+        Option.iter (fun u -> Lwt.wakeup u 1) !slow;
+        slow := Some (snd (pending_write t))
+      )
+  );
   print_string "a write stalled, timeout 0, minimum rate 500 B/s: ";
   let ((t, _) as g) =
     guard ~limits:(limits ~timeout:0 ~min_rate:500 ()) G.Request
@@ -325,4 +338,5 @@ let () =
   Printf.printf "no limit: %b\n"
     (List.for_all
        (fun _ -> G.Per_address.acquire ~limit:0 (ip "198.51.100.1"))
-       (List.init 1000 Fun.id))
+       (List.init 1000 Fun.id)
+    )

@@ -12,28 +12,32 @@ let response path =
            ~headers:(of_list ["content-range", "bytes 0-4/10"])
            ~status:`Partial_content
            ~body:(chunked (fun write -> write "01234"))
-           ())
+           ()
+        )
   | "length-chunked" ->
       Some
         (Ocsigen.Response.respond
            ~headers:(of_list ["content-length", "99"])
            ~status:`OK
            ~body:(chunked (fun write -> write "hello"))
-           ())
+           ()
+        )
   | "range-fixed" ->
       Some
         (Ocsigen.Response.respond
            ~headers:(of_list ["content-range", "bytes 5-9/10"])
            ~status:`Partial_content
            ~body:(Ocsigen.Response.Body.of_string "56789")
-           ())
+           ()
+        )
   | "length-fixed" ->
       Some
         (Ocsigen.Response.respond
            ~headers:(of_list ["content-length", "99"])
            ~status:`OK
            ~body:(Ocsigen.Response.Body.of_string "world")
-           ())
+           ()
+        )
   | "unknown-length" ->
       Some
         (Ocsigen.Response.respond
@@ -41,14 +45,18 @@ let response path =
            ~status:`OK
            ~body:
              (Ocsigen.Response.Body.make Cohttp.Transfer.Unknown (fun write ->
-                write "unknown"))
-           ())
+                  write "unknown"
+              )
+             )
+           ()
+        )
   | "no-content" -> Some (Ocsigen.Response.respond ~status:`No_content ())
   | "not-modified" ->
       Some
         (Ocsigen.Response.respond
            ~headers:(of_list ["content-length", "99"])
-           ~status:`Not_modified ())
+           ~status:`Not_modified ()
+        )
   | _ -> None
 
 let respond _vh _config_info _path = function
@@ -56,9 +64,9 @@ let respond _vh _config_info _path = function
     -> (
     match response (Ocsigen.Request.sub_path_string request_info) with
     | Some response ->
-        Lwt.return
-          (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return response))
-    | None -> Lwt.return (Ocsigen.Extensions.Ext_next `Not_found))
+        Lwt.return (Ocsigen.Extensions.Ext_found (fun () -> Lwt.return response))
+    | None -> Lwt.return (Ocsigen.Extensions.Ext_next `Not_found)
+  )
   | Ocsigen.Extensions.Req_found _ ->
       Lwt.return (Ocsigen.Extensions.Ext_next `Not_found)
 

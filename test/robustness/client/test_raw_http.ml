@@ -9,14 +9,21 @@ let show_status title outcome =
   Printf.printf "== %s\n%s" title (Raw_http.render ~status_only:true outcome)
 
 let response =
-  "HTTP/1.1 200 OK\r\nDate: Sat, 17 Oct 2026 10:00:00 GMT\r\nETag: W/\"1-2\"\r\nlast-modified: Sat, 17 Oct 2026 09:00:00 GMT\r\nContent-Length: 5\r\n\r\nhello"
+  "HTTP/1.1 200 OK\r\n\
+   Date: Sat, 17 Oct 2026 10:00:00 GMT\r\n\
+   ETag: W/\"1-2\"\r\n\
+   last-modified: Sat, 17 Oct 2026 09:00:00 GMT\r\n\
+   Content-Length: 5\r\n\
+   \r\n\
+   hello"
 
 let () =
   show "headers that vary are removed, CRLF becomes LF"
     {Raw_http.received = response; ending = Closed};
   Printf.printf "== validators kept, Date still removed\n%s"
     (Raw_http.render ~validators:true
-       {Raw_http.received = response; ending = Closed});
+       {Raw_http.received = response; ending = Closed}
+    );
   show "control and non-ASCII bytes are escaped"
     {received = "a\x00b\x1bc\xe9\td\re\n"; ending = Idle};
   show "empty answer" {received = ""; ending = Reset};
@@ -29,8 +36,16 @@ let () =
        (List.map string_of_int
           (Raw_http.status_codes
              (response
-            ^ "\r\nHTTP/1.1 404 Not Found\r\nHTTP/1.0 bad\r\nHTTP/1.1 +20 x\r\nHTTP/1.1 0x1F4\r\nHTTP/1.1 2000\r\n"
-             ))))
+            ^ "\r\n\
+               HTTP/1.1 404 Not Found\r\n\
+               HTTP/1.0 bad\r\n\
+               HTTP/1.1 +20 x\r\n\
+               HTTP/1.1 0x1F4\r\n\
+               HTTP/1.1 2000\r\n"
+             )
+          )
+       )
+    )
 
 let framing_name = function
   | Raw_http.Complete {close = false} -> "complete"
@@ -42,7 +57,8 @@ let () =
   print_endline "== framing";
   List.iter
     (fun (title, received) ->
-       Printf.printf "%s: %s\n" title (framing_name (Raw_http.framing received)))
+      Printf.printf "%s: %s\n" title (framing_name (Raw_http.framing received))
+    )
     [ "nothing", ""
     ; "content-length", response
     ; ( "content-length, content missing"
@@ -65,8 +81,11 @@ let () =
     ; ( "connection: close"
       , "HTTP/1.1 204 No Content\r\nConnection: keep-alive, Close\r\n\r\n" )
     ; ( "close, then a response that does not close"
-      , "HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\nHTTP/1.1 204 No Content\r\n\r\n"
-      )
+      , "HTTP/1.1 204 No Content\r\n\
+         Connection: close\r\n\
+         \r\n\
+         HTTP/1.1 204 No Content\r\n\
+         \r\n" )
     ; ( "huge content-length"
       , "HTTP/1.1 200 OK\r\nContent-Length: 4611686018427387903\r\n\r\nx" )
     ; ( "content-length too large for an int"
@@ -74,22 +93,36 @@ let () =
     ; "content-length +2", "HTTP/1.1 200 OK\r\nContent-Length: +2\r\n\r\nxx"
     ; "content-length 0x2", "HTTP/1.1 200 OK\r\nContent-Length: 0x2\r\n\r\nxx"
     ; ( "huge chunk size"
-      , "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3fffffffffffffff\r\nx"
-      )
+      , "HTTP/1.1 200 OK\r\n\
+         Transfer-Encoding: chunked\r\n\
+         \r\n\
+         3fffffffffffffff\r\n\
+         x" )
     ; ( "chunk size 1_0"
       , "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n1_0\r\n" )
     ; ( "chunked"
-      , "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5;x=y\r\nhello\r\n0\r\nT: 1\r\n\r\n"
-      )
+      , "HTTP/1.1 200 OK\r\n\
+         Transfer-Encoding: chunked\r\n\
+         \r\n\
+         5;x=y\r\n\
+         hello\r\n\
+         0\r\n\
+         T: 1\r\n\
+         \r\n" )
     ; ( "chunked, last chunk missing"
       , "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n" )
     ; ( "chunked, bad size"
       , "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\nzz\r\n" )
     ; ( "chunked wins over content-length"
-      , "HTTP/1.1 200 OK\r\nContent-Length: 99\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n"
-      )
+      , "HTTP/1.1 200 OK\r\n\
+         Content-Length: 99\r\n\
+         Transfer-Encoding: chunked\r\n\
+         \r\n\
+         0\r\n\
+         \r\n" )
     ; "delimited by the close", "HTTP/1.1 200 OK\r\n\r\nhello"
-    ; "not a response", "garbage\r\n\r\n" ]
+    ; "not a response", "garbage\r\n\r\n"
+    ]
 
 (* [with_server f] calls [f conn server], [conn] being a connection to a local
    socket and [server] the other end of it, which plays the server. *)
@@ -116,17 +149,19 @@ let with_server f =
    fail. *)
 let settle_test title ~idle data =
   with_server (fun conn server ->
-    let (_ : int) = Unix.write_substring server data 0 (String.length data) in
-    let start = Unix.gettimeofday () in
-    let outcome = Raw_http.receive ~idle ~settle:0.01 conn in
-    let elapsed = Unix.gettimeofday () -. start in
-    Printf.printf "== %s: stopped after %s\n%s" title
-      (if elapsed < idle /. 2.
-       then "settle"
-       else if elapsed >= idle *. 0.8
-       then "idle"
-       else "between")
-      (Raw_http.render outcome))
+      let (_ : int) = Unix.write_substring server data 0 (String.length data) in
+      let start = Unix.gettimeofday () in
+      let outcome = Raw_http.receive ~idle ~settle:0.01 conn in
+      let elapsed = Unix.gettimeofday () -. start in
+      Printf.printf "== %s: stopped after %s\n%s" title
+        ( if elapsed < idle /. 2.
+          then "settle"
+          else if elapsed >= idle *. 0.8
+          then "idle"
+          else "between"
+        )
+        (Raw_http.render outcome)
+  )
 
 let () =
   settle_test "complete response" ~idle:10. response;
@@ -137,19 +172,21 @@ let () =
    that answers late, as on a loaded machine, is still heard. *)
 let () =
   with_server (fun conn server ->
-    let writer =
-      Thread.create
-        (fun () ->
-           Unix.sleepf 0.5;
-           let (_ : int) =
-             Unix.write_substring server response 0 (String.length response)
-           in
-           ())
-        ()
-    in
-    let outcome =
-      Raw_http.receive ~first_byte:10. ~idle:0.1 ~settle:0.01 conn
-    in
-    Thread.join writer;
-    Printf.printf "== first byte later than the idle delay\n%s"
-      (Raw_http.render outcome))
+      let writer =
+        Thread.create
+          (fun () ->
+            Unix.sleepf 0.5;
+            let (_ : int) =
+              Unix.write_substring server response 0 (String.length response)
+            in
+            ()
+          )
+          ()
+      in
+      let outcome =
+        Raw_http.receive ~first_byte:10. ~idle:0.1 ~settle:0.01 conn
+      in
+      Thread.join writer;
+      Printf.printf "== first byte later than the idle delay\n%s"
+        (Raw_http.render outcome)
+  )

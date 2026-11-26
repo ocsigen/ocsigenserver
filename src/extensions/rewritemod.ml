@@ -37,11 +37,12 @@ let section = Logs.Src.create "ocsigen:ext:rewritemod"
 type assockind = Regexp of Pcre.regexp * string * bool
 
 let find_rewrite (Regexp (regexp, dest, fullrewrite)) suburl =
-  ( (match Ocsigen_base.Lib.Netstring_pcre.string_match regexp suburl 0 with
+  ( ( match Ocsigen_base.Lib.Netstring_pcre.string_match regexp suburl 0 with
     | None -> raise Ocsigen.Extensions.Not_concerned
     | Some _ ->
         (* Matching regexp found! *)
-        Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest suburl)
+        Ocsigen_base.Lib.Netstring_pcre.global_replace regexp dest suburl
+    )
   , fullrewrite )
 
 (* The function that will generate the pages from the request *)
@@ -54,9 +55,10 @@ let gen regexp continue = function
         let redir, full_rewrite =
           let ri = ri.Ocsigen.Extensions.request_info in
           find_rewrite regexp
-            (match Ocsigen.Request.query ri with
+            ( match Ocsigen.Request.query ri with
             | None -> Ocsigen.Request.sub_path_string ri
-            | Some g -> Ocsigen.Request.sub_path_string ri ^ "?" ^ g)
+            | Some g -> Ocsigen.Request.sub_path_string ri ^ "?" ^ g
+            )
         in
         Logs.info ~src:section (fun fmt -> fmt "YES! rewrite to: %s" redir);
         if continue
@@ -67,9 +69,11 @@ let gen regexp continue = function
                    Ocsigen.Extensions.request_info =
                      Ocsigen.Request.update ~full_rewrite
                        ~uri:(Uri.of_string redir)
-                       ri.Ocsigen.Extensions.request_info }
+                       ri.Ocsigen.Extensions.request_info
+                 }
                , Ocsigen_cookie_map.empty
-               , err )
+               , err
+               )
         else
           Lwt.return
           @@ Ocsigen.Extensions.Ext_retry_with
@@ -77,8 +81,10 @@ let gen regexp continue = function
                    Ocsigen.Extensions.request_info =
                      Ocsigen.Request.update ~full_rewrite
                        ~uri:(Uri.of_string redir)
-                       ri.Ocsigen.Extensions.request_info }
-               , Ocsigen_cookie_map.empty )
+                       ri.Ocsigen.Extensions.request_info
+                 }
+               , Ocsigen_cookie_map.empty
+               )
       and catch_block = function
         | Ocsigen.Extensions.Not_concerned ->
             Lwt.return (Ocsigen.Extensions.Ext_next err)
@@ -98,26 +104,35 @@ let parse_config element =
         [ Configuration.element ~name:"rewrite"
             ~attributes:
               [ Configuration.attribute ~name:"regexp" ~obligatory:true (fun s ->
-                  regexp := s)
+                    regexp := s
+                )
               ; Configuration.attribute ~name:"url" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"fullrewrite" (fun s ->
-                  fullrewrite := s = "fullrewrite" || s = "true")
+                    fullrewrite := s = "fullrewrite" || s = "true"
+                )
               ; Configuration.attribute ~name:"continue" (fun s ->
-                  continue := s = "continue" || s = "true") ]
-            () ]
-      element);
+                    continue := s = "continue" || s = "true"
+                )
+              ]
+            ()
+        ]
+      element
+  );
   match !dest with
   | None ->
       raise
         (Ocsigen.Extensions.Error_in_config_file
-           "url attribute expected for <rewrite>")
+           "url attribute expected for <rewrite>"
+        )
   | Some dest ->
       gen
         (Regexp
            ( Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ !regexp ^ "$")
            , dest
-           , !fullrewrite ))
+           , !fullrewrite
+           )
+        )
         !continue
 
 (** Registration of the extension *)
@@ -131,5 +146,7 @@ let run ?(continue = false) ?(full_rewrite = false) ~regexp dest () _ _ _ =
     (Regexp
        ( Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ regexp ^ "$")
        , dest
-       , full_rewrite ))
+       , full_rewrite
+       )
+    )
     continue

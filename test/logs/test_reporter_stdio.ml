@@ -25,12 +25,14 @@ let () =
   Lwt_main.run (Ocsigen.Messages.open_files ());
   let src = Logs.Src.create "test:reporter-stdio" in
   List.init domains (fun d ->
-    Domain.spawn (fun () ->
-      for i = 1 to messages do
-        Logs.warn ~src (fun m -> m "domain %d warning %d" d i);
-        Logs.app ~src (fun m -> m "notice|%d|%d" d i);
-        Ocsigen.Messages.accesslog (Printf.sprintf "access %d %d" d i)
-      done))
+      Domain.spawn (fun () ->
+          for i = 1 to messages do
+            Logs.warn ~src (fun m -> m "domain %d warning %d" d i);
+            Logs.app ~src (fun m -> m "notice|%d|%d" d i);
+            Ocsigen.Messages.accesslog (Printf.sprintf "access %d %d" d i)
+          done
+      )
+  )
   |> List.iter Domain.join;
   flush stdout;
   flush stderr;
@@ -41,7 +43,8 @@ let () =
   in
   check "stderr"
     (fun line ->
-       Scanf.sscanf line "%_s@] domain %d warning %d%!" (fun d i -> d, i))
+      Scanf.sscanf line "%_s@] domain %d warning %d%!" (fun d i -> d, i)
+    )
     (Log_test.lines dir "stderr");
   let access, notices =
     List.partition

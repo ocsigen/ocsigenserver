@@ -31,12 +31,14 @@ let tags =
   ; "shutdowntimeout", "1", option string_of_float C.get_shutdown_timeout
   ; "debugmode", "", bool C.get_debugmode
   ; "usedefaulthostname", "", bool C.get_usedefaulthostname
-  ; "disablepartialrequests", "", bool C.get_disablepartialrequests ]
+  ; "disablepartialrequests", "", bool C.get_disablepartialrequests
+  ]
 
 let configuration =
   List.map
     (fun (name, value, _) ->
-       Xml.Element (name, [], if value = "" then [] else [Xml.PCData value]))
+      Xml.Element (name, [], if value = "" then [] else [Xml.PCData value])
+    )
     tags
 
 let values () = List.map (fun (_, _, get) -> get ()) tags
@@ -53,7 +55,8 @@ let () =
   pass configuration;
   List.iter2
     (fun (name, _, _) (before, (after_error, after)) ->
-       Printf.printf "<%s>: %s, after the error %s, then %s\n" name before
-         after_error after)
+      Printf.printf "<%s>: %s, after the error %s, then %s\n" name before
+        after_error after
+    )
     tags
     (List.combine before (List.combine after_error (values ())))

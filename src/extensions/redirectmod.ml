@@ -36,9 +36,10 @@ let attempt_redir {r_regexp; r_dest; r_full; r_temp} _err ri () =
   Logs.info ~src:section (fun fmt -> fmt "Is it a redirection?");
   let redir = Ocsigen.Extensions.find_redirection r_regexp r_full r_dest ri in
   Logs.info ~src:section (fun fmt ->
-    fmt "YES! %s redirection to: %s"
-      (if r_temp then "Temporary " else "Permanent ")
-      redir);
+      fmt "YES! %s redirection to: %s"
+        (if r_temp then "Temporary " else "Permanent ")
+        redir
+  );
   Lwt.return
   @@ Ocsigen.Extensions.Ext_found
        (fun () ->
@@ -46,7 +47,8 @@ let attempt_redir {r_regexp; r_dest; r_full; r_temp} _err ri () =
          @@
          let headers = Cohttp.Header.(init_with "Location" redir)
          and status = if r_temp then `Found else `Moved_permanently in
-         Cohttp.Response.make ~status ~headers ())
+         Cohttp.Response.make ~status ~headers ()
+       )
 
 (** The function that will generate the pages from the request *)
 let gen dir = function
@@ -57,7 +59,8 @@ let gen dir = function
       Lwt.catch (attempt_redir dir err request_info) @@ function
       | Ocsigen.Extensions.Not_concerned ->
           Lwt.return (Ocsigen.Extensions.Ext_next err)
-      | e -> Lwt.fail e)
+      | e -> Lwt.fail e
+    )
 
 let parse_config config_elem =
   let regexp = ref None
@@ -71,18 +74,25 @@ let parse_config config_elem =
         [ Configuration.element ~name:"redirect"
             ~attributes:
               [ Configuration.attribute ~name:"fullurl" (fun s ->
-                  regexp := Some s;
-                  mode := true)
+                    regexp := Some s;
+                    mode := true
+                )
               ; Configuration.attribute ~name:"suburl" (fun s ->
-                  regexp := Some s;
-                  mode := false)
+                    regexp := Some s;
+                    mode := false
+                )
               ; Configuration.attribute ~name:"dest" ~obligatory:true (fun s ->
-                  dest := s)
+                    dest := s
+                )
               ; Configuration.attribute ~name:"temporary" (function
                   | "temporary" -> temporary := true
-                  | _ -> ()) ]
-            () ]
-      config_elem);
+                  | _ -> ()
+                )
+              ]
+            ()
+        ]
+      config_elem
+  );
   match !regexp with
   | None ->
       Ocsigen.Extensions.badconfig "Missing attribute regexp for <redirect>"

@@ -29,26 +29,35 @@ let echo _vh _config_info _path = function
             (Ocsigen.Request.to_cohttp request_info
             |> Cohttp.Request.headers |> Cohttp.Header.to_list
             |> List.filter_map (fun (name, value) ->
-              match String.lowercase_ascii name with
-              | "user-agent" -> None
-              | name -> Some (name ^ ": " ^ value ^ "\n"))
-            |> List.sort compare |> String.concat "")
+                match String.lowercase_ascii name with
+                | "user-agent" -> None
+                | name -> Some (name ^ ": " ^ value ^ "\n")
+            )
+            |> List.sort compare |> String.concat ""
+            )
             ^ "body: " ^ body ^ "\n"
         | _ ->
             Lwt.return
               (Printf.sprintf
-                 "path: %s\nhost: %s\nhttps: %b\nx-forwarded-proto: %s\nx-forwarded-for: %s\n"
+                 "path: %s\n\
+                  host: %s\n\
+                  https: %b\n\
+                  x-forwarded-proto: %s\n\
+                  x-forwarded-for: %s\n"
                  path_and_query
                  (header Ocsigen_http.Header.Name.host)
                  (Ocsigen.Request.ssl request_info)
                  (header Ocsigen_http.Header.Name.x_forwarded_proto)
-                 (header Ocsigen_http.Header.Name.x_forwarded_for))
+                 (header Ocsigen_http.Header.Name.x_forwarded_for)
+              )
       in
       Lwt.return
         (Ocsigen.Extensions.Ext_found
            (fun () ->
              body () >|= fun body ->
-             Ocsigen.Response.respond_string ~status:`OK ~body ()))
+             Ocsigen.Response.respond_string ~status:`OK ~body ()
+           )
+        )
 
 let () =
   let port, tls_port =
@@ -65,7 +74,9 @@ let () =
          ; ssl_privatekey = Some "privkey.pem"
          ; ssl_ciphers = None
          ; ssl_dhfile = None
-         ; ssl_curve = None })
+         ; ssl_curve = None
+         }
+      )
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
     ~command_pipe:"local.cmd"
     [Ocsigen.Server.host [echo]]

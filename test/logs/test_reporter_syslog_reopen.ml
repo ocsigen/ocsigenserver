@@ -25,4 +25,6 @@ let () =
         then (
           Printf.eprintf "file descriptors: %d before, %d after 10 reopenings\n"
             before after;
-          exit 1))
+          exit 1
+        )
+  )

@@ -40,7 +40,8 @@ let register_basic_authentication_method, get_basic_authentication_method =
       fun_auth :=
         fun config ->
           try old_fun_auth config
-          with Bad_config_tag_for_auth _c -> new_fun_auth config)
+          with Bad_config_tag_for_auth _c -> new_fun_auth config
+    )
   , (* get_basic_authentication_method *)
     fun config ->
       try !fun_auth config
@@ -60,7 +61,8 @@ let () =
         fun l p -> Lwt.return (login = l && password = p)
     | _ ->
         Ocsigen.Extensions.badconfig
-          "<plain> takes the attributes login and password")
+          "<plain> takes the attributes login and password"
+  )
   | element -> raise (Bad_config_tag_for_auth (tag_name element))
 
 let gen ~realm ~auth rs =
@@ -76,7 +78,8 @@ let gen ~realm ~auth rs =
     Logs.info ~src:section (fun fmt -> fmt "AUTH: invalid Authorization header");
     Lwt.fail
       (Ocsigen.Ocsigen_cohttp.Ocsigen_http_error
-         (Ocsigen_cookie_map.empty, `Bad_request))
+         (Ocsigen_cookie_map.empty, `Bad_request)
+      )
   in
   let validate ~err ~request s =
     match Cohttp.Auth.credential_of_string s with
@@ -86,7 +89,8 @@ let gen ~realm ~auth rs =
         then (
           (* Record the authenticated user for the access log (%u field). *)
           Ocsigen.Request.set_remote_user request user;
-          Lwt.return (Ocsigen.Extensions.Ext_next err))
+          Lwt.return (Ocsigen.Extensions.Ext_next err)
+        )
         else reject ()
     | `Other _s -> invalid_header ()
   in
@@ -97,7 +101,8 @@ let gen ~realm ~auth rs =
         Ocsigen.Request.header request Ocsigen_http.Header.Name.authorization
       with
       | Some s -> validate ~err ~request s
-      | None -> reject ())
+      | None -> reject ()
+    )
   | Ocsigen.Extensions.Req_found _ ->
       Lwt.return Ocsigen.Extensions.Ext_do_nothing
 
@@ -111,11 +116,16 @@ let parse_config element =
         [ Configuration.element ~name:"authbasic"
             ~attributes:
               [ Configuration.attribute ~name:"realm" ~obligatory:true (fun s ->
-                  realm_ref := s) ]
+                    realm_ref := s
+                )
+              ]
             ~other_elements:(fun name attrs content ->
-              rest_ref := Xml.Element (name, attrs, content) :: !rest_ref)
-            () ]
-      element);
+              rest_ref := Xml.Element (name, attrs, content) :: !rest_ref
+            )
+            ()
+        ]
+      element
+  );
   let realm = !realm_ref in
   let auth =
     match !rest_ref with

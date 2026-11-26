@@ -54,10 +54,7 @@ val update_charset_ext : charset_assoc -> extension -> charset -> charset_assoc
 val update_charset_file : charset_assoc -> filename -> charset -> charset_assoc
 
 val update_charset_regexp :
-   charset_assoc
-  -> Re.Pcre.regexp
-  -> charset
-  -> charset_assoc
+  charset_assoc -> Re.Pcre.regexp -> charset -> charset_assoc
 
 type mime_type = string
 (** MIME types; the default value is ["application/octet-stream"] *)
@@ -93,10 +90,7 @@ val find_mime : file -> mime_assoc -> string
     type of [assoc]. *)
 
 val content_type :
-   mime_assoc:mime_assoc
-  -> charset_assoc:charset_assoc
-  -> file
-  -> string
+  mime_assoc:mime_assoc -> charset_assoc:charset_assoc -> file -> string
 (** [content_type ~mime_assoc ~charset_assoc file] is the value of the
     [Content-Type] header for [file]: its MIME type, followed by its charset
     for text and XML types, when [charset_assoc] gives one. *)

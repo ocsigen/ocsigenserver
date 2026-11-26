@@ -33,10 +33,12 @@ let section = Logs.Src.create "ocsigen:main"
 (* Initialize exception handler for Lwt timeouts: *)
 let () =
   Lwt_timeout.set_exn_handler (fun e ->
-    Logs.err ~src:section (fun fmt ->
-      fmt
-        ("Uncaught Exception after lwt timeout" ^^ "@\n%s")
-        (Printexc.to_string e)))
+      Logs.err ~src:section (fun fmt ->
+          fmt
+            ("Uncaught Exception after lwt timeout" ^^ "@\n%s")
+            (Printexc.to_string e)
+      )
+  )
 
 (* Silent mode (-s) or daemon mode (-d) requested while the logs go to the
    terminal, which these modes redirect to /dev/null. *)
@@ -50,10 +52,17 @@ exception Logdir_with_syslog
    reload fail, and the exit code at start-up. *)
 let errmsg = function
   | Silent_with_console_logs ->
-      ( "silent mode (-s) and daemon mode (-d) need log files or syslog, but the logs go to the terminal, which these modes redirect to /dev/null. Set a log directory or syslog (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start), or drop -s and -d."
+      ( "silent mode (-s) and daemon mode (-d) need log files or syslog, but \
+         the logs go to the terminal, which these modes redirect to /dev/null. \
+         Set a log directory or syslog (<logdir> or <syslog> in the \
+         configuration file, ~logdir or ~syslog_facility for \
+         Ocsigen.Server.start), or drop -s and -d."
       , 50 )
   | Logdir_with_syslog ->
-      ( "a log directory and syslog are mutually exclusive: the logs go either to files or to syslog. Set only one of them (<logdir> or <syslog> in the configuration file, ~logdir or ~syslog_facility for Ocsigen.Server.start)."
+      ( "a log directory and syslog are mutually exclusive: the logs go either \
+         to files or to syslog. Set only one of them (<logdir> or <syslog> in \
+         the configuration file, ~logdir or ~syslog_facility for \
+         Ocsigen.Server.start)."
       , 50 )
   | Dynlink_wrapper.Error e ->
       "Dynamic linking error: " ^ Dynlink_wrapper.error_message e, 6
@@ -68,7 +77,8 @@ let errmsg = function
   | Ocsigen_base.Loader.Findlib_error _ as e -> Printexc.to_string e, 53
   | exn -> (
     try Extensions.get_init_exn_handler () exn, 20
-    with exn -> "Uncaught exception: " ^ Printexc.to_string exn, 100)
+    with exn -> "Uncaught exception: " ^ Printexc.to_string exn, 100
+  )
 
 (* Log the error [e], which stops the server at start-up, and exit. *)
 let exit_with_error e =
@@ -88,7 +98,8 @@ let report_to_terminal_by_default () =
 let reload_conf s =
   Extensions.start_initialisation ();
   Fun.protect ~finally:Extensions.end_initialisation (fun () ->
-    Parseconfig.later_pass s)
+      Parseconfig.later_pass s
+  )
 
 (* Reloading the config file: it is read and applied once. On an error,
    [Parseconfig.later_pass] leaves the hosts and the settings of [<server>]
@@ -104,7 +115,8 @@ let reload ?file () =
   | () -> Logs.warn ~src:section (fun fmt -> fmt "Config file reloaded")
   | exception e ->
       Logs.err ~src:section (fun fmt ->
-        fmt "Config file reload failed: %s" (fst (errmsg e)))
+          fmt "Config file reload failed: %s" (fst (errmsg e))
+      )
 
 let () =
   let f _s = function
@@ -124,16 +136,19 @@ let () =
         Ocsigen_cohttp.shutdown None;
         Lwt.return ()
     | ["shutdown"; delay] ->
-        (match float_of_string_opt delay with
+        ( match float_of_string_opt delay with
         | Some delay -> Ocsigen_cohttp.shutdown (Some delay)
         | None ->
             Logs.err ~src:section (fun fmt ->
-              fmt "shutdown: %S is not a delay in seconds" delay));
+                fmt "shutdown: %S is not a delay in seconds" delay
+            )
+        );
         Lwt.return ()
     | ["gc"] ->
         Gc.compact ();
         Logs.warn ~src:section (fun fmt ->
-          fmt "Heap compaction requested by user");
+            fmt "Heap compaction requested by user"
+        );
         Lwt.return ()
     | ["clearcache"] ->
         Ocsigen_base.Cache.clear_all_caches ();
@@ -143,7 +158,7 @@ let () =
   Command.register_command_function f
 
 type instruction =
-  Extensions.virtual_hosts
+     Extensions.virtual_hosts
   -> Extensions.config_info
   -> Ocsigen_base.Lib.Url.path
   -> Extensions.extension
@@ -151,23 +166,22 @@ type instruction =
 let default_re_string = ".*"
 
 let host
-      ?(regexp = default_re_string)
-      ?port
-      ?default_hostname
-      ?default_httpport
-      ?default_httpsport
-      ?default_protocol_is_https
-      ?mime_assoc
-      ?charset_assoc
-      ?default_directory_index
-      ?list_directory_content
-      ?follow_symlinks
-      ?do_not_serve_404
-      ?do_not_serve_403
-      ?uploaddir
-      ?maxuploadfilesize
-      instructions
-  =
+    ?(regexp = default_re_string)
+    ?port
+    ?default_hostname
+    ?default_httpport
+    ?default_httpsport
+    ?default_protocol_is_https
+    ?mime_assoc
+    ?charset_assoc
+    ?default_directory_index
+    ?list_directory_content
+    ?follow_symlinks
+    ?do_not_serve_404
+    ?do_not_serve_403
+    ?uploaddir
+    ?maxuploadfilesize
+    instructions =
   let maxuploadfilesize =
     Option.map
       (Config.checked_size "Ocsigen.Server.host ~maxuploadfilesize")
@@ -191,7 +205,8 @@ let host
     ; do_not_serve_404 = default def.do_not_serve_404 do_not_serve_404
     ; do_not_serve_403 = default def.do_not_serve_403 do_not_serve_403
     ; uploaddir = default def.uploaddir uploaddir
-    ; maxuploadfilesize = default def.maxuploadfilesize maxuploadfilesize }
+    ; maxuploadfilesize = default def.maxuploadfilesize maxuploadfilesize
+    }
   in
   let vh = [regexp, Extensions.host_regexp regexp, port] in
   ( vh
@@ -237,16 +252,18 @@ let open_files ~connections =
   let max_files = if lwt_uses_select () then select_max_files else max_int in
   let fit (soft, hard) =
     Logs.debug ~src:section (fun fmt ->
-      fmt "Limit on open files: %s (hard limit: %s)" (limit_to_string soft)
-        (limit_to_string hard));
+        fmt "Limit on open files: %s (hard limit: %s)" (limit_to_string soft)
+          (limit_to_string hard)
+    );
     min soft max_files
   in
   let limits =
     try Open_files.raise_soft_limit (min (needed_files connections) max_files)
     with Unix.Unix_error (error, f, _) ->
       Logs.warn ~src:section (fun fmt ->
-        fmt "Cannot raise the limit on open files (%s: %s)" f
-          (Unix.error_message error));
+          fmt "Cannot raise the limit on open files (%s: %s)" f
+            (Unix.error_message error)
+      );
       Open_files.limits ()
   in
   match limits with
@@ -258,7 +275,8 @@ let advice () =
   if not (lwt_uses_select ())
   then
     Some
-      "raise the hard limit on open files (ulimit -Hn, or LimitNOFILE with systemd)"
+      "raise the hard limit on open files (ulimit -Hn, or LimitNOFILE with \
+       systemd)"
   else if Lwt_sys.have `libev
   then Some "use the libev engine of Lwt (Lwt_engine.libev)"
   else if Sys.win32
@@ -280,19 +298,25 @@ let max_number_of_connections ~sockets =
       if affordable < sockets
       then
         Logs.err ~src:section (fun fmt ->
-          fmt
-            "%d open files afford %d connections, and the server needs one for each socket it listens on (%d): it cannot accept any.%t"
-            files affordable sockets pp_advice)
+            fmt
+              "%d open files afford %d connections, and the server needs one \
+               for each socket it listens on (%d): it cannot accept any.%t"
+              files affordable sockets pp_advice
+        )
       else if Config.max_number_of_connections_is_set ()
       then
         Logs.warn ~src:section (fun fmt ->
-          fmt
-            "<maxconnected> is %d, but %d open files afford %d connections only, which the server accepts.%t"
-            wanted files affordable pp_advice)
+            fmt
+              "<maxconnected> is %d, but %d open files afford %d connections \
+               only, which the server accepts.%t"
+              wanted files affordable pp_advice
+        )
       else
         Logs.debug ~src:section (fun fmt ->
-          fmt "Accepting %d connections at most, which %d open files afford.%t"
-            affordable files pp_advice);
+            fmt
+              "Accepting %d connections at most, which %d open files afford.%t"
+              affordable files pp_advice
+        );
       affordable
   | Some _ | None -> wanted
 
@@ -321,10 +345,12 @@ let open_command_pipe path =
   in
   let refuse reason =
     Logs.err ~src:section (fun fmt ->
-      fmt
-        ("Refusing the command pipe %s: %s. Remove it to let the server create"
-       ^^ " a new one. I will continue without.")
-        path reason);
+        fmt
+          ("Refusing the command pipe %s: %s. Remove it to let the server \
+            create" ^^ " a new one. I will continue without."
+          )
+          path reason
+    );
     None
   in
   let rec use ~replace =
@@ -337,12 +363,15 @@ let open_command_pipe path =
         | `Refused reason -> refuse reason
         | `Permissive when replace ->
             Logs.warn ~src:section (fun fmt ->
-              fmt "Command pipe %s has group or other permissions: replacing it"
-                path);
+                fmt
+                  "Command pipe %s has group or other permissions: replacing it"
+                  path
+            );
             Unix.unlink path;
             create ();
             use ~replace:false
-        | `Permissive -> refuse "it has group or other permissions")
+        | `Permissive -> refuse "it has group or other permissions"
+      )
     | exception e -> Unix.close fd; raise e
   in
   try
@@ -350,10 +379,12 @@ let open_command_pipe path =
     use ~replace:true
   with Unix.Unix_error _ as e ->
     Logs.warn ~src:section (fun fmt ->
-      fmt
-        ("Cannot set up the command pipe %s. I will continue without."
-       ^^ "@\n%s")
-        path (Printexc.to_string e));
+        fmt
+          ("Cannot set up the command pipe %s. I will continue without."
+         ^^ "@\n%s"
+          )
+          path (Printexc.to_string e)
+    );
     None
 
 let main_loop_is_running = ref false
@@ -414,7 +445,8 @@ let main config =
           | Some
               { Config.ssl_certificate = Some crt
               ; Config.ssl_privatekey = Some key
-              ; _ } ->
+              ; _
+              } ->
               Some (crt, key)
           | Some {Config.ssl_privatekey = None; _} ->
               raise (Config.Config_file_error "SSL key is missing")
@@ -436,7 +468,8 @@ let main config =
       then
         raise
           (Config.Config_file_error
-             "maxthreads should be greater than minthreads");
+             "maxthreads should be greater than minthreads"
+          );
       (Lwt.async_exception_hook :=
          fun e ->
            (* replace the default "exit 2" behaviour *)
@@ -444,7 +477,9 @@ let main config =
            | Unix.Unix_error (Unix.EPIPE, _, _) -> ()
            | _ ->
                Logs.err ~src:section (fun fmt ->
-                 fmt ("Uncaught Exception" ^^ "@\n%s") (Printexc.to_string e)));
+                   fmt ("Uncaught Exception" ^^ "@\n%s") (Printexc.to_string e)
+               )
+      );
       (* Now apply host configuration: *)
       config ();
       if Config.get_silent ()
@@ -455,7 +490,8 @@ let main config =
         Unix.dup2 devnull Unix.stdout;
         Unix.dup2 devnull Unix.stderr;
         Unix.close devnull;
-        Unix.close Unix.stdin);
+        Unix.close Unix.stdin
+      );
       (* detach from the terminal *)
       if Config.get_daemon () then ignore (Unix.setsid () : int);
       Extensions.end_initialisation ();
@@ -469,16 +505,18 @@ let main config =
            Messages.warning ("Command received: " ^ s);
            Lwt.catch
              (fun () ->
-                let prefix, c =
-                  match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
-                  | [] -> raise Command.Unknown_command
-                  | a :: l -> (
-                    try
-                      let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
-                      Some aa, ab :: l
-                    with Not_found -> None, a :: l)
-                in
-                Command.get_command_function () ?prefix s c)
+               let prefix, c =
+                 match Ocsigen_base.Lib.String.split ~multisep:true ' ' s with
+                 | [] -> raise Command.Unknown_command
+                 | a :: l -> (
+                   try
+                     let aa, ab = Ocsigen_base.Lib.String.sep ':' a in
+                     Some aa, ab :: l
+                   with Not_found -> None, a :: l
+                 )
+               in
+               Command.get_command_function () ?prefix s c
+             )
              (function
                | Command.Unknown_command ->
                    Logs.warn ~src:section (fun fmt -> fmt "Unknown command");
@@ -488,11 +526,14 @@ let main config =
                       later ones, such as the reopen_logs of a log rotation,
                       would be ignored. *)
                    Logs.err ~src:section (fun fmt ->
-                     fmt "Command %S failed: %s" s (Printexc.to_string e));
-                   Lwt.return ())
+                       fmt "Command %S failed: %s" s (Printexc.to_string e)
+                   );
+                   Lwt.return ()
+               )
            >>= f
          in
-         ignore (f () : 'a Lwt.t));
+         ignore (f () : 'a Lwt.t)
+      );
       (* Enforce the maximum number of simultaneous connections: conduit
          throttles its accept loop (across all listening sockets, as file
          descriptors are a global resource) while the number of active
@@ -503,24 +544,31 @@ let main config =
           ~sockets:
             (List.fold_left
                (fun n address ->
-                  n + Ocsigen_cohttp.max_listening_sockets address)
+                 n + Ocsigen_cohttp.max_listening_sockets address
+               )
                0
                (List.map fst connection
-               @ List.map (fun (address, _, _) -> address) ssl_connection))
+               @ List.map (fun (address, _, _) -> address) ssl_connection
+               )
+            )
       in
       Config.set_max_number_of_connections_in_effect max_connections;
       Conduit_lwt_server.set_max_active max_connections;
       Lwt.join
         (List.map
            (fun (address, port) ->
-              Ocsigen_cohttp.service ~address ~port
-                ~connector:extensions_connector ())
+             Ocsigen_cohttp.service ~address ~port
+               ~connector:extensions_connector ()
+           )
            connection
         @ (List.map (fun (address, port, (crt, key)) ->
-             Ocsigen_cohttp.service
-               ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
-               ~address ~port ~connector:extensions_connector ()))
-            ssl_connection)
+               Ocsigen_cohttp.service
+                 ~ssl:(crt, key, Some (ask_for_passwd [address, port]))
+                 ~address ~port ~connector:extensions_connector ()
+           )
+          )
+            ssl_connection
+        )
       (*
          Messages.warning "Ocsigen has been launched (initialisations ok)";
 
@@ -564,11 +612,14 @@ let main config =
       else (
         (* Only the detached process is silent: the user who launched the
            server learns its process id. *)
-        Logs.app ~src:section (fun fmt -> fmt "Process %d detached" pid);
-        write_pid pid)
+        Logs.app ~src:section (fun fmt -> fmt "Process %d detached" pid
+        );
+        write_pid pid
+      )
     else (
       write_pid (Unix.getpid ());
-      Lwt_main.run (run ()))
+      Lwt_main.run (run ())
+    )
   with e -> exit_with_error e
 
 let exec config =
@@ -579,17 +630,19 @@ let exec config =
   | [h] ->
       (try Parseconfig.first_pass h with e -> exit_with_error e);
       main (fun () ->
-        (* Now I can load the modules *)
-        Dynlink_wrapper.allow_unsafe_modules true;
-        Extensions.start_initialisation ();
-        Parseconfig.later_pass h;
-        (* As libraries are reloaded each time the config file is
+          (* Now I can load the modules *)
+          Dynlink_wrapper.allow_unsafe_modules true;
+          Extensions.start_initialisation ();
+          Parseconfig.later_pass h;
+          (* As libraries are reloaded each time the config file is
           read, we do not allow to register extensions in
           libraries. Seems it does not work :-/ *)
-        Dynlink_wrapper.prohibit ["Extensions.R"])
+          Dynlink_wrapper.prohibit ["Extensions.R"]
+      )
   | _ :: _ :: _ ->
       Logs.warn ~src:section (fun fmt ->
-        fmt "Multiple servers not supported anymore")
+          fmt "Multiple servers not supported anymore"
+      )
 (* Multiple servers not supported any more *)
 
 let exec_config_file ?file () =
@@ -599,44 +652,43 @@ let exec_config_file ?file () =
   | exception e -> exit_with_error e
 
 let start
-      ?(ports = [`All, 8080])
-      ?ssl_ports
-      ?ssl_info
-      ?default_charset
-      ?logdir
-      ?uploaddir
-      ?maxuploadfilesize
-      ?syslog_facility
-      ?configfile
-      ?usedefaulthostname
-      ?pidfile
-      ?mimefile
-      ?verbose
-      ?veryverbose
-      ?silent
-      ?daemon
-      ?debug
-      ?debugmode
-      ?minthreads
-      ?maxthreads
-      ?max_number_of_connections
-      ?client_timeout
-      ?keepalive_timeout
-      ?min_data_rate
-      ?max_connections_per_address
-      ?server_timeout
-      ?shutdown_timeout
-      ?filebuffersize
-      ?maxrequestbodysize
-      ?maxrequestbodysizeinmemory
-      ?bindir
-      ?extdir
-      ?command_pipe
-      ?disablepartialrequests
-      ?respect_pipeline
-      ?maxretries
-      instructions
-  =
+    ?(ports = [`All, 8080])
+    ?ssl_ports
+    ?ssl_info
+    ?default_charset
+    ?logdir
+    ?uploaddir
+    ?maxuploadfilesize
+    ?syslog_facility
+    ?configfile
+    ?usedefaulthostname
+    ?pidfile
+    ?mimefile
+    ?verbose
+    ?veryverbose
+    ?silent
+    ?daemon
+    ?debug
+    ?debugmode
+    ?minthreads
+    ?maxthreads
+    ?max_number_of_connections
+    ?client_timeout
+    ?keepalive_timeout
+    ?min_data_rate
+    ?max_connections_per_address
+    ?server_timeout
+    ?shutdown_timeout
+    ?filebuffersize
+    ?maxrequestbodysize
+    ?maxrequestbodysizeinmemory
+    ?bindir
+    ?extdir
+    ?command_pipe
+    ?disablepartialrequests
+    ?respect_pipeline
+    ?maxretries
+    instructions =
   Config.set_ports ports;
   Option.iter Config.set_ssl_ports ssl_ports;
   Option.iter Config.set_logdir logdir;
@@ -674,15 +726,19 @@ let start
   Option.iter Config.set_shutdown_timeout shutdown_timeout;
   Option.iter Config.set_ssl_info ssl_info;
   main (fun () ->
-    (* Logged here rather than above, where the logs are not open yet. *)
-    Option.iter
-      (fun _ ->
-         Logs.warn ~src:section (fun fmt ->
-           fmt
-             "Ocsigen.Server.start: ~server_timeout has no effect and is ignored."))
-      server_timeout;
-    Extensions.start_initialisation ();
-    Extensions.set_hosts instructions)
+      (* Logged here rather than above, where the logs are not open yet. *)
+      Option.iter
+        (fun _ ->
+          Logs.warn ~src:section (fun fmt ->
+              fmt
+                "Ocsigen.Server.start: ~server_timeout has no effect and is \
+                 ignored."
+          )
+        )
+        server_timeout;
+      Extensions.start_initialisation ();
+      Extensions.set_hosts instructions
+  )
 
 (* Registries through which the Staticmod and Revproxy extensions, once loaded,
    publish their serving functions. This lets the one-command serve mode use
@@ -754,12 +810,11 @@ let listen_url address port =
   | `Unix path -> "unix:" ^ path
 
 let serve
-      ?(address = default_one_command_address)
-      ?(port = 8080)
-      ?(directory_listing = false)
-      ~dir
-      ()
-  =
+    ?(address = default_one_command_address)
+    ?(port = 8080)
+    ?(directory_listing = false)
+    ~dir
+    () =
   one_command_setup ();
   let static =
     load_one_command_extension "ocsigenserver.ext.staticmod" static_server
@@ -777,22 +832,23 @@ let serve
     :: (Option.to_list !compression @ Option.to_list !security_headers)
   in
   Logs.app ~src:section (fun fmt ->
-    fmt "Serving %s on %s" dir (listen_url address port));
+      fmt "Serving %s on %s" dir (listen_url address port)
+  );
   start
     ~ports:[address, port]
     [host ~list_directory_content:directory_listing instructions]
 
 let reverse_proxy
-      ?(address = default_one_command_address)
-      ?(port = 8080)
-      ?maxrequestbodysize
-      ~target
-      ()
-  =
+    ?(address = default_one_command_address)
+    ?(port = 8080)
+    ?maxrequestbodysize
+    ~target
+    () =
   one_command_setup ();
   let proxy =
     load_one_command_extension "ocsigenserver.ext.revproxy" reverse_proxy_server
   in
   Logs.app ~src:section (fun fmt ->
-    fmt "Proxying %s to %s" (listen_url address port) target);
+      fmt "Proxying %s to %s" (listen_url address port) target
+  );
   start ?maxrequestbodysize ~ports:[address, port] [host [proxy ~target]]

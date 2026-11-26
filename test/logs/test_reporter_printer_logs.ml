@@ -11,7 +11,8 @@ let () =
   in
   Logs.warn ~src (fun m -> m "outer message %a" pp_logging ());
   Log_test.on_other_thread (fun () ->
-    Logs.warn ~src (fun m -> m "message from a thread"));
+      Logs.warn ~src (fun m -> m "message from a thread")
+  );
   let ends_with suffix line = String.ends_with ~suffix line in
   match Log_test.lines dir "warnings.log" with
   | [inner; outer; other]

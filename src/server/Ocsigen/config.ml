@@ -25,7 +25,8 @@ type ssl_info =
   ; ssl_privatekey : string option
   ; ssl_ciphers : string option
   ; ssl_dhfile : string option
-  ; ssl_curve : string option }
+  ; ssl_curve : string option
+  }
 
 module Socket_type = struct
   type t =
@@ -51,8 +52,8 @@ let set_global_log_level lvl =
   let open Logs.Src in
   List.iter
     (fun src ->
-       if String.starts_with ~prefix:"ocsigen:" (name src)
-       then set_level src lvl)
+      if String.starts_with ~prefix:"ocsigen:" (name src) then set_level src lvl
+    )
     (list ())
 
 (* General config *)
@@ -244,7 +245,8 @@ let save_settings () =
   [ saved defaultcharset
   ; saved uploaddir
   ; (let m = get_mimefile () in
-     fun () -> Ocsigen_http.Charset_mime.set_mime_file m)
+     fun () -> Ocsigen_http.Charset_mime.set_mime_file m
+    )
   ; saved max_number_of_connections
   ; saved maxretries
   ; saved silent_client_timeout
@@ -262,6 +264,8 @@ let save_settings () =
   ; saved usedefaulthostname
   ; saved disablepartialrequests
   ; (let n = Ocsigen_base.Ocsigen_stream.get_net_buffer_size () in
-     fun () -> Ocsigen_base.Ocsigen_stream.set_net_buffer_size n) ]
+     fun () -> Ocsigen_base.Ocsigen_stream.set_net_buffer_size n
+    )
+  ]
 
 let restore_settings settings = List.iter (fun restore -> restore ()) settings

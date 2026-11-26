@@ -52,14 +52,14 @@ val remove : path:Ocsigen_lib_base.Url_base.path -> string -> t -> t
     OUnset (client-side) *)
 module Poly : sig
   val add :
-     path:Ocsigen_lib_base.Url_base.path
+       path:Ocsigen_lib_base.Url_base.path
     -> string
     -> 'a
     -> 'a Map_inner.t Map_path.t
     -> 'a Map_inner.t Map_path.t
 
   val remove :
-     path:Ocsigen_lib_base.Url_base.path
+       path:Ocsigen_lib_base.Url_base.path
     -> string
     -> 'a Map_inner.t Map_path.t
     -> 'a Map_inner.t Map_path.t

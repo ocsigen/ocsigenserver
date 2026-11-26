@@ -34,11 +34,7 @@ val section : Logs.src
 type redirection
 
 val create_redirection :
-   ?full_url:bool
-  -> ?temporary:bool
-  -> regexp:string
-  -> string
-  -> redirection
+  ?full_url:bool -> ?temporary:bool -> regexp:string -> string -> redirection
 
 val run : redirection:redirection -> unit -> Ocsigen.Server.instruction
 (** [run ~redirection ()] makes it possible to use this extension without

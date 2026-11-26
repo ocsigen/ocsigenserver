@@ -41,7 +41,8 @@ type file_info = Multipart.file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
-  ; file_content_type : ((string * string) * (string * string) list) option }
+  ; file_content_type : ((string * string) * (string * string) list) option
+  }
 
 val badconfig : ('a, unit, string, 'b) format4 -> 'a
 (** Convenient function for raising Error_in_config_file exceptions with
@@ -70,10 +71,7 @@ val hash_virtual_hosts : virtual_hosts -> int
 val equal_virtual_hosts : virtual_hosts -> virtual_hosts -> bool
 
 val host_match :
-   virtual_hosts:virtual_hosts
-  -> host:string option
-  -> port:int
-  -> bool
+  virtual_hosts:virtual_hosts -> host:string option -> port:int -> bool
 (** [host_match ~virtual_hosts ~host ~port] is [true] iff one element of
     [virtual_hosts] matches [host] and [port]. A final dot of [host] (fully
     qualified form) is ignored. A missing [host] is matched as the empty
@@ -84,7 +82,8 @@ val host_match :
 type do_not_serve =
   { do_not_serve_regexps : string list
   ; do_not_serve_files : string list
-  ; do_not_serve_extensions : string list }
+  ; do_not_serve_extensions : string list
+  }
 (** Configuration to hide/forbid local files *)
 
 val serve_everything : do_not_serve
@@ -106,20 +105,21 @@ type config_info =
   ; mime_assoc : Ocsigen_http.Charset_mime.mime_assoc
   ; charset_assoc : Ocsigen_http.Charset_mime.charset_assoc
   ; default_directory_index : string list
-    (** Default name to use as index file when a directory is requested.
+        (** Default name to use as index file when a directory is requested.
       Use [None] if no index should be tried. The various indexes are
       tried in the given order. If no index is specified, or the index
       does not exists, the content of the directory might be listed,
       according to [list_directory_content] *)
   ; list_directory_content : bool
-    (** Should the list of files in a directory be displayed if there is
+        (** Should the list of files in a directory be displayed if there is
       no index in this directory ? *)
   ; follow_symlinks : [`No | `Owner_match | `Always]
-    (** Should symlinks be followed when accessing a local file? *)
+        (** Should symlinks be followed when accessing a local file? *)
   ; do_not_serve_404 : do_not_serve
   ; do_not_serve_403 : do_not_serve
   ; uploaddir : string option
-  ; maxuploadfilesize : int64 option }
+  ; maxuploadfilesize : int64 option
+  }
 (** Configuration options, passed to (and modified by) extensions *)
 
 val default_config_info : unit -> config_info
@@ -131,7 +131,7 @@ exception Ocsigen_is_dir of (Request.t -> Uri.t)
 type answer =
   | Ext_do_nothing  (** I don't want to do anything *)
   | Ext_found of (unit -> Response.t Lwt.t)
-  (** "OK stop! I will take the page.  You can start the following
+      (** "OK stop! I will take the page.  You can start the following
       request of the same pipelined connection.  Here is the function
       to generate the page".  The extension must return Ext_found as
       soon as possible when it is sure it is safe to start next
@@ -141,25 +141,25 @@ type answer =
       requests to another server before returning Ext_found, to ensure
       that all requests are done in same order). *)
   | Ext_found_stop of (unit -> Response.t Lwt.t)
-  (** Found but do not try next extensions *)
+      (** Found but do not try next extensions *)
   | Ext_next of Cohttp.Code.status
-  (** Page not found. Try next extension. The status is usually
+      (** Page not found. Try next extension. The status is usually
       `Not_found, but may be for example `Forbidden (403) if you want
       to try another extension afterwards. Same as Ext_continue_with
       but does not change the request. *)
   | Ext_stop_site of (Ocsigen_cookie_map.t * Cohttp.Code.status)
-  (** Error. Do not try next extension, but try next site. *)
+      (** Error. Do not try next extension, but try next site. *)
   | Ext_stop_host of (Ocsigen_cookie_map.t * Cohttp.Code.status)
-  (** Error.
+      (** Error.
       Do not try next extension,
       do not try next site,
       but try next host. *)
   | Ext_stop_all of (Ocsigen_cookie_map.t * Cohttp.Code.status)
-  (** Error. Do not try next extension,
+      (** Error. Do not try next extension,
       do not try next site,
       do not try next host. *)
   | Ext_continue_with of (request * Ocsigen_cookie_map.t * Cohttp.Code.status)
-  (** Used to modify the request before giving it to next extension.
+      (** Used to modify the request before giving it to next extension.
       The extension returns the request (possibly modified) and a set
       of cookies if it wants to set or cookies
       ({!Ocsigen_cookie_map.empty} for no cookies).  You must add
@@ -169,7 +169,7 @@ type answer =
       to the one received from preceding extension (but you may want to
       modify it). *)
   | Ext_retry_with of request * Ocsigen_cookie_map.t
-  (** Used to retry all the extensions with a new request.  The
+      (** Used to retry all the extensions with a new request.  The
       extension returns the request (possibly modified) and a set of
       cookies if it wants to set or cookies
       ({!Ocsigen_cookie_map.empty} for no cookies).  You must add
@@ -177,15 +177,15 @@ type answer =
       subsequent extensions, for example using
       the [cookies_override] argument of {!Ocsigen.Request.update}. *)
   | Ext_sub_result of extension_composite
-  (** Used if your extension want to define option that may contain
+      (** Used if your extension want to define option that may contain
       other options from other extensions.  In that case, while
       parsing the configuration file, call the parsing function (of
       type [parse_fun]), that will return something of type
       [extension_composite]. *)
   | Ext_found_continue_with of (unit -> (Response.t * request) Lwt.t)
-  (** Same as [Ext_found] but may modify the request. *)
+      (** Same as [Ext_found] but may modify the request. *)
   | Ext_found_continue_with' of (Response.t * request)
-  (** Same as [Ext_found_continue_with] but does not allow to delay
+      (** Same as [Ext_found_continue_with] but does not allow to delay
       the computation of the page. You should probably not use it, but
       for output filters. *)
 
@@ -251,7 +251,7 @@ and parse_config_aux =
   Ocsigen_base.Lib.Url.path -> parse_host -> parse_fun -> Xml.xml -> extension
 
 val register :
-   name:string
+     name:string
   -> ?fun_site:parse_config
   -> ?end_init:(unit -> unit)
   -> ?init_fun:(Xml.xml list -> unit)
@@ -297,14 +297,13 @@ module Configuration : sig
   (** Specification of a XML attribute. *)
 
   val element :
-     name:string
+       name:string
     -> ?obligatory:bool
     -> ?init:(unit -> unit)
     -> ?elements:element list
     -> ?attributes:attribute list
     -> ?pcdata:(string -> unit)
-    -> ?other_elements:
-         (string -> (string * string) list -> Xml.xml list -> unit)
+    -> ?other_elements:(string -> (string * string) list -> Xml.xml list -> unit)
     -> ?other_attributes:(string -> string -> unit)
     -> unit
     -> element
@@ -320,10 +319,7 @@ module Configuration : sig
   *)
 
   val attribute :
-     name:string
-    -> ?obligatory:bool
-    -> (string -> unit)
-    -> attribute
+    name:string -> ?obligatory:bool -> (string -> unit) -> attribute
   (** [attribute ~name f] create a specification of a XML attribute.
       @param name The name of the XML attribute
       @param obligatory Whether the attribute is obligatory ([false] by default)
@@ -331,11 +327,10 @@ module Configuration : sig
   *)
 
   val process_element :
-     in_tag:string
+       in_tag:string
     -> elements:element list
     -> ?pcdata:(string -> unit)
-    -> ?other_elements:
-         (string -> (string * string) list -> Xml.xml list -> unit)
+    -> ?other_elements:(string -> (string * string) list -> Xml.xml list -> unit)
     -> Xml.xml
     -> unit
   (** Process an XML element by the specifications.
@@ -349,11 +344,10 @@ module Configuration : sig
   *)
 
   val process_elements :
-     in_tag:string
+       in_tag:string
     -> elements:element list
     -> ?pcdata:(string -> unit)
-    -> ?other_elements:
-         (string -> (string * string) list -> Xml.xml list -> unit)
+    -> ?other_elements:(string -> (string * string) list -> Xml.xml list -> unit)
     -> ?init:(unit -> unit)
     -> Xml.xml list
     -> unit
@@ -407,20 +401,17 @@ val find_redirection : Re.Pcre.regexp -> bool -> string -> Request.t -> string
 (**/**)
 
 val preprocess_site_path :
-   Ocsigen_base.Lib.Url.path
-  -> Ocsigen_base.Lib.Url.path
+  Ocsigen_base.Lib.Url.path -> Ocsigen_base.Lib.Url.path
 
 val compose : extension list -> extension_composite
 
 val make_parse_config :
-   Ocsigen_base.Lib.Url.path
-  -> parse_config_aux
-  -> parse_fun
+  Ocsigen_base.Lib.Url.path -> parse_config_aux -> parse_fun
 
 val parse_config_item : parse_config
 
 val site_ext :
-   extension_composite
+     extension_composite
   -> Ocsigen_http.Charset_mime.charset option
   -> Ocsigen_base.Lib.Url.path
   -> extension
@@ -431,9 +422,7 @@ val set_hosts : host_config list -> unit
 val get_hosts : unit -> (virtual_hosts * config_info * extension_composite) list
 
 val compute_result :
-   ?previous_cookies:Ocsigen_cookie_map.t
-  -> Request.t
-  -> Response.t Lwt.t
+  ?previous_cookies:Ocsigen_cookie_map.t -> Request.t -> Response.t Lwt.t
 (** Compute the answer to be sent to the client, by trying all
     extensions according the configuration file. *)
 

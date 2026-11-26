@@ -3,7 +3,8 @@
 
 let () =
   Ocsigen.Command.register_command_function ~prefix:"test" (fun _ _ ->
-    Lwt.fail (Failure "this order always fails"))
+      Lwt.fail (Failure "this order always fails")
+  )
 
 let () =
   Ocsigen.Server.start

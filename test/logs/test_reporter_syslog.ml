@@ -43,7 +43,8 @@ let captured_stderr f =
       ~finally:(fun () ->
         flush stderr;
         Unix.dup2 saved Unix.stderr;
-        Unix.close saved)
+        Unix.close saved
+      )
       f
   in
   let printed = Log_test.read dir "stderr" in
@@ -91,7 +92,8 @@ let check_message log expected_stderr =
 
 let message ?header ?tags reporter =
   reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
-    m ?header ?tags "message %d" 42)
+      m ?header ?tags "message %d" 42
+  )
 
 let () =
   let facility = Logs.Tag.(add Logs_syslog.facility Syslog_message.Local0) in
@@ -114,30 +116,38 @@ let () =
 let () =
   let check log =
     check_message log (fun column ->
-      let header = "[WARNING] " in
-      header ^ "first line\n"
-      ^ String.make (column + String.length header) ' '
-      ^ "second line\n")
+        let header = "[WARNING] " in
+        header ^ "first line\n"
+        ^ String.make (column + String.length header) ' '
+        ^ "second line\n"
+    )
   in
   check (fun reporter ->
-    reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
-      m "first line@\nsecond line"));
+      reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
+          m "first line@\nsecond line"
+      )
+  );
   check (fun reporter ->
-    reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
-      m "%s" "first line\nsecond line"))
+      reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
+          m "%s" "first line\nsecond line"
+      )
+  )
 
 (* The empty lines of a message, a final newline included, stay empty on
    stderr. *)
 let () =
   check_message
     (fun reporter ->
-       reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
-         m "%s" "first line\n\nthird line\n"))
+      reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
+          m "%s" "first line\n\nthird line\n"
+      )
+    )
     (fun column ->
-       let header = "[WARNING] " in
-       header ^ "first line\n\n"
-       ^ String.make (column + String.length header) ' '
-       ^ "third line\n\n")
+      let header = "[WARNING] " in
+      header ^ "first line\n\n"
+      ^ String.make (column + String.length header) ' '
+      ^ "third line\n\n"
+    )
 
 (* A header wider than the maximal indentation of Format does not put the
    message on a line of its own. *)
@@ -152,16 +162,20 @@ let () =
   let words = String.concat " " (List.init 40 (Printf.sprintf "word%d")) in
   check_message
     (fun reporter ->
-       reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
-         m "%a" Format.pp_print_text words))
+      reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
+          m "%a" Format.pp_print_text words
+      )
+    )
     (fun column ->
-       let header = "[WARNING] " in
-       let indentation = String.make (column + String.length header) ' ' in
-       header
-       ^ String.concat ("\n" ^ indentation)
-           (String.split_on_char '\n'
-              (Format.asprintf "%a" Format.pp_print_text words))
-       ^ "\n")
+      let header = "[WARNING] " in
+      let indentation = String.make (column + String.length header) ' ' in
+      header
+      ^ String.concat ("\n" ^ indentation)
+          (String.split_on_char '\n'
+             (Format.asprintf "%a" Format.pp_print_text words)
+          )
+      ^ "\n"
+    )
 
 let () =
   Logs.set_reporter reporter;
@@ -172,14 +186,16 @@ let () =
   in
   let (), printed =
     captured_stderr (fun () ->
-      Logs.warn ~src (fun m -> m "message %a" pp_counted ()))
+        Logs.warn ~src (fun m -> m "message %a" pp_counted ())
+    )
   in
   let received = receive () in
   if
     not
       (!count = 1
       && Log_test.contains received "message counted"
-      && Log_test.contains printed "message counted")
+      && Log_test.contains printed "message counted"
+      )
   then
     Log_test.fail "printer called %d times\nsyslog: %s\nstderr: %s" !count
       received printed
@@ -192,22 +208,26 @@ let () =
   Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
   let raised, (_ : string) =
     captured_stderr (fun () ->
-      let reader, writer = Unix.pipe () in
-      Unix.close reader;
-      let saved = Unix.dup Unix.stderr in
-      Unix.dup2 writer Unix.stderr;
-      Unix.close writer;
-      Fun.protect
-        ~finally:(fun () ->
-          Unix.dup2 saved Unix.stderr;
-          Unix.close saved)
-        (fun () ->
-           match
-             reporter.Logs.report src Logs.Warning ~over:ignore Fun.id (fun m ->
-               m "lost on stderr")
-           with
-           | () -> false
-           | exception Sys_error _ -> true))
+        let reader, writer = Unix.pipe () in
+        Unix.close reader;
+        let saved = Unix.dup Unix.stderr in
+        Unix.dup2 writer Unix.stderr;
+        Unix.close writer;
+        Fun.protect
+          ~finally:(fun () ->
+            Unix.dup2 saved Unix.stderr;
+            Unix.close saved
+          )
+          (fun () ->
+            match
+              reporter.Logs.report src Logs.Warning ~over:ignore Fun.id
+                (fun m -> m "lost on stderr"
+              )
+            with
+            | () -> false
+            | exception Sys_error _ -> true
+          )
+    )
   in
   let received = receive () in
   let error = receive () in
@@ -215,7 +235,8 @@ let () =
     raised
     || not
          (Log_test.contains received "lost on stderr"
-         && Log_test.contains error "Cannot write to the standard error")
+         && Log_test.contains error "Cannot write to the standard error"
+         )
   then
     Log_test.fail "writing to stderr %s\nsyslog: %s\n%s"
       (if raised then "raised" else "did not raise")
@@ -224,14 +245,18 @@ let () =
 let () =
   let logging =
     Logs.Tag.def "logging" (fun ppf () ->
-      Logs.warn ~src (fun m -> m "inner message");
-      Format.pp_print_string ppf "printed")
+        Logs.warn ~src (fun m -> m "inner message");
+        Format.pp_print_string ppf "printed"
+    )
   in
   let result, printed =
     captured_stderr (fun () ->
-      Log_test.try_on_other_thread (fun () ->
-        Logs.warn ~src (fun m ->
-          m ~tags:Logs.Tag.(add logging () empty) "outer message")))
+        Log_test.try_on_other_thread (fun () ->
+            Logs.warn ~src (fun m ->
+                m ~tags:Logs.Tag.(add logging () empty) "outer message"
+            )
+        )
+    )
   in
   Result.iter_error
     (fun msg -> Log_test.fail "%s\nstderr: %s" msg printed)
@@ -242,12 +267,14 @@ let () =
     not
       (Log_test.contains inner "inner message"
       && Log_test.contains outer "printed"
-      && Log_test.contains outer "outer message")
+      && Log_test.contains outer "outer message"
+      )
   then Log_test.fail "unexpected syslog messages\n%s\n%s" inner outer;
-  (match String.split_on_char '\n' printed with
+  ( match String.split_on_char '\n' printed with
   | [inner; outer; ""]
     when Log_test.contains inner "inner message"
          && Log_test.contains outer "outer message" ->
       ()
-  | _ -> Log_test.fail "unexpected lines on stderr\n%s" printed);
+  | _ -> Log_test.fail "unexpected lines on stderr\n%s" printed
+  );
   Unix.close daemon; Sys.remove path; Sys.rmdir dir

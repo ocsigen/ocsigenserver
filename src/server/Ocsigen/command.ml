@@ -32,7 +32,9 @@ let register_command_function, get_command_function =
             (function
               | Unknown_command ->
                   if prefix = prefix' then f s c else Lwt.fail Unknown_command
-              | e -> Lwt.fail e))
+              | e -> Lwt.fail e
+              )
+    )
   , fun () -> !command_function )
 
 let () =

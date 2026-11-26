@@ -15,7 +15,7 @@ This module belongs to ocamlfind package
 val section : Logs.src
 
 val run :
-   ?continue:bool
+     ?continue:bool
   -> ?full_rewrite:bool
   -> regexp:string
   -> string
