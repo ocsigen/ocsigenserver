@@ -11,7 +11,8 @@ open Lwt.Infix
 let () =
   Printexc.register_printer (function
     | Ocsigen_base.Lib.Ocsigen_Bad_Request -> Some "Bad request"
-    | _ -> None)
+    | _ -> None
+  )
 
 let uploads = "chunk-uploads"
 
@@ -29,7 +30,9 @@ let decode ~content_type chunks =
           (Lwt.catch
              (fun () -> decode (Some uploads) None >|= Describe.post_data)
              (fun e ->
-                Lwt.return (Printf.sprintf "error %s\n" (Printexc.to_string e))))
+               Lwt.return (Printf.sprintf "error %s\n" (Printexc.to_string e))
+             )
+          )
   in
   List.iter Sys.remove !created;
   result
@@ -50,8 +53,9 @@ let chunkings body =
     then []
     else
       List.init (len + 1) (fun i ->
-        ( Printf.sprintf "a cut at %d" i
-        , [String.sub body 0 i; String.sub body i (len - i)] ))
+          ( Printf.sprintf "a cut at %d" i
+          , [String.sub body 0 i; String.sub body i (len - i)] )
+      )
   in
   cuts
   @ List.map
@@ -73,15 +77,18 @@ let () =
         let differences =
           List.filter_map
             (fun (name, chunks) ->
-               let result = decode ~content_type chunks in
-               if result = reference then None else Some (name, result))
+              let result = decode ~content_type chunks in
+              if result = reference then None else Some (name, result)
+            )
             (chunkings body)
         in
         match differences with
         | [] -> ()
         | (name, result) :: _ ->
             Printf.printf "%d chunkings give another result, first %s:\n%s"
-              (List.length differences) name result))
+              (List.length differences) name result
+      )
+  )
   | _ ->
       prerr_endline "Usage: chunks.exe CONTENT-TYPE FILE";
       exit 2

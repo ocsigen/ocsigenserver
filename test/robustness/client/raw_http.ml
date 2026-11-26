@@ -13,8 +13,9 @@ exception Connect_failed of string
 (* A failed write must be reported as an error, not kill the process. *)
 let initialised =
   lazy
-    (Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
-     Ssl.init ())
+    ( Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
+      Ssl.init ()
+    )
 
 (* Upper bound on any single blocking operation, so that a server that
    stops answering in the middle of a TLS record or handshake cannot hang a
@@ -86,8 +87,9 @@ let send ?trickle conn data =
     | Some (size, delay) ->
         List.iteri
           (fun i piece ->
-             if i > 0 then Unix.sleepf delay;
-             write_all conn piece)
+            if i > 0 then Unix.sleepf delay;
+            write_all conn piece
+          )
           (pieces size data)
   with
   | () -> true
@@ -110,7 +112,8 @@ let tls_read_ending = function
   | Ssl.Error_ssl -> (
     match (Ssl.Error.get_error ()).reason with
     | Some reason when Re.execp unexpected_eof reason -> Closed
-    | Some _ | None -> Reset)
+    | Some _ | None -> Reset
+  )
   | _ -> Reset
 
 let split_lines received =
@@ -123,8 +126,9 @@ let split_lines received =
   in
   List.map
     (fun line ->
-       let n = String.length line in
-       if n > 0 && line.[n - 1] = '\r' then String.sub line 0 (n - 1) else line)
+      let n = String.length line in
+      if n > 0 && line.[n - 1] = '\r' then String.sub line 0 (n - 1) else line
+    )
     lines
 
 let is_status_line line = String.starts_with ~prefix:"HTTP/" line
@@ -133,7 +137,8 @@ let is_digits ~hex s =
   s <> ""
   && String.for_all
        (function
-         | '0' .. '9' -> true | 'a' .. 'f' | 'A' .. 'F' -> hex | _ -> false)
+         | '0' .. '9' -> true | 'a' .. 'f' | 'A' .. 'F' -> hex | _ -> false
+         )
        s
 
 (* The status code of a status line, "HTTP/1.1 200 OK". [int_of_string_opt]
@@ -182,9 +187,10 @@ let rec chunked_end s pos =
   let size = String.sub s pos (eol - pos) in
   let size =
     String.trim
-      (match String.index_opt size ';' with
+      ( match String.index_opt size ';' with
       | Some i -> String.sub size 0 i
-      | None -> size)
+      | None -> size
+      )
   in
   if not (is_digits ~hex:true size)
   then Error Unframed
@@ -263,7 +269,10 @@ let response_end s pos =
           | Some n when n <= String.length s - content ->
               Ok {next = content + n; final = true; close}
           | Some _ -> Error Incomplete
-          | None -> Error Unframed)))
+          | None -> Error Unframed
+        )
+      )
+    )
 
 (* The framing of the responses received from position [pos] on, [last]
    being [Some close] when they follow a final response. The state returned,
@@ -283,12 +292,7 @@ let rec scan received pos last =
 let framing received = fst (scan received 0 None)
 
 let receive
-      ?(first_byte = 10.)
-      ?(idle = 2.)
-      ?(settle = idle)
-      ?(limit = 1 lsl 20)
-      conn
-  =
+    ?(first_byte = 10.) ?(idle = 2.) ?(settle = idle) ?(limit = 1 lsl 20) conn =
   let buffer = Buffer.create 4096 in
   let chunk = Bytes.create 65536 in
   (* The delay before the next read: [first_byte] seconds, or [idle] if
@@ -343,15 +347,17 @@ let exchange ?trickle ?first_byte ?idle ?settle ?limit target request =
   Fun.protect
     ~finally:(fun () -> close conn)
     (fun () ->
-       let (_ : bool) = send ?trickle conn request in
-       receive ?first_byte ?idle ?settle ?limit conn)
+      let (_ : bool) = send ?trickle conn request in
+      receive ?first_byte ?idle ?settle ?limit conn
+    )
 
 let escape line =
   let buffer = Buffer.create (String.length line) in
   String.iter
     (function
       | ('\x20' .. '\x7e' | '\t') as c -> Buffer.add_char buffer c
-      | c -> Printf.bprintf buffer "\\x%02X" (Char.code c))
+      | c -> Printf.bprintf buffer "\\x%02X" (Char.code c)
+      )
     line;
   Buffer.contents buffer
 
@@ -360,7 +366,8 @@ let header_line names =
     (Re.seq
        [ Re.bos
        ; Re.no_case (Re.alt (List.map (fun name -> Re.str (name ^ ":")) names))
-       ])
+       ]
+    )
 
 let date_header = header_line ["date"]
 let validator_header = header_line ["etag"; "last-modified"]

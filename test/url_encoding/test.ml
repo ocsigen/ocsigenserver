@@ -19,7 +19,8 @@ let () =
     ; "%2e%2e%2fetc%2fpasswd"
     ; "100%"
     ; "a%2"
-    ; "%zz" ];
+    ; "%zz"
+    ];
   print_newline ();
   print_endline "decode ~plus:true:";
   List.iter (show (Url.decode ~plus:true)) ["a+b"; "a%2Bb"];
@@ -33,7 +34,8 @@ let () =
 let show_path s =
   Printf.printf "%-32s -> [%s]\n" s
     (String.concat "; "
-       (List.map (Printf.sprintf "%S") (Url.split_decoded_path s)))
+       (List.map (Printf.sprintf "%S") (Url.split_decoded_path s))
+    )
 
 let () =
   print_newline ();
@@ -50,4 +52,5 @@ let () =
     ; "%2e%2e%2f%2e%2e%2fetc%2fpasswd"
     ; "..%2f..%2fetc%2fpasswd"
     ; "a%2Fb"
-    ; "100%/x" ]
+    ; "100%/x"
+    ]

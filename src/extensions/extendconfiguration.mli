@@ -25,8 +25,7 @@ let _ =
  *)
 
 val followsymlinks :
-   [`Always | `No | `Owner_match]
-  -> Ocsigen.Server.instruction
+  [`Always | `No | `Owner_match] -> Ocsigen.Server.instruction
 
 val maxuploadfilesize : int64 option -> Ocsigen.Server.instruction
 (** Raises [Invalid_argument] if the size is negative. *)
@@ -35,14 +34,14 @@ val uploaddir : string option -> Ocsigen.Server.instruction
 val listdirs : bool -> Ocsigen.Server.instruction
 
 val forbidfile :
-   ?files:string list
+     ?files:string list
   -> ?extensions:string list
   -> ?regexps:string list
   -> unit
   -> Ocsigen.Server.instruction
 
 val hidefile :
-   ?files:string list
+     ?files:string list
   -> ?extensions:string list
   -> ?regexps:string list
   -> unit
@@ -51,7 +50,7 @@ val hidefile :
 val defaultindex : string list -> Ocsigen.Server.instruction
 
 val contenttype :
-   ?default:string
+     ?default:string
   -> ?files:(string * string) list
   -> ?extensions:(string * string) list
   -> ?regexps:(string * string) list
@@ -59,7 +58,7 @@ val contenttype :
   -> Ocsigen.Server.instruction
 
 val charset :
-   ?default:string
+     ?default:string
   -> ?files:(string * string) list
   -> ?extensions:(string * string) list
   -> ?regexps:(string * string) list

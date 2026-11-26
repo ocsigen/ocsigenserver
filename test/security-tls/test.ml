@@ -9,8 +9,9 @@ let respond _vh _config_info _path _request_state =
   Lwt.return
     (Ocsigen.Extensions.Ext_found
        (fun () ->
-         Lwt.return
-           (Ocsigen.Response.make (Cohttp.Response.make ~status:`OK ()))))
+         Lwt.return (Ocsigen.Response.make (Cohttp.Response.make ~status:`OK ()))
+       )
+    )
 
 let () =
   let port =
@@ -28,7 +29,9 @@ let () =
          ; ssl_privatekey = Some "privkey.pem"
          ; ssl_ciphers = Some "DEFAULT:@SECLEVEL=0"
          ; ssl_dhfile = None
-         ; ssl_curve = None })
+         ; ssl_curve = None
+         }
+      )
     ~logdir:"log" ~uploaddir:None ~usedefaulthostname:true
     ~command_pipe:"local.cmd" ~default_charset:(Some "utf-8")
     [Ocsigen.Server.host [respond]]

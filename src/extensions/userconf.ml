@@ -34,15 +34,17 @@ let handle_parsing_error {Ocsigen.Extensions.request_info; _} = function
   | Ocsigen.Extensions.Error_in_config_file s
   | Ocsigen.Config.Config_file_error s ->
       Logs.err ~src:section (fun fmt ->
-        fmt "Syntax error in userconf configuration file for url %s: %s"
-          (Uri.to_string (Ocsigen.Request.uri request_info))
-          s);
+          fmt "Syntax error in userconf configuration file for url %s: %s"
+            (Uri.to_string (Ocsigen.Request.uri request_info))
+            s
+      );
       Lwt.return err_500
   | Ocsigen.Extensions.Error_in_user_config_file s ->
       Logs.err ~src:section (fun fmt ->
-        fmt "Unauthorized option in user configuration for url %s: %s"
-          (Uri.to_string (Ocsigen.Request.uri request_info))
-          s);
+          fmt "Unauthorized option in user configuration for url %s: %s"
+            (Uri.to_string (Ocsigen.Request.uri request_info))
+            s
+      );
       Lwt.return err_500
   | e -> Lwt.fail e
 
@@ -53,41 +55,48 @@ let subresult new_req user_parse_site conf previous_err req req_state =
       (* XXX why is rs above never used ?? *)
       Lwt.catch
         (fun () ->
-           user_parse_site conf cookies_to_set
-             (Ocsigen.Extensions.Req_not_found (previous_err, new_req))
-           >>= fun (answer, cookies) ->
-           (* If the request is not satisfied by userconf, the
+          user_parse_site conf cookies_to_set
+            (Ocsigen.Extensions.Req_not_found (previous_err, new_req))
+          >>= fun (answer, cookies) ->
+          (* If the request is not satisfied by userconf, the
             changes in configuration (in request_config) are
             preserved for the remainder of the enclosing <site> (in
             the Ext_continue and Ext_found_continue cases below) *)
-           let rec aux ((answer, cts) as r) =
-             match answer with
-             | Ocsigen.Extensions.Ext_sub_result sr ->
-                 (* XXX Are these the good cookies ?? *)
-                 sr cookies_to_set req_state >>= aux
-             | Ocsigen.Extensions.Ext_continue_with
-                 ({Ocsigen.Extensions.request_config; _}, cookies, err) ->
-                 Lwt.return
-                   ( Ocsigen.Extensions.Ext_continue_with
-                       ( {req with Ocsigen.Extensions.request_config}
-                       , cookies
-                       , err )
-                   , cts )
-             | Ocsigen.Extensions.Ext_found_continue_with r ->
-                 (* We keep config information outside userconf! *)
-                 Lwt.return
-                   ( Ocsigen.Extensions.Ext_found_continue_with
-                       (fun () ->
-                         r ()
-                         >|= fun (r, {Ocsigen.Extensions.request_config; _}) ->
-                         r, {req with Ocsigen.Extensions.request_config})
-                   , cts )
-             | _ -> Lwt.return r
-           in
-           aux (answer, cookies))
+          let rec aux ((answer, cts) as r) =
+            match answer with
+            | Ocsigen.Extensions.Ext_sub_result sr ->
+                (* XXX Are these the good cookies ?? *)
+                sr cookies_to_set req_state >>= aux
+            | Ocsigen.Extensions.Ext_continue_with
+                ({Ocsigen.Extensions.request_config; _}, cookies, err) ->
+                Lwt.return
+                  ( Ocsigen.Extensions.Ext_continue_with
+                      ( {req with Ocsigen.Extensions.request_config}
+                      , cookies
+                      , err
+                      )
+                  , cts
+                  )
+            | Ocsigen.Extensions.Ext_found_continue_with r ->
+                (* We keep config information outside userconf! *)
+                Lwt.return
+                  ( Ocsigen.Extensions.Ext_found_continue_with
+                      (fun () ->
+                        r ()
+                        >|= fun (r, {Ocsigen.Extensions.request_config; _}) ->
+                        r, {req with Ocsigen.Extensions.request_config}
+                      )
+                  , cts
+                  )
+            | _ -> Lwt.return r
+          in
+          aux (answer, cookies)
+        )
         (fun e ->
-           handle_parsing_error req e >>= fun answer ->
-           Lwt.return (answer, Ocsigen_cookie_map.empty)))
+          handle_parsing_error req e >>= fun answer ->
+          Lwt.return (answer, Ocsigen_cookie_map.empty)
+        )
+    )
 
 let conf_to_xml conf =
   try [Ocsigen.Parseconfig.parse_xml_file conf]
@@ -114,7 +123,8 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
             Ocsigen_base.Lib.Netstring_pcre.global_replace regexp prefix path
           and userconf_options =
             { Ocsigen.Extensions.localfiles_root =
-                Ocsigen.Extensions.replace_user_dir regexp localpath path }
+                Ocsigen.Extensions.replace_user_dir regexp localpath path
+            }
           and conf = conf_to_xml conf0 in
           let user_parse_host =
             Ocsigen.Extensions.parse_config_item (Some userconf_options)
@@ -128,7 +138,8 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
           and req =
             { req with
               Ocsigen.Extensions.request_info =
-                Ocsigen.Request.update ~uri request_info }
+                Ocsigen.Request.update ~uri request_info
+            }
           in
           Lwt.return
             (subresult req user_parse_site conf previous_err req req_state)
@@ -137,7 +148,9 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
         | Unix.Unix_error (Unix.EACCES, _, _)
         | Unix.Unix_error (Unix.ENOENT, _, _) ->
             Lwt.return (Ocsigen.Extensions.Ext_next previous_err)
-        | e -> handle_parsing_error req e))
+        | e -> handle_parsing_error req e
+      )
+    )
 
 let parse_config _ hostpattern _ path _ _ config_elem =
   let regexp = ref None in
@@ -152,23 +165,31 @@ let parse_config _ hostpattern _ path _ _ config_elem =
         [ Configuration.element ~name:"userconf"
             ~attributes:
               [ Configuration.attribute ~name:"regexp" ~obligatory:true (fun s ->
-                  let s =
-                    Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
-                  in
-                  regexp := Some s)
+                    let s =
+                      Ocsigen_base.Lib.Netstring_pcre.regexp ("^" ^ s ^ "$")
+                    in
+                    regexp := Some s
+                )
               ; Configuration.attribute ~name:"conf" ~obligatory:true (fun s ->
-                  let s = Ocsigen.Extensions.parse_user_dir s in
-                  conf := Some s)
+                    let s = Ocsigen.Extensions.parse_user_dir s in
+                    conf := Some s
+                )
               ; Configuration.attribute ~name:"url" ~obligatory:true (fun s ->
-                  url := Some s)
+                    url := Some s
+                )
               ; Configuration.attribute ~name:"prefix" ~obligatory:true
-                  (fun s -> prefix := Some s)
+                  (fun s -> prefix := Some s
+                )
               ; Configuration.attribute ~name:"localpath" ~obligatory:true
                   (fun s ->
-                     let s = Ocsigen.Extensions.parse_user_dir s in
-                     localpath := Some s) ]
-            () ]
-      config_elem);
+                    let s = Ocsigen.Extensions.parse_user_dir s in
+                    localpath := Some s
+                )
+              ]
+            ()
+        ]
+      config_elem
+  );
   let info =
     match !regexp, !conf, !url, !prefix, !localpath with
     | Some r, Some t, Some u, Some p, Some p' -> r, t, u, p, p'

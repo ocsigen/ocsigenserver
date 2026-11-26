@@ -16,8 +16,10 @@ let describe : Ocsigen.Server.instruction =
         let body = Describe.post_data post_data in
         Ocsigen.Extensions.Ext_found
           (fun () ->
-            Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ()))
-    | _ -> Lwt.return (Ocsigen.Extensions.Ext_next err))
+            Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())
+          )
+    | _ -> Lwt.return (Ocsigen.Extensions.Ext_next err)
+  )
   | Ocsigen.Extensions.Req_found _ ->
       Lwt.return Ocsigen.Extensions.Ext_do_nothing
 

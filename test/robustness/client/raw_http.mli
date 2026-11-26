@@ -12,7 +12,7 @@ type tls_version = Tls_1_2 | Tls_1_3
 type transport =
   | Plain
   | Tls of {max_version : tls_version; sni : string option}
-  (** TLS without certificate verification: the test servers use
+      (** TLS without certificate verification: the test servers use
           self-signed certificates. *)
 
 type target = {host : string; port : int; transport : transport}
@@ -46,14 +46,14 @@ type outcome = {received : string; ending : ending}
 
 type framing =
   | Complete of {close : bool}
-  (** One or more complete responses, the last one final (not 1xx), and
+      (** One or more complete responses, the last one final (not 1xx), and
           nothing else. [close] tells whether the last one closes the
           connection ([Connection: close], or HTTP/1.0 without keep-alive). *)
   | Incomplete
-  (** The last response, or the final one that must follow a 1xx, is not
+      (** The last response, or the final one that must follow a 1xx, is not
           complete yet; or nothing has been received. *)
   | Unframed
-  (** Not responses, or a response whose end is the end of the
+      (** Not responses, or a response whose end is the end of the
           connection, or that switches to another protocol (101). *)
 
 val framing : string -> framing
@@ -64,7 +64,7 @@ val framing : string -> framing
     when as many bytes as its Content-Length follow it. *)
 
 val receive :
-   ?first_byte:float
+     ?first_byte:float
   -> ?idle:float
   -> ?settle:float
   -> ?limit:int
@@ -89,7 +89,7 @@ val close : conn -> unit
 (** [close conn] closes [conn]. It never fails. *)
 
 val exchange :
-   ?trickle:int * float
+     ?trickle:int * float
   -> ?first_byte:float
   -> ?idle:float
   -> ?settle:float

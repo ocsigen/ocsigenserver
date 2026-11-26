@@ -23,7 +23,7 @@ val max_listening_sockets : Config.socket_type -> int
     one for IPv6, and one otherwise. *)
 
 val service :
-   ?ssl:string * string * (bool -> string) option
+     ?ssl:string * string * (bool -> string) option
   -> address:Config.socket_type
   -> port:int
   -> connector:(Request.t -> Response.t Lwt.t)

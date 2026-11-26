@@ -73,8 +73,9 @@ let compress_body (cfilter : Bytesrw.Bytes.Writer.filter) body =
     try f () with Bytesrw.Bytes.Stream.Error e -> raise (stream_error e)
   in
   body (fun inbuf ->
-    write (fun () -> Bytesrw.Bytes.Writer.write_string cw inbuf);
-    flush_out ())
+      write (fun () -> Bytesrw.Bytes.Writer.write_string cw inbuf);
+      flush_out ()
+  )
   >>= fun () ->
   write (fun () -> Bytesrw.Bytes.Writer.write_eod cw);
   Logs.debug ~src:section (fun fmt -> fmt "Close stream");
@@ -105,7 +106,8 @@ let enc_compare e e' =
 let rec filtermap f = function
   | [] -> []
   | t :: q -> (
-    match f t with Some s -> s :: filtermap f q | None -> filtermap f q)
+    match f t with Some s -> s :: filtermap f q | None -> filtermap f q
+  )
 
 (* Content codings are case-insensitive (RFC 9110 8.4.1). *)
 let convert (coding, v) =
@@ -164,7 +166,8 @@ let compressible res url choice =
       match Ocsigen_http.Header.Mime_type.parse content_type with
       | Some a, Some b -> should_compress (a, b) url choice
       | None, _ | _, None -> false
-      | exception Not_found -> false)
+      | exception Not_found -> false
+    )
 
 let update_headers f res =
   let {Http.Response.headers; status; version} =
@@ -179,33 +182,34 @@ let compress cfilter contentencoding res =
   let res =
     update_headers
       (fun headers ->
-         let headers =
-           let name = Ocsigen_http.Header.Name.(to_string etag) in
-           match Cohttp.Header.get headers name with
-           | Some e -> Cohttp.Header.replace headers name (weaken_etag e)
-           | None -> headers
-         in
-         let headers =
-           Http.Header.replace headers
-             Ocsigen_http.Header.Name.(to_string content_encoding)
-             contentencoding
-         in
-         let headers = add_vary_accept_encoding headers in
-         (* The body about to be sent is the compressed one, of a length we
+        let headers =
+          let name = Ocsigen_http.Header.Name.(to_string etag) in
+          match Cohttp.Header.get headers name with
+          | Some e -> Cohttp.Header.replace headers name (weaken_etag e)
+          | None -> headers
+        in
+        let headers =
+          Http.Header.replace headers
+            Ocsigen_http.Header.Name.(to_string content_encoding)
+            contentencoding
+        in
+        let headers = add_vary_accept_encoding headers in
+        (* The body about to be sent is the compressed one, of a length we
             do not know before streaming it, so any content-length the
             producer computed is now wrong. The framing comes from the body
             when the response is sent, but the filters that follow should
             not see a wrong length either. *)
-         let headers =
-           Http.Header.remove headers
-             Ocsigen_http.Header.Name.(to_string content_length)
-         in
-         (* Byte ranges are only served from the uncompressed representation
+        let headers =
+          Http.Header.remove headers
+            Ocsigen_http.Header.Name.(to_string content_length)
+        in
+        (* Byte ranges are only served from the uncompressed representation
             (see [may_compress]), so the compressed one must not offer them:
             a client resuming a compressed download would get bytes of the
             other one. *)
-         Http.Header.remove headers
-           Ocsigen_http.Header.Name.(to_string accept_ranges))
+        Http.Header.remove headers
+          Ocsigen_http.Header.Name.(to_string accept_ranges)
+      )
       res
   in
   let body =
@@ -267,9 +271,10 @@ let filter choice_list = function
       in
       let compress_if cfilter contentencoding =
         found
-          (if is_compressible ()
-           then compress cfilter contentencoding res
-           else res)
+          ( if is_compressible ()
+            then compress cfilter contentencoding res
+            else res
+          )
       in
       match
         Ocsigen.Request.header_multi ri Ocsigen_http.Header.Name.accept_encoding
@@ -289,13 +294,16 @@ let filter choice_list = function
           (* Not compressed for this request, but it would be for another
            one: caches must know it (RFC 9110 12.5.5). *)
           found
-            (if is_compressible ()
-             then update_headers add_vary_accept_encoding res
-             else res)
+            ( if is_compressible ()
+              then update_headers add_vary_accept_encoding res
+              else res
+            )
       | Not_acceptable ->
           Lwt.return
             (Ocsigen.Extensions.Ext_stop_all
-               (Ocsigen.Response.cookies res, `Not_acceptable)))
+               (Ocsigen.Response.cookies res, `Not_acceptable)
+            )
+    )
 
 let rec parse_global_config = function
   | [] -> ()
@@ -305,7 +313,8 @@ let rec parse_global_config = function
         with Failure _ ->
           raise
             (Ocsigen.Extensions.Error_in_config_file
-               "Compress level should be an integer between 0 and 9")
+               "Compress level should be an integer between 0 and 9"
+            )
       in
       set_compress_level i; parse_global_config ll
   | Xml.Element ("buffer", [("size", s)], []) :: ll ->
@@ -314,13 +323,15 @@ let rec parse_global_config = function
         with Failure _ ->
           raise
             (Ocsigen.Extensions.Error_in_config_file
-               "Buffer size should be a positive integer")
+               "Buffer size should be a positive integer"
+            )
       in
       set_buffer_size s; parse_global_config ll
   | _ ->
       raise
         (Ocsigen.Extensions.Error_in_config_file
-           "Unexpected content inside deflatemod config")
+           "Unexpected content inside deflatemod config"
+        )
 
 let parse_config config_elem =
   let mode = ref `Only in
@@ -337,22 +348,29 @@ let parse_config config_elem =
                   | "allbut" -> mode := `All_but
                   | _ ->
                       badconfig
-                        "Attribute 'compress' should be 'allbut' or 'only'") ]
+                        "Attribute 'compress' should be 'allbut' or 'only'"
+                )
+              ]
             ~elements:
               [ Configuration.element ~name:"type"
                   ~pcdata:(fun s ->
                     let a, b = Ocsigen_http.Header.Mime_type.parse s in
-                    pages := `Type (a, b) :: !pages)
+                    pages := `Type (a, b) :: !pages
+                  )
                   ()
               ; Configuration.element ~name:"extension"
                   ~pcdata:(fun s -> pages := `Extension s :: !pages)
-                  () ]
-            () ]
-      config_elem);
+                  ()
+              ]
+            ()
+        ]
+      config_elem
+  );
   match !pages with
   | [] ->
       Ocsigen.Extensions.badconfig
-        "Unexpected element inside contenttype (should be <type> or <extension>)"
+        "Unexpected element inside contenttype (should be <type> or \
+         <extension>)"
   | l -> filter (match !mode with `Only -> `Only l | `All_but -> `All_but l)
 
 let () =
@@ -374,6 +392,7 @@ let default_serve_mode =
     ; `Type (Some "application", Some "xml")
     ; `Type (Some "application", Some "xhtml+xml")
     ; `Type (Some "application", Some "wasm")
-    ; `Type (Some "image", Some "svg+xml") ]
+    ; `Type (Some "image", Some "svg+xml")
+    ]
 
 let () = Ocsigen.Server.register_compression (run ~mode:default_serve_mode ())

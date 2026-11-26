@@ -33,7 +33,7 @@ let _ =
  *)
 
 val run :
-   ?credentials:bool
+     ?credentials:bool
   -> ?max_age:int
   -> ?exposed_headers:string list
   -> ?methods:Cohttp.Code.meth list

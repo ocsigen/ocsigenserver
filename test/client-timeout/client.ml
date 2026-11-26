@@ -17,7 +17,7 @@ type connection =
   ; send : string -> unit
   ; receive : unit -> event
   ; readable_within : float -> bool
-    (** whether something arrives, possibly the end of the connection,
+        (** whether something arrives, possibly the end of the connection,
             within this delay *)
   }
 
@@ -55,10 +55,10 @@ let plain port =
   let fd = connect port in
   { fd
   ; send =
-      send_with (fun s ->
-        ignore (Unix.write_substring fd s 0 (String.length s)))
+      send_with (fun s -> ignore (Unix.write_substring fd s 0 (String.length s)))
   ; receive = raw_receive fd
-  ; readable_within = readable_within fd }
+  ; readable_within = readable_within fd
+  }
 
 let tls port =
   let fd = connect port in
@@ -69,9 +69,9 @@ let tls port =
   { fd
   ; send = send_with (Ssl.output_string socket)
   ; receive =
-      receive_with (fun buffer ->
-        Ssl.read socket buffer 0 (Bytes.length buffer))
-  ; readable_within = readable_within fd }
+      receive_with (fun buffer -> Ssl.read socket buffer 0 (Bytes.length buffer))
+  ; readable_within = readable_within fd
+  }
 
 let request ?(meth = "GET") ?(version = "1.1") ?(headers = []) path =
   String.concat "\r\n"
@@ -88,12 +88,12 @@ let rec index_of sub s i =
 let header_value name lines =
   List.find_map
     (fun line ->
-       match String.index_opt line ':' with
-       | Some i when String.lowercase_ascii (String.sub line 0 i) = name ->
-           Some
-             (String.trim
-                (String.sub line (i + 1) (String.length line - i - 1)))
-       | Some _ | None -> None)
+      match String.index_opt line ':' with
+      | Some i when String.lowercase_ascii (String.sub line 0 i) = name ->
+          Some
+            (String.trim (String.sub line (i + 1) (String.length line - i - 1)))
+      | Some _ | None -> None
+    )
     lines
 
 let content_length header_lines =
@@ -112,7 +112,8 @@ let parse_response data =
       match head, content_length head with
       | status :: _, Some n when String.length body >= n ->
           Some (status, String.sub body 0 n)
-      | _ -> None)
+      | _ -> None
+    )
 
 (* The status line and the body of the next response on [conn]. *)
 let response conn =
@@ -122,7 +123,8 @@ let response conn =
     | None -> (
       match conn.receive () with
       | Data d -> read_response (data ^ d)
-      | Ended -> "connection ended before a complete response")
+      | Ended -> "connection ended before a complete response"
+    )
   in
   read_response ""
 
@@ -150,10 +152,11 @@ let timing ~bound elapsed =
 let await_close ?(what = "the timeout") ~bound conn ~since =
   let received = drain conn 0 in
   Printf.printf "%s, %s\n"
-    (match timing ~bound (Unix.gettimeofday () -. since) with
+    ( match timing ~bound (Unix.gettimeofday () -. since) with
     | Too_early -> "closed too early"
     | In_time -> "closed by the server after " ^ what
-    | Too_late -> "not closed by the server")
+    | Too_late -> "not closed by the server"
+    )
     (if received = 0 then "without answering" else "after answering")
 
 let timeout = 2.
@@ -174,7 +177,8 @@ let drip_headers conn =
     if i < String.length req && not (conn.readable_within 0.3)
     then (
       conn.send (String.make 1 req.[i]);
-      drip (i + 1))
+      drip (i + 1)
+    )
     else i
   in
   if drip 0 = String.length req then print_endline "the whole request was sent";
@@ -209,11 +213,13 @@ let slow_body conn =
   conn.send
     (request ~meth:"POST"
        ~headers:[Printf.sprintf "Content-Length: %d" (String.length body)]
-       "/length");
+       "/length"
+    );
   String.iter
     (fun c ->
-       Unix.sleepf 0.4;
-       conn.send (String.make 1 c))
+      Unix.sleepf 0.4;
+      conn.send (String.make 1 c)
+    )
     body;
   print_response conn
 
@@ -233,18 +239,20 @@ let drip_body conn =
     if i < 100 && not (conn.readable_within 1.5)
     then (
       conn.send "a";
-      drip (i + 1))
+      drip (i + 1)
+    )
     else i
   in
   let sent = drip 0 in
   let received = drain conn 0 in
   let elapsed = Unix.gettimeofday () -. since in
   Printf.printf "%s, %s\n"
-    (if sent = 100
-     then "the whole body was sent"
-     else if elapsed <= 10.
-     then "closed by the server before the end of the body"
-     else "closed too late")
+    ( if sent = 100
+      then "the whole body was sent"
+      else if elapsed <= 10.
+      then "closed by the server before the end of the body"
+      else "closed too late"
+    )
     (if received = 0 then "without answering" else "after answering")
 
 (* A client that asks for a response larger than the socket buffers and stops
@@ -254,9 +262,10 @@ let slow_reader conn =
   Unix.sleepf 6.;
   let received = drain conn 0 in
   print_endline
-    (if received < 32 * 1024 * 1024
-     then "the server cut the response"
-     else "the whole response arrived")
+    ( if received < 32 * 1024 * 1024
+      then "the server cut the response"
+      else "the whole response arrived"
+    )
 
 (* Five connections at once from the same address, for a limit of four. *)
 let per_address port =
@@ -269,9 +278,10 @@ let per_address port =
     && Unix.gettimeofday () -. since < 1.
   in
   print_endline
-    (if refused
-     then "the fifth connection is refused at once"
-     else "the fifth connection is accepted");
+    ( if refused
+      then "the fifth connection is refused at once"
+      else "the fifth connection is accepted"
+    );
   List.iter Unix.close (fifth.fd :: open_);
   Unix.sleepf 0.5;
   let again = plain port in
@@ -294,10 +304,11 @@ let mute conn =
       let notified = Unix.gettimeofday () in
       ignore (drain raw 0 : int);
       Printf.printf "close_notify %s, then the socket closed %s\n"
-        (match timing ~bound:keepalive_timeout (notified -. since) with
+        ( match timing ~bound:keepalive_timeout (notified -. since) with
         | Too_early -> "too early"
         | In_time -> "after the keep-alive timeout"
-        | Too_late -> "too late")
+        | Too_late -> "too late"
+        )
         (if Unix.gettimeofday () -. notified < 1. then "at once" else "late")
 
 (* A TLS client that leaves without ending its session: it closes its socket
@@ -323,9 +334,10 @@ let make_room ~open_fifth open_unused =
   let closed =
     List.mapi (fun i conn -> i + 1, conn) unused
     |> List.filter_map (fun (i, conn) ->
-      if conn.readable_within 0.5 && conn.receive () = Ended
-      then Some (string_of_int i)
-      else None)
+        if conn.readable_within 0.5 && conn.receive () = Ended
+        then Some (string_of_int i)
+        else None
+    )
   in
   Printf.printf "closed to make room: %s\n" (String.concat " " closed);
   List.iter (fun conn -> Unix.close conn.fd) (fifth :: unused)
@@ -338,24 +350,28 @@ let pool_busy port =
   let since = Unix.gettimeofday () in
   let busy =
     List.init 4 (fun _ ->
-      let conn = plain port in
-      conn.send (request "/slow");
-      Unix.sleepf 0.2;
-      conn)
+        let conn = plain port in
+        conn.send (request "/slow");
+        Unix.sleepf 0.2;
+        conn
+    )
   in
   let fifth = plain port in
   fifth.send (request "/");
   let answer = response fifth in
   Printf.printf "a fifth connection, %s: %s\n"
-    (if Unix.gettimeofday () -. since >= 3.5
-     then "once a busy one was done"
-     else "at once")
+    ( if Unix.gettimeofday () -. since >= 3.5
+      then "once a busy one was done"
+      else "at once"
+    )
     answer;
   Printf.printf "busy connections answered: %d\n"
     (List.length
        (List.filter
           (fun conn -> response conn = "HTTP/1.1 200 OK: slow response")
-          busy));
+          busy
+       )
+    );
   List.iter (fun conn -> Unix.close conn.fd) (fifth :: busy)
 
 let rec occurrences sub s i =
@@ -382,9 +398,10 @@ let keep_alive requests conn =
   let data, closed = receive "" in
   let lines = String.split_on_char '\n' data |> List.map String.trim in
   Printf.printf "%s, Connection: %s, responses: %d, %s\n"
-    (match lines with
+    ( match lines with
     | status :: _ when status <> "" -> status
-    | _ -> "no response")
+    | _ -> "no response"
+    )
     (Option.value ~default:"none" (header_value "connection" lines))
     (occurrences "HTTP/1.1 " data 0)
     (if closed then "closed by the server at once" else "kept open")
@@ -407,10 +424,11 @@ let () =
       make_room
         ~open_fifth:(fun () -> plain pool_port)
         (fun () ->
-           let conn = plain pool_port in
-           conn.send (request "/");
-           ignore (response conn : string);
-           conn)
+          let conn = plain pool_port in
+          conn.send (request "/");
+          ignore (response conn : string);
+          conn
+        )
   | [|_; "pool-silent"|] ->
       make_room
         ~open_fifth:(fun () -> plain pool_port)
@@ -461,5 +479,6 @@ let () =
       | "stalled-body" -> stalled_body conn
       | "drip-body" -> drip_body conn
       | "slow-reader" -> slow_reader conn
-      | _ -> failwith ("unknown scenario " ^ scenario))
+      | _ -> failwith ("unknown scenario " ^ scenario)
+    )
   | _ -> failwith "usage: client scenario [tls]"

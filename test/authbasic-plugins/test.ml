@@ -47,7 +47,8 @@ let () =
   let parse =
     Ocsigen.Extensions.make_parse_config []
       (Ocsigen.Extensions.parse_config_item None []
-         (Ocsigen.Extensions.default_config_info ()))
+         (Ocsigen.Extensions.default_config_info ())
+      )
   in
   let check_config name content =
     match parse [Xml.Element ("authbasic", ["realm", "r"], content)] with

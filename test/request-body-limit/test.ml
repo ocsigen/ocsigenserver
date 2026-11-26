@@ -8,7 +8,9 @@ let respond body =
   Lwt.return
     (Ocsigen.Extensions.Ext_found
        (fun () ->
-         Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())))
+         Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())
+       )
+    )
 
 let echo_params _vh _config_info _path = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -19,14 +21,17 @@ let echo_params _vh _config_info _path = function
     | None -> respond "no parameters"
     | Some params ->
         Lwt.bind params (fun params ->
-          let size =
-            List.fold_left
-              (fun n (k, v) -> n + String.length k + String.length v)
-              0 params
-          in
-          respond
-            (Printf.sprintf "%d parameter(s), %d bytes" (List.length params)
-               size)))
+            let size =
+              List.fold_left
+                (fun n (k, v) -> n + String.length k + String.length v)
+                0 params
+            in
+            respond
+              (Printf.sprintf "%d parameter(s), %d bytes" (List.length params)
+                 size
+              )
+        )
+  )
 
 let () =
   Ocsigen.Server.start

@@ -34,9 +34,10 @@ module Cookie = struct
     Format.sprintf "%s=%s; path=/%s%s%s" name c
       (Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
       (if secure then "; secure" else "")
-      (match exp with
+      ( match exp with
       | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
-      | None -> "")
+      | None -> ""
+      )
 
   let serialize_cookies path =
     Ocsigen_cookie_map.Map_inner.fold @@ fun name c h ->
@@ -86,15 +87,16 @@ module Access_log = struct
     let buf = Buffer.create (String.length s) in
     String.iter
       (fun c ->
-         match c with
-         | '"' -> Buffer.add_string buf "\\\""
-         | '\\' -> Buffer.add_string buf "\\\\"
-         | '\n' -> Buffer.add_string buf "\\n"
-         | '\r' -> Buffer.add_string buf "\\r"
-         | '\t' -> Buffer.add_string buf "\\t"
-         | c when Char.code c < 0x20 || Char.code c = 0x7f ->
-             Buffer.add_string buf (Printf.sprintf "\\x%02x" (Char.code c))
-         | c -> Buffer.add_char buf c)
+        match c with
+        | '"' -> Buffer.add_string buf "\\\""
+        | '\\' -> Buffer.add_string buf "\\\\"
+        | '\n' -> Buffer.add_string buf "\\n"
+        | '\r' -> Buffer.add_string buf "\\r"
+        | '\t' -> Buffer.add_string buf "\\t"
+        | c when Char.code c < 0x20 || Char.code c = 0x7f ->
+            Buffer.add_string buf (Printf.sprintf "\\x%02x" (Char.code c))
+        | c -> Buffer.add_char buf c
+      )
       s;
     Buffer.contents buf
 
@@ -177,24 +179,30 @@ let checked_body request body =
   | `Stream _, Some length, Some limit when Int64.compare length limit > 0 ->
       `Stream
         (Lwt_stream.from (fun () ->
-           Lwt.fail Ocsigen_base.Lib.Ocsigen_Request_too_long))
+             Lwt.fail Ocsigen_base.Lib.Ocsigen_Request_too_long
+         )
+        )
   | `Stream chunks, _, _ when Option.is_some length || Option.is_some limit ->
       let received = ref 0L in
       `Stream
         (Lwt_stream.from (fun () ->
-           Lwt_stream.get chunks >>= function
-           | Some chunk as c -> (
-               received :=
-                 Int64.add !received (Int64.of_int (String.length chunk));
-               match limit with
-               | Some limit when Int64.compare !received limit > 0 ->
-                   Lwt.fail Ocsigen_base.Lib.Ocsigen_Request_too_long
-               | Some _ | None -> Lwt.return c)
-           | None -> (
-             match length with
-             | Some length when Int64.compare !received length < 0 ->
-                 Lwt.fail Request.Truncated_body
-             | Some _ | None -> Lwt.return_none)))
+             Lwt_stream.get chunks >>= function
+             | Some chunk as c -> (
+                 received :=
+                   Int64.add !received (Int64.of_int (String.length chunk));
+                 match limit with
+                 | Some limit when Int64.compare !received limit > 0 ->
+                     Lwt.fail Ocsigen_base.Lib.Ocsigen_Request_too_long
+                 | Some _ | None -> Lwt.return c
+               )
+             | None -> (
+               match length with
+               | Some length when Int64.compare !received length < 0 ->
+                   Lwt.fail Request.Truncated_body
+               | Some _ | None -> Lwt.return_none
+             )
+         )
+        )
   | body, _, _ -> body
 
 (* The response for an error [status]. Never leak the OCaml exception
@@ -211,15 +219,7 @@ let error_response ?headers ?msg (status : Cohttp.Code.status) =
   Response.respond_error ?headers ~status ~body ()
 
 let handler
-      ~ssl
-      ~address
-      ~port
-      ~connector
-      ~guard
-      (flow, conn)
-      cohttp_request
-      body
-  =
+    ~ssl ~address ~port ~connector ~guard (flow, conn) cohttp_request body =
   (* cohttp calls this once the headers of [cohttp_request] have arrived. *)
   Connection_guard.set_phase guard Connection_guard.Request;
   let keep_alive_requested =
@@ -251,9 +251,10 @@ let handler
        The answers an extension chose on purpose stay at the debug level. *)
     let log level what =
       Logs.msg ~src:section level (fun fmt ->
-        fmt
-          ("%s while handling request." ^^ "@\n%s")
-          what (Printexc.to_string exn))
+          fmt
+            ("%s while handling request." ^^ "@\n%s")
+            what (Printexc.to_string exn)
+      )
     in
     let headers, ret_code, explicit_msg =
       match exn with
@@ -277,19 +278,25 @@ let handler
       | Request.Truncated_body
       | Ocsigen_base.Ocsigen_stream.Interrupted Request.Truncated_body ->
           Logs.info ~src:section (fun fmt ->
-            fmt "The body of a request ended before its Content-Length");
+              fmt "The body of a request ended before its Content-Length"
+          );
           None, `Bad_request, None
       | Ocsigen_base.Lib.Ocsigen_Request_too_long
       | Ocsigen_base.Ocsigen_stream.Interrupted
           Ocsigen_base.Lib.Ocsigen_Request_too_long ->
           Logs.info ~src:section (fun fmt ->
-            fmt
-              "Request body too large (see the <maxrequestbodysize> and <maxuploadfilesize> configuration options)");
+              fmt
+                "Request body too large (see the <maxrequestbodysize> and \
+                 <maxuploadfilesize> configuration options)"
+          );
           None, `Request_entity_too_large, None
       | Ocsigen_base.Lib.Input_is_too_large ->
           Logs.warn ~src:section (fun fmt ->
-            fmt
-              "Request body too large to be decoded in memory (see the <maxrequestbodysizeinmemory> and <netbuffersize> configuration options)");
+              fmt
+                "Request body too large to be decoded in memory (see the \
+                 <maxrequestbodysizeinmemory> and <netbuffersize> \
+                 configuration options)"
+          );
           None, `Request_entity_too_large, None
       (* The body of the request did not arrive in time. The socket is shut
          down before this is sent (see [Connection_guard]), and the closing is
@@ -339,107 +346,121 @@ let handler
       | Ok (), `OPTIONS, "*" -> `Server_options
       | Ok (), _, "*" ->
           `Reject (`Bad_request, "asterisk-form target without OPTIONS")
-      | Ok (), _, _ -> `Serve)
+      | Ok (), _, _ -> `Serve
+    )
   in
   Lwt.finalize
     (fun () ->
-       Lwt.catch
-         (fun () ->
-            match action with
-            | `Serve -> connector request
-            | `Server_options ->
-                (* For the server as a whole (RFC 9110, section 9.3.7), a
+      Lwt.catch
+        (fun () ->
+          match action with
+          | `Serve -> connector request
+          | `Server_options ->
+              (* For the server as a whole (RFC 9110, section 9.3.7), a
                    fixed list: the methods of static files (GET and HEAD) and
                    of Eliom services (also POST, PUT and DELETE). The server
                    does not know which extensions serve which resources.
                    CONNECT is refused above. *)
-                let headers =
-                  Cohttp.Header.init_with "allow"
-                    "GET, HEAD, POST, PUT, DELETE, OPTIONS"
-                in
-                Lwt.return
-                  (Response.respond_string ~headers ~status:`OK ~body:"" ())
-            | `Reject (status, reason) ->
-                Logs.info ~src:section (fun fmt ->
+              let headers =
+                Cohttp.Header.init_with "allow"
+                  "GET, HEAD, POST, PUT, DELETE, OPTIONS"
+              in
+              Lwt.return
+                (Response.respond_string ~headers ~status:`OK ~body:"" ())
+          | `Reject (status, reason) ->
+              Logs.info ~src:section (fun fmt ->
                   fmt "Request from %s rejected: %s"
                     (Request.client_ip_to_string request)
-                    reason);
-                Lwt.return (error_response status))
-         (function
-           | Ocsigen_is_dir fun_request ->
-               let headers =
-                 fun_request request |> Uri.to_string
-                 |> Cohttp.Header.init_with "location"
-               and status = `Moved_permanently in
-               Lwt.return (Response.respond_string ~headers ~status ~body:"" ())
-           | exn -> Lwt.return (handle_error exn))
-       >>= fun response ->
-       Messages.accesslog (Access_log.line request response);
-       let res, write_body =
-         Response.to_response_expert ~meth:(Request.meth request) ~version
-           response
-       in
-       (* As cohttp does for the responses it writes itself, which expert
+                    reason
+              );
+              Lwt.return (error_response status)
+        )
+        (function
+          | Ocsigen_is_dir fun_request ->
+              let headers =
+                fun_request request |> Uri.to_string
+                |> Cohttp.Header.init_with "location"
+              and status = `Moved_permanently in
+              Lwt.return (Response.respond_string ~headers ~status ~body:"" ())
+          | exn -> Lwt.return (handle_error exn)
+          )
+      >>= fun response ->
+      Messages.accesslog (Access_log.line request response);
+      let res, write_body =
+        Response.to_response_expert ~meth:(Request.meth request) ~version
+          response
+      in
+      (* As cohttp does for the responses it writes itself, which expert
           responses are not: the connection is kept alive if both the request
           and the response allow it, and the response says whether it is.
           Once the response is written, the connection waits for the next
           request, or is closed. It is closed after a rejected request too,
           which is safer. *)
-       let keep_alive =
-         keep_alive_requested
-         && (match action with
-           | `Reject _ -> false
-           | `Serve | `Server_options -> true)
-         && allows_keep_alive
-              (Http.Response.version res)
-              (Http.Response.headers res)
-       in
-       let res =
-         let headers = Http.Response.headers res in
-         { res with
-           Http.Response.headers =
-             (if keep_alive
+      let keep_alive =
+        keep_alive_requested
+        && ( match action with
+          | `Reject _ -> false
+          | `Serve | `Server_options -> true
+          )
+        && allows_keep_alive
+             (Http.Response.version res)
+             (Http.Response.headers res)
+      in
+      let res =
+        let headers = Http.Response.headers res in
+        { res with
+          Http.Response.headers =
+            ( if keep_alive
               then
                 Http.Header.add_unless_exists headers "connection" "keep-alive"
-              else Http.Header.replace headers "connection" "close") }
-       in
-       Lwt.return
-         ( res
-         , fun ic oc ->
-             write_body ic oc >>= fun () ->
-             if keep_alive
-             then (
-               Connection_guard.set_phase guard Connection_guard.Idle;
-               Lwt.return_unit)
-             else (
-               Connection_guard.close guard;
-               (* cohttp would read the next request, which may already be in
+              else Http.Header.replace headers "connection" "close"
+            )
+        }
+      in
+      Lwt.return
+        ( res
+        , fun ic oc ->
+            write_body ic oc >>= fun () ->
+            if keep_alive
+            then (
+              Connection_guard.set_phase guard Connection_guard.Idle;
+              Lwt.return_unit
+            )
+            else (
+              Connection_guard.close guard;
+              (* cohttp would read the next request, which may already be in
                   its buffer, out of reach of the guard: no request is served
                   after this one (RFC 9112, section 9.6). [Timed_out] ends the
                   connection quietly (see [serve_guarded]). *)
-               Lwt.fail Connection_guard.Timed_out) ))
+              Lwt.fail Connection_guard.Timed_out
+            )
+        )
+    )
     (fun () ->
-       (* The uploaded files. This runs once the response is computed, before
+      (* The uploaded files. This runs once the response is computed, before
           its body is written, and again once the body is decoded, for the
           files created in between if the application did not wait for them.
           The application may have moved them, to keep them. *)
-       let remove_uploaded_files () =
-         let files = !filenames in
-         filenames := [];
-         List.iter
-           (fun a ->
-              try Unix.unlink a with
-              | Unix.Unix_error (Unix.ENOENT, _, _) -> ()
-              | Unix.Unix_error _ as exn ->
-                  Logs.warn ~src:section (fun fmt ->
+      let remove_uploaded_files () =
+        let files = !filenames in
+        filenames := [];
+        List.iter
+          (fun a ->
+            try Unix.unlink a with
+            | Unix.Unix_error (Unix.ENOENT, _, _) -> ()
+            | Unix.Unix_error _ as exn ->
+                Logs.warn ~src:section (fun fmt ->
                     fmt
                       ("Error while removing file %s" ^^ "@\n%s")
-                      a (Printexc.to_string exn)))
-           files
-       in
-       remove_uploaded_files ();
-       Request.on_post_data_decoded request remove_uploaded_files;
-       Lwt.return_unit)
+                      a (Printexc.to_string exn)
+                )
+          )
+          files
+      in
+      remove_uploaded_files ();
+      Request.on_post_data_decoded request remove_uploaded_files;
+      Lwt.return_unit
+    )
 
 let conn_closed (_flow, conn) =
   try
@@ -468,12 +489,13 @@ let tls_context (crt, key, password) =
   let ctx = Ssl.create_context Ssl.TLSv1_3 Ssl.Server_context in
   Ssl.set_min_protocol_version ctx Ssl.TLSv1_2;
   Ssl.honor_cipher_order ctx;
-  (match Config.get_ssl_info () with
+  ( match Config.get_ssl_info () with
   | None -> ()
   | Some {Config.ssl_ciphers; ssl_dhfile; ssl_curve; _} ->
       Option.iter (Ssl.set_cipher_list ctx) ssl_ciphers;
       Option.iter (Ssl.init_dh_from_file ctx) ssl_dhfile;
-      Option.iter (Ssl.init_ec_from_named_curve ctx) ssl_curve);
+      Option.iter (Ssl.init_ec_from_named_curve ctx) ssl_curve
+  );
   Option.iter (Ssl.set_password_callback ctx) password;
   Ssl.use_certificate ctx crt key;
   ctx
@@ -488,7 +510,8 @@ let socket_of_flow = function
 let limits () =
   { Connection_guard.timeout = max 0 (Config.get_client_timeout ())
   ; keepalive_timeout = max 0 (Config.get_keepalive_timeout ())
-  ; min_rate = max 0 (Config.get_min_data_rate ()) }
+  ; min_rate = max 0 (Config.get_min_data_rate ())
+  }
 
 let client_to_string = function
   | Some ip -> Ipaddr.to_string ip
@@ -499,14 +522,16 @@ let client_to_string = function
    server would still try to send, such as a TLS close_notify. *)
 let on_expiry ~fd ~client phase =
   Logs.info ~src:section (fun fmt ->
-    fmt "Closing the connection of %s, which timed out %s"
-      (client_to_string client)
-      (match phase with
-      | Connection_guard.Handshake -> "during the TLS handshake"
-      | Connection_guard.Headers -> "while sending the headers of a request"
-      | Connection_guard.Idle | Connection_guard.Request ->
-          "while sending a request or reading a response"
-      | Connection_guard.Closing -> "while the connection was ending"));
+      fmt "Closing the connection of %s, which timed out %s"
+        (client_to_string client)
+        ( match phase with
+        | Connection_guard.Handshake -> "during the TLS handshake"
+        | Connection_guard.Headers -> "while sending the headers of a request"
+        | Connection_guard.Idle | Connection_guard.Request ->
+            "while sending a request or reading a response"
+        | Connection_guard.Closing -> "while the connection was ending"
+        )
+  );
   try Lwt_unix.shutdown fd Unix.SHUTDOWN_ALL
   with Unix.Unix_error (Unix.ENOTCONN, _, _) -> ()
 
@@ -515,15 +540,18 @@ let on_expiry ~fd ~client phase =
 let accept_tls ~guard ctx fd =
   Lwt.catch
     (fun () ->
-       Connection_guard.run guard (fun () -> Lwt_ssl.ssl_accept fd ctx)
-       >|= Option.some)
+      Connection_guard.run guard (fun () -> Lwt_ssl.ssl_accept fd ctx)
+      >|= Option.some
+    )
     (function
       | Connection_guard.Timed_out -> Lwt.return_none
       | (Ssl.Accept_error _ | Unix.Unix_error _) as exn ->
           Logs.info ~src:section (fun fmt ->
-            fmt "TLS handshake failed: %s" (Printexc.to_string exn));
+              fmt "TLS handshake failed: %s" (Printexc.to_string exn)
+          );
           Lwt.return_none
-      | exn -> Lwt.reraise exn)
+      | exn -> Lwt.reraise exn
+      )
 
 (* Ends a connection: what remains of the response is sent, then [finish] is
    run, within the bounds of the closing phase. For TLS, [finish] sends a single
@@ -537,15 +565,17 @@ let end_connection ~guard oc ~finish =
   else (
     Connection_guard.set_phase guard Connection_guard.Closing;
     Lwt.catch
-      (fun () ->
-         Lwt_io.flush oc >>= fun () -> Connection_guard.run guard finish)
+      (fun () -> Lwt_io.flush oc >>= fun () -> Connection_guard.run guard finish)
       (function
         | ( Connection_guard.Timed_out | Unix.Unix_error _ | Ssl.Write_error _
           | Ssl.Connection_error _ | Lwt_io.Channel_closed _ ) as exn ->
             Logs.debug ~src:section (fun fmt ->
-              fmt "Could not end a connection: %s" (Printexc.to_string exn));
+                fmt "Could not end a connection: %s" (Printexc.to_string exn)
+            );
             Lwt.return_unit
-        | exn -> Lwt.reraise exn))
+        | exn -> Lwt.reraise exn
+        )
+  )
 
 (* Serves a connection whose bytes move through [read] and [write], plain or
    through TLS, each of them watched by [guard]. *)
@@ -559,21 +589,24 @@ let serve_guarded ~serve ~guard flow ~read ~write ~finish =
   in
   Lwt.finalize
     (fun () ->
-       Lwt.catch
-         (fun () -> serve ~guard flow ic oc)
-         (function
-           (* The expiry has been logged; or the connection was idle, and its
+      Lwt.catch
+        (fun () -> serve ~guard flow ic oc)
+        (function
+          (* The expiry has been logged; or the connection was idle, and its
               closing is not worth a log. *)
-           | Connection_guard.Timed_out -> Lwt.return_unit
-           (* A TLS client that went away without ending its session, as many
+          | Connection_guard.Timed_out -> Lwt.return_unit
+          (* A TLS client that went away without ending its session, as many
               do. Logged here, since the error message of OpenSSL is read when
               the exception is printed, and the end of the connection would
               replace it. *)
-           | (Ssl.Read_error _ | Ssl.Write_error _) as exn ->
-               Logs.info ~src:section (fun fmt ->
-                 fmt "TLS connection error: %s" (Printexc.to_string exn));
-               Lwt.return_unit
-           | exn -> Lwt.reraise exn))
+          | (Ssl.Read_error _ | Ssl.Write_error _) as exn ->
+              Logs.info ~src:section (fun fmt ->
+                  fmt "TLS connection error: %s" (Printexc.to_string exn)
+              );
+              Lwt.return_unit
+          | exn -> Lwt.reraise exn
+          )
+    )
     (fun () -> end_connection ~guard oc ~finish)
 
 (* What [Cohttp_lwt_unix.Server.create] does, with its handler not exported,
@@ -581,11 +614,13 @@ let serve_guarded ~serve ~guard flow ~read ~write ~finish =
 let log_connection_error = function
   | Unix.Unix_error (error, func, arg) ->
       Logs.warn ~src:section (fun fmt ->
-        fmt "Client connection error %s: %s(%S)" (Unix.error_message error) func
-          arg)
+          fmt "Client connection error %s: %s(%S)" (Unix.error_message error)
+            func arg
+      )
   | exn ->
       Logs.err ~src:section (fun fmt ->
-        fmt "Unhandled exception: %s" (Printexc.to_string exn))
+          fmt "Unhandled exception: %s" (Printexc.to_string exn)
+      )
 
 (* The number of listening sockets. Conduit stops accepting connections once
    their number, plus one for each socket waiting to accept one, exceeds
@@ -601,12 +636,13 @@ let listening_socket addr port =
   Lwt.wrap (fun () -> Lwt_unix.socket domain Unix.SOCK_STREAM 0) >>= fun fd ->
   Lwt.catch
     (fun () ->
-       Lwt_unix.setsockopt fd Unix.SO_REUSEADDR true;
-       if domain = Unix.PF_INET6 then Lwt_unix.setsockopt fd Unix.IPV6_ONLY true;
-       Lwt_unix.bind fd sockaddr >|= fun () ->
-       Lwt_unix.listen fd 128;
-       Lwt_unix.set_close_on_exec fd;
-       fd)
+      Lwt_unix.setsockopt fd Unix.SO_REUSEADDR true;
+      if domain = Unix.PF_INET6 then Lwt_unix.setsockopt fd Unix.IPV6_ONLY true;
+      Lwt_unix.bind fd sockaddr >|= fun () ->
+      Lwt_unix.listen fd 128;
+      Lwt_unix.set_close_on_exec fd;
+      fd
+    )
     (fun exn -> Lwt_unix.close fd >>= fun () -> Lwt.reraise exn)
 
 let listening_sockets address port =
@@ -616,17 +652,22 @@ let listening_sockets address port =
       listening_socket Unix.inet_addr_any port >>= fun ipv4 ->
       Lwt.catch
         (fun () ->
-           listening_socket Unix.inet6_addr_any port >|= fun ipv6 -> [ipv4; ipv6])
+          listening_socket Unix.inet6_addr_any port >|= fun ipv6 -> [ipv4; ipv6]
+        )
         (function
           | Unix.Unix_error
               ( (Unix.EAFNOSUPPORT | Unix.EPROTONOSUPPORT | Unix.EADDRNOTAVAIL)
               , _
-              , _ ) ->
+              , _
+              ) ->
               Logs.info ~src:section (fun fmt ->
-                fmt "No IPv6 on this system: listening on port %d in IPv4 only"
-                  port);
+                  fmt
+                    "No IPv6 on this system: listening on port %d in IPv4 only"
+                    port
+              );
               Lwt.return [ipv4]
-          | exn -> Lwt_unix.close ipv4 >>= fun () -> Lwt.reraise exn)
+          | exn -> Lwt_unix.close ipv4 >>= fun () -> Lwt.reraise exn
+          )
 
 let max_listening_sockets = function
   | `All -> 2
@@ -642,11 +683,11 @@ let service ?ssl ~address ~port ~connector () =
     | _, Some ssl -> Some (tls_context ssl)
   in
   Conduit_lwt_unix.init () >>= fun ctx ->
-  (match address with
+  ( match address with
     | `Unix f -> Lwt.return [`Unix_domain_socket (`File f)]
     | (`All | `IPv4 _ | `IPv6 _) as address ->
-        listening_sockets address port
-        >|= List.map (fun fd -> `TCP (`Socket fd)))
+        listening_sockets address port >|= List.map (fun fd -> `TCP (`Socket fd))
+    )
   >>= fun modes ->
   services := !services + List.length modes;
   Connection_guard.set_capacity
@@ -678,7 +719,9 @@ let service ?ssl ~address ~port ~connector () =
             Connection_guard.set_phase guard Connection_guard.Headers;
             serve_guarded ~serve ~guard flow ~read:(Lwt_ssl.read_bytes sock)
               ~write:(Lwt_ssl.write_bytes sock) ~finish:(fun () ->
-              Lwt_ssl.close_notify sock >|= fun (_ : bool) -> ()))
+                Lwt_ssl.close_notify sock >|= fun (_ : bool) -> ()
+            )
+      )
   in
   (* Serve each connection here rather than through
      [Cohttp_lwt_unix.Server.create], which does nothing more, so that its
@@ -695,38 +738,48 @@ let service ?ssl ~address ~port ~connector () =
           not
             (Option.fold ~none:true
                ~some:(Connection_guard.Per_address.acquire ~limit)
-               client)
+               client
+            )
         then (
           Logs.info ~src:section (fun fmt ->
-            fmt
-              "Refusing a connection from %s, which already has %d (see <maxconnectionsperaddress>)"
-              (client_to_string client) limit);
-          Lwt.return_unit)
+              fmt
+                "Refusing a connection from %s, which already has %d (see \
+                 <maxconnectionsperaddress>)"
+                (client_to_string client) limit
+          );
+          Lwt.return_unit
+        )
         else
           (* The address is released whatever happens from now on, even
              if watching the connection fails. *)
           Lwt.finalize
             (fun () ->
-               let guard =
-                 Connection_guard.create (limits ())
-                   (match tls with
-                   | Some _ -> Connection_guard.Handshake
-                   | None -> Connection_guard.Headers)
-                   ~on_expiry:(on_expiry ~fd ~client)
-               in
-               Lwt.finalize
-                 (fun () -> serve_socket ~guard flow fd)
-                 (fun () ->
-                    Connection_guard.release guard;
-                    Lwt.return_unit))
+              let guard =
+                Connection_guard.create (limits ())
+                  ( match tls with
+                  | Some _ -> Connection_guard.Handshake
+                  | None -> Connection_guard.Headers
+                  )
+                  ~on_expiry:(on_expiry ~fd ~client)
+              in
+              Lwt.finalize
+                (fun () -> serve_socket ~guard flow fd)
+                (fun () ->
+                  Connection_guard.release guard;
+                  Lwt.return_unit
+                )
+            )
             (fun () ->
-               Option.iter Connection_guard.Per_address.release client;
-               Lwt.return_unit)
+              Option.iter Connection_guard.Per_address.release client;
+              Lwt.return_unit
+            )
   in
   Lwt.join
     (List.map
        (fun mode ->
-          Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
-            on_connection)
-       modes)
+         Conduit_lwt_unix.serve ~stop ~on_exn:log_connection_error ~ctx ~mode
+           on_connection
+       )
+       modes
+    )
   >>= fun () -> Lwt.return (Lwt.wakeup stop_wakener ())

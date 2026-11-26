@@ -1,7 +1,7 @@
 val section : Logs.src
 
 val scan_multipart_body_from_stream :
-   ?max_size:Int64.t
+     ?max_size:Int64.t
   -> boundary:string
   -> create:((string * string) list -> 'a)
   -> add:('a -> string -> unit Lwt.t)
@@ -15,12 +15,13 @@ type file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
-  ; file_content_type : content_type option }
+  ; file_content_type : content_type option
+  }
 
 type post_data = (string * string) list * (string * file_info) list
 
 val post_params :
-   content_type:content_type
+     content_type:content_type
   -> on_file:(string -> unit)
   -> Cohttp_lwt.Body.t
   -> (string option -> Int64.t option -> post_data Lwt.t) option

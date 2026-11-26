@@ -52,9 +52,10 @@ let () =
   flush stderr;
   restore Unix.stdout saved_stdout;
   restore Unix.stderr saved_stderr;
-  (match result with
+  ( match result with
   | Ok () -> ()
-  | Error exn -> Log_test.fail "logging raised %s" (Printexc.to_string exn));
+  | Error exn -> Log_test.fail "logging raised %s" (Printexc.to_string exn)
+  );
   let errors =
     List.filter
       (fun line -> Log_test.contains line "Cannot write to the standard output")

@@ -34,12 +34,7 @@ let default_referrer_policy = "strict-origin-when-cross-origin"
 (* Build the list of (header, value) pairs to add. A header is omitted when its
    option is [None]; [nosniff] adds [X-Content-Type-Options: nosniff]. *)
 let headers_of
-      ~nosniff
-      ~frame_options
-      ~referrer_policy
-      ~hsts
-      ~content_security_policy
-  =
+    ~nosniff ~frame_options ~referrer_policy ~hsts ~content_security_policy =
   List.filter_map
     (fun x -> x)
     [ (if nosniff then Some ("X-Content-Type-Options", "nosniff") else None)
@@ -61,11 +56,13 @@ let gen headers = function
              Lwt.return
              @@ List.fold_left
                   (fun res (name, value) ->
-                     let name = Ocsigen_http.Header.Name.of_string name in
-                     match Ocsigen.Response.header res name with
-                     | Some _ -> res
-                     | None -> Ocsigen.Response.add_header res name value)
-                  res headers)
+                    let name = Ocsigen_http.Header.Name.of_string name in
+                    match Ocsigen.Response.header res name with
+                    | Some _ -> res
+                    | None -> Ocsigen.Response.add_header res name value
+                  )
+                  res headers
+           )
 
 (* ["no"], ["none"] and the empty string disable a header. *)
 let is_disabled s =
@@ -98,11 +95,13 @@ let parse_config config_elem =
         [ Configuration.element ~name:"securityheaders"
             ~attributes:
               [ Configuration.attribute ~name:"nosniff" (fun s ->
-                  nosniff :=
-                    not
-                      (match String.lowercase_ascii (String.trim s) with
-                      | "false" | "no" | "off" -> true
-                      | _ -> false))
+                    nosniff :=
+                      not
+                        ( match String.lowercase_ascii (String.trim s) with
+                        | "false" | "no" | "off" -> true
+                        | _ -> false
+                        )
+                )
               ; Configuration.attribute ~name:"frame-options"
                   (optional "frame-options" frame_options)
               ; Configuration.attribute ~name:"referrer-policy"
@@ -111,12 +110,15 @@ let parse_config config_elem =
               ; Configuration.attribute ~name:"content-security-policy"
                   (optional "content-security-policy" content_security_policy)
               ]
-            () ]
-      config_elem);
+            ()
+        ]
+      config_elem
+  );
   gen
     (headers_of ~nosniff:!nosniff ~frame_options:!frame_options
        ~referrer_policy:!referrer_policy ~hsts:!hsts
-       ~content_security_policy:!content_security_policy)
+       ~content_security_policy:!content_security_policy
+    )
 
 let () =
   Ocsigen.Extensions.register ~name:"securityheaders"
@@ -124,19 +126,19 @@ let () =
     ()
 
 let run
-      ?(nosniff = true)
-      ?(frame_options = Some default_frame_options)
-      ?(referrer_policy = Some default_referrer_policy)
-      ?(hsts = None)
-      ?content_security_policy
-      ()
-      _
-      _
-      _
-  =
+    ?(nosniff = true)
+    ?(frame_options = Some default_frame_options)
+    ?(referrer_policy = Some default_referrer_policy)
+    ?(hsts = None)
+    ?content_security_policy
+    ()
+    _
+    _
+    _ =
   gen
     (headers_of ~nosniff ~frame_options ~referrer_policy ~hsts
-       ~content_security_policy)
+       ~content_security_policy
+    )
 
 (* Publish the safe-by-default instruction so that the one-command serve mode
    can add the security headers after loading this extension dynamically. *)

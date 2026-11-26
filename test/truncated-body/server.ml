@@ -23,7 +23,10 @@ let resources _vh _config_info _path = function
            (fun () ->
              Lwt.return
                (Ocsigen.Response.respond_string ~status:`OK
-                  ~body:(string_of_int length) ())))
+                  ~body:(string_of_int length) ()
+               )
+           )
+        )
 
 let () =
   Ocsigen.Server.start

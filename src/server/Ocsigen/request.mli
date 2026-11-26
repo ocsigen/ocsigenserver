@@ -5,7 +5,8 @@ type file_info = Multipart.file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
-  ; file_content_type : content_type option }
+  ; file_content_type : content_type option
+  }
 
 type post_data = (string * string) list * (string * file_info) list
 
@@ -19,7 +20,7 @@ type client_conn =
     through a proxy and carries the IP address reported in the HTTP headers. *)
 
 val make :
-   ?forward_ip:string list
+     ?forward_ip:string list
   -> ?sub_path:string
   -> ?original_full_path:string
   -> ?request_cache:Polytables.t
@@ -35,7 +36,7 @@ val make :
   -> t
 
 val update :
-   ?ssl:bool
+     ?ssl:bool
   -> ?forward_ip:string list
   -> ?client_conn:client_conn
   -> ?sub_path:string
@@ -79,16 +80,10 @@ val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
 val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
 
 val files :
-   t
-  -> string option
-  -> Int64.t option
-  -> (string * file_info) list Lwt.t option
+  t -> string option -> Int64.t option -> (string * file_info) list Lwt.t option
 
 val post_params :
-   t
-  -> string option
-  -> Int64.t option
-  -> (string * string) list Lwt.t option
+  t -> string option -> Int64.t option -> (string * string) list Lwt.t option
 
 val on_post_data_decoded : t -> (unit -> unit) -> unit
 (** [on_post_data_decoded r f] calls [f] once the decoding of the body of [r]

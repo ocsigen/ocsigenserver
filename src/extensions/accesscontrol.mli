@@ -63,7 +63,7 @@ val or_ : condition list -> condition
 val not_ : condition -> condition
 
 val if_ :
-   condition
+     condition
   -> Ocsigen.Server.instruction list
   -> Ocsigen.Server.instruction list
   -> Ocsigen.Server.instruction
@@ -71,9 +71,7 @@ val if_ :
 val iffound : Ocsigen.Server.instruction list -> Ocsigen.Server.instruction
 
 val ifnotfound :
-   ?code:string
-  -> Ocsigen.Server.instruction list
-  -> Ocsigen.Server.instruction
+  ?code:string -> Ocsigen.Server.instruction list -> Ocsigen.Server.instruction
 
 val notfound : Ocsigen.Server.instruction
 val nextsite : Ocsigen.Server.instruction
@@ -82,9 +80,7 @@ val stop : Ocsigen.Server.instruction
 val forbidden : Ocsigen.Server.instruction
 
 val allow_forward_for :
-   ?proxies:string list
-  -> unit
-  -> Ocsigen.Server.instruction
+  ?proxies:string list -> unit -> Ocsigen.Server.instruction
 (** [allow_forward_for ~proxies ()] takes the address of the client from
     X-Forwarded-For: the rightmost one that is not in [proxies], a list of
     addresses or networks such as ["10.0.0.0/8"] (none by default), or the

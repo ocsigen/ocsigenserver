@@ -25,7 +25,8 @@ type ssl_info =
   ; ssl_privatekey : string option
   ; ssl_ciphers : string option
   ; ssl_dhfile : string option
-  ; ssl_curve : string option }
+  ; ssl_curve : string option
+  }
 
 module Socket_type : sig
   type t =

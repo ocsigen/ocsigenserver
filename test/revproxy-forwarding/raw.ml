@@ -7,8 +7,13 @@
 
 let responses =
   [ ( "/http-1.0"
-    , "HTTP/1.0 200 OK\r\nConnection: close, X-Hop\r\nX-Hop: 1\r\nKeep-Alive: timeout=5\r\nX-End: 1\r\n\r\nbody ended by the connection\n"
-    )
+    , "HTTP/1.0 200 OK\r\n\
+       Connection: close, X-Hop\r\n\
+       X-Hop: 1\r\n\
+       Keep-Alive: timeout=5\r\n\
+       X-End: 1\r\n\
+       \r\n\
+       body ended by the connection\n" )
   ; ( "/length"
     , "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 3\r\n\r\nok\n" )
   ]
@@ -18,13 +23,17 @@ let rec skip_headers ic =
 
 let endless oc =
   output_string oc
-    "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 1000000000000\r\n\r\n";
+    "HTTP/1.1 200 OK\r\n\
+     Connection: close\r\n\
+     Content-Length: 1000000000000\r\n\
+     \r\n";
   let chunk = String.make 65536 'a' in
-  (try
-     while true do
-       output_string oc chunk; flush oc
-     done
-   with Sys_error _ -> print_endline "/endless: connection closed");
+  ( try
+      while true do
+        output_string oc chunk; flush oc
+      done
+    with Sys_error _ -> print_endline "/endless: connection closed"
+  );
   close_out_noerr oc
 
 let answer fd =
@@ -40,7 +49,8 @@ let answer fd =
   | _ ->
       output_string oc
         (Option.value ~default:"HTTP/1.0 404 Not Found\r\n\r\n"
-           (List.assoc_opt path responses));
+           (List.assoc_opt path responses)
+        );
       close_out oc
 
 let () =

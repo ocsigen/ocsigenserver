@@ -35,7 +35,7 @@ val exec_config_file : ?file:string -> unit -> unit
     returns. *)
 
 val serve :
-   ?address:Config.Socket_type.t
+     ?address:Config.Socket_type.t
   -> ?port:int
   -> ?directory_listing:bool
   -> dir:string
@@ -55,7 +55,7 @@ val serve :
     stopped with a signal. Never returns. *)
 
 val reverse_proxy :
-   ?address:Config.Socket_type.t
+     ?address:Config.Socket_type.t
   -> ?port:int
   -> ?maxrequestbodysize:int64 option
   -> target:string
@@ -70,7 +70,7 @@ val reverse_proxy :
     is stopped with a signal. Never returns. *)
 
 val start :
-   ?ports:(Config.Socket_type.t * int) list
+     ?ports:(Config.Socket_type.t * int) list
   -> ?ssl_ports:(Config.Socket_type.t * int) list
   -> ?ssl_info:Config.ssl_info option
   -> ?default_charset:string option
@@ -117,7 +117,7 @@ counterparts. Raises [Invalid_argument] if [maxuploadfilesize] or
 *)
 
 type instruction =
-  Extensions.virtual_hosts
+     Extensions.virtual_hosts
   -> Extensions.config_info
   -> Ocsigen_base.Lib.Url.path
   -> Extensions.extension
@@ -145,7 +145,7 @@ val register_compression : instruction -> unit
     responses without a static dependency on the extension. *)
 
 val host :
-   ?regexp:string
+     ?regexp:string
   -> ?port:int
   -> ?default_hostname:string
   -> ?default_httpport:int
@@ -170,7 +170,7 @@ val host :
     [Invalid_argument] if [maxuploadfilesize] is negative. *)
 
 val site :
-   ?charset:string
+     ?charset:string
   -> Ocsigen_base.Lib.Url.path
   -> instruction list
   -> instruction

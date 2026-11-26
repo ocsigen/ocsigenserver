@@ -42,7 +42,7 @@ val section : Logs.src
 type redirection
 
 val create_redirection :
-   ?full_url:bool
+     ?full_url:bool
   -> ?pipeline:bool
   -> ?keephost:bool
   -> regexp:string

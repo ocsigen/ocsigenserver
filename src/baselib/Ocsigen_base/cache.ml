@@ -105,7 +105,8 @@ end = struct
     ; (* the node added just before *)
       mutable mylist : 'a t option
     ; (* the list to which it belongs *)
-      mutable collection : float option (* the timestamp for removal *) }
+      mutable collection : float option (* the timestamp for removal *)
+    }
 
   (* Doubly-linked list with maximum size.
      The field [oldest] is the first
@@ -118,7 +119,8 @@ end = struct
     ; mutable maxsize : int
     ; mutable finaliser_before : 'a node -> unit
     ; mutable finaliser_after : 'a node -> unit
-    ; time_bound : time_bound option }
+    ; time_bound : time_bound option
+    }
 
   and time_bound = {timer : float; mutable collector : unit Lwt.t option}
 
@@ -160,9 +162,11 @@ end = struct
     ; finaliser_before = (fun _ -> ())
     ; finaliser_after = (fun _ -> ())
     ; time_bound =
-        (match timer with
+        ( match timer with
         | None -> None
-        | Some t -> Some {timer = t; collector = None}) }
+        | Some t -> Some {timer = t; collector = None}
+        )
+    }
 
   (* Remove an element from its list - don't finalise *)
   let remove' node l =
@@ -185,11 +189,12 @@ end = struct
     match node.mylist with
     | None -> ()
     | Some l as a ->
-        (try
-           l.finaliser_before node;
-           assert (node.mylist == a);
-           remove' node l
-         with e -> remove' node l; raise e);
+        ( try
+            l.finaliser_before node;
+            assert (node.mylist == a);
+            remove' node l
+          with e -> remove' node l; raise e
+        );
         l.finaliser_after node
 
   (* These next functions are for the collecting thread *)
@@ -206,7 +211,8 @@ end = struct
     | Some l when l == dl -> (
       match n.collection with
       | None -> assert false
-      | Some c -> if c < Unix.gettimeofday () then remove n else ())
+      | Some c -> if c < Unix.gettimeofday () then remove n else ()
+    )
     | None | Some _ -> ()
 
   let sleep_until = function
@@ -231,7 +237,9 @@ end = struct
                 collect r n;
                 t.collector <- None;
                 update_collector r;
-                Lwt.return () ))
+                Lwt.return ()
+              )
+    )
 
   (* Add a node that do not belong to any list to a list.
      The fields [succ] and [prev] are overridden.
@@ -291,7 +299,8 @@ end = struct
       | Some n when node == n -> ()
       | _ ->
           remove' node l;
-          ignore (add_node node l : _ node option))
+          ignore (add_node node l : _ node option)
+    )
 
   (* assertion: = None *)
   (* we must not change the physical address => use add_node *)
@@ -349,7 +358,8 @@ end = struct
     if m >= size
     then (
       l.maxsize <- m;
-      [])
+      []
+    )
     else if m <= 0
     then failwith "Dlist.set_maxsize"
     else
@@ -373,11 +383,11 @@ end = struct
 end
 
 module Weak = Weak.Make (struct
-    type t = unit -> unit
+  type t = unit -> unit
 
-    let hash = Hashtbl.hash
-    let equal = ( == )
-  end)
+  let hash = Hashtbl.hash
+  let equal = ( == )
+end)
 
 let clear_all = Weak.create 17
 
@@ -390,18 +400,18 @@ functor
   ->
   struct
     module H = Hashtbl.Make (struct
-        type t = A.key
+      type t = A.key
 
-        let equal a a' = a = a'
-        let hash = Hashtbl.hash
-      end)
+      let equal a a' = a = a'
+      let hash = Hashtbl.hash
+    end)
 
     type t =
       { mutable pointers : A.key Dlist.t
       ; mutable table : (A.value * A.key Dlist.node) H.t
       ; finder : A.key -> A.value Lwt.t
       ; clear : unit -> unit
-        (* This function clears the cache. It is put inside the
+            (* This function clears the cache. It is put inside the
                                cache structure so that it is garbage-collected only when the cache
                                is no longer referenced, as the functions themselves are put inside
                                a weak hash table *)
@@ -431,7 +441,8 @@ functor
       assert (
         match Dlist.list_of node with
         | None -> false
-        | Some l -> cache.pointers == l);
+        | Some l -> cache.pointers == l
+      );
       Dlist.up node
 
     let find_in_cache cache k =
@@ -444,7 +455,8 @@ functor
         assert (
           match Dlist.list_of node with
           | None -> false
-          | Some l -> cache.pointers == l);
+          | Some l -> cache.pointers == l
+        );
         Dlist.remove node
       with Not_found -> ()
 
@@ -463,10 +475,11 @@ functor
       try Lwt.return (find_in_cache cache k)
       with Not_found ->
         cache.finder k >>= fun r ->
-        (try
-           (* it may have been added during cache.finder *)
-           ignore (find_in_cache cache k : A.value)
-         with Not_found -> add_no_remove cache k r);
+        ( try
+            (* it may have been added during cache.finder *)
+            ignore (find_in_cache cache k : A.value)
+          with Not_found -> add_no_remove cache k r
+        );
         Lwt.return r
 
     class cache f ?timer size_c =

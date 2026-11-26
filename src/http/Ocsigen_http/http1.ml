@@ -31,9 +31,10 @@ let authority_host s =
       match String.index_opt s ']' with
       | Some k ->
           let address = String.sub s 1 (k - 1) in
-          ( (match Ipaddr.V6.of_string address with
+          ( ( match Ipaddr.V6.of_string address with
             | Ok _ -> Some address
-            | Error _ -> None)
+            | Error _ -> None
+            )
           , k + 1 )
       | None -> None, n
     else
@@ -74,7 +75,8 @@ let check_host version headers ~target =
       match authority_host value with
       | Some "" when value <> "" -> Error "invalid Host"
       | Some _ -> Ok ()
-      | None -> Error "invalid Host")
+      | None -> Error "invalid Host"
+    )
     | [], `HTTP_1_0 -> Ok ()
     | [], (`HTTP_1_1 | `Other _) -> Error "missing Host"
     | _ :: _ :: _, _ -> Error "repeated Host"
@@ -90,16 +92,20 @@ let check_host version headers ~target =
         match Option.map authority_host (absolute_form_authority target) with
         | Some (Some host) when host <> "" -> Ok ()
         | Some (Some _ | None) -> Error "invalid host in the request target"
-        | None -> Error "invalid request target")
+        | None -> Error "invalid request target"
+    )
 
 (* Field values are made of visible characters, spaces, horizontal tabs and
    non-ASCII bytes (RFC 9110, section 5.5): no other control character. *)
 let valid_field_values headers =
   Http.Header.to_list headers
   |> List.for_all (fun (_, value) ->
-    String.for_all
-      (function '\t' -> true | '\000' .. '\031' | '\127' -> false | _ -> true)
-      value)
+      String.for_all
+        (function
+          | '\t' -> true | '\000' .. '\031' | '\127' -> false | _ -> true
+          )
+        value
+  )
 
 (* tchar (RFC 9110, section 5.6.2). *)
 let is_tchar = function

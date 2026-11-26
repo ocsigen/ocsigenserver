@@ -9,7 +9,8 @@ module Body = struct
   type t =
     { write : (string -> unit Lwt.t) -> unit Lwt.t
     ; encoding : Transfer.encoding
-    ; release : unit -> unit Lwt.t }
+    ; release : unit -> unit Lwt.t
+    }
 
   let make ?(release = fun () -> Lwt.return_unit) encoding write =
     {write; encoding; release}
@@ -17,9 +18,7 @@ module Body = struct
   let empty = make (Fixed 0L) (fun _write -> Lwt.return_unit)
 
   let of_string s =
-    make
-      (Transfer.Fixed (Int64.of_int (String.length s)))
-      (fun write -> write s)
+    make (Transfer.Fixed (Int64.of_int (String.length s))) (fun write -> write s)
 
   let of_cohttp ?release ~encoding body =
     let release =
@@ -61,11 +60,7 @@ let respond_string ?headers ~status ~body () =
   make ~body response
 
 let respond_error
-      ?(headers = Header.init ())
-      ?(status = `Internal_server_error)
-      ~body
-      ()
-  =
+    ?(headers = Header.init ()) ?(status = `Internal_server_error) ~body () =
   let headers =
     Header.add_unless_exists headers
       Ocsigen_http.Header.Name.(to_string content_type)
@@ -115,192 +110,204 @@ let parse_range size value =
             else `Range (max 0 (size - suffix), size - 1)
         | Some first, Some last ->
             let last = min last (size - 1) in
-            if first <= last then `Range (first, last) else `Unsatisfiable)
-    | _ -> `Full)
+            if first <= last then `Range (first, last) else `Unsatisfiable
+      )
+    | _ -> `Full
+  )
   | _ -> `Full
 
 let respond_file
-      ?headers
-      ?(status = `OK)
-      ?if_match
-      ?if_unmodified_since
-      ?if_none_match
-      ?if_modified_since
-      ?range
-      ?if_range
-      ?content_type
-      fname
-  =
+    ?headers
+    ?(status = `OK)
+    ?if_match
+    ?if_unmodified_since
+    ?if_none_match
+    ?if_modified_since
+    ?range
+    ?if_range
+    ?content_type
+    fname =
   let exception Isnt_a_file in
   (* Copied from [cohttp-lwt-unix] and adapted to [Body]. *)
   Lwt.catch
     (fun () ->
-       (* Check this isn't a directory first *)
-       let* s = Lwt_unix.stat fname in
-       if Unix.(s.st_kind <> S_REG)
-       then raise Isnt_a_file
-       else
-         let size = s.Unix.st_size in
-         let last_modified = Ocsigen_base.Lib.Date.to_string s.Unix.st_mtime in
-         let etag = weak_etag ~mtime:(int_of_float s.Unix.st_mtime) ~size in
-         (* Validators sent with [200], [206] and [304] responses (RFC 9110
+      (* Check this isn't a directory first *)
+      let* s = Lwt_unix.stat fname in
+      if Unix.(s.st_kind <> S_REG)
+      then raise Isnt_a_file
+      else
+        let size = s.Unix.st_size in
+        let last_modified = Ocsigen_base.Lib.Date.to_string s.Unix.st_mtime in
+        let etag = weak_etag ~mtime:(int_of_float s.Unix.st_mtime) ~size in
+        (* Validators sent with [200], [206] and [304] responses (RFC 9110
             8.8). *)
-         let add_validators h =
-           Http.Header.add
-             (Http.Header.add h "etag"
-                (Ocsigen_http.Header.Entity_tag.to_string etag))
-             "last-modified" last_modified
-         in
-         let headers = Option.value headers ~default:(Http.Header.init ()) in
-         (* A date that is not valid is ignored (RFC 9110 13.1.3 and
+        let add_validators h =
+          Http.Header.add
+            (Http.Header.add h "etag"
+               (Ocsigen_http.Header.Entity_tag.to_string etag)
+            )
+            "last-modified" last_modified
+        in
+        let headers = Option.value headers ~default:(Http.Header.init ()) in
+        (* A date that is not valid is ignored (RFC 9110 13.1.3 and
             13.1.4). *)
-         let date field = Option.bind field Ocsigen_http.Header.Date.parse in
-         (* The file is not modified since a date when its Last-Modified
+        let date field = Option.bind field Ocsigen_http.Header.Date.parse in
+        (* The file is not modified since a date when its Last-Modified
             date, in whole seconds, is not after it. *)
-         let not_modified_since since = Float.trunc s.Unix.st_mtime <= since in
-         (* [If-Match], or else [If-Unmodified-Since], is evaluated first
+        let not_modified_since since = Float.trunc s.Unix.st_mtime <= since in
+        (* [If-Match], or else [If-Unmodified-Since], is evaluated first
             (RFC 9110 13.2.2). [If-Match] uses the strong comparison, which
             the weak entity-tag never passes: only "*" matches. *)
-         let precondition_failed =
-           match if_match with
-           | Some im ->
-               not
-                 (etag_matches
-                    ~equal:Ocsigen_http.Header.Entity_tag.strong_equal im etag)
-           | None -> (
-             match date if_unmodified_since with
-             | Some since -> not (not_modified_since since)
-             | None -> false)
-         in
-         (* [If-None-Match] takes precedence over [If-Modified-Since]
+        let precondition_failed =
+          match if_match with
+          | Some im ->
+              not
+                (etag_matches ~equal:Ocsigen_http.Header.Entity_tag.strong_equal
+                   im etag
+                )
+          | None -> (
+            match date if_unmodified_since with
+            | Some since -> not (not_modified_since since)
+            | None -> false
+          )
+        in
+        (* [If-None-Match] takes precedence over [If-Modified-Since]
             (RFC 9110 13.1.3). A date later than now is ignored, as Apache
             does: the file may change before that date, and the client would
             keep its stale copy. *)
-         let not_modified =
-           match if_none_match with
-           | Some inm ->
-               etag_matches ~equal:Ocsigen_http.Header.Entity_tag.weak_equal inm
-                 etag
-           | None -> (
-             match date if_modified_since with
-             | Some since when since <= Unix.gettimeofday () ->
-                 not_modified_since since
-             | Some _ | None -> false)
-         in
-         if precondition_failed
-         then Lwt.return (respond ~headers ~status:`Precondition_failed ())
-         else if not_modified
-         then
-           Lwt.return
-             (respond ~headers:(add_validators headers) ~status:`Not_modified ())
-         else
-           (* A [Range] request is honoured only if [If-Range] (when present)
+        let not_modified =
+          match if_none_match with
+          | Some inm ->
+              etag_matches ~equal:Ocsigen_http.Header.Entity_tag.weak_equal inm
+                etag
+          | None -> (
+            match date if_modified_since with
+            | Some since when since <= Unix.gettimeofday () ->
+                not_modified_since since
+            | Some _ | None -> false
+          )
+        in
+        if precondition_failed
+        then Lwt.return (respond ~headers ~status:`Precondition_failed ())
+        else if not_modified
+        then
+          Lwt.return
+            (respond ~headers:(add_validators headers) ~status:`Not_modified ())
+        else
+          (* A [Range] request is honoured only if [If-Range] (when present)
               matches the current validators. It calls for a strong comparison
               (RFC 9110 13.1.5): our entity-tag is weak, so it never matches,
               and the date matches only when Last-Modified is a strong
               validator, at least one second older than now (RFC 9110
               8.8.2.2): the file may have changed again within that second. *)
-           let if_range_ok =
-             match if_range with
-             | None -> true
-             | Some v ->
-                 String.equal (String.trim v) last_modified
-                 && Unix.gettimeofday () -. s.Unix.st_mtime >= 1.
-           in
-           let range =
-             match range with
-             | Some r when if_range_ok -> parse_range size r
-             | _ -> `Full
-           in
-           let add_common h =
-             add_validators (Http.Header.add h "accept-ranges" "bytes")
-           in
-           match range with
-           | `Unsatisfiable ->
-               let headers =
-                 Http.Header.add (add_common headers) "content-range"
-                   (Printf.sprintf "bytes */%d" size)
-               in
-               Lwt.return
-                 (respond ~headers ~status:`Requested_range_not_satisfiable ())
-           | (`Full | `Range _) as range ->
-               let first, length, status, add_content_range =
-                 match range with
-                 | `Full -> 0, size, status, fun h -> h
-                 | `Range (first, last) ->
-                     ( first
-                     , last - first + 1
-                     , `Partial_content
-                     , fun h ->
-                         Http.Header.add h "content-range"
-                           (Printf.sprintf "bytes %d-%d/%d" first last size) )
-               in
-               let count = 16384 in
-               let* ic =
-                 Lwt_io.open_file ~buffer:(Lwt_bytes.create count)
-                   ~mode:Lwt_io.input fname
-               in
-               let encoding = Http.Transfer.Fixed (Int64.of_int length) in
-               let close () =
-                 Lwt.catch
-                   (fun () -> Lwt_io.close ic)
-                   (fun e ->
-                      Logs.warn (fun f ->
-                        f "Closing channel failed: %s" (Printexc.to_string e));
-                      Lwt.return_unit)
-               in
-               let stream write =
-                 let send () =
-                   let* () =
-                     if first = 0
-                     then Lwt.return_unit
-                     else Lwt_io.set_position ic (Int64.of_int first)
-                   in
-                   let remaining = ref length in
-                   let rec cat_loop () =
-                     if !remaining <= 0
-                     then Lwt.return_unit
-                     else
-                       let* buf =
-                         Lwt_io.read ~count:(min count !remaining) ic
-                       in
-                       if String.equal buf ""
-                       then Lwt.return_unit
-                       else (
-                         remaining := !remaining - String.length buf;
-                         let* () = write buf in
-                         cat_loop ())
-                   in
-                   cat_loop ()
-                 in
-                 let* () =
-                   Lwt.catch send (fun exn ->
-                     Logs.warn (fun m ->
-                       m "Error resolving file %s (%s)" fname
-                         (Printexc.to_string exn));
-                     Lwt.return_unit)
-                 in
-                 close ()
-               in
-               (* Without its body, as for HEAD, the response still closes the
+          let if_range_ok =
+            match if_range with
+            | None -> true
+            | Some v ->
+                String.equal (String.trim v) last_modified
+                && Unix.gettimeofday () -. s.Unix.st_mtime >= 1.
+          in
+          let range =
+            match range with
+            | Some r when if_range_ok -> parse_range size r
+            | _ -> `Full
+          in
+          let add_common h =
+            add_validators (Http.Header.add h "accept-ranges" "bytes")
+          in
+          match range with
+          | `Unsatisfiable ->
+              let headers =
+                Http.Header.add (add_common headers) "content-range"
+                  (Printf.sprintf "bytes */%d" size)
+              in
+              Lwt.return
+                (respond ~headers ~status:`Requested_range_not_satisfiable ())
+          | (`Full | `Range _) as range ->
+              let first, length, status, add_content_range =
+                match range with
+                | `Full -> 0, size, status, fun h -> h
+                | `Range (first, last) ->
+                    ( first
+                    , last - first + 1
+                    , `Partial_content
+                    , fun h ->
+                        Http.Header.add h "content-range"
+                          (Printf.sprintf "bytes %d-%d/%d" first last size) )
+              in
+              let count = 16384 in
+              let* ic =
+                Lwt_io.open_file ~buffer:(Lwt_bytes.create count)
+                  ~mode:Lwt_io.input fname
+              in
+              let encoding = Http.Transfer.Fixed (Int64.of_int length) in
+              let close () =
+                Lwt.catch
+                  (fun () -> Lwt_io.close ic)
+                  (fun e ->
+                    Logs.warn (fun f ->
+                        f "Closing channel failed: %s" (Printexc.to_string e)
+                    );
+                    Lwt.return_unit
+                  )
+              in
+              let stream write =
+                let send () =
+                  let* () =
+                    if first = 0
+                    then Lwt.return_unit
+                    else Lwt_io.set_position ic (Int64.of_int first)
+                  in
+                  let remaining = ref length in
+                  let rec cat_loop () =
+                    if !remaining <= 0
+                    then Lwt.return_unit
+                    else
+                      let* buf = Lwt_io.read ~count:(min count !remaining) ic in
+                      if String.equal buf ""
+                      then Lwt.return_unit
+                      else (
+                        remaining := !remaining - String.length buf;
+                        let* () = write buf in
+                        cat_loop ()
+                      )
+                  in
+                  cat_loop ()
+                in
+                let* () =
+                  Lwt.catch send (fun exn ->
+                      Logs.warn (fun m ->
+                          m "Error resolving file %s (%s)" fname
+                            (Printexc.to_string exn)
+                      );
+                      Lwt.return_unit
+                  )
+                in
+                close ()
+              in
+              (* Without its body, as for HEAD, the response still closes the
                   file. *)
-               let body = Body.make ~release:close encoding stream in
-               let mime_type =
-                 match content_type with
-                 | Some content_type -> content_type
-                 | None -> Magic_mime.lookup fname
-               in
-               let headers =
-                 add_content_range
-                   (add_common
-                      (Http.Header.add_unless_exists headers "content-type"
-                         mime_type))
-               in
-               Lwt.return (respond ~headers ~status ~body ()))
+              let body = Body.make ~release:close encoding stream in
+              let mime_type =
+                match content_type with
+                | Some content_type -> content_type
+                | None -> Magic_mime.lookup fname
+              in
+              let headers =
+                add_content_range
+                  (add_common
+                     (Http.Header.add_unless_exists headers "content-type"
+                        mime_type
+                     )
+                  )
+              in
+              Lwt.return (respond ~headers ~status ~body ())
+    )
     (function
       | Unix.Unix_error (Unix.ENOENT, _, _) | Isnt_a_file ->
           Lwt.return (respond_not_found ())
-      | exn -> Lwt.reraise exn)
+      | exn -> Lwt.reraise exn
+      )
 
 let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   let a_response =
@@ -312,7 +319,8 @@ let update ?response ?body ?cookies {a_response; a_body; a_cookies} =
   in
   {a_response; a_body; a_cookies}
 
-let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) ?release (a_response, body) =
+let of_cohttp ?(cookies = Ocsigen_cookie_map.empty) ?release (a_response, body)
+    =
   let encoding = Response.encoding a_response in
   let a_body = Body.of_cohttp ?release ~encoding body in
   {a_response; a_body; a_cookies = cookies}
@@ -332,15 +340,16 @@ let make_cookies_header path exp name c _secure =
 let make_cookies_headers path t hds =
   Ocsigen_cookie_map.Map_inner.fold
     (fun name c h ->
-       let open Ocsigen_cookie_map in
-       let exp, v, secure =
-         match c with
-         | OUnset -> Some 0., "", false
-         | OSet (t, v, secure) -> t, v, secure
-       in
-       Cohttp.Header.add h
-         Ocsigen_http.Header.Name.(to_string set_cookie)
-         (make_cookies_header path exp name v secure))
+      let open Ocsigen_cookie_map in
+      let exp, v, secure =
+        match c with
+        | OUnset -> Some 0., "", false
+        | OSet (t, v, secure) -> t, v, secure
+      in
+      Cohttp.Header.add h
+        Ocsigen_http.Header.Name.(to_string set_cookie)
+        (make_cookies_header path exp name v secure)
+    )
     t hds
 
 (* The framing that [headers] announce must be the one [to_response_expert]
@@ -423,7 +432,8 @@ let to_response_expert ~meth ~version t =
     | Transfer.Unknown when sends_body ~meth t ->
         { res with
           Response.headers =
-            Header.replace (Response.headers res) "connection" "close" }
+            Header.replace (Response.headers res) "connection" "close"
+        }
     | Transfer.Unknown | Transfer.Chunked | Transfer.Fixed _ -> res
   in
   ( res
@@ -439,10 +449,12 @@ let to_response_expert ~meth ~version t =
         Lwt.catch
           (fun () -> Body.release t.a_body)
           (fun exn ->
-             Logs.warn (fun f ->
-               f "Releasing the body of a response failed: %s"
-                 (Printexc.to_string exn));
-             Lwt.return_unit) )
+            Logs.warn (fun f ->
+                f "Releasing the body of a response failed: %s"
+                  (Printexc.to_string exn)
+            );
+            Lwt.return_unit
+          ) )
 
 let response t = t.a_response
 let body t = t.a_body
@@ -455,7 +467,8 @@ let status {a_response = {Cohttp.Response.status; _}; _} =
 let set_status ({a_response; _} as a) status =
   { a with
     a_response =
-      {a_response with Cohttp.Response.status :> Cohttp.Code.status_code} }
+      {a_response with Cohttp.Response.status :> Cohttp.Code.status_code}
+  }
 
 let cookies {a_cookies; _} = a_cookies
 
@@ -473,22 +486,17 @@ let header_multi {a_response; _} id =
   Cohttp.Header.get_multi h (Ocsigen_http.Header.Name.to_string id)
 
 let add_header
-      ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
-      id
-      v
-  =
+    ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a) id v =
   { a with
     a_response =
       { a_response with
         Cohttp.Response.headers =
-          Cohttp.Header.add headers (Ocsigen_http.Header.Name.to_string id) v }
+          Cohttp.Header.add headers (Ocsigen_http.Header.Name.to_string id) v
+      }
   }
 
 let add_header_multi
-      ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
-      id
-      l
-  =
+    ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a) id l =
   let id = Ocsigen_http.Header.Name.to_string id in
   let headers =
     List.fold_left (fun headers -> Cohttp.Header.add headers id) headers l
@@ -496,25 +504,25 @@ let add_header_multi
   {a with a_response = {a_response with Cohttp.Response.headers}}
 
 let replace_header
-      ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a)
-      id
-      v
-  =
+    ({a_response = {Cohttp.Response.headers; _} as a_response; _} as a) id v =
   { a with
     a_response =
       { a_response with
         Cohttp.Response.headers =
           Cohttp.Header.replace headers
             (Ocsigen_http.Header.Name.to_string id)
-            v } }
+            v
+      }
+  }
 
 let replace_headers ({a_response; _} as a) l =
   let headers =
     List.fold_left
       (fun headers (id, content) ->
-         Cohttp.Header.replace headers
-           (Ocsigen_http.Header.Name.to_string id)
-           content)
+        Cohttp.Header.replace headers
+          (Ocsigen_http.Header.Name.to_string id)
+          content
+      )
       (Cohttp.Response.headers a_response)
       l
   in

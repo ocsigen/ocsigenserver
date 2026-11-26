@@ -99,7 +99,8 @@ end = struct
     { name : string
     ; mutex : Mutex.t
     ; mutable channel : out_channel option
-    ; mutable failing : bool }
+    ; mutable failing : bool
+    }
 
   let make ~name channel =
     {name; mutex = Mutex.create (); channel; failing = false}
@@ -110,35 +111,42 @@ end = struct
   let write sink s =
     let error =
       with_lock sink.mutex (fun () ->
-        match sink.channel with
-        | None -> None
-        | Some channel -> (
-          match output_string channel s; flush channel with
-          | () ->
-              sink.failing <- false;
-              None
-          | exception Sys_error msg ->
-              if sink.failing
-              then None
-              else (
-                sink.failing <- true;
-                Some msg)))
+          match sink.channel with
+          | None -> None
+          | Some channel -> (
+            match output_string channel s; flush channel with
+            | () ->
+                sink.failing <- false;
+                None
+            | exception Sys_error msg ->
+                if sink.failing
+                then None
+                else (
+                  sink.failing <- true;
+                  Some msg
+                )
+          )
+      )
     in
     Option.iter
       (fun msg ->
-         Logs.err ~src:section (fun fmt ->
-           fmt
-             "Cannot write to %s: %s. Messages to it may be lost until a write succeeds."
-             sink.name msg))
+        Logs.err ~src:section (fun fmt ->
+            fmt
+              "Cannot write to %s: %s. Messages to it may be lost until a \
+               write succeeds."
+              sink.name msg
+        )
+      )
       error
 
   let replace sink channel =
     with_lock sink.mutex (fun () ->
-      (* The old channel is closed with [mutex] locked, so that what it still
+        (* The old channel is closed with [mutex] locked, so that what it still
          buffers is written before anything written to the new one. *)
-      Option.iter close_out_noerr sink.channel;
-      sink.channel <- channel;
-      sink.failing <- false)
+        Option.iter close_out_noerr sink.channel;
+        sink.channel <- channel;
+        sink.failing <- false
+    )
 end
 
 let stdout_sink = Sink.make ~name:"the standard output" (Some Stdlib.stdout)
@@ -174,9 +182,10 @@ let reporter sinks =
         msgf @@ fun ?header ?tags:_ fmt ->
         Format.kasprintf
           (fun line ->
-             List.iter (fun sink -> Sink.write sink line) sinks;
-             over ();
-             k ())
+            List.iter (fun sink -> Sink.write sink line) sinks;
+            over ();
+            k ()
+          )
           ("%a@[" ^^ fmt ^^ "@]@.")
           pp_prefix (src, level, header)
   in
@@ -219,27 +228,32 @@ let syslog_reporter syslog =
     msgf @@ fun ?header ?(tags = Logs.Tag.empty) fmt ->
     Format.kasprintf
       (fun msg ->
-         let facility = Logs.Tag.find Logs_syslog.facility tags in
-         let tags = Logs.Tag.rem Logs_syslog.facility tags in
-         let content =
-           String.concat " "
-             ((if Logs.Tag.is_empty tags
+        let facility = Logs.Tag.find Logs_syslog.facility tags in
+        let tags = Logs.Tag.rem Logs_syslog.facility tags in
+        let content =
+          String.concat " "
+            (( if Logs.Tag.is_empty tags
                then []
-               else [Format.asprintf "%a" Logs.Tag.pp_set tags])
-             @ Option.to_list header @ [msg])
-         in
-         let facility_tag =
-           match facility with
-           | Some facility -> Logs.Tag.(add Logs_syslog.facility facility empty)
-           | None -> Logs.Tag.empty
-         in
-         with_lock syslog_mutex (fun () ->
-           syslog.Logs.report src level ~over:ignore Fun.id (fun m ->
-             m ~tags:facility_tag "%s" content));
-         let prefix = Format.asprintf "%a" pp_prefix (src, level, header) in
-         Sink.write stderr_sink (indented_line prefix msg);
-         over ();
-         k ())
+               else [Format.asprintf "%a" Logs.Tag.pp_set tags]
+             )
+            @ Option.to_list header @ [msg]
+            )
+        in
+        let facility_tag =
+          match facility with
+          | Some facility -> Logs.Tag.(add Logs_syslog.facility facility empty)
+          | None -> Logs.Tag.empty
+        in
+        with_lock syslog_mutex (fun () ->
+            syslog.Logs.report src level ~over:ignore Fun.id (fun m ->
+                m ~tags:facility_tag "%s" content
+            )
+        );
+        let prefix = Format.asprintf "%a" pp_prefix (src, level, header) in
+        Sink.write stderr_sink (indented_line prefix msg);
+        over ();
+        k ()
+      )
       fmt
   in
   {Logs.report}
@@ -261,12 +275,14 @@ let console_access s =
 let stdio_reporter =
   reporter (function
     | Logs.Warning | Logs.Error -> [stderr_sink]
-    | _ -> [stdout_sink])
+    | _ -> [stdout_sink]
+  )
 
 let log_to_stdio () =
   Logs.set_reporter stdio_reporter;
   (* In serve mode the terminal is the access log. *)
-  Atomic.set access_out (fun s -> Sink.write stdout_sink (s ^ "\n"));
+  Atomic.set access_out (fun s -> Sink.write stdout_sink (s ^ "\n")
+  );
   close_log_files ();
   Lwt.return ()
 
@@ -281,7 +297,9 @@ let open_log_files_in_dir dir =
         raise
           (Config.Config_file_error
              (Printf.sprintf "can't open log file %s: %s" path
-                (Unix.error_message error)))
+                (Unix.error_message error)
+             )
+          )
     | exn -> raise exn
   in
   (* [with_channel file f] is [f c], [c] being a new channel to [file], which
@@ -309,16 +327,21 @@ let open_log_files_in_dir dir =
   (* Access lines: verbatim Combined format to [access.log], plus a prefixed
      echo on the console (unless silent). *)
   Atomic.set access_out (fun s ->
-    Sink.write access_sink (s ^ "\n");
-    if not (Config.get_silent ()) then Sink.write stdout_sink (console_access s));
+      Sink.write access_sink (s ^ "\n");
+      if not (Config.get_silent ())
+      then Sink.write stdout_sink (console_access s)
+  );
   Logs.set_reporter
     (reporter (fun level ->
-       let silent = Config.get_silent () in
-       match level with
-       | Logs.Error -> if silent then [error_sink] else [error_sink; stderr_sink]
-       | Logs.Warning ->
-           if silent then [warning_sink] else [warning_sink; stderr_sink]
-       | _ -> if silent then [] else [stdout_sink]));
+         let silent = Config.get_silent () in
+         match level with
+         | Logs.Error ->
+             if silent then [error_sink] else [error_sink; stderr_sink]
+         | Logs.Warning ->
+             if silent then [warning_sink] else [warning_sink; stderr_sink]
+         | _ -> if silent then [] else [stdout_sink]
+     )
+    );
   Lwt.return ()
 
 (* The syslog reporter in use, with its facility. Logs_syslog_unix gives no
@@ -337,13 +360,15 @@ let log_to_syslog facility =
       | Ok r ->
           current_syslog_reporter := Some (facility, r);
           r
-      | Error msg -> failwith msg)
+      | Error msg -> failwith msg
+    )
   in
   Logs.set_reporter (syslog_reporter syslog);
   (* No access.log file in syslog mode: access lines reach syslog (and
      stderr) through Logs. *)
   Atomic.set access_out (fun s ->
-    Logs.app ~src:access_sect (fun fmt -> fmt "%s" s));
+      Logs.app ~src:access_sect (fun fmt -> fmt "%s" s)
+  );
   close_log_files ();
   Lwt.return ()
 
@@ -377,7 +402,8 @@ let warning ?section s = Logs.warn ?src:section (fun fmt -> fmt "%s" s)
 
 let unexpected_exception e s =
   Logs.warn (fun fmt ->
-    fmt ("Unexpected exception in %s" ^^ "@\n%s") s (Printexc.to_string e))
+      fmt ("Unexpected exception in %s" ^^ "@\n%s") s (Printexc.to_string e)
+  )
 
 (****)
 
@@ -411,15 +437,18 @@ let command_f exc _ args =
     if not (set_source_level name level)
     then
       Logs.warn ~src:command_section (fun fmt ->
-        fmt "logs: no log source named %s" name)
+          fmt "logs: no log source named %s" name
+      )
   in
   match args with
   | [name] -> set name None; Lwt.return_unit
   | [name; level_name] ->
-      (match level_of_string (String.lowercase_ascii level_name) with
+      ( match level_of_string (String.lowercase_ascii level_name) with
       | Some level -> set name (Some level)
       | None ->
           Logs.warn ~src:command_section (fun fmt ->
-            fmt "logs: unknown log level %s" level_name));
+              fmt "logs: unknown log level %s" level_name
+          )
+      );
       Lwt.return_unit
   | _ -> Lwt.fail exc

@@ -14,13 +14,14 @@ let fields_text = function
 let show_host ?(target = "/") version fields =
   Printf.printf "%s %s, %s: %s\n" (version_name version) target
     (fields_text fields)
-    (match
-       Ocsigen_http.Http1.check_host version
-         (Http.Header.of_list fields)
-         ~target
-     with
+    ( match
+        Ocsigen_http.Http1.check_host version
+          (Http.Header.of_list fields)
+          ~target
+      with
     | Ok () -> "ok"
-    | Error reason -> reason)
+    | Error reason -> reason
+    )
 
 let () =
   print_endline "== check_host";
@@ -94,9 +95,10 @@ let () =
 let show_method meth =
   Printf.printf "%S: %s\n"
     (Http.Method.to_string meth)
-    (match Ocsigen_http.Http1.request_method meth with
+    ( match Ocsigen_http.Http1.request_method meth with
     | Some meth -> Printf.sprintf "%S" (Http.Method.to_string meth)
-    | None -> "invalid")
+    | None -> "invalid"
+    )
 
 let () =
   print_endline "== request_method";

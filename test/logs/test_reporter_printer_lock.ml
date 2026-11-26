@@ -21,10 +21,12 @@ let () =
       ()
   in
   Log_test.wait_for "the printer did not start" (fun () ->
-    if Atomic.get in_printer then Some () else None);
+      if Atomic.get in_printer then Some () else None
+  );
   (* The printer is formatting its message and waits for [app_mutex]. *)
   Log_test.on_other_thread (fun () ->
-    Logs.warn ~src (fun m -> m "message while the printer waits"));
+      Logs.warn ~src (fun m -> m "message while the printer waits")
+  );
   Mutex.unlock app_mutex;
   Thread.join printing;
   Log_test.check_file dir "warnings.log"

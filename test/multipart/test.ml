@@ -15,7 +15,8 @@ let () =
     | Add_failed -> Some "Add_failed"
     | Stop_failed n -> Some (Printf.sprintf "Stop_failed %d" n)
     | Ocsigen_base.Lib.Ocsigen_Bad_Request -> Some "Bad request"
-    | _ -> None)
+    | _ -> None
+  )
 
 let body =
   "--B\r\nContent-Disposition: form-data; name=\"f\"\r\n\r\nx\r\n--B--\r\n"
@@ -25,13 +26,16 @@ let scan ~add ~stop body =
   Lwt_main.run
     (Lwt.catch
        (fun () ->
-          Lwt.map
-            (fun () -> "ok")
-            (Ocsigen.Multipart.scan_multipart_body_from_stream ~boundary:"B"
-               ~create:(fun _ -> ())
-               ~add ~stop
-               (S.get (S.of_string body))))
-       (fun e -> Lwt.return (Printexc.to_string e)))
+         Lwt.map
+           (fun () -> "ok")
+           (Ocsigen.Multipart.scan_multipart_body_from_stream ~boundary:"B"
+              ~create:(fun _ -> ())
+              ~add ~stop
+              (S.get (S.of_string body))
+           )
+       )
+       (fun e -> Lwt.return (Printexc.to_string e))
+    )
 
 let show ~add_fails ~stop_fails =
   let calls = ref 0 in

@@ -7,7 +7,7 @@ module Body : sig
   val of_string : string -> t
 
   val make :
-     ?release:(unit -> unit Lwt.t)
+       ?release:(unit -> unit Lwt.t)
     -> Cohttp.Transfer.encoding
     -> ((string -> unit Lwt.t) -> unit Lwt.t)
     -> t
@@ -20,7 +20,7 @@ module Body : sig
       writes another body must release that body in [release]. *)
 
   val of_cohttp :
-     ?release:(unit -> unit Lwt.t)
+       ?release:(unit -> unit Lwt.t)
     -> encoding:Cohttp.Transfer.encoding
     -> Cohttp_lwt.Body.t
     -> t
@@ -38,10 +38,7 @@ module Body : sig
 end
 
 val make :
-   ?body:Body.t
-  -> ?cookies:Ocsigen_cookie_map.t
-  -> Cohttp.Response.t
-  -> t
+  ?body:Body.t -> ?cookies:Ocsigen_cookie_map.t -> Cohttp.Response.t -> t
 (** Make a response from a [Cohttp.Response.t]. Note that the
     [transfer-encoding] header is not taken into account if it is set to
     [chunked], use {!add_header}. This is because [Cohttp.Response.make] sets
@@ -49,35 +46,23 @@ val make :
     by the [body]. *)
 
 val respond :
-   ?headers:Cohttp.Header.t
-  -> status:Http.Status.t
-  -> ?body:Body.t
-  -> unit
-  -> t
+  ?headers:Cohttp.Header.t -> status:Http.Status.t -> ?body:Body.t -> unit -> t
 (** Like [make] but with an interface similar to
     [Cohttp_lwt_unix.Server.respond]. *)
 
 val respond_string :
-   ?headers:Cohttp.Header.t
-  -> status:Http.Status.t
-  -> body:string
-  -> unit
-  -> t
+  ?headers:Cohttp.Header.t -> status:Http.Status.t -> body:string -> unit -> t
 (** Like [respond] but with a fixed string body. *)
 
 val respond_error :
-   ?headers:Cohttp.Header.t
-  -> ?status:Http.Status.t
-  -> body:string
-  -> unit
-  -> t
+  ?headers:Cohttp.Header.t -> ?status:Http.Status.t -> body:string -> unit -> t
 (** Like [respond_string], with ["Error: "] prepended to the body, which is
     text: the response has [Content-Type: text/plain; charset=utf-8], unless
     [headers] gives another one. The default status is
     [`Internal_server_error]. *)
 
 val respond_file :
-   ?headers:Cohttp.Header.t
+     ?headers:Cohttp.Header.t
   -> ?status:Http.Status.t
   -> ?if_match:string list
   -> ?if_unmodified_since:string
@@ -117,7 +102,7 @@ val respond_file :
     file (RFC 9110 14.2). *)
 
 val update :
-   ?response:Cohttp.Response.t
+     ?response:Cohttp.Response.t
   -> ?body:Body.t
   -> ?cookies:Ocsigen_cookie_map.t
   -> t
@@ -127,7 +112,7 @@ val update :
     it, the caller releases it ({!Body.release}). *)
 
 val of_cohttp :
-   ?cookies:Ocsigen_cookie_map.t
+     ?cookies:Ocsigen_cookie_map.t
   -> ?release:(unit -> unit Lwt.t)
   -> Cohttp.Response.t * Cohttp_lwt.Body.t
   -> t
@@ -140,7 +125,7 @@ val sends_body : meth:Cohttp.Code.meth -> t -> bool
     status (RFC 9110 6.4.1, 9.3.2). *)
 
 val to_response_expert :
-   meth:Cohttp.Code.meth
+     meth:Cohttp.Code.meth
   -> version:Cohttp.Code.version
   -> t
   -> Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)

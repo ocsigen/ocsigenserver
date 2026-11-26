@@ -47,7 +47,8 @@ let () =
     ; "not-a-size"
     ; "-1"
     ; "-1k"
-    ; "10000000T" ]
+    ; "10000000T"
+    ]
 
 (* Feed a single tag through [later_pass], as if it were a child of
    [<server>] in the configuration file, then read the resulting value. *)
@@ -57,8 +58,7 @@ let show_tag tag value get =
 
 let () =
   let in_memory () = show_int (Ocsigen.Config.get_maxrequestbodysizeinmemory ())
-  and body_size () =
-    show_int64_option (Ocsigen.Config.get_maxrequestbodysize ())
+  and body_size () = show_int64_option (Ocsigen.Config.get_maxrequestbodysize ())
   and upload_size () =
     show_int64_option (Ocsigen.Config.get_maxuploadfilesize ())
   in
@@ -77,7 +77,8 @@ let () =
   let int get () = string_of_int (get ()) in
   print_newline ();
   Printf.printf
-    "defaults -> keepalivetimeout %d, mindatarate %d, maxconnectionsperaddress %d\n"
+    "defaults -> keepalivetimeout %d, mindatarate %d, maxconnectionsperaddress \
+     %d\n"
     (Ocsigen.Config.get_keepalive_timeout ())
     (Ocsigen.Config.get_min_data_rate ())
     (Ocsigen.Config.get_max_connections_per_address ());
@@ -163,14 +164,18 @@ let () =
     { Logs.report =
         (fun _src level ~over k msgf ->
           msgf (fun ?header:_ ?tags:_ fmt ->
-            Format.kasprintf
-              (fun message ->
-                 Printf.printf "%s: %s\n"
-                   (Logs.level_to_string (Some level))
-                   message;
-                 over ();
-                 k ())
-              fmt)) };
+              Format.kasprintf
+                (fun message ->
+                  Printf.printf "%s: %s\n"
+                    (Logs.level_to_string (Some level))
+                    message;
+                  over ();
+                  k ()
+                )
+                fmt
+          )
+        )
+    };
   print_newline ();
   print_endline "tags without effect:";
   Ocsigen.Parseconfig.later_pass
@@ -180,7 +185,8 @@ let () =
     ; Xml.Element ("minthreads", [], [Xml.PCData "10"])
     ; Xml.Element ("maxthreads", [], [Xml.PCData "30"])
     ; Xml.Element ("disablepartialrequests", [], [])
-    ; Xml.Element ("respectpipeline", [], []) ]
+    ; Xml.Element ("respectpipeline", [], [])
+    ]
 
 (* The -vv option sets the level of the existing Ocsigen Server sources, and
    the default level of the sources created afterwards (those of the
@@ -211,14 +217,20 @@ let () =
         Printf.printf "%s -> Invalid_argument: %s\n" name msg
   in
   show "set_maxrequestbodysize (Some (-1L))" (fun () ->
-    Ocsigen.Config.set_maxrequestbodysize (Some (-1L)));
+      Ocsigen.Config.set_maxrequestbodysize (Some (-1L))
+  );
   show "set_maxuploadfilesize (Some (-1L))" (fun () ->
-    Ocsigen.Config.set_maxuploadfilesize (Some (-1L)));
+      Ocsigen.Config.set_maxuploadfilesize (Some (-1L))
+  );
   show "Server.host ~maxuploadfilesize:(Some (-1L))" (fun () ->
-    ignore
-      (Ocsigen.Server.host ~maxuploadfilesize:(Some (-1L)) []
-       : Ocsigen.Extensions.host_config));
+      ignore
+        ( Ocsigen.Server.host ~maxuploadfilesize:(Some (-1L)) []
+          : Ocsigen.Extensions.host_config
+        )
+  );
   show "set_maxrequestbodysize (Some 0L)" (fun () ->
-    Ocsigen.Config.set_maxrequestbodysize (Some 0L));
+      Ocsigen.Config.set_maxrequestbodysize (Some 0L)
+  );
   show "set_maxrequestbodysize None" (fun () ->
-    Ocsigen.Config.set_maxrequestbodysize None)
+      Ocsigen.Config.set_maxrequestbodysize None
+  )

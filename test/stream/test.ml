@@ -17,11 +17,14 @@ let show limit l =
     Lwt_main.run
       (Lwt.catch
          (fun () ->
-            Lwt.map (Printf.sprintf "%S")
-              (S.string_of_stream limit (S.get (chunks l))))
+           Lwt.map (Printf.sprintf "%S")
+             (S.string_of_stream limit (S.get (chunks l)))
+         )
          (function
            | S.String_too_large -> Lwt.return "String_too_large"
-           | e -> Lwt.fail e))
+           | e -> Lwt.fail e
+           )
+      )
   in
   Printf.printf "limit %-7s [%s] -> %s\n"
     (if limit = max_int then "max_int" else string_of_int limit)

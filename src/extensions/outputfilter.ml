@@ -38,15 +38,19 @@ let gen filter = function
                      (Ocsigen.Response.header_multi res header)
                  and a = Ocsigen.Response.remove_header res header in
                  Ocsigen.Response.add_header_multi a header l
-               with Not_found -> res)
+               with Not_found -> res
+             )
              | `Add (header, dest, replace) -> (
                match replace with
                | None -> (
                  match Ocsigen.Response.header res header with
                  | Some _ -> res
-                 | None -> Ocsigen.Response.add_header res header dest)
+                 | None -> Ocsigen.Response.add_header res header dest
+               )
                | Some false -> Ocsigen.Response.add_header res header dest
-               | Some true -> Ocsigen.Response.replace_header res header dest))
+               | Some true -> Ocsigen.Response.replace_header res header dest
+             )
+           )
 
 let gen_code code = function
   | Ocsigen.Extensions.Req_not_found (code, _) ->
@@ -69,42 +73,53 @@ let parse_config config_elem =
         [ Configuration.element ~name:"outputfilter"
             ~attributes:
               [ Configuration.attribute ~name:"header" (fun s ->
-                  header := Some s)
+                    header := Some s
+                )
               ; Configuration.attribute ~name:"regexp" (fun s ->
-                  regexp := Some (Ocsigen_base.Lib.Netstring_pcre.regexp s))
+                    regexp := Some (Ocsigen_base.Lib.Netstring_pcre.regexp s)
+                )
               ; Configuration.attribute ~name:"dest" (fun s -> dest := Some s)
               ; Configuration.attribute ~name:"replace" (fun s ->
-                  try replace := Some (bool_of_string s)
-                  with Invalid_argument _ ->
-                    badconfig
-                      "Wrong value for attribute replace of <outputfilter/>: %s. It should be true or false"
-                      s) ]
+                    try replace := Some (bool_of_string s)
+                    with Invalid_argument _ ->
+                      badconfig
+                        "Wrong value for attribute replace of <outputfilter/>: \
+                         %s. It should be true or false"
+                        s
+                )
+              ]
             ()
         ; Configuration.element ~name:"sethttpcode"
             ~attributes:
               [ Configuration.attribute ~name:"code" (fun s ->
-                  try
-                    match Cohttp.Code.status_of_code (int_of_string s) with
-                    | #Cohttp.Code.status as status -> code := Some status
-                    | `Code _ -> failwith "Invalid code"
-                  with Failure _ ->
-                    badconfig "Invalid code attribute in <sethttpcode>") ]
-            () ]
-      config_elem);
+                    try
+                      match Cohttp.Code.status_of_code (int_of_string s) with
+                      | #Cohttp.Code.status as status -> code := Some status
+                      | `Code _ -> failwith "Invalid code"
+                    with Failure _ ->
+                      badconfig "Invalid code attribute in <sethttpcode>"
+                )
+              ]
+            ()
+        ]
+      config_elem
+  );
   match !code with
   | None -> (
     match !header, !regexp, !dest, !replace with
     | _, Some _, _, Some _ ->
         Ocsigen.Extensions.badconfig
-          "Wrong attributes for <outputfilter/>: attributes regexp and replace can't be set simultaneously"
+          "Wrong attributes for <outputfilter/>: attributes regexp and replace \
+           can't be set simultaneously"
     | Some h, Some r, Some d, None ->
         gen (`Rewrite (Ocsigen_http.Header.Name.of_string h, r, d))
     | Some h, None, Some d, rep ->
         gen (`Add (Ocsigen_http.Header.Name.of_string h, d, rep))
     | _ ->
         Ocsigen.Extensions.badconfig
-          "Wrong attributes for <outputfilter header=... dest=... (regexp=... / replace=...)/>"
-    )
+          "Wrong attributes for <outputfilter header=... dest=... (regexp=... \
+           / replace=...)/>"
+  )
   | Some code -> gen_code code
 
 let () =

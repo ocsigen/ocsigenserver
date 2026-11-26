@@ -1,5 +1,6 @@
 let usage =
-  "usage: ocsigenserver [-c configfile | [--serve] DIR | --reverse-proxy URL [options]]"
+  "usage: ocsigenserver [-c configfile | [--serve] DIR | --reverse-proxy URL \
+   [options]]"
 
 let section = Logs.Src.create "ocsigen:main"
 
@@ -11,8 +12,9 @@ let () = Logs.set_reporter Ocsigen.Messages.stdio_reporter
 let fatal fmt =
   Format.kasprintf
     (fun msg ->
-       Logs.err ~src:section (fun m -> m "%s" msg);
-       exit 2)
+      Logs.err ~src:section (fun m -> m "%s" msg);
+      exit 2
+    )
     fmt
 
 (* Serve-mode options. When a directory to serve is given (either through
@@ -47,7 +49,8 @@ let set_max_request_body_size s =
   | size -> max_request_body_size := Some size
   | exception Ocsigen.Config.Config_file_error _ ->
       fatal
-        "--max-request-body-size: %s is not a size (such as 100MB, 1GiB or infinity)"
+        "--max-request-body-size: %s is not a size (such as 100MB, 1GiB or \
+         infinity)"
         s
 
 let set_configfile f =
@@ -62,9 +65,11 @@ let () =
     "Forward every request to the base URL given, without a configuration file"
   and port_msg = "Port to listen on in the one-command modes (default 8080)"
   and address_msg =
-    "IP address to listen on in the one-command modes (default 127.0.0.1; 0.0.0.0 for all interfaces)"
+    "IP address to listen on in the one-command modes (default 127.0.0.1; \
+     0.0.0.0 for all interfaces)"
   and body_size_msg =
-    "Maximum size of a request body with --reverse-proxy (default 8MB; such as 100MB, 1GiB or infinity)"
+    "Maximum size of a request body with --reverse-proxy (default 8MB; such as \
+     100MB, 1GiB or infinity)"
   and listing_msg = "List directory contents in serve mode (when no index file)"
   and silent_msg =
     "Silent mode (error messages in errors.log only; needs log files or syslog)"
@@ -103,7 +108,8 @@ let () =
       ; "--debug", Arg.Unit Ocsigen.Config.set_debug, debug_msg
       ; "-d", Arg.Unit Ocsigen.Config.set_daemon, daemon_msg
       ; "--daemon", Arg.Unit Ocsigen.Config.set_daemon, daemon_msg
-      ; "--version", Arg.Unit Ocsigen.Config.display_version, version_msg ]
+      ; "--version", Arg.Unit Ocsigen.Config.display_version, version_msg
+      ]
       set_serve_dir usage
   with
   | Arg.Help s -> print_endline s; exit 0
@@ -130,7 +136,8 @@ let () =
     && Ocsigen.Config.get_silent ()
   then
     fatal
-      "-s and -d cannot be combined with serve mode or --reverse-proxy, which log to the terminal";
+      "-s and -d cannot be combined with serve mode or --reverse-proxy, which \
+       log to the terminal";
   if !max_request_body_size <> None && !reverse_proxy = None
   then fatal "--max-request-body-size is only valid with --reverse-proxy";
   match !serve_dir, !reverse_proxy with
@@ -152,5 +159,6 @@ let () =
       if !serve_port <> None || !serve_address <> None || !directory_listing
       then
         fatal
-          "--port, --address and --directory-listing require a directory to serve or --reverse-proxy";
+          "--port, --address and --directory-listing require a directory to \
+           serve or --reverse-proxy";
       Ocsigen.Server.exec_config_file ()

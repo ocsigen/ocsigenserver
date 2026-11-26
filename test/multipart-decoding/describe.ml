@@ -12,12 +12,13 @@ let content_type = function
         ((typ ^ "/" ^ subtype) :: List.map (fun (k, v) -> k ^ "=" ^ v) params)
 
 let file
-      ( field
-      , { Ocsigen.Multipart.tmp_filename
-        ; filesize
-        ; raw_original_filename
-        ; file_content_type } )
-  =
+    ( field
+    , { Ocsigen.Multipart.tmp_filename
+      ; filesize
+      ; raw_original_filename
+      ; file_content_type
+      }
+    ) =
   let content = In_channel.with_open_bin tmp_filename In_channel.input_all in
   let size =
     if Int64.of_int (String.length content) = filesize
@@ -33,4 +34,5 @@ let post_data (params, files) =
     (List.map
        (fun (name, v) -> Printf.sprintf "param %S %s\n" name (value v))
        params
-    @ List.map file files)
+    @ List.map file files
+    )

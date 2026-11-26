@@ -9,7 +9,8 @@ type file_info = Multipart.file_info =
   { tmp_filename : string
   ; filesize : int64
   ; raw_original_filename : string
-  ; file_content_type : content_type option }
+  ; file_content_type : content_type option
+  }
 
 type post_data = Multipart.post_data
 type body = [`Unparsed of Cohttp_lwt.Body.t | `Parsed of post_data Lwt.t]
@@ -22,15 +23,18 @@ type uri =
   ; u_get_params : (string * string list) list Lazy.t
   ; u_get_params_flat : (string * string) list Lazy.t
   ; u_path_string : string Lazy.t
-  ; u_path : string list Lazy.t }
+  ; u_path : string list Lazy.t
+  }
 
 let unflatten_get_params l =
   let module M = Ocsigen_base.Lib.String.Table in
   M.bindings
     (List.fold_left
        (fun acc (id, v) ->
-          M.add id (try v :: M.find id acc with Not_found -> [v]) acc)
-       M.empty l)
+         M.add id (try v :: M.find id acc with Not_found -> [v]) acc
+       )
+       M.empty l
+    )
 
 let flatten_get_params l =
   List.concat (List.map (fun (s, l) -> List.map (fun v -> s, v) l) l)
@@ -77,23 +81,23 @@ type t =
   ; mutable r_request_cache : Polytables.t
   ; mutable r_tries : int
   ; r_connection_closed : unit Lwt.t
-  ; r_timeofday : float }
+  ; r_timeofday : float
+  }
 
 let make
-      ?(forward_ip = [])
-      ?sub_path
-      ?original_full_path
-      ?(request_cache = Polytables.create ())
-      ?cookies_override
-      ~address
-      ~port
-      ~ssl
-      ~filenames
-      ~client_conn
-      ~body
-      ~connection_closed
-      request
-  =
+    ?(forward_ip = [])
+    ?sub_path
+    ?original_full_path
+    ?(request_cache = Polytables.create ())
+    ?cookies_override
+    ~address
+    ~port
+    ~ssl
+    ~filenames
+    ~client_conn
+    ~body
+    ~connection_closed
+    request =
   { r_address = address
   ; r_port = port
   ; r_ssl = ssl
@@ -112,33 +116,35 @@ let make
   ; r_request_cache = request_cache
   ; r_tries = 0
   ; r_connection_closed = connection_closed
-  ; r_timeofday = Unix.gettimeofday () }
+  ; r_timeofday = Unix.gettimeofday ()
+  }
 
 let path_string {r_uri = {u_path_string; _}; _} = Lazy.force u_path_string
 let path {r_uri = {u_path; _}; _} = Lazy.force u_path
 
 let update
-      ?ssl
-      ?forward_ip
-      ?client_conn
-      ?sub_path
-      ?meth
-      ?get_params_flat
-      ?post_data
-      ?cookies_override
-      ?(full_rewrite = false)
-      ?uri
-      ({ r_ssl
-       ; r_uri = {u_uri; _} as r_uri
-       ; r_meth
-       ; r_forward_ip
-       ; r_client_conn
-       ; r_cookies_override
-       ; r_body
-       ; r_sub_path
-       ; r_original_full_path
-       ; _ } as r)
-  =
+    ?ssl
+    ?forward_ip
+    ?client_conn
+    ?sub_path
+    ?meth
+    ?get_params_flat
+    ?post_data
+    ?cookies_override
+    ?(full_rewrite = false)
+    ?uri
+    ( { r_ssl
+      ; r_uri = {u_uri; _} as r_uri
+      ; r_meth
+      ; r_forward_ip
+      ; r_client_conn
+      ; r_cookies_override
+      ; r_body
+      ; r_sub_path
+      ; r_original_full_path
+      ; _
+      } as r
+    ) =
   let r_ssl = match ssl with Some ssl -> ssl | None -> r_ssl
   and r_forward_ip =
     match forward_ip with Some forward_ip -> forward_ip | None -> r_forward_ip
@@ -158,10 +164,11 @@ let update
   and r_original_full_path, r_uri =
     match uri with
     | Some uri ->
-        ( (match full_rewrite, r_original_full_path with
+        ( ( match full_rewrite, r_original_full_path with
           | true, _ -> None
           | false, Some _ -> r_original_full_path
-          | false, _ -> Some (Uri.path (Lazy.force u_uri)))
+          | false, _ -> Some (Uri.path (Lazy.force u_uri))
+          )
         , make_uri uri )
     | None -> r_original_full_path, r_uri
   in
@@ -185,7 +192,8 @@ let update
   ; r_body
   ; r_cookies_override
   ; r_sub_path
-  ; r_original_full_path }
+  ; r_original_full_path
+  }
 
 let uri {r_uri = {u_uri; _}; _} = Lazy.force u_uri
 
@@ -213,9 +221,10 @@ let get_params_flat {r_uri = {u_get_params_flat; _}; _} =
 
 let sub_path_string req =
   remove_trailing_slash_string
-    (match req with
+    ( match req with
     | {r_sub_path = Some r_sub_path; _} -> r_sub_path
-    | r -> path_string r)
+    | r -> path_string r
+    )
 
 let sub_path r = Ocsigen_base.Lib.Url.split_decoded_path (sub_path_string r)
 
@@ -236,17 +245,19 @@ let header_multi {r_headers; _} id =
 let add_header ({r_headers; _} as r) id v =
   { r with
     r_headers =
-      Cohttp.Header.add r_headers (Ocsigen_http.Header.Name.to_string id) v }
+      Cohttp.Header.add r_headers (Ocsigen_http.Header.Name.to_string id) v
+  }
 
 let parse_cookies s =
   let splitted = Ocsigen_base.Lib.String.split ';' s in
   try
     List.fold_left
       (fun beg a ->
-         try
-           let n, v = Ocsigen_base.Lib.String.sep '=' a in
-           Ocsigen_cookie_map.Map_inner.add n v beg
-         with Not_found -> beg)
+        try
+          let n, v = Ocsigen_base.Lib.String.sep '=' a in
+          Ocsigen_cookie_map.Map_inner.add n v beg
+        with Not_found -> beg
+      )
       Ocsigen_cookie_map.Map_inner.empty splitted
   with _ -> Ocsigen_cookie_map.Map_inner.empty
 
@@ -255,7 +266,8 @@ let cookies = function
   | r -> (
     match header r Ocsigen_http.Header.Name.cookie with
     | Some cookies -> parse_cookies cookies
-    | None -> Ocsigen_cookie_map.Map_inner.empty)
+    | None -> Ocsigen_cookie_map.Map_inner.empty
+  )
 
 let content_type r =
   match header r Ocsigen_http.Header.Name.content_type with
@@ -274,8 +286,10 @@ let force_post_data ({r_body; _} as r) s i =
             let v = f s i in
             r.r_body := `Parsed v;
             Some v
-        | None -> None)
-    | None -> None)
+        | None -> None
+      )
+    | None -> None
+  )
 
 let post_params r s i =
   match force_post_data r s i with Some v -> Some (v >|= fst) | None -> None

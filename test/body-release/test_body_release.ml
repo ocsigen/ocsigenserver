@@ -45,18 +45,21 @@ let () =
   Lwt_main.run
     (let* () =
        check "GET" (fun () ->
-         let* response = Ocsigen.Response.respond_file file in
-         send ~meth:`GET response)
+           let* response = Ocsigen.Response.respond_file file in
+           send ~meth:`GET response
+       )
      in
      let* () =
        check "HEAD" (fun () ->
-         let* response = Ocsigen.Response.respond_file file in
-         send ~meth:`HEAD response)
+           let* response = Ocsigen.Response.respond_file file in
+           send ~meth:`HEAD response
+       )
      in
      let* () =
        check "304" (fun () ->
-         let* response = Ocsigen.Response.respond_file file in
-         send ~meth:`GET (Ocsigen.Response.set_status response `Not_modified))
+           let* response = Ocsigen.Response.respond_file file in
+           send ~meth:`GET (Ocsigen.Response.set_status response `Not_modified)
+       )
      in
      (* A body from Cohttp is read to the end by default... *)
      let stream, response = cohttp_response () in
@@ -76,4 +79,5 @@ let () =
      let* drained = Lwt_stream.is_empty stream in
      if drained || not !released
      then fail "of_cohttp ~release: the body is read, or not released";
-     Lwt.return_unit)
+     Lwt.return_unit
+    )

@@ -18,4 +18,5 @@ let () =
     ; ["Cookie"; "Origin"]
     ; ["Cookie"; "ORIGIN"]
     ; ["Cookie, *"]
-    ; ["Cookie"; "  *"] ]
+    ; ["Cookie"; "  *"]
+    ]
