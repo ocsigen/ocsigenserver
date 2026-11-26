@@ -457,6 +457,10 @@ Bug fixes:
    extensions did before the error, such as loading a new extension, is not
    undone. The error no longer starts with "Fatal - ", as the server keeps
    running.
+ * On a reload, when a tag of <server> such as <charset>, <maxretries> or
+   <debugmode/> is removed from the configuration file, its setting goes
+   back to its default value. It used to keep the value of the file read
+   before.
  * A malformed multipart body gets a 400 Bad Request instead of a 500: a part
    without a Content-Disposition header or without a name in it, a part header
    line that is not a header, a body cut right after its first boundary, and a

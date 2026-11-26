@@ -2,7 +2,9 @@
    as they were: [Ocsigen.Parseconfig.later_pass], which reads them each time
    the configuration file is reloaded, puts them back on an error. Each tag
    below gets a value other than the current one, first followed by a tag
-   that does not exist, then alone. *)
+   that does not exist, then alone. A configuration with only an error then
+   keeps them, and one without these tags gives back the values they had
+   before the first reading. *)
 
 module C = Ocsigen.Config
 
@@ -48,15 +50,25 @@ let pass config =
   | () -> print_endline "accepted"
   | exception C.Config_file_error msg -> print_endline msg
 
+let error = Xml.Element ("nosuchtag", [], [])
+
 let () =
   let before = values () in
-  pass (configuration @ [Xml.Element ("nosuchtag", [], [])]);
+  pass (configuration @ [error]);
   let after_error = values () in
   pass configuration;
-  List.iter2
-    (fun (name, _, _) (before, (after_error, after)) ->
-      Printf.printf "<%s>: %s, after the error %s, then %s\n" name before
-        after_error after
+  let after = values () in
+  pass [error];
+  let after_second_error = values () in
+  pass [];
+  let without = values () in
+  List.iteri
+    (fun i (name, _, _) ->
+      let value l = List.nth l i in
+      Printf.printf
+        "<%s>: %s, after the error %s, then %s, after the error %s, without it \
+         %s\n"
+        name (value before) (value after_error) (value after)
+        (value after_second_error) (value without)
     )
     tags
-    (List.combine before (List.combine after_error (values ())))
