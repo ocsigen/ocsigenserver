@@ -1,0 +1,51 @@
+<!-- Configuration of the server under test. The placeholders @...@ are
+     replaced by start_server (see helpers.sh). -->
+<ocsigen>
+  <server>
+    @PORTS@
+    @SERVER_OPTIONS@
+    <logdir>@ROOT@/log</logdir>
+    <datadir>@ROOT@/data</datadir>
+    <commandpipe>@ROOT@/local.cmd</commandpipe>
+    <charset>utf-8</charset>
+
+    <extension findlib-package="ocsigenserver.ext.staticmod"/>
+    <extension findlib-package="ocsigenserver.ext.accesscontrol"/>
+    <extension findlib-package="ocsigenserver.ext.authbasic"/>
+    <extension findlib-package="ocsigenserver.ext.revproxy"/>
+    <extension findlib-package="ocsigenserver.ext.redirectmod"/>
+    <extension findlib-package="ocsigenserver.ext.deflatemod"/>
+    <extension findlib-package="ocsigenserver.ext.securityheaders"/>
+
+    <!-- Protected by a password. -->
+    <host hostfilter="admin.test">
+      <authbasic realm="admin">
+        <plain login="admin" password="s3cret"/>
+      </authbasic>
+      <static dir="@ROOT@/www/admin"/>
+    </host>
+
+    <!-- Forwards everything to the default host of this same server, under
+         /backend/. -->
+    <host hostfilter="proxy.test">
+      <revproxy suburl="(.*)" dest="http://127.0.0.1:@PORT@/backend/\1"/>
+    </host>
+
+    <host hostfilter="redirect.test">
+      <redirect suburl="(.*)" dest="http://elsewhere.test/\1"/>
+    </host>
+
+    <host hostfilter="*">
+      <if>
+        <path regexp="private/.*"/>
+        <then><forbidden/></then>
+      </if>
+      <site path="compressed">
+        <static dir="@ROOT@/www/compressed"/>
+        <deflate compress="only"><type>text/plain</type></deflate>
+      </site>
+      <static dir="@ROOT@/www/public"/>
+      <securityheaders/>
+    </host>
+  </server>
+</ocsigen>

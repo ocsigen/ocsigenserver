@@ -30,6 +30,7 @@ module Name = struct
   let accept_encoding = of_string "Accept-Encoding"
   let accept_language = of_string "Accept-Language"
   let accept_ranges = of_string "Accept-Ranges"
+  let allow = of_string "Allow"
   let authorization = of_string "Authorization"
   let cache_control = of_string "Cache-Control"
   let connection = of_string "Connection"
