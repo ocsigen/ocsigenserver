@@ -53,11 +53,14 @@ let register_basic_authentication_method, get_basic_authentication_method =
 let () =
   let open Xml in
   register_basic_authentication_method @@ function
-  | Element ("plain", [("login", login); ("password", password)], _) ->
-      fun l p -> Lwt.return (login = l && password = p)
-  | Element ("plain", _, _) ->
-      Ocsigen.Extensions.badconfig
-        "<plain> takes the attributes login and password, in this order"
+  | Element ("plain", attributes, _) -> (
+    (* Sorted by name, so that the attributes may come in any order *)
+    match List.sort (fun (a, _) (b, _) -> String.compare a b) attributes with
+    | [("login", login); ("password", password)] ->
+        fun l p -> Lwt.return (login = l && password = p)
+    | _ ->
+        Ocsigen.Extensions.badconfig
+          "<plain> takes the attributes login and password")
   | element -> raise (Bad_config_tag_for_auth (tag_name element))
 
 let gen ~realm ~auth rs =

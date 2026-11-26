@@ -24,9 +24,16 @@ let () =
   let login = "login", "me" and password = "password", "pw" in
   check "plain" (plain [login; password]) "me" "pw";
   check "plain" (plain [login; password]) "me" "other";
+  check "plain password first" (plain [password; login]) "me" "pw";
   check "always" always "anyone" "anything";
   check "unknown" (Xml.Element ("ldap", [], [])) "me" "pw";
   check "plain without password" (plain [login]) "me" "pw";
+  check "plain with another attribute"
+    (plain [login; password; "realm", "r"])
+    "me" "pw";
+  check "plain with two logins"
+    (plain [login; "login", "you"; password])
+    "me" "pw";
   check "always with an attribute"
     (Xml.Element ("always", ["user", "me"], []))
     "me" "pw"
