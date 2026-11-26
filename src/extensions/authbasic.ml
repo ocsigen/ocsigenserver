@@ -20,16 +20,19 @@
 
 open Lwt.Infix
 
-let section = Logs.Src.create "ocsigen:ext:access-control"
+let section = Logs.Src.create "ocsigen:ext:authbasic"
 
 type auth = string -> string -> bool Lwt.t
 
 exception Bad_config_tag_for_auth of string
 
+let tag_name = function
+  | Xml.Element (tag, _, _) -> tag
+  | Xml.PCData _ -> "#text"
+
 let register_basic_authentication_method, get_basic_authentication_method =
   let fun_auth =
-    ref (fun _config ->
-      raise (Bad_config_tag_for_auth "<unknown basic authentication method>"))
+    ref (fun config -> raise (Bad_config_tag_for_auth (tag_name config)))
   in
   (* register_basic_authentication_method *)
   ( (fun new_fun_auth ->
@@ -39,16 +42,26 @@ let register_basic_authentication_method, get_basic_authentication_method =
           try old_fun_auth config
           with Bad_config_tag_for_auth _c -> new_fun_auth config)
   , (* get_basic_authentication_method *)
-    fun config -> !fun_auth config )
+    fun config ->
+      try !fun_auth config
+      with Bad_config_tag_for_auth _ ->
+        Ocsigen.Extensions.badconfig
+          "Unknown authentication method <%s> in <authbasic>" (tag_name config)
+  )
 
 (* Basic authentication with a predefined login/password (example) *)
 let () =
   let open Xml in
   register_basic_authentication_method @@ function
-  | Element ("plain", [("login", login); ("password", password)], _) ->
-      fun l p -> Lwt.return (login = l && password = p)
-  | _ ->
-      raise (Ocsigen.Extensions.Bad_config_tag_for_extension "not for htpasswd")
+  | Element ("plain", attributes, _) -> (
+    (* Sorted by name, so that the attributes may come in any order *)
+    match List.sort (fun (a, _) (b, _) -> String.compare a b) attributes with
+    | [("login", login); ("password", password)] ->
+        fun l p -> Lwt.return (login = l && password = p)
+    | _ ->
+        Ocsigen.Extensions.badconfig
+          "<plain> takes the attributes login and password")
+  | element -> raise (Bad_config_tag_for_auth (tag_name element))
 
 let gen ~realm ~auth rs =
   let reject () =

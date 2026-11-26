@@ -115,6 +115,12 @@ Incompatible changes:
    hostfilter. A configuration without such a catch-all host now answers
    these requests 404: add one if a load balancer checks the server with
    requests without Host.
+ * The log source of Authbasic is named "ocsigen:ext:authbasic". It used to
+   share the name of the log source of Accesscontrol,
+   "ocsigen:ext:access-control", so
+   <loglevel source="ocsigen:ext:access-control"> also set the level of the
+   messages of Authbasic. They now need
+   <loglevel source="ocsigen:ext:authbasic">.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -194,6 +200,7 @@ New features:
    comparisons of RFC 9110).
  * OCaml API: Ocsigen_http.Header.Date.parse reads the three formats of HTTP
    dates.
+ * Authbasic: <plain> accepts its attributes login and password in any order.
 
 Bug fixes:
  * In syslog mode, reopening the logs (the reopen_logs order of a log
@@ -533,6 +540,12 @@ Bug fixes:
  * Revproxy: a body that the target ends by closing its connection is sent
    chunked to an HTTP/1.1 client, whose connection is no longer closed after
    it.
+ * Authbasic: an authentication method registered with
+   register_basic_authentication_method is now tried. <plain> rejected the
+   other elements with an exception that stopped the search, and the one that
+   lets a method pass on, Authbasic.Bad_config_tag_for_auth, was not exported.
+   An unknown method, or a <plain> whose attributes are not login and
+   password, now gives a clear configuration error.
 
 ==== 8.0.0 (2026-09-24) ===
 
