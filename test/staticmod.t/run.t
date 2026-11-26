@@ -60,6 +60,39 @@ This 404 is the one of a missing file: the error page is served.
   $ curl -s --max-time 10 http://127.0.0.1:$PORT1/.env
   error page
 
+The preconditions and the range of the request do not apply to an error
+page (RFC 9110 sections 13.2.1 and 14.2): it is sent whole, with its status.
+
+  $ TZ=UTC touch -t 202001011200 error.html
+  $ for h in 'If-None-Match: *' 'If-Match: "x"' 'Range: bytes=0-1' \
+  >   'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT' \
+  >   'If-Unmodified-Since: Tue, 01 Jan 2019 00:00:00 GMT'; do
+  >   curl -s -w ' %{http_code}\n' --max-time 10 -H "$h" \
+  >     http://127.0.0.1:$PORT1/missing
+  > done
+  error page
+   404
+  error page
+   404
+  error page
+   404
+  error page
+   404
+  error page
+   404
+
+It does not carry the validators of the file, nor Accept-Ranges, which would
+invite such requests:
+
+  $ curl -s -o /dev/null -D - --max-time 10 http://127.0.0.1:$PORT1/missing |
+  >   tr -d '\r' | grep -iv '^date:'
+  HTTP/1.1 404 Not Found
+  content-type: text/html; charset=utf-8
+  server: Ocsigen
+  content-length: 11
+  connection: keep-alive
+  
+
 Directory listings leave the hidden files out, except /.well-known/:
 
   $ rm www/index.html

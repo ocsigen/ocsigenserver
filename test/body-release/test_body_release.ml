@@ -8,7 +8,9 @@ let fail fmt = Printf.ksprintf (fun s -> prerr_endline s; exit 1) fmt
 let open_files () = Array.length (Sys.readdir "/dev/fd")
 
 let send ~meth response =
-  let _, write = Ocsigen.Response.to_response_expert ~meth response in
+  let _, write =
+    Ocsigen.Response.to_response_expert ~meth ~version:`HTTP_1_1 response
+  in
   write () Lwt_io.null
 
 let check what f =

@@ -49,15 +49,18 @@ Incompatible changes:
    "Process N detached" message of daemon mode, its only use, now goes
    through Logs (source ocsigen:main).
  * Ocsigen.Response.to_response_expert takes the method of the request
-   (~meth), to send no body in response to HEAD. A body that is not sent is
-   released instead: Ocsigen.Response.Body.make takes a function ~release
-   (for example to close a file). Ocsigen.Response.of_cohttp and
+   (~meth), to send no body in response to HEAD, and its HTTP version
+   (~version), to send no chunked body to an HTTP/1.0 client. A body that is
+   not sent is released instead: Ocsigen.Response.Body.make takes a function
+   ~release (for example to close a file). Ocsigen.Response.of_cohttp and
    Ocsigen.Response.Body.of_cohttp take one too; by default, they release
    the body by reading it to the end. An extension that replaces a body
    without writing it must free it with Ocsigen.Response.Body.release.
  * Ocsigen.Multipart.post_params takes a function (~on_file) that it calls
    with the name of each uploaded file it creates, so that the caller can
    remove it.
+ * Ocsigen.Response.respond_file takes ?if_none_match as the list of the
+   lines of the header field, which may be written on several lines.
  * The one-command modes (ocsigenserver DIR, --serve, --reverse-proxy) now
    listen on the loopback interface (127.0.0.1) by default, instead of on all
    the interfaces, and their startup banner shows the address. The new
@@ -186,6 +189,11 @@ New features:
    requests that cohttp does not enforce, such as the Host of a request.
  * OCaml API: Ocsigen_http.Header.Name.allow, the name of the Allow header
    field.
+ * OCaml API: Ocsigen_http.Header.Entity_tag parses lists of entity tags, as
+   in If-Match and If-None-Match, and compares them (weak and strong
+   comparisons of RFC 9110).
+ * OCaml API: Ocsigen_http.Header.Date.parse reads the three formats of HTTP
+   dates.
 
 Bug fixes:
  * In syslog mode, reopening the logs (the reopen_logs order of a log
@@ -487,6 +495,44 @@ Bug fixes:
    and XML files get the charset of the host again, so a text file served
    from a configuration file now has "; charset=utf-8" by default (serve mode
    gives no charset, as before).
+ * Static files: If-None-Match uses the weak comparison, as RFC 9110 requires:
+   "x" now matches the ETag W/"x". All the If-None-Match lines of a request
+   are read, and a comma within an entity tag no longer splits it.
+ * Static files: If-Modified-Since gives 304 when the file has not changed
+   since the date, not only when the date is exactly its Last-Modified one,
+   and the obsolete date formats (RFC 850 and asctime) are accepted. The
+   field is ignored when it is written on several lines (RFC 9110 13.1.3):
+   the last line was used. A date later than the time of the request is
+   ignored, as Apache does.
+ * Static files: a false If-Match or If-Unmodified-Since condition is
+   answered with 412, as RFC 9110 requires; they were ignored. As the ETag
+   is weak, If-Match only succeeds with "*". Ocsigen.Response.respond_file
+   takes ~if_match and ~if_unmodified_since.
+ * Staticmod: the conditional headers and Range of the request no longer
+   apply to an error page (<static code>): it could be answered with an
+   empty 404 instead of a 304, or with a part of it. It no longer carries
+   the ETag, Last-Modified and Accept-Ranges of its file.
+ * Static files: a HEAD request with a Range header gets 200, as RFC 9110
+   requires: ranges are only defined for GET. It got 206.
+ * Deflatemod: content codings are case-insensitive, as RFC 9110 says:
+   "Accept-Encoding: GZIP" now gets gzip.
+ * Deflatemod: a response of a type that it compresses carries
+   "Vary: Accept-Encoding" even when it is not compressed, so that a shared
+   cache does not serve the uncompressed copy to the clients that accept a
+   compressed one.
+ * Deflatemod: 304 responses, and 206 responses of a type it compresses,
+   carry "Vary: Accept-Encoding", as the complete response would (RFC 9110
+   15.4.5 and 15.3.7).
+ * A chunked body, such as a compressed or streamed one, goes to an HTTP/1.0
+   client without the chunked coding, which HTTP/1.0 does not have (RFC 9112
+   6.1), and the connection is closed after it. A body of unknown length (as
+   sent by Eliom's Flow5 module) is now sent chunked to an HTTP/1.1 client,
+   and to an HTTP/1.0 client with "Connection: close", in both cases without
+   the Content-Length its producer may have set: the connection was kept
+   open, so that the client could not find the end of the response.
+ * Revproxy: a body that the target ends by closing its connection is sent
+   chunked to an HTTP/1.1 client, whose connection is no longer closed after
+   it.
 
 ==== 8.0.0 (2026-09-24) ===
 

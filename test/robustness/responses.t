@@ -1,6 +1,6 @@
 Conformance of responses: HEAD, byte ranges, conditional requests and
-compression (RFC 9110 sections 8.4, 9.3.2, 12.5.3, 13 and 14). Answers marked
-BUG show the current behaviour, with the expected one in the text.
+compression (RFC 9110 sections 8.4, 9.3.2, 12.5.3, 13 and 14), and the
+framing of responses to HTTP/1.0 clients (RFC 9112 section 6.1).
 
 The modification time of the files is fixed, so that their validators are
 known: ETag W/"5e0c89c0-6" for hello.txt ("hello\n"), W/"5e0c89c0-4000" for
@@ -183,19 +183,19 @@ A missing file gives 404, not 416.
   $ status GET /nothere 'Range: bytes=1-2'
   HTTP/1.1 404 Not Found
 
-BUG: range requests are only defined for GET, and the Range header field of
-any other method must be ignored (section 14.2). HEAD gets 206. Expected:
-200.
+Range requests are only defined for GET, and the Range header field of any
+other method is ignored (section 14.2): HEAD gets 200.
 
   $ status HEAD /hello.txt 'Range: bytes=1-2'
-  HTTP/1.1 206 Partial Content
+  HTTP/1.1 200 OK
 
 POST does not apply to a static file, Range or not.
 
   $ status POST /hello.txt 'Range: bytes=1-2' 'Content-Length: 0'
   HTTP/1.1 405 Method Not Allowed
 
-Ranges of a file under deflatemod work as elsewhere.
+Ranges of a file under deflatemod work as elsewhere. A 206 response carries
+the Vary header field that the 200 response would have (section 15.3.7).
 
   $ req GET /compressed/big.txt 'Range: bytes=0-9'
   HTTP/1.1 206 Partial Content
@@ -204,6 +204,7 @@ Ranges of a file under deflatemod work as elsewhere.
   etag: W/"5e0c89c0-4000"
   last-modified: Wed, 01 Jan 2020 12:00:00 GMT
   content-range: bytes 0-9/16384
+  vary: accept-encoding
   content-length: 10
   
   0123456789
@@ -220,6 +221,7 @@ the selected bytes would not match Content-Range.
   etag: W/"5e0c89c0-4000"
   last-modified: Wed, 01 Jan 2020 12:00:00 GMT
   content-range: bytes 0-9/16384
+  vary: accept-encoding
   content-length: 10
   
   0123456789
@@ -246,11 +248,16 @@ tag, alone or in a list, or "*", gives 304. Entity tags are case-sensitive.
   $ status GET /hello.txt 'If-None-Match: W/"5E0C89C0-6"'
   HTTP/1.1 200 OK
 
-BUG: with the weak comparison, "5e0c89c0-6" matches W/"5e0c89c0-6" (section
-8.8.3.2). Expected: 304.
+With the weak comparison, "5e0c89c0-6" matches W/"5e0c89c0-6" (section
+8.8.3.2). The list may be written on several lines, and a comma may appear in
+an entity tag.
 
   $ status GET /hello.txt 'If-None-Match: "5e0c89c0-6"'
-  HTTP/1.1 200 OK
+  HTTP/1.1 304 Not Modified
+  $ status GET /hello.txt 'If-None-Match: "a"' "If-None-Match: $E"
+  HTTP/1.1 304 Not Modified
+  $ status GET /hello.txt "If-None-Match: \"a,\", $E"
+  HTTP/1.1 304 Not Modified
 
 A 304 response carries the validators, and no Content-Length, which would
 have to be the one of the 200 response (section 8.6).
@@ -263,16 +270,27 @@ have to be the one of the 200 response (section 8.6).
   
   [idle]
 
-BUG: a 304 response must carry the Vary header field that the 200 response
-would have (section 15.4.5). The 304 response for a compressed file has
-none. Expected: "vary: accept-encoding".
+A 304 response carries the Vary header field that the 200 response would
+have (section 15.4.5).
 
   $ req GET /compressed/big.txt 'If-None-Match: W/"5e0c89c0-4000"' \
   >   'Accept-Encoding: gzip'
   HTTP/1.1 304 Not Modified
   etag: W/"5e0c89c0-4000"
   last-modified: Wed, 01 Jan 2020 12:00:00 GMT
+  vary: accept-encoding
   
+  [idle]
+
+So does a 304 response for a type that deflatemod does not compress (it only
+compresses text/plain here): a 304 has no Content-Type, so deflatemod cannot
+tell. This may only make a cache keep more copies than needed.
+
+  $ printf 'page\n' > www/compressed/page.html
+  $ req GET /compressed/page.html 'If-None-Match: *' 'Accept-Encoding: gzip' |
+  >   grep -iE '^(HTTP/|vary|\[)'
+  HTTP/1.1 304 Not Modified
+  vary: accept-encoding
   [idle]
   $ settle=0.1
 
@@ -292,31 +310,57 @@ is ignored when the date is invalid, or when If-None-Match is present
   >   'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
   HTTP/1.1 200 OK
 
-Tolerated: only a date equal to Last-Modified gives 304, and a later one
-gives 200. RFC 9110 section 13.1.3 allows servers to honor only exact
-matches, although "not modified since" is more useful.
+A field with more than one value is ignored too (section 13.1.3), whatever
+the values and their order:
+
+  $ status GET /hello.txt 'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT' \
+  >   'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Modified-Since: Wed, 01 Jan 2020 11:59:59 GMT' \
+  >   'If-Modified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
+  HTTP/1.1 200 OK
+
+The condition of If-Modified-Since is "not modified since": a later date
+gives 304 too (section 13.1.3, which allows honoring only exact matches, but
+this is less useful). The obsolete date formats, RFC 850 and asctime, are
+accepted (section 5.6.7).
 
   $ status GET /hello.txt 'If-Modified-Since: Wed, 01 Jan 2020 12:00:01 GMT'
-  HTTP/1.1 200 OK
-
-BUG: a recipient must accept the obsolete date formats, RFC 850 and asctime
-(section 5.6.7). Expected: 304 for both requests.
-
+  HTTP/1.1 304 Not Modified
   $ status GET /hello.txt 'If-Modified-Since: Wednesday, 01-Jan-20 12:00:00 GMT'
-  HTTP/1.1 200 OK
+  HTTP/1.1 304 Not Modified
   $ status GET /hello.txt 'If-Modified-Since: Wed Jan  1 12:00:00 2020'
+  HTTP/1.1 304 Not Modified
+
+A date later than the time of the request is ignored, as Apache does: the
+file may change before that date, and the client would keep its stale copy.
+
+  $ status GET /hello.txt 'If-Modified-Since: Fri, 01 Jan 2100 00:00:00 GMT'
   HTTP/1.1 200 OK
 
-BUG: If-Match and If-Unmodified-Since are ignored. A false condition must be
-answered 412 (sections 13.1.1, 13.1.4 and 13.2.2). If-Match uses the strong
-comparison, which a weak entity tag never passes. Expected: 412 for the three
-requests.
+A false If-Match or If-Unmodified-Since condition is answered 412 (sections
+13.1.1, 13.1.4 and 13.2.2). If-Match uses the strong comparison, which a weak
+entity tag never passes: only "*" matches. If-Unmodified-Since is ignored
+when the date is invalid, when the field has more than one value (section
+13.1.4), or when If-Match is present (section 13.2.2).
 
   $ status GET /hello.txt 'If-Match: "other"'
-  HTTP/1.1 200 OK
+  HTTP/1.1 412 Precondition Failed
   $ status GET /hello.txt "If-Match: $E"
+  HTTP/1.1 412 Precondition Failed
+  $ status GET /hello.txt 'If-Match: *'
   HTTP/1.1 200 OK
   $ status GET /hello.txt 'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT'
+  HTTP/1.1 412 Precondition Failed
+  $ status GET /hello.txt 'If-Unmodified-Since: Wed, 01 Jan 2020 12:00:00 GMT'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Unmodified-Since: garbage'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT' \
+  >   'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT'
+  HTTP/1.1 200 OK
+  $ status GET /hello.txt 'If-Match: *' \
+  >   'If-Unmodified-Since: Tue, 01 Jan 2019 12:00:00 GMT'
   HTTP/1.1 200 OK
 
 Methods other than GET and HEAD do not apply to a static file: they get 405
@@ -418,18 +462,23 @@ none. When identity is excluded too, 406 is allowed (sections 12.4.1 and
 
   $ coding br
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding 'gzip;q=0'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding 'gzip;q=abc'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding 'gzip;q=0, *'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding '*'
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ coding '*;q=0'
   HTTP/1.1 406 Not Acceptable
@@ -438,23 +487,24 @@ none. When identity is excluded too, 406 is allowed (sections 12.4.1 and
   HTTP/1.1 406 Not Acceptable
   content-length: 21
 
-BUG: content-coding names are case-insensitive (section 8.4.1). Expected:
-gzip.
+Content-coding names are case-insensitive (section 8.4.1).
 
   $ coding GZIP
   HTTP/1.1 200 OK
-  content-length: 16384
+  content-encoding: gzip
+  vary: accept-encoding
+  transfer-encoding: chunked
 
-BUG: the response depends on Accept-Encoding, so it should carry
-"Vary: accept-encoding" even when it is not compressed (section 12.5.5).
-Otherwise a shared cache may serve the uncompressed copy to every client.
+The response depends on Accept-Encoding, so it carries "Vary:
+accept-encoding" even when it is not compressed (section 12.5.5). Otherwise
+a shared cache could serve the uncompressed copy to every client.
 
   $ coding ''
   HTTP/1.1 200 OK
+  vary: accept-encoding
   content-length: 16384
   $ req GET /compressed/big.txt | grep -ic '^vary'
-  0
-  [1]
+  1
 
 A compressed response is well framed: a request that follows on the same
 connection is answered.
@@ -466,17 +516,19 @@ connection is answered.
   HTTP/1.1 200 OK
   [idle]
 
-BUG: the chunked transfer coding must not be used in a response to an
-HTTP/1.0 request (RFC 9112 section 6.1): an HTTP/1.0 client takes the chunk
-sizes as part of the content, and the compressed data is corrupted. Expected:
-no Transfer-Encoding, content delimited by closing the connection.
+The chunked transfer coding is not used in a response to an HTTP/1.0 request
+(RFC 9112 section 6.1): an HTTP/1.0 client would take the chunk sizes as part
+of the content. The compressed content is delimited by closing the
+connection, which the response says.
 
   $ printf 'GET /compressed/big.txt HTTP/1.0\r\nHost: x\r\nAccept-Encoding: gzip\r\n\r\n' |
   >   rawhttp send --port "$PORT" --idle 0.5 |
-  >   grep -iE '^(HTTP/|transfer-encoding|content-length|0$|\[)'
+  >   grep -iE '^(HTTP/|transfer-encoding|content-length|content-encoding|connection|\\x1F\\x8B|\[)' |
+  >   cut -c 1-24
   HTTP/1.1 200 OK
-  transfer-encoding: chunked
-  0
+  content-encoding: gzip
+  connection: close
+  \x1F\x8B\x08\x00\x00\x00
   [closed]
 
 The server still works.
