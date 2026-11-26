@@ -44,13 +44,46 @@ type ending =
 
 type outcome = {received : string; ending : ending}
 
-val receive : ?first_byte:float -> ?idle:float -> ?limit:int -> conn -> outcome
+type framing =
+  | Complete of {close : bool}
+  (** One or more complete responses, the last one final (not 1xx), and
+          nothing else. [close] tells whether the last one closes the
+          connection ([Connection: close], or HTTP/1.0 without keep-alive). *)
+  | Incomplete
+  (** The last response, or the final one that must follow a 1xx, is not
+          complete yet; or nothing has been received. *)
+  | Unframed
+  (** Not responses, or a response whose end is the end of the
+          connection, or that switches to another protocol (101). *)
+
+val framing : string -> framing
+(** [framing received] tells whether [received] ends at the end of a final
+    response, as delimited by Content-Length or the chunked coding (RFC 9112
+    section 6.3); 1xx, 204 and 304 responses have no content. The request
+    method is not known, so the response to a HEAD request is complete only
+    when as many bytes as its Content-Length follow it. *)
+
+val receive :
+   ?first_byte:float
+  -> ?idle:float
+  -> ?settle:float
+  -> ?limit:int
+  -> conn
+  -> outcome
 (** [receive conn] reads from [conn] until the server closes the connection,
     until nothing arrives for [idle] seconds (default [2.]), or until [limit]
     bytes have been received (default 1 MiB). Before the first byte, the delay
     is [first_byte] seconds (default [10.]), or [idle] if longer, so that a
     server slowed down by a loaded machine is not taken for one that does not
-    answer. *)
+    answer.
+
+    When the bytes received so far are complete responses (see {!framing})
+    and the last one leaves the connection open, the delay is [settle]
+    seconds, at most [idle] (default [idle]). Bytes that follow within that
+    delay, such as content sent after a 204 or 304 response, or a response to
+    a pipelined request, are still seen; later ones are not. After a response
+    that closes the connection ([Connection: close], or HTTP/1.0 without
+    keep-alive), the close is waited for [idle] seconds. *)
 
 val close : conn -> unit
 (** [close conn] closes [conn]. It never fails. *)
@@ -59,6 +92,7 @@ val exchange :
    ?trickle:int * float
   -> ?first_byte:float
   -> ?idle:float
+  -> ?settle:float
   -> ?limit:int
   -> target
   -> string
@@ -70,7 +104,7 @@ val exchange :
 
 (** {1 Rendering} *)
 
-val render : ?status_only:bool -> outcome -> string
+val render : ?status_only:bool -> ?validators:bool -> outcome -> string
 (** [render outcome] is a printable rendering of [outcome] that does not
     depend on the time of the test:
     - line ends ["\r\n"] become ["\n"], other control and non-ASCII bytes
@@ -81,10 +115,13 @@ val render : ?status_only:bool -> outcome -> string
       [[overflow]].
 
     With [~status_only:true], only the status lines ([HTTP/...]) are kept,
-    followed by the ending line. *)
+    followed by the ending line. With [~validators:true], the [ETag] and
+    [Last-Modified] lines are kept, for tests that fix the modification time
+    of the files they request. *)
 
 val status_codes : string -> int list
 (** [status_codes received] is the list of status codes of the responses in
-    [received], in order. Only lines that start with ["HTTP/"] at the
-    beginning of the data or after a line end are considered, so this is a
-    heuristic when bodies contain such lines. *)
+    [received], in order: the three digits that follow the version in status
+    lines. Only lines that start with ["HTTP/"] at the beginning of the data or
+    after a line end are considered, so this is a heuristic when bodies
+    contain such lines. *)
