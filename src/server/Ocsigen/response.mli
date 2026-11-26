@@ -99,7 +99,7 @@ val respond_file :
     {!Ocsigen_http.Header.Entity_tag.parse_list}).
     If a [range] (the [Range] header) is passed and satisfiable, a single byte
     range is returned as [206 Partial Content] with a [Content-Range] header
-    (RFC 7233); an unsatisfiable range gives [416]. A passed [if_range] (the
+    (RFC 9110 14); an unsatisfiable range gives [416]. A passed [if_range] (the
     [If-Range] header) must be the [Last-Modified] date, unchanged for at
     least a second, for the range to be honoured: [If-Range] calls for a strong
     comparison, which the weak [ETag] never passes (RFC 9110 13.1.5). *)

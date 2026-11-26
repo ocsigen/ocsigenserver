@@ -93,7 +93,7 @@ let etag_matches ~equal values etag =
   | `Any -> true
   | `Tags tags -> List.exists (equal etag) tags
 
-(* Parse a single byte-range request against the total [size] (RFC 7233).
+(* Parse a single byte-range request against the total [size] (RFC 9110 14).
    Returns the inclusive bounds [`Range (first, last)], [`Full] when there is no
    usable single range (absent, malformed or multi-range), or [`Unsatisfiable]. *)
 let parse_range size value =
@@ -141,7 +141,8 @@ let respond_file
          let size = s.Unix.st_size in
          let last_modified = Ocsigen_base.Lib.Date.to_string s.Unix.st_mtime in
          let etag = weak_etag ~mtime:(int_of_float s.Unix.st_mtime) ~size in
-         (* Validators sent with [200], [206] and [304] responses (RFC 7232). *)
+         (* Validators sent with [200], [206] and [304] responses (RFC 9110
+            8.8). *)
          let add_validators h =
            Http.Header.add
              (Http.Header.add h "etag"

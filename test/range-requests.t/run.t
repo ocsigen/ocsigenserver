@@ -1,4 +1,4 @@
-Static files support single byte-range requests (RFC 7233).
+Static files support single byte-range requests (RFC 9110, section 14).
 
   $ . ../server-test-helpers.sh
   $ free_ports 1
