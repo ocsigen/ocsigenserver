@@ -656,9 +656,9 @@ As in `<extension>`, you can also use `findlib-package=` instead of `module=`.
 
 #### `<host>` : Virtual host setting
 
-It is possible to have several virtual hosts on the same server. For example if your server has two host names, you may want to serve different Web sites for each of them. Note that this feature is based on the `Host:` HTTP header, which is not mandatory in HTTP/1.0.
+It is possible to have several virtual hosts on the same server. For example if your server has two host names, you may want to serve different Web sites for each of them. Note that this feature is based on the `Host:` HTTP header, which is not mandatory in HTTP/1.0. A request with several `Host:` headers, or whose `Host:` is not a host name made of letters, digits, `-`, `.` and `_`, an IPv4 address or an IPv6 address in brackets, with an optional port, is answered 400 (Bad Request), and so is an HTTP/1.1 request without `Host:`. A request without `Host`, like a request for a host name that no `hostfilter` names, goes to a virtual host that accepts any name (`hostfilter="*"`, or no `hostfilter`). Define such a catch-all host, last, so that these requests are answered, for instance the health checks of a load balancer.
 
-The attribute `defaulthostname` is just an information about the hostname, that can be used for example by services to create absolute links. If you want to create virtual hosts for several domain names, use the `hostfilter` attribute to filter on the `Host` HTTP header. You may specify several hostnames, and the optional `hostfilter` field may contain '\*' (wildcard). Example:
+The attribute `defaulthostname` is just an information about the hostname, that can be used for example by services to create absolute links. If you want to create virtual hosts for several domain names, use the `hostfilter` attribute to filter on the `Host` HTTP header. You may specify several hostnames, and the optional `hostfilter` field may contain '\*' (wildcard). Host names are compared case-insensitively, and a final dot (as in `www.mysite.com.`) is ignored, in the `Host` header as in `hostfilter`. Example:
 
 ```
 <host defaulthostname="www.mysite.com" hostfilter="www.mysite.com *.org" charset="utf-8"> ... </host>
@@ -1064,6 +1064,8 @@ Staticmod is a module allowing to serve static pages (files).
 Served files carry an `ETag` (weak, derived from the file's modification time and size) and a `Last-Modified` header. Conditional requests made with `If-None-Match` or `If-Modified-Since` are answered with `304 Not Modified` when the file is unchanged (RFC 7232\), saving bandwidth on revalidation.
 
 Single byte-range requests are supported (RFC 7233\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
+
+Files and directory listings are served for the GET and HEAD methods only. OPTIONS is answered `200 OK` without content and with an `Allow: GET, HEAD, OPTIONS` header (load balancers often use it as a health check). Other methods, such as POST, are answered `405 Method Not Allowed` with the same `Allow` header, unless the page is served as an error page (see the `code` attribute below).
 
 ## Using as a library
 
@@ -1998,6 +2000,7 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 [`Ocsigen.Multipart`](./Ocsigen-Multipart.md)
 [`Ocsigen_cookie_map`](./Ocsigen_cookie_map.md)
 [`Ocsigen_http.Charset_mime`](./Ocsigen_http-Charset_mime.md)
+[`Ocsigen_http.Http1`](./Ocsigen_http-Http1.md) Rules of HTTP/1.1 messages (RFC 9112) that cohttp does not enforce.
 
 ### Persistent data, writing in the logs, configuration file extension, polymorphic tables
 
@@ -3036,6 +3039,16 @@ type virtual_hosts = (string * Re.Pcre.regexp * int option) list
 Type of the result of parsing the field `hostfiler` in the configuration file. Inside the list, the first argument is the host itself (which is a glob-like pattern that can contains `*`), a regexp parsing this pattern, and optionally a port.
 
 ```ocaml
+val host_regexp : string -> Re.Pcre.regexp
+```
+`host_regexp re` compiles the regular expression `re` for the `virtual_hosts` list. It matches host names case-insensitively, and `$` only matches at the end of the name, not before a newline.
+
+```ocaml
+val without_final_dot : string -> string
+```
+`without_final_dot name` is the host name `name` without its final dot, if any: the fully qualified form `"example.org."` names the same host as `"example.org"`.
+
+```ocaml
 val hash_virtual_hosts : virtual_hosts -> int
 ```
 ```ocaml
@@ -3048,6 +3061,8 @@ val host_match :
   port:int ->
   bool
 ```
+`host_match ~virtual_hosts ~host ~port` is `true` iff one element of `virtual_hosts` matches `host` and `port`. A final dot of `host` (fully qualified form) is ignored. A missing `host` is matched as the empty host name: only patterns that accept any name, such as `*`, match it.
+
 ```ocaml
 type do_not_serve = {
   do_not_serve_regexps : string list;
@@ -3786,9 +3801,8 @@ val respond_error :
   unit ->
   t
 ```
-Like `respond_string` with `"Error: "` appended to the body. The default status is ``Internal_server_error`.
+Like `respond_string`, with `"Error: "` prepended to the body, which is text: the response has `Content-Type: text/plain; charset=utf-8`, unless `headers` gives another one. The default status is ``Internal_server_error`.
 
-deprecated Use respond\_string with a ~status argument instead.
 ```ocaml
 val respond_file : 
   ?headers:Cohttp.Header.t ->
@@ -4016,7 +4030,7 @@ val host :
   instruction list ->
   Extensions.host_config
 ```
-You can define one or several virtual hosts corresponding to a given server name or port. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
+You can define one or several virtual hosts corresponding to a given server name or port. `regexp` is matched against the host name of the request, case-insensitively, without its final dot if any. It must match from the start of the name, but not up to its end: end it with `$`, as in `"example\\.org$"`, or it also matches `example.org.evil.net`. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
 
 ```ocaml
 val site : 
@@ -6168,6 +6182,9 @@ val accept_language : t
 val accept_ranges : t
 ```
 ```ocaml
+val allow : t
+```
+```ocaml
 val authorization : t
 ```
 ```ocaml
@@ -6329,6 +6346,32 @@ module Content_type : sig ... end
 
 ---
 
+# Module `Ocsigen_http.Http1`
+
+Rules of HTTP/1.1 messages (RFC 9112\) that cohttp does not enforce.
+
+```ocaml
+val check_host : 
+  Http.Version.t ->
+  Http.Header.t ->
+  target:string ->
+  (unit, string) Stdlib.result
+```
+`check_host version headers ~target` is `Ok ()` iff a request with these version, header fields and request target names its host as RFC 9112 (section 3\.2) asks, with stricter host names: exactly one `Host` field, or none in HTTP/1.0, whose value is empty, or a host name, an IPv4 address or an IPv6 address in brackets, optionally followed by a port of at most 65535 (not an empty host with a port, such as `:80`); and a target in origin form (`/...`), `*`, or in absolute form with an `http` or `https` URI whose host is valid in the same way, but not empty. A host name is made of letters, digits, `-`, `.` and `_` only: neither percent-encoding nor the sub-delimiters of RFC 3986 (such as `,`). Otherwise it is `Error reason`, for the logs, and the server must answer 400\.
+
+```ocaml
+val valid_field_values : Http.Header.t -> bool
+```
+`valid_field_values headers` is `true` iff no value of `headers` has a control character other than a horizontal tab (RFC 9110, section 5\.5). NUL, CR and LF in particular must be rejected.
+
+```ocaml
+val request_method : Http.Method.t -> Http.Method.t option
+```
+`request_method meth` is the method of a request that cohttp read with the method `meth`, or `None` if it is not a valid token. Cohttp does not skip the empty lines that may come before a request line (RFC 9112, section 2\.2), sent for instance by clients that end a POST body with an extra line end: it takes them as the start of the method. They are removed here.
+
+
+---
+
 # Module `Ocsigen_http`
 
 ```ocaml
@@ -6337,6 +6380,10 @@ module Charset_mime : sig ... end
 ```ocaml
 module Header : sig ... end
 ```
+```ocaml
+module Http1 : sig ... end
+```
+Rules of HTTP/1.1 messages (RFC 9112\) that cohttp does not enforce.
 
 
 ---
@@ -8017,6 +8064,16 @@ type virtual_hosts = (string * Re.Pcre.regexp * int option) list
 Type of the result of parsing the field `hostfiler` in the configuration file. Inside the list, the first argument is the host itself (which is a glob-like pattern that can contains `*`), a regexp parsing this pattern, and optionally a port.
 
 ```ocaml
+val host_regexp : string -> Re.Pcre.regexp
+```
+`host_regexp re` compiles the regular expression `re` for the `virtual_hosts` list. It matches host names case-insensitively, and `$` only matches at the end of the name, not before a newline.
+
+```ocaml
+val without_final_dot : string -> string
+```
+`without_final_dot name` is the host name `name` without its final dot, if any: the fully qualified form `"example.org."` names the same host as `"example.org"`.
+
+```ocaml
 val hash_virtual_hosts : virtual_hosts -> int
 ```
 ```ocaml
@@ -8029,6 +8086,8 @@ val host_match :
   port:int ->
   bool
 ```
+`host_match ~virtual_hosts ~host ~port` is `true` iff one element of `virtual_hosts` matches `host` and `port`. A final dot of `host` (fully qualified form) is ignored. A missing `host` is matched as the empty host name: only patterns that accept any name, such as `*`, match it.
+
 ```ocaml
 type do_not_serve = Ocsigen.Extensions.do_not_serve = {
   do_not_serve_regexps : string list;
@@ -8874,9 +8933,8 @@ val respond_error :
   unit ->
   t
 ```
-Like `respond_string` with `"Error: "` appended to the body. The default status is ``Internal_server_error`.
+Like `respond_string`, with `"Error: "` prepended to the body, which is text: the response has `Content-Type: text/plain; charset=utf-8`, unless `headers` gives another one. The default status is ``Internal_server_error`.
 
-deprecated Use respond\_string with a ~status argument instead.
 ```ocaml
 val respond_file : 
   ?headers:Cohttp.Header.t ->
@@ -9104,7 +9162,7 @@ val host :
   instruction list ->
   Ocsigen.Extensions.host_config
 ```
-You can define one or several virtual hosts corresponding to a given server name or port. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
+You can define one or several virtual hosts corresponding to a given server name or port. `regexp` is matched against the host name of the request, case-insensitively, without its final dot if any. It must match from the start of the name, but not up to its end: end it with `$`, as in `"example\\.org$"`, or it also matches `example.org.evil.net`. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
 
 ```ocaml
 val site : 

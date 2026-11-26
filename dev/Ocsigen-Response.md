@@ -43,9 +43,8 @@ val respond_error :
   unit ->
   t
 ```
-Like `respond_string` with `"Error: "` appended to the body. The default status is ``Internal_server_error`.
+Like `respond_string`, with `"Error: "` prepended to the body, which is text: the response has `Content-Type: text/plain; charset=utf-8`, unless `headers` gives another one. The default status is ``Internal_server_error`.
 
-deprecated Use respond\_string with a ~status argument instead.
 ```ocaml
 val respond_file : 
   ?headers:Cohttp.Header.t ->

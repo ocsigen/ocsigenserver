@@ -6,6 +6,8 @@ Served files carry an `ETag` (weak, derived from the file's modification time an
 
 Single byte-range requests are supported (RFC 7233\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
 
+Files and directory listings are served for the GET and HEAD methods only. OPTIONS is answered `200 OK` without content and with an `Allow: GET, HEAD, OPTIONS` header (load balancers often use it as a health check). Other methods, such as POST, are answered `405 Method Not Allowed` with the same `Allow` header, unless the page is served as an error page (see the `code` attribute below).
+
 ## Using as a library
 
 To use that extension as a library for your OCaml programs, load OCamlfind package `ocsigenserver.ext.staticmod`, from your Dune file, and have a look at the [API documentation](./Staticmod.md).

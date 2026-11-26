@@ -26,6 +26,7 @@ API reference for Ocsigen Server. See the [manual](./index.md) to get started.
 [`Ocsigen.Multipart`](./Ocsigen-Multipart.md)
 [`Ocsigen_cookie_map`](./Ocsigen_cookie_map.md)
 [`Ocsigen_http.Charset_mime`](./Ocsigen_http-Charset_mime.md)
+[`Ocsigen_http.Http1`](./Ocsigen_http-Http1.md) Rules of HTTP/1.1 messages (RFC 9112) that cohttp does not enforce.
 
 ### Persistent data, writing in the logs, configuration file extension, polymorphic tables
 

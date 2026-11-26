@@ -83,6 +83,7 @@
 - [Module `Header.Mime_type`](Ocsigen_http-Header-Mime_type.md)
 - [Module `Header.Name`](Ocsigen_http-Header-Name.md)
 - [Module `Ocsigen_http.Header`](Ocsigen_http-Header.md)
+- [Module `Ocsigen_http.Http1`](Ocsigen_http-Http1.md)
 - [Module `Ocsigen_http`](Ocsigen_http.md)
 - [Module `Ocsigen_lib_base.Clist`](Ocsigen_lib_base-Clist.md)
 - [Module `Ocsigen_lib_base.Int`](Ocsigen_lib_base-Int.md)

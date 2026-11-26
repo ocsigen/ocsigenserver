@@ -25,6 +25,9 @@ val accept_language : t
 val accept_ranges : t
 ```
 ```ocaml
+val allow : t
+```
+```ocaml
 val authorization : t
 ```
 ```ocaml
