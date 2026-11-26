@@ -1061,9 +1061,9 @@ Accesses are now logged in the Combined Log Format of Apache and nginx, which co
 
 Staticmod is a module allowing to serve static pages (files).
 
-Served files carry an `ETag` (weak, derived from the file's modification time and size) and a `Last-Modified` header. Conditional requests made with `If-None-Match` or `If-Modified-Since` are answered with `304 Not Modified` when the file is unchanged (RFC 7232\), saving bandwidth on revalidation.
+Served files carry an `ETag` (weak, derived from the file's modification time and size) and a `Last-Modified` header. Conditional requests made with `If-None-Match` or `If-Modified-Since` are answered with `304 Not Modified` when the file is unchanged (RFC 9110\), saving bandwidth on revalidation. A false `If-Match` or `If-Unmodified-Since` condition is answered with `412 Precondition Failed`; as the `ETag` is weak, `If-Match` only succeeds with `"*"`. These conditions, and ranges, do not apply to error pages (the `code` attribute below), which carry no `ETag`, `Last-Modified` or `Accept-Ranges`.
 
-Single byte-range requests are supported (RFC 7233\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
+Single byte-range requests are supported (RFC 9110\): responses advertise `Accept-Ranges: bytes`, a `Range` request yields `206 Partial Content` with a `Content-Range` header (and honours `If-Range`), enabling media streaming and resumable downloads.
 
 Files and directory listings are served for the GET and HEAD methods only. OPTIONS is answered `200 OK` without content and with an `Allow: GET, HEAD, OPTIONS` header (load balancers often use it as a health check). Other methods, such as POST, are answered `405 Method Not Allowed` with the same `Allow` header, unless the page is served as an error page (see the `code` attribute below).
 
@@ -1545,13 +1545,15 @@ No, it doesn't. Content-encoding is definitely a better solution, providing end 
 
 ### How does deflatemod deal with the content-length header?
 
-As it cannot compute the new content-length, deflatemod uses chunked-encoding. This is the recommended way to go.
+As it cannot compute the new content-length, deflatemod uses chunked-encoding. This is the recommended way to go. An HTTP/1.0 client does not know the chunked coding: it gets the compressed content delimited by the end of the connection instead.
 
 ### Which responses are compressed?
 
 Only responses that carry a whole representation. A partial response (206, the answer to a byte-range request), or any response with a Content-Range header, is sent uncompressed: its range is one of the uncompressed file, and compressing it would make the range wrong. Responses with no body (1xx, 204, 205 and 304\) are left untouched too.
 
 For the same reason, a compressed response does not carry the Accept-Ranges header: byte ranges are only served from the uncompressed file.
+
+A response of a type that deflatemod compresses carries `Vary: Accept-Encoding`, even when it is not compressed, because the client does not accept any of the codings: a shared cache must not serve this uncompressed copy to the clients that do. A partial (206) response carries it too, as the complete response would, and so does a 304 response: as a 304 has no content type, this is the case for all of them.
 
 *Page written by Gabriel Kerneis*
 
@@ -3807,7 +3809,9 @@ Like `respond_string`, with `"Error: "` prepended to the body, which is text: th
 val respond_file : 
   ?headers:Cohttp.Header.t ->
   ?status:Http.Status.t ->
-  ?if_none_match:string ->
+  ?if_match:string list ->
+  ?if_unmodified_since:string ->
+  ?if_none_match:string list ->
   ?if_modified_since:string ->
   ?range:string ->
   ?if_range:string ->
@@ -3815,7 +3819,7 @@ val respond_file :
   string ->
   t Lwt.t
 ```
-Respond with the content of a file. The content type is `content_type`. By default, it is the one that `Magic_mime` guesses from the name of the file, without the rules of the configuration: Staticmod passes [`Ocsigen_http.Charset_mime.content_type`](./Ocsigen_http-Charset_mime.md#val-content_type). An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5).
+Respond with the content of a file. The content type is `content_type`. By default, it is the one that `Magic_mime` guesses from the name of the file, without the rules of the configuration: Staticmod passes [`Ocsigen_http.Charset_mime.content_type`](./Ocsigen_http-Charset_mime.md#val-content_type). An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. The conditional headers of the request, when passed, are evaluated as RFC 9110 13\.2.2 says. When `If-Match` (with the strong comparison, which the weak `ETag` never passes: only `"*"` matches) or `If-Unmodified-Since` is false, the response is `412 Precondition Failed`. When `If-None-Match` (with the weak comparison) or `If-Modified-Since` (ignored if its date is in the future) is false, the response is `304 Not Modified` with an empty body. `if_match` and `if_none_match` are given as the lines of the header field (see [`Ocsigen_http.Header.Entity_tag.parse_list`](./Ocsigen_http-Header-Entity_tag.md#val-parse_list)). Pass the conditional headers only for a GET or HEAD request whose response is a success: for other methods, a false `If-None-Match` calls for 412 rather than 304, and the preconditions do not apply to an error page (RFC 9110 13\.2.1). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 9110 14\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5). Pass `range` and `if_range` only for a GET request: ranges are not defined for other methods, and a HEAD request gets the header section of the whole file (RFC 9110 14\.2).
 
 ```ocaml
 val update : 
@@ -3844,10 +3848,11 @@ val sends_body : meth:Cohttp.Code.meth -> t -> bool
 ```ocaml
 val to_response_expert : 
   meth:Cohttp.Code.meth ->
+  version:Cohttp.Code.version ->
   t ->
   Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
 ```
-Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body. Otherwise the body is released ([`Body.release`](./Ocsigen-Response-Body.md#val-release)), and a failure to release it is logged.
+Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth` and HTTP version `version`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body. Otherwise the body is released ([`Body.release`](./Ocsigen-Response-Body.md#val-release)), and a failure to release it is logged. A body of unknown length is sent chunked to an HTTP/1.1 client. To an HTTP/1.0 client, which does not know the chunked coding (RFC 9112 6\.1), a body of unknown length or a chunked one goes out without framing headers and, unless the request is `HEAD`, with `Connection: close`: the end of the connection is the end of the body.
 
 ```ocaml
 val response : t -> Cohttp.Response.t
@@ -6143,6 +6148,58 @@ val choose : Accept.t -> string -> string list -> string
 
 ---
 
+# Module `Header.Date`
+
+Dates in header fields (RFC 9110, section 5\.6.7).
+
+```ocaml
+val parse : ?now:float -> string -> float option
+```
+`parse s` is the time, in seconds since the epoch, of the HTTP date `s`, in any of its three formats: the preferred one (`"Sun, 06 Nov 1994 08:49:37 GMT"`) and the obsolete RFC 850 (`"Sunday, 06-Nov-94 08:49:37 GMT"`) and asctime (`"Sun Nov  6 08:49:37 1994"`) ones. The two-digit year of the RFC 850 format is the latest year with these digits that does not put the date more than 50 years after `now` (default: the current time). `parse s` is `None` when `s`, without its surrounding whitespace, is not a valid date in the exact syntax of RFC 9110 (single spaces, except the two before a one-digit day of the asctime format).
+
+
+---
+
+# Module `Header.Entity_tag`
+
+Entity tags (RFC 9110, section 8\.8.3).
+
+```ocaml
+type t = private {
+  weak : bool;
+  opaque : string;
+}
+```
+`opaque` is the tag without its quotes. It only has the characters that RFC 9110 allows in it (etagc): no space, control character or double quote, so that [`to_string`](./#val-to_string) always gives a valid entity tag.
+
+```ocaml
+val make : weak:bool -> string -> t
+```
+`make ~weak opaque` is the entity tag `opaque`, weak if `weak`. Raises `Invalid_argument` if `opaque` has a character that an entity tag cannot contain.
+
+```ocaml
+val to_string : t -> string
+```
+`to_string t` is `t` as written in a header, such as `W/"1-2"`.
+
+```ocaml
+val parse_list : string list -> [ `Any | `Tags of t list ]
+```
+`parse_list values` is the value of an `If-Match` or `If-None-Match` header field written on the lines `values`: ``Any` when it is just `"*"`, otherwise the list of its entity tags. Elements that are not valid entity tags are ignored.
+
+```ocaml
+val weak_equal : t -> t -> bool
+```
+`weak_equal a b` is the weak comparison of `a` and `b`: their opaque tags are equal, whether they are weak or not (section 8\.8.3.2).
+
+```ocaml
+val strong_equal : t -> t -> bool
+```
+`strong_equal a b` is the strong comparison of `a` and `b`: they are not weak and their opaque tags are equal.
+
+
+---
+
 # Module `Header.Mime_type`
 
 ```ocaml
@@ -6342,6 +6399,15 @@ module Accept_language : sig ... end
 ```ocaml
 module Content_type : sig ... end
 ```
+```ocaml
+module Entity_tag : sig ... end
+```
+Entity tags (RFC 9110, section 8\.8.3).
+
+```ocaml
+module Date : sig ... end
+```
+Dates in header fields (RFC 9110, section 5\.6.7).
 
 
 ---
@@ -8333,6 +8399,15 @@ module Accept_language = Ocsigen_http.Header.Accept_language
 ```ocaml
 module Content_type = Ocsigen_http.Header.Content_type
 ```
+```ocaml
+module Entity_tag = Ocsigen_http.Header.Entity_tag
+```
+Entity tags (RFC 9110, section 8\.8.3).
+
+```ocaml
+module Date = Ocsigen_http.Header.Date
+```
+Dates in header fields (RFC 9110, section 5\.6.7).
 
 
 ---
@@ -8939,7 +9014,9 @@ Like `respond_string`, with `"Error: "` prepended to the body, which is text: th
 val respond_file : 
   ?headers:Cohttp.Header.t ->
   ?status:Http.Status.t ->
-  ?if_none_match:string ->
+  ?if_match:string list ->
+  ?if_unmodified_since:string ->
+  ?if_none_match:string list ->
   ?if_modified_since:string ->
   ?range:string ->
   ?if_range:string ->
@@ -8947,7 +9024,7 @@ val respond_file :
   string ->
   t Lwt.t
 ```
-Respond with the content of a file. The content type is `content_type`. By default, it is the one that `Magic_mime` guesses from the name of the file, without the rules of the configuration: Staticmod passes [`Ocsigen_http.Charset_mime.content_type`](./../ocsigenserver/Ocsigen_http-Charset_mime.md#val-content_type). An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. If the request's `If-None-Match` or `If-Modified-Since` header is passed and matches, the response is `304 Not Modified` with an empty body (RFC 7232\). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 7233\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5).
+Respond with the content of a file. The content type is `content_type`. By default, it is the one that `Magic_mime` guesses from the name of the file, without the rules of the configuration: Staticmod passes [`Ocsigen_http.Charset_mime.content_type`](./../ocsigenserver/Ocsigen_http-Charset_mime.md#val-content_type). An `ETag` (weak, derived from the file's modification time and size), a `Last-Modified` and an `Accept-Ranges: bytes` header are added. The conditional headers of the request, when passed, are evaluated as RFC 9110 13\.2.2 says. When `If-Match` (with the strong comparison, which the weak `ETag` never passes: only `"*"` matches) or `If-Unmodified-Since` is false, the response is `412 Precondition Failed`. When `If-None-Match` (with the weak comparison) or `If-Modified-Since` (ignored if its date is in the future) is false, the response is `304 Not Modified` with an empty body. `if_match` and `if_none_match` are given as the lines of the header field (see [`Ocsigen_http.Header.Entity_tag.parse_list`](./../ocsigenserver/Ocsigen_http-Header-Entity_tag.md#val-parse_list)). Pass the conditional headers only for a GET or HEAD request whose response is a success: for other methods, a false `If-None-Match` calls for 412 rather than 304, and the preconditions do not apply to an error page (RFC 9110 13\.2.1). If a `range` (the `Range` header) is passed and satisfiable, a single byte range is returned as `206 Partial Content` with a `Content-Range` header (RFC 9110 14\); an unsatisfiable range gives `416`. A passed `if_range` (the `If-Range` header) must be the `Last-Modified` date, unchanged for at least a second, for the range to be honoured: `If-Range` calls for a strong comparison, which the weak `ETag` never passes (RFC 9110 13\.1.5). Pass `range` and `if_range` only for a GET request: ranges are not defined for other methods, and a HEAD request gets the header section of the whole file (RFC 9110 14\.2).
 
 ```ocaml
 val update : 
@@ -8976,10 +9053,11 @@ val sends_body : meth:Cohttp.Code.meth -> t -> bool
 ```ocaml
 val to_response_expert : 
   meth:Cohttp.Code.meth ->
+  version:Cohttp.Code.version ->
   t ->
   Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
 ```
-Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body. Otherwise the body is released ([`Body.release`](./../ocsigenserver/Ocsigen-Response-Body.md#val-release)), and a failure to release it is logged.
+Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth` and HTTP version `version`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body. Otherwise the body is released ([`Body.release`](./../ocsigenserver/Ocsigen-Response-Body.md#val-release)), and a failure to release it is logged. A body of unknown length is sent chunked to an HTTP/1.1 client. To an HTTP/1.0 client, which does not know the chunked coding (RFC 9112 6\.1), a body of unknown length or a chunked one goes out without framing headers and, unless the request is `HEAD`, with `Connection: close`: the end of the connection is the end of the body.
 
 ```ocaml
 val response : t -> Cohttp.Response.t

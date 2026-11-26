@@ -80,6 +80,8 @@
 - [Module `Header.Accept_encoding`](Ocsigen_http-Header-Accept_encoding.md)
 - [Module `Header.Accept_language`](Ocsigen_http-Header-Accept_language.md)
 - [Module `Header.Content_type`](Ocsigen_http-Header-Content_type.md)
+- [Module `Header.Date`](Ocsigen_http-Header-Date.md)
+- [Module `Header.Entity_tag`](Ocsigen_http-Header-Entity_tag.md)
 - [Module `Header.Mime_type`](Ocsigen_http-Header-Mime_type.md)
 - [Module `Header.Name`](Ocsigen_http-Header-Name.md)
 - [Module `Ocsigen_http.Header`](Ocsigen_http-Header.md)

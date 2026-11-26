@@ -29,3 +29,12 @@ module Accept_language = Ocsigen_http.Header.Accept_language
 ```ocaml
 module Content_type = Ocsigen_http.Header.Content_type
 ```
+```ocaml
+module Entity_tag = Ocsigen_http.Header.Entity_tag
+```
+Entity tags (RFC 9110, section 8\.8.3).
+
+```ocaml
+module Date = Ocsigen_http.Header.Date
+```
+Dates in header fields (RFC 9110, section 5\.6.7).

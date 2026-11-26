@@ -29,3 +29,12 @@ module Accept_language : sig ... end
 ```ocaml
 module Content_type : sig ... end
 ```
+```ocaml
+module Entity_tag : sig ... end
+```
+Entity tags (RFC 9110, section 8\.8.3).
+
+```ocaml
+module Date : sig ... end
+```
+Dates in header fields (RFC 9110, section 5\.6.7).
