@@ -5,7 +5,6 @@
 open Lwt.Syntax
 
 let fail fmt = Printf.ksprintf (fun s -> prerr_endline s; exit 1) fmt
-let open_files () = Array.length (Sys.readdir "/dev/fd")
 
 let send ~meth response =
   let _, write =
@@ -16,7 +15,7 @@ let send ~meth response =
 let check what f =
   let n = 20 in
   let* () = f () in
-  let before = open_files () in
+  let before = Fd_count.open_files () in
   let rec loop i =
     if i = 0
     then Lwt.return_unit
@@ -25,7 +24,7 @@ let check what f =
       loop (i - 1)
   in
   let* () = loop n in
-  let after = open_files () in
+  let after = Fd_count.open_files () in
   if after <> before
   then
     fail "%s: %d files open before %d responses, %d after" what before n after;
@@ -79,5 +78,23 @@ let () =
      let* drained = Lwt_stream.is_empty stream in
      if drained || not !released
      then fail "of_cohttp ~release: the body is read, or not released";
+     (* A body dropped twice is released once, even when releasing it fails,
+        which is not raised. *)
+     let released_twice release =
+       let releases = ref 0 in
+       let body =
+         Ocsigen.Response.Body.make
+           ~release:(fun () -> incr releases; release ())
+           (Cohttp.Transfer.Fixed 0L)
+           (fun _write -> Lwt.return_unit)
+       in
+       let* () = Ocsigen.Response.Body.release body in
+       let* () = Ocsigen.Response.Body.release body in
+       Lwt.return !releases
+     in
+     let* n = released_twice (fun () -> Lwt.return_unit) in
+     if n <> 1 then fail "Body.release: %d releases" n;
+     let* n = released_twice (fun () -> failwith "release") in
+     if n <> 1 then fail "Body.release, failing: %d releases" n;
      Lwt.return_unit
     )

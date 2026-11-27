@@ -55,6 +55,10 @@
  (deps cors/test.exe))
 
 (cram
+ (applies_to dropped-bodies)
+ (deps dropped-bodies/server.exe))
+
+(cram
  (applies_to error-logs)
  (deps error-logs/test.exe))
 
@@ -93,6 +97,10 @@
 (cram
  (applies_to request-body-limit)
  (deps request-body-limit/test.exe))
+
+(cram
+ (applies_to response-fields)
+ (deps response-fields/test.exe))
 
 (cram
  (applies_to response-framing)

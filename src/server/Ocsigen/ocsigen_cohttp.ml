@@ -29,30 +29,67 @@ let get_number_of_connected, incr_connected, decr_connected =
 
 exception Ocsigen_is_dir of (Request.t -> Uri.t)
 
-module Cookie = struct
-  let serialize_cookie_raw path exp name c secure =
-    Format.sprintf "%s=%s; path=/%s%s%s" name c
-      (Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
-      (if secure then "; secure" else "")
-      ( match exp with
-      | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
-      | None -> ""
-      )
+(* cohttp writes the headers as they are: a CR or LF in a value ends the
+   header, and text injected by a client in a value could add other headers
+   (response splitting). A [;] in a cookie would add attributes to it. The
+   response is checked before it is sent, and replaced by an error if
+   something cannot be written. *)
+module Field_check = struct
+  let is_tchar = Ocsigen_http.Http1.is_tchar
+  let is_field_value_char = Ocsigen_http.Http1.is_field_value_char
 
-  let serialize_cookies path =
-    Ocsigen_cookie_map.Map_inner.fold @@ fun name c h ->
-    let open Ocsigen_cookie_map in
-    let exp, v, secure =
-      match c with
-      | OUnset -> Some 0., "", false
-      | OSet (t, v, secure) -> t, v, secure
-    in
-    Cohttp.Header.add h
-      Ocsigen_http.Header.Name.(to_string set_cookie)
-      (serialize_cookie_raw path exp name v secure)
+  (* Cookie names are not always tokens: those of Eliom contain the path of
+     the site, with "/" and possibly spaces. *)
+  let is_cookie_name_char = function
+    | ';' | '=' -> false
+    | c -> is_field_value_char c
 
-  let serialize cookies headers =
-    Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
+  let is_cookie_value_char c = c <> ';' && is_field_value_char c
+
+  let header_error headers =
+    Cohttp.Header.to_list headers
+    |> List.find_map (fun (name, value) ->
+        if name = "" || not (String.for_all is_tchar name)
+        then Some (Printf.sprintf "the header name %S is not a token" name)
+        else if not (String.for_all is_field_value_char value)
+        then Some ("the value of header " ^ name ^ " has a forbidden character")
+        else None
+    )
+
+  let cookie_error cookies =
+    Ocsigen_cookie_map.Map_path.to_seq cookies
+    |> Seq.find_map (fun (_, cookies) ->
+        Ocsigen_cookie_map.Map_inner.to_seq cookies
+        |> Seq.find_map (fun (name, cookie) ->
+            if name = ""
+            then Some "a cookie has an empty name"
+            else if not (String.for_all is_cookie_name_char name)
+            then
+              Some
+                (Printf.sprintf "the cookie name %S has a forbidden character"
+                   name
+                )
+            else
+              match cookie with
+              | Ocsigen_cookie_map.OSet (_, value, _)
+                when not (String.for_all is_cookie_value_char value) ->
+                  Some
+                    ("the value of cookie " ^ name
+                   ^ " has a forbidden character"
+                    )
+              | Ocsigen_cookie_map.OSet _ | Ocsigen_cookie_map.OUnset -> None
+        )
+    )
+
+  (* [response_error response] describes the first header or cookie of
+     [response] that cannot be sent, without its value, which may be
+     private. *)
+  let response_error response =
+    match
+      header_error (Cohttp.Response.headers (Response.response response))
+    with
+    | Some _ as e -> e
+    | None -> cookie_error (Response.cookies response)
 end
 
 (* Access log in the Apache/nginx Combined Log Format:
@@ -256,23 +293,20 @@ let handler
             what (Printexc.to_string exn)
       )
     in
-    let headers, ret_code, explicit_msg =
+    let headers, ret_code, explicit_msg, cookies =
       match exn with
-      | Ocsigen_http_error (cookies_to_set, code) ->
+      | Ocsigen_http_error (cookies, code) ->
           log Logs.Debug "Got exception";
-          let headers =
-            Cookie.serialize cookies_to_set (Cohttp.Header.init ())
-          in
-          Some headers, code, None
+          None, code, None, cookies
       | Unix.Unix_error (Unix.EACCES, _, _) ->
           log Logs.Warning "Permission denied";
-          None, `Forbidden, None
+          None, `Forbidden, None, Ocsigen_cookie_map.empty
       | Ext_http_error (code, msg, headers) ->
           log Logs.Debug "Got exception";
-          headers, code, msg
+          headers, code, msg, Ocsigen_cookie_map.empty
       | Ocsigen_base.Lib.Ocsigen_Bad_Request ->
           log Logs.Info "Bad request";
-          None, `Bad_request, None
+          None, `Bad_request, None, Ocsigen_cookie_map.empty
       (* The body parsers of [Request.post_params] read it through an
          [Ocsigen_stream], which wraps its failures in [Interrupted]. *)
       | Request.Truncated_body
@@ -280,7 +314,7 @@ let handler
           Logs.info ~src:section (fun fmt ->
               fmt "The body of a request ended before its Content-Length"
           );
-          None, `Bad_request, None
+          None, `Bad_request, None, Ocsigen_cookie_map.empty
       | Ocsigen_base.Lib.Ocsigen_Request_too_long
       | Ocsigen_base.Ocsigen_stream.Interrupted
           Ocsigen_base.Lib.Ocsigen_Request_too_long ->
@@ -289,7 +323,7 @@ let handler
                 "Request body too large (see the <maxrequestbodysize> and \
                  <maxuploadfilesize> configuration options)"
           );
-          None, `Request_entity_too_large, None
+          None, `Request_entity_too_large, None, Ocsigen_cookie_map.empty
       | Ocsigen_base.Lib.Input_is_too_large ->
           Logs.warn ~src:section (fun fmt ->
               fmt
@@ -297,19 +331,21 @@ let handler
                  <maxrequestbodysizeinmemory> and <netbuffersize> \
                  configuration options)"
           );
-          None, `Request_entity_too_large, None
+          None, `Request_entity_too_large, None, Ocsigen_cookie_map.empty
       (* The body of the request did not arrive in time. The socket is shut
          down before this is sent (see [Connection_guard]), and the closing is
          logged then. The access log records the request with this status all
          the same, as nginx and Apache do. *)
       | Connection_guard.Timed_out ->
           log Logs.Debug "Got exception";
-          None, `Request_timeout, None
+          None, `Request_timeout, None, Ocsigen_cookie_map.empty
       | _ ->
           log Logs.Error "Error";
-          None, `Internal_server_error, None
+          None, `Internal_server_error, None, Ocsigen_cookie_map.empty
     in
-    error_response ?headers ?msg:explicit_msg ret_code
+    Response.add_cookies
+      (error_response ?headers ?msg:explicit_msg ret_code)
+      cookies
   in
   let meth =
     Ocsigen_http.Http1.request_method (Cohttp.Request.meth cohttp_request)
@@ -385,6 +421,32 @@ let handler
           | exn -> Lwt.return (handle_error exn)
           )
       >>= fun response ->
+      ( match Field_check.response_error response with
+        | None -> Lwt.return response
+        | Some what ->
+            Logs.err ~src:section (fun fmt ->
+                fmt "Response replaced by a 500 error: %s" what
+            );
+            (* Its body, which will not be sent, may hold a file open. *)
+            Response.Body.release (Response.body response) >|= fun () ->
+            error_response `Internal_server_error
+        )
+      >>= fun response ->
+      (* cohttp drops the response without calling its writer if it fails to
+         read the rest of the body of the request (a client too slow, or that
+         leaves) or to write the headers; an exception raised below drops it
+         too. Its body is then released once the connection is closed. On a
+         connection kept alive, [Lwt.choose] detaches the callback from
+         [connection_closed] once the writer starts, so that callbacks do not
+         pile up there, one for each request. *)
+      let writing, start_writing = Lwt.wait () in
+      Lwt.on_success
+        (Lwt.choose [writing; connection_closed])
+        (fun () ->
+          if Lwt.is_sleeping writing
+          then
+            Lwt.async (fun () -> Response.Body.release (Response.body response))
+        );
       Messages.accesslog (Access_log.line request response);
       let res, write_body =
         Response.to_response_expert ~meth:(Request.meth request) ~version
@@ -420,6 +482,7 @@ let handler
       Lwt.return
         ( res
         , fun ic oc ->
+            Lwt.wakeup start_writing ();
             write_body ic oc >>= fun () ->
             if keep_alive
             then (
