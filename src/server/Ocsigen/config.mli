@@ -189,8 +189,16 @@ val get_debugmode : unit -> bool
 val get_disablepartialrequests : unit -> bool
 val get_usedefaulthostname : unit -> bool
 val get_respect_pipeline : unit -> bool
+
 val get_default_port : unit -> int
+(** [get_default_port ()] is the first port of {!get_ports}, or 80 if there is
+    none. A Unix-domain socket given port 0 has none and is skipped; the
+    number given with another one is the port of its requests. *)
+
 val get_default_sslport : unit -> int
+(** [get_default_sslport ()] is as {!get_default_port} for {!get_ssl_ports},
+    or 443. *)
+
 val get_maxretries : unit -> int
 val get_shutdown_timeout : unit -> float option
 val get_ssl_info : unit -> ssl_info option

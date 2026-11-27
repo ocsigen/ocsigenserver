@@ -83,7 +83,7 @@ Without Accept-Encoding the response is not compressed:
 
   $ curl_ "index.html"
   HTTP/1.1 200 OK
-  content-type: text/html
+  content-type: text/html; charset=utf-8
   accept-ranges: bytes
   vary: accept-encoding
   server: Ocsigen
@@ -96,7 +96,7 @@ gzip:
 
   $ curl_ "index.html" -H "Accept-Encoding: gzip" --compressed
   HTTP/1.1 200 OK
-  content-type: text/html
+  content-type: text/html; charset=utf-8
   content-encoding: gzip
   vary: accept-encoding
   server: Ocsigen
@@ -110,7 +110,7 @@ deflate (zlib format):
 
   $ curl_ "index.html" -H "Accept-Encoding: deflate" --compressed
   HTTP/1.1 200 OK
-  content-type: text/html
+  content-type: text/html; charset=utf-8
   content-encoding: deflate
   vary: accept-encoding
   server: Ocsigen
@@ -124,7 +124,7 @@ zstd:
 
   $ curl_ "index.html" -H "Accept-Encoding: zstd" --compressed
   HTTP/1.1 200 OK
-  content-type: text/html
+  content-type: text/html; charset=utf-8
   content-encoding: zstd
   vary: accept-encoding
   server: Ocsigen
@@ -138,7 +138,7 @@ When several codecs are offered, zstd is preferred:
 
   $ curl_ "index.html" -H "Accept-Encoding: gzip, zstd" --compressed
   HTTP/1.1 200 OK
-  content-type: text/html
+  content-type: text/html; charset=utf-8
   content-encoding: zstd
   vary: accept-encoding
   server: Ocsigen
@@ -174,7 +174,7 @@ compressed as any other response.
   $ curl_ missing/page.html -H "Range: bytes=0-3" -H "Accept-Encoding: gzip" \
   >   --compressed
   HTTP/1.1 404 Not Found
-  content-type: text/html
+  content-type: text/html; charset=utf-8
   content-encoding: gzip
   vary: accept-encoding
   server: Ocsigen
