@@ -901,7 +901,10 @@ let start
       (* As the <host> of a configuration file, now that the server-wide
        settings are set, and in the same order: [List.map] forces the hosts
        from left to right. *)
-      Extensions.set_hosts (List.map Lazy.force hosts)
+      Extensions.set_hosts (List.map Lazy.force hosts);
+      (* Read now rather than at the first request, as in
+         [Parseconfig.later_pass]. *)
+      Ocsigen_http.Charset_mime.load_mime_file ()
   )
 
 (* Registries through which the Staticmod and Revproxy extensions, once loaded,

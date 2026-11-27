@@ -27,13 +27,29 @@ Incompatible changes:
  * Without <mimefile> in the configuration file, or ~mimefile for
    Ocsigen.Server.start, the server reads no mime.types file. It read the one
    that the installation put in its configuration directory, an old copy that
-   is no longer installed, and logged an error when it was missing. The file
-   is now read at the first lookup of a type, rather than for each <host>, so
-   ~mimefile also applies to the hosts given to Ocsigen.Server.start. An empty path means no file.
+   is no longer installed, and logged an error when it was missing. If
+   <mimefile> names this old copy, remove the <mimefile>: the copy hides the
+   newer types of magic-mime (js as application/x-javascript, for instance).
+   make purge still deletes it. The file is now read once the hosts are set,
+   rather than for each <host>, so ~mimefile also applies to the hosts given
+   to Ocsigen.Server.start. An empty path means no file.
    Ocsigen.Config.get_mimefile returns a string option, and
    Ocsigen_base.Config_static.mimefile is removed.
    Ocsigen_http.Charset_mime.default_mime_assoc no longer holds the file:
-   find_mime looks it up after the rules, and set_mime_file sets it.
+   find_mime looks it up after the rules, set_mime_file sets it, and
+   load_mime_file reads it.
+ * Text and XML files (text/*, */xml, *+xml) served by Staticmod get the
+   charset of their host again: by default, in every mode, their
+   Content-Type ends with "; charset=utf-8". This charset takes precedence
+   over the <meta charset> of an HTML page and over the encoding of an XML
+   declaration. A site with files in another encoding must now say so, with a
+   <charset> rule of Extendconfiguration for their extensions
+   (<extension ext="html" value="iso-8859-1"/>, or value="" for no charset),
+   or with charset="" on its <host> or <site> to send no charset. This also
+   removes the charset of the Eliom pages of that <host> or <site>, which
+   comes from the same place: on a host with Eliom pages, use rules for the
+   extensions of the static files, or put charset="" on a <site> around the
+   <static> only, at a path without Eliom pages.
  * Silent mode (-s) and daemon mode (-d) are now refused when the logs go to
    the terminal: always in serve mode and with --reverse-proxy, and with a
    configuration file that gives neither <logdir> nor <syslog>, or
@@ -539,8 +555,14 @@ Bug fixes:
    Extendconfiguration, again. Since 3.0.0, they were read but not used:
    the Content-Type of a file came from the built-in table of magic-mime,
    without a charset. That table now comes after the rules and the file. Text
-   and XML files get the charset of the host again, so a text file now has
-   "; charset=utf-8" by default.
+   and XML files get a charset again (see the incompatible changes).
+   Staticmod and Ocsigen.Response.respond_file now give magic-mime the name
+   of the file rather than its path, so that it finds the names it knows.
+   Such files often have no extension: they were application/octet-stream,
+   and browsers downloaded them. README, LICENSE, META, opam, Changes, _tags
+   and _oasis are now text/x-plain, Makefile text/x-makefile and ChangeLog
+   text/x-changelog (by default with "; charset=utf-8" from Staticmod), and
+   browsers show them.
  * Static files: If-None-Match uses the weak comparison, as RFC 9110 requires:
    "x" now matches the ETag W/"x". All the If-None-Match lines of a request
    are read, and a comma within an entity tag no longer splits it.

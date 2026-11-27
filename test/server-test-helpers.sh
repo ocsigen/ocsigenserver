@@ -126,6 +126,29 @@ send_command ()
   return 1
 }
 
+# Wait until FILE has at least COUNT lines matching the basic regular
+# expression PATTERN, as when the server logs that it has done something
+# (reloaded its configuration, for instance). If it does not have them after
+# about 10 s, print how many it has and fail.
+#
+# Usage:
+#   $ send_command $SERVER_PID local.cmd reload
+#   $ wait_log log/warnings.log 'Config file reloaded' 1
+#
+wait_log ()
+{
+  wait_log_deadline=$(($(date +%s) + 10))
+  until wait_log_n=$(grep -c -- "$2" "$1" 2>/dev/null)
+        [ "${wait_log_n:-0}" -ge "$3" ]; do
+    if [ "$(date +%s)" -gt "$wait_log_deadline" ]; then
+      echo "wait_log: $1 has ${wait_log_n:-0} lines matching '$2'," \
+        "expected at least $3" >&2
+      return 1
+    fi
+    sleep 0.05
+  done
+}
+
 # Shut the server of process id PID down through its command pipe PIPE
 # ("local.cmd" by default), and wait for it to exit. If it is not running,
 # print a message instead of blocking on the pipe. If it does not exit
