@@ -3,6 +3,8 @@
 ```ocaml
 type t
 ```
+A response. The server sends a 500 error instead of a response whose headers or cookies cannot be written as they are: a header name that is not a token (RFC 9110, section 5\.6.2), a header value with a control character other than a tab, a cookie name with `=`, or a cookie name or value with `;` or such a control character.
+
 ```ocaml
 module Body : sig ... end
 ```
@@ -92,7 +94,7 @@ val to_response_expert :
   t ->
   Cohttp.Response.t * ('ic -> Lwt_io.output_channel -> unit Lwt.t)
 ```
-Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth` and HTTP version `version`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body. Otherwise the body is released ([`Body.release`](./Ocsigen-Response-Body.md#val-release)), and a failure to release it is logged. A body of unknown length is sent chunked to an HTTP/1.1 client. To an HTTP/1.0 client, which does not know the chunked coding (RFC 9112 6\.1), a body of unknown length or a chunked one goes out without framing headers and, unless the request is `HEAD`, with `Connection: close`: the end of the connection is the end of the body.
+Response for `Cohttp_lwt_unix.Server.make_expert`, to a request with method `meth` and HTTP version `version`. Set cookie headers, and the framing headers from the body. The body is written only if [`sends_body`](./#val-sends_body): the response to `HEAD` has the headers of the response to `GET`, without its body. Otherwise the body is released ([`Body.release`](./Ocsigen-Response-Body.md#val-release)). A body of unknown length is sent chunked to an HTTP/1.1 client. To an HTTP/1.0 client, which does not know the chunked coding (RFC 9112 6\.1), a body of unknown length or a chunked one goes out without framing headers and, unless the request is `HEAD`, with `Connection: close`: the end of the connection is the end of the body.
 
 ```ocaml
 val response : t -> Cohttp.Response.t

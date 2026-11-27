@@ -13,7 +13,7 @@ type cookie =
   | OSet of float option * string * bool
   | OUnset
 ```
-Type used for cookies to set. The float option is the timestamp for the expiration date. The string is the value. If the bool is true and the protocol is https, the cookie will be secure (will ask the browser to send it only through secure connections).
+Type used for cookies to set. The float option is the timestamp for the expiration date. The string is the value. If the bool is true, the cookie has the Secure attribute: the browser sends it only through secure connections, and does not accept it from an insecure origin other than localhost. A cookie whose name has `=`, or whose name or value has `;` or a control character other than a tab, cannot be sent: the server answers 500 instead.
 
 ```ocaml
 type t = cookie Map_inner.t Map_path.t
