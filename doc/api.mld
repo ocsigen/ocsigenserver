@@ -30,6 +30,7 @@ Cors
 Ocsigen.Request
 Ocsigen.Response
 Ocsigen.Multipart
+Ocsigen.Http_client
 Ocsigen_cookie_map
 Ocsigen_http.Charset_mime
 Ocsigen_http.Http1

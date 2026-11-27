@@ -227,6 +227,9 @@ New features:
  * OCaml API: Ocsigen_http.Header.Date.parse reads the three formats of HTTP
    dates.
  * Authbasic: <plain> accepts its attributes login and password in any order.
+ * OCaml API: Ocsigen.Http_client.call sends a request to another server on a
+   connection of its own, as Cohttp_lwt_unix.Client.call does, but a failure
+   only rejects its promise. It also takes a ctx argument.
 
 Bug fixes:
  * In syslog mode, reopening the logs (the reopen_logs order of a log

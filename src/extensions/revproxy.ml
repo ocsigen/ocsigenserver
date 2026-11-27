@@ -93,46 +93,6 @@ let tracked body =
   in
   body, fun () -> !failure
 
-(* [call ~client_closed ~headers ~body meth uri] sends the request to the
-   target on a connection of its own, closed once the body of the response is
-   read, the call fails, or [client_closed] resolves: a client that leaves
-   before the end of the response does not read it to the end. This is what
-   [Cohttp_lwt_unix.Client.call] does, except that cohttp-lwt 6 raises again,
-   outside of any promise, any failure of the call: an error while reading
-   the body of the request (one too large, for instance) or writing it to the
-   target stopped the server. The response comes with a function that closes
-   the connection, for a body that is not sent: reading it to the end could
-   take forever. The body then ends with what was already received, so that
-   its stream is closed. *)
-let call ~client_closed ~headers ~body meth uri =
-  let module Net = Cohttp_lwt_unix.Net in
-  let module Connection = Cohttp_lwt_unix.Connection in
-  Net.resolve ~ctx:(Lazy.force Net.default_ctx) uri
-  (* Persistent, as cohttp does, so that a chunked body is sent chunked. *)
-  >>= Connection.connect ~persistent:true
-  >>= fun connection ->
-  Lwt.catch
-    (fun () -> Connection.call connection ~headers ~body meth uri)
-    (fun exn ->
-      Connection.close connection;
-      Lwt.reraise exn
-    )
-  >|= fun ((_, response_body) as response) ->
-  ( match response_body with
-  | `Stream stream ->
-      (* [Lwt.choose] removes its callback from the promise that does not
-         resolve, so that they do not pile up on [client_closed] during a
-         long-lived connection of the client. *)
-      Lwt.on_termination
-        (Lwt.choose [Lwt_stream.closed stream; client_closed])
-        (fun () -> Connection.close connection)
-  | `Empty | `String _ | `Strings _ -> Connection.close connection
-  );
-  ( response
-  , fun () ->
-      Connection.close connection;
-      Cohttp_lwt.Body.drain_body response_body )
-
 (** Generate the pages from the request *)
 let gen dir = function
   | Ocsigen.Extensions.Req_found _ ->
@@ -207,8 +167,11 @@ let gen dir = function
                 the step that fails and the library that does it. *)
             Lwt.catch
               (fun () ->
-                call
-                  ~client_closed:(Ocsigen.Request.connection_closed request_info)
+                (* A client that leaves before the end of the response does
+                   not read it to the end: the connection to the target is
+                   closed then. *)
+                Ocsigen.Http_client.call
+                  ~interrupted:(Ocsigen.Request.connection_closed request_info)
                   ~headers ~body meth target
               )
               (fun exn ->
@@ -230,7 +193,7 @@ let gen dir = function
                          (Ocsigen_cookie_map.empty, `Bad_gateway)
                       )
               )
-            >|= fun ((response, body), release) ->
+            >|= fun (response, body, release) ->
             Ocsigen.Response.of_cohttp ~release
               (forwarded_response response, body)
           in
