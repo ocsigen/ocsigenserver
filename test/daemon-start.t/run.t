@@ -1,7 +1,8 @@
 In daemon mode (-d), the command returns once the detached process is
-initialised. If the server does not start, the command fails with its error
-and exit code, says nothing of a detached process and writes no pid file,
-although the error happens in the detached process, after its logs are open.
+initialised and listens. If the server does not start, the command fails with
+its error and exit code, says nothing of a detached process and writes no pid
+file, although the error happens in the detached process, after its logs are
+open.
 
   $ . ../server-test-helpers.sh
   $ free_ports 2
@@ -32,14 +33,15 @@ So when it cannot open its logs:
   $ sed 's|<logdir>log|<logdir>notadir|; s|<cors foo="1"/>||' attr.conf \
   >   > nolog.conf
   $ ocsigenserver -c nolog.conf -d -p server.pid >out.log 2>&1; echo "exit $?"
-  exit 100
+  exit 50
   $ grep -o 'Fatal - .*\|detached' out.log
-  Fatal - Uncaught exception: Sys_error("notadir/access.log: Not a directory")
+  Fatal - Error in configuration file: can't open log file notadir/access.log: Not a directory
   $ test -e server.pid
   [1]
 
 When the server starts, the command says so and writes the process id of the
-detached process in the pid file:
+detached process in the pid file. The server listens as soon as the command
+returns:
 
   $ sed 's|<cors foo="1"/>||; s|</host>|</host><commandpipe>local.cmd</commandpipe>|' \
   >   attr.conf > good.conf
@@ -48,8 +50,34 @@ detached process in the pid file:
   $ trap 'stop_server $(cat server.pid)' EXIT
   $ sed 's/^.*: ocsigen:main: *//' out.log | sed "s/$(cat server.pid)/PID/"
   Process PID detached
-  $ wait_server $(cat server.pid) log/errors.log local.cmd \
+  $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
   >   http://127.0.0.1:$PORT1/
+  404
+
+A port already in use, here by the server above, makes the command fail too:
+
+  $ mkdir -p log2
+  $ sed 's|<logdir>log|<logdir>log2|; s|<commandpipe>local.cmd</commandpipe>||' \
+  >   good.conf > busy.conf
+  $ ocsigenserver -c busy.conf -d -p busy.pid >out.log 2>&1; echo "exit $?"
+  exit 9
+  $ grep -o 'Fatal - .*\|detached' out.log | sed "s/:$PORT1:/:PORT:/"
+  Fatal - bind 127.0.0.1:PORT: Address already in use
+  $ test -e busy.pid
+  [1]
+
+So does a TLS certificate that cannot be read. Its port is never opened:
+
+  $ sed "s|<port>127.0.0.1:$PORT1</port>|<port>127.0.0.1:$PORT2</port>\
+  > <port protocol=\"HTTPS\">127.0.0.1:1</port><ssl><certificate>missing.pem\
+  > </certificate><privatekey>missing.key</privatekey></ssl>|" busy.conf \
+  >   > tls.conf
+  $ ocsigenserver -c tls.conf -d -p tls.pid >out.log 2>&1; echo "exit $?"
+  exit 100
+  $ grep -o 'Fatal - .*Certificate error\|detached' out.log
+  Fatal - Uncaught exception: SSL: Certificate error
+  $ test -e tls.pid
+  [1]
 
 A pid file that cannot be written makes the command fail before the server
 starts. This server would listen on a free port, so that nothing else makes
@@ -60,7 +88,7 @@ it fail:
   $ ocsigenserver -c free.conf -d -p missing/other.pid >out.log 2>&1
   [9]
   $ grep -o 'Fatal - .*\|detached' out.log
-  Fatal - Unix.Unix_error(Unix.ENOENT, "open", "missing/other.pid")
+  Fatal - open missing/other.pid: No such file or directory
   $ curl -s -o /dev/null --max-time 10 http://127.0.0.1:$PORT2/
   [7]
 
