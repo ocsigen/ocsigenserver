@@ -28,6 +28,11 @@ let () = Sys.set_signal Sys.sigpipe Sys.Signal_ignore
 
 (* Exit gracefully on SIGINT so that profiling will work *)
 let () = Sys.set_signal Sys.sigint (Sys.Signal_handle (fun _ -> exit 0))
+
+(* A failed request sent with Cohttp_lwt_unix.Client must not stop the
+   server. Done when this module is loaded, before the modules of the
+   applications, which may then set their own function. *)
+let () = Http_client.install ()
 let section = Logs.Src.create "ocsigen:main"
 
 (* Initialize exception handler for Lwt timeouts: *)

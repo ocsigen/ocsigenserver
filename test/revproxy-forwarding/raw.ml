@@ -1,9 +1,9 @@
-(* An upstream server for the reverse proxy tests, on the port given as
-   argument, that answers
-   with raw responses, which Ocsigen Server would not send, then closes the
-   connection. It serves one connection at a time. For /endless, it sends a
-   body that does not end, until the connection is closed from the other side,
-   and then says so on its standard output. *)
+(* An upstream server for the tests of the reverse proxy and of the HTTP
+   client, on the port given as argument, that answers with raw responses,
+   which Ocsigen Server would not send, then closes the connection. It serves
+   one connection at a time. For /endless, it sends a body that does not end,
+   until the connection is closed from the other side, and then says so on its
+   standard output. *)
 
 let responses =
   [ ( "/http-1.0"
@@ -16,6 +16,7 @@ let responses =
        body ended by the connection\n" )
   ; ( "/length"
     , "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 3\r\n\r\nok\n" )
+  ; "/malformed", "not an HTTP status line\r\n\r\n"
   ]
 
 let rec skip_headers ic =

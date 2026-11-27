@@ -59,6 +59,10 @@
  (deps error-logs/test.exe))
 
 (cram
+ (applies_to http-client)
+ (deps http-client/test.exe revproxy-forwarding/raw.exe))
+
+(cram
  (applies_to loader)
  (deps loader/test.bc loader/dep.cma loader/dep2.cma loader/app.cma))
 
