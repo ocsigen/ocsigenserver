@@ -11,11 +11,13 @@ type conn = {fd : Unix.file_descr; channel : channel}
 exception Connect_failed of string
 
 (* A failed write must be reported as an error, not kill the process. *)
-let initialised =
+let initialisation =
   lazy
     ( Sys.set_signal Sys.sigpipe Sys.Signal_ignore;
       Ssl.init ()
     )
+
+let init () = Lazy.force initialisation
 
 (* Upper bound on any single blocking operation, so that a server that
    stops answering in the middle of a TLS record or handshake cannot hang a
@@ -35,7 +37,7 @@ let tls_handshake fd ~max_version ~sni =
       raise (Connect_failed "TLS handshake failed")
 
 let connect target =
-  Lazy.force initialised;
+  init ();
   let address =
     match
       Unix.getaddrinfo target.host
@@ -180,9 +182,11 @@ let rec trailers_end s pos =
     let* eol = line_end s pos in
     trailers_end s (eol + 2)
 
-(* Position after the chunked content that starts at [pos]. Lengths are
-   compared by subtraction, as a huge one would overflow an addition. *)
-let rec chunked_end s pos =
+(* Position after the chunked content that starts at [pos], and the ranges of
+   [s] that hold its data, in reverse order, the first ones being [ranges].
+   Lengths are compared by subtraction, as a huge one would overflow an
+   addition. *)
+let rec chunked_end ranges s pos =
   let* eol = line_end s pos in
   let size = String.sub s pos (eol - pos) in
   let size =
@@ -196,20 +200,27 @@ let rec chunked_end s pos =
   then Error Unframed
   else
     match int_of_string_opt ("0x" ^ size) with
-    | Some 0 -> trailers_end s (eol + 2)
+    | Some 0 ->
+        let* next = trailers_end s (eol + 2) in
+        Ok (next, ranges)
     | Some n when n > 0 ->
         if n > String.length s - eol - 4
         then Error Incomplete
         else if substring_at s (eol + 2 + n) "\r\n"
-        then chunked_end s (eol + 4 + n)
+        then chunked_end ((eol + 2, n) :: ranges) s (eol + 4 + n)
         else Error Unframed
     | Some _ | None -> Error Unframed
 
-let field_value name line =
+(* The name and value of a field line, without the whitespace around the
+   value. *)
+let field line =
   match String.index_opt line ':' with
-  | Some i when String.lowercase_ascii (String.sub line 0 i) = name ->
-      Some (String.trim (String.sub line (i + 1) (String.length line - i - 1)))
-  | Some _ | None -> None
+  | Some i ->
+      Some
+        ( String.sub line 0 i
+        , String.trim (String.sub line (i + 1) (String.length line - i - 1))
+        )
+  | None -> None
 
 let list_elements value =
   List.map
@@ -221,21 +232,43 @@ let is_chunked coding =
   | last :: _ -> last = "chunked"
   | [] -> false
 
-type response = {next : int; final : bool; close : bool}
+type http_response =
+  {status : int; headers : (string * string) list; body : string}
+
+(* A response found in [s]: where it ends, whether it is final and closes the
+   connection, and its status, fields and the ranges of [s] that hold its
+   content, in reverse order. *)
+type response =
+  { next : int
+  ; final : bool
+  ; close : bool
+  ; code : int
+  ; fields : (string * string) list
+  ; ranges : (int * int) list
+  }
 
 (* The response that starts at [pos] (RFC 9112 section 6.3): the position
-   after it, whether it is a final one (not 1xx), and whether it closes the
-   connection. A response delimited by the end of the connection, or followed
-   by another protocol (101), is [Unframed]. *)
-let response_end s pos =
+   after it, whether it is a final one (not 1xx), whether it closes the
+   connection, and its status, fields and content. A response delimited by the
+   end of the connection, or followed by another protocol (101), is
+   [Unframed], unless [closed] says that the connection is closed: its content
+   is then the rest of [s]. *)
+let response_end ?(closed = false) s pos =
   let* head_end =
     match find s pos "\r\n\r\n" with Some i -> Ok i | None -> Error Incomplete
   in
   let content = head_end + 4 in
   match split_lines (String.sub s pos (head_end - pos)) with
   | [] -> Error Unframed
-  | status :: fields -> (
-      let values name = List.filter_map (field_value name) fields in
+  | status_line :: lines -> (
+      let fields = List.filter_map field lines in
+      let values name =
+        List.filter_map
+          (fun (n, value) ->
+            if String.lowercase_ascii n = name then Some value else None
+          )
+          fields
+      in
       let last name =
         match List.rev (values name) with
         | value :: _ -> Some value
@@ -246,20 +279,31 @@ let response_end s pos =
          section 9.3). *)
       let close =
         List.mem "close" options
-        || String.starts_with ~prefix:"HTTP/1.0 " status
+        || String.starts_with ~prefix:"HTTP/1.0 " status_line
            && not (List.mem "keep-alive" options)
       in
-      match status_code status with
-      | None | Some 101 -> Error Unframed
+      let response ~next ~final code ranges =
+        Ok {next; final; close; code; fields; ranges}
+      in
+      let until_close code =
+        if closed
+        then
+          response ~next:(String.length s) ~final:true code
+            [content, String.length s - content]
+        else Error Unframed
+      in
+      match status_code status_line with
+      | None -> Error Unframed
+      | Some 101 -> until_close 101
       | Some code when code / 100 = 1 ->
-          Ok {next = content; final = false; close}
-      | Some (204 | 304) -> Ok {next = content; final = true; close}
-      | Some _ -> (
+          response ~next:content ~final:false code []
+      | Some ((204 | 304) as code) -> response ~next:content ~final:true code []
+      | Some code -> (
         match last "transfer-encoding", last "content-length" with
         | Some coding, _ when is_chunked coding ->
-            let* next = chunked_end s content in
-            Ok {next; final = true; close}
-        | Some _, _ | None, None -> Error Unframed
+            let* next, ranges = chunked_end [] s content in
+            response ~next ~final:true code ranges
+        | Some _, _ | None, None -> until_close code
         | None, Some length -> (
           match
             if is_digits ~hex:false length
@@ -267,7 +311,7 @@ let response_end s pos =
             else None
           with
           | Some n when n <= String.length s - content ->
-              Ok {next = content + n; final = true; close}
+              response ~next:(content + n) ~final:true code [content, n]
           | Some _ -> Error Incomplete
           | None -> Error Unframed
         )
@@ -285,11 +329,25 @@ let rec scan received pos last =
     , (pos, last) )
   else
     match response_end received pos with
-    | Ok {next; final; close} ->
+    | Ok {next; final; close; _} ->
         scan received next (if final then Some close else None)
     | Error framing -> framing, (pos, last)
 
 let framing received = fst (scan received 0 None)
+
+let responses ?closed received =
+  let rec from pos acc =
+    match response_end ?closed received pos with
+    | Ok {next; code; fields; ranges; _} ->
+        let body =
+          String.concat ""
+            (List.rev_map (fun (start, n) -> String.sub received start n) ranges)
+        in
+        from next ({status = code; headers = fields; body} :: acc)
+    | Error _ ->
+        List.rev acc, String.sub received pos (String.length received - pos)
+  in
+  from 0 []
 
 let receive
     ?(first_byte = 10.) ?(idle = 2.) ?(settle = idle) ?(limit = 1 lsl 20) conn =
@@ -372,7 +430,7 @@ let header_line names =
 let date_header = header_line ["date"]
 let validator_header = header_line ["etag"; "last-modified"]
 
-let ending_line = function
+let ending_to_string = function
   | Closed -> "[closed]"
   | Reset -> "[reset]"
   | Idle -> "[idle]"
@@ -386,6 +444,6 @@ let render ?(status_only = false) ?(validators = false) {received; ending} =
   in
   let lines = List.filter keep (split_lines received) in
   String.concat "" (List.map (fun line -> escape line ^ "\n") lines)
-  ^ ending_line ending ^ "\n"
+  ^ ending_to_string ending ^ "\n"
 
 let status_codes received = List.filter_map status_code (split_lines received)

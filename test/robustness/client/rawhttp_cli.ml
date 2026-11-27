@@ -106,12 +106,6 @@ let send () =
         )
   | exception Raw_http.Connect_failed message -> connect_failed message
 
-let ending_name = function
-  | Raw_http.Closed -> "closed"
-  | Reset -> "reset"
-  | Idle -> "idle"
-  | Overflow -> "overflow"
-
 (* One line per distinct answer, in order of first appearance:
    "<count> x <status codes> [<ending>]". *)
 let repeat () =
@@ -127,12 +121,12 @@ let repeat () =
       with
       | {received; ending} ->
           let codes = Raw_http.status_codes received in
-          Printf.sprintf "%s [%s]"
+          Printf.sprintf "%s %s"
             ( if codes = []
               then "-"
               else String.concat "," (List.map string_of_int codes)
             )
-            (ending_name ending)
+            (Raw_http.ending_to_string ending)
       | exception Raw_http.Connect_failed message ->
           Printf.sprintf "[connect failed: %s]" message
     in
