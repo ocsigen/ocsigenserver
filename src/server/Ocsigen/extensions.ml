@@ -427,25 +427,24 @@ let rec compose = function
 let fun_end = ref (fun () -> ())
 let fun_exn = ref (fun exn : string -> raise exn)
 
-let rec parse_site_attrs (enc, dir) = function
+(* [dir] is an older name of [path]. *)
+let rec parse_site_attrs (enc, path) = function
   | [] -> (
-    match dir with
-    | None -> raise (Config.Config_file_error "Missing dir attribute in <site>")
+    match path with
+    | None -> badconfig "Missing path attribute in <site>"
     | Some s -> enc, s
   )
   | ("path", s) :: rest | ("dir", s) :: rest -> (
-    match dir with
+    match path with
     | None -> parse_site_attrs (enc, Some s) rest
-    | _ -> raise (Config.Config_file_error "Duplicate attribute dir in <site>")
+    | _ -> badconfig "Duplicate attribute path (or dir) in <site>"
   )
   | ("charset", s) :: rest -> (
     match enc with
-    | None -> parse_site_attrs (Some s, dir) rest
-    | _ ->
-        raise (Config.Config_file_error "Duplicate attribute charset in <site>")
+    | None -> parse_site_attrs (Some s, path) rest
+    | _ -> badconfig "Duplicate attribute charset in <site>"
   )
-  | (s, _) :: _ ->
-      raise (Config.Config_file_error ("Wrong attribute for <site>: " ^ s))
+  | (s, _) :: _ -> badconfig "Wrong attribute for <site>: %s" s
 
 let make_parse_config path parse_host l : extension_composite =
   let f = parse_host path (Parse_host parse_host) in
@@ -460,8 +459,9 @@ let make_parse_config path parse_host l : extension_composite =
       with
       | Bad_config_tag_for_extension t ->
           (* This case happens only if no extension has recognized the
-           tag at all *)
-          badconfig "Unexpected tag <%s> inside <site dir=\"%s\">" t
+           tag at all. [path] is the path of the site in the URLs, made of
+           the paths of the nested <site>s. *)
+          badconfig "Unexpected tag <%s> in the configuration of /%s" t
             (Url.string_of_url_path ~encode:true path)
       | (Error_in_config_file _ | Error_in_user_config_file _) as e -> raise e
       | e ->
@@ -555,12 +555,12 @@ let default_parse_config
     (Parse_host parse_host)
     (_parse_fun : parse_fun) = function
   | Xml.Element ("site", atts, l) ->
-      let charset, dir = parse_site_attrs (None, None) atts in
-      let path = prevpath @ preprocess_site_path (Url.split_path dir) in
+      let charset, site_path = parse_site_attrs (None, None) atts in
+      let path = prevpath @ preprocess_site_path (Url.split_path site_path) in
       let ext_of_children = make_parse_config path parse_host l in
       site_ext ext_of_children charset path
   | Xml.Element (tag, _, _) -> raise (Bad_config_tag_for_extension tag)
-  | _ -> raise (Config.Config_file_error "Unexpected content inside <host>")
+  | _ -> badconfig "Unexpected text inside <host> or <site>"
 
 type userconf_info = {localfiles_root : string}
 

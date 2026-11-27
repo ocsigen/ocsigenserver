@@ -65,7 +65,7 @@ keeps its sites, here the one that the file no longer has:
   $ write_conf '<nosuchtag />'
   $ reload 'Config file reload failed' 1
   $ grep -o 'ocsigen:main: .*' log/errors.log
-  ocsigen:main: [ERROR] Config file reload failed: Error in configuration file: Unexpected tag <nosuchtag> inside <site dir="">
+  ocsigen:main: [ERROR] Config file reload failed: Error in configuration file: Unexpected tag <nosuchtag> in the configuration of /
   $ grep -c 'reload failed' log/warnings.log
   0
   [1]

@@ -651,6 +651,10 @@ Bug fixes:
    error responses: the cookies of the secure sessions of Eliom were also sent
    in clear. Browsers refuse such cookies from a site served over HTTP
    (Chrome and Firefox make an exception for localhost, Safari does not).
+ * The errors in a <site> name its path attribute (dir is an older name), and
+   no longer show the name of an OCaml exception. A tag that no extension
+   knows is reported with the path of the site it configures, such as /a/b,
+   instead of <site dir="a/b">.
 
 ==== 8.0.0 (2026-09-24) ===
 
