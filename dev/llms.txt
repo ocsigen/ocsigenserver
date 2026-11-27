@@ -1,6 +1,6 @@
 # Server
 
-> - [ocsigenserver](ocsigenserver/index.md) (version 8.1.0~dev)
+> - [ocsigenserver](./index.md) (version 8.1.0~dev)
 
 ## Manual
 - [OCaml Package Documentation](index.md)

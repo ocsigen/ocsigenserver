@@ -60,7 +60,7 @@ val set_pidfile : string -> unit
 ```ocaml
 val set_mimefile : string -> unit
 ```
-The mime.types file whose types come after the `<contenttype>` rules (see [`Ocsigen_http.Charset_mime.find_mime`](./../ocsigenserver/Ocsigen_http-Charset_mime.md#val-find_mime)). An empty path means none.
+The mime.types file whose types come after the `<contenttype>` rules (see [`Ocsigen_http.Charset_mime.find_mime`](../Ocsigen_http-Charset_mime.md#val-find_mime)). An empty path means none.
 
 ```ocaml
 val set_verbose : unit -> unit
