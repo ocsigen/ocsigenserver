@@ -38,7 +38,8 @@
   (xml-light (>= 2.5))
   (logs (>= 0.10.0))
   logs-syslog
-  (syslog-message (>= 1.1.0)))
+  (syslog-message (>= 1.1.0))
+  (yojson :with-test))
  (conflicts
   (pgocaml (< 2.2))
   ; Their extensions use the data directory, removed in 8.1, and the dbm one

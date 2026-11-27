@@ -33,6 +33,7 @@ depends: [
   "logs" {>= "0.10.0"}
   "logs-syslog"
   "syslog-message" {>= "1.1.0"}
+  "yojson" {with-test}
   "odoc" {with-doc}
 ]
 conflicts: [

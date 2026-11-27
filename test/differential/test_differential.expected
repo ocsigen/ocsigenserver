@@ -1,0 +1,42 @@
+== Corpus.parse
+"# comment\n\na \"GET\\r\\n\"\n  b\t\"x\\000\"  \n" -> a="GET\r\n"; b="x\000"
+"a \"unterminated\n" -> error: line 1: scanf: bad input at char number 15: scanning of a String failed: premature end of file occurred before end of token
+"a\n" -> error: line 1: no input
+"\"no name\"\n" -> error: line 1: scanf: bad input at char number 4: looking for '"', found 'n'
+"a \"x\" trailing\n" -> error: line 1: scanf: bad input at char number 5: end of input not found
+== Echo.of_json
+"GET" "/" "1.1" ["Host": "a"; "X-A": "1"; "X-A": "2"] "b\r\n"
+"GET" "/" "1.0" ["Host": "a"] ""
+error: no body
+error: method is not base64
+error: method is not a string
+error: a header is not a pair
+error: not a JSON object
+error: invalid JSON: Line 1, bytes 0-1:
+Unexpected end of input
+== Outcome.of_outcome
+"GET" "/" "1.1" ["Host": "a"] ""
+status 400
+[idle]
+unreadable: invalid JSON: Line 1, bytes 0-8:
+Invalid token 'not json'
+[idle]
+"GET" "/" "1.1" ["Host": "a"] ""
+[closed]
+"GET" "/" "1.1" ["Host": "a"] ""
+[closed]
+rest "garbage"
+[idle]
+== Outcome.clusters
+accepted, same-but-framing, accepted-then-rejected: "GET" "/" "1.1" ["host": "a"] ""
+rejected, closed: refused
+other: "GET" "/b" "1.1" ["host": "a"] ""
+== Outcome.view, normalization
+"GET" "/" "1.1" ["b": "2"; "host": "a"; "x-a": "1,3"] ""
+"GET" "/" "1.1" ["host": "a"; "x-a": "1"] ""
+"GET" "/c?d" "1.1" ["host": "b:8080"] ""
+"GET" "/?d" "1.1" ["host": "b"] ""
+"GET" "/" "1.1" ["host": "b"] ""
+"GET" "/a://b" "1.1" ["host": "a"] ""
+"GET" "/" "1.1" ["host": "a"; "x-a": "1,2,3"] ""
+"GET" "/" "1.1" ["host": "a"] ""
