@@ -76,6 +76,17 @@ val original_full_path : t -> string list
 val original_full_path_string : t -> string
 val header : t -> Ocsigen_http.Header.Name.t -> string option
 val header_multi : t -> Ocsigen_http.Header.Name.t -> string list
+
+val target : t -> string
+(** [target r] is the request target of [r] as received, such as [/a?b] or
+    [http://host/a], before any normalization or rewriting: {!uri} and
+    {!path} are computed from it. *)
+
+val headers : t -> Cohttp.Header.t
+(** [headers r] are the header fields of [r]: those of the request as
+    received, in their order and with repeated ones, and those added since
+    with {!add_header}. *)
+
 val add_header : t -> Ocsigen_http.Header.Name.t -> string -> t
 val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
 
