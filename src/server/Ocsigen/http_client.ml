@@ -39,3 +39,10 @@ let call
   , fun () ->
       Connection.close connection;
       Cohttp_lwt.Body.drain_body body )
+
+let install () =
+  Cohttp_lwt_unix.Client.set_cache
+    (fun ?headers ?body ?absolute_form meth uri ->
+      call ?headers ?body ?absolute_form meth uri >|= fun (response, body, _) ->
+      response, body
+  )

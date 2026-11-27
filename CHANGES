@@ -232,6 +232,14 @@ New features:
    only rejects its promise. It also takes a ctx argument.
 
 Bug fixes:
+ * A request that the server or an application sends with
+   Cohttp_lwt_unix.Client (call, get, post...), and that fails, no longer stops
+   the server: a target that answers with something other than HTTP, a
+   connection closed while the request is sent, or a request body that cannot
+   be read. cohttp raised the error again outside of any promise
+   (cohttp#1153). The server now makes these functions send their requests
+   with Ocsigen.Http_client.call, when they are called without a ctx argument.
+   An application that needs one should call Ocsigen.Http_client.call.
  * In syslog mode, reopening the logs (the reopen_logs order of a log
    rotation) no longer opens a new socket to syslog each time, which leaked
    one file descriptor per rotation.
