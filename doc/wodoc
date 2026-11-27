@@ -9,6 +9,7 @@
 ;; ocsigenserver/.
 (project ocsigenserver)
 (title Server)
+(llms (title "Ocsigen Server"))  ; the llms.txt index (for AIs): the site label is short
 (url-prefix /ocsigenserver)
 (css /css/style.css /css/ocsigen-odoc.css)  ; shared Ocsigen theme (wodoc css default changed)
 (landing ocsigenserver/index.html)
