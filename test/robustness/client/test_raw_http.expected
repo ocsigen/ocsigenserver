@@ -72,3 +72,26 @@ Content-Length: 5
 
 hello
 [idle]
+== responses: content-length, then chunked, then a partial one
+200 [Date=Sat, 17 Oct 2026 10:00:00 GMT; ETag=W/"1-2"; last-modified=Sat, 17 Oct 2026 09:00:00 GMT; Content-Length=5] "hello"
+200 [Transfer-Encoding=chunked] "hello"
+rest "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nabc"
+== responses: 100 then 204, fields with spaces
+100 [] ""
+204 [X-A=a b] ""
+rest ""
+== responses: delimited by the end, connection open
+rest "HTTP/1.1 200 OK\r\n\r\nhello"
+== responses: delimited by the end, connection closed
+200 [] "hello"
+rest ""
+== responses: 101, connection closed
+101 [Upgrade=x] "other protocol"
+rest ""
+== responses: transfer coding gzip alone, connection closed
+200 [Transfer-Encoding=gzip] "xyz"
+rest ""
+== responses: content cut short, connection closed
+rest "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nabc"
+== responses: not a response
+rest "garbage\r\n\r\n"

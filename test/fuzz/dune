@@ -1,0 +1,6 @@
+; Property tests of the parsers of HTTP messages (see README.md).
+
+(test
+ (name fuzz)
+ (package ocsigenserver)
+ (libraries crowbar http ipaddr ocsigen_http baselib raw_http))

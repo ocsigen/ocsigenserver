@@ -1,0 +1,4 @@
+(executable
+ (name echo)
+ (modules echo)
+ (libraries ocsigenserver cryptokit cohttp cohttp-lwt lwt uri unix))

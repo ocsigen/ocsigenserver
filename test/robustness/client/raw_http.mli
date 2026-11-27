@@ -22,6 +22,12 @@ type target = {host : string; port : int; transport : transport}
 type conn
 (** An open connection to a target. *)
 
+val init : unit -> unit
+(** [init ()] prepares the program for connections: it ignores SIGPIPE, so
+    that a write to a closed connection fails instead of killing the process,
+    and initialises OpenSSL. {!connect} calls it; a program that connects from
+    several threads must call it before starting them. *)
+
 exception Connect_failed of string
 (** Raised by {!connect} when the TCP connection or the TLS handshake fails.
     The argument is a short, stable description of the failure. *)
@@ -62,6 +68,21 @@ val framing : string -> framing
     section 6.3); 1xx, 204 and 304 responses have no content. The request
     method is not known, so the response to a HEAD request is complete only
     when as many bytes as its Content-Length follow it. *)
+
+type http_response =
+  { status : int
+  ; headers : (string * string) list
+        (** In the order received, without the whitespace around values. *)
+  ; body : string  (** Without the chunked coding. *)
+  }
+
+val responses : ?closed:bool -> string -> http_response list * string
+(** [responses received] is the list of the complete responses at the start
+    of [received], 1xx ones included, framed as {!framing} says, and the bytes
+    that follow them. With [~closed:true], meaning that the server closed the
+    connection after [received], a response that has neither Content-Length
+    nor the chunked coding takes the rest of [received] as its content, as
+    does the response with status 101. *)
 
 val receive :
      ?first_byte:float
@@ -104,6 +125,9 @@ val exchange :
 
 (** {1 Rendering} *)
 
+val ending_to_string : ending -> string
+(** [ending_to_string e] is [[closed]], [[reset]], [[idle]] or [[overflow]]. *)
+
 val render : ?status_only:bool -> ?validators:bool -> outcome -> string
 (** [render outcome] is a printable rendering of [outcome] that does not
     depend on the time of the test:
@@ -111,8 +135,7 @@ val render : ?status_only:bool -> ?validators:bool -> outcome -> string
       are written [\xHH];
     - header lines [Date], [ETag] and [Last-Modified] are removed, wherever
       they appear;
-    - the last line describes {!ending}: [[closed]], [[reset]], [[idle]] or
-      [[overflow]].
+    - the last line describes {!ending}, as {!ending_to_string} does.
 
     With [~status_only:true], only the status lines ([HTTP/...]) are kept,
     followed by the ending line. With [~validators:true], the [ETag] and

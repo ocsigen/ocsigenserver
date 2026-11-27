@@ -73,6 +73,7 @@ type t =
   ; r_meth : Cohttp.Code.meth
   ; r_encoding : Cohttp.Transfer.encoding
   ; r_version : Cohttp.Code.version
+  ; r_target : string
   ; r_headers : Cohttp.Header.t
   ; r_body : body ref
   ; r_original_full_path : string option
@@ -108,6 +109,7 @@ let make
   ; r_encoding = Cohttp.Request.encoding request
   ; r_meth = Cohttp.Request.meth request
   ; r_version = Cohttp.Request.version request
+  ; r_target = Cohttp.Request.resource request
   ; r_headers = Cohttp.Request.headers request
   ; r_body = ref (`Unparsed body)
   ; r_sub_path = sub_path
@@ -241,6 +243,9 @@ let header {r_headers; _} id =
 
 let header_multi {r_headers; _} id =
   Cohttp.Header.get_multi r_headers (Ocsigen_http.Header.Name.to_string id)
+
+let target {r_target; _} = r_target
+let headers {r_headers; _} = r_headers
 
 let add_header ({r_headers; _} as r) id v =
   { r with

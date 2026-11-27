@@ -133,7 +133,9 @@ module Entity_tag : sig
   (** [parse_list values] is the value of an [If-Match] or [If-None-Match]
       header field written on the lines [values]: [`Any] when it is just
       ["*"], otherwise the list of its entity tags. Elements that are not
-      valid entity tags are ignored. *)
+      valid entity tags are ignored. As an entity tag may contain commas, a
+      double quote out of place can make the elements that follow part of
+      such an invalid element: [parse_list ["\"a, \"b\""]] has no entity tag. *)
 
   val weak_equal : t -> t -> bool
   (** [weak_equal a b] is the weak comparison of [a] and [b]: their opaque tags

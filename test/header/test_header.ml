@@ -28,6 +28,7 @@ let () =
   show_list ["w/\"a\""];
   show_list ["\"a\"x, \"b\""];
   show_list ["\"a\" , \"b\" "];
+  show_list ["\"a, \"b\""];
   show_list ["\"a b\", \"c\""];
   show_list ["\"a\x7f\", \"c\""];
   print_endline "== Entity_tag.make";
