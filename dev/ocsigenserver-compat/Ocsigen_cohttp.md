@@ -29,7 +29,30 @@ Shutdown main loop of server
 ```ocaml
 val max_listening_sockets : Ocsigen.Config.socket_type -> int
 ```
-`max_listening_sockets address` is the number of sockets that `service ~address` listens on, at most: two for ``All`, one for IPv4 and one for IPv6, and one otherwise.
+`max_listening_sockets address` is the number of sockets that `listen ~address` opens, at most: two for ``All`, one for IPv4 and one for IPv6, and one otherwise.
+
+```ocaml
+type listening = Ocsigen.Ocsigen_cohttp.listening
+```
+Sockets listening for the connections of a server, not served yet.
+
+```ocaml
+val listen : 
+  ?ssl:(string * string * (bool -> string) option) ->
+  address:Ocsigen.Config.socket_type ->
+  port:int ->
+  unit ->
+  listening Lwt.t
+```
+`listen ?ssl ~address ~port ()` opens the sockets of a server on `address` and `port`, with TLS if `ssl` gives a certificate, its key and the function that asks for the password of the key; a Unix-domain socket never has TLS. It fails if a socket cannot be opened, for instance on a port already in use.
+
+```ocaml
+val serve : 
+  listening ->
+  connector:(Ocsigen.Request.t -> Ocsigen.Response.t Lwt.t) ->
+  unit Lwt.t
+```
+`serve l ~connector` serves the connections of `l`, answering their requests with `connector`, until the server stops.
 
 ```ocaml
 val service : 
@@ -40,4 +63,4 @@ val service :
   unit ->
   unit Lwt.t
 ```
-initialize a main loop of http server
+`service ?ssl ~address ~port ~connector ()` is [`listen`](./#val-listen), then [`serve`](./#val-serve).

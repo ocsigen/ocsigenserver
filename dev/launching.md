@@ -39,6 +39,8 @@ To run the server, use the command `ocsigenserver`. It has the following options
   -d, --daemon
          Daemon mode (detach the process).
          Implies -s, so it needs log files or syslog.
+         The command returns once the server is initialised and listens,
+         and fails with its error and exit code if it does not start.
 
   -help, --help
          Show summary of options.

@@ -179,6 +179,8 @@ To run the server, use the command `ocsigenserver`. It has the following options
   -d, --daemon
          Daemon mode (detach the process).
          Implies -s, so it needs log files or syslog.
+         The command returns once the server is initialised and listens,
+         and fails with its error and exit code if it does not start.
 
   -help, --help
          Show summary of options.
@@ -517,6 +519,8 @@ The `logs:` order of the command pipe (see `<commandpipe>` below) sets the level
 
 #### `<charset>` : default charset for pages
 
+The charset of the hosts that do not give one with their `charset` attribute. Without `<charset>`, it is `utf-8`. Staticmod gives it for text and XML files, and Eliom for its pages.
+
 Example:
 
 ```
@@ -854,7 +858,7 @@ Most distributions have a special command to do that automatically (for the defa
 ```
 /etc/init.d/ocsigenserver reload
 ```
-The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
+The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded. When a tag of `<server>` such as `<maxretries>` or `<charset>` is removed from the file, its setting goes back to the value it had before the file was first read. This does not apply to `<loglevel>` or `<respectpipeline/>`.
 
 If the file has an error, the server logs "Config file reload failed: " followed by the error, and keeps its sites and its server-wide settings (the tags of `<server>`, such as `<maxretries>`) as they were. What the extensions did before the error is not undone: an extension that the file loads for the first time stays loaded, with its options, and Eliom may already have reloaded the modules of the sites that come before the error. Otherwise it logs "Config file reloaded".
 
@@ -2717,6 +2721,8 @@ val set_maxrequestbodysizeinmemory : int -> unit
 ```ocaml
 val set_default_charset : string option -> unit
 ```
+`set_default_charset c` sets the charset of the hosts that give none themselves. `None` is no charset: the text responses then have none.
+
 ```ocaml
 val set_bindir : string -> unit
 ```
@@ -2850,6 +2856,8 @@ val get_maxrequestbodysizeinmemory : unit -> int
 ```ocaml
 val get_default_charset : unit -> string option
 ```
+`get_default_charset ()` is the charset of the hosts that give none themselves, `Some "utf-8"` unless [`set_default_charset`](./#val-set_default_charset) changed it.
+
 ```ocaml
 val get_bindir : unit -> string
 ```
@@ -3601,7 +3609,30 @@ Shutdown main loop of server
 ```ocaml
 val max_listening_sockets : Config.socket_type -> int
 ```
-`max_listening_sockets address` is the number of sockets that `service ~address` listens on, at most: two for ``All`, one for IPv4 and one for IPv6, and one otherwise.
+`max_listening_sockets address` is the number of sockets that `listen ~address` opens, at most: two for ``All`, one for IPv4 and one for IPv6, and one otherwise.
+
+```ocaml
+type listening
+```
+Sockets listening for the connections of a server, not served yet.
+
+```ocaml
+val listen : 
+  ?ssl:(string * string * (bool -> string) option) ->
+  address:Config.socket_type ->
+  port:int ->
+  unit ->
+  listening Lwt.t
+```
+`listen ?ssl ~address ~port ()` opens the sockets of a server on `address` and `port`, with TLS if `ssl` gives a certificate, its key and the function that asks for the password of the key; a Unix-domain socket never has TLS. It fails if a socket cannot be opened, for instance on a port already in use.
+
+```ocaml
+val serve : 
+  listening ->
+  connector:(Request.t -> Response.t Lwt.t) ->
+  unit Lwt.t
+```
+`serve l ~connector` serves the connections of `l`, answering their requests with `connector`, until the server stops.
 
 ```ocaml
 val service : 
@@ -3612,7 +3643,7 @@ val service :
   unit ->
   unit Lwt.t
 ```
-initialize a main loop of http server
+`service ?ssl ~address ~port ~connector ()` is [`listen`](./#val-listen), then [`serve`](./#val-serve).
 
 
 ---
@@ -4131,7 +4162,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-Options behave exactly like their [configuration file](./config.md) counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative.
+Options behave exactly like their [configuration file](./config.md) counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative. The default charset is utf-8 unless `default_charset` gives another one, or `None` for no charset.
 
 ```ocaml
 type instruction =
@@ -7863,7 +7894,30 @@ Shutdown main loop of server
 ```ocaml
 val max_listening_sockets : Ocsigen.Config.socket_type -> int
 ```
-`max_listening_sockets address` is the number of sockets that `service ~address` listens on, at most: two for ``All`, one for IPv4 and one for IPv6, and one otherwise.
+`max_listening_sockets address` is the number of sockets that `listen ~address` opens, at most: two for ``All`, one for IPv4 and one for IPv6, and one otherwise.
+
+```ocaml
+type listening = Ocsigen.Ocsigen_cohttp.listening
+```
+Sockets listening for the connections of a server, not served yet.
+
+```ocaml
+val listen : 
+  ?ssl:(string * string * (bool -> string) option) ->
+  address:Ocsigen.Config.socket_type ->
+  port:int ->
+  unit ->
+  listening Lwt.t
+```
+`listen ?ssl ~address ~port ()` opens the sockets of a server on `address` and `port`, with TLS if `ssl` gives a certificate, its key and the function that asks for the password of the key; a Unix-domain socket never has TLS. It fails if a socket cannot be opened, for instance on a port already in use.
+
+```ocaml
+val serve : 
+  listening ->
+  connector:(Ocsigen.Request.t -> Ocsigen.Response.t Lwt.t) ->
+  unit Lwt.t
+```
+`serve l ~connector` serves the connections of `l`, answering their requests with `connector`, until the server stops.
 
 ```ocaml
 val service : 
@@ -7874,7 +7928,7 @@ val service :
   unit ->
   unit Lwt.t
 ```
-initialize a main loop of http server
+`service ?ssl ~address ~port ~connector ()` is [`listen`](./#val-listen), then [`serve`](./#val-serve).
 
 
 ---
@@ -8023,6 +8077,8 @@ val set_maxrequestbodysizeinmemory : int -> unit
 ```ocaml
 val set_default_charset : string option -> unit
 ```
+`set_default_charset c` sets the charset of the hosts that give none themselves. `None` is no charset: the text responses then have none.
+
 ```ocaml
 val set_bindir : string -> unit
 ```
@@ -8156,6 +8212,8 @@ val get_maxrequestbodysizeinmemory : unit -> int
 ```ocaml
 val get_default_charset : unit -> string option
 ```
+`get_default_charset ()` is the charset of the hosts that give none themselves, `Some "utf-8"` unless [`set_default_charset`](./#val-set_default_charset) changed it.
+
 ```ocaml
 val get_bindir : unit -> string
 ```
@@ -9356,7 +9414,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-Options behave exactly like their `configuration file` counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative.
+Options behave exactly like their `configuration file` counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative. The default charset is utf-8 unless `default_charset` gives another one, or `None` for no charset.
 
 ```ocaml
 type instruction =

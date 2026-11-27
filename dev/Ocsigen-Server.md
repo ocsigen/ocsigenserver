@@ -88,7 +88,7 @@ val start :
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
 
-Options behave exactly like their [configuration file](./config.md) counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative.
+Options behave exactly like their [configuration file](./config.md) counterparts. Raises `Invalid_argument` if `maxuploadfilesize` or `maxrequestbodysize` is negative. The default charset is utf-8 unless `default_charset` gives another one, or `None` for no charset.
 
 ```ocaml
 type instruction =

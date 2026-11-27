@@ -307,6 +307,8 @@ The `logs:` order of the command pipe (see `<commandpipe>` below) sets the level
 
 #### `<charset>` : default charset for pages
 
+The charset of the hosts that do not give one with their `charset` attribute. Without `<charset>`, it is `utf-8`. Staticmod gives it for text and XML files, and Eliom for its pages.
+
 Example:
 
 ```
@@ -644,7 +646,7 @@ Most distributions have a special command to do that automatically (for the defa
 ```
 /etc/init.d/ocsigenserver reload
 ```
-The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded.
+The configuration file will be reloaded, and the changes will be taken into account if possible. For example it is not possible to change the port numbers without stopping the server for now. Extensions and libraries loaded using `<extension>` will not be reloaded. When a tag of `<server>` such as `<maxretries>` or `<charset>` is removed from the file, its setting goes back to the value it had before the file was first read. This does not apply to `<loglevel>` or `<respectpipeline/>`.
 
 If the file has an error, the server logs "Config file reload failed: " followed by the error, and keeps its sites and its server-wide settings (the tags of `<server>`, such as `<maxretries>`) as they were. What the extensions did before the error is not undone: an extension that the file loads for the first time stays loaded, with its options, and Eliom may already have reloaded the modules of the sites that come before the error. Otherwise it logs "Config file reloaded".
 

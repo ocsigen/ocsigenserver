@@ -128,6 +128,8 @@ val set_maxrequestbodysizeinmemory : int -> unit
 ```ocaml
 val set_default_charset : string option -> unit
 ```
+`set_default_charset c` sets the charset of the hosts that give none themselves. `None` is no charset: the text responses then have none.
+
 ```ocaml
 val set_bindir : string -> unit
 ```
@@ -261,6 +263,8 @@ val get_maxrequestbodysizeinmemory : unit -> int
 ```ocaml
 val get_default_charset : unit -> string option
 ```
+`get_default_charset ()` is the charset of the hosts that give none themselves, `Some "utf-8"` unless [`set_default_charset`](./#val-set_default_charset) changed it.
+
 ```ocaml
 val get_bindir : unit -> string
 ```
