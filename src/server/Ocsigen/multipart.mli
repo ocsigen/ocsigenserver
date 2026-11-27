@@ -32,9 +32,12 @@ val post_params :
   -> (string option -> Int64.t option -> post_data Lwt.t) option
 (** [post_params ~content_type ~on_file body] is the function that decodes
     [body], if [content_type] is a form encoding. The returned function takes
-    the directory where to store the uploaded files ([None] forbids uploads)
-    and their maximum size. It calls [on_file] with the name of each file it
-    creates, which the caller removes once it no longer needs it. *)
+    the directory where to store the uploaded files and their maximum size.
+    [None] as directory forbids uploads: a file makes the decoding fail with
+    {!Ocsigen_upload_forbidden}, but a file input left empty (an empty file
+    name, without content) is read as an empty field. With a directory, such
+    an input gives an empty file. It calls [on_file] with the name of each
+    file it creates, which the caller removes once it no longer needs it. *)
 
 val parse_content_type : string -> content_type option
 (** [parse_content_type s] is the media type and the parameters of the

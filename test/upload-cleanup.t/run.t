@@ -147,6 +147,21 @@ without a file is accepted:
   $ curl --unix-socket local.sock -s -o /dev/null -w '%{http_code}\n' \
   >   -F f=value http://x/forbidden
   200
+
+A file input left empty, which browsers send with an empty file name and no
+content, is read as an empty field there. With some content, it is a file:
+
+  $ empty_file () {
+  >   printf %b "--B\r\nContent-Disposition: form-data; name=\"x\"\r\n\r\n1\r\n--B\r\nContent-Disposition: form-data; name=\"f\"; filename=\"\"\r\nContent-Type: application/octet-stream\r\n\r\n$1\r\n--B--\r\n" \
+  >   | curl --unix-socket local.sock -s -w '%{http_code}\n' --data-binary @- \
+  >       -H 'Content-Type: multipart/form-data; boundary=B' http://x/forbidden
+  > }
+  $ empty_file ''
+  x=1
+  f=
+  200
+  $ empty_file 'some content'
+  Error: Forbidden403
   $ grep -o 'A request sent a file where uploads are forbidden.*' server.log | sort -u
   A request sent a file where uploads are forbidden (see the <uploaddir> configuration option)
 

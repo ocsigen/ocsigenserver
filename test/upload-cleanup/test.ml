@@ -2,7 +2,8 @@
    It answers with the field, the name and whether the temporary file
    exists. A field named "keep" is moved to "kept", as an application does
    to keep a file. On the path "early", it answers without waiting for the
-   files. On the path "forbidden", uploads are forbidden. Its info messages go
+   files. On the path "forbidden", uploads are forbidden, and it also
+   answers with the fields, as name=value. Its info messages go
    to the standard output. *)
 
 open Lwt.Infix
@@ -34,8 +35,18 @@ let upload : Ocsigen.Server.instruction =
                )
             )
       | Some files ->
-          files >|= fun files ->
-          let body = String.concat "" (List.map describe files) in
+          files >>= fun files ->
+          ( match
+              path, Ocsigen.Request.post_params request_info upload_dir None
+            with
+            | "forbidden", Some fields -> fields
+            | _ -> Lwt.return []
+            )
+          >|= fun fields ->
+          let field (name, value) = Printf.sprintf "%s=%s\n" name value in
+          let body =
+            String.concat "" (List.map field fields @ List.map describe files)
+          in
           Ocsigen.Extensions.Ext_found
             (fun () ->
               Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())

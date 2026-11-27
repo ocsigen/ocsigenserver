@@ -654,6 +654,9 @@ Bug fixes:
  * A multipart request that sends a file where uploads are forbidden (no
    <uploaddir>) gets a 403 Forbidden, and the log says why, instead of a 500
    with the name of an OCaml exception.
+ * Where uploads are forbidden, a file input left empty, which browsers send
+   with an empty file name and no content, is read as an empty field: such a
+   form is no longer refused.
 
 ==== 8.0.0 (2026-09-24) ===
 
