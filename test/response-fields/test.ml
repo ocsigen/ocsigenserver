@@ -6,13 +6,13 @@ let with_header name value =
     ~headers:(Cohttp.Header.of_list [name, value])
     ~status:`OK ~body:"sent\n" ()
 
-let with_cookie name value =
+let with_cookie_set name cookie =
   Ocsigen.Response.add_cookies
     (Ocsigen.Response.respond_string ~status:`OK ~body:"sent\n" ())
-    (Ocsigen_cookie_map.add ~path:[] name
-       (Ocsigen_cookie_map.OSet (None, value, false))
-       Ocsigen_cookie_map.empty
-    )
+    (Ocsigen_cookie_map.add ~path:[] name cookie Ocsigen_cookie_map.empty)
+
+let with_cookie ?expires ?(secure = false) name value =
+  with_cookie_set name (Ocsigen_cookie_map.OSet (expires, value, secure))
 
 let injected = "x\r\nx-injected: 1"
 
@@ -28,6 +28,10 @@ let response = function
   | "eliom-cookie-name" ->
       Some (with_cookie "eliomdatasession|0|/my site/\xc3\xa9/|" "v")
   | "space-in-cookie-value" -> Some (with_cookie "c" "a b")
+  | "secure-cookie" -> Some (with_cookie ~secure:true "c" "v")
+  | "secure-cookie-with-expiry" ->
+      Some (with_cookie ~expires:1e9 ~secure:true "c" "v")
+  | "unset-cookie" -> Some (with_cookie_set "c" Ocsigen_cookie_map.OUnset)
   | "crlf-in-cookie" -> Some (with_cookie "c" injected)
   | "semicolon-in-cookie" -> Some (with_cookie "c" "v; domain=example.org")
   | "equals-in-cookie-name" -> Some (with_cookie "a=b" "v")

@@ -25,8 +25,9 @@ module Map_inner : Map.S with type key := string
 
 (** Type used for cookies to set. The float option is the timestamp
     for the expiration date. The string is the value. If the bool is
-    true and the protocol is https, the cookie will be secure (will ask
-    the browser to send it only through secure connections).
+    true, the cookie has the Secure attribute: the browser sends it only
+    through secure connections, and does not accept it from an insecure
+    origin other than localhost.
     A cookie whose name has [=], or whose name or value has [;] or a control
     character other than a tab, cannot be sent: the server answers 500
     instead. *)

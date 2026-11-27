@@ -145,6 +145,10 @@ Incompatible changes:
    and the text files of Staticmod had no charset in their Content-Type.
    ~default_charset:None of Ocsigen.Server.start gives no charset, and
    Ocsigen.Config.get_default_charset returns Some "utf-8" by default.
+ * A cookie set as secure now has the Secure attribute (see "Bug fixes"), so
+   browsers refuse it from a site served over HTTP: such a site must not ask
+   for secure cookies, for example with <securecookies value="true"/> or the
+   secure scopes of Eliom.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -636,6 +640,11 @@ Bug fixes:
    not contain "=". As Eliom puts the path of a site in the names of its
    cookies, a site whose path has a ";" or "=" gets this 500 when it sets
    one: browsers could not send such a cookie back anyway.
+ * Security: a cookie set as secure now has the Secure attribute, so that the
+   browser sends it only through HTTPS. The attribute was only written on
+   error responses: the cookies of the secure sessions of Eliom were also sent
+   in clear. Browsers refuse such cookies from a site served over HTTP
+   (Chrome and Firefox make an exception for localhost, Safari does not).
 
 ==== 8.0.0 (2026-09-24) ===
 
