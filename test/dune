@@ -165,3 +165,7 @@
 (cram
  (applies_to vary)
  (deps vary/test.exe))
+
+(cram
+ (applies_to http-echo)
+ (deps http-echo/echo.exe differential/httpdiff.exe))

@@ -1,0 +1,17 @@
+; Differential tests of HTTP/1.1 parsers (see README.md).
+
+(library
+ (name differential)
+ (modules echo outcome corpus)
+ (libraries raw_http yojson cryptokit))
+
+(executable
+ (name httpdiff)
+ (modules httpdiff)
+ (libraries differential raw_http threads.posix))
+
+(test
+ (name test_differential)
+ (package ocsigenserver)
+ (modules test_differential)
+ (libraries differential raw_http cryptokit))

@@ -190,3 +190,45 @@ let () =
       Printf.printf "== first byte later than the idle delay\n%s"
         (Raw_http.render outcome)
   )
+
+let show_responses title ?closed received =
+  let responses, rest = Raw_http.responses ?closed received in
+  Printf.printf "== responses: %s\n" title;
+  List.iter
+    (fun {Raw_http.status; headers; body} ->
+      Printf.printf "%d [%s] %S\n" status
+        (String.concat "; "
+           (List.map (fun (name, value) -> name ^ "=" ^ value) headers)
+        )
+        body
+    )
+    responses;
+  Printf.printf "rest %S\n" rest
+
+let () =
+  show_responses "content-length, then chunked, then a partial one"
+    (response
+   ^ "HTTP/1.1 200 OK\r\n\
+      Transfer-Encoding: chunked\r\n\
+      \r\n\
+      2;x=y\r\n\
+      he\r\n\
+      3\r\n\
+      llo\r\n\
+      0\r\n\
+      T: 1\r\n\
+      \r\n" ^ "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nabc"
+    );
+  show_responses "100 then 204, fields with spaces"
+    "HTTP/1.1 100 Continue\r\n\r\nHTTP/1.1 204 No Content\r\nX-A:  a b \r\n\r\n";
+  show_responses "delimited by the end, connection open"
+    "HTTP/1.1 200 OK\r\n\r\nhello";
+  show_responses "delimited by the end, connection closed" ~closed:true
+    "HTTP/1.1 200 OK\r\n\r\nhello";
+  show_responses "101, connection closed" ~closed:true
+    "HTTP/1.1 101 Switching Protocols\r\nUpgrade: x\r\n\r\nother protocol";
+  show_responses "transfer coding gzip alone, connection closed" ~closed:true
+    "HTTP/1.1 200 OK\r\nTransfer-Encoding: gzip\r\n\r\nxyz";
+  show_responses "content cut short, connection closed" ~closed:true
+    "HTTP/1.1 200 OK\r\nContent-Length: 9\r\n\r\nabc";
+  show_responses "not a response" "garbage\r\n\r\n"
