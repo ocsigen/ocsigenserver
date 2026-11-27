@@ -486,46 +486,43 @@ let parse_loglevel atts =
           )
   )
 
+(* A file of an <extconf> directory that cannot be read or parsed is left
+   out. *)
+let ignored_file filename msg =
+  Logs.err ~src:section (fun fmt ->
+      fmt
+        ("Error while loading configuration file %s (ignored)" ^^ "@\n%s")
+        filename msg
+  )
+
 let rec later_pass_extconf dir =
   let f acc s =
     if Filename.check_suffix s "conf"
-    then
-      match
-        let filename = dir ^ "/" ^ s in
-        try
-          Logs.info ~src:section (fun fmt ->
-              fmt "Parsing configuration file %s" filename
-          );
-          parse_ext filename
-        with e ->
-          let msg =
-            match e with
-            | Config_file_error msg -> msg
-            | e -> Printexc.to_string e
-          in
-          Logs.err ~src:section (fun fmt ->
-              fmt
-                ("Error while loading configuration file %s (ignored)"
-               ^^ "@\n%s"
-                )
-                filename msg
-          );
-          []
-      with
+    then (
+      let filename = dir ^ "/" ^ s in
+      Logs.info ~src:section (fun fmt ->
+          fmt "Parsing configuration file %s" filename
+      );
+      match parse_ext filename with
       | [] -> acc
       | s :: _ -> acc @ later_pass s
+      | exception (Config_file_error msg | Sys_error msg) ->
+          ignored_file filename msg; acc
+      | exception Xml_light_errors.File_not_found _ ->
+          ignored_file filename "the file cannot be read";
+          acc
+    )
     else acc
   in
-  try
-    let files = Sys.readdir dir in
-    Array.sort compare files; Array.fold_left f [] files
-  with Sys_error _ as e ->
-    Logs.err ~src:section (fun fmt ->
-        fmt
-          ("Error while loading configuration file (ignored)" ^^ "@\n%s")
-          (Printexc.to_string e)
-    );
-    []
+  match Sys.readdir dir with
+  | files -> Array.sort compare files; Array.fold_left f [] files
+  | exception Sys_error msg ->
+      Logs.err ~src:section (fun fmt ->
+          fmt
+            ("Error while reading the <extconf> directory (ignored)" ^^ "@\n%s")
+            msg
+      );
+      []
 
 (* Config file is parsed twice. This is the second parsing (site
    loading). *)

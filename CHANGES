@@ -654,6 +654,9 @@ Bug fixes:
  * The <findlib path> tags are set again at each reload, like the other
    settings of <server>: a path is no longer added twice to the search path
    of Findlib, and a path removed from the file is no longer searched.
+ * The errors of <extconf> no longer show the name of an OCaml exception: an
+   unreadable file, or a directory that cannot be read, is reported in
+   plain words. An error in the content of such a file is no longer ignored.
 
 ==== 8.0.0 (2026-09-24) ===
 
