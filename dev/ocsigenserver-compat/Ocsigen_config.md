@@ -285,9 +285,13 @@ val get_respect_pipeline : unit -> bool
 ```ocaml
 val get_default_port : unit -> int
 ```
+`get_default_port ()` is the first port of [`get_ports`](./#val-get_ports), or 80 if there is none. A Unix-domain socket given port 0 has none and is skipped; the number given with another one is the port of its requests.
+
 ```ocaml
 val get_default_sslport : unit -> int
 ```
+`get_default_sslport ()` is as [`get_default_port`](./#val-get_default_port) for [`get_ssl_ports`](./#val-get_ssl_ports), or 443\.
+
 ```ocaml
 val get_maxretries : unit -> int
 ```

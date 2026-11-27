@@ -2876,9 +2876,13 @@ val get_respect_pipeline : unit -> bool
 ```ocaml
 val get_default_port : unit -> int
 ```
+`get_default_port ()` is the first port of [`get_ports`](./#val-get_ports), or 80 if there is none. A Unix-domain socket given port 0 has none and is skipped; the number given with another one is the port of its requests.
+
 ```ocaml
 val get_default_sslport : unit -> int
 ```
+`get_default_sslport ()` is as [`get_default_port`](./#val-get_default_port) for [`get_ssl_ports`](./#val-get_ssl_ports), or 443\.
+
 ```ocaml
 val get_maxretries : unit -> int
 ```
@@ -3249,6 +3253,8 @@ Configuration options, passed to (and modified by) extensions
 ```ocaml
 val default_config_info : unit -> config_info
 ```
+`default_config_info ()` is the configuration of a host that sets nothing itself: its default charset, ports, upload directory and maximum upload size are the server-wide settings of [`Ocsigen.Config`](./Ocsigen-Config.md) at the time of the call.
+
 ```ocaml
 type request = {
   request_info : Request.t;
@@ -3368,11 +3374,8 @@ Returns the hostname to be used for absolute links or redirections. It is either
 ```ocaml
 val get_port : request -> int
 ```
-Returns the port to be used for absolute links or redirections. It is either:
+Returns the port to be used for absolute links or redirections: the default port of the host (its `default_httpport` or `default_httpsport`) with `<usedefaulthostname>`, or else the port on which the request came, which is the number given with a Unix-domain socket. A Unix-domain socket given port 0 has none: the default port of the host is used then.
 
-- the port the server is listening at
-- or the port in the Host header
-- or the default port set in the configuration file, also when the server listens on a Unix-domain socket, which has no port.
 ```ocaml
 val new_url_of_directory_request : request -> Request.t -> Uri.t
 ```
@@ -4081,6 +4084,11 @@ val reverse_proxy :
 `reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve), and `maxrequestbodysize` as for [`start`](./#val-start). There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
+type host_config
+```
+A virtual host, as [`host`](./#val-host) describes it. [`start`](./#val-start) makes it once it has applied its own options, so that they apply to the host.
+
+```ocaml
 val start : 
   ?ports:(Config.Socket_type.t * int) list ->
   ?ssl_ports:(Config.Socket_type.t * int) list ->
@@ -4118,7 +4126,7 @@ val start :
   ?disablepartialrequests:bool ->
   ?respect_pipeline:unit ->
   ?maxretries:int ->
-  Extensions.host_config list ->
+  host_config list ->
   unit
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
@@ -4172,9 +4180,11 @@ val host :
   ?uploaddir:string option ->
   ?maxuploadfilesize:int64 option ->
   instruction list ->
-  Extensions.host_config
+  host_config
 ```
 You can define one or several virtual hosts corresponding to a given server name or port. `regexp` is matched against the host name of the request, case-insensitively, without its final dot if any. It must match from the start of the name, but not up to its end: end it with `$`, as in `"example\\.org$"`, or it also matches `example.org.evil.net`. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
+
+[`start`](./#val-start) makes the host once it has applied its options, although OCaml evaluates `host` first. A setting not given here is then the one of the server: `default_charset`, `uploaddir` and `maxuploadfilesize` of [`start`](./#val-start), and the first port of its `ports` and `ssl_ports` for `default_httpport` and `default_httpsport` (see [`Ocsigen.Config.get_default_port`](./Ocsigen-Config.md#val-get_default_port)). The instructions are applied to the host at that time too: an error raised by an instruction comes from [`start`](./#val-start), which stops the server with it, as for an error in a configuration file. [`start`](./#val-start) makes its hosts in the order of the list, as the `<host>` elements of a configuration file.
 
 ```ocaml
 val site : 
@@ -8172,9 +8182,13 @@ val get_respect_pipeline : unit -> bool
 ```ocaml
 val get_default_port : unit -> int
 ```
+`get_default_port ()` is the first port of [`get_ports`](./#val-get_ports), or 80 if there is none. A Unix-domain socket given port 0 has none and is skipped; the number given with another one is the port of its requests.
+
 ```ocaml
 val get_default_sslport : unit -> int
 ```
+`get_default_sslport ()` is as [`get_default_port`](./#val-get_default_port) for [`get_ssl_ports`](./#val-get_ssl_ports), or 443\.
+
 ```ocaml
 val get_maxretries : unit -> int
 ```
@@ -8343,6 +8357,8 @@ Configuration options, passed to (and modified by) extensions
 ```ocaml
 val default_config_info : unit -> config_info
 ```
+`default_config_info ()` is the configuration of a host that sets nothing itself: its default charset, ports, upload directory and maximum upload size are the server-wide settings of [`Ocsigen.Config`](../Ocsigen-Config.md) at the time of the call.
+
 ```ocaml
 type request = Ocsigen.Extensions.request = {
   request_info : Ocsigen.Request.t;
@@ -8462,11 +8478,8 @@ Returns the hostname to be used for absolute links or redirections. It is either
 ```ocaml
 val get_port : request -> int
 ```
-Returns the port to be used for absolute links or redirections. It is either:
+Returns the port to be used for absolute links or redirections: the default port of the host (its `default_httpport` or `default_httpsport`) with `<usedefaulthostname>`, or else the port on which the request came, which is the number given with a Unix-domain socket. A Unix-domain socket given port 0 has none: the default port of the host is used then.
 
-- the port the server is listening at
-- or the port in the Host header
-- or the default port set in the configuration file, also when the server listens on a Unix-domain socket, which has no port.
 ```ocaml
 val new_url_of_directory_request : request -> Ocsigen.Request.t -> Uri.t
 ```
@@ -9296,6 +9309,11 @@ val reverse_proxy :
 `reverse_proxy ~target ()` starts a server that forwards every request to the `target` base URL (for example `http://localhost:9000`), with no configuration file and no log directory required. This backs `ocsigenserver --reverse-proxy URL`. The Revproxy extension is loaded dynamically on demand. `address` and `port` are as for [`serve`](./#val-serve), and `maxrequestbodysize` as for [`start`](./#val-start). There is no command pipe: the server is stopped with a signal. Never returns.
 
 ```ocaml
+type host_config = Ocsigen.Server.host_config
+```
+A virtual host, as [`host`](./#val-host) describes it. [`start`](./#val-start) makes it once it has applied its own options, so that they apply to the host.
+
+```ocaml
 val start : 
   ?ports:(Ocsigen.Config.Socket_type.t * int) list ->
   ?ssl_ports:(Ocsigen.Config.Socket_type.t * int) list ->
@@ -9333,7 +9351,7 @@ val start :
   ?disablepartialrequests:bool ->
   ?respect_pipeline:unit ->
   ?maxretries:int ->
-  Ocsigen.Extensions.host_config list ->
+  host_config list ->
   unit
 ```
 Start the server with some instructions. Never returns. It takes as main parameter a list of virtual hosts (see [`host`](./#val-host) below).
@@ -9387,9 +9405,11 @@ val host :
   ?uploaddir:string option ->
   ?maxuploadfilesize:int64 option ->
   instruction list ->
-  Ocsigen.Extensions.host_config
+  host_config
 ```
 You can define one or several virtual hosts corresponding to a given server name or port. `regexp` is matched against the host name of the request, case-insensitively, without its final dot if any. It must match from the start of the name, but not up to its end: end it with `$`, as in `"example\\.org$"`, or it also matches `example.org.evil.net`. Raises `Invalid_argument` if `maxuploadfilesize` is negative.
+
+[`start`](./#val-start) makes the host once it has applied its options, although OCaml evaluates `host` first. A setting not given here is then the one of the server: `default_charset`, `uploaddir` and `maxuploadfilesize` of [`start`](./#val-start), and the first port of its `ports` and `ssl_ports` for `default_httpport` and `default_httpsport` (see [`Ocsigen.Config.get_default_port`](../Ocsigen-Config.md#val-get_default_port)). The instructions are applied to the host at that time too: an error raised by an instruction comes from [`start`](./#val-start), which stops the server with it, as for an error in a configuration file. [`start`](./#val-start) makes its hosts in the order of the list, as the `<host>` elements of a configuration file.
 
 ```ocaml
 val site : 

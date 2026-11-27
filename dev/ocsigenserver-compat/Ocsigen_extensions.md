@@ -120,6 +120,8 @@ Configuration options, passed to (and modified by) extensions
 ```ocaml
 val default_config_info : unit -> config_info
 ```
+`default_config_info ()` is the configuration of a host that sets nothing itself: its default charset, ports, upload directory and maximum upload size are the server-wide settings of [`Ocsigen.Config`](../Ocsigen-Config.md) at the time of the call.
+
 ```ocaml
 type request = Ocsigen.Extensions.request = {
   request_info : Ocsigen.Request.t;
@@ -239,11 +241,8 @@ Returns the hostname to be used for absolute links or redirections. It is either
 ```ocaml
 val get_port : request -> int
 ```
-Returns the port to be used for absolute links or redirections. It is either:
+Returns the port to be used for absolute links or redirections: the default port of the host (its `default_httpport` or `default_httpsport`) with `<usedefaulthostname>`, or else the port on which the request came, which is the number given with a Unix-domain socket. A Unix-domain socket given port 0 has none: the default port of the host is used then.
 
-- the port the server is listening at
-- or the port in the Host header
-- or the default port set in the configuration file, also when the server listens on a Unix-domain socket, which has no port.
 ```ocaml
 val new_url_of_directory_request : request -> Ocsigen.Request.t -> Uri.t
 ```
