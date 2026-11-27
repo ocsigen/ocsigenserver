@@ -72,8 +72,8 @@ answers.
   $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
   >   http://127.0.0.1:$PORT1/user/index.html
   500
-  $ grep -o 'ocsigen:ext:userconf: .*' log/errors.log | sed "s/:$PORT1\//:PORT\//"
-  ocsigen:ext:userconf: [ERROR] Syntax error in userconf configuration file for url //127.0.0.1:PORT/user/index.html: user.conf, line 3, characters 0-6: End of tag expected : 'static'
+  $ grep -o 'ocsigen:ext:userconf: .*' log/errors.log
+  ocsigen:ext:userconf: [ERROR] Syntax error in userconf configuration file for url /user/index.html: user.conf, line 3, characters 0-6: End of tag expected : 'static'
   $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
   >   http://127.0.0.1:$PORT1/nouser/index.html
   404
