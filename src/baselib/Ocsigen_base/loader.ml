@@ -167,6 +167,8 @@ let set_ocamlpath lp =
   ocsigen_search_path := lp;
   update_search_path ()
 
+let get_added_ocamlpath () = !ocsigen_search_path
+
 let add_ocamlpath p =
   ocsigen_search_path := p :: !ocsigen_search_path;
   update_search_path ()

@@ -272,6 +272,9 @@ let save_settings () =
   ; (let n = Ocsigen_base.Ocsigen_stream.get_net_buffer_size () in
      fun () -> Ocsigen_base.Ocsigen_stream.set_net_buffer_size n
     )
+  ; (let p = Ocsigen_base.Loader.get_added_ocamlpath () in
+     fun () -> Ocsigen_base.Loader.set_ocamlpath p
+    )
   ]
 
 let restore_settings settings = List.iter (fun restore -> restore ()) settings

@@ -651,6 +651,9 @@ Bug fixes:
    error responses: the cookies of the secure sessions of Eliom were also sent
    in clear. Browsers refuse such cookies from a site served over HTTP
    (Chrome and Firefox make an exception for localhost, Safari does not).
+ * The <findlib path> tags are set again at each reload, like the other
+   settings of <server>: a path is no longer added twice to the search path
+   of Findlib, and a path removed from the file is no longer searched.
 
 ==== 8.0.0 (2026-09-24) ===
 
