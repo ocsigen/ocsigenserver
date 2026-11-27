@@ -12,7 +12,26 @@ module Body = struct
     ; release : unit -> unit Lwt.t
     }
 
-  let make ?(release = fun () -> Lwt.return_unit) encoding write =
+  (* The body is dropped whatever happens: whoever drops it can do nothing
+     about a failure, which is only logged. *)
+  let release_logging_failure release =
+    Lwt.catch release (fun exn ->
+        Logs.warn (fun f ->
+            f "Releasing the body of a response failed: %s"
+              (Printexc.to_string exn)
+        );
+        Lwt.return_unit
+    )
+
+  let make ?release encoding write =
+    let release =
+      match release with
+      | None -> fun () -> Lwt.return_unit
+      | Some release ->
+          (* Several parts of the server may drop the same response. *)
+          let released = lazy (release_logging_failure release) in
+          fun () -> Lazy.force released
+    in
     {write; encoding; release}
 
   let empty = make (Fixed 0L) (fun _write -> Lwt.return_unit)
@@ -30,17 +49,7 @@ module Body = struct
 
   let write {write; _} = write
   let transfer_encoding {encoding; _} = encoding
-
-  (* The body is dropped whatever happens: whoever drops it can do nothing
-     about a failure, which is only logged. *)
-  let release {release; _} =
-    Lwt.catch release (fun exn ->
-        Logs.warn (fun f ->
-            f "Releasing the body of a response failed: %s"
-              (Printexc.to_string exn)
-        );
-        Lwt.return_unit
-    )
+  let release {release; _} = release ()
 end
 
 type t =

@@ -78,5 +78,23 @@ let () =
      let* drained = Lwt_stream.is_empty stream in
      if drained || not !released
      then fail "of_cohttp ~release: the body is read, or not released";
+     (* A body dropped twice is released once, even when releasing it fails,
+        which is not raised. *)
+     let released_twice release =
+       let releases = ref 0 in
+       let body =
+         Ocsigen.Response.Body.make
+           ~release:(fun () -> incr releases; release ())
+           (Cohttp.Transfer.Fixed 0L)
+           (fun _write -> Lwt.return_unit)
+       in
+       let* () = Ocsigen.Response.Body.release body in
+       let* () = Ocsigen.Response.Body.release body in
+       Lwt.return !releases
+     in
+     let* n = released_twice (fun () -> Lwt.return_unit) in
+     if n <> 1 then fail "Body.release: %d releases" n;
+     let* n = released_twice (fun () -> failwith "release") in
+     if n <> 1 then fail "Body.release, failing: %d releases" n;
      Lwt.return_unit
     )
