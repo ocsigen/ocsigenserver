@@ -11,7 +11,9 @@ let conf_in =
 
     <port>_PORT_</port>
 
-    <logdir>_LOGDIR_</logdir>
+    <!-- Without <logdir> (or <syslog>), the logs go to the standard output
+         and standard error. The silent (-s) and daemon (-d) modes need one. -->
+    _LOGDIR_
     _COMMANDPIPE_
 
     <charset>utf-8</charset>
@@ -116,9 +118,21 @@ let static_options = function
   | "DEPS" -> String.concat ";" (List.map (Format.asprintf "%S") (deps ()))
   | _ as s -> failwith s
 
+(* An XML comment cannot contain "--". *)
+let fits_in_comment s =
+  match Str.search_forward (Str.regexp_string "--") s 0 with
+  | _ -> false
+  | exception Not_found -> true
+
 let sample_options = function
   | "PORT" -> string_of_int port
-  | "LOGDIR" -> logdir
+  | "LOGDIR" ->
+      (* Commented out, so that the logs go to the standard output and error:
+         the directory given to configure is only an example. *)
+      let example =
+        if logdir <> "" && fits_in_comment logdir then logdir else "..."
+      in
+      "<!-- <logdir>" ^ example ^ "</logdir> -->"
   | "COMMANDPIPE" ->
       if commandpipe = ""
       then "<!-- <commandpipe>...</commandpipe> -->"
@@ -132,7 +146,7 @@ let sample_options = function
 
 let local_options = function
   | "PORT" -> "8080"
-  | "LOGDIR" -> src ^ "/local/var/log"
+  | "LOGDIR" -> "<logdir>" ^ src ^ "/local/var/log</logdir>"
   | "COMMANDPIPE" ->
       "<commandpipe>" ^ src
       ^ "/local/var/run/ocsigenserver_command</commandpipe>"

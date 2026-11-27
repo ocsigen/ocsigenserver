@@ -20,8 +20,11 @@ Incompatible changes:
    standard output and standard error, which suits systemd and statically
    linked programs. They used to go to the directory given to
    ./configure --logdir (with opam, in the switch), and the server did not
-   start when it was missing or read-only. The generated configuration file
-   sets <logdir> explicitly. An empty path means no log directory.
+   start when it was missing or read-only. The generated configuration file,
+   which the installation copies to ocsigenserver.conf when there is none
+   yet, now gives <logdir> only as a comment, with that directory as an
+   example: uncomment it to log to files (or use <syslog>), which the silent
+   (-s) and daemon (-d) modes need. An empty <logdir> means no log directory.
    Ocsigen.Config.get_logdir and Ocsigen.Messages.error_log_path return a
    string option, and Ocsigen_base.Config_static.logdir is removed.
  * Without <mimefile> in the configuration file, or ~mimefile for
