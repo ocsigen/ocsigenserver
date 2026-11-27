@@ -43,3 +43,8 @@ main configuration file, for instance {{!page-redirectmod}Redirectmod} or
 {{!page-outputfilter}Outputfilter}. When a user file holds a refused
 directive or a syntax error, each request that it handles gets a 500, and
 the error log says why.
+
+The settings of a user file only hold for what it serves itself. When it does
+not answer a request, the directives that follow [<userconf>] get the request
+as it came, with the settings of the main configuration file and its original
+path.

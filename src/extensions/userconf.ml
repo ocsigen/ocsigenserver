@@ -30,20 +30,20 @@ let err_500 =
   Ocsigen.Extensions.Ext_stop_site
     (Ocsigen_cookie_map.empty, `Internal_server_error)
 
-let handle_parsing_error {Ocsigen.Extensions.request_info; _} = function
+(* [request_info] is the request as it came, so that the path names the user. *)
+let handle_parsing_error {Ocsigen.Extensions.request_info; _} =
+  let path = "/" ^ Ocsigen.Request.path_string request_info in
+  function
   | Ocsigen.Extensions.Error_in_config_file s
   | Ocsigen.Config.Config_file_error s ->
       Logs.err ~src:section (fun fmt ->
-          fmt "Syntax error in userconf configuration file for url %s: %s"
-            (Uri.to_string (Ocsigen.Request.uri request_info))
+          fmt "Syntax error in userconf configuration file for url %s: %s" path
             s
       );
       Lwt.return err_500
   | Ocsigen.Extensions.Error_in_user_config_file s ->
       Logs.err ~src:section (fun fmt ->
-          fmt "Unauthorized option in user configuration for url %s: %s"
-            (Uri.to_string (Ocsigen.Request.uri request_info))
-            s
+          fmt "Unauthorized option in user configuration for url %s: %s" path s
       );
       Lwt.return err_500
   | e -> Lwt.fail e
@@ -58,36 +58,31 @@ let subresult new_req user_parse_site conf previous_err req req_state =
           user_parse_site conf cookies_to_set
             (Ocsigen.Extensions.Req_not_found (previous_err, new_req))
           >>= fun (answer, cookies) ->
-          (* If the request is not satisfied by userconf, the
-            changes in configuration (in request_config) are
-            preserved for the remainder of the enclosing <site> (in
-            the Ext_continue and Ext_found_continue cases below) *)
+          (* The directives that follow Userconf get the request as it came,
+            without any change made inside the user file: its settings
+            (request_config), the path that Userconf gave the request, its
+            rewrites. Otherwise a user could, for instance, enable directory
+            listings or choose the upload directory for the extensions of
+            the main configuration file. A <rewrite> that restarts the
+            request (Ext_retry_with) is left as is: the new request goes
+            through all the rules again, as if the client had asked for it. *)
           let rec aux ((answer, cts) as r) =
             match answer with
             | Ocsigen.Extensions.Ext_sub_result sr ->
                 (* XXX Are these the good cookies ?? *)
                 sr cookies_to_set req_state >>= aux
-            | Ocsigen.Extensions.Ext_continue_with
-                ({Ocsigen.Extensions.request_config; _}, cookies, err) ->
+            | Ocsigen.Extensions.Ext_continue_with (_, cookies, err) ->
                 Lwt.return
-                  ( Ocsigen.Extensions.Ext_continue_with
-                      ( {req with Ocsigen.Extensions.request_config}
-                      , cookies
-                      , err
-                      )
-                  , cts
-                  )
+                  (Ocsigen.Extensions.Ext_continue_with (req, cookies, err), cts)
             | Ocsigen.Extensions.Ext_found_continue_with r ->
-                (* We keep config information outside userconf! *)
                 Lwt.return
                   ( Ocsigen.Extensions.Ext_found_continue_with
-                      (fun () ->
-                        r ()
-                        >|= fun (r, {Ocsigen.Extensions.request_config; _}) ->
-                        r, {req with Ocsigen.Extensions.request_config}
-                      )
+                      (fun () -> r () >|= fun (response, _) -> response, req)
                   , cts
                   )
+            | Ocsigen.Extensions.Ext_found_continue_with' (r, _) ->
+                Lwt.return
+                  (Ocsigen.Extensions.Ext_found_continue_with' (r, req), cts)
             | _ -> Lwt.return r
           in
           aux (answer, cookies)
@@ -135,14 +130,14 @@ let gen hostpattern sitepath (regexp, conf, url, prefix, localpath) = function
           let user_parse_site =
             Ocsigen.Extensions.make_parse_config (sitepath @ [prefix])
               user_parse_host
-          and req =
+          and new_req =
             { req with
               Ocsigen.Extensions.request_info =
                 Ocsigen.Request.update ~uri request_info
             }
           in
           Lwt.return
-            (subresult req user_parse_site conf previous_err req req_state)
+            (subresult new_req user_parse_site conf previous_err req req_state)
         with
         | Ocsigen.Extensions.NoSuchUser | NoConfFile
         | Unix.Unix_error (Unix.EACCES, _, _)
