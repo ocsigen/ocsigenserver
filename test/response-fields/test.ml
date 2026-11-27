@@ -37,21 +37,24 @@ let response = function
   | "equals-in-cookie-name" -> Some (with_cookie "a=b" "v")
   | _ -> None
 
+(* The cookies of an error are written and checked as the others. *)
+let error_with_cookie ?(secure = false) value =
+  Lwt.fail
+    (Ocsigen.Ocsigen_cohttp.Ocsigen_http_error
+       ( Ocsigen_cookie_map.add ~path:[] "c"
+           (Ocsigen_cookie_map.OSet (None, value, secure))
+           Ocsigen_cookie_map.empty
+       , `Forbidden
+       )
+    )
+
 let respond _vh _config_info _path = function
   | Ocsigen.Extensions.Req_not_found (_, {Ocsigen.Extensions.request_info; _})
     -> (
     match Ocsigen.Request.sub_path_string request_info with
-    | ("error-with-cookie" | "error-with-bad-cookie") as path ->
-        (* The cookies of an error go through the same check. *)
-        let value = if path = "error-with-cookie" then "v" else injected in
-        Lwt.fail
-          (Ocsigen.Ocsigen_cohttp.Ocsigen_http_error
-             ( Ocsigen_cookie_map.add ~path:[] "c"
-                 (Ocsigen_cookie_map.OSet (None, value, false))
-                 Ocsigen_cookie_map.empty
-             , `Forbidden
-             )
-          )
+    | "error-with-cookie" -> error_with_cookie "v"
+    | "error-with-secure-cookie" -> error_with_cookie ~secure:true "v"
+    | "error-with-bad-cookie" -> error_with_cookie injected
     | "error-with-bad-header" ->
         (* So are the headers that an extension gives with its error. *)
         Lwt.fail

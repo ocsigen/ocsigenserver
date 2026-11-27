@@ -29,32 +29,6 @@ let get_number_of_connected, incr_connected, decr_connected =
 
 exception Ocsigen_is_dir of (Request.t -> Uri.t)
 
-module Cookie = struct
-  let serialize_cookie_raw path exp name c secure =
-    Format.sprintf "%s=%s; path=/%s%s%s" name c
-      (Ocsigen_base.Lib.Url.string_of_url_path ~encode:true path)
-      (if secure then "; secure" else "")
-      ( match exp with
-      | Some s -> "; expires=" ^ Ocsigen_base.Lib.Date.to_string s
-      | None -> ""
-      )
-
-  let serialize_cookies path =
-    Ocsigen_cookie_map.Map_inner.fold @@ fun name c h ->
-    let open Ocsigen_cookie_map in
-    let exp, v, secure =
-      match c with
-      | OUnset -> Some 0., "", false
-      | OSet (t, v, secure) -> t, v, secure
-    in
-    Cohttp.Header.add h
-      Ocsigen_http.Header.Name.(to_string set_cookie)
-      (serialize_cookie_raw path exp name v secure)
-
-  let serialize cookies headers =
-    Ocsigen_cookie_map.Map_path.fold serialize_cookies cookies headers
-end
-
 (* cohttp writes the headers as they are: a CR or LF in a value ends the
    header, and text injected by a client in a value could add other headers
    (response splitting). A [;] in a cookie would add attributes to it. The
@@ -319,23 +293,20 @@ let handler
             what (Printexc.to_string exn)
       )
     in
-    let headers, ret_code, explicit_msg =
+    let headers, ret_code, explicit_msg, cookies =
       match exn with
-      | Ocsigen_http_error (cookies_to_set, code) ->
+      | Ocsigen_http_error (cookies, code) ->
           log Logs.Debug "Got exception";
-          let headers =
-            Cookie.serialize cookies_to_set (Cohttp.Header.init ())
-          in
-          Some headers, code, None
+          None, code, None, cookies
       | Unix.Unix_error (Unix.EACCES, _, _) ->
           log Logs.Warning "Permission denied";
-          None, `Forbidden, None
+          None, `Forbidden, None, Ocsigen_cookie_map.empty
       | Ext_http_error (code, msg, headers) ->
           log Logs.Debug "Got exception";
-          headers, code, msg
+          headers, code, msg, Ocsigen_cookie_map.empty
       | Ocsigen_base.Lib.Ocsigen_Bad_Request ->
           log Logs.Info "Bad request";
-          None, `Bad_request, None
+          None, `Bad_request, None, Ocsigen_cookie_map.empty
       (* The body parsers of [Request.post_params] read it through an
          [Ocsigen_stream], which wraps its failures in [Interrupted]. *)
       | Request.Truncated_body
@@ -343,7 +314,7 @@ let handler
           Logs.info ~src:section (fun fmt ->
               fmt "The body of a request ended before its Content-Length"
           );
-          None, `Bad_request, None
+          None, `Bad_request, None, Ocsigen_cookie_map.empty
       | Ocsigen_base.Lib.Ocsigen_Request_too_long
       | Ocsigen_base.Ocsigen_stream.Interrupted
           Ocsigen_base.Lib.Ocsigen_Request_too_long ->
@@ -352,7 +323,7 @@ let handler
                 "Request body too large (see the <maxrequestbodysize> and \
                  <maxuploadfilesize> configuration options)"
           );
-          None, `Request_entity_too_large, None
+          None, `Request_entity_too_large, None, Ocsigen_cookie_map.empty
       | Ocsigen_base.Lib.Input_is_too_large ->
           Logs.warn ~src:section (fun fmt ->
               fmt
@@ -360,19 +331,21 @@ let handler
                  <maxrequestbodysizeinmemory> and <netbuffersize> \
                  configuration options)"
           );
-          None, `Request_entity_too_large, None
+          None, `Request_entity_too_large, None, Ocsigen_cookie_map.empty
       (* The body of the request did not arrive in time. The socket is shut
          down before this is sent (see [Connection_guard]), and the closing is
          logged then. The access log records the request with this status all
          the same, as nginx and Apache do. *)
       | Connection_guard.Timed_out ->
           log Logs.Debug "Got exception";
-          None, `Request_timeout, None
+          None, `Request_timeout, None, Ocsigen_cookie_map.empty
       | _ ->
           log Logs.Error "Error";
-          None, `Internal_server_error, None
+          None, `Internal_server_error, None, Ocsigen_cookie_map.empty
     in
-    error_response ?headers ?msg:explicit_msg ret_code
+    Response.add_cookies
+      (error_response ?headers ?msg:explicit_msg ret_code)
+      cookies
   in
   let meth =
     Ocsigen_http.Http1.request_method (Cohttp.Request.meth cohttp_request)
