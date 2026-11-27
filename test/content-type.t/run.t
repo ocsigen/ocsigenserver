@@ -50,13 +50,14 @@ With a configuration file:
   $ kill $CONF_PID
 
 Without <mimefile>, no mime.types file is read: serve mode logs no error
-about it, and the types come from magic-mime, without a charset:
+about it, and the types come from magic-mime. Text gets the default charset,
+utf-8:
 
   $ ocsigenserver --serve www --port $PORT2 >serve.log 2>&1 &
   $ SERVE_PID=$!
   $ wait_server $SERVE_PID serve.log http://127.0.0.1:$PORT2/
   $ ctypes "" http://127.0.0.1:$PORT2 a.txt c.zzz g.js
-  a.txt: content-type: text/plain
+  a.txt: content-type: text/plain; charset=utf-8
   c.zzz: content-type: application/octet-stream
   g.js: content-type: application/javascript
   $ grep -i "mime.types\|mime types" serve.log
@@ -70,5 +71,15 @@ to it, which are evaluated before it:
   $ LIB_PID=$!
   $ wait_server $LIB_PID lib.log local.sock local.cmd
   $ ctypes "--unix-socket local.sock" http://x c.zzz d.png
-  c.zzz: content-type: text/x-zzz
+  c.zzz: content-type: text/x-zzz; charset=utf-8
   d.png: content-type: image/png
+
+With ~default_charset:None, the server has no default charset:
+
+  $ stop_server $LIB_PID
+  $ rm local.sock
+  $ ../content-type/test.exe --no-charset >lib.log 2>&1 &
+  $ LIB_PID=$!
+  $ wait_server $LIB_PID lib.log local.sock local.cmd
+  $ ctypes "--unix-socket local.sock" http://x c.zzz
+  c.zzz: content-type: text/x-zzz

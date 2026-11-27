@@ -383,9 +383,9 @@ let later_pass_host attrs l =
   in
   let host = parse_host_field host in
   let charset =
-    match charset, Config.get_default_charset () with
-    | Some charset, _ | None, Some charset -> charset
-    | None, None -> "utf-8"
+    match charset with
+    | None -> Config.get_default_charset ()
+    | Some _ -> charset
   and defaulthttpport =
     match defaulthttpport with
     | None -> Config.get_default_port ()
@@ -408,7 +408,7 @@ let later_pass_host attrs l =
     ; default_protocol_is_https = defaultprotocol = Some "https"
     ; mime_assoc = Ocsigen_http.Charset_mime.default_mime_assoc ()
     ; charset_assoc =
-        Ocsigen_http.Charset_mime.empty_charset_assoc ~default:charset ()
+        Ocsigen_http.Charset_mime.empty_charset_assoc ?default:charset ()
     ; default_directory_index = ["index.html"]
     ; list_directory_content = false
     ; follow_symlinks = `Owner_match
@@ -647,12 +647,21 @@ and later_pass = function
       raise (Config_file_error ("tag <" ^ tag ^ "> unexpected inside <server>"))
   | _ -> raise (Config_file_error "Syntax error")
 
+(* The settings of the tags of [<server>] before the configuration file was
+   first read. Each reading starts from them, so that a tag removed from the
+   file before a reload puts its setting back to that value. *)
+let initial_settings = ref None
+
 (* On an error, the settings of the tags of [<server>] are put back as they
    were, and the hosts stay as they were. What the extensions loaded or set
    up before the error stays. *)
 let later_pass l =
   log_levels := [];
   let settings = Config.save_settings () in
+  ( match !initial_settings with
+  | None -> initial_settings := Some settings
+  | Some initial -> Config.restore_settings initial
+  );
   ( match later_pass l with
   | hosts -> Extensions.set_hosts hosts
   | exception e ->

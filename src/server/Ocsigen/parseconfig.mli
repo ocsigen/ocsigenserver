@@ -50,6 +50,11 @@ val first_pass : Xml.xml list -> unit
 *)
 
 val later_pass : Xml.xml list -> unit
+(** [later_pass l] reads the children [l] of [<server>], at start-up and on
+    each reload, and sets the hosts. It starts from the settings of the tags
+    of [<server>] in effect before its first call, so that a tag removed from
+    the file gets back that value. On an error, the settings and the hosts stay
+    as they were. *)
 
 val parse_xml_file : string -> Xml.xml
 (** [parse_xml_file file] is the XML document in [file]. An XML or DTD error

@@ -139,6 +139,12 @@ Incompatible changes:
      slash, or the links of Eliom with ~usedefaulthostname. Behind a reverse
      proxy, give the public ports to host with ~default_httpport and
      ~default_httpsport.
+ * The default charset of the hosts is utf-8 in every mode, as it was
+   already for a configuration file without <charset>. The hosts of
+   Ocsigen.Server.host, and serve mode, had none, so that the pages of Eliom
+   and the text files of Staticmod had no charset in their Content-Type.
+   ~default_charset:None of Ocsigen.Server.start gives no charset, and
+   Ocsigen.Config.get_default_charset returns Some "utf-8" by default.
 
 New features:
  * Security: the server now bounds how long it waits for its clients, so that
@@ -457,6 +463,10 @@ Bug fixes:
    extensions did before the error, such as loading a new extension, is not
    undone. The error no longer starts with "Fatal - ", as the server keeps
    running.
+ * On a reload, when a tag of <server> such as <charset>, <maxretries> or
+   <debugmode/> is removed from the configuration file, its setting goes
+   back to its default value. It used to keep the value of the file read
+   before.
  * A malformed multipart body gets a 400 Bad Request instead of a 500: a part
    without a Content-Disposition header or without a name in it, a part header
    line that is not a header, a body cut right after its first boundary, and a
@@ -519,9 +529,8 @@ Bug fixes:
    Extendconfiguration, again. Since 3.0.0, they were read but not used:
    the Content-Type of a file came from the built-in table of magic-mime,
    without a charset. That table now comes after the rules and the file. Text
-   and XML files get the charset of the host again, so a text file served
-   from a configuration file now has "; charset=utf-8" by default (serve mode
-   gives no charset, as before).
+   and XML files get the charset of the host again, so a text file now has
+   "; charset=utf-8" by default.
  * Static files: If-None-Match uses the weak comparison, as RFC 9110 requires:
    "x" now matches the ETag W/"x". All the If-None-Match lines of a request
    are read, and a comma within an entity tag no longer splits it.
