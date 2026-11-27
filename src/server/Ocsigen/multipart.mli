@@ -1,5 +1,10 @@
 val section : Logs.src
 
+exception Ocsigen_upload_forbidden
+(** The failure of the decoding of a multipart body that holds a file when
+    there is no upload directory, so that uploads are forbidden. The server
+    answers [403 Forbidden]. *)
+
 val scan_multipart_body_from_stream :
      ?max_size:Int64.t
   -> boundary:string

@@ -135,4 +135,19 @@ The reasons are logged:
   a part has no name in its Content-Disposition
   a part has a malformed Content-Disposition
 
+Where uploads are forbidden, a file gets a 403, and the log says why. A field
+without a file is accepted:
+
+  $ curl --unix-socket local.sock -s -o /dev/null -w '%{http_code}\n' \
+  >   -F f=@a.txt http://x/forbidden
+  403
+  $ curl --unix-socket local.sock -s -o /dev/null -w '%{http_code}\n' \
+  >   -F x=1 -F f=@a.txt http://x/forbidden
+  403
+  $ curl --unix-socket local.sock -s -o /dev/null -w '%{http_code}\n' \
+  >   -F f=value http://x/forbidden
+  200
+  $ grep -o 'A request sent a file where uploads are forbidden.*' server.log | sort -u
+  A request sent a file where uploads are forbidden (see the <uploaddir> configuration option)
+
   $ stop_server $SERVER_PID

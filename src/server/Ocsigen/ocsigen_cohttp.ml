@@ -301,6 +301,13 @@ let handler
       | Unix.Unix_error (Unix.EACCES, _, _) ->
           log Logs.Warning "Permission denied";
           None, `Forbidden, None, Ocsigen_cookie_map.empty
+      | Multipart.Ocsigen_upload_forbidden ->
+          Logs.info ~src:section (fun fmt ->
+              fmt
+                "A request sent a file where uploads are forbidden (see the \
+                 <uploaddir> configuration option)"
+          );
+          None, `Forbidden, None, Ocsigen_cookie_map.empty
       | Ext_http_error (code, msg, headers) ->
           log Logs.Debug "Got exception";
           headers, code, msg, Ocsigen_cookie_map.empty

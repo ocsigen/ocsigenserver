@@ -2,7 +2,8 @@
    It answers with the field, the name and whether the temporary file
    exists. A field named "keep" is moved to "kept", as an application does
    to keep a file. On the path "early", it answers without waiting for the
-   files. Its info messages go to the standard output. *)
+   files. On the path "forbidden", uploads are forbidden. Its info messages go
+   to the standard output. *)
 
 open Lwt.Infix
 
@@ -16,24 +17,30 @@ let upload : Ocsigen.Server.instruction =
  fun _ _ _ -> function
   | Ocsigen.Extensions.Req_not_found (err, {Ocsigen.Extensions.request_info; _})
     -> (
-    match Ocsigen.Request.files request_info (Some "uploads") None with
-    | None -> Lwt.return (Ocsigen.Extensions.Ext_next err)
-    | Some _ when Ocsigen.Request.path_string request_info = "early" ->
-        Lwt.return
-          (Ocsigen.Extensions.Ext_found
-             (fun () ->
-               Lwt.return
-                 (Ocsigen.Response.respond_string ~status:`OK ~body:"early\n" ())
-             )
-          )
-    | Some files ->
-        files >|= fun files ->
-        let body = String.concat "" (List.map describe files) in
-        Ocsigen.Extensions.Ext_found
-          (fun () ->
-            Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())
-          )
-  )
+      let path = Ocsigen.Request.path_string request_info in
+      let upload_dir =
+        match path with "forbidden" -> None | _ -> Some "uploads"
+      in
+      match Ocsigen.Request.files request_info upload_dir None with
+      | None -> Lwt.return (Ocsigen.Extensions.Ext_next err)
+      | Some _ when path = "early" ->
+          Lwt.return
+            (Ocsigen.Extensions.Ext_found
+               (fun () ->
+                 Lwt.return
+                   (Ocsigen.Response.respond_string ~status:`OK ~body:"early\n"
+                      ()
+                   )
+               )
+            )
+      | Some files ->
+          files >|= fun files ->
+          let body = String.concat "" (List.map describe files) in
+          Ocsigen.Extensions.Ext_found
+            (fun () ->
+              Lwt.return (Ocsigen.Response.respond_string ~status:`OK ~body ())
+            )
+    )
   | Ocsigen.Extensions.Req_found _ ->
       Lwt.return Ocsigen.Extensions.Ext_do_nothing
 

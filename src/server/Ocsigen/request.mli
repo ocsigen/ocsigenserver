@@ -81,9 +81,17 @@ val cookies : t -> string Ocsigen_cookie_map.Map_inner.t
 
 val files :
   t -> string option -> Int64.t option -> (string * file_info) list Lwt.t option
+(** [files r upload_dir max_size] is the list of the files of the body of [r],
+    if it is a form, decoded once for both [files] and {!post_params}. The
+    files are written in [upload_dir], at most [max_size] bytes each. With
+    [None] as [upload_dir], uploads are forbidden: a body that holds a file
+    makes the promise fail with {!Multipart.Ocsigen_upload_forbidden}, which
+    the server answers with [403 Forbidden]. *)
 
 val post_params :
   t -> string option -> Int64.t option -> (string * string) list Lwt.t option
+(** [post_params r upload_dir max_size] is the list of the fields of the body
+    of [r], if it is a form. The arguments are as for {!files}. *)
 
 val on_post_data_decoded : t -> (unit -> unit) -> unit
 (** [on_post_data_decoded r f] calls [f] once the decoding of the body of [r]
