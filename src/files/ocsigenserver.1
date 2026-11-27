@@ -34,8 +34,9 @@ Specify a file where to write the PIDs of the servers.
 .TP
 .BR \-s ,\  \-\-silent
 Silent mode (error messages go in errors.log only).
-Refused when the logs go to the terminal, as in serve mode and with
-\-\-reverse\-proxy.
+Refused when the logs go to the terminal: in serve mode, with
+\-\-reverse\-proxy, and with a configuration file that gives neither
+<logdir> nor <syslog>, such as the default one.
 .TP
 .BR \-v ,\  \-\-verbose
 Verbose mode (notice).
