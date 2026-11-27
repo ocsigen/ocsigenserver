@@ -11,7 +11,8 @@
    - the log levels set by [<loglevel>] and by the [logs:] command;
    - the warnings for the tags that are accepted but have no effect;
    - the check of the sizes given through the API;
-   - the default ports, which skip the Unix-domain sockets given port 0. *)
+   - the default ports, which skip the Unix-domain sockets given port 0;
+   - the <findlib> paths, set again at each reading of the file. *)
 
 let show_int n = if n = max_int then "max_int" else string_of_int n
 let show_int64_option = function None -> "None" | Some n -> Int64.to_string n
@@ -257,3 +258,21 @@ let () =
     [`Unix "http.sock", 8081; `All, 8080]
     [`Unix "https.sock", 8444; `All, 8443];
   show "no ports" [] []
+
+(* The <findlib> paths are settings of the configuration file: each reading
+   starts from the search path of Findlib as it was before the first one, so
+   that a path is not added twice, and a path removed from the file is no
+   longer searched. *)
+let () =
+  print_endline "\nfindlib path read twice, then removed:";
+  let path = "/some/findlib/path" in
+  let count () =
+    List.length
+      (List.filter (String.equal path) (Ocsigen_base.Loader.get_ocamlpath ()))
+  in
+  let findlib = Xml.Element ("findlib", ["path", path], []) in
+  Ocsigen.Parseconfig.later_pass [findlib];
+  Ocsigen.Parseconfig.later_pass [findlib];
+  Printf.printf "%d\n" (count ());
+  Ocsigen.Parseconfig.later_pass [];
+  Printf.printf "%d\n" (count ())

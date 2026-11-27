@@ -3,7 +3,8 @@ wiring of each tag to its Config value. Then the defaults and the wiring of the
 connection tags and of <commandpipe> and <logdir>, and the log levels set by
 <loglevel> and by the logs: command of the command pipe. Then the warnings for
 the tags that have no effect, and the log levels set by the -vv option. Last,
-the check of the sizes given through the API.
+the check of the sizes given through the API, the default ports, and the
+<findlib> paths read twice, then removed.
 
   $ ../parseconfig/test.exe 2>&1
   parse_size_tag:
@@ -87,3 +88,7 @@ the check of the sizes given through the API.
   Unix-domain sockets with port 0 only -> 80, 443
   Unix-domain sockets with a port -> 8081, 8444
   no ports -> 80, 443
+  
+  findlib path read twice, then removed:
+  1
+  0

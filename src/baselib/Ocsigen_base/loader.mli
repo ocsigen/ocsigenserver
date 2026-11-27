@@ -84,6 +84,10 @@ val set_ocamlpath : string list -> unit
     library path and some site-specific paths are always implicitly
     added. *)
 
+val get_added_ocamlpath : unit -> string list
+(** The paths given to {!set_ocamlpath} and {!add_ocamlpath}, without the
+    ones that Findlib always adds. *)
+
 val add_ocamlpath : string -> unit
 (** Adds a path to the Findlib library search path. *)
 

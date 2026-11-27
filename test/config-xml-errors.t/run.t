@@ -32,7 +32,9 @@ And so does a file that its own DTD rejects:
   Fatal - Error in configuration file: dtd.conf: No more children expected
 
 A file of an <extconf> directory that is not well-formed XML is logged, with
-its name and the position of the error, and ignored.
+its name and the position of the error, and ignored. So is a file that cannot
+be read, here a dangling symbolic link, and an <extconf> directory that cannot
+be read.
 
 A user configuration file (Userconf) that is not well-formed XML gives a 500,
 and the error is logged with the name of the file and the position of the
@@ -45,6 +47,7 @@ answers.
   $ echo index > www/index.html
   $ printf '<ocsigen><server>\n<host>\n</hostx>\n</server></ocsigen>\n' \
   >   > conf.d/bad.conf
+  $ ln -s missing.conf conf.d/dangling.conf
   $ cat > site.conf <<CONF
   > <ocsigen><server>
   > <port>127.0.0.1:$PORT1</port>
@@ -58,6 +61,7 @@ answers.
   >   <static dir="www" />
   > </host>
   > <extconf dir="conf.d"/>
+  > <extconf dir="nodir"/>
   > </server></ocsigen>
   > CONF
   $ printf '<site>\n<static dir="www">\n</site>\n' > user.conf
@@ -69,6 +73,10 @@ answers.
   $ grep -A 1 'ocsigen:config: \[ERROR\]' log/errors.log | sed 's/^.*: \[ERROR\] //; s/^ *//'
   Error while loading configuration file conf.d/bad.conf (ignored)
   conf.d/bad.conf, line 3, characters 0-7: End of tag expected : 'host'
+  Error while loading configuration file conf.d/dangling.conf (ignored)
+  the file cannot be read
+  Error while reading the <extconf> directory (ignored)
+  nodir: No such file or directory
   $ curl -s -o /dev/null -w '%{http_code}\n' --max-time 10 \
   >   http://127.0.0.1:$PORT1/user/index.html
   500
