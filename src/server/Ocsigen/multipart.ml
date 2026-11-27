@@ -423,6 +423,10 @@ let post_params_multipart_form_data
   let rec add p s =
     match p with
     | _, `No_file to_buf -> Buffer.add_string to_buf s; Lwt.return ()
+    | _, `Empty_file ->
+        if String.equal s ""
+        then Lwt.return ()
+        else Lwt.fail Ocsigen_upload_forbidden
     | _, `Some_file (_, _, wh, _) ->
         let len = String.length s in
         let r = Unix.write_substring wh s 0 len in
@@ -456,6 +460,11 @@ let post_params_multipart_form_data
     in
     match List.assoc_opt "filename" cd_params with
     | None -> p_name, `No_file (Buffer.create 1024)
+    (* Browsers send an empty file name, and no content, for a file input left
+       empty. Where uploads are forbidden, it is read as an empty field, so
+       that such a form is not refused. With some content, it is still
+       refused, as a file. *)
+    | Some "" when Option.is_none upload_dir -> p_name, `Empty_file
     | Some store -> (
       match upload_dir with
       | Some dname ->
@@ -477,6 +486,9 @@ let post_params_multipart_form_data
   and stop filesize = function
     | p_name, `No_file to_buf ->
         params := !params @ [p_name, Buffer.contents to_buf];
+        Lwt.return ()
+    | p_name, `Empty_file ->
+        params := !params @ [p_name, ""];
         Lwt.return ()
     (* in the end ? *)
     | ( p_name
