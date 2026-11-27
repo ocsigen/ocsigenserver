@@ -1,4 +1,4 @@
-# Server
+# Ocsigen Server
 
 > Ocsigen Server is a powerful and modular generic purpose Web Server. It supports static files, redirections, reverse proxy, CORS, user pages with local configuration, page compression, authentication, etc.
 
